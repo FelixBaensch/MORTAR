@@ -20,19 +20,33 @@
 
 package de.unijena.cheminf.mortar.main;
 
-import java.util.Locale;
+import de.unijena.cheminf.mortar.message.Message;
+import javafx.application.Application;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.stage.Stage;
 
-public class Main {
+public class MainApp extends Application {
+
     /**
-     * Since the Java launcher checks if the main class extends javafx.application.Application,
-     * and in that case it requires the JavaFX runtime available as modules (not as jars), a
-     * possible workaround to make it work, should be adding a new Main class that will be the
-     * main class of your project, and that class will be the one that calls your JavaFX
-     * Application class.
-     * @param args cmd line arguments
+     * @param args the command line arguments
      */
-    public static void main(String[] args) {
-        Locale.setDefault(Locale.UK);
-        MainApp.main(args);
+    public static void main(String[] args){
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage aPrimaryStage) {
+        String javaVersion = System.getProperty("java.version");
+        String javafxVersion = System.getProperty("javafx.version");
+
+        Label tmpLabel = new Label(Message.get("Hello") + " " + javafxVersion + "\nRunning on Java " + javaVersion + ".");
+
+        Scene scene = new Scene(tmpLabel, 400, 200);
+
+        aPrimaryStage.setTitle("MORTAR");
+        aPrimaryStage.setScene(scene);
+        aPrimaryStage.show();
     }
 }
