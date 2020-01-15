@@ -18,25 +18,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.main;
+package de.unijena.cheminf.mortar.gui;
 
 /**
- * Since the Java launcher checks if the main class extends javafx.application.Application,
- * and in that case it requires the JavaFX runtime available as modules (not as jars), a
- * possible workaround to make it work, should be adding a new Main class that will be the
- * main class of your project, and that class will be the one that calls your JavaFX
- * Application class.
- * See José Pereda's comment on https://stackoverflow.com/questions/52569724/javafx-11-create-a-jar-file-with-gradle (retrieved December 18, 2019) for more details.
+ * GUI definitions
  *
  * @author Felix Baensch
  */
-public class Main {
+public interface GuiDefinitions {
+
     /**
-     * Main class
-     *
-     * @param args the command line arguments
+     * Value for the GUI insets
      */
-    public static void main(String[] args) {
-        MainApp.main(args);
-    }
+    Double GUI_INSETS_VALUE = 10.0;
+    /**
+     * Value for the width of the main view
+     */
+    Double GUI_MAIN_VIEW_WIDTH_VALUE = 400.0;
+    /**
+     * Value for the height of the main view
+     */
+    Double GUI_MAIN_VIEW_HEIGHT_VALUE = 400.0;
+
+    Double GUI_BUTTON_WIDTH_VALUE = 40.0;
+
+    Double GUI_BUTTON_HEIGHT_VALUE = 25.0;
+
+    Double GUI_PROGRESSBAR_WIDTH_VALUE = 25.0;
+
+    Double GUI_PROGRESSBAR_HEIGHT_VALUE = 25.0;
 }

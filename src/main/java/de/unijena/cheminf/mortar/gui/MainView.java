@@ -20,5 +20,76 @@
 
 package de.unijena.cheminf.mortar.gui;
 
-public class MainView {
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+
+/**
+ * MainView Class of MORTAR
+ *
+ * @author Felix Baensch
+ */
+public class MainView extends AnchorPane {
+
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    private BorderPane mainBorderPane;
+    private Pane mainCenterPane;
+    private MainMenuBar mainMenuBar;
+    private MainToolBar mainToolBar;
+
+    //</editor-fold>
+
+    /**
+     * Constructor
+     *
+     * Initialises the variables and fields and adds the components to the frame.
+     * No event listeners are added to any component.
+     */
+    public MainView(){
+        super();
+        //BorderPane
+        this.mainBorderPane = new BorderPane();
+        MainView.setTopAnchor(this.mainBorderPane, 0.0);
+        MainView.setBottomAnchor(this.mainBorderPane, 0.0);
+        MainView.setLeftAnchor(this.mainBorderPane, 0.0);
+        MainView.setRightAnchor(this.mainBorderPane, 0.0);
+        HBox.setHgrow(this.mainBorderPane, Priority.ALWAYS);
+        VBox.setVgrow(this.mainBorderPane, Priority.ALWAYS);
+        //mainCenterPane
+        this.mainCenterPane = new Pane();
+        this.mainCenterPane.setStyle("-fx-background-color: LIGHTGREY");
+        this.mainCenterPane.getChildren().add(new Label("mainCenterPane")); //TODO: Remove this line (it is just for debugging)
+//        BorderPane.setMargin(this.mainCenterPane, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        this.mainBorderPane.setCenter(this.mainCenterPane);
+        //menuBar
+        this.mainMenuBar = new MainMenuBar();
+        this.mainBorderPane.setTop(this.mainMenuBar);
+        //toolBar
+        this.mainToolBar = new MainToolBar();
+        this.mainBorderPane.setBottom(this.mainToolBar);
+
+        this.getChildren().add(this.mainBorderPane);
+    }
+
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    //<editor-fold desc="getMainMenuBar" defaultstate="collapsed">
+    /**
+     * Returns the main menubar that contains menus for file handling (I/O), shutting down the application, settings and help menu entries
+     * @return main menubar
+     */
+    public MainMenuBar getMainMenuBar() {
+        return this.mainMenuBar;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="getMainCenterPane" defaultstate="collapsed">
+    /**
+     * Returns the main center pane that contains
+     * @return main center pane that is supposed to contain GUI elements of interest
+     */
+    public Pane getMainCenterPane() {
+        return this.mainCenterPane;
+    }
+    //</editor-fold>
+    //</editor-fold>
 }

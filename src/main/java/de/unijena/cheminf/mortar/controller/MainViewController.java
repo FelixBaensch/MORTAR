@@ -20,5 +20,53 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.gui.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.MainView;
+import de.unijena.cheminf.mortar.message.Message;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import java.io.File;
+import java.util.Objects;
+
+/**
+ * MainViewController
+ * controls  {@link de.unijena.cheminf.mortar.gui.MainView}.
+ *
+ * @author Felix Baensch
+ */
 public class MainViewController {
+
+    private Stage primaryStage;
+    private MainView mainView;
+    private String appDir;
+    private Scene scene;
+
+    public MainViewController(Stage aStage, MainView aMainView, String anAppDir){
+        //<editor-fold desc="checks" defaultstate="collapsed">
+        Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
+        Objects.requireNonNull(aMainView, "aMainView (instance of MainView) is null");
+        File tmpAppDirFile = new File(anAppDir);
+        if (!tmpAppDirFile.isDirectory() || !tmpAppDirFile.exists()) {
+            throw new IllegalArgumentException("The given application directory is neither no directory or does not exist");
+        }
+        //</editor-fold>
+        this.primaryStage = aStage;
+        this.mainView = aMainView;
+        this.appDir = anAppDir;
+
+        this.addListener();
+
+        //<editor-fold desc="show MainView inside of the primaryStage" defaultstate="collapsed">
+        this.scene = new Scene(this.mainView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
+        this.primaryStage.setTitle(Message.get("Title.text"));
+        this.primaryStage.setScene(this.scene);
+        this.primaryStage.show();
+        this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
+        this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
+        //</editor-fold>
+    }
+
+    private void addListener(){
+        //TODO: Implementation needed
+    }
 }

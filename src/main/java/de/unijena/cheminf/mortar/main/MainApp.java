@@ -20,12 +20,13 @@
 
 package de.unijena.cheminf.mortar.main;
 
-import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.controller.MainViewController;
+import de.unijena.cheminf.mortar.gui.MainView;
 import javafx.application.Application;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.stage.Stage;
+
+import java.io.File;
+import java.util.Locale;
 
 public class MainApp extends Application {
 
@@ -38,15 +39,37 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage aPrimaryStage) {
-        String javaVersion = System.getProperty("java.version");
-        String javafxVersion = System.getProperty("javafx.version");
-
-        Label tmpLabel = new Label(Message.get("Hello") + " " + javafxVersion + "\nRunning on Java " + javaVersion + ".");
-
-        Scene scene = new Scene(tmpLabel, 400, 200);
-
-        aPrimaryStage.setTitle("MORTAR");
-        aPrimaryStage.setScene(scene);
-        aPrimaryStage.show();
+        try{
+            //<editor-fold defaultstate="collapsed" desc="setting default locale">
+            Locale.setDefault(new Locale("en", "GB"));
+            System.out.println(Locale.getDefault().toString());
+            //</editor-fold>
+            //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
+            String tmpAppDir = "";
+            String tmpOS = System.getProperty("os.name").toUpperCase();
+            if(tmpOS.contains("WIN"))
+                tmpAppDir = System.getenv("AppData");
+            else if (tmpOS.contains("MAC"))
+                tmpAppDir = System.getenv("user.home");
+            else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
+                tmpAppDir = System.getenv("user.home");
+            else
+                throw new SecurityException();
+            File tmpAppDirFile = new File(tmpAppDir);
+            if(!tmpAppDirFile.exists() || !tmpAppDirFile.isDirectory())
+                throw new SecurityException();
+            if(tmpOS.contains("MAC"))
+                tmpAppDir += File.separator + "Library" + File.separator + "Application Support";
+            tmpAppDir += File.separator + "VENDOR_NAME" + File.separator + "APPLICATION_NAME"; //TODO: ApplicationConstants
+            tmpAppDirFile = new File(tmpAppDir);
+            if(!tmpAppDirFile.exists())
+                tmpAppDirFile.mkdirs();
+            //</editor-fold>
+            MainView tmpMainView = new MainView();
+            MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
+        } catch (Exception anException){
+            System.out.println(anException);
+            System.exit(-1);
+        }
     }
 }
