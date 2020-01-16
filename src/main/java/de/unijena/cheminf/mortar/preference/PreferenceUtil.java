@@ -18,33 +18,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui;
+package de.unijena.cheminf.mortar.preference;
+
+import java.util.logging.Logger;
 
 /**
- * GUI definitions
+ * Preference utilities.
  *
- * @author Felix Baensch
+ * @author Jonas Schaub
  */
-public final class GuiDefinitions {
-
+public final class PreferenceUtil {
+    //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
-     * Value for the GUI insets
+     * Logger of this class.
      */
-    public static final double GUI_INSETS_VALUE = 10.0;
+    private static final Logger LOGGER = Logger.getLogger(PreferenceUtil.class.getName());
+    //</editor-fold>
+    //
+    //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
-     * Value for the width of the main view
+     * Tests whether the given string would be allowed as name of a new preference object.
+     * Internally BasePreference.isValidName(String aName) is used.
+     *
+     * @param aName the string to test
+     * @return true if aName matches the defined pattern for preference names
      */
-    public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 400.0;
-    /**
-     * Value for the height of the main view
-     */
-    public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 400.0;
-
-    public static final double GUI_BUTTON_WIDTH_VALUE = 40.0;
-
-    public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
-
-    public static final double GUI_PROGRESSBAR_WIDTH_VALUE = 25.0;
-
-    public static final double GUI_PROGRESSBAR_HEIGHT_VALUE = 25.0;
+    public static boolean isValidName(String aName) {
+        return BasePreference.isValidName(aName);
+    }
+    //</editor-fold>
 }

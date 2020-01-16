@@ -18,33 +18,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui;
+package de.unijena.cheminf.mortar.preference;
 
 /**
- * GUI definitions
+ * Preference types for fast determination of a preference class without using reflection or 'instanceof'.<br>
+ * NOTE: All newly added enum constants must also be added in the PreferenceFactory.reinitializePreference() method.
  *
- * @author Felix Baensch
+ * @author Jonas Schaub
  */
-public final class GuiDefinitions {
+public enum PreferenceType {
+    /**
+     * Constant associated with class BooleanPreference.
+     */
+    BOOLEAN,
 
     /**
-     * Value for the GUI insets
+     * Constant associated with class RGBColorPreference.
      */
-    public static final double GUI_INSETS_VALUE = 10.0;
+    RGB_COLOR,
+
     /**
-     * Value for the width of the main view
+     * Constant associated with class SingleIntegerPreference.
      */
-    public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 400.0;
+    SINGLE_INTEGER,
+
     /**
-     * Value for the height of the main view
+     * Constant associated with class SingleNumberPreference.
      */
-    public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 400.0;
+    SINGLE_NUMBER,
 
-    public static final double GUI_BUTTON_WIDTH_VALUE = 40.0;
-
-    public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
-
-    public static final double GUI_PROGRESSBAR_WIDTH_VALUE = 25.0;
-
-    public static final double GUI_PROGRESSBAR_HEIGHT_VALUE = 25.0;
+    /**
+     * Constant associated with class SingleTermPreference.
+     */
+    SINGLE_TERM;
 }

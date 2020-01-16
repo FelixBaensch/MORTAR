@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'junit', name: 'junit', version: '4.13'
     implementation group: 'org.openscience.cdk', name: 'cdk-bundle', version: '2.3'
 }
 

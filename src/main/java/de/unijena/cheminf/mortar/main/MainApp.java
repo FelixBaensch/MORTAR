@@ -42,7 +42,7 @@ public class MainApp extends Application {
         try{
             //<editor-fold defaultstate="collapsed" desc="setting default locale">
             Locale.setDefault(new Locale("en", "GB"));
-            System.out.println(Locale.getDefault().toString());
+            System.out.println(Locale.getDefault().toString()); //TODO: Log this instead of printing
             //</editor-fold>
             //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
             String tmpAppDir = "";
@@ -65,9 +65,13 @@ public class MainApp extends Application {
             if(!tmpAppDirFile.exists())
                 tmpAppDirFile.mkdirs();
             //</editor-fold>
+            //TODO: Check Java version
+            //TODO: Check screen resolution?
+            //TODO: Configure logging environment and log application start
             MainView tmpMainView = new MainView();
             MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
         } catch (Exception anException){
+            //TODO: Log this instead of printing and give notification to the user (dialog)
             System.out.println(anException);
             System.exit(-1);
         }
