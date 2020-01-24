@@ -22,9 +22,13 @@ package de.unijena.cheminf.mortar.main;
 
 import de.unijena.cheminf.mortar.controller.MainViewController;
 import de.unijena.cheminf.mortar.gui.MainView;
+import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
+import javax.swing.JOptionPane;
 import java.io.File;
 import java.util.Locale;
 
@@ -42,34 +46,27 @@ public class MainApp extends Application {
         try{
             //<editor-fold defaultstate="collapsed" desc="setting default locale">
             Locale.setDefault(new Locale("en", "GB"));
-            System.out.println(Locale.getDefault().toString()); //TODO: Log this instead of printing
-            //</editor-fold>
-            //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
-            String tmpAppDir = "";
-            String tmpOS = System.getProperty("os.name").toUpperCase();
-            if(tmpOS.contains("WIN"))
-                tmpAppDir = System.getenv("AppData");
-            else if (tmpOS.contains("MAC"))
-                tmpAppDir = System.getenv("user.home");
-            else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
-                tmpAppDir = System.getenv("user.home");
-            else
-                throw new SecurityException();
-            File tmpAppDirFile = new File(tmpAppDir);
-            if(!tmpAppDirFile.exists() || !tmpAppDirFile.isDirectory())
-                throw new SecurityException();
-            if(tmpOS.contains("MAC"))
-                tmpAppDir += File.separator + "Library" + File.separator + "Application Support";
-            tmpAppDir += File.separator + "VENDOR_NAME" + File.separator + "APPLICATION_NAME"; //TODO: ApplicationConstants
-            tmpAppDirFile = new File(tmpAppDir);
-            if(!tmpAppDirFile.exists())
-                tmpAppDirFile.mkdirs();
+            System.out.println(Locale.getDefault().toString()); //TODO: Log this instead of printing (even though here it will be logged to console)
             //</editor-fold>
             //TODO: Check Java version
             //TODO: Check screen resolution?
-            //TODO: Configure logging environment and log application start
+            //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
+            boolean tmpWasLoggingInitializationSuccessfull = LogUtil.initializeLoggingEnvironment();
+            if (!tmpWasLoggingInitializationSuccessfull) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        Message.get("Error.LoggingInitialization"),
+                        Message.get("Error.LoggingInitialization.Title"),
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+            // </editor-fold>
+            //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
+            String tmpAppDir = FileUtil.getAppDirPath();
+            //</editor-fold>
             MainView tmpMainView = new MainView();
             MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
+            //TODO: Log session end
         } catch (Exception anException){
             //TODO: Log this instead of printing and give notification to the user (dialog)
             System.out.println(anException);

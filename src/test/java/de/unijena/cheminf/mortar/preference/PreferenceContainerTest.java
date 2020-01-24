@@ -50,7 +50,7 @@ public class PreferenceContainerTest {
      */
     @Test
     public void testPreferenceContainerBasics() throws Exception {
-        String tmpDir = FileUtil.getDataPath()
+        String tmpDir = FileUtil.getAppDirPath()
                 + File.separatorChar
                 + "Test"
                 + File.separatorChar;

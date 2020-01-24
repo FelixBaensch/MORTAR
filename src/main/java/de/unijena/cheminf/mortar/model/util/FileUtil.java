@@ -21,6 +21,9 @@
 package de.unijena.cheminf.mortar.model.util;
 
 import java.io.File;
+import java.time.DateTimeException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,7 +31,7 @@ import java.util.logging.Logger;
 /**
  * File utility
  *
- * @author Achim Zielesny, Jonas Schaub
+ * @author Achim Zielesny, Jonas Schaub, Felix Baensch
  */
 public class FileUtil {
     //<editor-fold defaultstate="collapsed" desc="Public static final class constants">
@@ -96,6 +99,33 @@ public class FileUtil {
     }
 
     /**
+     * Creates directory and all non-existent ancestor directories if necessary
+     *
+     * @param aDirectoryPath Full directory path to be created
+     * @return true: Directory already existed or was successfully created,
+     * false: Otherwise
+     */
+    public static boolean createDirectory(String aDirectoryPath) {
+        // <editor-fold defaultstate="collapsed" desc="Checks">
+        if (aDirectoryPath == null ||
+                aDirectoryPath.isEmpty()
+        ) {
+            return false;
+        }
+        // </editor-fold>
+        try {
+            File tmpDirectory = new File(aDirectoryPath);
+            if (!tmpDirectory.isDirectory()) {
+                return tmpDirectory.mkdirs();
+            }
+            return true;
+        } catch (Exception anException) {
+            FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            return false;
+        }
+    }
+
+    /**
      * Creates empty file
      *
      * @param aFilePathname Full file pathname
@@ -119,19 +149,87 @@ public class FileUtil {
         }
     }
 
+    //TODO: If we put the path in a static variable not to determine the OS etc. every time, would this create a bottle neck at parallelization?
     /**
-     * Returns data path
+     * Returns data path of the application (depending on OS). If the path does not exist yet, it will be created.
      *
      * @return Data path
+     * @throws SecurityException if the OS name is unknown, the AppData directory (Windows) or the user home directory
+     * path cannot be determined or data directory cannot be created
      */
-    public static String getDataPath() {
-        String tmpDataPath;
-        if (BasicDefinitions.LOCAL_USER_DATA_DIRECTORY_PATH != null) {
-            tmpDataPath = BasicDefinitions.LOCAL_USER_DATA_DIRECTORY_PATH + File.separatorChar + BasicDefinitions.MORTAR_DATA_DIRECTORY;
-        } else {
-            tmpDataPath = BasicDefinitions.USER_DIRECTORY_PATH + File.separatorChar + BasicDefinitions.MORTAR_DATA_DIRECTORY;
+    public static String getAppDirPath() throws SecurityException {
+        String tmpAppDir;
+        String tmpOS = System.getProperty("os.name").toUpperCase();
+        if (tmpOS.contains("WIN"))
+            tmpAppDir = System.getenv("AppData");
+        else if (tmpOS.contains("MAC"))
+            tmpAppDir = System.getenv("user.home");
+        else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
+            tmpAppDir = System.getenv("user.home");
+        else
+            throw new SecurityException("OS name " + tmpOS + " unknown.");
+        File tmpAppDirFile = new File(tmpAppDir);
+        if(!tmpAppDirFile.exists() || !tmpAppDirFile.isDirectory())
+            throw new SecurityException("AppData (Windows) or user home directory path " + tmpAppDir + " is either no directory or does not exist.");
+        if (tmpOS.contains("MAC"))
+            tmpAppDir += File.separator + "Library" + File.separator + "Application Support";
+        tmpAppDir += File.separator + BasicDefinitions.MORTAR_VENDOR + File.separator + BasicDefinitions.MORTAR_DATA_DIRECTORY;
+        tmpAppDirFile = new File(tmpAppDir);
+        boolean tmpSuccessful = true;
+        if(!tmpAppDirFile.exists())
+            tmpSuccessful = tmpAppDirFile.mkdirs();
+        if (!tmpSuccessful)
+            throw new SecurityException("Unable to create application data directory");
+        return tmpAppDir;
+    }
+
+    /**
+     * Returns a timestamp to add to a filename.
+     *
+     * @throws DateTimeException if the time cannot be determined or formatted
+     */
+    public static String getTimeStampFileNameExtension() throws DateTimeException {
+        LocalDateTime tmpDateTime = LocalDateTime.now();
+        String tmpDateTimeAddition = tmpDateTime.format(DateTimeFormatter.ofPattern(
+                BasicDefinitions.FILENAME_TIMESTAMP_FORMAT));
+        return tmpDateTimeAddition;
+    }
+
+    /**
+     * Checks whether a file with the given path already exists and adds a number to the given path to make it non-existing
+     * if it does.
+     *
+     * @param aFilePath file path to check
+     * @return the given file path either unchanged or with an added number to make it non-existing
+     * @throws IllegalArgumentException if the parameter is null, empty or does not represent a file but a directory; also
+     * if there are already more than [Integer.MAX-VALUE] files with that name existing
+     */
+    public static String getNonExistingFilePath(String aFilePath) throws IllegalArgumentException {
+        //<editor-fold desc="Checks">
+        if (Objects.isNull(aFilePath) || aFilePath.isEmpty())
+            throw new IllegalArgumentException("Given file path is null or empty.");
+        char tmpLastChar = aFilePath.charAt(aFilePath.length() - 1);
+        if (tmpLastChar == File.separatorChar)
+            throw new IllegalArgumentException("Given file path is a directory.");
+        //</editor-fold>
+        int tmpFilesInThisMinuteCounter = 1;
+        boolean tmpNumberAddedToFileName = false;
+        File tmpFile = new File(aFilePath);
+        if (tmpFile.exists()) {
+            tmpNumberAddedToFileName = true;
+            while (tmpFilesInThisMinuteCounter <= Integer.MAX_VALUE) {
+                tmpFile = new File(aFilePath + "(" + tmpFilesInThisMinuteCounter + ")");
+                if (!tmpFile.exists()) {
+                    break;
+                }
+                if (tmpFilesInThisMinuteCounter == Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("More than [Integer.MAX-VALUE] files with this name already exist.");
+                }
+                tmpFilesInThisMinuteCounter++;
+            }
         }
-        return tmpDataPath;
+        String tmpNonExistingFilePath = tmpFile.getPath();
+        return tmpNonExistingFilePath;
     }
     // </editor-fold>
 }

@@ -38,6 +38,11 @@ public final class BasicDefinitions {
      * Standard timestamp format
      */
     public static final String STANDARD_TIMESTAMP_FORMAT = "yyyy/MM/dd - HH:mm:ss";
+
+    /**
+     * Timestamp format for filename extensions
+     */
+    public static final String FILENAME_TIMESTAMP_FORMAT = "uuuu_MM_dd_HH_mm";
     //</editor-fold>
     //
     // <editor-fold defaultstate="collapsed" desc="Buffer">
@@ -48,20 +53,40 @@ public final class BasicDefinitions {
     public static final int BUFFER_SIZE = 65536;
     //</editor-fold>
     //
-    //<editor-fold defaultstate="collapsed" desc="System">
+    //<editor-fold defaultstate="collapsed" desc="System and directories">
+    //TODO: Change vendor name?
     /**
-     * Path to local data of user
+     * Vendor name of application to include in data directory path
      */
-    public static final String LOCAL_USER_DATA_DIRECTORY_PATH = System.getenv("APPDATA");
-
-    /**
-     * User directory
-     */
-    public static final String USER_DIRECTORY_PATH = System.getProperty("user.dir");
+    public static final String MORTAR_VENDOR = "UniJena";
 
     /**
      * Directory name for MORTAR data
      */
     public static final String MORTAR_DATA_DIRECTORY = "MortarData";
+
+    /**
+     * Directory name for storing log files
+     */
+    public static final String LOG_FILES_DIRECTORY = "Logs";
+
+    /**
+     * Name for Log files
+     */
+    public static final String LOG_FILE_NAME = "Mortar_Log";
+    //</editor-fold>
+    //
+    //<editor-fold desc="Session">
+    /**
+     * MORTAR session start log entry
+     */
+    public static final String MORTAR_SESSION_START_FORMAT = "MORTAR %s session start";
+    //</editor-fold>
+    //
+    //<editor-fold desc="Application version">
+    /**
+     * Version of application
+     */
+    public static final String MORTAR_VERSION = "0.0.1.0";
     //</editor-fold>
 }

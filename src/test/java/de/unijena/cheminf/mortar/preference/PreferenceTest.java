@@ -127,7 +127,7 @@ public class PreferenceTest {
         System.out.println(aPreference.getName());
         System.out.println(aPreference.toString());
 
-        String tmpDir = FileUtil.getDataPath() + File.separatorChar + "Test";
+        String tmpDir = FileUtil.getAppDirPath() + File.separatorChar + "Test";
         (new File(tmpDir)).mkdirs();
         File tmpPreferenceFile = new File(tmpDir + File.separatorChar + "preference.txt");
         PrintWriter tmpWriter = new PrintWriter(tmpPreferenceFile);
