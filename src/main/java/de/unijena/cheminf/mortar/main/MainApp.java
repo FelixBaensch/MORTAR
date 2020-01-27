@@ -23,14 +23,16 @@ package de.unijena.cheminf.mortar.main;
 import de.unijena.cheminf.mortar.controller.MainViewController;
 import de.unijena.cheminf.mortar.gui.MainView;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
 import javax.swing.JOptionPane;
-import java.io.File;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MainApp extends Application {
 
@@ -46,13 +48,14 @@ public class MainApp extends Application {
         try{
             //<editor-fold defaultstate="collapsed" desc="setting default locale">
             Locale.setDefault(new Locale("en", "GB"));
-            System.out.println(Locale.getDefault().toString()); //TODO: Log this instead of printing (even though here it will be logged to console)
+            Logger.getLogger(Main.class.getName()).info(Locale.getDefault().toString());
             //</editor-fold>
             //TODO: Check Java version
             //TODO: Check screen resolution?
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
             boolean tmpWasLoggingInitializationSuccessfull = LogUtil.initializeLoggingEnvironment();
             if (!tmpWasLoggingInitializationSuccessfull) {
+                //TODO: JavaFX alternative to JOptionPane?
                 JOptionPane.showMessageDialog(
                         null,
                         Message.get("Error.LoggingInitialization"),
@@ -60,16 +63,19 @@ public class MainApp extends Application {
                         JOptionPane.INFORMATION_MESSAGE
                 );
             }
+            //Start new logging session
+            Logger.getLogger(Main.class.getName()).info(String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
             // </editor-fold>
             //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
             String tmpAppDir = FileUtil.getAppDirPath();
             //</editor-fold>
             MainView tmpMainView = new MainView();
             MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
-            //TODO: Log session end
+            
+            Logger.getLogger(Main.class.getName()).info(BasicDefinitions.MORTAR_SESSION_END);
         } catch (Exception anException){
-            //TODO: Log this instead of printing and give notification to the user (dialog)
-            System.out.println(anException);
+            //TODO: Give notification to the user (dialog)
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             System.exit(-1);
         }
     }

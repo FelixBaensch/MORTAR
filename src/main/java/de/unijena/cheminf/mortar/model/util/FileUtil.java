@@ -200,11 +200,12 @@ public class FileUtil {
      * if it does.
      *
      * @param aFilePath file path to check
+     * @param aFileExtension the file name extension, may be empty or null; must start with '.', so e.g. ".txt"
      * @return the given file path either unchanged or with an added number to make it non-existing
-     * @throws IllegalArgumentException if the parameter is null, empty or does not represent a file but a directory; also
+     * @throws IllegalArgumentException if aFilePath parameter is null, empty or does not represent a file but a directory; also
      * if there are already more than [Integer.MAX-VALUE] files with that name existing
      */
-    public static String getNonExistingFilePath(String aFilePath) throws IllegalArgumentException {
+    public static String getNonExistingFilePath(String aFilePath, String aFileExtension) throws IllegalArgumentException {
         //<editor-fold desc="Checks">
         if (Objects.isNull(aFilePath) || aFilePath.isEmpty())
             throw new IllegalArgumentException("Given file path is null or empty.");
@@ -212,13 +213,16 @@ public class FileUtil {
         if (tmpLastChar == File.separatorChar)
             throw new IllegalArgumentException("Given file path is a directory.");
         //</editor-fold>
+        String tmpFilePath = aFilePath;
+        String tmpFileExtension = aFileExtension;
+        if (Objects.isNull(tmpFileExtension)) {
+            tmpFileExtension = "";
+        }
         int tmpFilesInThisMinuteCounter = 1;
-        boolean tmpNumberAddedToFileName = false;
-        File tmpFile = new File(aFilePath);
+        File tmpFile = new File(tmpFilePath+ tmpFileExtension);
         if (tmpFile.exists()) {
-            tmpNumberAddedToFileName = true;
             while (tmpFilesInThisMinuteCounter <= Integer.MAX_VALUE) {
-                tmpFile = new File(aFilePath + "(" + tmpFilesInThisMinuteCounter + ")");
+                tmpFile = new File(tmpFilePath + "(" + tmpFilesInThisMinuteCounter + ")" + tmpFileExtension);
                 if (!tmpFile.exists()) {
                     break;
                 }
@@ -227,9 +231,11 @@ public class FileUtil {
                 }
                 tmpFilesInThisMinuteCounter++;
             }
+            String tmpNonExistingFilePath = tmpFile.getPath();
+            return tmpNonExistingFilePath;
+        } else {
+            return tmpFilePath + tmpFileExtension;
         }
-        String tmpNonExistingFilePath = tmpFile.getPath();
-        return tmpNonExistingFilePath;
     }
     // </editor-fold>
 }

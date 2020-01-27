@@ -39,6 +39,7 @@ public class Message {
      * Locale default
      */
     private static final Locale LOCALE_DEFAULT = Locale.getDefault();
+    //TODO: getBundle() can throw an exception
     /**
      * Resource bundle
      */
@@ -62,6 +63,7 @@ public class Message {
      */
     public static String get(String aKey){
         try{
+            //TODO: A NullPointerException can also be thrown here!
             return RESOURCE_BUNDLE.getString(aKey).trim();
         } catch (MissingResourceException anException){
             //TODO: Log exception

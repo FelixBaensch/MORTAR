@@ -74,6 +74,11 @@ public final class BasicDefinitions {
      * Name for Log files
      */
     public static final String LOG_FILE_NAME = "Mortar_Log";
+
+    /**
+     * Name extension (denoting the file type) of log files
+     */
+    public static final String LOG_FILE_NAME_EXTENSION = ".txt";
     //</editor-fold>
     //
     //<editor-fold desc="Session">
@@ -81,6 +86,11 @@ public final class BasicDefinitions {
      * MORTAR session start log entry
      */
     public static final String MORTAR_SESSION_START_FORMAT = "MORTAR %s session start";
+
+    /**
+     * MORTAR session end log entry
+     */
+    public static final String MORTAR_SESSION_END = "MORTAR session end";
     //</editor-fold>
     //
     //<editor-fold desc="Application version">

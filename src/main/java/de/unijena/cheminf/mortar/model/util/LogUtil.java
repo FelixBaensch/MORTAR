@@ -62,7 +62,7 @@ public final class LogUtil {
     private static File logFile;
     //</editor-fold>
     //
-    // <editor-fold defaultstate="collapsed" desc="Public static synchronized methods">
+    //<editor-fold defaultstate="collapsed" desc="Public static synchronized methods">
     /**
      * Configures the root logger called by all other loggers in the application not to print to console but to write
      * all logs to the log file specified in preferences. Also logs session start and sets as
@@ -85,40 +85,35 @@ public final class LogUtil {
             }
             //Messages of levels INFO, WARNING and SEVERE will be logged only
             LogUtil.ROOT_LOGGER.setLevel(Level.INFO);
-            String tmpLogFilePathName = FileUtil.getAppDirPath() + File.separator
+            String tmpLoggingDirectoryPathName = FileUtil.getAppDirPath() + File.separator
                     + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator;
-            File tmpLogFile = new File(tmpLogFilePathName);
+            File tmpLoggingDirectoryFile = new File(tmpLoggingDirectoryPathName);
             //If the directories do not exist already they are created
-            if (!tmpLogFile.exists()) {
-                FileUtil.createDirectory(tmpLogFile.getAbsolutePath());
+            if (!tmpLoggingDirectoryFile.exists()) {
+                FileUtil.createDirectory(tmpLoggingDirectoryFile.getAbsolutePath());
             }
-            tmpLogFilePathName += BasicDefinitions.LOG_FILE_NAME
+            String tmpLogFilePathName = tmpLoggingDirectoryPathName + BasicDefinitions.LOG_FILE_NAME
                     + "_"
                     + FileUtil.getTimeStampFileNameExtension();
-            tmpLogFilePathName = FileUtil.getNonExistingFilePath(tmpLogFilePathName);
-            tmpLogFilePathName += ".txt";
-            tmpLogFile = new File(tmpLogFilePathName);
+            String tmpFinalLogFilePathName = FileUtil.getNonExistingFilePath(tmpLogFilePathName, BasicDefinitions.LOG_FILE_NAME_EXTENSION);
+            File tmpLogFile = new File(tmpFinalLogFilePathName);
             boolean tmpFileWasCreated = FileUtil.createEmptyFile(tmpLogFile.getAbsolutePath());
             if (!tmpFileWasCreated) {
-                throw new Exception("Log file " + tmpLogFilePathName + " could not be created.");
+                throw new Exception("Log file " + tmpFinalLogFilePathName + " could not be created.");
             }
             if (!tmpLogFile.isFile() || !tmpLogFile.canWrite()) {
-                throw new Exception("The designated log file " + tmpLogFilePathName + " is not a file or can not be written to.");
+                throw new Exception("The designated log file " + tmpFinalLogFilePathName + " is not a file or can not be written to.");
             }
             LogUtil.logFile = tmpLogFile;
-            LogUtil.fileHandler = new FileHandler(tmpLogFilePathName, true);
+            LogUtil.fileHandler = new FileHandler(tmpFinalLogFilePathName, true);
             LogUtil.fileHandler.setFormatter(new SimpleFormatter());
             LogUtil.ROOT_LOGGER.addHandler(LogUtil.fileHandler);
-
-            //Start new logging session
-            LogUtil.ROOT_LOGGER.info(String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
-
-            //TODO: This will also come into affect if a key is missing in the language bundle!
             Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                 @Override
                 public void uncaughtException(Thread aThread, Throwable aThrowable) {
                     Logger.getLogger(aThread.getClass().getName()).log(Level.SEVERE, aThrowable.toString(), aThrowable);
                     if (aThread.getName().equals("main")) {
+                        //TODO: JavaFX alternative to JOptionPane?
                         JOptionPane.showMessageDialog(
                                 null,
                                 Message.get("Error.UnknownError"),
@@ -156,7 +151,11 @@ public final class LogUtil {
             LogUtil.fileHandler.close();
             boolean tmpFileWasDeleted = FileUtil.deleteSingleFile(LogUtil.logFile.getAbsolutePath());
             if (tmpFileWasDeleted) {
-                return LogUtil.initializeLoggingEnvironment();
+                boolean tmpWasLogEnvInitialized = LogUtil.initializeLoggingEnvironment();
+                if (tmpWasLogEnvInitialized) {
+                    LogUtil.LOGGER.info("Log file was reset.");
+                }
+                return true;
             } else {
                 return false;
             }
