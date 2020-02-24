@@ -43,7 +43,7 @@ public class MainMenuBar extends MenuBar {
     private MenuItem loadMenuItem;
     //</editor-fold>
     //
-    //<editor-fold desc="ctor" defaultstate="collapsed">
+    //<editor-fold desc="constructor" defaultstate="collapsed">
     /**
      * Constructor
      * It initialises the MainMenuBar's components, adds them to the MainMenuBar.

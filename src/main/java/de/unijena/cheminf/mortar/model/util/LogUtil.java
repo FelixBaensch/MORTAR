@@ -20,7 +20,9 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.gui.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import javafx.scene.control.Alert;
 
 import javax.swing.JOptionPane;
 import java.io.File;
@@ -113,13 +115,10 @@ public final class LogUtil {
                 public void uncaughtException(Thread aThread, Throwable aThrowable) {
                     Logger.getLogger(aThread.getClass().getName()).log(Level.SEVERE, aThrowable.toString(), aThrowable);
                     if (aThread.getName().equals("main")) {
-                        //TODO: JavaFX alternative to JOptionPane?
-                        JOptionPane.showMessageDialog(
-                                null,
-                                Message.get("Error.UnknownError"),
+                        GuiUtil.GuiMessageAlert(Alert.AlertType.ERROR,
                                 Message.get("Error.Notification.Title"),
-                                JOptionPane.ERROR_MESSAGE
-                        );
+                                null,
+                                Message.get("Error.UnknownError"));
                         System.exit(-1);
                     }
                 }

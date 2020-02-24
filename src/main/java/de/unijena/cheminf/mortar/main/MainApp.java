@@ -21,15 +21,15 @@
 package de.unijena.cheminf.mortar.main;
 
 import de.unijena.cheminf.mortar.controller.MainViewController;
+import de.unijena.cheminf.mortar.gui.GuiUtil;
 import de.unijena.cheminf.mortar.gui.MainView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Application;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
-
-import javax.swing.JOptionPane;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,15 +53,11 @@ public class MainApp extends Application {
             //TODO: Check Java version
             //TODO: Check screen resolution?
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
-            boolean tmpWasLoggingInitializationSuccessfull = LogUtil.initializeLoggingEnvironment();
-            if (!tmpWasLoggingInitializationSuccessfull) {
-                //TODO: JavaFX alternative to JOptionPane?
-                JOptionPane.showMessageDialog(
+            boolean tmpWasLoggingInitializationSuccessful = LogUtil.initializeLoggingEnvironment();
+            if (tmpWasLoggingInitializationSuccessful) {
+                GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Error.LoggingInitialization.Title"),
                         null,
-                        Message.get("Error.LoggingInitialization"),
-                        Message.get("Error.LoggingInitialization.Title"),
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+                        Message.get("Error.LoggingInitialization"));
             }
             //Start new logging session
             Logger.getLogger(Main.class.getName()).info(String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
@@ -74,7 +70,7 @@ public class MainApp extends Application {
             
             Logger.getLogger(Main.class.getName()).info(BasicDefinitions.MORTAR_SESSION_END);
         } catch (Exception anException){
-            //TODO: Give notification to the user (dialog)
+            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"), anException.getMessage(), anException);
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             System.exit(-1);
         }

@@ -45,6 +45,7 @@ public class MainViewController {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
         Objects.requireNonNull(aMainView, "aMainView (instance of MainView) is null");
+        Objects.requireNonNull(aMainView, "anAppDir (instance of String) is null");
         File tmpAppDirFile = new File(anAppDir);
         if (!tmpAppDirFile.isDirectory() || !tmpAppDirFile.exists()) {
             throw new IllegalArgumentException("The given application directory is neither no directory or does not exist");

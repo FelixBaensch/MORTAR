@@ -75,9 +75,7 @@ public class FileUtil {
      * then false is returned)
      * @return true: Operation was successful, false: Operation failed
      */
-    public static boolean deleteSingleFile(
-            String aFilePathname
-    ) {
+    public static boolean deleteSingleFile(String aFilePathname) {
         // <editor-fold defaultstate="collapsed" desc="Checks">
         if (aFilePathname == null ||
                 aFilePathname.isEmpty()

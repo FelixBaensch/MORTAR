@@ -19,9 +19,14 @@
  */
 package de.unijena.cheminf.mortar.message;
 
+import de.unijena.cheminf.mortar.gui.GuiUtil;
+import de.unijena.cheminf.mortar.main.Main;
+
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Message
@@ -30,6 +35,13 @@ import java.util.ResourceBundle;
  */
 public class Message {
 
+    //<editor-fold defaultstate="collapsed" desc="Public static final class constants">
+    /**
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(Message.class.getName());
+    //</editor-fold>
+    //
     //<editor-fold desc="Private class variables" defaultstate="collapsed">
     /**
      * Resource bundle name
@@ -63,10 +75,9 @@ public class Message {
      */
     public static String get(String aKey){
         try{
-            //TODO: A NullPointerException can also be thrown here!
             return RESOURCE_BUNDLE.getString(aKey).trim();
-        } catch (MissingResourceException anException){
-            //TODO: Log exception
+        } catch (MissingResourceException | NullPointerException anException){
+            Message.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return "Key '" + aKey + "' not found.";
         }
     }
