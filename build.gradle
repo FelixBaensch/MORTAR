@@ -1,3 +1,5 @@
+import java.util.regex.Matcher
+
 plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.8'
@@ -24,9 +26,15 @@ javafx {
 
 mainClassName = 'de.unijena.cheminf.mortar.main.Main'
 
+/*
+* Merges the exact enumeration of all library jars into one single path giving all the files and subfolders in 'lib'.
+* This is necessary because lines that are too long cause errors in batch files.
+* The unix script still has to be tested!
+*/
 startScripts {
     doLast {
         windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
+        unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
     }
 }
 

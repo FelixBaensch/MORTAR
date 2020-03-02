@@ -54,7 +54,7 @@ public class MainApp extends Application {
             //TODO: Check screen resolution?
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
             boolean tmpWasLoggingInitializationSuccessful = LogUtil.initializeLoggingEnvironment();
-            if (tmpWasLoggingInitializationSuccessful) {
+            if (!tmpWasLoggingInitializationSuccessful) {
                 GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Error.LoggingInitialization.Title"),
                         null,
                         Message.get("Error.LoggingInitialization"));
