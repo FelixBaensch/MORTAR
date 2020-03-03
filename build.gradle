@@ -10,6 +10,9 @@ version '0.1'
 
 sourceCompatibility = 1.11
 
+compileJava.options.fork = true
+compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.5_10' +  File.separator + 'bin' + File.separator + 'javac'
+
 repositories {
     mavenCentral()
 }
@@ -35,6 +38,8 @@ startScripts {
     doLast {
         windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
         unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
+        windowsScript.text = windowsScript.text.replace("set JAVA_HOME=%JAVA_HOME:\"=%",
+                "set JAVA_HOME=%APP_HOME%\\jdk-11.0.5_10\\")
     }
 }
 
@@ -59,4 +64,12 @@ task fatJar(type: Jar) {
 
 artifacts {
     archives fatJar
+}
+
+distributions {
+    main {
+        contents {
+            from 'AdoptOpenJDK'
+        }
+    }
 }

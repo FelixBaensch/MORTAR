@@ -39,3 +39,6 @@ gradle-app.setting
 
 # Cache of project
 .gradletasknamecache
+
+# JDK added for distribution
+/AdoptOpenJDK
