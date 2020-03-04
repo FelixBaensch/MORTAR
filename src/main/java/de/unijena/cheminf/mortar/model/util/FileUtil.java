@@ -185,6 +185,7 @@ public class FileUtil {
      * Returns a timestamp to add to a filename.
      *
      * @throws DateTimeException if the time cannot be determined or formatted
+     * @return timestamp filename extension
      */
     public static String getTimeStampFileNameExtension() throws DateTimeException {
         LocalDateTime tmpDateTime = LocalDateTime.now();

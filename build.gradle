@@ -10,6 +10,14 @@ version '0.1'
 
 sourceCompatibility = 1.11
 
+//Creates javadoc and sources jars
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+//The supplied Adopt Open JDK is used for compilation and running
+//TODO: Omit?
 compileJava.options.fork = true
 compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.5_10' +  File.separator + 'bin' + File.separator + 'javac'
 
@@ -43,12 +51,14 @@ startScripts {
     }
 }
 
+//Needed to make the created jar archives executable
 jar {
     manifest {
         attributes 'Main-Class': mainClassName
     }
 }
 
+//Creates a jar archive that includes all dependencies of the project, i.e. that  MORTAR can be started by executing this jar
 task fatJar(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'MORTAR Fat Jar File',
@@ -62,10 +72,12 @@ task fatJar(type: Jar) {
     with jar
 }
 
+//Archives artifacts executed with build
 artifacts {
     archives fatJar
 }
 
+//Includes the Adopt Open JDK folder in the project's root directory in the created archives for distribution
 distributions {
     main {
         contents {

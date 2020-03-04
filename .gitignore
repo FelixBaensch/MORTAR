@@ -42,3 +42,4 @@ gradle-app.setting
 
 # JDK added for distribution
 /AdoptOpenJDK
+AdoptOpenJDK.zip
