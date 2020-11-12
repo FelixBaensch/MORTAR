@@ -46,12 +46,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws IllegalArgumentException {
+    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
         return null;
     }
 
     @Override
-    public boolean hasFragments(IAtomContainer aMolecule) throws IllegalArgumentException {
+    public boolean hasFragments(IAtomContainer aMolecule, List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
         return false;
     }
 
@@ -71,7 +71,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public void applyPreprocessing(IAtomContainer aMolecule) throws IllegalArgumentException {
+    public void applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
 
     }
 }

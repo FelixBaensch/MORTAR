@@ -53,7 +53,7 @@ public interface IMoleculeFragmenter {
      * @return
      * @throws IllegalArgumentException
      */
-    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws IllegalArgumentException;
+    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Returns true if the given molecule has e.g. functional groups or sugar moieties that are detected by the respective
@@ -63,7 +63,7 @@ public interface IMoleculeFragmenter {
      * @return
      * @throws IllegalArgumentException
      */
-    public boolean hasFragments(IAtomContainer aMolecule) throws IllegalArgumentException;
+    public boolean hasFragments(IAtomContainer aMolecule, List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Returns true if the given molecule cannot be fragmented by the respective algorithm, even after preprocessing.
@@ -100,6 +100,6 @@ public interface IMoleculeFragmenter {
      * @param aMolecule
      * @throws IllegalArgumentException
      */
-    public void applyPreprocessing(IAtomContainer aMolecule) throws IllegalArgumentException;
+    public void applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
     //</editor-fold>
 }
