@@ -22,17 +22,18 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - Copy EFGF and EFGFUtility in the respective package and implement the IMoleculeFragmenter methods.
+ * - implement the IMoleculeFragmenter methods.
  */
 
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
 
 import java.util.List;
 
 /**
  * TODO
  */
-public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter {
+public class ErtlFunctionalGroupsFinderFragmenter extends ErtlFunctionalGroupsFinder implements IMoleculeFragmenter {
     /**
      * TODO
      */

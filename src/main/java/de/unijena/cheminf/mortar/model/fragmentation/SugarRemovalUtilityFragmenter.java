@@ -22,9 +22,10 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - Copy SRU in the respective package and implement the IMoleculeFragmenter methods.
+ * - implement the IMoleculeFragmenter methods.
  */
 
+import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.List;
 /**
  * TODO
  */
-public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
+public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implements IMoleculeFragmenter {
     /**
      * TODO
      */
