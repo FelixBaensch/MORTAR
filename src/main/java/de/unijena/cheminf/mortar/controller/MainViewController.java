@@ -23,8 +23,14 @@ package de.unijena.cheminf.mortar.controller;
 import de.unijena.cheminf.mortar.gui.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.MainView;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.io.Importer;
+import javafx.application.Platform;
+import javafx.event.EventType;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
+
 import java.io.File;
 import java.util.Objects;
 
@@ -40,6 +46,7 @@ public class MainViewController {
     private MainView mainView;
     private String appDir;
     private Scene scene;
+    private IAtomContainerSet atomContainerSet;
 
     public MainViewController(Stage aStage, MainView aMainView, String anAppDir){
         //<editor-fold desc="checks" defaultstate="collapsed">
@@ -55,8 +62,6 @@ public class MainViewController {
         this.mainView = aMainView;
         this.appDir = anAppDir;
 
-        this.addListener();
-
         //<editor-fold desc="show MainView inside of the primaryStage" defaultstate="collapsed">
         this.scene = new Scene(this.mainView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setTitle(Message.get("Title.text"));
@@ -65,9 +70,38 @@ public class MainViewController {
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
+
+        this.addListener();
     }
 
     private void addListener(){
-        //TODO: Implementation needed
+        this.mainView.getMainMenuBar().getExitMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.closeApplication(0));
+        this.mainView.getMainMenuBar().getLoadMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.loadMoleculeFile(this.primaryStage));
+        //TODO: More implementation needed
+    }
+
+    /**
+     * Closes application
+     */
+    private void closeApplication(int aStatus) {
+        Platform.exit();
+        System.exit(aStatus);
+    }
+    //
+    private void loadMoleculeFile(Stage aParentStage){
+        Importer tmpImporter = new Importer();
+        this.atomContainerSet = new AtomContainerSet();
+        this.atomContainerSet = tmpImporter.Import(aParentStage);
+        if(this.atomContainerSet == null || this.atomContainerSet.isEmpty())
+            return;
+        this.OpenMoleculesTab();
+    }
+
+    private void OpenMoleculesTab(){
+
     }
 }

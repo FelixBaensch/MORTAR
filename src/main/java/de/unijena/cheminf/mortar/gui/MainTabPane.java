@@ -20,35 +20,15 @@
 
 package de.unijena.cheminf.mortar.gui;
 
-/**
- * GUI definitions
- *
- * @author Felix Baensch
- */
-public final class GuiDefinitions {
+import javafx.scene.control.TabPane;
 
-    /**
-     * Value for the GUI insets
-     */
-    public static final double GUI_INSETS_VALUE = 10.0;
-    /**
-     * Value for the width of the main view
-     */
-    public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 400.0;
-    /**
-     * Value for the height of the main view
-     */
-    public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 400.0;
+public class MainTabPane extends TabPane{
 
-    public static final double GUI_BUTTON_WIDTH_VALUE = 40.0;
 
-    public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
-
-    public static final double GUI_PROGRESSBAR_WIDTH_VALUE = 25.0;
-
-    public static final double GUI_PROGRESSBAR_HEIGHT_VALUE = 25.0;
-    /**
-     *  Selection column width
-     */
-    public static final double GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH = 40.0;
+    public MainTabPane(){
+        super();
+        //TODO
+        MoleculesTab tmpMoleculesTab = new MoleculesTab();
+        this.getTabs().add(tmpMoleculesTab);
+    }
 }

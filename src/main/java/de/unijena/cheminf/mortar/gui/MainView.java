@@ -35,7 +35,7 @@ public class MainView extends AnchorPane {
     private BorderPane mainBorderPane;
     private Pane mainCenterPane;
     private MainMenuBar mainMenuBar;
-    private MainToolBar mainToolBar;
+    private StatusBar statusBar;
 
     //</editor-fold>
 
@@ -58,16 +58,17 @@ public class MainView extends AnchorPane {
         //mainCenterPane
         this.mainCenterPane = new Pane();
         this.mainCenterPane.setStyle("-fx-background-color: LIGHTGREY");
-        this.mainCenterPane.getChildren().add(new Label("mainCenterPane")); //TODO: Remove this line (it is just for debugging)
+
+        MainTabPane tmpMainTabPane = new MainTabPane(); //TODO: Remove this line (it is just for debugging)
+        this.mainCenterPane.getChildren().add(tmpMainTabPane); //TODO: Remove this line (it is just for debugging)
 //        BorderPane.setMargin(this.mainCenterPane, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         this.mainBorderPane.setCenter(this.mainCenterPane);
         //menuBar
         this.mainMenuBar = new MainMenuBar();
         this.mainBorderPane.setTop(this.mainMenuBar);
-        //toolBar
-        this.mainToolBar = new MainToolBar();
-        this.mainBorderPane.setBottom(this.mainToolBar);
-
+        //statusBar
+        this.statusBar = new StatusBar();
+        this.mainBorderPane.setBottom(this.statusBar);
         this.getChildren().add(this.mainBorderPane);
     }
 
@@ -89,6 +90,16 @@ public class MainView extends AnchorPane {
      */
     public Pane getMainCenterPane() {
         return this.mainCenterPane;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="getMainMenuBar" defaultstate="collapsed">
+    /**
+     * Returns the status bar
+     * @return statusBar
+     */
+    public StatusBar getStatusBar() {
+        return this.statusBar;
     }
     //</editor-fold>
     //</editor-fold>

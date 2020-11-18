@@ -27,10 +27,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -62,7 +61,7 @@ public class GuiUtil {
         tmpAlert.setContentText(aContentText);
         tmpAlert.showAndWait();
     }
-
+    //
     /**
      * Creates and shows conformation type alert and returns the button selected by user as ButtonType.
      * Two buttons are possible - ButtonType.OK and ButtonType.CANCEL.
@@ -79,9 +78,10 @@ public class GuiUtil {
         tmpAlert.setContentText(aContentText);
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
-
+    //
     /**
-     * Creates and shows an alert explicit for exceptions, which contains the stack trace of the given exception in an expandable pane.
+     * Creates and shows an alert explicit for exceptions, which contains the stack trace of the given exception in
+     * an expandable pane.
      *
      * @param aTitle Title of the exception alert
      * @param aHeaderText Header of the exception alert
@@ -89,32 +89,41 @@ public class GuiUtil {
      * @param anException Exception that was thrown
      */
     public static void GuiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException){
-        //ToDo: What happens if anException is null?
-        Alert tmpAlert = new Alert(Alert.AlertType.ERROR);
-        tmpAlert.setTitle(aTitle);
-        tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.setContentText(aContentText);
-        //Create expandable exception info
-        StringWriter tmpStringWriter = new StringWriter();
-        PrintWriter tmpPrintWriter = new PrintWriter(tmpStringWriter);
-        anException.printStackTrace(tmpPrintWriter);
-        String tmpExceptionString = tmpStringWriter.toString();
-        Label tmpLabel = new Label(Message.get("Error.ExceptionAlert.Label"));
-        TextArea tmpExceptionTextArea = new TextArea(tmpExceptionString);
-        tmpExceptionTextArea.setEditable(false);
-        tmpExceptionTextArea.setWrapText(true);
-        tmpExceptionTextArea.setMaxWidth(Double.MAX_VALUE);
-        tmpExceptionTextArea.setMaxHeight(Double.MAX_VALUE);
-        GridPane.setVgrow(tmpExceptionTextArea, Priority.ALWAYS);
-        GridPane.setHgrow(tmpExceptionTextArea, Priority.ALWAYS);
-        GridPane tmpExceptionGridPane = new GridPane();
-        tmpExceptionGridPane.setMaxWidth(Double.MAX_VALUE);
-        tmpExceptionGridPane.add(tmpLabel, 0, 0);
-        tmpExceptionGridPane.add(tmpExceptionTextArea, 0, 1);
-        //Add expandable exception info to the dialog/alert pane
-        tmpAlert.getDialogPane().setExpandableContent(tmpExceptionGridPane);
-        //Show and wait exception alert
-        tmpAlert.showAndWait();
+        //ToDo: What happens if anException is null? GuiMessageAlert!
+        if(anException == null){
+
+            return;
+        }
+        try{
+            Alert tmpAlert = new Alert(Alert.AlertType.ERROR);
+            tmpAlert.setTitle(aTitle);
+            tmpAlert.setHeaderText(aHeaderText);
+            tmpAlert.setContentText(aContentText);
+            //Create expandable exception info
+            StringWriter tmpStringWriter = new StringWriter();
+            PrintWriter tmpPrintWriter = new PrintWriter(tmpStringWriter);
+            anException.printStackTrace(tmpPrintWriter);
+            String tmpExceptionString = tmpStringWriter.toString();
+            Label tmpLabel = new Label(Message.get("Error.ExceptionAlert.Label"));
+            TextArea tmpExceptionTextArea = new TextArea(tmpExceptionString);
+            tmpExceptionTextArea.setEditable(false);
+            tmpExceptionTextArea.setWrapText(true);
+            tmpExceptionTextArea.setMaxWidth(Double.MAX_VALUE);
+            tmpExceptionTextArea.setMaxHeight(Double.MAX_VALUE);
+            GridPane.setVgrow(tmpExceptionTextArea, Priority.ALWAYS);
+            GridPane.setHgrow(tmpExceptionTextArea, Priority.ALWAYS);
+            GridPane tmpExceptionGridPane = new GridPane();
+            tmpExceptionGridPane.setMaxWidth(Double.MAX_VALUE);
+            tmpExceptionGridPane.add(tmpLabel, 0, 0);
+            tmpExceptionGridPane.add(tmpExceptionTextArea, 0, 1);
+            //Add expandable exception info to the dialog/alert pane
+            tmpAlert.getDialogPane().setExpandableContent(tmpExceptionGridPane);
+            //Show and wait exception alert
+            tmpAlert.showAndWait();
+        }catch(Exception aNewThrownException){
+            GuiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), aNewThrownException.toString());
+            LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
+        }
     }
     //</editor-fold>
 }

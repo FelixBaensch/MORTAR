@@ -148,6 +148,7 @@ public class FileUtil {
     }
 
     //TODO: If we put the path in a static variable not to determine the OS etc. every time, would this create a bottle neck at parallelization?
+    // "AppDirPath" should be set initially once (maybe as a preference), since it does not change during the application and therefore does not have to be queried several times using this method
     /**
      * Returns data path of the application (depending on OS). If the path does not exist yet, it will be created.
      *
