@@ -20,26 +20,26 @@
 
 package de.unijena.cheminf.mortar.gui;
 
+import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.util.MoleculeTableViewWrapper;
+import de.unijena.cheminf.mortar.model.data.DataModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 
-import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
-
 public class MoleculesTab extends Tab {
 
     private TableView tableView;
-    private TableColumn<MoleculeTableViewWrapper, Boolean> selectionColumn;
-    private TableColumn<MoleculeTableViewWrapper, String> nameColumn;
-    private TableColumn<MoleculeTableViewWrapper, Image> structureColumn;
+    private TableColumn<DataModel, Boolean> selectionColumn;
+    private TableColumn<DataModel, String> nameColumn;
+    private TableColumn<DataModel, Image> structureColumn;
 
     public MoleculesTab(){
         super(Message.get("MainTabPane.moleculesTab.title"));
         this.setClosable(false);
         this.tableView = new TableView();
+        this.tableView.setEditable(true);
         //selectionColumn
         this.selectionColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.selectionColumn.header"));
         this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
@@ -50,17 +50,15 @@ public class MoleculesTab extends Tab {
         this.selectionColumn.setSortable(false);
         //nameColumn
         this.nameColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.nameColumn.header"));
-        this.nameColumn.setMinWidth(150);
-        this.nameColumn.setPrefWidth(USE_COMPUTED_SIZE);
-        this.nameColumn.setMaxWidth(250);
+//        this.nameColumn.setMinWidth(150);
+//        this.nameColumn.prefWidthProperty().bind( );
+//        this.nameColumn.setMaxWidth(250);
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(false);
         //structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.structureColumn.header"));
-        this.structureColumn.setMinWidth(100);
-        this.structureColumn.setPrefWidth(USE_COMPUTED_SIZE);
-        this.structureColumn.setMaxWidth(5000);
+//        this.structureColumn.prefWidthProperty().bind(this.tableView.widthProperty().divide(1.5));
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
         this.structureColumn.setSortable(false);
@@ -69,5 +67,16 @@ public class MoleculesTab extends Tab {
         this.setContent(this.tableView);
     }
 
-    
+    public TableView getTableView(){
+        return this.tableView;
+    }
+    public TableColumn getSelectionColumn(){
+        return this.selectionColumn;
+    }
+    public TableColumn getNameColumn(){
+        return this.nameColumn;
+    }
+    public TableColumn getStructureColumn() {
+        return structureColumn;
+    }
 }

@@ -27,8 +27,8 @@ public class MainTabPane extends TabPane{
 
     public MainTabPane(){
         super();
+        this.setStyle("-fx-background-color: Red");
         //TODO
-        MoleculesTab tmpMoleculesTab = new MoleculesTab();
-        this.getTabs().add(tmpMoleculesTab);
     }
+
 }

@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.gui;
 
+import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
@@ -49,6 +50,7 @@ public class StatusBar extends FlowPane {
      */
     public StatusBar(){
         super();
+        this.setStyle("-fx-background-color: DarkGrey");
         this.fileNameLabel = new Label("Hier koennte ihre Werbung stehen.");
         this.statusLabel = new Label();
         this.progressBar = new ProgressBar();

@@ -18,17 +18,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui;
+package de.unijena.cheminf.mortar.gui.util;
 
 import de.unijena.cheminf.mortar.message.Message;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.collections.ListChangeListener;
+import javafx.scene.control.*;
+import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,9 +91,8 @@ public class GuiUtil {
      * @param anException Exception that was thrown
      */
     public static void GuiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException){
-        //ToDo: What happens if anException is null? GuiMessageAlert!
         if(anException == null){
-
+            //TODO: What happens if anException is null? GuiMessageAlert!
             return;
         }
         try{
@@ -125,5 +126,35 @@ public class GuiUtil {
             LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
         }
     }
+    public static void GuiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl){
+        aChildControl.prefHeightProperty().bind(aParentPane.heightProperty());
+        aChildControl.prefWidthProperty().bind(aParentPane.widthProperty());
+    }
     //</editor-fold>
+
+//    private static Method columnToFitMethod;
+//
+//    static {
+//        try {
+//            columnToFitMethod = TableViewSkin.class.getDeclaredMethod("columnToFitContent", TableColumn.class, int.class);
+//            columnToFitMethod.setAccessible(true);
+//        } catch (NoSuchMethodException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    public static void autoFitTable(TableView tableView) {
+//        tableView.getItems().addListener(new ListChangeListener<Object>() {
+//            @Override
+//            public void onChanged(Change<?> c) {
+//                for (Object column : tableView.getColumns()) {
+//                    try {
+//                        columnToFitMethod.invoke(tableView.getSkin(), column, -1);
+//                    } catch (IllegalAccessException | InvocationTargetException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        });
+//    }
 }

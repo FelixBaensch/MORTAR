@@ -69,6 +69,20 @@ public class FileUtil {
     }
 
     /**
+     * Returns the name of the file without the file extension.
+     *
+     * @param aFile whose name should ne return without extension
+     * @return file name without extension
+     * @throws NullPointerException if given file is 'null'
+     */
+    public static String getFileNameWithoutExtension(File aFile) throws NullPointerException{
+        //<editor-fold defaultstate="collapsed" desc="Checks">
+        Objects.requireNonNull(aFile, "Given file is 'null'.");
+        //</editor-fold>
+        return aFile.getName().replaceFirst("[.][^.]+$", ""); //cuts the
+    }
+
+    /**
      * Deletes single file
      *
      * @param aFilePathname Full pathname of file to be deleted (may be null

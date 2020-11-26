@@ -141,6 +141,8 @@ public class Importer {
             //TODO: add a preference depending if clause to add implicit hydrogens or not
             BufferedReader tmpBufferedReader = new BufferedReader(new FileReader(aFile));
             String tmpMolName = tmpBufferedReader.readLine();
+            if(tmpMolName == null || tmpMolName.isBlank() || tmpMolName.isEmpty())
+                tmpMolName = FileUtil.getFileNameWithoutExtension(aFile);
             tmpBufferedReader.close();
             tmpAtomContainer.setProperty("NAME", tmpMolName);
             this.atomContainerSet.addAtomContainer(tmpAtomContainer);
@@ -158,10 +160,16 @@ public class Importer {
         try{
             IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile),
                     DefaultChemObjectBuilder.getInstance());
+            int tmpCounter = 0;
             while(tmpSDFReader.hasNext()){
                 IAtomContainer tmpAtomContainer = tmpSDFReader.next();
+                String tmpName = tmpAtomContainer.getTitle();
+                if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
+                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
                 //TODO: add a preference depending if clause to add implicit hydrogens or not
+                tmpAtomContainer.setProperty("NAME", tmpName);
                 this.atomContainerSet.addAtomContainer(tmpAtomContainer);
+                tmpCounter++;
             }
         } catch (FileNotFoundException anException) {
             Importer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -176,6 +184,11 @@ public class Importer {
         try{
             PDBReader tmpPDBReader = new PDBReader(new FileInputStream(aFile));
             IAtomContainer tmpAtomContainer = tmpPDBReader.read(new AtomContainer());
+            String tmpName = tmpAtomContainer.getTitle();
+            if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
+                tmpName = FileUtil.getFileNameWithoutExtension(aFile);
+            tmpAtomContainer.setProperty("NAME", tmpName);
+            this.atomContainerSet.addAtomContainer(tmpAtomContainer);
         } catch (FileNotFoundException | CDKException anException) {
             Importer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }

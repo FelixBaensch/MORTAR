@@ -19,9 +19,6 @@
  */
 package de.unijena.cheminf.mortar.message;
 
-import de.unijena.cheminf.mortar.gui.GuiUtil;
-import de.unijena.cheminf.mortar.main.Main;
-
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;

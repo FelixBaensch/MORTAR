@@ -20,11 +20,10 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
-import de.unijena.cheminf.mortar.gui.GuiUtil;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import javafx.scene.control.Alert;
 
-import javax.swing.JOptionPane;
 import java.io.File;
 import java.util.Objects;
 import java.util.logging.FileHandler;
