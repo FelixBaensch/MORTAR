@@ -58,10 +58,6 @@ public class MainView extends AnchorPane {
         //mainCenterPane
         this.mainCenterPane = new Pane();
         this.mainCenterPane.setStyle("-fx-background-color: LIGHTGREY");
-
-        MainTabPane tmpMainTabPane = new MainTabPane(); //TODO: Remove this line (it is just for debugging)
-        this.mainCenterPane.getChildren().add(tmpMainTabPane); //TODO: Remove this line (it is just for debugging)
-//        BorderPane.setMargin(this.mainCenterPane, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         this.mainBorderPane.setCenter(this.mainCenterPane);
         //menuBar
         this.mainMenuBar = new MainMenuBar();

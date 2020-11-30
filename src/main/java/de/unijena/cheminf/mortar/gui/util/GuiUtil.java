@@ -126,35 +126,16 @@ public class GuiUtil {
             LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
         }
     }
+    //
+    /**
+     * Binds height and width property of the child control to the parent pane properties
+     *
+     * @param aParentPane
+     * @param aChildControl
+     */
     public static void GuiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl){
         aChildControl.prefHeightProperty().bind(aParentPane.heightProperty());
         aChildControl.prefWidthProperty().bind(aParentPane.widthProperty());
     }
     //</editor-fold>
-
-//    private static Method columnToFitMethod;
-//
-//    static {
-//        try {
-//            columnToFitMethod = TableViewSkin.class.getDeclaredMethod("columnToFitContent", TableColumn.class, int.class);
-//            columnToFitMethod.setAccessible(true);
-//        } catch (NoSuchMethodException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    public static void autoFitTable(TableView tableView) {
-//        tableView.getItems().addListener(new ListChangeListener<Object>() {
-//            @Override
-//            public void onChanged(Change<?> c) {
-//                for (Object column : tableView.getColumns()) {
-//                    try {
-//                        columnToFitMethod.invoke(tableView.getSkin(), column, -1);
-//                    } catch (IllegalAccessException | InvocationTargetException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
-//    }
 }

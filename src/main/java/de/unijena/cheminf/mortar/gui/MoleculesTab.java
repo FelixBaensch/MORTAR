@@ -23,6 +23,7 @@ package de.unijena.cheminf.mortar.gui;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.DataModel;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -43,22 +44,27 @@ public class MoleculesTab extends Tab {
         //selectionColumn
         this.selectionColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.selectionColumn.header"));
         this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
-        this.selectionColumn.setPrefWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
-        this.selectionColumn.setMaxWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
+        this.selectionColumn.prefWidthProperty().bind(
+                this.tableView.widthProperty().multiply(0.05)
+        );
         this.selectionColumn.setResizable(false);
         this.selectionColumn.setEditable(true);
         this.selectionColumn.setSortable(false);
         //nameColumn
         this.nameColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.nameColumn.header"));
-//        this.nameColumn.setMinWidth(150);
-//        this.nameColumn.prefWidthProperty().bind( );
-//        this.nameColumn.setMaxWidth(250);
+        this.nameColumn.setMinWidth(150);
+        this.nameColumn.prefWidthProperty().bind(
+                        this.tableView.widthProperty().multiply(0.15)
+        );
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(false);
         //structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.structureColumn.header"));
-//        this.structureColumn.prefWidthProperty().bind(this.tableView.widthProperty().divide(1.5));
+        this.structureColumn.setMinWidth(150);
+        this.structureColumn.prefWidthProperty().bind(
+               this.tableView.widthProperty().multiply(0.8)
+        );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
         this.structureColumn.setSortable(false);
