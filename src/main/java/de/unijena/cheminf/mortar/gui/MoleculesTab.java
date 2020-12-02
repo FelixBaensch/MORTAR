@@ -23,66 +23,28 @@ package de.unijena.cheminf.mortar.gui;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.DataModel;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
+import javafx.util.Callback;
 
 public class MoleculesTab extends Tab {
 
-    private TableView tableView;
-    private TableColumn<DataModel, Boolean> selectionColumn;
-    private TableColumn<DataModel, String> nameColumn;
-    private TableColumn<DataModel, Image> structureColumn;
-
+    /**
+     *
+     */
     public MoleculesTab(){
         super(Message.get("MainTabPane.moleculesTab.title"));
         this.setClosable(false);
-        this.tableView = new TableView();
-        this.tableView.setEditable(true);
-        //selectionColumn
-        this.selectionColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.selectionColumn.header"));
-        this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
-        this.selectionColumn.prefWidthProperty().bind(
-                this.tableView.widthProperty().multiply(0.05)
-        );
-        this.selectionColumn.setResizable(false);
-        this.selectionColumn.setEditable(true);
-        this.selectionColumn.setSortable(false);
-        //nameColumn
-        this.nameColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.nameColumn.header"));
-        this.nameColumn.setMinWidth(150);
-        this.nameColumn.prefWidthProperty().bind(
-                        this.tableView.widthProperty().multiply(0.15)
-        );
-        this.nameColumn.setResizable(true);
-        this.nameColumn.setEditable(false);
-        this.nameColumn.setSortable(false);
-        //structureColumn
-        this.structureColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.structureColumn.header"));
-        this.structureColumn.setMinWidth(150);
-        this.structureColumn.prefWidthProperty().bind(
-               this.tableView.widthProperty().multiply(0.8)
-        );
-        this.structureColumn.setResizable(true);
-        this.structureColumn.setEditable(false);
-        this.structureColumn.setSortable(false);
-        //
-        this.tableView.getColumns().addAll(this.selectionColumn, this.nameColumn, this.structureColumn);
-        this.setContent(this.tableView);
-    }
-
-    public TableView getTableView(){
-        return this.tableView;
-    }
-    public TableColumn getSelectionColumn(){
-        return this.selectionColumn;
-    }
-    public TableColumn getNameColumn(){
-        return this.nameColumn;
-    }
-    public TableColumn getStructureColumn() {
-        return structureColumn;
     }
 }

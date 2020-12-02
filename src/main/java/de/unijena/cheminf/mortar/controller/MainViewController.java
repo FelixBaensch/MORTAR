@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.gui.DataTableView;
 import de.unijena.cheminf.mortar.gui.MainTabPane;
 import de.unijena.cheminf.mortar.gui.MoleculesTab;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
@@ -36,12 +37,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventType;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Pagination;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.openscience.cdk.AtomContainerSet;
@@ -66,6 +70,8 @@ public class MainViewController {
 //    private IAtomContainerSet atomContainerSet;
     private MainTabPane mainTabPane;
     private ObservableList<DataModel> dataModelList;
+    private DataTableView dataTableView;
+    private int rowsPerPage;
 
     public MainViewController(Stage aStage, MainView aMainView, String anAppDir){
         //<editor-fold desc="checks" defaultstate="collapsed">
@@ -93,6 +99,8 @@ public class MainViewController {
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
 
+        this.rowsPerPage = 5;
+
         this.addListener();
     }
 
@@ -114,56 +122,48 @@ public class MainViewController {
         System.exit(aStatus);
     }
     //
+
+    /**
+     *
+     *
+     * @param aParentStage
+     */
     private void loadMoleculeFile(Stage aParentStage) {
         Importer tmpImporter = new Importer();
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
         tmpAtomContainerSet = tmpImporter.Import(aParentStage);
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
             return;
-        this.OpenMoleculesTab(tmpAtomContainerSet);
-    }
-
-    private void OpenMoleculesTab(IAtomContainerSet anAtomContainerSet) {
-        for (IAtomContainer tmpAtomContainer : anAtomContainerSet.atomContainers()) {
+        for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
             DataModel tmpDataModel = new DataModel(tmpAtomContainer.getID(), tmpAtomContainer);
             tmpDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.dataModelList.add(tmpDataModel);
         }
+        this.OpenMoleculesTab();
+    }
+
+    /**
+     *
+     */
+    private void OpenMoleculesTab() {
         MoleculesTab tmpMoleculesTab = new MoleculesTab();
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
-        tmpMoleculesTab.getTableView().setItems(this.dataModelList);
-        //nameColumn
-        tmpMoleculesTab.getNameColumn().setCellValueFactory(new PropertyValueFactory<>("name"));
-        tmpMoleculesTab.getNameColumn().setCellFactory(TextFieldTableCell.<DataModel>forTableColumn());
-        tmpMoleculesTab.getNameColumn().setStyle("-fx-alignment: CENTER");
-        //structureColumn
-        tmpMoleculesTab.getStructureColumn().setCellValueFactory(new PropertyValueFactory("structure"));
-        tmpMoleculesTab.getStructureColumn().setStyle("-fx-alignment: CENTER");
-        //selectionColumn
-        tmpMoleculesTab.getSelectionColumn().setCellValueFactory(new Callback<TableColumn.CellDataFeatures<DataModel, Boolean>, ObservableValue<Boolean>>(){
-            @Override
-            public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<DataModel, Boolean> aParam){
-                DataModel tmpDataModel = aParam.getValue();
-                SimpleBooleanProperty tmpBooleanProp = new SimpleBooleanProperty(tmpDataModel.isSelection());
-                // Note: singleCol.setOnEditCommit(): Not work for
-                // CheckBoxTableCell.
-                // When "Selection" column change.
-                tmpBooleanProp.addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                        tmpDataModel.setSelection(newValue);
-                    }
-                });
-                return tmpBooleanProp;
-            }
-        });
-        tmpMoleculesTab.getSelectionColumn().setCellFactory(new Callback<TableColumn<DataModel, Boolean>, TableCell<DataModel, Boolean>>(){
-            @Override
-            public TableCell<DataModel, Boolean> call(TableColumn<DataModel, Boolean> aParam){
-                CheckBoxTableCell<DataModel, Boolean> tmpCell = new CheckBoxTableCell<DataModel, Boolean>();
-                tmpCell.setAlignment(Pos.CENTER);
-                return tmpCell;
-            }
-        });
+        Pagination tmpPagination = new Pagination((this.dataModelList.size() / rowsPerPage + 1), 0);
+        tmpPagination.setPageFactory(this::createPage);
+        tmpMoleculesTab.setContent(tmpPagination);
+    }
+
+    /**
+     *
+     *
+     * @param aPageIndex
+     * @return
+     */
+    private Node createPage(int aPageIndex){
+        int tmpFromIndex = aPageIndex * this.rowsPerPage;
+        int tmpToIndex = Math.min(tmpFromIndex + this.rowsPerPage, this.dataModelList.size());
+        DataTableView tmpDataTableView = new DataTableView();
+        tmpDataTableView.setItems(FXCollections.observableArrayList(this.dataModelList.subList(tmpFromIndex, tmpToIndex)));
+        return new BorderPane(tmpDataTableView);
     }
 }

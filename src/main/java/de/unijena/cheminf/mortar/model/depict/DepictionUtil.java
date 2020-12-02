@@ -31,6 +31,11 @@ import java.awt.image.BufferedImage;
 
 public class DepictionUtil {
 
+    /**
+     *
+     * @param anAtomContainer
+     * @return
+     */
     public static Image depictImage(IAtomContainer anAtomContainer) { //TODO: add , int aWidth, int aHeight
         try {
             DepictionGenerator tmpGenerator = new DepictionGenerator();

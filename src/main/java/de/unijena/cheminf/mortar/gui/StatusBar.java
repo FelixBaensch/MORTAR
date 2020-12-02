@@ -31,6 +31,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.FlowPane;
 
+import static de.unijena.cheminf.mortar.gui.util.GuiDefinitions.GUI_STATUSBAR_HEIGHT_VALUE;
+
 /**
  * StatusBar to show status of the application and progress of a running task
  *
@@ -55,7 +57,12 @@ public class StatusBar extends FlowPane {
         this.statusLabel = new Label();
         this.progressBar = new ProgressBar();
         this.progressBar.visibleProperty().setValue(false);
-        this.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        this.setMinHeight(GUI_STATUSBAR_HEIGHT_VALUE);
+        this.setPrefHeight(GUI_STATUSBAR_HEIGHT_VALUE);
+        this.setMaxHeight(GUI_STATUSBAR_HEIGHT_VALUE);
+//        this.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        System.out.println((GUI_STATUSBAR_HEIGHT_VALUE - this.fileNameLabel.getHeight()));
+        this.setPadding(new Insets( 3));
         this.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         this.getChildren().addAll(fileNameLabel, statusLabel, progressBar);
     }
@@ -104,7 +111,8 @@ public class StatusBar extends FlowPane {
         }
         statusLabel.setText(Message.get("Status.Ready"));
     }
-
+    //
+    //<editor-fold desc="properties" defaultstate="collapsed">
     /**
      * Set file name to fileNameLabel
      * @param aFileName String
@@ -114,7 +122,7 @@ public class StatusBar extends FlowPane {
             throw new IllegalArgumentException();
         this.fileNameLabel.setText(aFileName);
     }
-
+    //
     /**
      * Returns the task
      * @return task
@@ -122,7 +130,7 @@ public class StatusBar extends FlowPane {
     public Task getTask(){
         return this.task;
     }
-
+    //
     /**
      * Returns the fileNameLabel
      * @return
@@ -130,7 +138,7 @@ public class StatusBar extends FlowPane {
     public Label getFileNameLabel() {
         return fileNameLabel;
     }
-
+    //
     /**
      * Returns statusLabel
      * @return
@@ -138,7 +146,7 @@ public class StatusBar extends FlowPane {
     public Label getStatusLabel() {
         return statusLabel;
     }
-
+    //
     /**
      * Returns the progressBar
      * @return
@@ -146,5 +154,6 @@ public class StatusBar extends FlowPane {
     public ProgressBar getProgressBar() {
         return progressBar;
     }
+    //</editor-fold>
 }
 

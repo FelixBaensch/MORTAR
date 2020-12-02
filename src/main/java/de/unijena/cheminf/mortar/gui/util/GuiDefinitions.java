@@ -34,19 +34,17 @@ public final class GuiDefinitions {
     /**
      * Value for the width of the main view
      */
-    public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 400.0;
+    public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 1024.0;
     /**
      * Value for the height of the main view
      */
-    public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 400.0;
+    public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 768.0;
 
     public static final double GUI_BUTTON_WIDTH_VALUE = 40.0;
 
     public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
 
-    public static final double GUI_PROGRESSBAR_WIDTH_VALUE = 25.0;
-
-    public static final double GUI_PROGRESSBAR_HEIGHT_VALUE = 25.0;
+    public static final double GUI_STATUSBAR_HEIGHT_VALUE = 25.0;
     /**
      *  Selection column width
      */
