@@ -21,6 +21,8 @@
 package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
@@ -31,7 +33,7 @@ public class DataModel {
     private String name;
     private String smiles;
     private IAtomContainer atomContainer;
-    private boolean selection;
+    private BooleanProperty selection;
     private IAtomContainerSet fragments;
 
     public DataModel(String anID, IAtomContainer anAtomContainer){
@@ -39,6 +41,7 @@ public class DataModel {
         this.atomContainer = anAtomContainer;
         this.name = this.atomContainer.getTitle();
         this.smiles = this.atomContainer.getProperty("SMILES");
+        this.selection = new SimpleBooleanProperty(true);
     }
 
     public String getId(){
@@ -55,8 +58,11 @@ public class DataModel {
     public String getSmiles(){
         return this.smiles;
     }
-    public boolean isSelection(){
-        return this.selection;
+    public boolean isSelected(){
+        return this.selection.get();
+    }
+    public BooleanProperty selectionProperty(){
+        return selection;
     }
     public IAtomContainerSet getFragments(){
         return this.fragments;
@@ -68,9 +74,8 @@ public class DataModel {
     public void setName(String aName){
         this.name = aName;
     }
-    public void setSelection(boolean anSelection){
-        this.selection = anSelection;
-        System.out.println("This molecule is " + this.selection);
+    public void setSelection(boolean aValue){
+        this.selection.set(aValue);
     }
 
 }

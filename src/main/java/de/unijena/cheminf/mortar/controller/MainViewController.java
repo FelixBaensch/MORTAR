@@ -22,33 +22,24 @@ package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.DataTableView;
 import de.unijena.cheminf.mortar.gui.MainTabPane;
+import de.unijena.cheminf.mortar.gui.MainView;
 import de.unijena.cheminf.mortar.gui.MoleculesTab;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
-import de.unijena.cheminf.mortar.gui.MainView;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.DataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.Observable;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventType;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Pagination;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import javafx.util.Callback;
-import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
@@ -72,6 +63,8 @@ public class MainViewController {
     private ObservableList<DataModel> dataModelList;
     private DataTableView dataTableView;
     private int rowsPerPage;
+    private boolean selectionAll;
+    private boolean selectionAllCheckBoxAction;
 
     public MainViewController(Stage aStage, MainView aMainView, String anAppDir){
         //<editor-fold desc="checks" defaultstate="collapsed">
@@ -83,7 +76,8 @@ public class MainViewController {
             throw new IllegalArgumentException("The given application directory is neither no directory or does not exist");
         }
         //</editor-fold>
-        this.dataModelList = FXCollections.observableArrayList();
+        this.selectionAll = true;
+        this.dataModelList = FXCollections.observableArrayList(param -> new Observable[]{param.selectionProperty()});
         this.primaryStage = aStage;
         this.mainView = aMainView;
         this.appDir = anAppDir;
@@ -104,6 +98,9 @@ public class MainViewController {
         this.addListener();
     }
 
+    /**
+     *
+     */
     private void addListener(){
         this.mainView.getMainMenuBar().getExitMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -130,8 +127,7 @@ public class MainViewController {
      */
     private void loadMoleculeFile(Stage aParentStage) {
         Importer tmpImporter = new Importer();
-        IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-        tmpAtomContainerSet = tmpImporter.Import(aParentStage);
+        IAtomContainerSet tmpAtomContainerSet = tmpImporter.Import(aParentStage);
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
             return;
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
@@ -148,8 +144,9 @@ public class MainViewController {
     private void OpenMoleculesTab() {
         MoleculesTab tmpMoleculesTab = new MoleculesTab();
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
+        this.dataTableView = new DataTableView();
         Pagination tmpPagination = new Pagination((this.dataModelList.size() / rowsPerPage + 1), 0);
-        tmpPagination.setPageFactory(this::createPage);
+        tmpPagination.setPageFactory(this::createDataTableViewPage);
         tmpMoleculesTab.setContent(tmpPagination);
     }
 
@@ -159,11 +156,50 @@ public class MainViewController {
      * @param aPageIndex
      * @return
      */
-    private Node createPage(int aPageIndex){
+    private Node createDataTableViewPage(int aPageIndex){
         int tmpFromIndex = aPageIndex * this.rowsPerPage;
         int tmpToIndex = Math.min(tmpFromIndex + this.rowsPerPage, this.dataModelList.size());
-        DataTableView tmpDataTableView = new DataTableView();
-        tmpDataTableView.setItems(FXCollections.observableArrayList(this.dataModelList.subList(tmpFromIndex, tmpToIndex)));
-        return new BorderPane(tmpDataTableView);
+        this.dataTableView.getSelectAllCheckBox().setOnAction(event -> {
+            this.selectionAllCheckBoxAction = true;
+            for (int i = 0; i < this.dataModelList.size(); i++) {
+                if(this.dataTableView.getSelectAllCheckBox().isSelected()){
+                    this.dataModelList.get(i).setSelection(true);
+                }
+                else if(!this.dataTableView.getSelectAllCheckBox().isSelected()){
+                    this.dataModelList.get(i).setSelection(false);
+                }
+            }
+            this.selectionAllCheckBoxAction = false;
+        });
+        this.dataModelList.addListener((ListChangeListener) change ->{
+            if(this.selectionAllCheckBoxAction){
+                // No further action needed with column checkbox data when the select all checkbox is operated on
+                return;
+            }
+            while(change.next()){
+                if(change.wasUpdated()){
+                    int checked = 0;
+                    for(DataModel tmpDataModel : this.dataModelList){
+                        if(tmpDataModel.isSelected())
+                            checked++;
+                    }
+                    if(checked == this.dataModelList.size()){
+                        this.dataTableView.getSelectAllCheckBox().setSelected(true);
+                        this.dataTableView.getSelectAllCheckBox().setIndeterminate(false);
+                    }
+                    else if(checked == 0){
+                        this.dataTableView.getSelectAllCheckBox().setSelected(false);
+                        this.dataTableView.getSelectAllCheckBox().setIndeterminate(false);
+                    }
+                    else if(checked > 0){
+                        this.dataTableView.getSelectAllCheckBox().setSelected(false);
+                        this.dataTableView.getSelectAllCheckBox().setIndeterminate(true);
+                    }
+                }
+            }
+        });
+
+        this.dataTableView.setItems(FXCollections.observableArrayList(this.dataModelList.subList(tmpFromIndex, tmpToIndex)));
+        return new BorderPane(this.dataTableView);
     }
 }

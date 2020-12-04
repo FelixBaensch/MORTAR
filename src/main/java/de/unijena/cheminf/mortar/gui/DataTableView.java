@@ -23,18 +23,13 @@ package de.unijena.cheminf.mortar.gui;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.DataModel;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.Pos;
-import javafx.scene.control.TableCell;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
-import javafx.util.Callback;
 
 /**
  * TODO
@@ -44,12 +39,17 @@ public class DataTableView extends TableView {
     private TableColumn<DataModel, Boolean> selectionColumn;
     private TableColumn<DataModel, String> nameColumn;
     private TableColumn<DataModel, Image> structureColumn;
+    private CheckBox selectAllCheckBox;
 
     public DataTableView(){
         super();
         this.setEditable(true);
         //-selectionColumn
-        this.selectionColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.selectionColumn.header"));
+        this.selectionColumn = new TableColumn<>();
+        this.selectAllCheckBox = new CheckBox();
+        this.selectAllCheckBox.setAllowIndeterminate(true);
+        this.selectAllCheckBox.setSelected(true);
+        this.selectionColumn.setGraphic(this.selectAllCheckBox);
         //TODO: add de/selectAll checkBox to header
         this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
         this.selectionColumn.prefWidthProperty().bind(
@@ -58,31 +58,8 @@ public class DataTableView extends TableView {
         this.selectionColumn.setResizable(false);
         this.selectionColumn.setEditable(true);
         this.selectionColumn.setSortable(false);
-        this.selectionColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<DataModel, Boolean>, ObservableValue<Boolean>>(){
-            @Override
-            public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<DataModel, Boolean> aParam){
-                DataModel tmpDataModel = aParam.getValue();
-                SimpleBooleanProperty tmpBooleanProp = new SimpleBooleanProperty(tmpDataModel.isSelection());
-                // Note: singleCol.setOnEditCommit(): Not work for
-                // CheckBoxTableCell.
-                // When "Selection" column change.
-                tmpBooleanProp.addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                        tmpDataModel.setSelection(newValue);
-                    }
-                });
-                return tmpBooleanProp;
-            }
-        });
-        this.selectionColumn.setCellFactory(new Callback<TableColumn<DataModel, Boolean>, TableCell<DataModel, Boolean>>(){
-            @Override
-            public TableCell<DataModel, Boolean> call(TableColumn<DataModel, Boolean> aParam){
-                CheckBoxTableCell<DataModel, Boolean> tmpCell = new CheckBoxTableCell<DataModel, Boolean>();
-                tmpCell.setAlignment(Pos.CENTER);
-                return tmpCell;
-            }
-        });
+        this.selectionColumn.setCellValueFactory(new PropertyValueFactory<>("selection"));
+        this.selectionColumn.setCellFactory(tc -> new CheckBoxTableCell<>());
         //-nameColumn
         this.nameColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.nameColumn.header"));
         this.nameColumn.setMinWidth(150);
@@ -118,7 +95,8 @@ public class DataTableView extends TableView {
         return this.nameColumn;
     }
     public TableColumn getStructureColumn() {
-        return structureColumn;
+        return this.structureColumn;
     }
+    public CheckBox getSelectAllCheckBox() { return this.selectAllCheckBox; }
     //</editor-fold>
 }
