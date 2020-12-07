@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -23,6 +23,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 /**
  * TODO:
  * - Manage settings somehow through the interface? At least a 'restoreDefaultSettings()' method could be made mandatory here
+ *      -> by extending the fragmenter classes, all settings can be modified easily through the original methods
  * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)?
  * - how to manage intrinsically transported information (e.g. as properties of the returned atom containers), e.g.
  * 'this fragment is the deglycosylated core' or 'this is a (non-)FG fragment'? Create property names as constants here for
@@ -63,7 +64,7 @@ public interface IMoleculeFragmenter {
      * @return
      * @throws IllegalArgumentException
      */
-    public boolean hasFragments(IAtomContainer aMolecule, List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException;
+    public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Returns true if the given molecule cannot be fragmented by the respective algorithm, even after preprocessing.
@@ -72,7 +73,7 @@ public interface IMoleculeFragmenter {
      * @return
      * @throws NullPointerException
      */
-    public boolean shouldBeFiltered(IAtomContainer aMolecule) throws NullPointerException;
+    public boolean shouldBeFiltered(IAtomContainer aMolecule);
 
     /**
      * Returns true if the given molecule can be fragmented by the respective algorithm after preprocessing.
@@ -100,6 +101,6 @@ public interface IMoleculeFragmenter {
      * @param aMolecule
      * @throws IllegalArgumentException
      */
-    public void applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
+    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
     //</editor-fold>
 }

@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -27,23 +27,67 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
+import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * TODO
  */
-public class ErtlFunctionalGroupsFinderFragmenter extends ErtlFunctionalGroupsFinder implements IMoleculeFragmenter {
+public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter {
+    /**
+     *
+     */
+    public static final String ALGORITHM_NAME = "Ertl algorithm";
+
+    /**
+     *
+     */
+    private ErtlFunctionalGroupsFinder EFGFinstance;
+
+    /**
+     *
+     */
+    private ErtlFunctionalGroupsFinder.Mode mode;
+
     /**
      * TODO
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
+        this(ErtlFunctionalGroupsFinder.Mode.DEFAULT);
+    }
 
+    /**
+     *
+     */
+    public ErtlFunctionalGroupsFinderFragmenter(ErtlFunctionalGroupsFinder.Mode aMode) throws NullPointerException {
+        Objects.requireNonNull(aMode, "Given mode is null.");
+        this.mode = aMode;
+        this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.mode);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public ErtlFunctionalGroupsFinder.Mode getMode() {
+        return this.mode;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setMode(ErtlFunctionalGroupsFinder.Mode aMode) throws NullPointerException {
+        Objects.requireNonNull(aMode, "Given mode is null.");
+        this.mode = aMode;
+        this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.mode);
     }
 
     @Override
     public String getFragmentationAlgorithmName() {
-        return null;
+        return ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME;
     }
 
     @Override
@@ -52,12 +96,12 @@ public class ErtlFunctionalGroupsFinderFragmenter extends ErtlFunctionalGroupsFi
     }
 
     @Override
-    public boolean hasFragments(IAtomContainer aMolecule, List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
+    public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
         return false;
     }
 
     @Override
-    public boolean shouldBeFiltered(IAtomContainer aMolecule) throws NullPointerException {
+    public boolean shouldBeFiltered(IAtomContainer aMolecule) {
         return false;
     }
 
@@ -72,7 +116,7 @@ public class ErtlFunctionalGroupsFinderFragmenter extends ErtlFunctionalGroupsFi
     }
 
     @Override
-    public void applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
-
+    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+        return null;
     }
 }
