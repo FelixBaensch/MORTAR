@@ -38,6 +38,13 @@ import java.util.List;
  * TODO
  */
 public interface IMoleculeFragmenter {
+    //<editor-fold desc="Public static final constants">
+    /**
+     *
+     */
+    public static final String FRAGMENT_CATEGORY_PROPERTY_KEY = "IMoleculeFragmenter.Category";
+    //</editor-fold>
+    //
     //<editor-fold desc="Public properties">
     /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
@@ -46,13 +53,15 @@ public interface IMoleculeFragmenter {
      */
     public String getFragmentationAlgorithmName();
     //</editor-fold>
+    //
     //<editor-fold desc="Public methods">
     /**
      * Fragments the given molecule according to the respective algorithm and returns the resulting fragments.
      *
      * @param aMolecule
      * @return
-     * @throws IllegalArgumentException
+     * @throws NullPointerException if aMolecule is null
+     * @throws IllegalArgumentException if the given molecule can not be fragmented but should be filtered or preprocessed
      */
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
 
@@ -60,9 +69,10 @@ public interface IMoleculeFragmenter {
      * Returns true if the given molecule has e.g. functional groups or sugar moieties that are detected by the respective
      * algorithm.
      *
-     * @param aMolecule
+     * @param aFragmentList
      * @return
-     * @throws IllegalArgumentException
+     * @throws NullPointerException if fragment list is null
+     * @throws IllegalArgumentException if the given list did not result from a fragmentation done by this class
      */
     public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException;
 
@@ -71,13 +81,12 @@ public interface IMoleculeFragmenter {
      *
      * @param aMolecule
      * @return
-     * @throws NullPointerException
      */
     public boolean shouldBeFiltered(IAtomContainer aMolecule);
 
     /**
      * Returns true if the given molecule can be fragmented by the respective algorithm after preprocessing.
-     *
+     * Does not check whether the molecule should be filtered! But throws an exception if it is null.
      * @param aMolecule
      * @return
      * @throws NullPointerException
@@ -86,11 +95,11 @@ public interface IMoleculeFragmenter {
 
     /**
      * Returns true only if the given molecule can be passed to the central fragmentation method without any preprocessing
-     * and without causing an exception.
+     * and without causing an exception. If 'false' is returned, check the methods for filtering and preprocessing.
      *
      * @param aMolecule
      * @return
-     * @throws NullPointerException
+     * @throws NullPointerException if the molecule is null
      */
     public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException;
 
@@ -99,6 +108,7 @@ public interface IMoleculeFragmenter {
      * should be filtered.
      *
      * @param aMolecule
+     * @throws NullPointerException
      * @throws IllegalArgumentException
      */
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;

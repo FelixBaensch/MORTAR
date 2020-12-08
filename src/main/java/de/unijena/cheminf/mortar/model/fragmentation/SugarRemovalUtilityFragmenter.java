@@ -37,6 +37,7 @@ import java.util.Objects;
  * TODO
  */
 public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implements IMoleculeFragmenter {
+    //<editor-fold desc="Enum SugarTypeToRemove">
     /**
      *
      */
@@ -56,7 +57,9 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
          */
         CIRCULAR_AND_LINEAR;
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public static final constants">
     /**
      * TODO
      */
@@ -65,13 +68,27 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     /**
      *
      */
-    public static final SugarTypeToRemove SUGAR_TYPE_TO_REMOVE_DEFAULT = SugarTypeToRemove.CIRCULAR_AND_LINEAR;
+    public static final String FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE = "SugarRemovalUtilityFragmenter.DeglycosylatedCore";
 
     /**
      *
      */
-    private SugarTypeToRemove sugarTypeToRemove;
+    public static final String FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE = "SugarRemovalUtilityFragmenter.SugarMoiety";
 
+    /**
+     *
+     */
+    public static final SugarTypeToRemove SUGAR_TYPE_TO_REMOVE_DEFAULT = SugarTypeToRemove.CIRCULAR_AND_LINEAR;
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private variables">
+    /**
+     *
+     */
+    private SugarTypeToRemove sugarTypeToRemove;
+    //</editor-fold>
+    //
+    //<editor-fold desc="Constructor">
     /**
      * TODO
      * all settings in default, calls the SRU sole constructor
@@ -80,7 +97,9 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         super();
         this.sugarTypeToRemove = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public properties get">
     /**
      *
      * @return
@@ -88,7 +107,9 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     public SugarTypeToRemove getSugarTypeToRemoveSetting() {
         return this.sugarTypeToRemove;
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public properties set">
     /**
      *
      */
@@ -96,7 +117,13 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         Objects.requireNonNull(aSugarTypeToRemove, "Given type of sugars to remove is null.");
         this.sugarTypeToRemove = aSugarTypeToRemove;
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="IMoleculeFragmenter methods">
+    /**
+     *
+     * @return
+     */
     @Override
     public String getFragmentationAlgorithmName() {
         return SugarRemovalUtilityFragmenter.ALGORITHM_NAME;
@@ -128,9 +155,24 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         } catch (IllegalArgumentException | CloneNotSupportedException anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
         }
+        tmpFragments.get(0).setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+        if (tmpFragments.size() > 1) {
+            for (int i = 1; i < tmpFragments.size(); i++) {
+                tmpFragments.get(i).setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
+            }
+        }
         return tmpFragments;
     }
 
+    /**
+     * TODO: Add test for deglycosylated core property
+     * @param aFragmentList
+     * @return
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
     @Override
     public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aFragmentList, "Given fragment list is null.");
@@ -171,6 +213,13 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     @Override
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
+        if (tmpShouldBeFiltered) {
+            throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
+        }
+        if (!this.shouldBePreprocessed(aMolecule)) {
+            return aMolecule;
+        }
         if (this.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
             if (!tmpIsConnected) {
@@ -179,4 +228,5 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         }
         return aMolecule;
     }
+    //</editor-fold>
 }

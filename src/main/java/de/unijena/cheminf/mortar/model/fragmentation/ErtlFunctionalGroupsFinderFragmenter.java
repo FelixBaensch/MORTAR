@@ -25,6 +25,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  * - implement the IMoleculeFragmenter methods.
  */
 
+import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
@@ -36,11 +37,29 @@ import java.util.Objects;
  * TODO
  */
 public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter {
+    //<editor-fold desc="Public static final constants">
     /**
      *
      */
     public static final String ALGORITHM_NAME = "Ertl algorithm";
 
+    /**
+     *
+     */
+    //public static final Aromaticity AROMATICITY_MODEL_DEFAULT =
+
+    /**
+     *
+     */
+    public static final String FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE = "ErtlFunctionalGroupsFinderFragmenter.FunctionalGroup";
+
+    /**
+     * TODO: is the 'opposite' of FG alkane? Wikipedia says, alkanes are acyclic. But apart from this, the definition fits.
+     */
+    public static final String FRAGMENT_CATEGORY_ALKANE_VALUE = "ErtlFunctionalGroupsFinderFragmenter.Alkane";
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private variables">
     /**
      *
      */
@@ -51,6 +70,13 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      */
     private ErtlFunctionalGroupsFinder.Mode mode;
 
+    /**
+     *
+     */
+    private Aromaticity aromaticityModel;
+    //</editor-fold>
+
+    //<editor-fold desc="Constructors">
     /**
      * TODO
      */
@@ -66,7 +92,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.mode = aMode;
         this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.mode);
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public properties get">
     /**
      *
      * @return
@@ -74,7 +102,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public ErtlFunctionalGroupsFinder.Mode getMode() {
         return this.mode;
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public properties set">
     /**
      *
      * @return
@@ -84,17 +114,37 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.mode = aMode;
         this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.mode);
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="IMoleculeFragmenter methods">
+    /**
+     *
+     * @return
+     */
     @Override
     public String getFragmentationAlgorithmName() {
         return ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME;
     }
 
+    /**
+     * TODO
+     * @param aMolecule
+     * @return
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
         return null;
     }
 
+    /**
+     * TODO
+     * @param aFragmentList
+     * @return
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
     @Override
     public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
         return false;
@@ -102,21 +152,51 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
-        return false;
+        if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
+            return true;
+        }
+        //throws NullpointerException if molecule is null
+        return ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(aMolecule);
     }
 
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
-        return false;
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        //throws NullpointerException if molecule is null
+        return ErtlFunctionalGroupsFinderUtility.shouldBePreprocessed(aMolecule);
     }
 
     @Override
     public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
-        return false;
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
+        boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
+        if (tmpShouldBeFiltered || tmpShouldBePreprocessed) {
+            return false;
+        }
+        //throws NullpointerException if molecule is null
+        return ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule);
     }
 
+    /**
+     * TODO
+     * @param aMolecule
+     * @return
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
     @Override
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
+        if (tmpShouldBeFiltered) {
+            throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
+        }
+        if (!this.shouldBePreprocessed(aMolecule)) {
+            return aMolecule;
+        }
+        //return ErtlFunctionalGroupsFinderUtility.applyFiltersAndPreprocessing(aMolecule, );
         return null;
     }
+    //</editor-fold>
 }

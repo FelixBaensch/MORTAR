@@ -36,6 +36,7 @@ public class SugarRemovalUtilityFragmenterTest {
     public void basicTest() throws Exception {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
         System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
+        System.out.println(tmpFragmenter.getSugarTypeToRemoveSetting());
     }
 
     @Test
