@@ -22,6 +22,8 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
+ * - add option to generate valid valences on all returned fragments
+ * - add option to separate unconnected fragments of the deglycosylated molecule into separate atom containers
  * - write doc
  */
 
@@ -129,13 +131,26 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         return SugarRemovalUtilityFragmenter.ALGORITHM_NAME;
     }
 
+    /**
+     * Notice that the given atom container is altered!
+     * @param aMolecule
+     * @return
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         if (aMolecule.isEmpty()) {
             List<IAtomContainer> tmpReturnList = new ArrayList<IAtomContainer>(1);
             tmpReturnList.add(0, aMolecule);
+            aMolecule.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                    SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
             return tmpReturnList;
+        }
+        boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
+        if (!tmpCanBeFragmented) {
+            throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
         List<IAtomContainer> tmpFragments;
         try {
@@ -167,7 +182,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     }
 
     /**
-     * TODO: Add test for deglycosylated core property
+     *
      * @param aFragmentList
      * @return
      * @throws NullPointerException
@@ -181,6 +196,10 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         }
         if (Objects.isNull(aFragmentList.get(0))) {
             throw new IllegalArgumentException("Object at position 0 is null, should be the deglycosylated molecule.");
+        }
+        String tmpCategory = aFragmentList.get(0).getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY);
+        if (Objects.isNull(tmpCategory) || tmpCategory.isEmpty() || !tmpCategory.equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
+            throw new IllegalArgumentException("Object at position 0 has no or an incorrect fragment category property, should be the deglycosylated molecule.");
         }
         return !(aFragmentList.size() == 1);
     }

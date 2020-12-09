@@ -31,7 +31,6 @@ import org.openscience.cdk.smiles.SmilesParser;
 import java.util.List;
 
 public class SugarRemovalUtilityFragmenterTest {
-
     @Test
     public void basicTest() throws Exception {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
@@ -56,17 +55,20 @@ public class SugarRemovalUtilityFragmenterTest {
         tmpFragmentList = tmpSRUFragmenter.fragmentMolecule(tmpOriginalMolecule);
         Assert.assertFalse(tmpSRUFragmenter.hasFragments(tmpFragmentList));
         tmpSmilesCode = tmpSmiGen.create(tmpFragmentList.get(0));
-        System.out.println(tmpSmilesCode);
+        System.out.println(tmpSmilesCode + " " + tmpFragmentList.get(0).getProperty(
+                IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         //The sugar ring is not terminal and should not be removed, so the molecule remains unchanged
         Assert.assertEquals("O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4", tmpSmilesCode);
         tmpSRUFragmenter.setRemoveOnlyTerminalSugarsSetting(false);
         tmpFragmentList = tmpSRUFragmenter.fragmentMolecule(tmpOriginalMolecule);
         Assert.assertTrue(tmpSRUFragmenter.hasFragments(tmpFragmentList));
         tmpSmilesCode = tmpSmiGen.create(tmpFragmentList.get(0));
-        System.out.println(tmpSmilesCode);
+        System.out.println(tmpSmilesCode + " " + tmpFragmentList.get(0).getProperty(
+                IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         //Now that all sugars are removed, the sugar ring is removed and an unconnected structure remains
         Assert.assertEquals("O=C(O)C=CC1=CC=C(O)C=C1.O=C(OCC1(O)C(O)CC2C(=COC(OC(=O)CC(C)C)C21)CO)C", tmpSmilesCode);
-        System.out.println(tmpSmiGen.create(tmpFragmentList.get(1)));
+        System.out.println(tmpSmiGen.create(tmpFragmentList.get(1)) + " " + tmpFragmentList.get(1).getProperty(
+                IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         tmpSRUFragmenter.setRemoveOnlyTerminalSugarsSetting(true);
         Assert.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpFragmentList.get(0)));
         Assert.assertTrue(tmpSRUFragmenter.shouldBePreprocessed(tmpFragmentList.get(0)));
