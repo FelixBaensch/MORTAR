@@ -23,6 +23,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 /**
  * TODO:
  * - add option to generate valid valences on all returned fragments
+ * - add method that receives list of molecules and returns list of unique fragments and list of molecules with pointers to fragments
  * - add option to separate unconnected fragments of the deglycosylated molecule into separate atom containers
  * - write doc
  */

@@ -23,6 +23,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 /**
  * TODO:
  * - add option to generate valid valences on all returned fragments
+ * - add method that receives list of molecules and returns list of unique fragments and returns list of molecules with pointers to fragments
  * - add option to return only the marked atoms as FG fragments, i.e. removing the environmental Cs
  * - write doc
  */
