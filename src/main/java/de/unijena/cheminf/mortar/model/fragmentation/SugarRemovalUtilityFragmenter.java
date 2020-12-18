@@ -248,5 +248,11 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         }
         return aMolecule;
     }
+
+    @Override
+    public void restoreDefaultSettings() {
+        super.restoreDefaultSettings();
+        this.sugarTypeToRemove = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
+    }
     //</editor-fold>
 }

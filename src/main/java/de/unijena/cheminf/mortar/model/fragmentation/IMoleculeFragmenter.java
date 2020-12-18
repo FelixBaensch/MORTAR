@@ -22,12 +22,8 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - Manage settings somehow through the interface? At least a 'restoreDefaultSettings()' method could be made mandatory here
- *      -> by extending the fragmenter classes, all settings can be modified easily through the original methods
- * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)?
- * - how to manage intrinsically transported information (e.g. as properties of the returned atom containers), e.g.
- * 'this fragment is the deglycosylated core' or 'this is a (non-)FG fragment'? Create property names as constants here for
- * some of this information?
+ * - add fragment saturation options here as an enum and maybe static methods for the basic options, like H-saturation
+ * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)
  */
 
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -112,5 +108,10 @@ public interface IMoleculeFragmenter {
      * @throws IllegalArgumentException
      */
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     *
+     */
+    public void restoreDefaultSettings();
     //</editor-fold>
 }

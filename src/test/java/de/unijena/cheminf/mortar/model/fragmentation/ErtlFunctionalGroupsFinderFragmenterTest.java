@@ -37,7 +37,7 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
         System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
         System.out.println(tmpFragmenter.getAromaticityModel());
-        System.out.println(tmpFragmenter.getMode());
+        System.out.println(tmpFragmenter.getEnvironmentMode());
     }
 
     @Test
@@ -46,7 +46,8 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Canonical));
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
-        ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter(ErtlFunctionalGroupsFinder.Mode.NO_GENERALIZATION);
+        ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter(
+                ErtlFunctionalGroupsFinderFragmenter.FunctionalGroupEnvironmentMode.NO_ENVIRONMENT);
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 //CNP0151033
                 "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4");
@@ -56,7 +57,8 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         Assert.assertTrue(tmpFragmenter.hasFragments(tmpFragmentList));
         for (IAtomContainer tmpFragment : tmpFragmentList) {
-            System.out.println(tmpSmiGen.create(tmpFragment) + " " + tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
+            System.out.println(tmpSmiGen.create(tmpFragment) + " " + tmpFragment.getProperty(
+                    IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         }
     }
 }

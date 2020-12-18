@@ -25,7 +25,7 @@ package org.openscience.cdk.tools;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/JonasSchaub/Ertl-FG-for-COCONUT/blob/master/src/main/java/org/openscience/cdk/tools/ErtlFunctionalGroupsFinderUtility.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on November 17th 2020
+ * Last copied on December 18th 2020
  */
 
 import org.openscience.cdk.Atom;
@@ -55,11 +55,7 @@ import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -613,6 +609,58 @@ public final class ErtlFunctionalGroupsFinderUtility {
     //</editor-fold>
     //
     //<editor-fold desc="Other">
+    /**
+     * TODO
+     */
+    public static List<IAtomContainer> findMarkedAtoms(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return new ArrayList<IAtomContainer>(0);
+        }
+        boolean tmpCanBeFragmented = ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule);
+        if (!tmpCanBeFragmented) {
+            throw new IllegalArgumentException("Given molecule cannot be frgamented but needs to be filtered or preprocessed.");
+        }
+        HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(aMolecule.getAtomCount() + 1, 1);
+        for (int i = 0; i < aMolecule.getAtomCount(); i++) {
+            IAtom tmpAtom = aMolecule.getAtom(i);
+            tmpAtom.setProperty("EFGFUtility.INDEX", i);
+            tmpIdToAtomMap.put(i, tmpAtom);
+        }
+        ErtlFunctionalGroupsFinder tmpEFGF = new ErtlFunctionalGroupsFinder(ErtlFunctionalGroupsFinder.Mode.DEFAULT);
+        List<IAtomContainer> tmpFunctionalGroups = tmpEFGF.find(aMolecule, false);
+        if (tmpFunctionalGroups.isEmpty()) {
+            return tmpFunctionalGroups;
+        }
+        for (IAtomContainer tmpFunctionalGroup : tmpFunctionalGroups) {
+            for (int i = 0; i < tmpFunctionalGroup.getAtomCount(); i++) {
+                IAtom tmpAtom = tmpFunctionalGroup.getAtom(i);
+                if (Objects.isNull(tmpAtom.getProperty("EFGFUtility.INDEX"))) {
+                    if (tmpAtom instanceof IPseudoAtom && "R".equals(((IPseudoAtom)tmpAtom).getLabel())) {
+                        //atom is a pseudo atom added by the EFGF in generalization
+                        tmpFunctionalGroup.removeAtom(tmpAtom);
+                        i = i - 1;
+                        continue;
+                    } else if (tmpAtom.getSymbol().equals("C")){
+                        //atom is an environmental C added by the EFGF
+                        tmpFunctionalGroup.removeAtom(tmpAtom);
+                        i = i - 1;
+                        continue;
+                    } else if (tmpAtom.getSymbol().equals("H")) {
+                        //atom is an explicit H added by the EFGF
+                        tmpFunctionalGroup.removeAtom(tmpAtom);
+                        i = i - 1;
+                        continue;
+                    } else {
+                        //unknown atom
+                        throw new IllegalArgumentException("Something went wrong, identified unknown added atom.");
+                    }
+                }
+            }
+        }
+        return tmpFunctionalGroups;
+    }
+
     /**
      * Aims at doing a deep copy of the given atom container, i.e. all information stored in the object is copied exactly
      * but original and copy do not share any references. The method used here writes an SD representation (via CDK's
