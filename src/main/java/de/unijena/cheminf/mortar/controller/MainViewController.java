@@ -20,10 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.mortar.gui.DataTableView;
-import de.unijena.cheminf.mortar.gui.MainTabPane;
-import de.unijena.cheminf.mortar.gui.MainView;
-import de.unijena.cheminf.mortar.gui.MoleculesTab;
+import de.unijena.cheminf.mortar.gui.*;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -39,6 +36,9 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Pagination;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
@@ -139,7 +139,7 @@ public class MainViewController {
     }
 
     /**
-     *
+     * Opens molecules tab
      */
     private void OpenMoleculesTab() {
         MoleculesTab tmpMoleculesTab = new MoleculesTab();
@@ -147,14 +147,20 @@ public class MainViewController {
         this.dataTableView = new DataTableView();
         Pagination tmpPagination = new Pagination((this.dataModelList.size() / rowsPerPage + 1), 0);
         tmpPagination.setPageFactory(this::createDataTableViewPage);
-        tmpMoleculesTab.setContent(tmpPagination);
+        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
+        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
+        tmpMoleculesTab.addToGridPane(tmpPagination, 0,0,2,2);
+        tmpMoleculesTab.addFragmentButton();
+        tmpMoleculesTab.getFragmentButton().setOnAction(event -> {
+            //TODO: implement fragmentation algorithm start
+        });
     }
 
     /**
-     *
+     * Creates a page for the pagination for the dataTableView //TODO: refine comment
      *
      * @param aPageIndex
-     * @return
+     * @return Node, page of pagination
      */
     private Node createDataTableViewPage(int aPageIndex){
         int tmpFromIndex = aPageIndex * this.rowsPerPage;
@@ -198,7 +204,6 @@ public class MainViewController {
                 }
             }
         });
-
         this.dataTableView.setItems(FXCollections.observableArrayList(this.dataModelList.subList(tmpFromIndex, tmpToIndex)));
         return new BorderPane(this.dataTableView);
     }

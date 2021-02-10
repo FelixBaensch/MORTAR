@@ -31,6 +31,7 @@ public final class GuiDefinitions {
      * Value for the GUI insets
      */
     public static final double GUI_INSETS_VALUE = 10.0;
+    public static final double GUI_SPACING_VALUE = 5.0;
     /**
      * Value for the width of the main view
      */
@@ -45,6 +46,8 @@ public final class GuiDefinitions {
     public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
 
     public static final double GUI_STATUSBAR_HEIGHT_VALUE = 25.0;
+
+    public static final double GUI_MOLECULE_TAB_SECOND_ROW_HEIGHT = 50.0;
     /**
      *  Selection column width
      */
