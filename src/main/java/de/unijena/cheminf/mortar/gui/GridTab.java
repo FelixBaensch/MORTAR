@@ -21,47 +21,24 @@
 package de.unijena.cheminf.mortar.gui;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
-import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.data.DataModel;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.image.Image;
-import javafx.scene.layout.*;
-import javafx.util.Callback;
+import javafx.scene.control.Tab;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
 
-/**
- * MoleculesTab
- *
- * @author Felix Baensch
- */
-public class MoleculesTab extends Tab {
+public class GridTab extends Tab {
 
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
     private GridPane gridPane;
-    private Button fragmentButton;
-    //</editor-fold>
 
-    /**
-     * Constructor
-     */
-    public MoleculesTab(){
-        super(Message.get("MainTabPane.moleculesTab.title"));
+    public GridTab(){
+        this("loading");
+    }
+    
+    public GridTab(String aTitle){
+        super(aTitle);
         this.setClosable(false);
-        this.fragmentButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
-        this.fragmentButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.fragmentButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.fragmentButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         //gridPane to add button to pagination
         this.gridPane = new GridPane();
         this.setContent(this.gridPane);
@@ -97,24 +74,12 @@ public class MoleculesTab extends Tab {
      * @param aColSpan
      * @param aRowSpan
      */
-    public void addToGridPane(Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
+    public void addToGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.gridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
 
-    /**
-     * Adds fragmentButton to gridPane
-     * Necessary to add it after pagination to overlap it
-     */
-    public void addFragmentButton(){
-        this.gridPane.add(this.fragmentButton, 1,1,1,1);
+    public void setTitle(String aTitle){
+        this.setText(aTitle);
     }
 
-    /**
-     * Returns fragmentButton, button to start fragmentation
-     *
-     * @return fragmentButton, button
-     */
-    public Button getFragmentButton(){
-        return this.fragmentButton;
-    }
 }

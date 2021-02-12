@@ -24,7 +24,7 @@ import de.unijena.cheminf.mortar.gui.*;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.data.DataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -34,6 +34,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Pagination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -60,8 +61,8 @@ public class MainViewController {
     private Scene scene;
 //    private IAtomContainerSet atomContainerSet;
     private MainTabPane mainTabPane;
-    private ObservableList<DataModel> dataModelList;
-    private DataTableView dataTableView;
+    private ObservableList<MoleculeDataModel> moleculeDataModelList;
+    private MoleculesDataTableView moleculesDataTableView;
     private int rowsPerPage;
     private boolean selectionAll;
     private boolean selectionAllCheckBoxAction;
@@ -77,7 +78,7 @@ public class MainViewController {
         }
         //</editor-fold>
         this.selectionAll = true;
-        this.dataModelList = FXCollections.observableArrayList(param -> new Observable[]{param.selectionProperty()});
+        this.moleculeDataModelList = FXCollections.observableArrayList(param -> new Observable[]{param.selectionProperty()});
         this.primaryStage = aStage;
         this.mainView = aMainView;
         this.appDir = anAppDir;
@@ -131,9 +132,9 @@ public class MainViewController {
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
             return;
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-            DataModel tmpDataModel = new DataModel(tmpAtomContainer.getID(), tmpAtomContainer);
-            tmpDataModel.setName(tmpAtomContainer.getProperty("NAME"));
-            this.dataModelList.add(tmpDataModel);
+            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer.getID(), tmpAtomContainer);
+            tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
+            this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
         this.OpenMoleculesTab();
     }
@@ -142,19 +143,22 @@ public class MainViewController {
      * Opens molecules tab
      */
     private void OpenMoleculesTab() {
-        MoleculesTab tmpMoleculesTab = new MoleculesTab();
+        GridTab tmpMoleculesTab = new GridTab(Message.get("MainTabPane.moleculesTab.title"));
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
-        this.dataTableView = new DataTableView();
-        Pagination tmpPagination = new Pagination((this.dataModelList.size() / rowsPerPage + 1), 0);
+        this.moleculesDataTableView = new MoleculesDataTableView();
+        Pagination tmpPagination = new Pagination((this.moleculeDataModelList.size() / rowsPerPage + 1), 0);
         tmpPagination.setPageFactory(this::createDataTableViewPage);
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addToGridPane(tmpPagination, 0,0,2,2);
-        tmpMoleculesTab.addFragmentButton();
-        tmpMoleculesTab.getFragmentButton().setOnAction(event -> {
-            //TODO: implement fragmentation algorithm start
+        Button tmpFragmentButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
+        tmpMoleculesTab.addToGridPane(tmpFragmentButton, 1,1,1,1);
+        tmpFragmentButton.setOnAction(event->{
+            //TODO: add implementation to start fragmentation algorithm
         });
     }
+
+
 
     /**
      * Creates a page for the pagination for the dataTableView //TODO: refine comment
@@ -164,20 +168,20 @@ public class MainViewController {
      */
     private Node createDataTableViewPage(int aPageIndex){
         int tmpFromIndex = aPageIndex * this.rowsPerPage;
-        int tmpToIndex = Math.min(tmpFromIndex + this.rowsPerPage, this.dataModelList.size());
-        this.dataTableView.getSelectAllCheckBox().setOnAction(event -> {
+        int tmpToIndex = Math.min(tmpFromIndex + this.rowsPerPage, this.moleculeDataModelList.size());
+        this.moleculesDataTableView.getSelectAllCheckBox().setOnAction(event -> {
             this.selectionAllCheckBoxAction = true;
-            for (int i = 0; i < this.dataModelList.size(); i++) {
-                if(this.dataTableView.getSelectAllCheckBox().isSelected()){
-                    this.dataModelList.get(i).setSelection(true);
+            for (int i = 0; i < this.moleculeDataModelList.size(); i++) {
+                if(this.moleculesDataTableView.getSelectAllCheckBox().isSelected()){
+                    this.moleculeDataModelList.get(i).setSelection(true);
                 }
-                else if(!this.dataTableView.getSelectAllCheckBox().isSelected()){
-                    this.dataModelList.get(i).setSelection(false);
+                else if(!this.moleculesDataTableView.getSelectAllCheckBox().isSelected()){
+                    this.moleculeDataModelList.get(i).setSelection(false);
                 }
             }
             this.selectionAllCheckBoxAction = false;
         });
-        this.dataModelList.addListener((ListChangeListener) change ->{
+        this.moleculeDataModelList.addListener((ListChangeListener) change ->{
             if(this.selectionAllCheckBoxAction){
                 // No further action needed with column checkbox data when the select all checkbox is operated on
                 return;
@@ -185,26 +189,26 @@ public class MainViewController {
             while(change.next()){
                 if(change.wasUpdated()){
                     int checked = 0;
-                    for(DataModel tmpDataModel : this.dataModelList){
-                        if(tmpDataModel.isSelected())
+                    for(MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList){
+                        if(tmpMoleculeDataModel.isSelected())
                             checked++;
                     }
-                    if(checked == this.dataModelList.size()){
-                        this.dataTableView.getSelectAllCheckBox().setSelected(true);
-                        this.dataTableView.getSelectAllCheckBox().setIndeterminate(false);
+                    if(checked == this.moleculeDataModelList.size()){
+                        this.moleculesDataTableView.getSelectAllCheckBox().setSelected(true);
+                        this.moleculesDataTableView.getSelectAllCheckBox().setIndeterminate(false);
                     }
                     else if(checked == 0){
-                        this.dataTableView.getSelectAllCheckBox().setSelected(false);
-                        this.dataTableView.getSelectAllCheckBox().setIndeterminate(false);
+                        this.moleculesDataTableView.getSelectAllCheckBox().setSelected(false);
+                        this.moleculesDataTableView.getSelectAllCheckBox().setIndeterminate(false);
                     }
                     else if(checked > 0){
-                        this.dataTableView.getSelectAllCheckBox().setSelected(false);
-                        this.dataTableView.getSelectAllCheckBox().setIndeterminate(true);
+                        this.moleculesDataTableView.getSelectAllCheckBox().setSelected(false);
+                        this.moleculesDataTableView.getSelectAllCheckBox().setIndeterminate(true);
                     }
                 }
             }
         });
-        this.dataTableView.setItems(FXCollections.observableArrayList(this.dataModelList.subList(tmpFromIndex, tmpToIndex)));
-        return new BorderPane(this.dataTableView);
+        this.moleculesDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(tmpFromIndex, tmpToIndex)));
+        return new BorderPane(this.moleculesDataTableView);
     }
 }

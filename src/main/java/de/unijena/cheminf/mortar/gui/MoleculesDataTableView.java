@@ -22,7 +22,7 @@ package de.unijena.cheminf.mortar.gui;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.data.DataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -34,14 +34,14 @@ import javafx.scene.image.Image;
 /**
  * TODO
  */
-public class DataTableView extends TableView {
+public class MoleculesDataTableView extends TableView {
 
-    private TableColumn<DataModel, Boolean> selectionColumn;
-    private TableColumn<DataModel, String> nameColumn;
-    private TableColumn<DataModel, Image> structureColumn;
+    private TableColumn<MoleculeDataModel, Boolean> selectionColumn;
+    private TableColumn<MoleculeDataModel, String> nameColumn;
+    private TableColumn<MoleculeDataModel, Image> structureColumn;
     private CheckBox selectAllCheckBox;
 
-    public DataTableView(){
+    public MoleculesDataTableView(){
         super();
         this.setEditable(true);
         //-selectionColumn
@@ -70,7 +70,7 @@ public class DataTableView extends TableView {
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(false);
         this.nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        this.nameColumn.setCellFactory(TextFieldTableCell.<DataModel>forTableColumn());
+        this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         //-structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.structureColumn.header"));

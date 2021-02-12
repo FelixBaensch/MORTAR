@@ -27,7 +27,7 @@ import javafx.scene.image.ImageView;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
-public class DataModel {
+public class MoleculeDataModel {
 
     private String iD;
     private String name;
@@ -36,7 +36,7 @@ public class DataModel {
     private BooleanProperty selection;
     private IAtomContainerSet fragments;
 
-    public DataModel(String anID, IAtomContainer anAtomContainer){
+    public MoleculeDataModel(String anID, IAtomContainer anAtomContainer){
         this.iD = anID;
         this.atomContainer = anAtomContainer;
         this.name = this.atomContainer.getTitle();
