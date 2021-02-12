@@ -21,4 +21,8 @@
 package de.unijena.cheminf.mortar.model.data;
 
 public class FragmentDataModel {
+
+    public FragmentDataModel(){
+        
+    }
 }
