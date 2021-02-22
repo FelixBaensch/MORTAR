@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
@@ -126,6 +127,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      *
      */
     private Aromaticity aromaticityModel;
+
+    /**
+     *
+     */
+    private FragmentSaturationOptions fragmentSaturationSetting;
     //</editor-fold>
 
     //<editor-fold desc="Constructors">
@@ -133,6 +139,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * TODO
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
+        //this is also the default of EFGF
         this(FunctionalGroupEnvironmentMode.GENERALIZATION);
     }
 
@@ -144,6 +151,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.environmentMode = aMode;
         this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.environmentMode.getAssociatedEFGFMode());
         this.aromaticityModel = ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_DEFAULT;
+        this.fragmentSaturationSetting = FragmentSaturationOptions.HYDROGEN_SATURATION;
     }
     //</editor-fold>
     //
@@ -183,13 +191,19 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
-    /**
-     *
-     * @return
-     */
     @Override
     public String getFragmentationAlgorithmName() {
         return ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME;
+    }
+
+    @Override
+    public void setFragmentSaturationSetting(FragmentSaturationOptions anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given saturation option is null.");
+    }
+
+    @Override
+    public FragmentSaturationOptions getFragmentSaturationSetting() {
+        return this.fragmentSaturationSetting;
     }
 
     /**
@@ -223,14 +237,19 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         List<IAtomContainer> tmpNonFGFragments;
         try {
             if (this.environmentMode != FunctionalGroupEnvironmentMode.NO_ENVIRONMENT) {
+                //generalization or full environment, can both be handled by EFGF
                 tmpFunctionalGroupFragments = this.EFGFinstance.find(aMolecule, false);
             } else {
                 tmpFunctionalGroupFragments = ErtlFunctionalGroupsFinderUtility.findMarkedAtoms(aMolecule);
             }
+            //FG fragments are removed from molecule to get generate alkane fragments
             if (!tmpFunctionalGroupFragments.isEmpty()) {
                 for (IAtomContainer tmpFunctionalGroup : tmpFunctionalGroupFragments) {
                     tmpFunctionalGroup.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE);
+                    if (this.fragmentSaturationSetting.equals(FragmentSaturationOptions.HYDROGEN_SATURATION)) {
+                        IMoleculeFragmenter.saturateWithHydrogen(tmpFunctionalGroup);
+                    }
                     for (IAtom tmpAtom : tmpFunctionalGroup.atoms()) {
                         if (Objects.isNull(tmpAtom.getProperty("EFGFFragmenter.INDEX"))) {
                             //else if construct unnecessary but left here for future individual treatment of cases
@@ -252,23 +271,25 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                         aMolecule.removeAtom(tmpIdToAtomMap.get(tmpIndex));
                     }
                 }
-                //AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
-                //CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance()).addImplicitHydrogens(aMolecule);
                 IAtomContainerSet tmpPartitionedMoietiesSet = ConnectivityChecker.partitionIntoMolecules(aMolecule);
                 tmpNonFGFragments = new ArrayList<>(tmpPartitionedMoietiesSet.getAtomContainerCount());
                 for (IAtomContainer tmpContainer : tmpPartitionedMoietiesSet.atomContainers()) {
                     tmpContainer.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
+                    if (this.fragmentSaturationSetting.equals(FragmentSaturationOptions.HYDROGEN_SATURATION)) {
+                        IMoleculeFragmenter.saturateWithHydrogen(tmpContainer);
+                    }
                     tmpNonFGFragments.add(tmpContainer);
                 }
             } else {
+                //no FG identified
                 List<IAtomContainer> tmpReturnList = new ArrayList<IAtomContainer>(1);
                 tmpReturnList.add(0, aMolecule);
                 aMolecule.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                         ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
                 return tmpReturnList;
             }
-        } catch(IllegalArgumentException /*| CDKException*/ anException) {
+        } catch(IllegalArgumentException | CDKException anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
         }
         List<IAtomContainer> tmpFragments = new ArrayList<IAtomContainer>(tmpFunctionalGroupFragments.size() + tmpNonFGFragments.size());
@@ -362,6 +383,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.aromaticityModel = ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_DEFAULT;
         this.environmentMode = FunctionalGroupEnvironmentMode.GENERALIZATION;
         this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.environmentMode.getAssociatedEFGFMode());
+        this.fragmentSaturationSetting = FragmentSaturationOptions.HYDROGEN_SATURATION;
     }
     //</editor-fold>
 }

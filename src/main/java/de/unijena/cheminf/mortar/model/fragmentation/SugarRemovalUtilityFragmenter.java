@@ -29,12 +29,15 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * TODO
@@ -89,6 +92,11 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
      *
      */
     private SugarTypeToRemove sugarTypeToRemove;
+
+    /**
+     *
+     */
+    private FragmentSaturationOptions fragmentSaturationSetting;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -99,6 +107,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     public SugarRemovalUtilityFragmenter() {
         super();
         this.sugarTypeToRemove = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
+        this.fragmentSaturationSetting = FragmentSaturationOptions.HYDROGEN_SATURATION;
     }
     //</editor-fold>
     //
@@ -130,6 +139,16 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     @Override
     public String getFragmentationAlgorithmName() {
         return SugarRemovalUtilityFragmenter.ALGORITHM_NAME;
+    }
+
+    @Override
+    public void setFragmentSaturationSetting(FragmentSaturationOptions anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given saturation option is null.");
+    }
+
+    @Override
+    public FragmentSaturationOptions getFragmentSaturationSetting() {
+        return this.fragmentSaturationSetting;
     }
 
     /**
@@ -175,8 +194,16 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
         if (tmpFragments.size() > 1) {
             for (int i = 1; i < tmpFragments.size(); i++) {
-                tmpFragments.get(i).setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                IAtomContainer tmpSugarFragment = tmpFragments.get(i);
+                tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                         SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
+                if (this.fragmentSaturationSetting.equals(FragmentSaturationOptions.HYDROGEN_SATURATION)) {
+                    try {
+                        IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
+                    } catch (CDKException aCDKException) {
+                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                    }
+                }
             }
         }
         return tmpFragments;
@@ -253,6 +280,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     public void restoreDefaultSettings() {
         super.restoreDefaultSettings();
         this.sugarTypeToRemove = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
+        this.fragmentSaturationSetting = FragmentSaturationOptions.HYDROGEN_SATURATION;
     }
     //</editor-fold>
 }
