@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -22,19 +22,20 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - add method that receives list of molecules and returns list of unique fragments and returns list of molecules with pointers to fragments
  * - write doc
+ * - make cycle finder configurable?
  */
 
+import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
+import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
-import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
 
@@ -47,11 +48,11 @@ import java.util.Objects;
  * TODO
  */
 public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter {
-    //<editor-fold desc="Enum FunctionalGroupEnvironmentMode">
+    //<editor-fold desc="Enum FunctionalGroupEnvironmentModeOption">
     /**
      *
      */
-    public static enum FunctionalGroupEnvironmentMode {
+    public static enum FunctionalGroupEnvironmentModeOption {
         /**
          *
          */
@@ -76,7 +77,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
          *
          * @param aMode
          */
-        FunctionalGroupEnvironmentMode(ErtlFunctionalGroupsFinder.Mode aMode) {
+        FunctionalGroupEnvironmentModeOption(ErtlFunctionalGroupsFinder.Mode aMode) {
             this.mode = aMode;
         }
 
@@ -89,6 +90,33 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
     //</editor-fold>
     //
+    //<editor-fold desc="Enum AromaticityModelOption">
+    /**
+     *
+     */
+    public static enum AromaticityModelOption {
+        /**
+         *
+         */
+        DAYLIGHT,
+
+        /**
+         *
+         */
+        CDK,
+
+        /**
+         *
+         */
+        CDK_ALLOWING_EXOCYCLIC,
+
+        /**
+         *
+         */
+        PI_BONDS;
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Public static final constants">
     /**
      *
@@ -98,18 +126,27 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      *
      */
-    public static final Aromaticity AROMATICITY_MODEL_DEFAULT = new Aromaticity(ElectronDonation.daylight(),
-            Cycles.or(Cycles.all(), Cycles.cdkAromaticSet()));
+    public static final String INTERNAL_INDEX_PROPERTY_KEY = "EFGFFragmenter.INDEX";
 
     /**
      *
      */
-    public static final String FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE = "ErtlFunctionalGroupsFinderFragmenter.FunctionalGroup";
+    public static final AromaticityModelOption AROMATICITY_MODEL_OPTION_DEFAULT = AromaticityModelOption.DAYLIGHT;
 
     /**
-     * TODO: is the 'opposite' of FG alkane? Wikipedia says, alkanes are acyclic. But apart from this, the definition fits.
+     *
      */
-    public static final String FRAGMENT_CATEGORY_ALKANE_VALUE = "ErtlFunctionalGroupsFinderFragmenter.Alkane";
+    public static final FunctionalGroupEnvironmentModeOption ENVIRONMENT_MODE_OPTION_DEFAULT = FunctionalGroupEnvironmentModeOption.GENERALIZATION;
+
+    /**
+     *
+     */
+    public static final String FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE = "EFGFFragmenter.FunctionalGroup";
+
+    /**
+     *
+     */
+    public static final String FRAGMENT_CATEGORY_ALKANE_VALUE = "EFGFFragmenter.Alkane";
     //</editor-fold>
     //
     //<editor-fold desc="Private variables">
@@ -121,7 +158,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      *
      */
-    private FunctionalGroupEnvironmentMode environmentMode;
+    private final SimpleStringProperty environmentModeProperty = new SimpleStringProperty(this, "environmentMode");
 
     /**
      *
@@ -131,7 +168,17 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      *
      */
-    private FragmentSaturationOptions fragmentSaturationSetting;
+    private final SimpleStringProperty aromaticityModelProperty = new SimpleStringProperty(this, "aromaticityModel");
+
+    /**
+     *
+     */
+    private final SimpleStringProperty fragmentSaturationProperty = new SimpleStringProperty(this, "fragmentSaturation");
+
+    /**
+     *
+     */
+    private CycleFinder cycleFinder;
     //</editor-fold>
 
     //<editor-fold desc="Constructors">
@@ -139,19 +186,27 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * TODO
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
-        //this is also the default of EFGF
-        this(FunctionalGroupEnvironmentMode.GENERALIZATION);
+        this(ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT);
     }
 
     /**
      *
      */
-    public ErtlFunctionalGroupsFinderFragmenter(FunctionalGroupEnvironmentMode aMode) throws NullPointerException {
+    public ErtlFunctionalGroupsFinderFragmenter(FunctionalGroupEnvironmentModeOption aMode) throws NullPointerException {
         Objects.requireNonNull(aMode, "Given mode is null.");
-        this.environmentMode = aMode;
-        this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.environmentMode.getAssociatedEFGFMode());
-        this.aromaticityModel = ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_DEFAULT;
-        this.fragmentSaturationSetting = FragmentSaturationOptions.HYDROGEN_SATURATION;
+        this.cycleFinder = Cycles.or(Cycles.all(), Cycles.cdkAromaticSet());
+        this.environmentModeProperty.set(aMode.name());
+        this.EFGFinstance = new ErtlFunctionalGroupsFinder(FunctionalGroupEnvironmentModeOption.valueOf(
+                this.environmentModeProperty.get()).getAssociatedEFGFMode());
+        this.aromaticityModelProperty.set(ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name());
+        //this.aromaticityModel is set in the method
+        this.setAromaticityModelSetting(AromaticityModelOption.valueOf(this.aromaticityModelProperty.get()));
+        this.fragmentSaturationProperty.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.environmentModeProperty.addListener((observable, oldValue, newValue)
+                -> this.setEnvironmentModeSetting(FunctionalGroupEnvironmentModeOption.valueOf(this.environmentModeProperty.get())));
+        this.aromaticityModelProperty.addListener((observable, oldValue, newValue)
+                -> this.setAromaticityModelSetting(AromaticityModelOption.valueOf(this.aromaticityModelProperty.get())));
+        //no listener needed for fragment saturation setting
     }
     //</editor-fold>
     //
@@ -160,15 +215,29 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      *
      * @return
      */
-    public ErtlFunctionalGroupsFinderFragmenter.FunctionalGroupEnvironmentMode getEnvironmentMode() {
-        return this.environmentMode;
+    public FunctionalGroupEnvironmentModeOption getEnvironmentModeSetting() {
+        return FunctionalGroupEnvironmentModeOption.valueOf(this.environmentModeProperty.get());
     }
 
     /**
      *
      */
-    public Aromaticity getAromaticityModel() {
-        return this.aromaticityModel;
+    public SimpleStringProperty getEnvironmentModeProperty() {
+        return this.environmentModeProperty;
+    }
+
+    /**
+     *
+     */
+    public AromaticityModelOption getAromaticityModelSetting() {
+        return AromaticityModelOption.valueOf(this.aromaticityModelProperty.get());
+    }
+
+    /**
+     *
+     */
+    public SimpleStringProperty getAromaticityModelProperty() {
+        return this.aromaticityModelProperty;
     }
     //</editor-fold>
     //
@@ -177,37 +246,74 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      *
      * @return
      */
-    public void setEnvironmentMode(ErtlFunctionalGroupsFinderFragmenter.FunctionalGroupEnvironmentMode aMode)
+    public void setEnvironmentModeSetting(FunctionalGroupEnvironmentModeOption aMode)
             throws NullPointerException {
         Objects.requireNonNull(aMode, "Given mode is null.");
-        this.environmentMode = aMode;
-        this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.environmentMode.getAssociatedEFGFMode());
+        this.environmentModeProperty.set(aMode.name());
+        this.EFGFinstance = new ErtlFunctionalGroupsFinder(FunctionalGroupEnvironmentModeOption.valueOf(this.environmentModeProperty.get()).getAssociatedEFGFMode());
     }
 
-    public void setAromaticityModel(Aromaticity anAromaticityModel) throws NullPointerException {
+    public void setAromaticityModelSetting(AromaticityModelOption anAromaticityModel) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anAromaticityModel, "Given model is null.");
-        this.aromaticityModel = anAromaticityModel;
+        switch (anAromaticityModel) {
+            case CDK:
+                this.aromaticityModel = new Aromaticity(ElectronDonation.cdk(), this.cycleFinder);
+                break;
+            case DAYLIGHT:
+                this.aromaticityModel = new Aromaticity(ElectronDonation.daylight(), this.cycleFinder);
+                break;
+            case CDK_ALLOWING_EXOCYCLIC:
+                this.aromaticityModel = new Aromaticity(ElectronDonation.cdkAllowingExocyclic(), this.cycleFinder);
+                break;
+            case PI_BONDS:
+                this.aromaticityModel = new Aromaticity(ElectronDonation.piBonds(), this.cycleFinder);
+                break;
+            default:
+                throw new IllegalArgumentException("Undefined aromaticity model option.");
+        }
+        this.aromaticityModelProperty.set(anAromaticityModel.name());
+        return;
     }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+
     @Override
     public String getFragmentationAlgorithmName() {
         return ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME;
     }
 
     @Override
-    public void setFragmentSaturationSetting(FragmentSaturationOptions anOption) throws NullPointerException {
+    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
+        this.fragmentSaturationProperty.set(anOption.name());
     }
 
     @Override
-    public FragmentSaturationOptions getFragmentSaturationSetting() {
-        return this.fragmentSaturationSetting;
+    public FragmentSaturationOption getFragmentSaturationSetting() {
+        return FragmentSaturationOption.valueOf(this.fragmentSaturationProperty.get());
     }
 
     /**
-     * Notice that the given atom container is altered!
+     *
+     */
+    @Override
+    public void restoreDefaultSettings() {
+        this.environmentModeProperty.set(ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.name());
+        this.EFGFinstance = new ErtlFunctionalGroupsFinder(FunctionalGroupEnvironmentModeOption.valueOf(
+                this.environmentModeProperty.get()).getAssociatedEFGFMode());
+        this.aromaticityModelProperty.set(ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name());
+        //this.aromaticityModel is set in the method
+        this.setAromaticityModelSetting(AromaticityModelOption.valueOf(this.aromaticityModelProperty.get()));
+        this.fragmentSaturationProperty.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        //no need to reset cycle finder
+    }
+
+    /**
+     * Notice that the given atom container is altered
+     * If molecule is empty, it is returned inside a list as sole element
+     * If no FG are identified, the molecule is returned as sole element in the list (one alkane fragment)
+     *
      * @param aMolecule
      * @return
      * @throws NullPointerException
@@ -215,6 +321,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      */
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+        //<editor-fold desc="Parameter tests">
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         if (aMolecule.isEmpty()) {
             List<IAtomContainer> tmpReturnList = new ArrayList<IAtomContainer>(1);
@@ -227,56 +334,49 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         if (!tmpCanBeFragmented) {
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
+        //</editor-fold>
         HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(aMolecule.getAtomCount() + 1, 1);
         for (int i = 0; i < aMolecule.getAtomCount(); i++) {
             IAtom tmpAtom = aMolecule.getAtom(i);
-            tmpAtom.setProperty("EFGFFragmenter.INDEX", i);
+            tmpAtom.setProperty(ErtlFunctionalGroupsFinderFragmenter.INTERNAL_INDEX_PROPERTY_KEY, i);
             tmpIdToAtomMap.put(i, tmpAtom);
         }
         List<IAtomContainer> tmpFunctionalGroupFragments;
         List<IAtomContainer> tmpNonFGFragments;
         try {
-            if (this.environmentMode != FunctionalGroupEnvironmentMode.NO_ENVIRONMENT) {
-                //generalization or full environment, can both be handled by EFGF
-                tmpFunctionalGroupFragments = this.EFGFinstance.find(aMolecule, false);
-            } else {
+            //generate FG fragments using EFGF
+            if (this.environmentModeProperty.get() == FunctionalGroupEnvironmentModeOption.NO_ENVIRONMENT.name()) {
+                //extract only marked atoms, use implemented utility method from EFGFUtilities
                 tmpFunctionalGroupFragments = ErtlFunctionalGroupsFinderUtility.findMarkedAtoms(aMolecule);
+            } else {
+                //generalization or full environment, can both be handled by EFGF alone
+                tmpFunctionalGroupFragments = this.EFGFinstance.find(aMolecule, false);
             }
-            //FG fragments are removed from molecule to get generate alkane fragments
             if (!tmpFunctionalGroupFragments.isEmpty()) {
                 for (IAtomContainer tmpFunctionalGroup : tmpFunctionalGroupFragments) {
+                    //post-processing FG fragments
                     tmpFunctionalGroup.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE);
-                    if (this.fragmentSaturationSetting.equals(FragmentSaturationOptions.HYDROGEN_SATURATION)) {
+                    if (this.fragmentSaturationProperty.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                         IMoleculeFragmenter.saturateWithHydrogen(tmpFunctionalGroup);
                     }
+                    //FG fragments are removed from molecule to generate alkane fragments
                     for (IAtom tmpAtom : tmpFunctionalGroup.atoms()) {
-                        if (Objects.isNull(tmpAtom.getProperty("EFGFFragmenter.INDEX"))) {
-                            //else if construct unnecessary but left here for future individual treatment of cases
-                            if (tmpAtom instanceof IPseudoAtom && "R".equals(((IPseudoAtom)tmpAtom).getLabel())) {
-                                //atom is a pseudo atom added by the EFGF
-                                continue;
-                            } else if (tmpAtom.getSymbol().equals("C")){
-                                //atom is an environmental C added by the EFGF
-                                continue;
-                            } else if (tmpAtom.getSymbol().equals("H")) {
-                                //atom is an explicit H added by the EFGF
-                                continue;
-                            } else {
-                                //unspecified additional atom
-                                continue;
-                            }
+                        if (!Objects.isNull(tmpAtom.getProperty(ErtlFunctionalGroupsFinderFragmenter.INTERNAL_INDEX_PROPERTY_KEY))) {
+                            //FG fragments contain new atoms added by EFGF, they must be removed
+                            int tmpIndex = tmpAtom.getProperty("EFGFFragmenter.INDEX");
+                            aMolecule.removeAtom(tmpIdToAtomMap.get(tmpIndex));
                         }
-                        int tmpIndex = tmpAtom.getProperty("EFGFFragmenter.INDEX");
-                        aMolecule.removeAtom(tmpIdToAtomMap.get(tmpIndex));
                     }
                 }
+                //Partition unconnected alkane fragments in distinct atom containers
                 IAtomContainerSet tmpPartitionedMoietiesSet = ConnectivityChecker.partitionIntoMolecules(aMolecule);
                 tmpNonFGFragments = new ArrayList<>(tmpPartitionedMoietiesSet.getAtomContainerCount());
                 for (IAtomContainer tmpContainer : tmpPartitionedMoietiesSet.atomContainers()) {
+                    //post-processing of alkane fragments
                     tmpContainer.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
-                    if (this.fragmentSaturationSetting.equals(FragmentSaturationOptions.HYDROGEN_SATURATION)) {
+                    if (this.fragmentSaturationProperty.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                         IMoleculeFragmenter.saturateWithHydrogen(tmpContainer);
                     }
                     tmpNonFGFragments.add(tmpContainer);
@@ -312,11 +412,13 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             throw new IllegalArgumentException("Given fragment list is empty.");
         }
         if (Objects.isNull(aFragmentList.get(0))) {
-            throw new IllegalArgumentException("Object at position 0 is null, should be the original molecule or a functional group fragment.");
+            throw new IllegalArgumentException("Object at position 0 is null, should be the original molecule or a " +
+                    "functional group fragment.");
         }
         String tmpCategory = aFragmentList.get(0).getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY);
         if (Objects.isNull(tmpCategory) || tmpCategory.isEmpty()) {
-            throw new IllegalArgumentException("Object at position 0 has no or an incorrect fragment category property, should be the original molecule or a functional group fragment.");
+            throw new IllegalArgumentException("Object at position 0 has no or an incorrect fragment category property, " +
+                    "should be the original molecule or a functional group fragment.");
         }
         return !(aFragmentList.size() == 1);
     }
@@ -373,17 +475,6 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         } else {
             return tmpPreprocessedMolecule;
         }
-    }
-
-    /**
-     *
-     */
-    @Override
-    public void restoreDefaultSettings() {
-        this.aromaticityModel = ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_DEFAULT;
-        this.environmentMode = FunctionalGroupEnvironmentMode.GENERALIZATION;
-        this.EFGFinstance = new ErtlFunctionalGroupsFinder(this.environmentMode.getAssociatedEFGFMode());
-        this.fragmentSaturationSetting = FragmentSaturationOptions.HYDROGEN_SATURATION;
     }
     //</editor-fold>
 }

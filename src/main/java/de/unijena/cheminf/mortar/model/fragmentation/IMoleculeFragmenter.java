@@ -23,8 +23,9 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 /**
  * TODO:
  * - Add methods for processing of lists of molecules, think about return values
- * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)?
- * - implement management of settings
+ * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)
+ * - implement management of settings via properties
+ * - add method getFragmentSaturationProperty()
  */
 
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -44,7 +45,7 @@ public interface IMoleculeFragmenter {
     /**
      * Enumeration of different ways to saturate free valences of returned fragment molecules
      */
-    public static enum FragmentSaturationOptions {
+    public static enum FragmentSaturationOption {
         /**
          * Do not saturate free valences or use default of the respective fragmenter.
          */
@@ -62,6 +63,11 @@ public interface IMoleculeFragmenter {
      * 'functional group'.
      */
     public static final String FRAGMENT_CATEGORY_PROPERTY_KEY = "IMoleculeFragmenter.Category";
+
+    /**
+     *
+     */
+    public static final FragmentSaturationOption FRAGMENT_SATURATION_OPTION_DEFAULT = FragmentSaturationOption.HYDROGEN_SATURATION;
     //</editor-fold>
     //
     //<editor-fold desc="Public properties">
@@ -78,14 +84,19 @@ public interface IMoleculeFragmenter {
      * @param anOption the option to use
      * @throws NullPointerException if the given option is null
      */
-    public void setFragmentSaturationSetting(FragmentSaturationOptions anOption) throws NullPointerException;
+    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException;
 
     /**
      * Returns the currently set option for saturating free valences on returned fragment molecules.
      *
      * @return the set option
      */
-    public FragmentSaturationOptions getFragmentSaturationSetting();
+    public FragmentSaturationOption getFragmentSaturationSetting();
+
+    /**
+     * Restore all settings of the fragmenter to their default values.
+     */
+    public void restoreDefaultSettings();
     //</editor-fold>
     //
     //<editor-fold desc="Public methods">
@@ -100,7 +111,7 @@ public interface IMoleculeFragmenter {
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
 
     /**
-     * Returns true if the given molecule has e.g. functional groups or sugar moieties that are detected by the respective
+     * Returns true if the fragmented molecule has e.g. functional groups or sugar moieties that are detected by the respective
      * algorithm. The Ertl functional groups fragmenter, for example, returns the unchanged molecule as an alkane fragment
      * if no functional groups can be identified. In this case, this method would return false. Other fragmenters might
      * return no fragment at all in such a case. For harmonising these different behaviours, this method is implemented.
@@ -154,11 +165,6 @@ public interface IMoleculeFragmenter {
      * preprocessing
      */
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
-
-    /**
-     * Restore all settings of the fragmenter to their default values.
-     */
-    public void restoreDefaultSettings();
     //</editor-fold>
     //<editor-fold desc="Static methods">
     /**
