@@ -20,9 +20,48 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import javafx.scene.image.ImageView;
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainer;
+
 public class FragmentDataModel {
 
-    public FragmentDataModel(){
-        
+    private String iD;
+    private String smiles;
+    private int frequency;
+    private double percentage;
+    private IAtomContainer atomContainer;
+
+    public FragmentDataModel(String anId, IAtomContainer anAtomContainer, int aFrequency, double aPercentage){
+        this.iD = anId;
+        this.atomContainer = anAtomContainer;
+        this.frequency = aFrequency;
+        this.percentage = aPercentage;
+        this.smiles = this.atomContainer.getProperty("SMILES");
+    }
+
+    public String getId() {
+        return this.iD;
+    }
+
+    public IAtomContainer getAtomContainer() {
+        return this.atomContainer;
+    }
+
+    public String getSmiles() {
+        return this.smiles;
+    }
+
+    public int getFrequency() {
+        return this.frequency;
+    }
+
+    public double getPercentage() {
+        return this.percentage;
+    }
+
+    public ImageView getStructure(){
+        return new ImageView(DepictionUtil.depictImage(this.atomContainer));
     }
 }

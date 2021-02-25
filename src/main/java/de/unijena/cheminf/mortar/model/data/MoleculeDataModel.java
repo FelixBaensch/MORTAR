@@ -27,6 +27,9 @@ import javafx.scene.image.ImageView;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MoleculeDataModel {
 
     private String iD;
@@ -34,7 +37,7 @@ public class MoleculeDataModel {
     private String smiles;
     private IAtomContainer atomContainer;
     private BooleanProperty selection;
-    private IAtomContainerSet fragments;
+    private List<FragmentDataModel> fragments;
 
     public MoleculeDataModel(String anID, IAtomContainer anAtomContainer){
         this.iD = anID;
@@ -42,6 +45,7 @@ public class MoleculeDataModel {
         this.name = this.atomContainer.getTitle();
         this.smiles = this.atomContainer.getProperty("SMILES");
         this.selection = new SimpleBooleanProperty(true);
+        this.fragments = new ArrayList<>();
     }
 
     public String getId(){
@@ -64,7 +68,7 @@ public class MoleculeDataModel {
     public BooleanProperty selectionProperty(){
         return selection;
     }
-    public IAtomContainerSet getFragments(){
+    public List<FragmentDataModel> getFragments(){
         return this.fragments;
     }
     public ImageView getStructure(){

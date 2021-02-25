@@ -29,11 +29,16 @@ import javafx.scene.image.Image;
 
 public class FragmentsDataTableView extends TableView {
 
+    //<editor-fold desc="private class variables", defaultstate="collapsed">
     private TableColumn<FragmentDataModel, Image> structureColumn;
     private TableColumn<FragmentDataModel, String> smilesColumn;
     private TableColumn<FragmentDataModel, Integer> frequencyColumn;
     private TableColumn<FragmentDataModel, Double> percentageColumn;
-
+    //</editor-fold>
+    //
+    /**
+     * Constructor
+     */
     public FragmentsDataTableView(){
         super();
         this.setEditable(false);
@@ -41,12 +46,13 @@ public class FragmentsDataTableView extends TableView {
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
         this.structureColumn.setMinWidth(150);
         this.structureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.8) //TODO
+                this.widthProperty().multiply(0.7) //TODO
         );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
         this.structureColumn.setSortable(true);
         this.structureColumn.setCellValueFactory(new PropertyValueFactory("structure"));
+        this.structureColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.structureColumn);
         //-smilesColumn
         this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
@@ -58,6 +64,7 @@ public class FragmentsDataTableView extends TableView {
         this.smilesColumn.setEditable(false);
         this.smilesColumn.setSortable(true);
         this.smilesColumn.setCellValueFactory(new PropertyValueFactory("smiles"));
+        this.smilesColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.smilesColumn);
         //-frequencyColumn
         this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
@@ -69,6 +76,7 @@ public class FragmentsDataTableView extends TableView {
         this.frequencyColumn.setEditable(false);
         this.frequencyColumn.setSortable(true);
         this.frequencyColumn.setCellValueFactory(new PropertyValueFactory("frequency"));
+        this.frequencyColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.frequencyColumn);
         //-percentageColumn
         this.percentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.percentageColumn.header"));
@@ -80,9 +88,10 @@ public class FragmentsDataTableView extends TableView {
         this.percentageColumn.setEditable(false);
         this.percentageColumn.setSortable(true);
         this.percentageColumn.setCellValueFactory(new PropertyValueFactory("percentage"));
+        this.percentageColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.percentageColumn);
     }
-
+    //
     //<editor-fold desc="properties" defaultstate="collapsed">
     public TableColumn getStructureColumn() { return this.structureColumn; }
     public TableColumn getSmilesColumn() { return this.smilesColumn; }

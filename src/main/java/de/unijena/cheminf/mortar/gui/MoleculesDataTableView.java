@@ -32,25 +32,30 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 
 /**
- * TODO
+ * MoleculesDataTableView extends TableView
+ * Customized table view for molecules data table view
  */
 public class MoleculesDataTableView extends TableView {
-
+    //
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
     private TableColumn<MoleculeDataModel, Boolean> selectionColumn;
     private TableColumn<MoleculeDataModel, String> nameColumn;
     private TableColumn<MoleculeDataModel, Image> structureColumn;
     private CheckBox selectAllCheckBox;
-
+    //</editor-fold>
+    //
+    /**
+     * Constructor
+     */
     public MoleculesDataTableView(){
         super();
-        this.setEditable(true);
+        this.setEditable(false);
         //-selectionColumn
         this.selectionColumn = new TableColumn<>();
         this.selectAllCheckBox = new CheckBox();
         this.selectAllCheckBox.setAllowIndeterminate(true);
         this.selectAllCheckBox.setSelected(true);
         this.selectionColumn.setGraphic(this.selectAllCheckBox);
-        //TODO: add de/selectAll checkBox to header
         this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
         this.selectionColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.05)
@@ -86,7 +91,7 @@ public class MoleculesDataTableView extends TableView {
         //
         this.getColumns().addAll(this.selectionColumn, this.nameColumn, this.structureColumn);
     }
-
+    //
     //<editor-fold desc="properties" defaulstate="collapsed">
     public TableColumn getSelectionColumn(){
         return this.selectionColumn;

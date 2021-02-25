@@ -46,7 +46,7 @@ public class StatusBar extends FlowPane {
     private ProgressBar progressBar;
     private Task task;
     //</editor-fold>
-
+    //
     /**
      * Constructor
      */
@@ -66,7 +66,8 @@ public class StatusBar extends FlowPane {
         this.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         this.getChildren().addAll(fileNameLabel, statusLabel, progressBar);
     }
-
+    //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      *
      * @param aTask
@@ -93,7 +94,7 @@ public class StatusBar extends FlowPane {
         //Start task
         new Thread(this.task).start();
     }
-
+    //
     /**
      * Cancels task
      */
@@ -111,6 +112,7 @@ public class StatusBar extends FlowPane {
         }
         statusLabel.setText(Message.get("Status.Ready"));
     }
+    //</editor-fold>
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**

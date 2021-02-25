@@ -24,13 +24,19 @@ import de.unijena.cheminf.mortar.gui.*;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.fragmentation.ErtlFunctionalGroupsFinderFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -41,11 +47,20 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.hash.MoleculeHashGenerator;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
-
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * MainViewController
@@ -55,18 +70,33 @@ import java.util.Objects;
  */
 public class MainViewController {
 
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
     private Stage primaryStage;
     private MainView mainView;
     private String appDir;
     private Scene scene;
-//    private IAtomContainerSet atomContainerSet;
     private MainTabPane mainTabPane;
     private ObservableList<MoleculeDataModel> moleculeDataModelList;
+    private ObservableList<FragmentDataModel> fragmentDataModelList;
     private MoleculesDataTableView moleculesDataTableView;
     private int rowsPerPage;
     private boolean selectionAll;
     private boolean selectionAllCheckBoxAction;
-
+    //</editor-fold>
+    //<editor-fold desc="private static final variables" defaultstate="collapsed">
+    /**
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(MainViewController.class.getName());
+    //</editor-fold>
+    //
+    /**
+     * Constructor
+     *
+     * @param aStage
+     * @param aMainView
+     * @param anAppDir
+     */
     public MainViewController(Stage aStage, MainView aMainView, String anAppDir){
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
@@ -79,10 +109,11 @@ public class MainViewController {
         //</editor-fold>
         this.selectionAll = true;
         this.moleculeDataModelList = FXCollections.observableArrayList(param -> new Observable[]{param.selectionProperty()});
+        this.fragmentDataModelList = FXCollections.observableArrayList();
         this.primaryStage = aStage;
         this.mainView = aMainView;
         this.appDir = anAppDir;
-        //<editor-fold desc="show MainView inside of the primaryStage" defaultstate="collapsed">
+        //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
         GuiUtil.GuiBindControlSizeToParentPane(this.mainView.getMainCenterPane(), this.mainTabPane);
@@ -93,16 +124,15 @@ public class MainViewController {
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
-
-        this.rowsPerPage = 5;
-
+        this.rowsPerPage = 5; //TODO: get this from settings
         this.addListener();
     }
-
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      *
      */
-    private void addListener(){
+    private void addListener() {
         this.mainView.getMainMenuBar().getExitMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.closeApplication(0));
@@ -111,7 +141,7 @@ public class MainViewController {
                 anEvent -> this.loadMoleculeFile(this.primaryStage));
         //TODO: More implementation needed
     }
-
+    //
     /**
      * Closes application
      */
@@ -120,30 +150,38 @@ public class MainViewController {
         System.exit(aStatus);
     }
     //
-
     /**
-     *
+     * Loads molecule file and opens molecules tab
      *
      * @param aParentStage
      */
     private void loadMoleculeFile(Stage aParentStage) {
         Importer tmpImporter = new Importer();
         IAtomContainerSet tmpAtomContainerSet = tmpImporter.Import(aParentStage);
+        this.clearGuiAndCollections();
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
             return;
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
+            if(tmpAtomContainer.getProperty("SMILES") == null){
+                try {
+                    SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Absolute);
+                    tmpAtomContainer.setProperty("SMILES", tmpSmilesGen.create(tmpAtomContainer));
+                } catch (CDKException anException){
+                    MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                }
+            }
             MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer.getID(), tmpAtomContainer);
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
         this.OpenMoleculesTab();
     }
-
+    //
     /**
      * Opens molecules tab
      */
     private void OpenMoleculesTab() {
-        GridTab tmpMoleculesTab = new GridTab(Message.get("MainTabPane.moleculesTab.title"));
+        GridTab tmpMoleculesTab = new GridTab(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name());
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
         this.moleculesDataTableView = new MoleculesDataTableView();
         Pagination tmpPagination = new Pagination((this.moleculeDataModelList.size() / rowsPerPage + 1), 0);
@@ -155,11 +193,10 @@ public class MainViewController {
         tmpMoleculesTab.addToGridPane(tmpFragmentButton, 1,1,1,1);
         tmpFragmentButton.setOnAction(event->{
             //TODO: add implementation to start fragmentation algorithm
+            this.startFragmentation();
         });
     }
-
-
-
+    //
     /**
      * Creates a page for the pagination for the dataTableView //TODO: refine comment
      *
@@ -211,4 +248,105 @@ public class MainViewController {
         this.moleculesDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(tmpFromIndex, tmpToIndex)));
         return new BorderPane(this.moleculesDataTableView);
     }
+    //
+    /**
+     * Starts fragmentation task and opens fragment and itemiztation tabs
+     */
+    private void startFragmentation(){
+        //TODO
+        Map<Long, IAtomContainer> tmpFragmentMap = new HashMap<>();
+        Task tmpFragmentTask = new Task() {
+            @Override
+            protected Object call() throws Exception {
+                IMoleculeFragmenter tmpFragmenter =  new ErtlFunctionalGroupsFinderFragmenter();
+                MoleculeHashGenerator tmpHashGen = ErtlFunctionalGroupsFinderUtility.getFunctionalGroupHashGenerator();
+                for(int i = 0; i < moleculeDataModelList.size(); i++){
+                    List<IAtomContainer> tmpFragments = tmpFragmenter.fragmentMolecule(moleculeDataModelList.get(i).getAtomContainer());
+                    for (IAtomContainer tmpFragment : tmpFragments) {
+                        long tmpKey = tmpHashGen.generate(tmpFragment);
+                        tmpFragmentMap.put(tmpKey, tmpFragment);
+                    }
+                }
+                return null;
+            }
+        };
+        this.mainView.getStatusBar().setTaskAndStart(tmpFragmentTask);
+        this.mainView.getStatusBar().getTask().setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent event) {
+                tmpFragmentMap.forEach((k, v) -> {
+                    fragmentDataModelList.add(new FragmentDataModel(v.getID(), v, 0,0.0));
+                });
+                moleculeDataModelList.get(0).getFragments().addAll(fragmentDataModelList);
+                GridTab tmpFragmentsTab = new GridTab(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
+                mainTabPane.getTabs().add(tmpFragmentsTab);
+                FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
+                Pagination tmpPagination = new Pagination((fragmentDataModelList.size() / rowsPerPage + 1), 0);
+                tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
+                VBox.setVgrow(tmpPagination, Priority.ALWAYS);
+                HBox.setHgrow(tmpPagination, Priority.ALWAYS);
+                tmpFragmentsTab.addToGridPane(tmpPagination, 0,0,2,2);
+
+                int tmpAmount = 0;
+                for(int i= 0; i < moleculeDataModelList.size(); i++){
+                    tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragments().size());
+                }
+                GridTab tmpItemizationTab = new GridTab("Items", TabNames.Itemization.name());
+                mainTabPane.getTabs().add(tmpItemizationTab);
+                ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount);
+                Pagination tmpPaginationItems = new Pagination(moleculeDataModelList.size() / rowsPerPage + 1, 0);
+                tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
+                VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
+                HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
+                tmpItemizationTab.addToGridPane(tmpPaginationItems, 0,0,2,2);
+            }
+        });
+    }
+    //
+    /**
+     * Creates a fragments tableview page
+     *
+     * @param pageIndex
+     * @param aFragmentsDataTableView
+     * @return
+     */
+    private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView) {
+        int fromIndex = pageIndex * rowsPerPage;
+        int toIndex = Math.min(fromIndex + rowsPerPage, this.fragmentDataModelList.size());
+        aFragmentsDataTableView.setItems(FXCollections.observableArrayList(this.fragmentDataModelList.subList(fromIndex, toIndex)));
+        return new BorderPane(aFragmentsDataTableView);
+    }
+    //
+    /**
+     * Creates an itemization tableview page
+     *
+     * @param pageIndex
+     * @param anItemizationDataTableView
+     * @return
+     */
+    private Node createItemizationTableViewPage(int pageIndex, ItemizationDataTableView anItemizationDataTableView){
+        int fromIndex = pageIndex * rowsPerPage;
+        int toIndex = Math.min(fromIndex + rowsPerPage, this.moleculeDataModelList.size());
+        anItemizationDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(fromIndex, toIndex)));
+
+        return new BorderPane(anItemizationDataTableView);
+    }
+    //
+    /**
+     * Clears the gui and all collections
+     */
+    private void clearGuiAndCollections(){
+        this.moleculeDataModelList.clear();
+        this.fragmentDataModelList.clear();
+        this.moleculesDataTableView = null;
+        this.mainTabPane.getTabs().clear();
+    }
+    //</editor-fold>
+}
+
+/**
+ * Enum ro tab names
+ */
+enum TabNames{
+    Molecules, Fragments, Itemization
 }

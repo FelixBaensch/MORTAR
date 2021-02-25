@@ -31,14 +31,25 @@ import javafx.scene.layout.RowConstraints;
 public class GridTab extends Tab {
 
     private GridPane gridPane;
-
+    //
+    /**
+     * Constructor
+     *
+     * Creates a 'No Title' grid tab
+     */
     public GridTab(){
-        this("loading");
+        this("No Title", "");
     }
-    
-    public GridTab(String aTitle){
+    //
+    /**
+     * Constructor
+     * @param aTitle
+     * @param anIdString
+     */
+    public GridTab(String aTitle, String anIdString){
         super(aTitle);
         this.setClosable(false);
+        this.setId(anIdString);
         //gridPane to add button to pagination
         this.gridPane = new GridPane();
         this.setContent(this.gridPane);
@@ -63,7 +74,7 @@ public class GridTab extends Tab {
         tmpColCon2.setHgrow(Priority.ALWAYS);
         gridPane.getColumnConstraints().add(tmpColCon2);
     }
-
+    //
     /**
      * Adds given Node (aNode) to specified column (aColIndex) and row (aRowIndex) to GridPane
      * Necessary to add the pagination via  MainViewController
@@ -77,9 +88,12 @@ public class GridTab extends Tab {
     public void addToGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.gridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
-
+    //
+    /**
+     *
+     * @param aTitle
+     */
     public void setTitle(String aTitle){
         this.setText(aTitle);
     }
-
 }
