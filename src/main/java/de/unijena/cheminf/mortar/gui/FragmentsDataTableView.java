@@ -27,6 +27,10 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 
+/**
+ + FragmentsDataTableView extends TableView
+ * Customized table view for fragments data table view
+ */
 public class FragmentsDataTableView extends TableView {
 
     //<editor-fold desc="private class variables", defaultstate="collapsed">

@@ -21,7 +21,6 @@
 package de.unijena.cheminf.mortar.gui;
 
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.TableColumn;
@@ -30,10 +29,10 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 
+/**
+ * Custom table view for the itemization table view
+ */
 public class ItemizationDataTableView extends TableView {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">

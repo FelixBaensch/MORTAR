@@ -22,17 +22,29 @@ package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import javafx.scene.image.ImageView;
-import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+/**
+ * Model class for fragment data
+ */
 public class FragmentDataModel {
 
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
     private String iD;
     private String smiles;
     private int frequency;
     private double percentage;
     private IAtomContainer atomContainer;
-
+    //</editor-fold>
+    //
+    /**
+     * Constructor
+     *
+     * @param anId - unique identifier
+     * @param anAtomContainer - IAtomContainer
+     * @param aFrequency - frequency of this fragment
+     * @param aPercentage - percentage amount of this fragment
+     */
     public FragmentDataModel(String anId, IAtomContainer anAtomContainer, int aFrequency, double aPercentage){
         this.iD = anId;
         this.atomContainer = anAtomContainer;
@@ -40,28 +52,54 @@ public class FragmentDataModel {
         this.percentage = aPercentage;
         this.smiles = this.atomContainer.getProperty("SMILES");
     }
-
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns string unique identifier
+     * @return String ID
+     */
     public String getId() {
         return this.iD;
     }
-
+    //
+    /**
+     * Returns IAtomContainer
+     * @return IAtomContainer
+     */
     public IAtomContainer getAtomContainer() {
         return this.atomContainer;
     }
-
+    //
+    /**
+     * Returns SMILES as String
+     * @return String SMILES
+     */
     public String getSmiles() {
         return this.smiles;
     }
-
+    //
+    /**
+     * Returns frequency of this framgent
+     * @return int frequency
+     */
     public int getFrequency() {
         return this.frequency;
     }
-
+    //
+    /**
+     * Returns percentage frequency of this fragment
+     * @return double percentage
+     */
     public double getPercentage() {
         return this.percentage;
     }
-
+    //
+    /**
+     * Creates and returns ImageView of this fragment
+     * @return ImageView of this fragment
+     */
     public ImageView getStructure(){
         return new ImageView(DepictionUtil.depictImage(this.atomContainer));
     }
+    //</editor-fold>
 }

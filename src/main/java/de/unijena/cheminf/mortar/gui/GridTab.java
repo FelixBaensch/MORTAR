@@ -21,16 +21,20 @@
 package de.unijena.cheminf.mortar.gui;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
-import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 
+/**
+ * Custom tab which contains a grid pane
+ */
 public class GridTab extends Tab {
 
+    //<editor-fold desc="private class variables">
     private GridPane gridPane;
+    //</editor-fold>
     //
     /**
      * Constructor
@@ -90,8 +94,9 @@ public class GridTab extends Tab {
     }
     //
     /**
+     * Sets the given string as title of this tab
      *
-     * @param aTitle
+     * @param aTitle String
      */
     public void setTitle(String aTitle){
         this.setText(aTitle);
