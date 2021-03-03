@@ -46,9 +46,9 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter(
-                ErtlFunctionalGroupsFinderFragmenter.FunctionalGroupEnvironmentModeOption.NO_ENVIRONMENT);
-        tmpFragmenter.setEnvironmentModeSetting(ErtlFunctionalGroupsFinderFragmenter.FunctionalGroupEnvironmentModeOption.GENERALIZATION);
-        tmpFragmenter.getEnvironmentModeProperty().set(ErtlFunctionalGroupsFinderFragmenter.FunctionalGroupEnvironmentModeOption.FULL_ENVIRONMENT.name());
+                ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.NO_ENVIRONMENT);
+        tmpFragmenter.setEnvironmentModeSetting(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.GENERALIZATION);
+        tmpFragmenter.environmentModeSettingProperty().set(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.FULL_ENVIRONMENT.name());
         tmpFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION);
         tmpFragmenter.setAromaticityModelSetting(ErtlFunctionalGroupsFinderFragmenter.AromaticityModelOption.CDK);
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(

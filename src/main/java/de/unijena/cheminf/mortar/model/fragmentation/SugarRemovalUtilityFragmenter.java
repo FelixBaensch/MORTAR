@@ -29,6 +29,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
+import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -148,8 +149,23 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     }
 
     @Override
-    public FragmentSaturationOption getFragmentSaturationSetting() {
-        return this.fragmentSaturationSetting;
+    public String getFragmentSaturationSetting() {
+        return this.fragmentSaturationSetting.name();
+    }
+
+    @Override
+    public SimpleStringProperty fragmentSaturationSettingProperty() {
+        return null;
+    }
+
+    @Override
+    public FragmentSaturationOption getFragmentSaturationSettingConstant() {
+        return null;
+    }
+
+    @Override
+    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+
     }
 
     @Override

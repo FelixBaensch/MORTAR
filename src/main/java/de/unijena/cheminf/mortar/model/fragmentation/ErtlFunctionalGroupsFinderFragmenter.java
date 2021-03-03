@@ -22,8 +22,11 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
+ * - override set() method of properties in Constructor instead of adding listeners, test parameters
+ * - copy given molecules!
  * - write doc
- * - make cycle finder configurable?
+ * - make cycle finder configurable (maybe in the future)
+ * - see other todos
  */
 
 import javafx.beans.property.SimpleStringProperty;
@@ -45,44 +48,52 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * TODO
+ * Wrapper class that makes the Ertl algorithm for automatic identification and extraction of functional groups
+ * available in MORTAR, using the ErtlFunctionalGroupsFinder.
+ * TODO: Add references
+ *
+ * @author Jonas Schaub
  */
 public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter {
-    //<editor-fold desc="Enum FunctionalGroupEnvironmentModeOption">
+    //<editor-fold desc="Enum FGEnvOption">
     /**
-     *
+     * Enum for options concerning the environment of returned functional group fragments.
      */
-    public static enum FunctionalGroupEnvironmentModeOption {
+    public static enum FGEnvOption {
         /**
-         *
+         * Generalize environments of functional groups.
          */
         GENERALIZATION(ErtlFunctionalGroupsFinder.Mode.DEFAULT),
 
         /**
-         *
+         * Do not generalize but give the full environment of functional groups.
          */
         FULL_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.NO_GENERALIZATION),
 
         /**
-         *
+         * Return only the marked atoms of a functional group, no environment. The EFGF mode for generalization is
+         * associated but the returned FG need additional processing to only return the marked atoms.
          */
         NO_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.DEFAULT);
 
         /**
-         *
+         * The ErtlFunctionalGroupsFinder mode to use in the respective cases.
          */
         private final ErtlFunctionalGroupsFinder.Mode mode;
 
         /**
+         * Constructor.
          *
-         * @param aMode
+         * @param aMode the EFGF mode to use with the respective option
          */
-        FunctionalGroupEnvironmentModeOption(ErtlFunctionalGroupsFinder.Mode aMode) {
+        FGEnvOption(ErtlFunctionalGroupsFinder.Mode aMode) {
             this.mode = aMode;
         }
 
         /**
+         * Returns the EFGF mode to use with the respective option.
          *
+         * @return EFGF mode to use with this option
          */
         public ErtlFunctionalGroupsFinder.Mode getAssociatedEFGFMode() {
             return this.mode;
@@ -92,26 +103,27 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Enum AromaticityModelOption">
     /**
-     *
+     * Enum for available aromaticity/electron donation models. Utility for defining the options in a GUI. The electron
+     * donation model specified in the constant name is used and a predefined cycle finder algorithm.
      */
     public static enum AromaticityModelOption {
         /**
-         *
+         * Daylight electron donation model.
          */
         DAYLIGHT,
 
         /**
-         *
+         * CDK electron donation model.
          */
         CDK,
 
         /**
-         *
+         * CDK electron donation model that additionally allows exocyclic bonds to be part of the aromatic system.
          */
         CDK_ALLOWING_EXOCYCLIC,
 
         /**
-         *
+         * Pi bonds electron donation model.
          */
         PI_BONDS;
     }
@@ -119,32 +131,32 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Public static final constants">
     /**
-     *
+     * Name of the used algorithm.
      */
     public static final String ALGORITHM_NAME = "Ertl algorithm";
 
     /**
-     *
+     * Key for an index property that is used internally for unique identification of atoms in a given molecule.
      */
     public static final String INTERNAL_INDEX_PROPERTY_KEY = "EFGFFragmenter.INDEX";
 
     /**
-     *
+     * Default aromaticity model.
      */
     public static final AromaticityModelOption AROMATICITY_MODEL_OPTION_DEFAULT = AromaticityModelOption.DAYLIGHT;
 
     /**
-     *
+     * Default functional group environment option.
      */
-    public static final FunctionalGroupEnvironmentModeOption ENVIRONMENT_MODE_OPTION_DEFAULT = FunctionalGroupEnvironmentModeOption.GENERALIZATION;
+    public static final FGEnvOption ENVIRONMENT_MODE_OPTION_DEFAULT = FGEnvOption.GENERALIZATION;
 
     /**
-     *
+     * Functional group fragments will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
      */
     public static final String FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE = "EFGFFragmenter.FunctionalGroup";
 
     /**
-     *
+     * Alkane fragments will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
      */
     public static final String FRAGMENT_CATEGORY_ALKANE_VALUE = "EFGFFragmenter.Alkane";
     //</editor-fold>
@@ -153,32 +165,32 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      *
      */
-    private ErtlFunctionalGroupsFinder EFGFinstance;
+    private ErtlFunctionalGroupsFinder EFGFInstance;
 
     /**
      *
      */
-    private final SimpleStringProperty environmentModeProperty = new SimpleStringProperty(this, "environmentMode");
+    private Aromaticity aromaticityModelInstance;
 
     /**
      *
      */
-    private Aromaticity aromaticityModel;
+    private final CycleFinder cycleFinderInstance;
 
     /**
      *
      */
-    private final SimpleStringProperty aromaticityModelProperty = new SimpleStringProperty(this, "aromaticityModel");
+    private final SimpleStringProperty environmentModeSetting;
 
     /**
      *
      */
-    private final SimpleStringProperty fragmentSaturationProperty = new SimpleStringProperty(this, "fragmentSaturation");
+    private final SimpleStringProperty aromaticityModelSetting;
 
     /**
      *
      */
-    private CycleFinder cycleFinder;
+    private final SimpleStringProperty fragmentSaturationSetting;
     //</editor-fold>
 
     //<editor-fold desc="Constructors">
@@ -190,23 +202,42 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
-     *
+     * TODO
      */
-    public ErtlFunctionalGroupsFinderFragmenter(FunctionalGroupEnvironmentModeOption aMode) throws NullPointerException {
+    public ErtlFunctionalGroupsFinderFragmenter(FGEnvOption aMode) throws NullPointerException {
         Objects.requireNonNull(aMode, "Given mode is null.");
-        this.cycleFinder = Cycles.or(Cycles.all(), Cycles.cdkAromaticSet());
-        this.environmentModeProperty.set(aMode.name());
-        this.EFGFinstance = new ErtlFunctionalGroupsFinder(FunctionalGroupEnvironmentModeOption.valueOf(
-                this.environmentModeProperty.get()).getAssociatedEFGFMode());
-        this.aromaticityModelProperty.set(ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name());
-        //this.aromaticityModel is set in the method
-        this.setAromaticityModelSetting(AromaticityModelOption.valueOf(this.aromaticityModelProperty.get()));
-        this.fragmentSaturationProperty.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
-        this.environmentModeProperty.addListener((observable, oldValue, newValue)
-                -> this.setEnvironmentModeSetting(FunctionalGroupEnvironmentModeOption.valueOf(this.environmentModeProperty.get())));
-        this.aromaticityModelProperty.addListener((observable, oldValue, newValue)
-                -> this.setAromaticityModelSetting(AromaticityModelOption.valueOf(this.aromaticityModelProperty.get())));
-        //no listener needed for fragment saturation setting
+        this.cycleFinderInstance = Cycles.or(Cycles.all(), Cycles.cdkAromaticSet());
+        this.fragmentSaturationSetting = new SimpleStringProperty(this, "fragmentSaturationSetting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name()) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                //TODO: test and react here
+                Objects.requireNonNull(newValue);
+                super.set(newValue);
+            }
+        };
+        this.environmentModeSetting = new SimpleStringProperty(this, "environmentModeSetting", aMode.name()) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                //TODO: test and react here
+                Objects.requireNonNull(newValue);
+                ErtlFunctionalGroupsFinderFragmenter.this.setEFGFInstance(FGEnvOption.valueOf(newValue));
+                super.set(newValue);
+            }
+        };
+        this.setEFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
+        this.aromaticityModelSetting = new SimpleStringProperty(this, "aromaticityModelSetting",
+                ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name()) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                //TODO: test and react here
+                Objects.requireNonNull(newValue);
+                ErtlFunctionalGroupsFinderFragmenter.this.setAromaticityModelInstance(AromaticityModelOption.valueOf(newValue));
+                super.set(newValue);
+            }
+        };
+        //aromaticity model instance is set in method
+        this.setAromaticityModelInstance(AromaticityModelOption.valueOf(this.aromaticityModelSetting.get()));
     }
     //</editor-fold>
     //
@@ -215,64 +246,88 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      *
      * @return
      */
-    public FunctionalGroupEnvironmentModeOption getEnvironmentModeSetting() {
-        return FunctionalGroupEnvironmentModeOption.valueOf(this.environmentModeProperty.get());
+    public String getEnvironmentModeSetting() {
+        return this.environmentModeSetting.get();
     }
 
     /**
      *
      */
-    public SimpleStringProperty getEnvironmentModeProperty() {
-        return this.environmentModeProperty;
+    public SimpleStringProperty environmentModeSettingProperty() {
+        return this.environmentModeSetting;
     }
 
     /**
      *
      */
-    public AromaticityModelOption getAromaticityModelSetting() {
-        return AromaticityModelOption.valueOf(this.aromaticityModelProperty.get());
+    public FGEnvOption getEnvironmentModeSettingConstant() {
+        return FGEnvOption.valueOf(this.environmentModeSetting.get());
     }
 
     /**
      *
      */
-    public SimpleStringProperty getAromaticityModelProperty() {
-        return this.aromaticityModelProperty;
+    public String getAromaticityModelSetting() {
+        return this.aromaticityModelSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleStringProperty aromaticityModelSettingProperty() {
+        return this.aromaticityModelSetting;
+    }
+
+    /**
+     *
+     */
+    public AromaticityModelOption getAromaticityModelSettingConstant() {
+        return AromaticityModelOption.valueOf(this.aromaticityModelSetting.get());
     }
     //</editor-fold>
     //
     //<editor-fold desc="Public properties set">
     /**
      *
-     * @return
      */
-    public void setEnvironmentModeSetting(FunctionalGroupEnvironmentModeOption aMode)
-            throws NullPointerException {
-        Objects.requireNonNull(aMode, "Given mode is null.");
-        this.environmentModeProperty.set(aMode.name());
-        this.EFGFinstance = new ErtlFunctionalGroupsFinder(FunctionalGroupEnvironmentModeOption.valueOf(this.environmentModeProperty.get()).getAssociatedEFGFMode());
+    public void setEnvironmentModeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        FGEnvOption tmpConstant = FGEnvOption.valueOf(anOptionName);
+        this.setEnvironmentModeSetting(tmpConstant);
     }
 
-    public void setAromaticityModelSetting(AromaticityModelOption anAromaticityModel) throws NullPointerException, IllegalArgumentException {
-        Objects.requireNonNull(anAromaticityModel, "Given model is null.");
-        switch (anAromaticityModel) {
-            case CDK:
-                this.aromaticityModel = new Aromaticity(ElectronDonation.cdk(), this.cycleFinder);
-                break;
-            case DAYLIGHT:
-                this.aromaticityModel = new Aromaticity(ElectronDonation.daylight(), this.cycleFinder);
-                break;
-            case CDK_ALLOWING_EXOCYCLIC:
-                this.aromaticityModel = new Aromaticity(ElectronDonation.cdkAllowingExocyclic(), this.cycleFinder);
-                break;
-            case PI_BONDS:
-                this.aromaticityModel = new Aromaticity(ElectronDonation.piBonds(), this.cycleFinder);
-                break;
-            default:
-                throw new IllegalArgumentException("Undefined aromaticity model option.");
-        }
-        this.aromaticityModelProperty.set(anAromaticityModel.name());
-        return;
+    /**
+     *
+     * @return
+     */
+    public void setEnvironmentModeSetting(FGEnvOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given option is null.");
+        //TODO: danger of infinite loop because set() calls this function!
+        this.setEFGFInstance(anOption);
+        this.environmentModeSetting.set(anOption.name());
+    }
+
+    /**
+     *
+     */
+    public void setAromaticityModelSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        AromaticityModelOption tmpConstant = AromaticityModelOption.valueOf(anOptionName);
+        this.setAromaticityModelSetting(tmpConstant);
+    }
+
+    /**
+     *
+     * @param anOption
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
+    public void setAromaticityModelSetting(AromaticityModelOption anOption) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOption, "Given option is null.");
+        this.setAromaticityModelInstance(anOption);
+        this.aromaticityModelSetting.set(anOption.name());
     }
     //</editor-fold>
     //
@@ -284,14 +339,32 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     @Override
-    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
-        Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationProperty.set(anOption.name());
+    public String getFragmentSaturationSetting() {
+        return this.fragmentSaturationSetting.get();
     }
 
     @Override
-    public FragmentSaturationOption getFragmentSaturationSetting() {
-        return FragmentSaturationOption.valueOf(this.fragmentSaturationProperty.get());
+    public SimpleStringProperty fragmentSaturationSettingProperty() {
+        return this.fragmentSaturationSetting;
+    }
+
+    @Override
+    public FragmentSaturationOption getFragmentSaturationSettingConstant() {
+        return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
+    }
+
+    @Override
+    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        FragmentSaturationOption tmpConstant = FragmentSaturationOption.valueOf(anOptionName);
+        this.fragmentSaturationSetting.set(tmpConstant.name());
+    }
+
+    @Override
+    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given saturation option is null.");
+        this.fragmentSaturationSetting.set(anOption.name());
     }
 
     /**
@@ -299,13 +372,12 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      */
     @Override
     public void restoreDefaultSettings() {
-        this.environmentModeProperty.set(ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.name());
-        this.EFGFinstance = new ErtlFunctionalGroupsFinder(FunctionalGroupEnvironmentModeOption.valueOf(
-                this.environmentModeProperty.get()).getAssociatedEFGFMode());
-        this.aromaticityModelProperty.set(ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name());
+        this.environmentModeSetting.set(ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.name());
+        this.setEFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
+        this.aromaticityModelSetting.set(ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name());
         //this.aromaticityModel is set in the method
-        this.setAromaticityModelSetting(AromaticityModelOption.valueOf(this.aromaticityModelProperty.get()));
-        this.fragmentSaturationProperty.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.setAromaticityModelInstance(AromaticityModelOption.valueOf(this.aromaticityModelSetting.get()));
+        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
         //no need to reset cycle finder
     }
 
@@ -345,19 +417,19 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         List<IAtomContainer> tmpNonFGFragments;
         try {
             //generate FG fragments using EFGF
-            if (this.environmentModeProperty.get() == FunctionalGroupEnvironmentModeOption.NO_ENVIRONMENT.name()) {
+            if (this.environmentModeSetting.get() == FGEnvOption.NO_ENVIRONMENT.name()) {
                 //extract only marked atoms, use implemented utility method from EFGFUtilities
                 tmpFunctionalGroupFragments = ErtlFunctionalGroupsFinderUtility.findMarkedAtoms(aMolecule);
             } else {
                 //generalization or full environment, can both be handled by EFGF alone
-                tmpFunctionalGroupFragments = this.EFGFinstance.find(aMolecule, false);
+                tmpFunctionalGroupFragments = this.EFGFInstance.find(aMolecule, false);
             }
             if (!tmpFunctionalGroupFragments.isEmpty()) {
                 for (IAtomContainer tmpFunctionalGroup : tmpFunctionalGroupFragments) {
                     //post-processing FG fragments
                     tmpFunctionalGroup.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE);
-                    if (this.fragmentSaturationProperty.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                         IMoleculeFragmenter.saturateWithHydrogen(tmpFunctionalGroup);
                     }
                     //FG fragments are removed from molecule to generate alkane fragments
@@ -376,7 +448,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                     //post-processing of alkane fragments
                     tmpContainer.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
-                    if (this.fragmentSaturationProperty.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                         IMoleculeFragmenter.saturateWithHydrogen(tmpContainer);
                     }
                     tmpNonFGFragments.add(tmpContainer);
@@ -469,12 +541,45 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             return aMolecule;
         }
         IAtomContainer tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.applyFiltersAndPreprocessing(aMolecule,
-                this.aromaticityModel);
+                this.aromaticityModelInstance);
         if (Objects.isNull(tmpPreprocessedMolecule)) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         } else {
             return tmpPreprocessedMolecule;
         }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private methods">
+    /**
+     * Sets only the instance, not the property! So its safe for the property to call this method when overriding set().
+     */
+    private void setAromaticityModelInstance(AromaticityModelOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given option is null.");
+        switch (anOption) {
+            case CDK:
+                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.cdk(), this.cycleFinderInstance);
+                break;
+            case DAYLIGHT:
+                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.daylight(), this.cycleFinderInstance);
+                break;
+            case CDK_ALLOWING_EXOCYCLIC:
+                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.cdkAllowingExocyclic(), this.cycleFinderInstance);
+                break;
+            case PI_BONDS:
+                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.piBonds(), this.cycleFinderInstance);
+                break;
+            default:
+                throw new IllegalArgumentException("Undefined aromaticity model option.");
+        }
+    }
+
+    /**
+     * Sets only the instance, not the property! So its safe for the property to call this method when overriding set().
+     */
+    private void setEFGFInstance(FGEnvOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given option is null.");
+        this.EFGFInstance = new ErtlFunctionalGroupsFinder(anOption.getAssociatedEFGFMode());
     }
     //</editor-fold>
 }

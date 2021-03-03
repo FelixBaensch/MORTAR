@@ -22,12 +22,16 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - Add methods for processing of lists of molecules, think about return values
+ * - Add methods for processing of lists of molecules, think about return values -> Molecule/FragmentDataModel
+ *      - frequencies of fragments should contain two values, how many molecules contain them and their total frequencies
+*  - implement FragmenterService class that manages fragmenters and fragments
  * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)
+ * - all molecules given to the fragmenters should be cloned or not altered!
  * - implement management of settings via properties
  * - add method getFragmentSaturationProperty()
  */
 
+import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -79,19 +83,34 @@ public interface IMoleculeFragmenter {
     public String getFragmentationAlgorithmName();
 
     /**
-     * Set the option for saturating free valences on returned fragment molecules.
-     *
-     * @param anOption the option to use
-     * @throws NullPointerException if the given option is null
-     */
-    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException;
-
-    /**
      * Returns the currently set option for saturating free valences on returned fragment molecules.
      *
      * @return the set option
      */
-    public FragmentSaturationOption getFragmentSaturationSetting();
+    public String getFragmentSaturationSetting();
+
+    /**
+     *
+     */
+    public SimpleStringProperty fragmentSaturationSettingProperty();
+
+    /**
+     *
+     */
+    public FragmentSaturationOption getFragmentSaturationSettingConstant();
+
+    /**
+     * Set the option for saturating free valences on returned fragment molecules.
+     *
+     * @param anOptionName the option to use
+     * @throws NullPointerException if the given option is null
+     */
+    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     *
+     */
+    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException;
 
     /**
      * Restore all settings of the fragmenter to their default values.
