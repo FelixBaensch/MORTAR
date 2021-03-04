@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
+import javafx.beans.property.Property;
 import org.junit.Assert;
 import org.junit.Test;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -37,6 +38,10 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
         System.out.println(tmpFragmenter.getAromaticityModelSetting());
         System.out.println(tmpFragmenter.getEnvironmentModeSetting());
+        for (Property tmpSetting : tmpFragmenter.settingsProperties()) {
+            System.out.println(tmpSetting.getName());
+        }
+        tmpFragmenter.settingsProperties().get(2).setValue(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.FULL_ENVIRONMENT.name());
     }
 
     @Test

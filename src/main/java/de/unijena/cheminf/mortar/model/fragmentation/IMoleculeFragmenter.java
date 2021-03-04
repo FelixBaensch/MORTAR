@@ -26,11 +26,9 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  *      - frequencies of fragments should contain two values, how many molecules contain them and their total frequencies
 *  - implement FragmenterService class that manages fragmenters and fragments
  * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)
- * - all molecules given to the fragmenters should be cloned or not altered!
- * - implement management of settings via properties
- * - add method getFragmentSaturationProperty()
  */
 
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -69,12 +67,19 @@ public interface IMoleculeFragmenter {
     public static final String FRAGMENT_CATEGORY_PROPERTY_KEY = "IMoleculeFragmenter.Category";
 
     /**
-     *
+     * Default option for saturating free valences on the returned fragment molecules.
      */
     public static final FragmentSaturationOption FRAGMENT_SATURATION_OPTION_DEFAULT = FragmentSaturationOption.HYDROGEN_SATURATION;
     //</editor-fold>
     //
     //<editor-fold desc="Public properties">
+    /**
+     * Returns a list of all available settings represented by properties for the given fragmentation algorithm.
+     *
+     * @return list of settings represented by properties
+     */
+    public List<Property> settingsProperties();
+
     /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
      *
@@ -90,25 +95,33 @@ public interface IMoleculeFragmenter {
     public String getFragmentSaturationSetting();
 
     /**
+     * Returns the property representing the setting for fragment saturation.
      *
+     * @return setting property for fragment saturation
      */
     public SimpleStringProperty fragmentSaturationSettingProperty();
 
     /**
+     * Returns the currently set fragment saturation option as the respective enum constant.
      *
+     * @return fragment saturation setting enum constant
      */
     public FragmentSaturationOption getFragmentSaturationSettingConstant();
 
     /**
      * Set the option for saturating free valences on returned fragment molecules.
      *
-     * @param anOptionName the option to use
-     * @throws NullPointerException if the given option is null
+     * @param anOptionName constant name (use name()) from FragmentSaturationOption enum
+     * @throws NullPointerException if the given name is null
+     * @throws IllegalArgumentException if the given string does not represent an enum constant
      */
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException;
 
     /**
+     * Set the option for saturating free valences on returned fragment molecules.
      *
+     * @param anOption the saturation option to use
+     * @throws NullPointerException if the given option is null
      */
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException;
 
@@ -120,14 +133,16 @@ public interface IMoleculeFragmenter {
     //
     //<editor-fold desc="Public methods">
     /**
-     * Fragments the given molecule according to the respective algorithm and returns the resulting fragments.
+     * Fragments a clone (!) of the given molecule according to the respective algorithm and returns the resulting fragments.
      *
      * @param aMolecule to fragment
      * @return a list of fragments
      * @throws NullPointerException if aMolecule is null
      * @throws IllegalArgumentException if the given molecule cannot be fragmented but should be filtered or preprocessed
+     * @throws CloneNotSupportedException if cloning the given molecule fails
      */
-    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
+    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
+            throws NullPointerException, IllegalArgumentException, CloneNotSupportedException;
 
     /**
      * Returns true if the fragmented molecule has e.g. functional groups or sugar moieties that are detected by the respective
@@ -179,11 +194,14 @@ public interface IMoleculeFragmenter {
      * should be filtered.
      *
      * @param aMolecule the molecule to preprocess
+     * @return a copy of the given molecule that has been preprocessed
      * @throws NullPointerException if the molecule is null
      * @throws IllegalArgumentException if the molecule should be filtered, i.e. it cannot be fragmented even after
      * preprocessing
+     * @throws CloneNotSupportedException if cloning the given molecule fails
      */
-    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException;
+    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule)
+            throws NullPointerException, IllegalArgumentException, CloneNotSupportedException;
     //</editor-fold>
     //<editor-fold desc="Static methods">
     /**

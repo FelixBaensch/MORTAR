@@ -29,6 +29,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -133,6 +134,11 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+    @Override
+    public List<Property> settingsProperties() {
+        return null;
+    }
+
     /**
      *
      * @return
