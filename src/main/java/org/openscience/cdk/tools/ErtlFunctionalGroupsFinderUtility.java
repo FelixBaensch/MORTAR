@@ -68,6 +68,34 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public final class ErtlFunctionalGroupsFinderUtility {
+    //<editor-fold defaultstate="collapsed" desc="Enum CustomAtomEncoder">
+    /**
+     * Custom enumeration of atom encoders for seeding atomic hash codes.
+     *
+     * @author Jonas Schaub
+     * @see BasicAtomEncoder
+     * @see AtomEncoder
+     */
+    enum CustomAtomEncoder implements AtomEncoder {
+        /**
+         * Encode whether an atom is aromatic or not. This specification is necessary to distinguish functional groups with
+         * aromatic environments and those without. For example: [H]O[C] and [H]OC* (pseudo SMILES codes) should be
+         * assigned different hash codes by the MoleculeHashGenerator.
+         *
+         * @see IAtom#isAromatic()
+         */
+        AROMATICITY {
+            /**
+             *{@inheritDoc}
+             */
+            @Override
+            public int encode(IAtom anAtom, IAtomContainer aContainer) {
+                return anAtom.isAromatic()? 3 : 2;
+            }
+        };
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Private static final class constants">
     /**
      * Atomic numbers that ErtlFunctionalGroupsFinder accepts, see getValidAtomicNumbers()
@@ -926,31 +954,3 @@ public final class ErtlFunctionalGroupsFinderUtility {
     //</editor-fold>
     //</editor-fold>
 }
-
-//<editor-fold defaultstate="collapsed" desc="Enum CustomAtomEncoder">
-/**
- * Custom enumeration of atom encoders for seeding atomic hash codes.
- *
- * @author Jonas Schaub
- * @see BasicAtomEncoder
- * @see AtomEncoder
- */
-enum CustomAtomEncoder implements AtomEncoder {
-    /**
-     * Encode whether an atom is aromatic or not. This specification is necessary to distinguish functional groups with
-     * aromatic environments and those without. For example: [H]O[C] and [H]OC* (pseudo SMILES codes) should be
-     * assigned different hash codes by the MoleculeHashGenerator.
-     *
-     * @see IAtom#isAromatic()
-     */
-    AROMATICITY {
-        /**
-         *{@inheritDoc}
-         */
-        @Override
-        public int encode(IAtom anAtom, IAtomContainer aContainer) {
-            return anAtom.isAromatic()? 3 : 2;
-        }
-    };
-}
-//</editor-fold>

@@ -22,19 +22,24 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - add option to generate valid valences on all returned fragments
- * - add method that receives list of molecules and returns list of unique fragments and list of molecules with pointers to fragments
- * - add option to separate unconnected fragments of the deglycosylated molecule into separate atom containers
+ * - add option to separate unconnected fragments of the deglycosylated molecule into separate atom containers?
+ * - implement properties for settings
+ * - after the above, maybe better do not extend the SRU here
  * - write doc
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
+import javafx.beans.property.Property;
+import javafx.beans.property.SimpleStringProperty;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * TODO
@@ -44,7 +49,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     /**
      *
      */
-    public static enum SugarTypeToRemove {
+    public static enum SugarTypeToRemoveOption {
         /**
          *
          */
@@ -81,14 +86,19 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     /**
      *
      */
-    public static final SugarTypeToRemove SUGAR_TYPE_TO_REMOVE_DEFAULT = SugarTypeToRemove.CIRCULAR_AND_LINEAR;
+    public static final SugarTypeToRemoveOption SUGAR_TYPE_TO_REMOVE_DEFAULT = SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR;
     //</editor-fold>
     //
     //<editor-fold desc="Private variables">
     /**
      *
      */
-    private SugarTypeToRemove sugarTypeToRemove;
+    private SugarTypeToRemoveOption sugarTypeToRemoveOption;
+
+    /**
+     *
+     */
+    private FragmentSaturationOption fragmentSaturationSetting;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -98,7 +108,8 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
      */
     public SugarRemovalUtilityFragmenter() {
         super();
-        this.sugarTypeToRemove = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
+        this.sugarTypeToRemoveOption = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
+        this.fragmentSaturationSetting = IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT;
     }
     //</editor-fold>
     //
@@ -107,8 +118,8 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
      *
      * @return
      */
-    public SugarTypeToRemove getSugarTypeToRemoveSetting() {
-        return this.sugarTypeToRemove;
+    public SugarTypeToRemoveOption getSugarTypeToRemoveSetting() {
+        return this.sugarTypeToRemoveOption;
     }
     //</editor-fold>
     //
@@ -116,13 +127,18 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     /**
      *
      */
-    public void setSugarTypeToRemoveSetting(SugarTypeToRemove aSugarTypeToRemove) throws NullPointerException {
-        Objects.requireNonNull(aSugarTypeToRemove, "Given type of sugars to remove is null.");
-        this.sugarTypeToRemove = aSugarTypeToRemove;
+    public void setSugarTypeToRemoveSetting(SugarTypeToRemoveOption aSugarTypeToRemoveOption) throws NullPointerException {
+        Objects.requireNonNull(aSugarTypeToRemoveOption, "Given type of sugars to remove is null.");
+        this.sugarTypeToRemoveOption = aSugarTypeToRemoveOption;
     }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+    @Override
+    public List<Property> settingsProperties() {
+        return null;
+    }
+
     /**
      *
      * @return
@@ -130,6 +146,39 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     @Override
     public String getFragmentationAlgorithmName() {
         return SugarRemovalUtilityFragmenter.ALGORITHM_NAME;
+    }
+
+    @Override
+    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given saturation option is null.");
+        this.fragmentSaturationSetting = anOption;
+    }
+
+    @Override
+    public String getFragmentSaturationSetting() {
+        return this.fragmentSaturationSetting.name();
+    }
+
+    @Override
+    public SimpleStringProperty fragmentSaturationSettingProperty() {
+        return null;
+    }
+
+    @Override
+    public FragmentSaturationOption getFragmentSaturationSettingConstant() {
+        return null;
+    }
+
+    @Override
+    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+
+    }
+
+    @Override
+    public void restoreDefaultSettings() {
+        super.restoreDefaultSettings();
+        this.sugarTypeToRemoveOption = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
+        this.fragmentSaturationSetting = IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT;
     }
 
     /**
@@ -155,7 +204,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         }
         List<IAtomContainer> tmpFragments;
         try {
-            switch (this.sugarTypeToRemove) {
+            switch (this.sugarTypeToRemoveOption) {
                 case CIRCULAR:
                     tmpFragments = this.removeAndReturnCircularSugars(aMolecule, false);
                     break;
@@ -166,17 +215,28 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
                     tmpFragments = this.removeAndReturnCircularAndLinearSugars(aMolecule, false);
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemove);
+                    throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemoveOption);
             }
         } catch (IllegalArgumentException | CloneNotSupportedException anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
         }
-        tmpFragments.get(0).setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+        //post-processing of aglycon, it is always saturated with implicit hydrogen atoms
+        IAtomContainer tmpAglycon = tmpFragments.get(0);
+        tmpAglycon.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+        //sugars were detected, postprocessing
         if (tmpFragments.size() > 1) {
             for (int i = 1; i < tmpFragments.size(); i++) {
-                tmpFragments.get(i).setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                IAtomContainer tmpSugarFragment = tmpFragments.get(i);
+                tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                         SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
+                if (this.fragmentSaturationSetting.equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                    try {
+                        IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
+                    } catch (CDKException aCDKException) {
+                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                    }
+                }
             }
         }
         return tmpFragments;
@@ -247,12 +307,6 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
             }
         }
         return aMolecule;
-    }
-
-    @Override
-    public void restoreDefaultSettings() {
-        super.restoreDefaultSettings();
-        this.sugarTypeToRemove = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
     }
     //</editor-fold>
 }

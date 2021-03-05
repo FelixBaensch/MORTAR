@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
+import javafx.beans.property.Property;
 import org.junit.Assert;
 import org.junit.Test;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -27,7 +28,6 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
 
 import java.util.List;
 
@@ -36,8 +36,12 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
     public void basicTest() throws Exception {
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
         System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
-        System.out.println(tmpFragmenter.getAromaticityModel());
-        System.out.println(tmpFragmenter.getEnvironmentMode());
+        System.out.println(tmpFragmenter.getAromaticityModelSetting());
+        System.out.println(tmpFragmenter.getEnvironmentModeSetting());
+        for (Property tmpSetting : tmpFragmenter.settingsProperties()) {
+            System.out.println(tmpSetting.getName());
+        }
+        tmpFragmenter.settingsProperties().get(2).setValue(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.FULL_ENVIRONMENT.name());
     }
 
     @Test
@@ -47,7 +51,11 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter(
-                ErtlFunctionalGroupsFinderFragmenter.FunctionalGroupEnvironmentMode.NO_ENVIRONMENT);
+                ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.NO_ENVIRONMENT);
+        tmpFragmenter.setEnvironmentModeSetting(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.GENERALIZATION);
+        tmpFragmenter.environmentModeSettingProperty().set(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.FULL_ENVIRONMENT.name());
+        tmpFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION);
+        tmpFragmenter.setAromaticityModelSetting(ErtlFunctionalGroupsFinderFragmenter.AromaticityModelOption.CDK);
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 //CNP0151033
                 "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4");
