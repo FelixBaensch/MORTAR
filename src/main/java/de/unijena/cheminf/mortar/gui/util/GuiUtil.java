@@ -27,12 +27,16 @@ import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.util.StringConverter;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * GUI utility
@@ -136,6 +140,51 @@ public class GuiUtil {
     public static void GuiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl){
         aChildControl.prefHeightProperty().bind(aParentPane.heightProperty());
         aChildControl.prefWidthProperty().bind(aParentPane.widthProperty());
+    }
+    //
+
+    /**
+     * TODO
+     * @return
+     */
+    public static Pattern GetNumericPattern(){
+        return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
+    }
+    //
+    /**
+     * TODO
+     * @return
+     */
+    public static UnaryOperator<TextFormatter.Change> GetNumericFilter(){
+        return c ->{
+          String text = c.getControlNewText();
+          if(GetNumericPattern().matcher(text).matches()) {
+              return c;
+          } else {
+              return null;
+          }
+        };
+    }
+    //
+    /**
+     * TODO
+     * @return
+     */
+    public static StringConverter<Double> GetStringToDoubleConverter(){
+        return new StringConverter<Double>() {
+            @Override
+            public String toString(Double anObject) {
+                return anObject.toString();
+            }
+            @Override
+            public Double fromString(String aString) {
+                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString)){
+                    return 0.0;
+                } else {
+                    return Double.valueOf(aString);
+                }
+            }
+        };
     }
     //</editor-fold>
 }

@@ -22,7 +22,7 @@ package de.unijena.cheminf.mortar.main;
 
 import de.unijena.cheminf.mortar.controller.MainViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.MainView;
+import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;

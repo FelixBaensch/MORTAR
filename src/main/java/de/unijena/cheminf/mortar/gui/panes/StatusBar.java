@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui;
+package de.unijena.cheminf.mortar.gui.panes;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
@@ -41,7 +41,6 @@ import static de.unijena.cheminf.mortar.gui.util.GuiDefinitions.GUI_STATUSBAR_HE
 public class StatusBar extends FlowPane {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private Label fileNameLabel;
     private Label statusLabel;
     private ProgressBar progressBar;
     private Task task;
@@ -53,7 +52,6 @@ public class StatusBar extends FlowPane {
     public StatusBar(){
         super();
         this.setStyle("-fx-background-color: DarkGrey");
-        this.fileNameLabel = new Label("Hier koennte ihre Werbung stehen.");
         this.statusLabel = new Label();
         this.progressBar = new ProgressBar();
         this.progressBar.visibleProperty().setValue(false);
@@ -61,15 +59,14 @@ public class StatusBar extends FlowPane {
         this.setPrefHeight(GUI_STATUSBAR_HEIGHT_VALUE);
         this.setMaxHeight(GUI_STATUSBAR_HEIGHT_VALUE);
 //        this.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-        System.out.println((GUI_STATUSBAR_HEIGHT_VALUE - this.fileNameLabel.getHeight()));
         this.setPadding(new Insets( 3));
         this.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
-        this.getChildren().addAll(fileNameLabel, statusLabel, progressBar);
+        this.getChildren().addAll(statusLabel, progressBar);
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     *
+     * TODO: remove this from here and add to fragementer service class
      * @param aTask
      */
     public void setTaskAndStart(Task aTask){
@@ -116,29 +113,11 @@ public class StatusBar extends FlowPane {
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * Set file name to fileNameLabel
-     * @param aFileName String
-     */
-    public void setFileNameLabelText(String aFileName) {
-        if(aFileName.isEmpty() || aFileName == null)
-            throw new IllegalArgumentException();
-        this.fileNameLabel.setText(aFileName);
-    }
-    //
-    /**
      * Returns the task
      * @return task
      */
     public Task getTask(){
         return this.task;
-    }
-    //
-    /**
-     * Returns the fileNameLabel
-     * @return
-     */
-    public Label getFileNameLabel() {
-        return fileNameLabel;
     }
     //
     /**

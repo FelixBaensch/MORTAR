@@ -20,9 +20,11 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.mortar.gui.*;
+import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
+import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
+import de.unijena.cheminf.mortar.gui.views.*;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -64,9 +66,9 @@ import java.util.logging.Logger;
 
 /**
  * MainViewController
- * controls  {@link de.unijena.cheminf.mortar.gui.MainView}.
+ * controls  {@link MainView}.
  *
- * @author Felix Baensch
+ * @author Felix Baensch, Jonas Schaub
  */
 public class MainViewController {
 
@@ -76,6 +78,7 @@ public class MainViewController {
     private String appDir;
     private Scene scene;
     private MainTabPane mainTabPane;
+    private FragmentationSettingsViewController fragmentationSettingsViewController;
     private ObservableList<MoleculeDataModel> moleculeDataModelList;
     private ObservableList<FragmentDataModel> fragmentDataModelList;
     private MoleculesDataTableView moleculesDataTableView;
@@ -139,6 +142,9 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getLoadMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.loadMoleculeFile(this.primaryStage));
+        this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openFragmentationSettingsView());
         //TODO: More implementation needed
     }
     //
@@ -161,6 +167,7 @@ public class MainViewController {
         this.clearGuiAndCollections();
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
             return;
+        this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName());
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
             if(tmpAtomContainer.getProperty("SMILES") == null){
                 try {
@@ -177,20 +184,27 @@ public class MainViewController {
         this.OpenMoleculesTab();
     }
     //
+
+    private void openFragmentationSettingsView(){
+        if(this.fragmentationSettingsViewController == null)
+            this.fragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage);
+
+    }
+    //
     /**
      * Opens molecules tab
      */
     private void OpenMoleculesTab() {
-        GridTab tmpMoleculesTab = new GridTab(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name());
+        GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name());
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
         this.moleculesDataTableView = new MoleculesDataTableView();
         Pagination tmpPagination = new Pagination((this.moleculeDataModelList.size() / rowsPerPage + 1), 0);
         tmpPagination.setPageFactory(this::createDataTableViewPage);
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpMoleculesTab.addToGridPane(tmpPagination, 0,0,2,2);
+        tmpMoleculesTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
         Button tmpFragmentButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
-        tmpMoleculesTab.addToGridPane(tmpFragmentButton, 1,1,1,1);
+        tmpMoleculesTab.addNodeToGridPane(tmpFragmentButton, 1,1,1,1);
         tmpFragmentButton.setOnAction(event->{
             //TODO: add implementation to start fragmentation algorithm
             this.startFragmentation();
@@ -278,27 +292,27 @@ public class MainViewController {
                     fragmentDataModelList.add(new FragmentDataModel(v.getID(), v, 0,0.0));
                 });
                 moleculeDataModelList.get(0).getFragments().addAll(fragmentDataModelList);
-                GridTab tmpFragmentsTab = new GridTab(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
+                GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
                 mainTabPane.getTabs().add(tmpFragmentsTab);
                 FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
                 Pagination tmpPagination = new Pagination((fragmentDataModelList.size() / rowsPerPage + 1), 0);
                 tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
                 VBox.setVgrow(tmpPagination, Priority.ALWAYS);
                 HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-                tmpFragmentsTab.addToGridPane(tmpPagination, 0,0,2,2);
+                tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
 
                 int tmpAmount = 0;
                 for(int i= 0; i < moleculeDataModelList.size(); i++){
                     tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragments().size());
                 }
-                GridTab tmpItemizationTab = new GridTab("Items", TabNames.Itemization.name());
+                GridTabForTableView tmpItemizationTab = new GridTabForTableView("Items", TabNames.Itemization.name());
                 mainTabPane.getTabs().add(tmpItemizationTab);
                 ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount);
                 Pagination tmpPaginationItems = new Pagination(moleculeDataModelList.size() / rowsPerPage + 1, 0);
                 tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
                 VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
                 HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
-                tmpItemizationTab.addToGridPane(tmpPaginationItems, 0,0,2,2);
+                tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
             }
         });
     }

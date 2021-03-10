@@ -18,8 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui;
+package de.unijena.cheminf.mortar.gui.panes;
 
+import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.message.Message;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -27,7 +28,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 
 /**
- * A MenuBar for the application's {@link de.unijena.cheminf.mortar.gui.MainView}.
+ * A MenuBar for the application's {@link MainView}.
  * It contains menus for file handling (I/O), shutting down the application, settings and help menu entries
  *
  * @author Felix Baensch, Jonas Schaub
@@ -41,6 +42,7 @@ public class MainMenuBar extends MenuBar {
     private Menu helpMenu;
     private MenuItem exitMenuItem;
     private MenuItem loadMenuItem;
+    private MenuItem fragmentationSettingsMenuItem;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -58,6 +60,7 @@ public class MainMenuBar extends MenuBar {
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
         //settingsMenu
         this.settingsMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.text"));
+        this.fragmentationSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.fragmentationSettingsMenuItem.text"));
         //helpMenu
         this.helpMenu = new Menu(Message.get("MainView.menuBar.helpMenu.text"));
         //</editor-fold>
@@ -82,6 +85,8 @@ public class MainMenuBar extends MenuBar {
         //</editor-fold>
         //<editor-fold desc="settingsMenu" defaultstate="collapsed">
         this.getMenus().add(this.settingsMenu);
+        //fragmentationSettingsMenuItem
+        this.settingsMenu.getItems().add(this.fragmentationSettingsMenuItem);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
         this.getMenus().add(this.helpMenu);
@@ -109,6 +114,16 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getExitMenuItem() {
         return this.exitMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the fragmentation settings window
+     *
+     * @return the menu item that should open the fragmentation settings window
+     */
+    public MenuItem getFragmentationSettingsMenuItem() {
+        return this.fragmentationSettingsMenuItem;
     }
     //</editor-fold>
     //</editor-fold>

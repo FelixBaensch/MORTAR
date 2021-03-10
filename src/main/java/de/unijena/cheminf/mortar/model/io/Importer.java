@@ -58,6 +58,7 @@ public class Importer {
      * String path to the recent directory
      */
     private String recentDirectoryPath;
+    private String fileName;
     //</editor-fold>
     //
     /**
@@ -83,6 +84,7 @@ public class Importer {
         if(tmpFile == null)
             return null;
         String tmpFileExtension = FileUtil.getFileExtension(tmpFile.getPath());
+        this.fileName = tmpFile.getName();
         switch (tmpFileExtension){
             case ".mol":
                 return this.ImportMolFile(tmpFile);
@@ -96,6 +98,9 @@ public class Importer {
         }
     }
     //</editor-fold>
+    public String getFileName(){
+        return this.fileName;
+    }
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      * Opens a file chooser and loads the chosen file

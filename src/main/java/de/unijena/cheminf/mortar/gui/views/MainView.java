@@ -18,13 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui;
+package de.unijena.cheminf.mortar.gui.views;
 
-import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import de.unijena.cheminf.mortar.gui.panes.MainMenuBar;
+import de.unijena.cheminf.mortar.gui.panes.StatusBar;
 import javafx.scene.layout.*;
-
-import static de.unijena.cheminf.mortar.gui.util.GuiDefinitions.GUI_STATUSBAR_HEIGHT_VALUE;
 
 /**
  * MainView Class of MORTAR

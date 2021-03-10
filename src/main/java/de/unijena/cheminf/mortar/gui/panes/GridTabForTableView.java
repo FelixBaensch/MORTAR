@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui;
+package de.unijena.cheminf.mortar.gui.panes;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import javafx.scene.control.Tab;
@@ -30,7 +30,7 @@ import javafx.scene.layout.RowConstraints;
 /**
  * Custom tab which contains a grid pane
  */
-public class GridTab extends Tab {
+public class GridTabForTableView extends Tab {
 
     //<editor-fold desc="private class variables">
     private GridPane gridPane;
@@ -41,7 +41,7 @@ public class GridTab extends Tab {
      *
      * Creates a 'No Title' grid tab
      */
-    public GridTab(){
+    public GridTabForTableView(){
         this("No Title", "");
     }
     //
@@ -50,7 +50,7 @@ public class GridTab extends Tab {
      * @param aTitle
      * @param anIdString
      */
-    public GridTab(String aTitle, String anIdString){
+    public GridTabForTableView(String aTitle, String anIdString){
         super(aTitle);
         this.setClosable(false);
         this.setId(anIdString);
@@ -62,9 +62,9 @@ public class GridTab extends Tab {
         tmpRowCon1.setVgrow(Priority.ALWAYS);
         gridPane.getRowConstraints().add(tmpRowCon1);
         RowConstraints tmpRowCon2 = new RowConstraints();
-        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_MOLECULE_TAB_SECOND_ROW_HEIGHT);
-        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_MOLECULE_TAB_SECOND_ROW_HEIGHT);
-        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_MOLECULE_TAB_SECOND_ROW_HEIGHT);
+        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
+        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
+        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
         tmpRowCon2.setVgrow(Priority.ALWAYS);
         gridPane.getRowConstraints().add(tmpRowCon2);
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
@@ -84,12 +84,12 @@ public class GridTab extends Tab {
      * Necessary to add the pagination via  MainViewController
      *
      * @param aNode Node to add
-     * @param aColIndex
-     * @param aRowIndex
+     * @param aColIndex index in which col the node should be added, only be 1 or 2
+     * @param aRowIndex index in which row the node should be added, only be 1 or 2
      * @param aColSpan
      * @param aRowSpan
      */
-    public void addToGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
+    public void addNodeToGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.gridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
     //
