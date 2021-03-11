@@ -23,11 +23,11 @@ package de.unijena.cheminf.mortar.model.util;
 import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
 import org.junit.Test;
 
-public class SimpleEnumConstantPropertyTest {
+public class SimpleEnumConstantNamePropertyTest {
 
     @Test
     public void test() throws Exception {
-        SimpleEnumConstantProperty tmpEnumProperty = new SimpleEnumConstantProperty(this, "testProp",
+        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(this, "testProp",
                 IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION.name(),
                 IMoleculeFragmenter.FragmentSaturationOption.class);
         System.out.println("Associated enum: " + tmpEnumProperty.getAssociatedEnum());

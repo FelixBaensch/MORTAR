@@ -24,13 +24,13 @@ import javafx.beans.property.SimpleStringProperty;
 
 import java.util.Objects;
 
-public class SimpleEnumConstantProperty<T extends Enum<T>> extends SimpleStringProperty {
+public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
     /**
      *
      */
-    private final Class<T> associatedEnum;
+    private final Class associatedEnum;
 
-    public SimpleEnumConstantProperty(Object bean, String name, String initialValue, Class<T> associatedEnum)
+    public SimpleEnumConstantNameProperty(Object bean, String name, String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name, initialValue);
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
@@ -40,16 +40,16 @@ public class SimpleEnumConstantProperty<T extends Enum<T>> extends SimpleStringP
         if (!associatedEnum.isEnum()) {
             throw new IllegalArgumentException("Given class must be an enum.");
         }
-        Enum[] tmpEnumConstants = associatedEnum.getEnumConstants();
+        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
         if (tmpEnumConstants.length == 0) {
             throw new IllegalArgumentException("The given enum class has no constants declared in it.");
         }
         this.associatedEnum = associatedEnum;
         //throws IllegalArgumentException if initial value is no enum constant name
-        T.valueOf(associatedEnum, initialValue);
+        Enum.valueOf(associatedEnum, initialValue);
     }
 
-    public SimpleEnumConstantProperty(Object bean, String name, Class<T> associatedEnum)
+    public SimpleEnumConstantNameProperty(Object bean, String name, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name);
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
@@ -58,14 +58,14 @@ public class SimpleEnumConstantProperty<T extends Enum<T>> extends SimpleStringP
         if (!associatedEnum.isEnum()) {
             throw new IllegalArgumentException("Given class must be an enum.");
         }
-        Enum[] tmpEnumConstants = associatedEnum.getEnumConstants();
+        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
         if (tmpEnumConstants.length == 0) {
             throw new IllegalArgumentException("The given enum class has no constants declared in it.");
         }
         this.associatedEnum = associatedEnum;
     }
 
-    public SimpleEnumConstantProperty(String initialValue, Class<T> associatedEnum)
+    public SimpleEnumConstantNameProperty(String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(initialValue);
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
@@ -73,23 +73,23 @@ public class SimpleEnumConstantProperty<T extends Enum<T>> extends SimpleStringP
         if (!associatedEnum.isEnum()) {
             throw new IllegalArgumentException("Given class must be an enum.");
         }
-        Enum[] tmpEnumConstants = associatedEnum.getEnumConstants();
+        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
         if (tmpEnumConstants.length == 0) {
             throw new IllegalArgumentException("The given enum class has no constants declared in it.");
         }
         this.associatedEnum = associatedEnum;
         //throws IllegalArgumentException if initial value is no enum constant name
-        T.valueOf(associatedEnum, initialValue);
+        Enum.valueOf(associatedEnum, initialValue);
     }
 
-    public SimpleEnumConstantProperty(Class<T> associatedEnum)
+    public SimpleEnumConstantNameProperty(Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super();
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
         if (!associatedEnum.isEnum()) {
             throw new IllegalArgumentException("Given class must be an enum.");
         }
-        Enum[] tmpEnumConstants = associatedEnum.getEnumConstants();
+        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
         if (tmpEnumConstants.length == 0) {
             throw new IllegalArgumentException("The given enum class has no constants declared in it.");
         }
@@ -100,7 +100,7 @@ public class SimpleEnumConstantProperty<T extends Enum<T>> extends SimpleStringP
     public void set(String newValue) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(newValue, "Given value is null.");
         //throws IllegalArgumentException if initial value is no enum constant name
-        T.valueOf(this.associatedEnum, newValue);
+        Enum.valueOf(this.associatedEnum, newValue);
         super.set(newValue);
     }
 
@@ -108,7 +108,7 @@ public class SimpleEnumConstantProperty<T extends Enum<T>> extends SimpleStringP
     public void setValue(String v) {
         Objects.requireNonNull(v, "Given value is null.");
         //throws IllegalArgumentException if initial value is no enum constant name
-        T.valueOf(this.associatedEnum, v);
+        Enum.valueOf(this.associatedEnum, v);
         super.setValue(v);
     }
 
@@ -123,14 +123,23 @@ public class SimpleEnumConstantProperty<T extends Enum<T>> extends SimpleStringP
      *
      */
     public Enum[] getAssociatedEnumConstants() {
-        return this.associatedEnum.getEnumConstants();
+        return (Enum[]) this.associatedEnum.getEnumConstants();
     }
 
-    public T getEnumValue() {
-        return T.valueOf(this.associatedEnum, this.get());
+    public Enum getEnumValue() {
+        return Enum.valueOf(this.associatedEnum, this.get());
     }
 
-    public void setEnumValue(T newValue) throws NullPointerException, IllegalArgumentException {
+    public void setEnumValue(Enum newValue) throws NullPointerException, IllegalArgumentException {
         this.set(newValue.name());
+    }
+
+    public String[] getAssociatedEnumConstantnames() {
+        Enum[] tmpConstants = (Enum[]) this.associatedEnum.getEnumConstants();
+        String[] tmpNames = new String[tmpConstants.length];
+        for (int i = 0; i < tmpConstants.length; i++) {
+            tmpNames[i] = tmpConstants[i].name();
+        }
+        return tmpNames;
     }
 }
