@@ -24,12 +24,33 @@ import javafx.beans.property.SimpleStringProperty;
 
 import java.util.Objects;
 
+/**
+ * A JavaFX property for wrapping the name of a constant from one specified enum class. The specific enum class is set
+ * in the constructor and cannot be changed. All values the property might be given later must represent a constant name
+ * (Enum.name()) from this specific enum class.
+ *
+ * @author Jonas Schaub
+ */
 public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
+    //<editor-fold desc="Private final variables">
     /**
-     *
+     * The enum class the constant name belongs to.
      */
     private final Class associatedEnum;
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Constructors">
+    /**
+     * Constructor with all parameters.
+     *
+     * @param bean the bean of this property
+     * @param name the name of this property
+     * @param initialValue the initial value of the wrapped value
+     * @param associatedEnum the enum class of which a constant name should be wrapped
+     * @throws NullPointerException if a parameter is null
+     * @throws IllegalArgumentException if the given class is no enum, it contains no constants, or the given initial
+     * values does not represent a constant name from the given enum class
+     */
     public SimpleEnumConstantNameProperty(Object bean, String name, String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name, initialValue);
@@ -49,6 +70,15 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
         Enum.valueOf(associatedEnum, initialValue);
     }
 
+    /**
+     * Constructor without an initial value.
+     *
+     * @param bean the bean of this property
+     * @param name the name of this property
+     * @param associatedEnum the enum class of which a constant name should be wrapped
+     * @throws NullPointerException if a parameter is null
+     * @throws IllegalArgumentException if the given class is no enum or it contains no constants
+     */
     public SimpleEnumConstantNameProperty(Object bean, String name, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name);
@@ -65,6 +95,15 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
         this.associatedEnum = associatedEnum;
     }
 
+    /**
+     * Constructor without bean and name.
+     *
+     * @param initialValue the initial value of the wrapped value
+     * @param associatedEnum the enum class of which a constant name should be wrapped
+     * @throws NullPointerException if a parameter is null
+     * @throws IllegalArgumentException if the given class is no enum, it contains no constants, or the given initial
+     * values does not represent a constant name from the given enum class
+     */
     public SimpleEnumConstantNameProperty(String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(initialValue);
@@ -82,6 +121,13 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
         Enum.valueOf(associatedEnum, initialValue);
     }
 
+    /**
+     * Constructor without bean, name, and initial value. Only the associated enum class must be given.
+     *
+     * @param associatedEnum the enum class of which a constant name should be wrapped
+     * @throws NullPointerException if a parameter is null
+     * @throws IllegalArgumentException if the given class is no enum or it contains no constants
+     */
     public SimpleEnumConstantNameProperty(Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super();
@@ -95,7 +141,17 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
         }
         this.associatedEnum = associatedEnum;
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public properties get/set">
+    /**
+     * Set the wrapped enum constant name. The Enum.name() method must be used to retrieve it from the enum constant
+     * object.
+     *
+     * @param newValue the new value
+     * @throws NullPointerException if the parameter is null
+     * @throws IllegalArgumentException if the associated enum class has no constant with the name specified in newValue
+     */
     @Override
     public void set(String newValue) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(newValue, "Given value is null.");
@@ -104,8 +160,16 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
         super.set(newValue);
     }
 
+    /**
+     * Set the wrapped enum constant name. The Enum.name() method must be used to retrieve it from the enum constant
+     * object.
+     *
+     * @param v the new value
+     * @throws NullPointerException if the parameter is null
+     * @throws IllegalArgumentException if the associated enum class has no constant with the name specified in newValue
+     */
     @Override
-    public void setValue(String v) {
+    public void setValue(String v) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(v, "Given value is null.");
         //throws IllegalArgumentException if initial value is no enum constant name
         Enum.valueOf(this.associatedEnum, v);
@@ -113,28 +177,51 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
     }
 
     /**
+     * Convenience method that accepts an enum constant object directly instead of its name as new value for this property.
      *
+     * @param newValue the new value will be the name of the given enum constant object
+     * @throws NullPointerException if the parameter is null
+     * @throws IllegalArgumentException if the given enum constant object does not belong to the associated enum class of
+     * this property
+     */
+    public void setEnumValue(Enum newValue) throws NullPointerException, IllegalArgumentException {
+        this.set(newValue.name());
+    }
+
+    /**
+     * Convenience method that returns an enum constant object directly instead of its name for the wrapped value.
+     *
+     * @return the enum constant object whose name is currently wrapped in this property
+     */
+    public Enum getEnumValue() {
+        return Enum.valueOf(this.associatedEnum, this.get());
+    }
+
+    /**
+     * Returns the enum class of which a constant name is wrapped in this property.
+     *
+     * @return the associated enum class
      */
     public Class getAssociatedEnum() {
         return this.associatedEnum;
     }
 
     /**
+     * Convenience method that returns an array containing all enum constants of the associated enum class.
      *
+     * @return all constants of the associated enum
      */
     public Enum[] getAssociatedEnumConstants() {
         return (Enum[]) this.associatedEnum.getEnumConstants();
     }
 
-    public Enum getEnumValue() {
-        return Enum.valueOf(this.associatedEnum, this.get());
-    }
-
-    public void setEnumValue(Enum newValue) throws NullPointerException, IllegalArgumentException {
-        this.set(newValue.name());
-    }
-
-    public String[] getAssociatedEnumConstantnames() {
+    /**
+     * Convenience method that returns an array containing the names of all enum constants of the associated enum class.
+     * Therefore, this array represents all possible values for the wrapped value of this property.
+     *
+     * @return all possible values for the value of this property
+     */
+    public String[] getAssociatedEnumConstantNames() {
         Enum[] tmpConstants = (Enum[]) this.associatedEnum.getEnumConstants();
         String[] tmpNames = new String[tmpConstants.length];
         for (int i = 0; i < tmpConstants.length; i++) {
@@ -142,4 +229,5 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
         }
         return tmpNames;
     }
+    //</editor-fold>
 }

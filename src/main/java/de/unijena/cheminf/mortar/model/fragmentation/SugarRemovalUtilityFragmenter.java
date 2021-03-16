@@ -29,8 +29,8 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -160,7 +160,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     }
 
     @Override
-    public SimpleStringProperty fragmentSaturationSettingProperty() {
+    public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
         return null;
     }
 

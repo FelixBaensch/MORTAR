@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)
  */
 
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -43,7 +44,7 @@ import java.util.Objects;
  * Central interface for implementing wrapper classes for fragmentation algorithms.
  */
 public interface IMoleculeFragmenter {
-    //<editor-fold desc="FragmentSaturationOptions enum">
+    //<editor-fold desc="FragmentSaturationOption enum">
     /**
      * Enumeration of different ways to saturate free valences of returned fragment molecules
      */
@@ -99,7 +100,7 @@ public interface IMoleculeFragmenter {
      *
      * @return setting property for fragment saturation
      */
-    public SimpleStringProperty fragmentSaturationSettingProperty();
+    public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty();
 
     /**
      * Returns the currently set fragment saturation option as the respective enum constant.
