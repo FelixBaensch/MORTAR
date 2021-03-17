@@ -155,7 +155,7 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
     @Override
     public void set(String newValue) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(newValue, "Given value is null.");
-        //throws IllegalArgumentException if initial value is no enum constant name
+        //throws IllegalArgumentException if value is no enum constant name
         Enum.valueOf(this.associatedEnum, newValue);
         super.set(newValue);
     }
@@ -171,7 +171,7 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
     @Override
     public void setValue(String v) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(v, "Given value is null.");
-        //throws IllegalArgumentException if initial value is no enum constant name
+        //throws IllegalArgumentException if value is no enum constant name
         Enum.valueOf(this.associatedEnum, v);
         super.setValue(v);
     }
@@ -228,6 +228,20 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
             tmpNames[i] = tmpConstants[i].name();
         }
         return tmpNames;
+    }
+
+    /**
+     * Convenience method that returns the enum constant object with the given name from the associated enum class.
+     *
+     * @param anEnumConstantName name of a constant name of the associated enum class
+     * @return the corresponding enum constant object
+     * @throws NullPointerException if parameter is null
+     * @throws IllegalArgumentException if the associated enum class has no constant with the given name
+     */
+    public Enum translateNameToEnumConstant(String anEnumConstantName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anEnumConstantName, "Given enum constant name is null.");
+        //throws IllegalArgumentException if parameter is no enum constant name
+        return Enum.valueOf(this.associatedEnum, anEnumConstantName);
     }
     //</editor-fold>
 }

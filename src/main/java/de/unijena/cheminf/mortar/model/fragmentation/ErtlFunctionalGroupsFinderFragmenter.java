@@ -309,7 +309,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      */
     public void setEnvironmentModeSetting(FGEnvOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
-        this.setErtlFGFInstance(anOption);
+        //synchronisation with EFGF instance done in overridden set() function of the property
         this.environmentModeSetting.set(anOption.name());
     }
 
@@ -331,7 +331,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      */
     public void setAromaticityModelSetting(AromaticityModelOption anOption) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOption, "Given option is null.");
-        this.setAromaticityModelInstance(anOption);
+        //synchronisation with aromaticity model instance done in overridden set() function of the property
         this.aromaticityModelSetting.set(anOption.name());
     }
     //</editor-fold>
