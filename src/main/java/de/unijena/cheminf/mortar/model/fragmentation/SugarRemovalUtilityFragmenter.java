@@ -22,7 +22,6 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - separate unconnected fragments of the deglycosylated molecule into separate atom containers
  * - write doc
  */
 
@@ -583,11 +582,85 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * @return
      */
     public void setPreservationModeThresholdSetting(double aThreshold) throws IllegalArgumentException {
-        
+        //parameter test, conversion, and synchronisation with SRU instance in overridden set() method of the property
+        this.preservationModeThresholdSetting.set(aThreshold);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance in overridden set() method
+        this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(double aThreshold) throws IllegalArgumentException {
+        //synchronisation with SRU instance and parameter test done in overridden set() method
+        this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.set(aThreshold);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectLinearSugarsInRingsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectLinearSugarsInRingsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setLinearSugarCandidateMinimumSizeSetting(double aMinSize) throws IllegalArgumentException {
+        //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
+        this.linearSugarCandidateMinimumSizeSetting.set(aMinSize);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setLinearSugarCandidateMaximumSizeSetting(double aMaxSize) throws IllegalArgumentException {
+        //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
+        this.linearSugarCandidateMaximumSizeSetting.set(aMaxSize);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectLinearAcidicSugarsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectLinearAcidicSugarsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectSpiroRingsAsCircularSugarsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectSpiroRingsAsCircularSugarsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectCircularSugarsWithKetoGroupsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectCircularSugarsWithKetoGroupsSetting.set(aBoolean);
     }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+
     @Override
     public List<Property> settingsProperties() {
         return this.settings;
@@ -629,13 +702,25 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     @Override
     public void restoreDefaultSettings() {
-        this.sugarRUInstance.restoreDefaultSettings();
         this.sugarTypeToRemoveSetting.set(SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT.name());
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.sugarRUInstance.restoreDefaultSettings();
+        this.detectCircularSugarsOnlyWithGlycosidicBondSetting.set(this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected());
+        this.removeOnlyTerminalSugarsSetting.set(this.sugarRUInstance.areOnlyTerminalSugarsRemoved());
+        this.preservationModeSetting.set(this.sugarRUInstance.getPreservationModeSetting().name());
+        this.preservationModeThresholdSetting.set(this.sugarRUInstance.getPreservationModeThresholdSetting());
+        this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.set(this.sugarRUInstance.areOnlyCircularSugarsWithEnoughExocyclicOxygenAtomsDetected());
+        this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.set(this.sugarRUInstance.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting());
+        this.detectLinearSugarsInRingsSetting.set(this.sugarRUInstance.areLinearSugarsInRingsDetected());
+        this.linearSugarCandidateMinimumSizeSetting.set(this.sugarRUInstance.getLinearSugarCandidateMinSizeSetting());
+        this.linearSugarCandidateMaximumSizeSetting.set(this.sugarRUInstance.getLinearSugarCandidateMaxSizeSetting());
+        this.detectLinearAcidicSugarsSetting.set(this.sugarRUInstance.areLinearAcidicSugarsDetected());
+        this.detectSpiroRingsAsCircularSugarsSetting.set(this.sugarRUInstance.areSpiroRingsDetectedAsCircularSugars());
+        this.detectCircularSugarsWithKetoGroupsSetting.set(this.sugarRUInstance.areCircularSugarsWithKetoGroupsDetected());
     }
 
     /**
-     * Notice that the given atom container is altered!
+     *
      * @param aMolecule
      * @return
      * @throws NullPointerException
@@ -678,17 +763,29 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         IAtomContainer tmpAglycon = tmpFragments.get(0);
         tmpAglycon.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+        boolean tmpSugarsWereDetected = (tmpFragments.size() > 1);
+        if (!ConnectivityChecker.isConnected(tmpAglycon)) {
+            List<IAtomContainer> tmpAglyconFragments = SugarRemovalUtility.partitionAndSortUnconnectedFragments(tmpAglycon);
+            for (IAtomContainer tmpAglyconFragment : tmpAglyconFragments) {
+                tmpAglyconFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+            }
+            tmpFragments.remove(0);
+            tmpFragments.addAll(0, tmpAglyconFragments);
+        }
         //sugars were detected, postprocessing
-        if (tmpFragments.size() > 1) {
+        if (tmpSugarsWereDetected) {
             for (int i = 1; i < tmpFragments.size(); i++) {
                 IAtomContainer tmpSugarFragment = tmpFragments.get(i);
-                tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                        SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
-                if (this.fragmentSaturationSetting.equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
-                    try {
-                        IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
-                    } catch (CDKException aCDKException) {
-                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                if (Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))) {
+                    tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
+                    if (this.fragmentSaturationSetting.equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                        try {
+                            IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
+                        } catch (CDKException aCDKException) {
+                            Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                        }
                     }
                 }
             }
