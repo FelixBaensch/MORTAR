@@ -339,7 +339,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
     //</editor-fold>
     //
-    //<editor-fold desc="IMoleculeFragmenter methods">
+    //<editor-fold desc="IMoleculeFragmenter methods" defaultstate="collapsed">
+
     @Override
     public List<Property> settingsProperties() {
         return this.settings;

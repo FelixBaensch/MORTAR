@@ -66,6 +66,7 @@ public class MainView extends AnchorPane {
         this.statusBar = new StatusBar();
         this.mainBorderPane.setBottom(this.statusBar);
         this.getChildren().add(this.mainBorderPane);
+
     }
 
     //<editor-fold desc="public properties" defaultstate="collapsed">

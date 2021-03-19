@@ -20,7 +20,6 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.FragmentationSettingsView;
@@ -39,13 +38,15 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
+import javafx.util.Pair;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * SettingsViewController
- * controls {@link FragmentationSettingsView}
+ * controls {@link de.unijena.cheminf.mortar.gui.views.FragmentationSettingsView}
  */
 public class FragmentationSettingsViewController {
 
@@ -53,10 +54,14 @@ public class FragmentationSettingsViewController {
     private Stage fragmentationSettingsViewStage;
     private boolean isViewDisplayed = false;
     private FragmentationSettingsView fragmentationSettingsView;
+    private Properties recentProperties;
+    private List<Property> recentPropertiesList;
+
 
     public FragmentationSettingsViewController(Stage aStage){
         this.mainStage = aStage;
         this.openFragmentationSettingsView();
+        this.recentProperties = new Properties();
     }
 
     private void openFragmentationSettingsView(){
@@ -72,22 +77,24 @@ public class FragmentationSettingsViewController {
         this.fragmentationSettingsViewStage.setTitle(Message.get("FragmentationSettingsView.title"));
         this.fragmentationSettingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.fragmentationSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-
-        addTab(new ErtlFunctionalGroupsFinderFragmenter()); //TODO: remove line after gui testing
+        //
+        this.addListener();
+        this.addTab(new ErtlFunctionalGroupsFinderFragmenter()); //TODO: remove line after gui testing
     }
 
-    public void addTab(IMoleculeFragmenter aFragmenter){
+    private void addTab(IMoleculeFragmenter aFragmenter){
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         Label tmpTabTitle = new Label(aFragmenter.getFragmentationAlgorithmName());
 
         StackPane tmpStackPane = new StackPane(new Group(tmpTabTitle));
         tmpTab.setGraphic(tmpStackPane);
-        tmpTab.setStyle("-fx-pref-height: 150"); //height and width are turned cause tab pane side is set to left
+        tmpTab.setStyle("-fx-pref-height: 150");
+        tmpTab.setId(aFragmenter.getFragmentationAlgorithmName()); //TODO: Maybe enum is the better way
 
         GridPane tmpGridPane = new GridPane();
         tmpGridPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-        tmpGridPane.setGridLinesVisible(true);
+//        tmpGridPane.setGridLinesVisible(true);
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
         tmpColCon1.setHalignment(HPos.LEFT);
         tmpColCon1.setHgrow(Priority.ALWAYS);
@@ -137,6 +144,7 @@ public class FragmentationSettingsViewController {
                 tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
                 //TODO: set to default or to set value, not necessary cause of bidirectional binding
                 tmpBooleanComboBox.valueProperty().bindBidirectional(tmpProperty);
+
                 //add to gridpane
                 aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -159,5 +167,30 @@ public class FragmentationSettingsViewController {
                 GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
         }
+    }
+
+    private void addListener(){
+        //fragmentationSettingsViewStage close request
+        this.fragmentationSettingsViewStage.setOnCloseRequest(event -> {
+            //TODO set properties back to recent values but only on active/focused/selected tab
+//            this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId();
+            this.fragmentationSettingsViewStage.close();
+        });
+        //applyButton
+        this.fragmentationSettingsView.getApplyButton().setOnAction(event -> {
+            this.fragmentationSettingsViewStage.close();
+        });
+        //cancelButton
+        this.fragmentationSettingsView.getCancelButton().setOnAction(event -> {
+            //TODO set properties back to recent values but only on active/focused/selected tab
+//            for(Property tmpProp : this.recentPropertiesList){
+//                tmpProp
+//            }
+            this.fragmentationSettingsViewStage.close();
+        });
+        //defaultButton
+        this.fragmentationSettingsView.getDefaultButton().setOnAction(event -> {
+            //TODO set properties to default values but only on active/focused/selected tab
+        });
     }
 }

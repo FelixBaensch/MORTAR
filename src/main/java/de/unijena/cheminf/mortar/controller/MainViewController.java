@@ -42,8 +42,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Pagination;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -129,7 +128,8 @@ public class MainViewController {
         //</editor-fold>
         this.rowsPerPage = 5; //TODO: get this from settings
         this.addListener();
-    }
+        this.addFragmentationAlgorithmCheckMenuItems();
+        }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
@@ -189,6 +189,17 @@ public class MainViewController {
         if(this.fragmentationSettingsViewController == null)
             this.fragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage);
 
+    }
+    //
+    private void addFragmentationAlgorithmCheckMenuItems(){
+        ToggleGroup tmpToggleGroup = new ToggleGroup();
+        RadioMenuItem tmpRadioMenuItem = new RadioMenuItem("Ertl");
+        tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
+        RadioMenuItem tmpRadioMenuItem2 = new RadioMenuItem("Sugar");
+        tmpRadioMenuItem2.setToggleGroup(tmpToggleGroup);
+//        this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(new CheckMenuItem("Ertl"));
+        this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(tmpRadioMenuItem);
+        this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(tmpRadioMenuItem2);
     }
     //
     /**

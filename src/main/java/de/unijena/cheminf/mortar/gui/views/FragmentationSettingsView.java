@@ -30,6 +30,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 
 public class FragmentationSettingsView extends AnchorPane {
 
@@ -37,7 +38,11 @@ public class FragmentationSettingsView extends AnchorPane {
     private BorderPane borderPane;
     private Button cancelButton;
     private Button applyButton;
-    private HBox hBoxButtons;
+    private Button defaultButton;
+    private HBox hBoxRightSideButtons;
+    private HBox hBoxLeftSideButtons;
+    private HBox hBoxButtonsHBox;
+
 
     public FragmentationSettingsView(){
         super();
@@ -58,17 +63,29 @@ public class FragmentationSettingsView extends AnchorPane {
         this.borderPane.setCenter(this.tabPane);
 
         //buttons
-        this.hBoxButtons = new HBox();
+        this.hBoxButtonsHBox = new HBox();
+        this.hBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
+        this.borderPane.setBottom(hBoxButtonsHBox);
+        //-left side
+        this.defaultButton = new Button(Message.get("FragmentationSettingsView.defaultButton.text"));
+        this.hBoxLeftSideButtons = new HBox();
+        this.hBoxLeftSideButtons.getChildren().add(this.defaultButton);
+        this.hBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);
+        this.hBoxLeftSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        this.hBoxLeftSideButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        HBox.setHgrow(this.hBoxLeftSideButtons, Priority.ALWAYS);
+        this.hBoxButtonsHBox.getChildren().add(this.hBoxLeftSideButtons);
+        //-right side
+        this.hBoxRightSideButtons = new HBox();
         this.cancelButton = new Button(Message.get("FragmentationSettingsView.cancelButton.text"));
         this.applyButton = new Button(Message.get("FragmentationSettingsView.applyButton.text"));
-        this.hBoxButtons.getChildren().addAll(this.applyButton, this.cancelButton);
-        this.hBoxButtons.setAlignment(Pos.CENTER_RIGHT);
-        this.hBoxButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-        this.hBoxButtons.setStyle("-fx-background-color: LightGrey");
-        this.hBoxButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-        this.borderPane.setBottom(this.hBoxButtons);
-
-
+        this.hBoxRightSideButtons.getChildren().addAll(this.applyButton, this.cancelButton);
+        this.hBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
+        this.hBoxRightSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        this.hBoxRightSideButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        HBox.setHgrow(this.hBoxRightSideButtons, Priority.ALWAYS);
+        this.hBoxButtonsHBox.getChildren().add(this.hBoxRightSideButtons);
+        //
         this.getChildren().add(this.borderPane);
     }
 
@@ -82,5 +99,8 @@ public class FragmentationSettingsView extends AnchorPane {
     }
     public Button getApplyButton(){
         return this.applyButton;
+    }
+    public Button getDefaultButton(){
+        return this.defaultButton;
     }
 }
