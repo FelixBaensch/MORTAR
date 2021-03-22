@@ -26,6 +26,7 @@ import de.unijena.cheminf.mortar.gui.views.FragmentationSettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -40,6 +41,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -54,17 +56,18 @@ public class FragmentationSettingsViewController {
     private Stage fragmentationSettingsViewStage;
     private boolean isViewDisplayed = false;
     private FragmentationSettingsView fragmentationSettingsView;
-    private Properties recentProperties;
-    private List<Property> recentPropertiesList;
+    private Map<String, Map<String, Object>> recentPropertiesList;
+    private IMoleculeFragmenter[] fragmenters;
 
 
-    public FragmentationSettingsViewController(Stage aStage){
+    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] fragmenters){
         this.mainStage = aStage;
+        this.recentPropertiesList = new HashMap<>();
+        this.fragmenters = fragmenters;
         this.openFragmentationSettingsView();
-        this.recentProperties = new Properties();
     }
 
-    private void openFragmentationSettingsView(){
+    public void openFragmentationSettingsView(){
         if(this.fragmentationSettingsView == null)
             this.fragmentationSettingsView = new FragmentationSettingsView();
         this.fragmentationSettingsViewStage = new Stage();
@@ -79,9 +82,16 @@ public class FragmentationSettingsViewController {
         this.fragmentationSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //
         this.addListener();
-        this.addTab(new ErtlFunctionalGroupsFinderFragmenter()); //TODO: remove line after gui testing
+        for (IMoleculeFragmenter fragmenter : this.fragmenters) {
+            this.addTab(fragmenter);
+        }
     }
 
+    /**
+     * Adds a tab for given IMoleculeFragmenter to FragmentationSettingsView
+     *
+     * @param aFragmenter IMoleculeFragmenter
+     */
     private void addTab(IMoleculeFragmenter aFragmenter){
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
@@ -91,10 +101,9 @@ public class FragmentationSettingsViewController {
         tmpTab.setGraphic(tmpStackPane);
         tmpTab.setStyle("-fx-pref-height: 150");
         tmpTab.setId(aFragmenter.getFragmentationAlgorithmName()); //TODO: Maybe enum is the better way
-
+        ScrollPane tmpScrollPane = new ScrollPane();
         GridPane tmpGridPane = new GridPane();
         tmpGridPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-//        tmpGridPane.setGridLinesVisible(true);
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
         tmpColCon1.setHalignment(HPos.LEFT);
         tmpColCon1.setHgrow(Priority.ALWAYS);
@@ -109,42 +118,37 @@ public class FragmentationSettingsViewController {
                 this.fragmentationSettingsViewStage.widthProperty().multiply(0.5)
         );
         tmpGridPane.getColumnConstraints().add(tmpColCon2);
-
-//        this.addPropertyItems(aFragmenter.settingsProperties(), tmpGridPane);
         this.addPropertyItems(aFragmenter, tmpGridPane);
-
-        tmpTab.setContent(tmpGridPane);
-
+        tmpScrollPane.setContent(tmpGridPane);
+        tmpTab.setContent(tmpScrollPane);
         this.fragmentationSettingsView.getTabPane().getTabs().add(tmpTab);
-
-
-
     }
 
-//    private void addPropertyItems(List<Property> aPropertyList, GridPane aGridPane){
+    /**
+     * Adds setting property items of given fragmenter to given grid pane
+     *
+     * @param aFragmenter IMoleculeFragmenter
+     * @param aGridPane GridPane
+     */
     private void addPropertyItems(IMoleculeFragmenter aFragmenter, GridPane aGridPane){
         int tmpRowIndex = 0;
         for(Property tmpProperty : aFragmenter.settingsProperties()){
-
             RowConstraints tmpRow = new RowConstraints();
             tmpRow.setVgrow(Priority.ALWAYS);
             tmpRow.setPrefHeight(50);
             tmpRow.setMaxHeight(50);
             tmpRow.setMinHeight(50);
             aGridPane.getRowConstraints().add(tmpRow);
-
             String tmpPropName = tmpProperty.getName();
             Label tmpNameLabel = new Label(tmpPropName);
             aGridPane.add(tmpNameLabel, 0, tmpRowIndex);
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             Object tmpSetValue = tmpProperty.getValue(); //TODO: Maybe change this line to getDefault() or something else
             if(tmpProperty instanceof SimpleBooleanProperty){
-//                SimpleBooleanProperty tmpBooleanProperty = (SimpleBooleanProperty) tmpProperty;
+
                 ComboBox tmpBooleanComboBox = new ComboBox();
                 tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
-                //TODO: set to default or to set value, not necessary cause of bidirectional binding
                 tmpBooleanComboBox.valueProperty().bindBidirectional(tmpProperty);
-
                 //add to gridpane
                 aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -159,16 +163,20 @@ public class FragmentationSettingsViewController {
                 aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
-            else if(tmpProperty instanceof SimpleStringProperty){ //TODO: change to Enum
+            else if(tmpProperty instanceof SimpleEnumConstantNameProperty){
                 ComboBox tmpEnumComboBox = new ComboBox();
-                tmpEnumComboBox.getItems().addAll("Jonas", "Kohulan", "Achim", "Lisa", "AKB", "Felix");
-//                tmpEnumComboBox.valueProperty().bindBidirectional(ErtlFunctionalGroupsFinderFragmenter.);
+                tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
+                tmpEnumComboBox.valueProperty().bindBidirectional(tmpProperty);
+                //add to gridpane
                 aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
         }
     }
 
+    /**
+     * Adds listeners
+     */
     private void addListener(){
         //fragmentationSettingsViewStage close request
         this.fragmentationSettingsViewStage.setOnCloseRequest(event -> {
@@ -183,6 +191,7 @@ public class FragmentationSettingsViewController {
         //cancelButton
         this.fragmentationSettingsView.getCancelButton().setOnAction(event -> {
             //TODO set properties back to recent values but only on active/focused/selected tab
+
 //            for(Property tmpProp : this.recentPropertiesList){
 //                tmpProp
 //            }
@@ -191,6 +200,10 @@ public class FragmentationSettingsViewController {
         //defaultButton
         this.fragmentationSettingsView.getDefaultButton().setOnAction(event -> {
             //TODO set properties to default values but only on active/focused/selected tab
+            this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId();
+
+            //TODO Fragmenter habe eine SetToDefault Methode
+
         });
     }
 }

@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
+import javafx.beans.property.Property;
 import org.junit.Assert;
 import org.junit.Test;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -36,6 +37,9 @@ public class SugarRemovalUtilityFragmenterTest {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
         System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
         System.out.println(tmpFragmenter.getSugarTypeToRemoveSetting());
+        for (Property tmpSetting : tmpFragmenter.settingsProperties()) {
+            System.out.println(tmpSetting.getName());
+        }
     }
 
     @Test
@@ -66,13 +70,15 @@ public class SugarRemovalUtilityFragmenterTest {
         System.out.println(tmpSmilesCode + " " + tmpFragmentList.get(0).getProperty(
                 IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         //Now that all sugars are removed, the sugar ring is removed and an unconnected structure remains
-        Assert.assertEquals("O=C(O)C=CC1=CC=C(O)C=C1.O=C(OCC1(O)C(O)CC2C(=COC(OC(=O)CC(C)C)C21)CO)C", tmpSmilesCode);
-        System.out.println(tmpSmiGen.create(tmpFragmentList.get(1)) + " " + tmpFragmentList.get(1).getProperty(
+        // the unconnected fragments are separated into different atom containers in the returned list
+        Assert.assertEquals("O=C(OCC1(O)C(O)CC2C(=COC(OC(=O)CC(C)C)C21)CO)C", tmpSmilesCode);
+        Assert.assertEquals("O=C(O)C=CC1=CC=C(O)C=C1", tmpSmiGen.create(tmpFragmentList.get(1)));
+        System.out.println(tmpSmiGen.create(tmpFragmentList.get(2)) + " " + tmpFragmentList.get(2).getProperty(
                 IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         tmpSRUFragmenter.setRemoveOnlyTerminalSugarsSetting(true);
         Assert.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpFragmentList.get(0)));
-        Assert.assertTrue(tmpSRUFragmenter.shouldBePreprocessed(tmpFragmentList.get(0)));
-        Assert.assertFalse(tmpSRUFragmenter.canBeFragmented(tmpFragmentList.get(0)));
+        Assert.assertFalse(tmpSRUFragmenter.shouldBePreprocessed(tmpFragmentList.get(0)));
+        Assert.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpFragmentList.get(0)));
         IAtomContainer tmpAfterPreprocessing = tmpSRUFragmenter.applyPreprocessing(tmpFragmentList.get(0));
         Assert.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpAfterPreprocessing));
     }

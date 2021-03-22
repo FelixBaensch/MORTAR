@@ -22,15 +22,14 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 /**
  * TODO:
- * - add option to separate unconnected fragments of the deglycosylated molecule into separate atom containers?
- * - implement properties for settings
- * - after the above, maybe better do not extend the SRU here
  * - write doc
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -44,8 +43,8 @@ import java.util.logging.Logger;
 /**
  * TODO
  */
-public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implements IMoleculeFragmenter {
-    //<editor-fold desc="Enum SugarTypeToRemove">
+public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
+    //<editor-fold desc="Enum SugarTypeToRemoveOption">
     /**
      *
      */
@@ -69,36 +68,108 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     //
     //<editor-fold desc="Public static final constants">
     /**
-     * TODO
+     *
      */
     public static final String ALGORITHM_NAME = "Sugar Removal Utility";
 
     /**
      *
      */
-    public static final String FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE = "SugarRemovalUtilityFragmenter.DeglycosylatedCore";
+    public static final String FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE = "SRUFragmenter.DeglycosylatedCore";
 
     /**
      *
      */
-    public static final String FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE = "SugarRemovalUtilityFragmenter.SugarMoiety";
+    public static final String FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE = "SRUFragmenter.SugarMoiety";
 
     /**
      *
      */
-    public static final SugarTypeToRemoveOption SUGAR_TYPE_TO_REMOVE_DEFAULT = SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR;
+    public static final SugarTypeToRemoveOption SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT = SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR;
     //</editor-fold>
     //
     //<editor-fold desc="Private variables">
     /**
      *
      */
-    private SugarTypeToRemoveOption sugarTypeToRemoveOption;
+    private SugarRemovalUtility sugarRUInstance;
+    //</editor-fold>
+    //<editor-fold desc="Private final variables">
+    /**
+     *
+     */
+    private final SimpleEnumConstantNameProperty sugarTypeToRemoveSetting;
 
     /**
      *
      */
-    private FragmentSaturationOption fragmentSaturationSetting;
+    private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+
+    /**
+     *
+     */
+    private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
+
+    /**
+     *
+     */
+    private final SimpleBooleanProperty removeOnlyTerminalSugarsSetting;
+
+    /**
+     *
+     */
+    private final SimpleEnumConstantNameProperty preservationModeSetting;
+
+    /**
+     * The threshold is actually an integer in the SRU but wrapped in a double here to make setup of
+     * settings window easier
+     */
+    private final SimpleDoubleProperty preservationModeThresholdSetting;
+
+    /**
+     *
+     */
+    private final SimpleBooleanProperty detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting;
+
+    /**
+     *
+     */
+    private final SimpleDoubleProperty exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting;
+
+    /**
+     *
+     */
+    private final SimpleBooleanProperty detectLinearSugarsInRingsSetting;
+
+    /**
+     *
+     */
+    private final SimpleDoubleProperty linearSugarCandidateMinimumSizeSetting;
+
+    /**
+     *
+     */
+    private final SimpleDoubleProperty linearSugarCandidateMaximumSizeSetting;
+
+    /**
+     *
+     */
+    private final SimpleBooleanProperty detectLinearAcidicSugarsSetting;
+
+    /**
+     *
+     */
+    private final SimpleBooleanProperty detectSpiroRingsAsCircularSugarsSetting;
+
+    /**
+     *
+     */
+    private final SimpleBooleanProperty detectCircularSugarsWithKetoGroupsSetting;
+
+    /**
+     *
+     */
+    private final List<Property> settings;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -107,9 +178,144 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
      * all settings in default, calls the SRU sole constructor
      */
     public SugarRemovalUtilityFragmenter() {
-        super();
-        this.sugarTypeToRemoveOption = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
-        this.fragmentSaturationSetting = IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT;
+        this.sugarRUInstance = new SugarRemovalUtility();
+        this.settings = new ArrayList<>(14);
+        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "fragmentSaturationSetting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(),
+                IMoleculeFragmenter.FragmentSaturationOption.class);
+        this.settings.add(this.fragmentSaturationSetting);
+        this.sugarTypeToRemoveSetting = new SimpleEnumConstantNameProperty(this, "sugarTypeToRemoveSetting",
+                SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT.name(),
+                SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.class);
+        this.settings.add(this.sugarTypeToRemoveSetting);
+        this.detectCircularSugarsOnlyWithGlycosidicBondSetting = new SimpleBooleanProperty(this,
+                "detectCircularSugarsOnlyWithGlycosidicBondSetting",
+                this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected()) {
+            @Override
+            public void set(boolean newValue) {
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectCircularSugarsOnlyWithOGlycosidicBondSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.detectCircularSugarsOnlyWithGlycosidicBondSetting);
+        this.removeOnlyTerminalSugarsSetting = new SimpleBooleanProperty(this, "removeOnlyTerminalSugarsSetting",
+                this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
+            @Override
+            public void set(boolean newValue) {
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setRemoveOnlyTerminalSugarsSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.removeOnlyTerminalSugarsSetting);
+        this.preservationModeSetting = new SimpleEnumConstantNameProperty(this, "preservationModeSetting",
+                this.sugarRUInstance.getPreservationModeSetting().name(), SugarRemovalUtility.PreservationModeOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                //valueOf() throws IllegalArgumentException
+                SugarRemovalUtility.PreservationModeOption tmpEnumConstant = SugarRemovalUtility.PreservationModeOption.valueOf(newValue);
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeSetting(tmpEnumConstant);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.preservationModeSetting);
+        this.preservationModeThresholdSetting = new SimpleDoubleProperty(this, "preservationModeThresholdSetting",
+                this.sugarRUInstance.getPreservationModeThresholdSetting()) {
+            @Override
+            public void set(double newValue) throws IllegalArgumentException{
+                //all digits after decimal point are truncated
+                int tmpIntegerValue = (int) newValue;
+                //throws IllegalArgumentException
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeThresholdSetting(tmpIntegerValue);
+                super.set(tmpIntegerValue);
+            }
+        };
+        this.settings.add(this.preservationModeThresholdSetting);
+        this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting = new SimpleBooleanProperty(this,
+                "detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting",
+                this.sugarRUInstance.areOnlyCircularSugarsWithEnoughExocyclicOxygenAtomsDetected()) {
+            @Override
+            public void set(boolean newValue) {
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting);
+        this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting = new SimpleDoubleProperty(this,
+                "exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting",
+                this.sugarRUInstance.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting()) {
+            @Override
+            public void set(double newValue) throws IllegalArgumentException {
+                //throws IllegalArgumentException
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting);
+        this.detectLinearSugarsInRingsSetting = new SimpleBooleanProperty(this, "detectLinearSugarsInRingsSetting",
+                this.sugarRUInstance.areLinearSugarsInRingsDetected()) {
+            @Override
+            public void set(boolean newValue) {
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectLinearSugarsInRingsSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.detectLinearSugarsInRingsSetting);
+        this.linearSugarCandidateMinimumSizeSetting = new SimpleDoubleProperty(this,
+                "linearSugarCandidateMinimumSizeSetting",
+                this.sugarRUInstance.getLinearSugarCandidateMinSizeSetting()) {
+            @Override
+            public void set(double newValue) {
+                //all digits after decimal point are truncated
+                int tmpIntegerValue = (int) newValue;
+                //throws IllegalArgumentException
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMinSizeSetting(tmpIntegerValue);
+                super.set(tmpIntegerValue);
+            }
+        };
+        this.settings.add(this.linearSugarCandidateMinimumSizeSetting);
+        this.linearSugarCandidateMaximumSizeSetting = new SimpleDoubleProperty(this,
+                "linearSugarCandidateMaximumSizeSetting",
+                this.sugarRUInstance.getLinearSugarCandidateMaxSizeSetting()) {
+            @Override
+            public void set(double newValue) {
+                //all digits after decimal point are truncated
+                int tmpIntegerValue = (int) newValue;
+                //throws IllegalArgumentException
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMaxSizeSetting(tmpIntegerValue);
+                super.set(tmpIntegerValue);
+            }
+        };
+        this.settings.add(this.linearSugarCandidateMaximumSizeSetting);
+        this.detectLinearAcidicSugarsSetting = new SimpleBooleanProperty(this,
+                "detectLinearAcidicSugarsSetting",
+                this.sugarRUInstance.areLinearAcidicSugarsDetected()) {
+            @Override
+            public void set(boolean newValue) {
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectLinearAcidicSugarsSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.detectLinearAcidicSugarsSetting);
+        this.detectSpiroRingsAsCircularSugarsSetting = new SimpleBooleanProperty(this,
+                "detectSpiroRingsAsCircularSugarsSetting",
+                this.sugarRUInstance.areSpiroRingsDetectedAsCircularSugars()) {
+            @Override
+            public void set(boolean newValue) {
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectSpiroRingsAsCircularSugarsSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.detectSpiroRingsAsCircularSugarsSetting);
+        this.detectCircularSugarsWithKetoGroupsSetting = new SimpleBooleanProperty(this,
+                "detectCircularSugarsWithKetoGroupsSetting",
+                this.sugarRUInstance.areCircularSugarsWithKetoGroupsDetected()) {
+            @Override
+            public void set(boolean newValue) {
+                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectCircularSugarsWithKetoGroupsSetting(newValue);
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.detectCircularSugarsWithKetoGroupsSetting);
     }
     //</editor-fold>
     //
@@ -118,8 +324,197 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
      *
      * @return
      */
-    public SugarTypeToRemoveOption getSugarTypeToRemoveSetting() {
-        return this.sugarTypeToRemoveOption;
+    public String getSugarTypeToRemoveSetting() {
+        return this.sugarTypeToRemoveSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleEnumConstantNameProperty sugarTypeToRemoveSettingProperty() {
+        return this.sugarTypeToRemoveSetting;
+    }
+
+    /**
+     *
+     */
+    public SugarTypeToRemoveOption getSugarTypeToRemoveSettingConstant() {
+        return SugarTypeToRemoveOption.valueOf(this.sugarTypeToRemoveSetting.get());
+    }
+
+    /**
+     *
+     */
+    public boolean getDetectCircularSugarsOnlyWithGlycosidicBondSetting() {
+        return this.detectCircularSugarsOnlyWithGlycosidicBondSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSettingProperty() {
+        return this.detectCircularSugarsOnlyWithGlycosidicBondSetting;
+    }
+
+    /**
+     *
+     */
+    public boolean getRemoveOnlyTerminalSugarsSetting() {
+        return this.removeOnlyTerminalSugarsSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleBooleanProperty removeOnlyTerminalSugarsSettingProperty() {
+        return this.removeOnlyTerminalSugarsSetting;
+    }
+
+    /**
+     *
+     */
+    public String getPreservationModeSetting() {
+        return this.preservationModeSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleEnumConstantNameProperty preservationModeSettingProperty() {
+        return this.preservationModeSetting;
+    }
+
+    /**
+     *
+     */
+    public SugarRemovalUtility.PreservationModeOption getPreservationModeSettingConstant() {
+        return SugarRemovalUtility.PreservationModeOption.valueOf(this.preservationModeSetting.get());
+    }
+
+    /**
+     *
+     */
+    public double getPreservationModeThresholdSetting() {
+        return this.preservationModeThresholdSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleDoubleProperty preservationModeThresholdSettingProperty() {
+        return this.preservationModeThresholdSetting;
+    }
+
+    /**
+     *
+     */
+    public boolean getDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting() {
+        return this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleBooleanProperty detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSettingProperty() {
+        return this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting;
+    }
+
+    /**
+     *
+     */
+    public double getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting() {
+        return this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleDoubleProperty exocyclicOxygenAtomsToAtomsInRingRatioThresholdSettingProperty() {
+        return this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting;
+    }
+
+    /**
+     *
+     */
+    public boolean getDetectLinearSugarsInRingsSetting() {
+        return this.detectLinearSugarsInRingsSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleBooleanProperty detectLinearSugarsInRingsSettingProperty() {
+        return this.detectLinearSugarsInRingsSetting;
+    }
+
+    /**
+     *
+     */
+    public double getLinearSugarCandidateMinimumSizeSetting() {
+        return this.linearSugarCandidateMinimumSizeSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleDoubleProperty linearSugarCandidateMinimumSizeSettingProperty() {
+        return this.linearSugarCandidateMinimumSizeSetting;
+    }
+
+    /**
+     *
+     */
+    public double getLinearSugarCandidateMaximumSizeSetting() {
+        return this.linearSugarCandidateMaximumSizeSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleDoubleProperty linearSugarCandidateMaximumSizeSettingProperty() {
+        return this.linearSugarCandidateMaximumSizeSetting;
+    }
+
+    /**
+     *
+     */
+    public boolean getDetectLinearAcidicSugarsSetting() {
+        return this.detectLinearAcidicSugarsSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleBooleanProperty detectLinearAcidicSugarsSettingProperty() {
+        return this.detectLinearAcidicSugarsSetting;
+    }
+
+    /**
+     *
+     */
+    public boolean getDetectSpiroRingsAsCircularSugarsSetting() {
+        return this.detectSpiroRingsAsCircularSugarsSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleBooleanProperty detectSpiroRingsAsCircularSugarsSettingProperty() {
+        return this.detectSpiroRingsAsCircularSugarsSetting;
+    }
+
+    /**
+     *
+     */
+    public boolean getDetectCircularSugarsWithKetoGroupsSetting() {
+        return this.detectCircularSugarsWithKetoGroupsSetting.get();
+    }
+
+    /**
+     *
+     */
+    public SimpleBooleanProperty detectCircularSugarsWithKetoGroupsSettingProperty() {
+        return this.detectCircularSugarsWithKetoGroupsSetting;
     }
     //</editor-fold>
     //
@@ -127,62 +522,205 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     /**
      *
      */
+    public void setSugarTypeToRemoveSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        SugarTypeToRemoveOption tmpConstant = SugarTypeToRemoveOption.valueOf(anOptionName);
+        this.setSugarTypeToRemoveSetting(tmpConstant);
+    }
+
+    /**
+     *
+     */
     public void setSugarTypeToRemoveSetting(SugarTypeToRemoveOption aSugarTypeToRemoveOption) throws NullPointerException {
         Objects.requireNonNull(aSugarTypeToRemoveOption, "Given type of sugars to remove is null.");
-        this.sugarTypeToRemoveOption = aSugarTypeToRemoveOption;
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="IMoleculeFragmenter methods">
-    @Override
-    public List<Property> settingsProperties() {
-        return null;
+        this.sugarTypeToRemoveSetting.set(aSugarTypeToRemoveOption.name());
     }
 
     /**
      *
      * @return
      */
+    public void setDetectCircularSugarsOnlyWithGlycosidicBondSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() function of the property
+        this.detectCircularSugarsOnlyWithGlycosidicBondSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setRemoveOnlyTerminalSugarsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() function of the property
+        this.removeOnlyTerminalSugarsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setPreservationModeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        SugarRemovalUtility.PreservationModeOption tmpConstant = SugarRemovalUtility.PreservationModeOption.valueOf(anOptionName);
+        this.setPreservationModeSetting(tmpConstant);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setPreservationModeSetting(SugarRemovalUtility.PreservationModeOption anOption)
+            throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOption, "Given option is null.");
+        //synchronisation with SRU instance done in overridden set() function of the property
+        this.preservationModeSetting.set(anOption.name());
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setPreservationModeThresholdSetting(double aThreshold) throws IllegalArgumentException {
+        //parameter test, conversion, and synchronisation with SRU instance in overridden set() method of the property
+        this.preservationModeThresholdSetting.set(aThreshold);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance in overridden set() method
+        this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(double aThreshold) throws IllegalArgumentException {
+        //synchronisation with SRU instance and parameter test done in overridden set() method
+        this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.set(aThreshold);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectLinearSugarsInRingsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectLinearSugarsInRingsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setLinearSugarCandidateMinimumSizeSetting(double aMinSize) throws IllegalArgumentException {
+        //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
+        this.linearSugarCandidateMinimumSizeSetting.set(aMinSize);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setLinearSugarCandidateMaximumSizeSetting(double aMaxSize) throws IllegalArgumentException {
+        //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
+        this.linearSugarCandidateMaximumSizeSetting.set(aMaxSize);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectLinearAcidicSugarsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectLinearAcidicSugarsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectSpiroRingsAsCircularSugarsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectSpiroRingsAsCircularSugarsSetting.set(aBoolean);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public void setDetectCircularSugarsWithKetoGroupsSetting(boolean aBoolean) {
+        //synchronisation with SRU instance done in overridden set() method
+        this.detectCircularSugarsWithKetoGroupsSetting.set(aBoolean);
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="IMoleculeFragmenter methods">
+
+    @Override
+    public List<Property> settingsProperties() {
+        return this.settings;
+    }
+
     @Override
     public String getFragmentationAlgorithmName() {
         return SugarRemovalUtilityFragmenter.ALGORITHM_NAME;
     }
 
     @Override
-    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
-        Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationSetting = anOption;
-    }
-
-    @Override
     public String getFragmentSaturationSetting() {
-        return this.fragmentSaturationSetting.name();
+        return this.fragmentSaturationSetting.get();
     }
 
     @Override
-    public SimpleStringProperty fragmentSaturationSettingProperty() {
-        return null;
+    public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
+        return this.fragmentSaturationSetting;
     }
 
     @Override
     public FragmentSaturationOption getFragmentSaturationSettingConstant() {
-        return null;
+        return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
     }
 
     @Override
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        FragmentSaturationOption tmpConstant = FragmentSaturationOption.valueOf(anOptionName);
+        this.fragmentSaturationSetting.set(tmpConstant.name());
+    }
 
+    @Override
+    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given saturation option is null.");
+        this.fragmentSaturationSetting.set(anOption.name());
     }
 
     @Override
     public void restoreDefaultSettings() {
-        super.restoreDefaultSettings();
-        this.sugarTypeToRemoveOption = SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_DEFAULT;
-        this.fragmentSaturationSetting = IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT;
+        this.sugarTypeToRemoveSetting.set(SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT.name());
+        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.sugarRUInstance.restoreDefaultSettings();
+        this.detectCircularSugarsOnlyWithGlycosidicBondSetting.set(this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected());
+        this.removeOnlyTerminalSugarsSetting.set(this.sugarRUInstance.areOnlyTerminalSugarsRemoved());
+        this.preservationModeSetting.set(this.sugarRUInstance.getPreservationModeSetting().name());
+        this.preservationModeThresholdSetting.set(this.sugarRUInstance.getPreservationModeThresholdSetting());
+        this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.set(this.sugarRUInstance.areOnlyCircularSugarsWithEnoughExocyclicOxygenAtomsDetected());
+        this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.set(this.sugarRUInstance.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting());
+        this.detectLinearSugarsInRingsSetting.set(this.sugarRUInstance.areLinearSugarsInRingsDetected());
+        this.linearSugarCandidateMinimumSizeSetting.set(this.sugarRUInstance.getLinearSugarCandidateMinSizeSetting());
+        this.linearSugarCandidateMaximumSizeSetting.set(this.sugarRUInstance.getLinearSugarCandidateMaxSizeSetting());
+        this.detectLinearAcidicSugarsSetting.set(this.sugarRUInstance.areLinearAcidicSugarsDetected());
+        this.detectSpiroRingsAsCircularSugarsSetting.set(this.sugarRUInstance.areSpiroRingsDetectedAsCircularSugars());
+        this.detectCircularSugarsWithKetoGroupsSetting.set(this.sugarRUInstance.areCircularSugarsWithKetoGroupsDetected());
     }
 
     /**
-     * Notice that the given atom container is altered!
+     *
      * @param aMolecule
      * @return
      * @throws NullPointerException
@@ -203,19 +741,20 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
         List<IAtomContainer> tmpFragments;
+        SugarTypeToRemoveOption tmpOption = SugarTypeToRemoveOption.valueOf(this.sugarTypeToRemoveSetting.get());
         try {
-            switch (this.sugarTypeToRemoveOption) {
+            switch (tmpOption) {
                 case CIRCULAR:
-                    tmpFragments = this.removeAndReturnCircularSugars(aMolecule, false);
+                    tmpFragments = this.sugarRUInstance.removeAndReturnCircularSugars(aMolecule, true);
                     break;
                 case LINEAR:
-                    tmpFragments = this.removeAndReturnLinearSugars(aMolecule, false);
+                    tmpFragments = this.sugarRUInstance.removeAndReturnLinearSugars(aMolecule, true);
                     break;
                 case CIRCULAR_AND_LINEAR:
-                    tmpFragments = this.removeAndReturnCircularAndLinearSugars(aMolecule, false);
+                    tmpFragments = this.sugarRUInstance.removeAndReturnCircularAndLinearSugars(aMolecule, true);
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemoveOption);
+                    throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemoveSetting);
             }
         } catch (IllegalArgumentException | CloneNotSupportedException anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
@@ -224,17 +763,29 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         IAtomContainer tmpAglycon = tmpFragments.get(0);
         tmpAglycon.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+        boolean tmpSugarsWereDetected = (tmpFragments.size() > 1);
+        if (!ConnectivityChecker.isConnected(tmpAglycon)) {
+            List<IAtomContainer> tmpAglyconFragments = SugarRemovalUtility.partitionAndSortUnconnectedFragments(tmpAglycon);
+            for (IAtomContainer tmpAglyconFragment : tmpAglyconFragments) {
+                tmpAglyconFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+            }
+            tmpFragments.remove(0);
+            tmpFragments.addAll(0, tmpAglyconFragments);
+        }
         //sugars were detected, postprocessing
-        if (tmpFragments.size() > 1) {
+        if (tmpSugarsWereDetected) {
             for (int i = 1; i < tmpFragments.size(); i++) {
                 IAtomContainer tmpSugarFragment = tmpFragments.get(i);
-                tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                        SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
-                if (this.fragmentSaturationSetting.equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
-                    try {
-                        IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
-                    } catch (CDKException aCDKException) {
-                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                if (Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))) {
+                    tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
+                    if (this.fragmentSaturationSetting.equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                        try {
+                            IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
+                        } catch (CDKException aCDKException) {
+                            Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                        }
                     }
                 }
             }
@@ -273,7 +824,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (this.areOnlyTerminalSugarsRemoved()) {
+        if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
             if (!tmpIsConnected) {
                 return true;
@@ -300,7 +851,7 @@ public class SugarRemovalUtilityFragmenter extends SugarRemovalUtility implement
         if (!this.shouldBePreprocessed(aMolecule)) {
             return aMolecule;
         }
-        if (this.areOnlyTerminalSugarsRemoved()) {
+        if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
             if (!tmpIsConnected) {
                 return SugarRemovalUtility.selectBiggestUnconnectedFragment(aMolecule);

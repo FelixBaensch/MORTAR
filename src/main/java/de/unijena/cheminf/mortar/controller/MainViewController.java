@@ -30,6 +30,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -84,6 +85,9 @@ public class MainViewController {
     private int rowsPerPage;
     private boolean selectionAll;
     private boolean selectionAllCheckBoxAction;
+
+    private ErtlFunctionalGroupsFinderFragmenter ertl;
+    private SugarRemovalUtilityFragmenter sugar;
     //</editor-fold>
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
     /**
@@ -186,8 +190,16 @@ public class MainViewController {
     //
 
     private void openFragmentationSettingsView(){
-        if(this.fragmentationSettingsViewController == null)
-            this.fragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage);
+//        if(this.fragmentationSettingsViewController == null)
+//            this.fragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage);
+//        else
+//            this.fragmentationSettingsViewController.openFragmentationSettingsView();
+
+        if(ertl == null)
+            ertl = new ErtlFunctionalGroupsFinderFragmenter();
+        if(sugar == null)
+            sugar = new SugarRemovalUtilityFragmenter();
+        FragmentationSettingsViewController tmpFragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage, new IMoleculeFragmenter[]{this.ertl, this.sugar});
 
     }
     //
