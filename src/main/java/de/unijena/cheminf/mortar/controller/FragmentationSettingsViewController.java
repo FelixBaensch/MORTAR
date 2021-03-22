@@ -24,13 +24,11 @@ import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.FragmentationSettingsView;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.fragmentation.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
@@ -39,12 +37,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * SettingsViewController
@@ -56,13 +51,13 @@ public class FragmentationSettingsViewController {
     private Stage fragmentationSettingsViewStage;
     private boolean isViewDisplayed = false;
     private FragmentationSettingsView fragmentationSettingsView;
-    private Map<String, Map<String, Object>> recentPropertiesList;
+    private Map<String, Map<String, Object>> recentProperties;
     private IMoleculeFragmenter[] fragmenters;
 
 
     public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] fragmenters){
         this.mainStage = aStage;
-        this.recentPropertiesList = new HashMap<>();
+        this.recentProperties = new HashMap<>();
         this.fragmenters = fragmenters;
         this.openFragmentationSettingsView();
     }
@@ -96,7 +91,8 @@ public class FragmentationSettingsViewController {
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         Label tmpTabTitle = new Label(aFragmenter.getFragmentationAlgorithmName());
-
+        HashMap<String, Object> tmpRecentProperties = new HashMap<>();
+        this.recentProperties.put(aFragmenter.getFragmentationAlgorithmName(), tmpRecentProperties);
         StackPane tmpStackPane = new StackPane(new Group(tmpTabTitle));
         tmpTab.setGraphic(tmpStackPane);
         tmpTab.setStyle("-fx-pref-height: 150");
@@ -118,7 +114,7 @@ public class FragmentationSettingsViewController {
                 this.fragmentationSettingsViewStage.widthProperty().multiply(0.5)
         );
         tmpGridPane.getColumnConstraints().add(tmpColCon2);
-        this.addPropertyItems(aFragmenter, tmpGridPane);
+        this.addPropertyItems(aFragmenter, tmpGridPane, tmpRecentProperties);
         tmpScrollPane.setContent(tmpGridPane);
         tmpTab.setContent(tmpScrollPane);
         this.fragmentationSettingsView.getTabPane().getTabs().add(tmpTab);
@@ -130,7 +126,7 @@ public class FragmentationSettingsViewController {
      * @param aFragmenter IMoleculeFragmenter
      * @param aGridPane GridPane
      */
-    private void addPropertyItems(IMoleculeFragmenter aFragmenter, GridPane aGridPane){
+    private void addPropertyItems(IMoleculeFragmenter aFragmenter, GridPane aGridPane, HashMap aRecentProperties){
         int tmpRowIndex = 0;
         for(Property tmpProperty : aFragmenter.settingsProperties()){
             RowConstraints tmpRow = new RowConstraints();
@@ -145,7 +141,7 @@ public class FragmentationSettingsViewController {
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             Object tmpSetValue = tmpProperty.getValue(); //TODO: Maybe change this line to getDefault() or something else
             if(tmpProperty instanceof SimpleBooleanProperty){
-
+                aRecentProperties.put(tmpPropName, tmpProperty.getValue());
                 ComboBox tmpBooleanComboBox = new ComboBox();
                 tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
                 tmpBooleanComboBox.valueProperty().bindBidirectional(tmpProperty);
@@ -154,6 +150,7 @@ public class FragmentationSettingsViewController {
                 GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
             else if(tmpProperty instanceof SimpleDoubleProperty){
+                aRecentProperties.put(tmpPropName, tmpProperty.getValue());
                 TextField tmpDoubleTextField = new TextField();
                 tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH_VALUE);
                 TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToDoubleConverter(), 0.0, GuiUtil.GetNumericFilter());
@@ -164,6 +161,7 @@ public class FragmentationSettingsViewController {
                 GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
             else if(tmpProperty instanceof SimpleEnumConstantNameProperty){
+                aRecentProperties.put(tmpPropName, tmpProperty.getValue());
                 ComboBox tmpEnumComboBox = new ComboBox();
                 tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
                 tmpEnumComboBox.valueProperty().bindBidirectional(tmpProperty);
@@ -181,7 +179,11 @@ public class FragmentationSettingsViewController {
         //fragmentationSettingsViewStage close request
         this.fragmentationSettingsViewStage.setOnCloseRequest(event -> {
             //TODO set properties back to recent values but only on active/focused/selected tab
-//            this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId();
+            for(int i = 0; i < this.fragmenters.length; i++){
+                if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
+                    this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
+                }
+            }
             this.fragmentationSettingsViewStage.close();
         });
         //applyButton
@@ -191,19 +193,35 @@ public class FragmentationSettingsViewController {
         //cancelButton
         this.fragmentationSettingsView.getCancelButton().setOnAction(event -> {
             //TODO set properties back to recent values but only on active/focused/selected tab
-
-//            for(Property tmpProp : this.recentPropertiesList){
-//                tmpProp
-//            }
+            for(int i = 0; i < this.fragmenters.length; i++){
+                if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
+                    this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
+                }
+            }
             this.fragmentationSettingsViewStage.close();
         });
         //defaultButton
         this.fragmentationSettingsView.getDefaultButton().setOnAction(event -> {
             //TODO set properties to default values but only on active/focused/selected tab
-            this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId();
-
-            //TODO Fragmenter habe eine SetToDefault Methode
-
+            for(int i = 0; i < this.fragmenters.length; i++){
+                if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
+                    this.fragmenters[i].restoreDefaultSettings();
+                }
+            }
         });
+    }
+
+    /**
+     * Sets the properties of the given fragmenter to the values of the 'recentPropertiesMap'
+     *
+     * @param aFragmenter IMoleculeFragmenter
+     * @param aRecentPropertiesMap Map
+     */
+    private void setRecentProperties(IMoleculeFragmenter aFragmenter, Map aRecentPropertiesMap){
+        for (Property tmpProperty : aFragmenter.settingsProperties()) {
+            if(aRecentPropertiesMap.containsKey(tmpProperty.getName())){
+                tmpProperty.setValue(aRecentPropertiesMap.get(tmpProperty.getName()));
+            }
+        }
     }
 }
