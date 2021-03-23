@@ -26,6 +26,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -225,7 +226,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                 //all digits after decimal point are truncated
                 int tmpIntegerValue = (int) newValue;
                 //throws IllegalArgumentException
-                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeThresholdSetting(tmpIntegerValue);
+                try {
+                    SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeThresholdSetting(tmpIntegerValue);
+                }catch(IllegalArgumentException anException){
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    throw anException;
+                }
                 super.set(tmpIntegerValue);
             }
         };

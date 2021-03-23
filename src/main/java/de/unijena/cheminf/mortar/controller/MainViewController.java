@@ -190,15 +190,10 @@ public class MainViewController {
     //
 
     private void openFragmentationSettingsView(){
-//        if(this.fragmentationSettingsViewController == null)
-//            this.fragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage);
-//        else
-//            this.fragmentationSettingsViewController.openFragmentationSettingsView();
-
-        if(ertl == null)
-            ertl = new ErtlFunctionalGroupsFinderFragmenter();
-        if(sugar == null)
-            sugar = new SugarRemovalUtilityFragmenter();
+        if(this.ertl == null)
+            this.ertl = new ErtlFunctionalGroupsFinderFragmenter();
+        if(this.sugar == null)
+            this.sugar = new SugarRemovalUtilityFragmenter();
         FragmentationSettingsViewController tmpFragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage, new IMoleculeFragmenter[]{this.ertl, this.sugar});
 
     }
@@ -312,9 +307,9 @@ public class MainViewController {
             @Override
             public void handle(WorkerStateEvent event) {
                 tmpFragmentMap.forEach((k, v) -> {
-                    fragmentDataModelList.add(new FragmentDataModel(v.getID(), v, 0,0.0));
+                    fragmentDataModelList.add(new FragmentDataModel(v.getID(), v));
                 });
-                moleculeDataModelList.get(0).getFragments().addAll(fragmentDataModelList);
+//                moleculeDataModelList.get(0).getFragments().addAll(fragmentDataModelList);
                 GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
                 mainTabPane.getTabs().add(tmpFragmentsTab);
                 FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
@@ -326,7 +321,7 @@ public class MainViewController {
 
                 int tmpAmount = 0;
                 for(int i= 0; i < moleculeDataModelList.size(); i++){
-                    tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragments().size());
+//                    tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragments().size());
                 }
                 GridTabForTableView tmpItemizationTab = new GridTabForTableView("Items", TabNames.Itemization.name());
                 mainTabPane.getTabs().add(tmpItemizationTab);

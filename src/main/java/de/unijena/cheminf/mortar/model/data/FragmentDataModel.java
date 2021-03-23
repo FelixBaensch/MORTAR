@@ -30,36 +30,33 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 public class FragmentDataModel {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private String iD;
-    private String smiles;
-    private int frequency;
-    private double percentage;
+    private String uniqueSmiles;
+    private int absoluteFrequency;
+    private double absolutePercentage;
+    private int moleculeFrequency;
+    private double moleculePercentage;
     private IAtomContainer atomContainer;
+    private String algorithmName;
     //</editor-fold>
     //
     /**
      * Constructor
      *
-     * @param anId - unique identifier
+     * @param anUniqueSmiles - unique SMILES
      * @param anAtomContainer - IAtomContainer
-     * @param aFrequency - frequency of this fragment
-     * @param aPercentage - percentage amount of this fragment
      */
-    public FragmentDataModel(String anId, IAtomContainer anAtomContainer, int aFrequency, double aPercentage){
-        this.iD = anId;
+    public FragmentDataModel(String anUniqueSmiles, IAtomContainer anAtomContainer){
+        this.uniqueSmiles = anUniqueSmiles;
         this.atomContainer = anAtomContainer;
-        this.frequency = aFrequency;
-        this.percentage = aPercentage;
-        this.smiles = this.atomContainer.getProperty("SMILES");
     }
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns string unique identifier
-     * @return String ID
+     * Returns string unique SMILES
+     * @return String uniqueSmiles
      */
-    public String getId() {
-        return this.iD;
+    public String getUniqueSmiles() {
+        return this.uniqueSmiles;
     }
     //
     /**
@@ -71,27 +68,35 @@ public class FragmentDataModel {
     }
     //
     /**
-     * Returns SMILES as String
-     * @return String SMILES
-     */
-    public String getSmiles() {
-        return this.smiles;
-    }
-    //
-    /**
      * Returns frequency of this framgent
      * @return int frequency
      */
-    public int getFrequency() {
-        return this.frequency;
+    public int getAbsoluteFrequency() {
+        return this.absoluteFrequency;
     }
     //
     /**
      * Returns percentage frequency of this fragment
      * @return double percentage
      */
-    public double getPercentage() {
-        return this.percentage;
+    public double getAbsolutePercentage() {
+        return this.absolutePercentage;
+    }
+    //
+    /**
+     * Returns frequency of this framgent
+     * @return int frequency
+     */
+    public int getMoleculeFrequency() {
+        return this.moleculeFrequency;
+    }
+    //
+    /**
+     * Returns percentage frequency of this fragment
+     * @return double percentage
+     */
+    public double getMoleculePercentage() {
+        return this.moleculePercentage;
     }
     //
     /**
@@ -100,6 +105,23 @@ public class FragmentDataModel {
      */
     public ImageView getStructure(){
         return new ImageView(DepictionUtil.depictImage(this.atomContainer));
+    }
+    //
+    /**
+     *
+     * @param aValue
+     */
+    public void setAbsoluteFrequency(int aValue)
+    {
+        this.absoluteFrequency = aValue;
+    }
+    /**
+     *
+     * @param aValue
+     */
+    public void setMoleculeFrequency(int aValue)
+    {
+        this.moleculeFrequency = aValue;
     }
     //</editor-fold>
 }

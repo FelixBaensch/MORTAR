@@ -20,13 +20,16 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Model class for molecule data
@@ -39,7 +42,9 @@ public class MoleculeDataModel {
     private String smiles;
     private IAtomContainer atomContainer;
     private BooleanProperty selection;
-    private List<FragmentDataModel> fragments;
+    private HashMap<String, Boolean> hasFragmentsMap; // HashMap<FragmentationAlgorithmName, hasFragments>
+    private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
+    private HashMap<String, HashMap<String, Integer>> fragmentFrequencies; // HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
     //</editor-fold>
     //
     /**
@@ -54,7 +59,9 @@ public class MoleculeDataModel {
         this.name = this.atomContainer.getTitle();
         this.smiles = this.atomContainer.getProperty("SMILES");
         this.selection = new SimpleBooleanProperty(true);
-        this.fragments = new ArrayList<>();
+        this.fragments = new HashMap<>(5);
+        this.fragmentFrequencies = new HashMap<>(5);
+        this.hasFragmentsMap = new HashMap<>(5); //TODO: magic number go to definitions
     }
     //
     //<editor-fold desc="public properties">
@@ -112,10 +119,53 @@ public class MoleculeDataModel {
      * Returns a list of {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} from which this molecule is composed
      * @return List<FragmentDataModel>
      */
-    public List<FragmentDataModel> getFragments(){
+    public HashMap<String, List<FragmentDataModel>> getAllFragments(){
         return this.fragments;
     }
     //
+
+    /**
+     * Returns a list of unique fragments fragmented by specific algorithm with a given name
+     * @param aKey String specifies fragmentation algorithm
+     * @return List<FragmentDataModel>
+     */
+    public List<FragmentDataModel> getFragmentsOfSpecificFragmentation(String aKey){
+        Objects.requireNonNull(aKey, "Key must not be null");
+        if(this.fragments.containsKey(aKey)){
+            return this.fragments.get(aKey);
+        }
+        else{
+            //ToDO
+            return null;
+        }
+    }
+    //
+    public HashMap<String, HashMap<String, Integer>> getFragmentFrequencies(){
+        return this.fragmentFrequencies;
+    }
+    public HashMap<String, Integer> getFragmentFrequencyOfSpecificFragmentation(String aKey){
+        Objects.requireNonNull(aKey, "Key must not be null");
+        if(this.fragmentFrequencies.containsKey(aKey)){
+            return this.fragmentFrequencies.get(aKey);
+        }
+        else{
+            //TODO
+            return null;
+        }
+    }
+    public HashMap<String, Boolean> getHasFragmentsMap(){
+        return this.hasFragmentsMap;
+    }
+    public Boolean hasMoleculeFragmentsForSpecificAlgorithm(String aKey){
+        Objects.requireNonNull(aKey, "aKy must not be null");
+        if(this.hasFragmentsMap.containsKey(aKey)){
+            return this.hasFragmentsMap.get(aKey);
+        }
+        else {
+            //TODO
+            return null;
+        }
+    }
     /**
      * Creates and returns an ImageView of this molecule as 2D structure
      * @return ImageView

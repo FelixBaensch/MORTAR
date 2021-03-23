@@ -21,9 +21,7 @@
 package de.unijena.cheminf.mortar.gui.util;
 
 import de.unijena.cheminf.mortar.message.Message;
-import javafx.collections.ListChangeListener;
 import javafx.scene.control.*;
-import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -31,8 +29,6 @@ import javafx.util.StringConverter;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -147,7 +143,7 @@ public class GuiUtil {
      * TODO
      * @return
      */
-    public static Pattern GetNumericPattern(){
+    public static Pattern GetDoublePattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
     }
     //
@@ -155,10 +151,10 @@ public class GuiUtil {
      * TODO
      * @return
      */
-    public static UnaryOperator<TextFormatter.Change> GetNumericFilter(){
+    public static UnaryOperator<TextFormatter.Change> GetDoubleFilter(){
         return c ->{
           String text = c.getControlNewText();
-          if(GetNumericPattern().matcher(text).matches()) {
+          if(GetDoublePattern().matcher(text).matches()) {
               return c;
           } else {
               return null;

@@ -149,11 +149,12 @@ public class FragmentationSettingsViewController {
                 aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
+            //TODO: add else if for SimpleIntegerProps
             else if(tmpProperty instanceof SimpleDoubleProperty){
                 aRecentProperties.put(tmpPropName, tmpProperty.getValue());
                 TextField tmpDoubleTextField = new TextField();
                 tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH_VALUE);
-                TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToDoubleConverter(), 0.0, GuiUtil.GetNumericFilter());
+                TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToDoubleConverter(), 0.0, GuiUtil.GetDoubleFilter());
                 tmpDoubleTextField.setTextFormatter(tmpFormatter);
                 tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
                 //add to gridpane
@@ -162,7 +163,7 @@ public class FragmentationSettingsViewController {
             }
             else if(tmpProperty instanceof SimpleEnumConstantNameProperty){
                 aRecentProperties.put(tmpPropName, tmpProperty.getValue());
-                ComboBox tmpEnumComboBox = new ComboBox();
+                ComboBox<String> tmpEnumComboBox = new ComboBox();
                 tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
                 tmpEnumComboBox.valueProperty().bindBidirectional(tmpProperty);
                 //add to gridpane
