@@ -84,7 +84,7 @@ public class ItemizationDataTableView extends TableView {
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment" + i);
-            tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> cellData.getValue().getFragmentsOfSpecificFragmentation("Ertl").get(tmpIndex).getStructure()));
+            tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> cellData.getValue().getFragmentsOfSpecificAlgorithm("Ertl").get(tmpIndex).getStructure()));
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);
         }

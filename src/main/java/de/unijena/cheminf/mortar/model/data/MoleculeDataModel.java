@@ -123,13 +123,12 @@ public class MoleculeDataModel {
         return this.fragments;
     }
     //
-
     /**
      * Returns a list of unique fragments fragmented by specific algorithm with a given name
      * @param aKey String specifies fragmentation algorithm
      * @return List<FragmentDataModel>
      */
-    public List<FragmentDataModel> getFragmentsOfSpecificFragmentation(String aKey){
+    public List<FragmentDataModel> getFragmentsOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
         if(this.fragments.containsKey(aKey)){
             return this.fragments.get(aKey);
@@ -143,7 +142,8 @@ public class MoleculeDataModel {
     public HashMap<String, HashMap<String, Integer>> getFragmentFrequencies(){
         return this.fragmentFrequencies;
     }
-    public HashMap<String, Integer> getFragmentFrequencyOfSpecificFragmentation(String aKey){
+    //
+    public HashMap<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
         if(this.fragmentFrequencies.containsKey(aKey)){
             return this.fragmentFrequencies.get(aKey);
@@ -153,9 +153,11 @@ public class MoleculeDataModel {
             return null;
         }
     }
+    //
     public HashMap<String, Boolean> getHasFragmentsMap(){
         return this.hasFragmentsMap;
     }
+    //
     public Boolean hasMoleculeFragmentsForSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "aKy must not be null");
         if(this.hasFragmentsMap.containsKey(aKey)){
@@ -166,6 +168,7 @@ public class MoleculeDataModel {
             return null;
         }
     }
+    //
     /**
      * Creates and returns an ImageView of this molecule as 2D structure
      * @return ImageView

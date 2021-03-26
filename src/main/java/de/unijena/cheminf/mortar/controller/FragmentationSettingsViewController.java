@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
@@ -126,7 +127,7 @@ public class FragmentationSettingsViewController {
      * @param aFragmenter IMoleculeFragmenter
      * @param aGridPane GridPane
      */
-    private void addPropertyItems(IMoleculeFragmenter aFragmenter, GridPane aGridPane, HashMap aRecentProperties){
+    private void addPropertyItems(IMoleculeFragmenter aFragmenter, GridPane aGridPane, HashMap<String, Object> aRecentProperties){
         int tmpRowIndex = 0;
         for(Property tmpProperty : aFragmenter.settingsProperties()){
             RowConstraints tmpRow = new RowConstraints();
@@ -142,14 +143,24 @@ public class FragmentationSettingsViewController {
             Object tmpSetValue = tmpProperty.getValue(); //TODO: Maybe change this line to getDefault() or something else
             if(tmpProperty instanceof SimpleBooleanProperty){
                 aRecentProperties.put(tmpPropName, tmpProperty.getValue());
-                ComboBox tmpBooleanComboBox = new ComboBox();
+                ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
                 tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
                 tmpBooleanComboBox.valueProperty().bindBidirectional(tmpProperty);
                 //add to gridpane
                 aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
-            //TODO: add else if for SimpleIntegerProps
+            else if(tmpProperty instanceof SimpleIntegerProperty){
+                aRecentProperties.put(tmpPropName, tmpProperty.getValue());
+                TextField tmpIntegerTextField = new TextField();
+                tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH_VALUE);
+                TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToIntegerConverter(), 0, GuiUtil.GetIntegerFilter());
+                tmpIntegerTextField.setTextFormatter(tmpFormatter);
+                tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
+                //add to gridpane
+                aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
+                GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+            }
             else if(tmpProperty instanceof SimpleDoubleProperty){
                 aRecentProperties.put(tmpPropName, tmpProperty.getValue());
                 TextField tmpDoubleTextField = new TextField();

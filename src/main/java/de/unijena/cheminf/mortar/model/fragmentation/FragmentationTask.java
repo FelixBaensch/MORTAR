@@ -26,7 +26,6 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -53,8 +52,8 @@ public class FragmentationTask implements Callable<Integer> {
 
 
     /**
-     * Applies the ErtlFunctionalGroupsFinder.find(IAtomContainer container, boolean clone) method on all given
-     * molecules (parameter clone = false) and counts the occurring exceptions.
+     * Applies the IMoleculeFragmenter.fragment(IAtomContainer container) method on all given
+     * molecules and counts the occurring exceptions.
      *
      * @return the number of occurred exceptions
      * @throws Exception if unable to compute a result (copied from doc in Callable interface)
@@ -95,7 +94,7 @@ public class FragmentationTask implements Callable<Integer> {
 
                     } else {
                         FragmentDataModel tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment);
-                        if(tmpMolecule.getFragmentsOfSpecificFragmentation(this.fragmenter.getFragmentationAlgorithmName()) == null){
+                        if(tmpMolecule.getFragmentsOfSpecificAlgorithm(this.fragmenter.getFragmentationAlgorithmName()) == null){
 
                         }
                     }

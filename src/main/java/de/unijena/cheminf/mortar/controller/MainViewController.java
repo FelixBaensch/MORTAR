@@ -156,6 +156,7 @@ public class MainViewController {
      * Closes application
      */
     private void closeApplication(int aStatus) {
+        //TODO: add alert if model is not null
         Platform.exit();
         System.exit(aStatus);
     }
@@ -166,6 +167,7 @@ public class MainViewController {
      * @param aParentStage
      */
     private void loadMoleculeFile(Stage aParentStage) {
+        //TODO: add alert if model is not null
         Importer tmpImporter = new Importer();
         IAtomContainerSet tmpAtomContainerSet = tmpImporter.Import(aParentStage);
         this.clearGuiAndCollections();
@@ -223,6 +225,7 @@ public class MainViewController {
         tmpMoleculesTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
         Button tmpFragmentButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
         tmpMoleculesTab.addNodeToGridPane(tmpFragmentButton, 1,1,1,1);
+        //TODO: disable 'tmpFragmentButton' while fragmentation is running
         tmpFragmentButton.setOnAction(event->{
             //TODO: add implementation to start fragmentation algorithm
             this.startFragmentation();

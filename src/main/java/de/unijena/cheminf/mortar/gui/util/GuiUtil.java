@@ -138,13 +138,36 @@ public class GuiUtil {
         aChildControl.prefWidthProperty().bind(aParentPane.widthProperty());
     }
     //
+    /**
+     * TODO
+     * @return
+     */
+    public static Pattern GetIntegerPattern(){
+        return Pattern.compile("-?(([1-9][0-9]*)|0)?");
 
+    }
+    //
     /**
      * TODO
      * @return
      */
     public static Pattern GetDoublePattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
+    }
+    //
+    /**
+     * TODO
+     * @return
+     */
+    public static UnaryOperator<TextFormatter.Change> GetIntegerFilter(){
+        return c ->{
+            String text = c.getControlNewText();
+            if(GetIntegerPattern().matcher(text).matches()) {
+                return c;
+            } else {
+                return null;
+            }
+        };
     }
     //
     /**
@@ -166,6 +189,28 @@ public class GuiUtil {
      * TODO
      * @return
      */
+    public static StringConverter<Integer> GetStringToIntegerConverter(){
+        return new StringConverter<Integer>() {
+            @Override
+            public String toString(Integer anObject) {
+                return anObject.toString();
+            }
+            @Override
+            public Integer fromString(String aString) {
+                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString)){
+                    return 0;
+                }
+                else{
+                    return Integer.valueOf(aString);
+                }
+            }
+        };
+    }
+    //
+    /**
+     * TODO
+     * @return
+     */
     public static StringConverter<Double> GetStringToDoubleConverter(){
         return new StringConverter<Double>() {
             @Override
@@ -176,7 +221,8 @@ public class GuiUtil {
             public Double fromString(String aString) {
                 if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString)){
                     return 0.0;
-                } else {
+                }
+                else {
                     return Double.valueOf(aString);
                 }
             }
