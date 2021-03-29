@@ -31,6 +31,7 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -125,7 +126,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * The threshold is actually an integer in the SRU but wrapped in a double here to make setup of
      * settings window easier
      */
-    private final SimpleDoubleProperty preservationModeThresholdSetting;
+    private final SimpleIntegerProperty preservationModeThresholdSetting;
 
     /**
      *
@@ -145,12 +146,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      *
      */
-    private final SimpleDoubleProperty linearSugarCandidateMinimumSizeSetting;
+    private final SimpleIntegerProperty linearSugarCandidateMinimumSizeSetting;
 
     /**
      *
      */
-    private final SimpleDoubleProperty linearSugarCandidateMaximumSizeSetting;
+    private final SimpleIntegerProperty linearSugarCandidateMaximumSizeSetting;
 
     /**
      *
@@ -171,6 +172,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      *
      */
     private final List<Property> settings;
+
+    /**
+     * Logger of this class
+     */
+    private final Logger logger = Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -181,142 +187,196 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public SugarRemovalUtilityFragmenter() {
         this.sugarRUInstance = new SugarRemovalUtility();
         this.settings = new ArrayList<>(14);
-        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "fragmentSaturationSetting",
-                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(),
-                IMoleculeFragmenter.FragmentSaturationOption.class);
+        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
         this.settings.add(this.fragmentSaturationSetting);
-        this.sugarTypeToRemoveSetting = new SimpleEnumConstantNameProperty(this, "sugarTypeToRemoveSetting",
+        this.sugarTypeToRemoveSetting = new SimpleEnumConstantNameProperty(this, "Sugar type to remove setting",
                 SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT.name(),
-                SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.class);
+                SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
         this.settings.add(this.sugarTypeToRemoveSetting);
         this.detectCircularSugarsOnlyWithGlycosidicBondSetting = new SimpleBooleanProperty(this,
                 "detectCircularSugarsOnlyWithGlycosidicBondSetting",
                 this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected()) {
             @Override
             public void set(boolean newValue) {
+                //throws no exceptions
                 SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectCircularSugarsOnlyWithOGlycosidicBondSetting(newValue);
                 super.set(newValue);
             }
         };
         this.settings.add(this.detectCircularSugarsOnlyWithGlycosidicBondSetting);
-        this.removeOnlyTerminalSugarsSetting = new SimpleBooleanProperty(this, "removeOnlyTerminalSugarsSetting",
+        this.removeOnlyTerminalSugarsSetting = new SimpleBooleanProperty(this, "Remove only terminal sugars setting",
                 this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             @Override
             public void set(boolean newValue) {
+                //throws no exceptions
                 SugarRemovalUtilityFragmenter.this.sugarRUInstance.setRemoveOnlyTerminalSugarsSetting(newValue);
                 super.set(newValue);
             }
         };
         this.settings.add(this.removeOnlyTerminalSugarsSetting);
-        this.preservationModeSetting = new SimpleEnumConstantNameProperty(this, "preservationModeSetting",
+        this.preservationModeSetting = new SimpleEnumConstantNameProperty(this, "Preservation mode setting",
                 this.sugarRUInstance.getPreservationModeSetting().name(), SugarRemovalUtility.PreservationModeOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
-                //valueOf() throws IllegalArgumentException
-                SugarRemovalUtility.PreservationModeOption tmpEnumConstant = SugarRemovalUtility.PreservationModeOption.valueOf(newValue);
-                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeSetting(tmpEnumConstant);
+                try {
+                    //valueOf() throws IllegalArgumentException
+                    SugarRemovalUtility.PreservationModeOption tmpEnumConstant = SugarRemovalUtility.PreservationModeOption.valueOf(newValue);
+                    SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeSetting(tmpEnumConstant);
+                } catch (IllegalArgumentException | NullPointerException anException) {
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
                 super.set(newValue);
             }
         };
         this.settings.add(this.preservationModeSetting);
-        this.preservationModeThresholdSetting = new SimpleDoubleProperty(this, "preservationModeThresholdSetting",
+        this.preservationModeThresholdSetting = new SimpleIntegerProperty(this, "Preservation mode threshold setting",
                 this.sugarRUInstance.getPreservationModeThresholdSetting()) {
             @Override
-            public void set(double newValue) throws IllegalArgumentException{
-                //all digits after decimal point are truncated
-                int tmpIntegerValue = (int) newValue;
-                //throws IllegalArgumentException
+            public void set(int newValue) throws IllegalArgumentException{
                 try {
-                    SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeThresholdSetting(tmpIntegerValue);
+                    //throws IllegalArgumentException
+                    SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeThresholdSetting(newValue);
                 }catch(IllegalArgumentException anException){
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
                     throw anException;
                 }
-                super.set(tmpIntegerValue);
+                super.set(newValue);
             }
         };
         this.settings.add(this.preservationModeThresholdSetting);
         this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting = new SimpleBooleanProperty(this,
-                "detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting",
+                "Detect circular sugars only with enough exocyclic oxygen atoms setting",
                 this.sugarRUInstance.areOnlyCircularSugarsWithEnoughExocyclicOxygenAtomsDetected()) {
             @Override
             public void set(boolean newValue) {
+                //throws no exceptions
                 SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting(newValue);
                 super.set(newValue);
             }
         };
         this.settings.add(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting);
         this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting = new SimpleDoubleProperty(this,
-                "exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting",
+                "Exocyclic oxygen atoms to atoms in ring ratio threshold setting",
                 this.sugarRUInstance.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting()) {
             @Override
             public void set(double newValue) throws IllegalArgumentException {
-                //throws IllegalArgumentException
-                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(newValue);
+                try {
+                    //throws IllegalArgumentException
+                    SugarRemovalUtilityFragmenter.this.sugarRUInstance.setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(newValue);
+                } catch (IllegalArgumentException anException) {
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
                 super.set(newValue);
             }
         };
         this.settings.add(this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting);
-        this.detectLinearSugarsInRingsSetting = new SimpleBooleanProperty(this, "detectLinearSugarsInRingsSetting",
+        this.detectLinearSugarsInRingsSetting = new SimpleBooleanProperty(this, "Detect linear sugars in rings setting",
                 this.sugarRUInstance.areLinearSugarsInRingsDetected()) {
             @Override
             public void set(boolean newValue) {
+                //throws no exceptions
                 SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectLinearSugarsInRingsSetting(newValue);
                 super.set(newValue);
             }
         };
         this.settings.add(this.detectLinearSugarsInRingsSetting);
-        this.linearSugarCandidateMinimumSizeSetting = new SimpleDoubleProperty(this,
-                "linearSugarCandidateMinimumSizeSetting",
+        this.linearSugarCandidateMinimumSizeSetting = new SimpleIntegerProperty(this,
+                "Linear sugar candidate minimum size setting",
                 this.sugarRUInstance.getLinearSugarCandidateMinSizeSetting()) {
             @Override
-            public void set(double newValue) {
-                //all digits after decimal point are truncated
-                int tmpIntegerValue = (int) newValue;
-                //throws IllegalArgumentException
-                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMinSizeSetting(tmpIntegerValue);
-                super.set(tmpIntegerValue);
+            public void set(int newValue) {
+                try {
+                    //throws IllegalArgumentException
+                    SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMinSizeSetting(newValue);
+                } catch (IllegalArgumentException anException) {
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+                super.set(newValue);
             }
         };
         this.settings.add(this.linearSugarCandidateMinimumSizeSetting);
-        this.linearSugarCandidateMaximumSizeSetting = new SimpleDoubleProperty(this,
-                "linearSugarCandidateMaximumSizeSetting",
+        this.linearSugarCandidateMaximumSizeSetting = new SimpleIntegerProperty(this,
+                "Linear sugar candidate maximum size setting",
                 this.sugarRUInstance.getLinearSugarCandidateMaxSizeSetting()) {
             @Override
-            public void set(double newValue) {
-                //all digits after decimal point are truncated
-                int tmpIntegerValue = (int) newValue;
-                //throws IllegalArgumentException
-                SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMaxSizeSetting(tmpIntegerValue);
-                super.set(tmpIntegerValue);
+            public void set(int newValue) {
+                try {
+                    //throws IllegalArgumentException
+                    SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMaxSizeSetting(newValue);
+                } catch (IllegalArgumentException anException) {
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+                super.set(newValue);
             }
         };
         this.settings.add(this.linearSugarCandidateMaximumSizeSetting);
         this.detectLinearAcidicSugarsSetting = new SimpleBooleanProperty(this,
-                "detectLinearAcidicSugarsSetting",
+                "Detect linear acidic sugars setting",
                 this.sugarRUInstance.areLinearAcidicSugarsDetected()) {
             @Override
             public void set(boolean newValue) {
+                //throws no exceptions
                 SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectLinearAcidicSugarsSetting(newValue);
                 super.set(newValue);
             }
         };
         this.settings.add(this.detectLinearAcidicSugarsSetting);
         this.detectSpiroRingsAsCircularSugarsSetting = new SimpleBooleanProperty(this,
-                "detectSpiroRingsAsCircularSugarsSetting",
+                "Detect spiro rings as circular sugars setting",
                 this.sugarRUInstance.areSpiroRingsDetectedAsCircularSugars()) {
             @Override
             public void set(boolean newValue) {
+                //throws no exceptions
                 SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectSpiroRingsAsCircularSugarsSetting(newValue);
                 super.set(newValue);
             }
         };
         this.settings.add(this.detectSpiroRingsAsCircularSugarsSetting);
         this.detectCircularSugarsWithKetoGroupsSetting = new SimpleBooleanProperty(this,
-                "detectCircularSugarsWithKetoGroupsSetting",
+                "Detect circular sugars with keto groups setting",
                 this.sugarRUInstance.areCircularSugarsWithKetoGroupsDetected()) {
             @Override
             public void set(boolean newValue) {
+                //throws no exceptions
                 SugarRemovalUtilityFragmenter.this.sugarRUInstance.setDetectCircularSugarsWithKetoGroupsSetting(newValue);
                 super.set(newValue);
             }
@@ -407,7 +467,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      *
      */
-    public SimpleDoubleProperty preservationModeThresholdSettingProperty() {
+    public SimpleIntegerProperty preservationModeThresholdSettingProperty() {
         return this.preservationModeThresholdSetting;
     }
 
@@ -463,7 +523,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      *
      */
-    public SimpleDoubleProperty linearSugarCandidateMinimumSizeSettingProperty() {
+    public SimpleIntegerProperty linearSugarCandidateMinimumSizeSettingProperty() {
         return this.linearSugarCandidateMinimumSizeSetting;
     }
 
@@ -477,7 +537,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      *
      */
-    public SimpleDoubleProperty linearSugarCandidateMaximumSizeSettingProperty() {
+    public SimpleIntegerProperty linearSugarCandidateMaximumSizeSettingProperty() {
         return this.linearSugarCandidateMaximumSizeSetting;
     }
 
@@ -587,7 +647,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      *
      * @return
      */
-    public void setPreservationModeThresholdSetting(double aThreshold) throws IllegalArgumentException {
+    public void setPreservationModeThresholdSetting(int aThreshold) throws IllegalArgumentException {
         //parameter test, conversion, and synchronisation with SRU instance in overridden set() method of the property
         this.preservationModeThresholdSetting.set(aThreshold);
     }
@@ -623,7 +683,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      *
      * @return
      */
-    public void setLinearSugarCandidateMinimumSizeSetting(double aMinSize) throws IllegalArgumentException {
+    public void setLinearSugarCandidateMinimumSizeSetting(int aMinSize) throws IllegalArgumentException {
         //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
         this.linearSugarCandidateMinimumSizeSetting.set(aMinSize);
     }
@@ -632,7 +692,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      *
      * @return
      */
-    public void setLinearSugarCandidateMaximumSizeSetting(double aMaxSize) throws IllegalArgumentException {
+    public void setLinearSugarCandidateMaximumSizeSetting(int aMaxSize) throws IllegalArgumentException {
         //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
         this.linearSugarCandidateMaximumSizeSetting.set(aMaxSize);
     }
@@ -704,6 +764,26 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
         this.fragmentSaturationSetting.set(anOption.name());
+    }
+
+    @Override
+    public IMoleculeFragmenter copy() {
+        SugarRemovalUtilityFragmenter tmpCopy = new SugarRemovalUtilityFragmenter();
+        tmpCopy.setSugarTypeToRemoveSetting(this.sugarTypeToRemoveSetting.get());
+        tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
+        tmpCopy.setDetectCircularSugarsOnlyWithGlycosidicBondSetting(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get());
+        tmpCopy.setRemoveOnlyTerminalSugarsSetting(this.removeOnlyTerminalSugarsSetting.get());
+        tmpCopy.setPreservationModeSetting(this.preservationModeSetting.get());
+        tmpCopy.setPreservationModeThresholdSetting(this.preservationModeThresholdSetting.get());
+        tmpCopy.setDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get());
+        tmpCopy.setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.get());
+        tmpCopy.setDetectLinearSugarsInRingsSetting(this.detectLinearSugarsInRingsSetting.get());
+        tmpCopy.setLinearSugarCandidateMinimumSizeSetting(this.linearSugarCandidateMinimumSizeSetting.get());
+        tmpCopy.setLinearSugarCandidateMaximumSizeSetting(this.linearSugarCandidateMaximumSizeSetting.get());
+        tmpCopy.setDetectLinearAcidicSugarsSetting(this.detectLinearAcidicSugarsSetting.get());
+        tmpCopy.setDetectSpiroRingsAsCircularSugarsSetting(this.detectSpiroRingsAsCircularSugarsSetting.get());
+        tmpCopy.setDetectCircularSugarsWithKetoGroupsSetting(this.detectCircularSugarsWithKetoGroupsSetting.get());
+        return tmpCopy;
     }
 
     @Override

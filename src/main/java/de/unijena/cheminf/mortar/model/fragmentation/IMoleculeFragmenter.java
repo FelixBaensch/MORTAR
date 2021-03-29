@@ -30,7 +30,6 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleStringProperty;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -127,6 +126,12 @@ public interface IMoleculeFragmenter {
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException;
 
     /**
+     * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
+     * multi-threaded work where every thread needs its own fragmenter instance.
+     */
+    public IMoleculeFragmenter copy();
+
+    /**
      * Restore all settings of the fragmenter to their default values.
      */
     public void restoreDefaultSettings();
@@ -135,6 +140,8 @@ public interface IMoleculeFragmenter {
     //<editor-fold desc="Public methods">
     /**
      * Fragments a clone (!) of the given molecule according to the respective algorithm and returns the resulting fragments.
+     * Usually, the molecule clone should be returned if no specific fragments (functional groups, sugar moieties etc.)
+     * can be detected.
      *
      * @param aMolecule to fragment
      * @return a list of fragments
