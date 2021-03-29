@@ -54,12 +54,14 @@ public class FragmentationSettingsViewController {
     private FragmentationSettingsView fragmentationSettingsView;
     private Map<String, Map<String, Object>> recentProperties;
     private IMoleculeFragmenter[] fragmenters;
+    private String selectedFragmenterName;
 
 
-    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] fragmenters){
+    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] fragmenters, String aSelectedFragmenterAlgorithmName){
         this.mainStage = aStage;
         this.recentProperties = new HashMap<>();
         this.fragmenters = fragmenters;
+        this.selectedFragmenterName = aSelectedFragmenterAlgorithmName;
         this.openFragmentationSettingsView();
     }
 
@@ -78,8 +80,8 @@ public class FragmentationSettingsViewController {
         this.fragmentationSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //
         this.addListener();
-        for (IMoleculeFragmenter fragmenter : this.fragmenters) {
-            this.addTab(fragmenter);
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            this.addTab(tmpFragmenter);
         }
     }
 
@@ -119,6 +121,9 @@ public class FragmentationSettingsViewController {
         tmpScrollPane.setContent(tmpGridPane);
         tmpTab.setContent(tmpScrollPane);
         this.fragmentationSettingsView.getTabPane().getTabs().add(tmpTab);
+        if(aFragmenter.getFragmentationAlgorithmName().equals(this.selectedFragmenterName)){
+            this.fragmentationSettingsView.getSelectionModel().select(tmpTab);
+        }
     }
 
     /**
@@ -190,7 +195,6 @@ public class FragmentationSettingsViewController {
     private void addListener(){
         //fragmentationSettingsViewStage close request
         this.fragmentationSettingsViewStage.setOnCloseRequest(event -> {
-            //TODO set properties back to recent values but only on active/focused/selected tab
             for(int i = 0; i < this.fragmenters.length; i++){
                 if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
                     this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
@@ -204,7 +208,6 @@ public class FragmentationSettingsViewController {
         });
         //cancelButton
         this.fragmentationSettingsView.getCancelButton().setOnAction(event -> {
-            //TODO set properties back to recent values but only on active/focused/selected tab
             for(int i = 0; i < this.fragmenters.length; i++){
                 if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
                     this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
@@ -214,7 +217,6 @@ public class FragmentationSettingsViewController {
         });
         //defaultButton
         this.fragmentationSettingsView.getDefaultButton().setOnAction(event -> {
-            //TODO set properties to default values but only on active/focused/selected tab
             for(int i = 0; i < this.fragmenters.length; i++){
                 if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.fragmentationSettingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
                     this.fragmenters[i].restoreDefaultSettings();

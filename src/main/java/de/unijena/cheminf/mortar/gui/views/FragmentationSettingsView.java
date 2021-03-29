@@ -26,6 +26,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.control.Button;
+import javafx.scene.control.SelectionModel;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -42,6 +44,7 @@ public class FragmentationSettingsView extends AnchorPane {
     private HBox hBoxRightSideButtons;
     private HBox hBoxLeftSideButtons;
     private HBox hBoxButtonsHBox;
+    private SelectionModel<Tab> selectionModel;
 
 
     public FragmentationSettingsView(){
@@ -55,13 +58,13 @@ public class FragmentationSettingsView extends AnchorPane {
 
         //tabPane
         this.tabPane =  new TabPane();
+        this.selectionModel = this.tabPane.getSelectionModel();
         this.tabPane.setSide(Side.LEFT);
 //        FragmentationSettingsView.setTopAnchor(this.tabPane, 0.0);
 //        FragmentationSettingsView.setRightAnchor(this.tabPane, 0.0);
 //        FragmentationSettingsView.setLeftAnchor(this.tabPane, 0.0);
 //        FragmentationSettingsView.setBottomAnchor(this.tabPane, 0.0);
         this.borderPane.setCenter(this.tabPane);
-
         //buttons
         this.hBoxButtonsHBox = new HBox();
         this.hBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
@@ -93,7 +96,9 @@ public class FragmentationSettingsView extends AnchorPane {
     public TabPane getTabPane(){
         return this.tabPane;
     }
-
+    public SelectionModel<Tab> getSelectionModel(){
+        return this.selectionModel;
+    }
     public Button getCancelButton(){
         return this.cancelButton;
     }

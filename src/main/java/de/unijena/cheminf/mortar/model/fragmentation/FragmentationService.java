@@ -23,7 +23,10 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 
+import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Service class for fragmentation
@@ -36,6 +39,7 @@ public class FragmentationService {
     private IMoleculeFragmenter selectedFragmenter;
     private IMoleculeFragmenter ertlFGF;
     private IMoleculeFragmenter sugarRUF;
+    private List<String> existingFragmentations;
 
     public FragmentationService(){
         this.fragmenters = new IMoleculeFragmenter[2];
@@ -43,26 +47,44 @@ public class FragmentationService {
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
         this.fragmenters[1] = this.sugarRUF;
-        this.selectedFragmenter = this.fragmenters[0];
+        this.existingFragmentations = new LinkedList<String>();
     }
 
 
-    public void startFragmentationThread(MoleculeDataModel[] molecules){
+    public FragmentationThread startFragmentationThread(MoleculeDataModel[] anArrayOfMolecules, int aNumberOfTasks) throws Exception{
+        String tmpFragmentationName = this.selectedFragmenter.getFragmentationAlgorithmName();
+        if(this.existingFragmentations.contains(tmpFragmentationName)){
+            int tmpIndex = 0;
+            do {
+                tmpFragmentationName = this.selectedFragmenter.getFragmentationAlgorithmName() + "_" + ++tmpIndex;
+            }
+            while(this.existingFragmentations.contains(tmpFragmentationName));
+        }
+        this.existingFragmentations.add(tmpFragmentationName);
+        FragmentationThread tmpFragmentationThread =
+                new FragmentationThread(
+                        anArrayOfMolecules,
+                        aNumberOfTasks,
+                        tmpFragmentationName,
+                        this.selectedFragmenter
+                        );
+        Hashtable<String, FragmentDataModel> tmpFragments = tmpFragmentationThread.call();
 
-        Hashtable<String, FragmentDataModel> tmpFragmentHashTable = new Hashtable<>();
-
-
-
+        return null;
     }
 
     public IMoleculeFragmenter[] getFragmenters(){
         return this.fragmenters;
     }
 
+    public IMoleculeFragmenter getSelectedFragmenter(){
+        return this.selectedFragmenter;
+    }
+
     public void setSelectedFragmenter(String anAlgorithmName){
-        for(int i = 0; i < this.fragmenters.length; i++){
-            if(anAlgorithmName.equals(this.fragmenters[i].getFragmentationAlgorithmName()))
-                this.selectedFragmenter = this.fragmenters[i];
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            if (anAlgorithmName.equals(tmpFragmenter.getFragmentationAlgorithmName()))
+                this.selectedFragmenter = tmpFragmenter;
         }
     }
 }

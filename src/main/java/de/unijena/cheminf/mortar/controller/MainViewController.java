@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.ErtlFunctionalGroupsFinderFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
@@ -57,10 +58,7 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,6 +83,7 @@ public class MainViewController {
     private int rowsPerPage;
     private boolean selectionAll;
     private boolean selectionAllCheckBoxAction;
+    private FragmentationService fragmentationService;
 
     private ErtlFunctionalGroupsFinderFragmenter ertl;
     private SugarRemovalUtilityFragmenter sugar;
@@ -131,6 +130,7 @@ public class MainViewController {
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
         this.rowsPerPage = 5; //TODO: get this from settings
+        this.fragmentationService = new FragmentationService();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
         }
@@ -192,23 +192,24 @@ public class MainViewController {
     //
 
     private void openFragmentationSettingsView(){
-        if(this.ertl == null)
-            this.ertl = new ErtlFunctionalGroupsFinderFragmenter();
-        if(this.sugar == null)
-            this.sugar = new SugarRemovalUtilityFragmenter();
-        FragmentationSettingsViewController tmpFragmentationSettingsViewController = new FragmentationSettingsViewController(this.primaryStage, new IMoleculeFragmenter[]{this.ertl, this.sugar});
+        FragmentationSettingsViewController tmpFragmentationSettingsViewController =
+                new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
 
     }
     //
     private void addFragmentationAlgorithmCheckMenuItems(){
         ToggleGroup tmpToggleGroup = new ToggleGroup();
-        RadioMenuItem tmpRadioMenuItem = new RadioMenuItem("Ertl");
-        tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
-        RadioMenuItem tmpRadioMenuItem2 = new RadioMenuItem("Sugar");
-        tmpRadioMenuItem2.setToggleGroup(tmpToggleGroup);
-//        this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(new CheckMenuItem("Ertl"));
-        this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(tmpRadioMenuItem);
-        this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(tmpRadioMenuItem2);
+        for(IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()){
+            RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmName());
+            tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
+            this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(tmpRadioMenuItem);
+        }
+        tmpToggleGroup.selectedToggleProperty().addListener((observableValue, oldValue, newValue) -> {
+            if(tmpToggleGroup.getSelectedToggle() != null){
+                this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
+            }
+        });
+        tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
     }
     //
     /**
@@ -289,53 +290,67 @@ public class MainViewController {
      */
     private void startFragmentation(){
         //TODO
-        Map<Long, IAtomContainer> tmpFragmentMap = new HashMap<>();
-        Task tmpFragmentTask = new Task() {
-            @Override
-            protected Object call() throws Exception {
-                IMoleculeFragmenter tmpFragmenter =  new ErtlFunctionalGroupsFinderFragmenter();
-                MoleculeHashGenerator tmpHashGen = ErtlFunctionalGroupsFinderUtility.getFunctionalGroupHashGenerator();
-                for(int i = 0; i < moleculeDataModelList.size(); i++){
-                    List<IAtomContainer> tmpFragments = tmpFragmenter.fragmentMolecule(moleculeDataModelList.get(i).getAtomContainer());
-                    for (IAtomContainer tmpFragment : tmpFragments) {
-                        long tmpKey = tmpHashGen.generate(tmpFragment);
-                        tmpFragmentMap.put(tmpKey, tmpFragment);
-                    }
-                }
-                return null;
-            }
-        };
-        this.mainView.getStatusBar().setTaskAndStart(tmpFragmentTask);
-        this.mainView.getStatusBar().getTask().setOnSucceeded(new EventHandler<WorkerStateEvent>() {
-            @Override
-            public void handle(WorkerStateEvent event) {
-                tmpFragmentMap.forEach((k, v) -> {
-                    fragmentDataModelList.add(new FragmentDataModel(v.getID(), v));
-                });
-//                moleculeDataModelList.get(0).getFragments().addAll(fragmentDataModelList);
-                GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
-                mainTabPane.getTabs().add(tmpFragmentsTab);
-                FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
-                Pagination tmpPagination = new Pagination((fragmentDataModelList.size() / rowsPerPage + 1), 0);
-                tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
-                VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-                HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-                tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+//        MoleculeDataModel[]) Arrays.stream(this).filter((molecule) -> molecule.isSelected()).toArray(), //TODO: not sure if it works
 
-                int tmpAmount = 0;
-                for(int i= 0; i < moleculeDataModelList.size(); i++){
-//                    tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragments().size());
-                }
-                GridTabForTableView tmpItemizationTab = new GridTabForTableView("Items", TabNames.Itemization.name());
-                mainTabPane.getTabs().add(tmpItemizationTab);
-                ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount);
-                Pagination tmpPaginationItems = new Pagination(moleculeDataModelList.size() / rowsPerPage + 1, 0);
-                tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
-                VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
-                HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
-                tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
-            }
-        });
+        MoleculeDataModel[] tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).toArray(MoleculeDataModel[]::new);
+        int tmpNumberOfCores = Runtime.getRuntime().availableProcessors(); //TODO: implement settings
+        try{
+            this.fragmentationService.startFragmentationThread(tmpSelectedMolecules, tmpNumberOfCores);
+        } catch(Exception anExcpetion){
+
+        }
+
+
+
+
+
+//        Map<Long, IAtomContainer> tmpFragmentMap = new HashMap<>();
+//        Task tmpFragmentTask = new Task() {
+//            @Override
+//            protected Object call() throws Exception {
+//                IMoleculeFragmenter tmpFragmenter =  new ErtlFunctionalGroupsFinderFragmenter();
+//                MoleculeHashGenerator tmpHashGen = ErtlFunctionalGroupsFinderUtility.getFunctionalGroupHashGenerator();
+//                for(int i = 0; i < moleculeDataModelList.size(); i++){
+//                    List<IAtomContainer> tmpFragments = tmpFragmenter.fragmentMolecule(moleculeDataModelList.get(i).getAtomContainer());
+//                    for (IAtomContainer tmpFragment : tmpFragments) {
+//                        long tmpKey = tmpHashGen.generate(tmpFragment);
+//                        tmpFragmentMap.put(tmpKey, tmpFragment);
+//                    }
+//                }
+//                return null;
+//            }
+//        };
+//        this.mainView.getStatusBar().setTaskAndStart(tmpFragmentTask);
+//        this.mainView.getStatusBar().getTask().setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+//            @Override
+//            public void handle(WorkerStateEvent event) {
+//                tmpFragmentMap.forEach((k, v) -> {
+//                    fragmentDataModelList.add(new FragmentDataModel(v.getID(), v));
+//                });
+////                moleculeDataModelList.get(0).getFragments().addAll(fragmentDataModelList);
+//                GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
+//                mainTabPane.getTabs().add(tmpFragmentsTab);
+//                FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
+//                Pagination tmpPagination = new Pagination((fragmentDataModelList.size() / rowsPerPage + 1), 0);
+//                tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
+//                VBox.setVgrow(tmpPagination, Priority.ALWAYS);
+//                HBox.setHgrow(tmpPagination, Priority.ALWAYS);
+//                tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+//
+//                int tmpAmount = 0;
+//                for(int i= 0; i < moleculeDataModelList.size(); i++){
+////                    tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragments().size());
+//                }
+//                GridTabForTableView tmpItemizationTab = new GridTabForTableView("Items", TabNames.Itemization.name());
+//                mainTabPane.getTabs().add(tmpItemizationTab);
+//                ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount);
+//                Pagination tmpPaginationItems = new Pagination(moleculeDataModelList.size() / rowsPerPage + 1, 0);
+//                tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
+//                VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
+//                HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
+//                tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
+//            }
+//        });
     }
     //
     /**

@@ -40,7 +40,7 @@ public class FragmentDataModel {
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor, sets absolute frequency to 1
      *
      * @param anUniqueSmiles - unique SMILES
      * @param anAtomContainer - IAtomContainer
@@ -48,6 +48,15 @@ public class FragmentDataModel {
     public FragmentDataModel(String anUniqueSmiles, IAtomContainer anAtomContainer){
         this.uniqueSmiles = anUniqueSmiles;
         this.atomContainer = anAtomContainer;
+        this.absoluteFrequency = 1;
+    }
+    //
+    public void incrementAbsoulteFreqeuncy(){
+        this.absoluteFrequency += 1;
+    }
+    //
+    public void incrementMoleculeFreqeuncy(){
+        this.moleculeFrequency += 1;
     }
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
