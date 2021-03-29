@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
  * - see other todos
  */
 
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -45,6 +46,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Wrapper class that makes the Ertl algorithm for automatic identification and extraction of functional groups
@@ -199,6 +202,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
      */
     private final List<Property> settings;
+
+    /**
+     * Logger of this class
+     */
+    private final Logger logger = Logger.getLogger(ErtlFunctionalGroupsFinderFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructors">
@@ -215,26 +223,54 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public ErtlFunctionalGroupsFinderFragmenter(FGEnvOption aMode) throws NullPointerException {
         Objects.requireNonNull(aMode, "Given mode is null.");
         this.cycleFinderInstance = Cycles.or(Cycles.all(), Cycles.cdkAromaticSet());
-        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment Saturation Setting",
-                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class);
-        this.environmentModeSetting = new SimpleEnumConstantNameProperty(this, "Environment Mode Setting",
+        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    ErtlFunctionalGroupsFinderFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
+        this.environmentModeSetting = new SimpleEnumConstantNameProperty(this, "Environment mode setting",
                 aMode.name(), ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
-                //call to super() first for parameter checks
-                super.set(newValue);
+                try {
+                    //call to super.set() for parameter checks
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    ErtlFunctionalGroupsFinderFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+                //throws no exception if super.set() throws no exception
                 ErtlFunctionalGroupsFinderFragmenter.this.setErtlFGFInstance(FGEnvOption.valueOf(newValue));
             }
         };
         //initialisation of EFGF instance
         this.setErtlFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
-        this.aromaticityModelSetting = new SimpleEnumConstantNameProperty(this, "aromaticityModelSetting",
+        this.aromaticityModelSetting = new SimpleEnumConstantNameProperty(this, "Aromaticity model setting",
                 ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name(),
                 ErtlFunctionalGroupsFinderFragmenter.AromaticityModelOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
-                //call to super() first for parameter checks
-                super.set(newValue);
+                try {
+                    //call to super.set() for parameter checks
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    ErtlFunctionalGroupsFinderFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+                //throws no exception if super.set() throws no exception
                 ErtlFunctionalGroupsFinderFragmenter.this.setAromaticityModelInstance(AromaticityModelOption.valueOf(newValue));
             }
         };
@@ -375,6 +411,15 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
         this.fragmentSaturationSetting.set(anOption.name());
+    }
+
+    @Override
+    public IMoleculeFragmenter copy() {
+        ErtlFunctionalGroupsFinderFragmenter tmpCopy = new ErtlFunctionalGroupsFinderFragmenter();
+        tmpCopy.setEnvironmentModeSetting(this.environmentModeSetting.get());
+        tmpCopy.setAromaticityModelSetting(this.aromaticityModelSetting.get());
+        tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
+        return tmpCopy;
     }
 
     @Override
