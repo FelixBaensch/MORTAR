@@ -65,6 +65,19 @@ public class StatusBar extends FlowPane {
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
+//    public void startProgressBar(Thread aThread){
+//        //bind progress property
+//        this.progressBar.visibleProperty().setValue(true);
+//        this.progressBar.progressProperty().unbind();
+//        this.progressBar.progressProperty().bind(aThread.get));
+//        //bind message property
+//        this.statusLabel.textProperty().unbind();
+//        this.statusLabel.textProperty().bind(this.task.messageProperty());
+//    }
+
+
+
+
     /**
      * TODO: remove this from here and add to fragementer service class
      * @param aTask

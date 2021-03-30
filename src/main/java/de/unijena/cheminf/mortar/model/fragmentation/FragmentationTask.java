@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 
 public class FragmentationTask implements Callable<Integer> {
 
-    private final MoleculeDataModel[] moleculesArray;
+    private final List<MoleculeDataModel> moleculesList;
 
     private final IMoleculeFragmenter fragmenter;
 
@@ -54,8 +54,8 @@ public class FragmentationTask implements Callable<Integer> {
      * @param aListOfMolecules atom containers should meet the ErtlFunctionalGroupsFinder's input specifications but
      * any occurring exception will be caught
      */
-    public FragmentationTask(MoleculeDataModel[] aListOfMolecules, IMoleculeFragmenter aFragmenter, Hashtable<String, FragmentDataModel> aHashtableOfFragments, String aFragmentationName) {
-        this.moleculesArray = aListOfMolecules;
+    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules, IMoleculeFragmenter aFragmenter, Hashtable<String, FragmentDataModel> aHashtableOfFragments, String aFragmentationName) {
+        this.moleculesList = aListOfMolecules;
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
@@ -73,7 +73,7 @@ public class FragmentationTask implements Callable<Integer> {
     public Integer call() throws Exception{
         int tmpExceptionsCounter = 0;
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique);
-        for (MoleculeDataModel tmpMolecule : this.moleculesArray) {
+        for (MoleculeDataModel tmpMolecule : this.moleculesList) {
             try{
                 IAtomContainer tmpAtomContainer = tmpMolecule.getAtomContainer();
                 HashMap<String, List<FragmentDataModel>> tmpFragmentsMapOfMolecule = tmpMolecule.getAllFragments();
@@ -106,6 +106,7 @@ public class FragmentationTask implements Callable<Integer> {
                     else{
                         tmpFragmentDataModel.incrementMoleculeFreqeuncy();
                         tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
+                        tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
                     }
                 }
             } catch(Exception anException){

@@ -40,6 +40,8 @@ public class FragmentationService {
     private IMoleculeFragmenter ertlFGF;
     private IMoleculeFragmenter sugarRUF;
     private List<String> existingFragmentations;
+    private Hashtable<String, FragmentDataModel> fragments;
+    private String currentFragmentationName;
 
     public FragmentationService(){
         this.fragmenters = new IMoleculeFragmenter[2];
@@ -51,7 +53,7 @@ public class FragmentationService {
     }
 
 
-    public FragmentationThread startFragmentationThread(MoleculeDataModel[] anArrayOfMolecules, int aNumberOfTasks) throws Exception{
+    public FragmentationThread startFragmentationThread(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
         String tmpFragmentationName = this.selectedFragmenter.getFragmentationAlgorithmName();
         if(this.existingFragmentations.contains(tmpFragmentationName)){
             int tmpIndex = 0;
@@ -61,16 +63,16 @@ public class FragmentationService {
             while(this.existingFragmentations.contains(tmpFragmentationName));
         }
         this.existingFragmentations.add(tmpFragmentationName);
+        this.currentFragmentationName = tmpFragmentationName;
         FragmentationThread tmpFragmentationThread =
                 new FragmentationThread(
-                        anArrayOfMolecules,
+                        aListOfMolecules,
                         aNumberOfTasks,
                         tmpFragmentationName,
                         this.selectedFragmenter
                         );
-        Hashtable<String, FragmentDataModel> tmpFragments = tmpFragmentationThread.call();
-
-        return null;
+        this.fragments = tmpFragmentationThread.call();
+        return tmpFragmentationThread;
     }
 
     public IMoleculeFragmenter[] getFragmenters(){
@@ -79,6 +81,14 @@ public class FragmentationService {
 
     public IMoleculeFragmenter getSelectedFragmenter(){
         return this.selectedFragmenter;
+    }
+
+    public Hashtable<String, FragmentDataModel> getFragments(){
+        return this.fragments;
+    }
+
+    public String getCurrentFragmentationName(){
+        return this.currentFragmentationName;
     }
 
     public void setSelectedFragmenter(String anAlgorithmName){

@@ -24,13 +24,9 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Objects;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FragmentationThread implements Callable<Hashtable<String, FragmentDataModel>> {
@@ -40,35 +36,63 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
      */
     private static final Logger LOGGER = Logger.getLogger(Message.class.getName());
 
-    private MoleculeDataModel[] molecules;
-    private int numberOfThreads;
+    private List<MoleculeDataModel> molecules;
+    private int numberOfTasks;
     private String fragmentationName;
     private IMoleculeFragmenter fragmenter;
 
-    public FragmentationThread(MoleculeDataModel[] anArrayOfMolecules, int aNumberOfThreads, String aFragmentationName, IMoleculeFragmenter aFragmenter){
+    public FragmentationThread(List<MoleculeDataModel> anArrayOfMolecules, int aNumberOfTasks, String aFragmentationName, IMoleculeFragmenter aFragmenter){
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(anArrayOfMolecules, "anArrayOfMolecules must not be null");
-        Objects.requireNonNull(aNumberOfThreads, "aNumberOfThreads must not be null");
+        Objects.requireNonNull(aNumberOfTasks, "aNumberOfTasks must not be null");
         Objects.requireNonNull(aFragmentationName, "aFragmentationName must not be null");
         Objects.requireNonNull(aFragmenter, "aFragmenter must not be null");
         //</editor-fold>
         this.molecules = anArrayOfMolecules;
-        this.numberOfThreads = aNumberOfThreads;
+        this.numberOfTasks = aNumberOfTasks;
         this.fragmentationName = aFragmentationName;
         this.fragmenter = aFragmenter;
     }
 
     @Override
     public Hashtable<String, FragmentDataModel> call() throws Exception {
-        Hashtable<String, FragmentDataModel> tmpFragmentHashtable = new Hashtable<>(this.molecules.length * 2);
-        int tmpMoleculesPerTask = this.molecules.length / this.numberOfThreads;
-        int tmpStartIndex = 0;
-        int tmpEndIndex = tmpMoleculesPerTask - 1;
-        ExecutorService tmpExecutor = Executors.newFixedThreadPool(this.numberOfThreads);
-        for(int i = 0; i < this.numberOfThreads; i++){
-            MoleculeDataModel[] tmpMoleculesForTask = Arrays.asList(this.molecules).subList(tmpStartIndex, tmpEndIndex).toArray(MoleculeDataModel[]::new);
+        Hashtable<String, FragmentDataModel> tmpFragmentHashtable = new Hashtable<>(this.molecules.size() * 2);
+        if(this.molecules.size() < this.numberOfTasks){
+            this.numberOfTasks = this.molecules.size();
         }
-
-        return null;
+        int tmpMoleculesPerTask = (int) Math.ceil(1.0 * this.molecules.size() / this.numberOfTasks);
+        //TODO refine this one
+        int tmpFromIndex = 0; //low endpoint (inclusive) of the subList
+        int tmpToIndex = tmpMoleculesPerTask; // high endpoint (exclusive) of the subList
+        ExecutorService tmpExecutor = Executors.newFixedThreadPool(this.numberOfTasks);
+        List<FragmentationTask> tmpFragmentationTaskList = new LinkedList<>();
+        for(int i = 0; i < this.numberOfTasks; i++){
+            List<MoleculeDataModel> tmpMoleculesForTask = this.molecules.subList(tmpFromIndex, tmpToIndex);
+            IMoleculeFragmenter tmpFragmenterForTask = this.fragmenter.copy();
+            tmpFragmentationTaskList.add (new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, this.fragmentationName));
+            tmpFromIndex = tmpToIndex;
+            tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
+            if(i == this.numberOfTasks - 2 ){
+                tmpToIndex = this.molecules.size();
+            }
+        }
+        List<Future<Integer>> tmpFuturesList;
+        try {
+            tmpFuturesList = tmpExecutor.invokeAll(tmpFragmentationTaskList);
+        }catch (Exception anException){
+            FragmentationThread.LOGGER.log(Level.SEVERE, anException.toString());
+            throw anException; //TODO ?
+        }
+        int tmpExceptionsCounter = 0;
+        for (Future<Integer> tmpFuture : tmpFuturesList) {
+            tmpExceptionsCounter += tmpFuture.get();
+        }
+        //TODO: set percentage in all fragments
+        if(tmpExceptionsCounter > 0){
+            FragmentationThread.LOGGER.log(Level.SEVERE, "Fragmentation " + this.fragmentationName + " caused " + tmpExceptionsCounter + " exceptions");
+        }
+        tmpExecutor.shutdown();
+        return tmpFragmentHashtable;
     }
+
 }

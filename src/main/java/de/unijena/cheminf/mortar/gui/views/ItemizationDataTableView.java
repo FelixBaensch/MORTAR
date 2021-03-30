@@ -39,6 +39,7 @@ public class ItemizationDataTableView extends TableView {
     private TableColumn<MoleculeDataModel, String> nameColumn;
     private TableColumn<MoleculeDataModel, Image> moleculeStructureColumn;
     private TableColumn<MoleculeDataModel, Image> fragmentStructureColumn;
+    private String fragmentationName;
     //</editor-fold>
     //
     /**
@@ -46,9 +47,10 @@ public class ItemizationDataTableView extends TableView {
      *
      * @param anItemAmount max amount of fragments to be displayed in fragment
      */
-    public ItemizationDataTableView(int anItemAmount){
+    public ItemizationDataTableView(int anItemAmount, String aFragmentationName){
         super();
         this.setEditable(false);
+        this.fragmentationName = aFragmentationName;
         //-nameColumn
         this.nameColumn = new TableColumn<>(Message.get("MainTabPane.itemizationTab.tableView.nameColumn.header"));
         this.nameColumn.setMinWidth(100);
@@ -84,7 +86,7 @@ public class ItemizationDataTableView extends TableView {
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment" + i);
-            tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> cellData.getValue().getFragmentsOfSpecificAlgorithm("Ertl").get(tmpIndex).getStructure()));
+            tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex).getStructure()));
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);
         }
