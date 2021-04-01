@@ -813,11 +813,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * @throws IllegalArgumentException
      */
     @Override
-    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         if (aMolecule.isEmpty()) {
             List<IAtomContainer> tmpReturnList = new ArrayList<IAtomContainer>(1);
-            tmpReturnList.add(0, aMolecule);
+            tmpReturnList.add(0, aMolecule.clone());
             aMolecule.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                     SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
             return tmpReturnList;
@@ -866,12 +866,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                 if (Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))) {
                     tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
-                    if (this.fragmentSaturationSetting.equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
-                        try {
-                            IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
-                        } catch (CDKException aCDKException) {
-                            Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
-                        }
+                }
+                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                    try {
+                        IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
+                    } catch (CDKException aCDKException) {
+                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
                     }
                 }
             }
@@ -928,22 +928,22 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         }
         if (!this.shouldBePreprocessed(aMolecule)) {
-            return aMolecule;
+            return aMolecule.clone();
         }
         if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
             if (!tmpIsConnected) {
-                return SugarRemovalUtility.selectBiggestUnconnectedFragment(aMolecule);
+                return SugarRemovalUtility.selectBiggestUnconnectedFragment(aMolecule.clone());
             }
         }
-        return aMolecule;
+        return aMolecule.clone();
     }
     //</editor-fold>
 }

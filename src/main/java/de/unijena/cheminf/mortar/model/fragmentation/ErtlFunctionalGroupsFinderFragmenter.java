@@ -464,6 +464,13 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         }
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
+        try {
+            tmpMoleculeClone = ErtlFunctionalGroupsFinderUtility.perceiveAtomTypesAndConfigureAtoms(tmpMoleculeClone);
+            tmpMoleculeClone = ErtlFunctionalGroupsFinderUtility.applyAromaticityDetection(tmpMoleculeClone, this.aromaticityModelInstance);
+        } catch (CDKException anException) {
+            this.logger.log(Level.WARNING, anException.toString(), anException);
+            throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
+        }
         HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(tmpMoleculeClone.getAtomCount() + 1, 1);
         for (int i = 0; i < tmpMoleculeClone.getAtomCount(); i++) {
             IAtom tmpAtom = tmpMoleculeClone.getAtom(i);
@@ -474,7 +481,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         List<IAtomContainer> tmpNonFGFragments;
         try {
             //generate FG fragments using EFGF
-            if (this.environmentModeSetting.get() == FGEnvOption.NO_ENVIRONMENT.name()) {
+            if (this.environmentModeSetting.get().equals(FGEnvOption.NO_ENVIRONMENT.name())) {
                 //extract only marked atoms, use implemented utility method from EFGFUtilities
                 tmpFunctionalGroupFragments = ErtlFunctionalGroupsFinderUtility.findMarkedAtoms(tmpMoleculeClone);
             } else {
@@ -599,8 +606,18 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         if (!this.shouldBePreprocessed(aMolecule)) {
             return aMolecule.clone();
         }
-        IAtomContainer tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.applyFiltersAndPreprocessing(aMolecule.clone(),
-                this.aromaticityModelInstance);
+        IAtomContainer tmpPreprocessedMolecule = aMolecule.clone();
+        if (ErtlFunctionalGroupsFinderUtility.isStructureUnconnected(tmpPreprocessedMolecule)) {
+            tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.selectBiggestUnconnectedComponent(tmpPreprocessedMolecule);
+        }
+        if (ErtlFunctionalGroupsFinderUtility.isMoleculeCharged(tmpPreprocessedMolecule)) {
+            try {
+                tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpPreprocessedMolecule);
+            } catch (CDKException anException) {
+                this.logger.log(Level.WARNING, anException.toString(), anException);
+                throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
+            }
+        }
         if (Objects.isNull(tmpPreprocessedMolecule)) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         } else {
