@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +45,7 @@ public class FragmentationTask implements Callable<Integer> {
 
     private final Hashtable<String, FragmentDataModel> fragmentsHashTable;
     private final String fragmentationName;
+    private final Lock lock;
     /**
      * Logger of this class.
      */
@@ -59,6 +62,7 @@ public class FragmentationTask implements Callable<Integer> {
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
+        this.lock = new ReentrantLock();
     }
 
 
@@ -72,7 +76,7 @@ public class FragmentationTask implements Callable<Integer> {
     @Override
     public Integer call() throws Exception{
         int tmpExceptionsCounter = 0;
-        SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique);
+        SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         for (MoleculeDataModel tmpMolecule : this.moleculesList) {
             try{
                 IAtomContainer tmpAtomContainer = tmpMolecule.getAtomContainer();
@@ -92,9 +96,10 @@ public class FragmentationTask implements Callable<Integer> {
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
                     String tmpSmiles = tmpSmilesGenerator.create(tmpFragment);
                     FragmentDataModel tmpFragmentDataModel;
+                    this.lock.lock(); //TODO: ask Achim about hashtable concurrency
                     if(this.fragmentsHashTable.containsKey(tmpSmiles)){
                         tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
-                        tmpFragmentDataModel.incrementAbsoulteFreqeuncy();
+                        tmpFragmentDataModel.incrementAbsoluteFrequency();
                     }
                     else{
                         tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment);
@@ -104,10 +109,11 @@ public class FragmentationTask implements Callable<Integer> {
                         tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
                     }
                     else{
-                        tmpFragmentDataModel.incrementMoleculeFreqeuncy();
+                        tmpFragmentDataModel.incrementMoleculeFrequency();
                         tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
                         tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
                     }
+                    this.lock.unlock();
                 }
             } catch(Exception anException){
                 tmpExceptionsCounter++;

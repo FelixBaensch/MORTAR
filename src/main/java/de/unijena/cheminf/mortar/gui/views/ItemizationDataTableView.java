@@ -32,6 +32,7 @@ import javafx.scene.image.ImageView;
 
 /**
  * Custom table view for the itemization table view
+ *
  */
 public class ItemizationDataTableView extends TableView {
 
@@ -85,7 +86,7 @@ public class ItemizationDataTableView extends TableView {
         );
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
-            TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment" + i);
+            TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment " + i+1); //+1 to avoid 0 in GUI
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex).getStructure()));
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);

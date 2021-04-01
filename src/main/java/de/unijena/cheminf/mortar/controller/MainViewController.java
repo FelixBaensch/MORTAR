@@ -47,6 +47,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Callback;
+import org.apache.xpath.operations.Bool;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.hash.MoleculeHashGenerator;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -172,9 +174,9 @@ public class MainViewController {
         //TODO: add alert if model is not null
         Importer tmpImporter = new Importer();
         IAtomContainerSet tmpAtomContainerSet = tmpImporter.Import(aParentStage);
-        this.clearGuiAndCollections();
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
             return;
+        this.clearGuiAndCollections();
         this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName());
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
             if(tmpAtomContainer.getProperty("SMILES") == null){
@@ -325,12 +327,11 @@ public class MainViewController {
         for(int i= 0; i < moleculeDataModelList.size(); i++){
                     tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).size());
         }
-        System.out.println(tmpAmount);
         GridTabForTableView tmpItemizationTab = new GridTabForTableView("Items", TabNames.Itemization.name());
         mainTabPane.getTabs().add(tmpItemizationTab);
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
         Pagination tmpPaginationItems = new Pagination(moleculeDataModelList.size() / rowsPerPage + 1, 0);
-        tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView, aFragmentationName));
+        tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
         tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
@@ -347,6 +348,23 @@ public class MainViewController {
     private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView, List<FragmentDataModel> aListOfFragments) {
         int fromIndex = pageIndex * rowsPerPage;
         int toIndex = Math.min(fromIndex + rowsPerPage, aListOfFragments.size());
+
+
+        aFragmentsDataTableView.sortPolicyProperty().set(
+                new Callback<FragmentsDataTableView, Boolean>() {
+                    @Override
+                    public Boolean call(FragmentsDataTableView param) {
+                        if(param.getSortOrder().size() > 0){
+                            String property = ((TableColumn)param.getSortOrder().get(0)).getText();
+                            System.out.println(((TableColumn)param.getSortOrder().get(0)).cellValueFactoryProperty().toString());
+                            String sortType = ((TableColumn)param.getSortOrder().get(0)).getSortType().toString();
+                        }
+                        return true;
+                    }
+                }
+        );
+
+
         aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aListOfFragments.subList(fromIndex, toIndex)));
         return new BorderPane(aFragmentsDataTableView);
     }
@@ -358,7 +376,7 @@ public class MainViewController {
      * @param anItemizationDataTableView
      * @return
      */
-    private Node createItemizationTableViewPage(int pageIndex, ItemizationDataTableView anItemizationDataTableView, String aFragmentationName){
+    private Node createItemizationTableViewPage(int pageIndex, ItemizationDataTableView anItemizationDataTableView){
         int fromIndex = pageIndex * rowsPerPage;
         int toIndex = Math.min(fromIndex + rowsPerPage, this.moleculeDataModelList.size());
         anItemizationDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(fromIndex, toIndex)));

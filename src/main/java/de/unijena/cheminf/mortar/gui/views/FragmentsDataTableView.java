@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -50,7 +51,7 @@ public class FragmentsDataTableView extends TableView {
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
         this.structureColumn.setMinWidth(150);
         this.structureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.7) //TODO
+                this.widthProperty().multiply(0.3) //TODO
         );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
@@ -62,12 +63,12 @@ public class FragmentsDataTableView extends TableView {
         this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
         this.smilesColumn.setMinWidth(50);
         this.smilesColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1)  //TODO
+                this.widthProperty().multiply(0.3)  //TODO
         );
         this.smilesColumn.setResizable(true);
         this.smilesColumn.setEditable(false);
         this.smilesColumn.setSortable(true);
-        this.smilesColumn.setCellValueFactory(new PropertyValueFactory("smiles"));
+        this.smilesColumn.setCellValueFactory(new PropertyValueFactory("uniqueSmiles"));
         this.smilesColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.smilesColumn);
         //-frequencyColumn
@@ -79,7 +80,7 @@ public class FragmentsDataTableView extends TableView {
         this.frequencyColumn.setResizable(true);
         this.frequencyColumn.setEditable(false);
         this.frequencyColumn.setSortable(true);
-        this.frequencyColumn.setCellValueFactory(new PropertyValueFactory("frequency"));
+        this.frequencyColumn.setCellValueFactory(new PropertyValueFactory("absoluteFrequency"));
         this.frequencyColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.frequencyColumn);
         //-percentageColumn
@@ -91,7 +92,31 @@ public class FragmentsDataTableView extends TableView {
         this.percentageColumn.setResizable(true);
         this.percentageColumn.setEditable(false);
         this.percentageColumn.setSortable(true);
-        this.percentageColumn.setCellValueFactory(new PropertyValueFactory("percentage"));
+        this.percentageColumn.setCellValueFactory(new PropertyValueFactory("absolutePercentage"));
+        this.percentageColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.percentageColumn);
+        //-frequencyColumn
+        this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.header"));
+        this.frequencyColumn.setMinWidth(50);
+        this.frequencyColumn.prefWidthProperty().bind(
+                this.widthProperty().multiply(0.1) //TODO
+        );
+        this.frequencyColumn.setResizable(true);
+        this.frequencyColumn.setEditable(false);
+        this.frequencyColumn.setSortable(true);
+        this.frequencyColumn.setCellValueFactory(new PropertyValueFactory("moleculeFrequency"));
+        this.frequencyColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.frequencyColumn);
+        //-percentageColumn
+        this.percentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
+        this.percentageColumn.setMinWidth(20);
+        this.percentageColumn.prefWidthProperty().bind(
+                this.widthProperty().multiply(0.1) //TODO
+        );
+        this.percentageColumn.setResizable(true);
+        this.percentageColumn.setEditable(false);
+        this.percentageColumn.setSortable(true);
+        this.percentageColumn.setCellValueFactory(new PropertyValueFactory("moleculePercentage"));
         this.percentageColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.percentageColumn);
     }

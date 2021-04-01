@@ -35,7 +35,6 @@ import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.io.PDBReader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import java.io.*;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -80,7 +79,7 @@ public class Importer {
         if(Objects.isNull(this.recentDirectoryPath) || this.recentDirectoryPath.isEmpty()){
             this.recentDirectoryPath =  System.getProperty("user.dir");
         }
-        File tmpFile = this.LoadFile(aParentStage);
+        File tmpFile = this.loadFile(aParentStage);
         if(tmpFile == null)
             return null;
         String tmpFileExtension = FileUtil.getFileExtension(tmpFile.getPath());
@@ -90,7 +89,6 @@ public class Importer {
                 return this.ImportMolFile(tmpFile);
             case ".sdf":
                 return this.ImportSDFile(tmpFile);
-
             case ".pdb":
                 return this.ImportPDBFile(tmpFile);
             default:
@@ -107,7 +105,7 @@ public class Importer {
      * @param aParentStage Stage where FileChooser should be shown
      * @return File which contains molecules
      */
-    private File LoadFile(Stage aParentStage){
+    private File loadFile(Stage aParentStage){
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
@@ -203,5 +201,6 @@ public class Importer {
             return null;
         }
     }
+    //TODO import smiles file
     //</editor-fold>
 }

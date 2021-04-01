@@ -51,11 +51,11 @@ public class FragmentDataModel {
         this.absoluteFrequency = 1;
     }
     //
-    public void incrementAbsoulteFreqeuncy(){
+    public void incrementAbsoluteFrequency(){
         this.absoluteFrequency += 1;
     }
     //
-    public void incrementMoleculeFreqeuncy(){
+    public void incrementMoleculeFrequency(){
         this.moleculeFrequency += 1;
     }
     //
@@ -131,6 +131,22 @@ public class FragmentDataModel {
     public void setMoleculeFrequency(int aValue)
     {
         this.moleculeFrequency = aValue;
+    }
+    //
+    /**
+     *
+     * @param aValue
+     */
+    public void setAbsolutePercentage(double aValue){
+        this.absolutePercentage = aValue;
+    }
+    //
+    /**
+     *
+     * @param aValue
+     */
+    public void setMoleculePercentage(double aValue){
+        this.moleculePercentage = aValue;
     }
     //</editor-fold>
 }
