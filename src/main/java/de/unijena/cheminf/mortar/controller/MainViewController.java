@@ -24,38 +24,39 @@ import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.*;
+import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
+import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
+import de.unijena.cheminf.mortar.gui.views.MainView;
+import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import de.unijena.cheminf.mortar.model.fragmentation.*;
+import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
+import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
+import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.Callback;
-import org.apache.xpath.operations.Bool;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.hash.MoleculeHashGenerator;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
-import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
+
 import java.io.File;
 import java.util.*;
 import java.util.logging.Level;
@@ -78,18 +79,13 @@ public class MainViewController {
     private MainTabPane mainTabPane;
     private FragmentationSettingsViewController fragmentationSettingsViewController;
     private ObservableList<MoleculeDataModel> moleculeDataModelList;
-//    private ObservableList<FragmentDataModel> fragmentDataModelList;
     private MoleculesDataTableView moleculesDataTableView;
     private int rowsPerPage;
     private boolean selectionAll;
     private boolean selectionAllCheckBoxAction;
     private FragmentationService fragmentationService;
     private Button fragmentationButton;
-
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
-
-    private ErtlFunctionalGroupsFinderFragmenter ertl;
-    private SugarRemovalUtilityFragmenter sugar;
     //</editor-fold>
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
     /**
@@ -293,9 +289,6 @@ public class MainViewController {
      * Starts fragmentation task and opens fragment and itemiztation tabs
      */
     private void startFragmentation(){
-        //TODO
-        //TODO: not sure if it works
-
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).collect(Collectors.toList());
         int tmpNumberOfCores = Runtime.getRuntime().availableProcessors(); //TODO: implement settings
         try{
@@ -315,14 +308,31 @@ public class MainViewController {
     }
 
     private void addFragmentationResultTabs(String aFragmentationName){
+        //fragments tab
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
-        Pagination tmpPagination = new Pagination((this.mapOfFragmentDataModelLists.get(aFragmentationName).size() / rowsPerPage + 1), 0);
-        tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView, this.mapOfFragmentDataModelLists.get(aFragmentationName)));
+        ObservableList<FragmentDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
+        tmpFragmentsDataTableView.setFragmentDataModelList(tmpList);
+        Pagination tmpPagination = new Pagination((tmpList.size() / rowsPerPage + 1), 0);
+        tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+        tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
+            @Override
+            public void handle(SortEvent<TableView> event) {
+                int i = 5;
+                String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
+                TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
+                sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList(), tmpSortProp, tmpSortType.toString());
+                int fromIndex = tmpPagination.getCurrentPageIndex() * rowsPerPage;
+                int toIndex = Math.min(fromIndex + rowsPerPage, ((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().size());
+                event.getSource().getItems().clear();
+                event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().subList(fromIndex,toIndex));
+            }
+        });
+        //itemization tab
         int tmpAmount = 0;
         for(int i= 0; i < moleculeDataModelList.size(); i++){
                     tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).size());
@@ -345,27 +355,11 @@ public class MainViewController {
      * @param aFragmentsDataTableView
      * @return
      */
-    private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView, List<FragmentDataModel> aListOfFragments) {
+//    private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView, List<FragmentDataModel> aListOfFragments) {
+    private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView) {
         int fromIndex = pageIndex * rowsPerPage;
-        int toIndex = Math.min(fromIndex + rowsPerPage, aListOfFragments.size());
-
-
-        aFragmentsDataTableView.sortPolicyProperty().set(
-                new Callback<FragmentsDataTableView, Boolean>() {
-                    @Override
-                    public Boolean call(FragmentsDataTableView param) {
-                        if(param.getSortOrder().size() > 0){
-                            String property = ((TableColumn)param.getSortOrder().get(0)).getText();
-                            System.out.println(((TableColumn)param.getSortOrder().get(0)).cellValueFactoryProperty().toString());
-                            String sortType = ((TableColumn)param.getSortOrder().get(0)).getSortType().toString();
-                        }
-                        return true;
-                    }
-                }
-        );
-
-
-        aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aListOfFragments.subList(fromIndex, toIndex)));
+        int toIndex = Math.min(fromIndex + rowsPerPage, aFragmentsDataTableView.getFragmentDataModelList().size());
+        aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aFragmentsDataTableView.getFragmentDataModelList().subList(fromIndex, toIndex)));
         return new BorderPane(aFragmentsDataTableView);
     }
     //
@@ -391,6 +385,49 @@ public class MainViewController {
         this.mapOfFragmentDataModelLists.clear();
         this.moleculesDataTableView = null;
         this.mainTabPane.getTabs().clear();
+    }
+
+    private void sortGivenFragmentListByPropertyAndSortType(List<FragmentDataModel> aList, String aProperty, String aSortType){
+        Collections.sort(aList, new Comparator<FragmentDataModel>() {
+            @Override
+            public int compare(FragmentDataModel f1, FragmentDataModel f2) {
+                switch(aProperty){
+                    case "absoluteFrequency":
+                        switch(aSortType){
+                            case "ASCENDING":
+//                                return (f1.getAbsoluteFrequency() < f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
+                                return (Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency()));
+                            case "DESCENDING":
+                                return (f1.getAbsoluteFrequency() > f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
+                        }
+                    case "absolutePercentage":
+                        switch(aSortType){
+                            case "ASCENDING":
+//                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+                                return (Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage()));
+                            case "DESCENDING":
+                                return (f1.getAbsolutePercentage() > f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+                        }
+                    case "moleculeFrequency":
+                        switch(aSortType){
+                            case "ASCENDING":
+//                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+                                return (Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency()));
+                            case "DESCENDING":
+                                return (f1.getMoleculeFrequency() > f2.getMoleculeFrequency() ? -1 : (f1.getMoleculeFrequency() == f2.getMoleculeFrequency() ? 0 : 1));
+                        }
+                    case "moleculePercentage":
+                        switch(aSortType){
+                            case "ASCENDING":
+//                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+                                return (Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage()));
+                            case "DESCENDING":
+                                return (f1.getMoleculePercentage() > f2.getMoleculePercentage() ? -1 : (f1.getMoleculePercentage() == f2.getMoleculePercentage() ? 0 : 1));
+                        }
+                }
+                return 0;
+            }
+        });
     }
     //</editor-fold>
 }

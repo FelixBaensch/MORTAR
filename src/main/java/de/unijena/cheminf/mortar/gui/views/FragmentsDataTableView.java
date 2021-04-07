@@ -22,11 +22,12 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
-import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+
+import java.util.List;
 
 /**
  + FragmentsDataTableView extends TableView
@@ -39,6 +40,9 @@ public class FragmentsDataTableView extends TableView {
     private TableColumn<FragmentDataModel, String> smilesColumn;
     private TableColumn<FragmentDataModel, Integer> frequencyColumn;
     private TableColumn<FragmentDataModel, Double> percentageColumn;
+    private TableColumn<FragmentDataModel, Integer> moleculeFrequencyColumn;
+    private TableColumn<FragmentDataModel, Double> moleculePercentageColumn;
+    private List<FragmentDataModel> fragmentDataModelList;
     //</editor-fold>
     //
     /**
@@ -96,29 +100,29 @@ public class FragmentsDataTableView extends TableView {
         this.percentageColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.percentageColumn);
         //-frequencyColumn
-        this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.header"));
-        this.frequencyColumn.setMinWidth(50);
-        this.frequencyColumn.prefWidthProperty().bind(
+        this.moleculeFrequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.header"));
+        this.moleculeFrequencyColumn.setMinWidth(50);
+        this.moleculeFrequencyColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.1) //TODO
         );
-        this.frequencyColumn.setResizable(true);
-        this.frequencyColumn.setEditable(false);
-        this.frequencyColumn.setSortable(true);
-        this.frequencyColumn.setCellValueFactory(new PropertyValueFactory("moleculeFrequency"));
-        this.frequencyColumn.setStyle("-fx-alignment: CENTER");
-        this.getColumns().add(this.frequencyColumn);
+        this.moleculeFrequencyColumn.setResizable(true);
+        this.moleculeFrequencyColumn.setEditable(false);
+        this.moleculeFrequencyColumn.setSortable(true);
+        this.moleculeFrequencyColumn.setCellValueFactory(new PropertyValueFactory("moleculeFrequency"));
+        this.moleculeFrequencyColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.moleculeFrequencyColumn);
         //-percentageColumn
-        this.percentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
-        this.percentageColumn.setMinWidth(20);
-        this.percentageColumn.prefWidthProperty().bind(
+        this.moleculePercentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
+        this.moleculePercentageColumn.setMinWidth(20);
+        this.moleculePercentageColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.1) //TODO
         );
-        this.percentageColumn.setResizable(true);
-        this.percentageColumn.setEditable(false);
-        this.percentageColumn.setSortable(true);
-        this.percentageColumn.setCellValueFactory(new PropertyValueFactory("moleculePercentage"));
-        this.percentageColumn.setStyle("-fx-alignment: CENTER");
-        this.getColumns().add(this.percentageColumn);
+        this.moleculePercentageColumn.setResizable(true);
+        this.moleculePercentageColumn.setEditable(false);
+        this.moleculePercentageColumn.setSortable(true);
+        this.moleculePercentageColumn.setCellValueFactory(new PropertyValueFactory("moleculePercentage"));
+        this.moleculePercentageColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.moleculePercentageColumn);
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
@@ -126,5 +130,11 @@ public class FragmentsDataTableView extends TableView {
     public TableColumn getSmilesColumn() { return this.smilesColumn; }
     public TableColumn getFrequencyColumn() { return this.frequencyColumn; }
     public TableColumn getPercentageColumn() { return this.percentageColumn; }
+    public TableColumn getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
+    public TableColumn getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
+    public List<FragmentDataModel> getFragmentDataModelList() { return this.fragmentDataModelList; }
+    public void setFragmentDataModelList(List<FragmentDataModel> aListOfFragments){
+        this.fragmentDataModelList = aListOfFragments;
+    }
     //</editor-fold>
 }
