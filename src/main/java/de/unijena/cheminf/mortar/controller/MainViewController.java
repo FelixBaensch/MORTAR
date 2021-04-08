@@ -219,7 +219,11 @@ public class MainViewController {
         GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name());
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
         this.moleculesDataTableView = new MoleculesDataTableView();
-        Pagination tmpPagination = new Pagination((this.moleculeDataModelList.size() / rowsPerPage + 1), 0);
+        int tmpPageCount = this.moleculeDataModelList.size() / rowsPerPage;
+        if(this.moleculeDataModelList.size() % rowsPerPage > 0){
+            tmpPageCount++;
+        }
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setPageFactory(this::createDataTableViewPage);
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
@@ -314,7 +318,11 @@ public class MainViewController {
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
         ObservableList<FragmentDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
         tmpFragmentsDataTableView.setFragmentDataModelList(tmpList);
-        Pagination tmpPagination = new Pagination((tmpList.size() / rowsPerPage + 1), 0);
+        int tmpPageCount = tmpList.size() / rowsPerPage;
+        if(tmpList.size() % rowsPerPage > 0){
+            tmpPageCount++;
+        }
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
@@ -340,7 +348,11 @@ public class MainViewController {
         GridTabForTableView tmpItemizationTab = new GridTabForTableView("Items", TabNames.Itemization.name());
         mainTabPane.getTabs().add(tmpItemizationTab);
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
-        Pagination tmpPaginationItems = new Pagination(moleculeDataModelList.size() / rowsPerPage + 1, 0);
+        tmpPageCount = moleculeDataModelList.size() / rowsPerPage;
+        if(moleculeDataModelList.size() % rowsPerPage > 0){
+            tmpPageCount++;
+        }
+        Pagination tmpPaginationItems = new Pagination( tmpPageCount, 0);
         tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
