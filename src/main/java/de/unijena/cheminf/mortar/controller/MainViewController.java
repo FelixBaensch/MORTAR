@@ -28,6 +28,7 @@ import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
+import de.unijena.cheminf.mortar.main.Main;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -35,6 +36,7 @@ import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
 import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -157,6 +159,8 @@ public class MainViewController {
      */
     private void closeApplication(int aStatus) {
         //TODO: add alert if model is not null
+        //TODO: bind/addListener to top right corner X
+        MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
         System.exit(aStatus);
     }
@@ -175,15 +179,14 @@ public class MainViewController {
         this.clearGuiAndCollections();
         this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName());
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-            if(tmpAtomContainer.getProperty("SMILES") == null){
-                try {
-                    SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Absolute);
-                    tmpAtomContainer.setProperty("SMILES", tmpSmilesGen.create(tmpAtomContainer));
-                } catch (CDKException anException){
-                    MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                }
+            String tmpSmiles = "";
+            try {
+                SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique);
+                tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+            } catch (CDKException anException){
+                MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
-            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer.getID(), tmpAtomContainer);
+            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer.getID(), tmpAtomContainer, tmpSmiles);
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }

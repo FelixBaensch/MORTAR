@@ -42,10 +42,9 @@ public class FragmentationTask implements Callable<Integer> {
     private final List<MoleculeDataModel> moleculesList;
 
     private final IMoleculeFragmenter fragmenter;
-
+    private static final ReentrantLock LOCK = new ReentrantLock(true);
     private final Hashtable<String, FragmentDataModel> fragmentsHashTable;
     private final String fragmentationName;
-    private final Lock lock;
     /**
      * Logger of this class.
      */
@@ -62,7 +61,6 @@ public class FragmentationTask implements Callable<Integer> {
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
-        this.lock = new ReentrantLock();
     }
 
 
@@ -96,24 +94,30 @@ public class FragmentationTask implements Callable<Integer> {
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
                     String tmpSmiles = tmpSmilesGenerator.create(tmpFragment);
                     FragmentDataModel tmpFragmentDataModel;
-                    this.lock.lock(); //TODO: ask Achim about hashtable concurrency
-                    if(this.fragmentsHashTable.containsKey(tmpSmiles)){
-                        tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
-                        tmpFragmentDataModel.incrementAbsoluteFrequency();
+                    LOCK.lock(); //TODO: ask Achim about hashtable concurrency
+                    try{
+                        if(this.fragmentsHashTable.containsKey(tmpSmiles)){
+                            tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
+                            tmpFragmentDataModel.incrementAbsoluteFrequency();
+                        }
+                        else{
+                            tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment);
+                            this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
+                        }
+                        if(tmpFragmentsMapOfMolecule.get(this.fragmentationName).contains(tmpFragmentDataModel)){
+                            tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
+                        }
+                        else{
+                            tmpFragmentDataModel.incrementMoleculeFrequency();
+                            tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
+                            tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
+                        }
+                    } catch (Exception anException){
+                        FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString());
+                        tmpExceptionsCounter++;
+                    }finally {
+                        LOCK.unlock();
                     }
-                    else{
-                        tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment);
-                        this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
-                    }
-                    if(tmpFragmentsMapOfMolecule.get(this.fragmentationName).contains(tmpFragmentDataModel)){
-                        tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
-                    }
-                    else{
-                        tmpFragmentDataModel.incrementMoleculeFrequency();
-                        tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
-                        tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
-                    }
-                    this.lock.unlock();
                 }
             } catch(Exception anException){
                 tmpExceptionsCounter++;

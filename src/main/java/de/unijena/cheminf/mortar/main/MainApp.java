@@ -67,8 +67,6 @@ public class MainApp extends Application {
             //</editor-fold>
             MainView tmpMainView = new MainView();
             MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
-            
-            Logger.getLogger(Main.class.getName()).info(BasicDefinitions.MORTAR_SESSION_END);
         } catch (Exception anException){
             GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"), anException.getMessage(), anException);
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);

@@ -22,7 +22,10 @@ package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import javafx.scene.image.ImageView;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
 
 /**
  * Model class for fragment data
@@ -35,7 +38,6 @@ public class FragmentDataModel {
     private double absolutePercentage;
     private int moleculeFrequency;
     private double moleculePercentage;
-    private IAtomContainer atomContainer;
     private String algorithmName;
     //</editor-fold>
     //
@@ -47,7 +49,6 @@ public class FragmentDataModel {
      */
     public FragmentDataModel(String anUniqueSmiles, IAtomContainer anAtomContainer){
         this.uniqueSmiles = anUniqueSmiles;
-        this.atomContainer = anAtomContainer;
         this.absoluteFrequency = 1;
     }
     //
@@ -72,8 +73,9 @@ public class FragmentDataModel {
      * Returns IAtomContainer
      * @return IAtomContainer
      */
-    public IAtomContainer getAtomContainer() {
-        return this.atomContainer;
+    public IAtomContainer getAtomContainer() throws CDKException {
+        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        return tmpSmiPar.parseSmiles(this.uniqueSmiles);
     }
     //
     /**
@@ -112,8 +114,8 @@ public class FragmentDataModel {
      * Creates and returns ImageView of this fragment
      * @return ImageView of this fragment
      */
-    public ImageView getStructure(){
-        return new ImageView(DepictionUtil.depictImage(this.atomContainer));
+    public ImageView getStructure() throws CDKException{
+        return new ImageView(DepictionUtil.depictImage(this.getAtomContainer()));
     }
     //
     /**

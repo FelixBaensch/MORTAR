@@ -25,7 +25,13 @@ import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.CDK;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +46,6 @@ public class MoleculeDataModel {
     private String iD;
     private String name;
     private String smiles;
-    private IAtomContainer atomContainer;
     private BooleanProperty selection;
     private HashMap<String, Boolean> hasFragmentsMap; // HashMap<FragmentationAlgorithmName, hasFragments>
     private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
@@ -53,11 +58,10 @@ public class MoleculeDataModel {
      * @param anID - unique identifier
      * @param anAtomContainer - IAtomContainer
      */
-    public MoleculeDataModel(String anID, IAtomContainer anAtomContainer){
+    public MoleculeDataModel(String anID, IAtomContainer anAtomContainer, String aUniqueSmiles){
         this.iD = anID;
-        this.atomContainer = anAtomContainer;
-        this.name = this.atomContainer.getTitle();
-        this.smiles = this.atomContainer.getProperty("SMILES");
+        this.name = anAtomContainer.getTitle();
+        this.smiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
         this.fragments = new HashMap<>(5);
         this.fragmentFrequencies = new HashMap<>(5);
@@ -87,8 +91,9 @@ public class MoleculeDataModel {
      * Returns IAtomContainer which holds the molecule
      * @return IAtomContainer
      */
-    public IAtomContainer getAtomContainer(){
-        return this.atomContainer;
+    public IAtomContainer getAtomContainer() throws CDKException {
+        SmilesParser tmpSmiPa = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        return tmpSmiPa.parseSmiles(this.smiles);
     }
     //
     /**
@@ -173,8 +178,8 @@ public class MoleculeDataModel {
      * Creates and returns an ImageView of this molecule as 2D structure
      * @return ImageView
      */
-    public ImageView getStructure(){
-        return new ImageView(DepictionUtil.depictImage(this.atomContainer));
+    public ImageView getStructure() throws CDKException {
+        return new ImageView(DepictionUtil.depictImage(this.getAtomContainer()));
     }
     //
     /**

@@ -47,7 +47,6 @@ public class DepictionUtil {
             //TODO: Logging
             return createErrorImage(anException.getMessage(), 250,250);
         }
-
     }
 
     /**

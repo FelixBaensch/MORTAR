@@ -49,7 +49,7 @@ public class MoleculesDataTableView extends TableView {
      */
     public MoleculesDataTableView(){
         super();
-        this.setEditable(false);
+        this.setEditable(true);
         //-selectionColumn
         this.selectionColumn = new TableColumn<>();
         this.selectAllCheckBox = new CheckBox();
