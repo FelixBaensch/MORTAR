@@ -27,6 +27,8 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesParser;
 
+import java.util.Map;
+
 /**
  * Model class for fragment data
  */
@@ -39,6 +41,7 @@ public class FragmentDataModel {
     private int moleculeFrequency;
     private double moleculePercentage;
     private String algorithmName;
+    private Map<Object, Object> properties;
     //</editor-fold>
     //
     /**
@@ -50,6 +53,7 @@ public class FragmentDataModel {
     public FragmentDataModel(String anUniqueSmiles, IAtomContainer anAtomContainer){
         this.uniqueSmiles = anUniqueSmiles;
         this.absoluteFrequency = 1;
+        this.properties = anAtomContainer.getProperties();
     }
     //
     public void incrementAbsoluteFrequency(){
@@ -75,11 +79,13 @@ public class FragmentDataModel {
      */
     public IAtomContainer getAtomContainer() throws CDKException {
         SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        return tmpSmiPar.parseSmiles(this.uniqueSmiles);
+        IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
+        tmpAtomContainer.addProperties(this.properties);
+        return tmpAtomContainer;
     }
     //
     /**
-     * Returns frequency of this framgent
+     * Returns frequency of this fragment
      * @return int frequency
      */
     public int getAbsoluteFrequency() {
@@ -95,7 +101,7 @@ public class FragmentDataModel {
     }
     //
     /**
-     * Returns frequency of this framgent
+     * Returns frequency of this fragment
      * @return int frequency
      */
     public int getMoleculeFrequency() {
@@ -116,6 +122,14 @@ public class FragmentDataModel {
      */
     public ImageView getStructure() throws CDKException{
         return new ImageView(DepictionUtil.depictImage(this.getAtomContainer()));
+    }
+    //
+    /**
+     * Returns property map of this fragment
+     * @return property map
+     */
+    public Map getProperties() {
+        return this.properties;
     }
     //
     /**
