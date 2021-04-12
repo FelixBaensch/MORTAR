@@ -29,7 +29,12 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Model class for molecule data
@@ -37,6 +42,7 @@ import java.util.*;
 public class MoleculeDataModel {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    //TODO: Omit? Is not the unique SMILES the id for us?
     private String iD;
     private String name;
     private String smiles;
@@ -48,10 +54,12 @@ public class MoleculeDataModel {
     //</editor-fold>
     //
     /**
-     * Constructor for MoleculeDataModel
+     * Constructor for MoleculeDataModel. From the atom container, only the properties map is retained, and
+     * the molecular information is taken from the given unique SMILES code.
      *
      * @param anID - unique identifier
      * @param anAtomContainer - IAtomContainer
+     * @param aUniqueSmiles - unique SMILES representation of the molecule
      */
     public MoleculeDataModel(String anID, IAtomContainer anAtomContainer, String aUniqueSmiles){
         this.iD = anID;
@@ -75,7 +83,7 @@ public class MoleculeDataModel {
     //
     /**
      * Returns name (String) of the molecule, if it is null, "NoName" will be returned
-     * @return String name of moleucle
+     * @return String name of molecule
      */
     public String getName(){
         if(this.name == null || this.name.isEmpty())
@@ -84,11 +92,13 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Returns IAtomContainer which holds the molecule
+     * Returns IAtomContainer which represents the molecule
      * @return IAtomContainer
      */
     public IAtomContainer getAtomContainer() throws CDKException {
         SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        //TODO: Necessary here? For fragments definitely necessary, but here also?
+        tmpSmiPar.kekulise(false);
         IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.smiles);
         tmpAtomContainer.addProperties(this.properties);
         return tmpAtomContainer;
@@ -102,9 +112,10 @@ public class MoleculeDataModel {
         return this.smiles;
     }
     //
+    //TODO: should this not be getSelection(), following the properties naming convention?
     /**
-     * Returns boolean whether molecule is selected or not
-     * @returns boolean
+     * Returns boolean telling whether molecule is selected or not
+     * @returns true if molecule is selected
      */
     public boolean isSelected(){
         return this.selection.get();
@@ -119,16 +130,18 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Returns a list of {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} from which this molecule is composed
-     * @return List<FragmentDataModel>
+     * Returns the fragments map of this molecule data model. The map contains as keys names of fragmentations done to
+     * the molecule and as values lists of {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that
+     * resulted from these fragmentations.
+     * @return HashMap<fragmentationName, List<FragmentDataModel>>
      */
     public HashMap<String, List<FragmentDataModel>> getAllFragments(){
         return this.fragments;
     }
     //
     /**
-     * Returns a list of unique fragments fragmented by specific algorithm with a given name
-     * @param aKey String specifies fragmentation algorithm
+     * Returns a list of unique fragments that resulted from the fragmentation of the molecule with the given name.
+     * @param aKey String specifies fragmentation or fragmentation algorithm
      * @return List<FragmentDataModel>
      */
     public List<FragmentDataModel> getFragmentsOfSpecificAlgorithm(String aKey){
@@ -142,10 +155,22 @@ public class MoleculeDataModel {
         }
     }
     //
+    /**
+     * Returns the fragment frequencies map of this molecule data model. The map contains as keys names of fragmentations
+     * done to the molecule and as values maps that in turn contain as keys unique SMILES representations of fragments
+     * that resulted from the respective fragmentation and as objects the frequencies of the specific fragment in the molecule.
+     * @return HashMap<fragmentationName, HashMap<uniqueSmiles, frequency>>
+     */
     public HashMap<String, HashMap<String, Integer>> getFragmentFrequencies(){
         return this.fragmentFrequencies;
     }
     //
+    /**
+     * Returns the fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique
+     * SMILES representations of the fragments and values are the frequencies of the respective fragments in the molecule.
+     * @param aKey String specifies fragmentation or fragmentation algorithm
+     * @return HashMap<uniqueSmiles, frequency>
+     */
     public HashMap<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
         if(this.fragmentFrequencies.containsKey(aKey)){
@@ -157,12 +182,23 @@ public class MoleculeDataModel {
         }
     }
     //
+    //TODO: Is the map written to in the fragmentation tasks?
+    /**
+     * Returns a map that contains fragmentation names as keys and boolean values that specify whether the molecule has
+     * fragments resulting from the respective fragmentation process or not.
+     * @return HashMap<fragmentationName, hasFragments>
+     */
     public HashMap<String, Boolean> getHasFragmentsMap(){
         return this.hasFragmentsMap;
     }
     //
+    /**
+     * Specifies whether the molecule has fragments resulting from the fragmentation process with the given name or not.
+     * @param aKey fragmentation name
+     * @return true if the molecule has fragments resulting from the specified fragmentation 
+     */
     public Boolean hasMoleculeFragmentsForSpecificAlgorithm(String aKey){
-        Objects.requireNonNull(aKey, "aKy must not be null");
+        Objects.requireNonNull(aKey, "aKey must not be null");
         if(this.hasFragmentsMap.containsKey(aKey)){
             return this.hasFragmentsMap.get(aKey);
         }
@@ -176,8 +212,14 @@ public class MoleculeDataModel {
      * Creates and returns an ImageView of this molecule as 2D structure
      * @return ImageView
      */
-    public ImageView getStructure() throws CDKException {
-        return new ImageView(DepictionUtil.depictImage(this.getAtomContainer()));
+    public ImageView getStructure() {
+        try {
+            IAtomContainer tmpAtomContainer = this.getAtomContainer();
+            return new ImageView(DepictionUtil.depictImage(tmpAtomContainer));
+        } catch (CDKException aCDKException) {
+            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
+            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250,250));
+        }
     }
     //
     /**

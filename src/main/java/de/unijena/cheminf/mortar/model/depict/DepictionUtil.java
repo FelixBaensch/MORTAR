@@ -56,7 +56,7 @@ public class DepictionUtil {
      * @param aWidth
      * @param aHeight
      */
-    private static Image createErrorImage(String aMessage, int aWidth, int aHeight) {
+    public static Image createErrorImage(String aMessage, int aWidth, int aHeight) {
         String tmpMessage;
         if (aMessage == null) {
             tmpMessage = "Error";
