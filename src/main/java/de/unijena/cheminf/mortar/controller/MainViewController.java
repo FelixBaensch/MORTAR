@@ -53,6 +53,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
@@ -151,6 +152,8 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openFragmentationSettingsView());
+//        this.primaryStage.setOnCloseRequest(event -> this.closeApplication(0));
+        this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //TODO: More implementation needed
     }
     //
@@ -158,11 +161,20 @@ public class MainViewController {
      * Closes application
      */
     private void closeApplication(int aStatus) {
-        //TODO: add alert if model is not null
+        if(moleculeDataModelList.size() > 0){
+            ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost and application will be closed if you press Ok. Click cancel to return to application."); //TODO
+            if(tmpConformationResult!= ButtonType.OK){
+                return;
+            }
+        }
         //TODO: bind/addListener to top right corner X
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
         System.exit(aStatus);
+    }
+    private void closeWindowEvent(WindowEvent anEvent){
+        this.closeApplication(0);
+        anEvent.consume();
     }
     //
     /**
@@ -171,13 +183,18 @@ public class MainViewController {
      * @param aParentStage
      */
     private void loadMoleculeFile(Stage aParentStage) {
-        //TODO: add alert if model is not null
+        if(moleculeDataModelList.size() > 0){
+            ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return."); //TODO
+            if(tmpConformationResult!= ButtonType.OK){
+                return;
+            }
+        }
         Importer tmpImporter = new Importer();
         IAtomContainerSet tmpAtomContainerSet = tmpImporter.Import(aParentStage);
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
             return;
         this.clearGuiAndCollections();
-        this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName());
+        this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
             String tmpSmiles = "";
             try {
@@ -190,6 +207,7 @@ public class MainViewController {
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
+        MainViewController.LOGGER.log(Level.SEVERE, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName());
         this.OpenMoleculesTab();
     }
     //
@@ -197,7 +215,6 @@ public class MainViewController {
     private void openFragmentationSettingsView(){
         FragmentationSettingsViewController tmpFragmentationSettingsViewController =
                 new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
-
     }
     //
     private void addFragmentationAlgorithmCheckMenuItems(){

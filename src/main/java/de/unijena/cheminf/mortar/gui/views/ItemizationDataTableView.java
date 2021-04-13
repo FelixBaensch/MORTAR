@@ -81,13 +81,15 @@ public class ItemizationDataTableView extends TableView {
         this.fragmentStructureColumn.setEditable(false);
         this.fragmentStructureColumn.setSortable(false);
         this.fragmentStructureColumn.setStyle("-fx-alignment: CENTER");
-        this.fragmentStructureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.55) //TODO
-        );
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
-            tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex).getStructure()));
+            tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
+                if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).size())
+                    return null;
+                return cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex).getStructure();
+
+            }));
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);
         }
