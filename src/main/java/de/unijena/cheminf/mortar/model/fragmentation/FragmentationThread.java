@@ -20,16 +20,23 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
-import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Thread class to run the fragmentation in a new parallel thread
+ * Thread class to run the fragmentation in a new parallel thread. This thread itself distributes the molecules onto
+ * multiple parallel tasks to speed up the fragmentation.
  *
  * @author Felix Baensch, Jonas Schaub
  */
@@ -38,13 +45,21 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
     /**
      * Logger of this class.
      */
-    private static final Logger LOGGER = Logger.getLogger(Message.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FragmentationThread.class.getName());
 
     private List<MoleculeDataModel> molecules;
     private int numberOfTasks;
     private String fragmentationName;
     private IMoleculeFragmenter fragmenter;
 
+    /**
+     * Constructor
+     *
+     * @param anArrayOfMolecules
+     * @param aNumberOfTasks
+     * @param aFragmentationName
+     * @param aFragmenter
+     */
     public FragmentationThread(List<MoleculeDataModel> anArrayOfMolecules, int aNumberOfTasks, String aFragmentationName, IMoleculeFragmenter aFragmenter){
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(anArrayOfMolecules, "anArrayOfMolecules must not be null");
@@ -90,18 +105,20 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
             }
         }
         List<Future<Integer>> tmpFuturesList;
+        long tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
+        FragmentationThread.LOGGER.info("Fragmentation \"" + this.fragmentationName
+                + "\" starting. Current memory consumption: " + tmpMemoryConsumption + " MB");
+        long tmpStartTime = System.currentTimeMillis();
         try {
             tmpFuturesList = tmpExecutor.invokeAll(tmpFragmentationTaskList);
-
         }catch (Exception anException){
-            FragmentationThread.LOGGER.log(Level.SEVERE, anException.toString());
-            throw anException; //TODO ?
+            FragmentationThread.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            throw anException; //TODO ? GUIAlert?
         }
         int tmpExceptionsCounter = 0;
         for (Future<Integer> tmpFuture : tmpFuturesList) {
             tmpExceptionsCounter += tmpFuture.get();
         }
-        //TODO: set percentage in all fragments
         int tmpFragmentAmount = 0;
         Set<String> tmpKeySet = tmpFragmentHashtable.keySet();
         for(String tmpKey : tmpKeySet){
@@ -112,10 +129,14 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
             tmpFragmentHashtable.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getMoleculeFrequency() / this.molecules.size());
         }
         if(tmpExceptionsCounter > 0){
-            FragmentationThread.LOGGER.log(Level.SEVERE, "Fragmentation " + this.fragmentationName + " caused " + tmpExceptionsCounter + " exceptions");
+            FragmentationThread.LOGGER.log(Level.SEVERE, "Fragmentation \"" + this.fragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");
         }
         tmpExecutor.shutdown();
+        tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() -Runtime.getRuntime().freeMemory()) / (1024*1024);
+        long tmpEndTime = System.currentTimeMillis();
+        FragmentationThread.LOGGER.info("Fragmentation \"" + this.fragmentationName + "\" of " + this.molecules.size()
+                + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "
+                + tmpMemoryConsumption + " MB");
         return tmpFragmentHashtable;
     }
-
 }

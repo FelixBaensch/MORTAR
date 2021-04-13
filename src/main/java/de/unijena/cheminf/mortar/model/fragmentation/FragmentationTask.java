@@ -20,7 +20,6 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
-import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -32,23 +31,25 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FragmentationTask implements Callable<Integer> {
 
-    private final List<MoleculeDataModel> moleculesList;
-
-    private final IMoleculeFragmenter fragmenter;
+    /**
+     * Lock to be used when updating the shared fragmentsHashTable. Needs to be static to be shared between all task
+     * objects.
+     */
     private static final ReentrantLock LOCK = new ReentrantLock(true);
+    private final List<MoleculeDataModel> moleculesList;
+    private final IMoleculeFragmenter fragmenter;
     private final Hashtable<String, FragmentDataModel> fragmentsHashTable;
     private final String fragmentationName;
     /**
      * Logger of this class.
      */
-    private static final Logger LOGGER = Logger.getLogger(Message.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FragmentationTask.class.getName());
 
     /**
      * Instantiates the thread.
@@ -62,7 +63,6 @@ public class FragmentationTask implements Callable<Integer> {
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
     }
-
 
     /**
      * Applies the IMoleculeFragmenter.fragment(IAtomContainer container) method on all given
@@ -94,7 +94,7 @@ public class FragmentationTask implements Callable<Integer> {
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
                     String tmpSmiles = tmpSmilesGenerator.create(tmpFragment);
                     FragmentDataModel tmpFragmentDataModel;
-                    LOCK.lock(); //TODO: ask Achim about hashtable concurrency
+                    LOCK.lock();
                     try{
                         if(this.fragmentsHashTable.containsKey(tmpSmiles)){
                             tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
@@ -113,7 +113,7 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
                         }
                     } catch (Exception anException){
-                        FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString());
+                        FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                         tmpExceptionsCounter++;
                     }finally {
                         LOCK.unlock();
@@ -121,7 +121,7 @@ public class FragmentationTask implements Callable<Integer> {
                 }
             } catch(Exception anException){
                 tmpExceptionsCounter++;
-                FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString());
+                FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
         }
         return tmpExceptionsCounter;
