@@ -35,7 +35,9 @@ import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.io.PDBReader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import java.io.*;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -140,12 +142,15 @@ public class Importer {
             MDLV2000Reader tmpReader = new MDLV2000Reader(new FileInputStream(aFile), IChemObjectReader.Mode.RELAXED);
             IAtomContainer tmpAtomContainer = tmpReader.read(new AtomContainer());
             //TODO: add a preference depending if clause to add implicit hydrogens or not
-            BufferedReader tmpBufferedReader = new BufferedReader(new FileReader(aFile));
-            String tmpMolName = tmpBufferedReader.readLine();
-            if(tmpMolName == null || tmpMolName.isBlank() || tmpMolName.isEmpty())
-                tmpMolName = FileUtil.getFileNameWithoutExtension(aFile);
-            tmpBufferedReader.close();
-            tmpAtomContainer.setProperty("NAME", tmpMolName);
+            String tmpName = this.findMoleculeName(tmpAtomContainer);
+            if(tmpName == null){
+                BufferedReader tmpBufferedReader = new BufferedReader(new FileReader(aFile));
+                tmpName = tmpBufferedReader.readLine();
+                if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
+                    tmpName = FileUtil.getFileNameWithoutExtension(aFile);
+                tmpBufferedReader.close();
+            }
+            tmpAtomContainer.setProperty("NAME", tmpName);
             tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
             return tmpAtomContainerSet;
         }catch(CDKException | IOException anException){
@@ -166,7 +171,7 @@ public class Importer {
             int tmpCounter = 0;
             while(tmpSDFReader.hasNext()){
                 IAtomContainer tmpAtomContainer = tmpSDFReader.next();
-                String tmpName = tmpAtomContainer.getTitle();
+                String tmpName = this.findMoleculeName(tmpAtomContainer);
                 if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
                 //TODO: add a preference depending if clause to add implicit hydrogens or not
@@ -190,7 +195,7 @@ public class Importer {
             IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
             PDBReader tmpPDBReader = new PDBReader(new FileInputStream(aFile));
             IAtomContainer tmpAtomContainer = tmpPDBReader.read(new AtomContainer());
-            String tmpName = tmpAtomContainer.getTitle();
+            String tmpName = this.findMoleculeName(tmpAtomContainer);
             if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
                 tmpName = FileUtil.getFileNameWithoutExtension(aFile);
             tmpAtomContainer.setProperty("NAME", tmpName);
@@ -201,6 +206,31 @@ public class Importer {
             return null;
         }
     }
+    //
     //TODO: import smiles file
+    //
+    /**
+     * Searches the properties of the given atom container for a property
+     * containing either 'name' or 'ID' and
+     * returns the corresponding value as a string.
+     * If nothing is found or value equals 'None', null is returned.
+     * @param anAtomContainer IAtomContainer
+     * @return String or null
+     */
+    private String findMoleculeName(IAtomContainer anAtomContainer){
+        String tmpName = anAtomContainer.getTitle();
+        Set<String> keySet = (Set<String>)(Set<?>)anAtomContainer.getProperties().keySet();
+        if(tmpName == null  && keySet.stream().anyMatch(k -> k.contains("name") || k.contains("Name") || k.contains("NAME"))){
+            String key = keySet.stream().filter(k -> k.contains("name") || k.contains("Name") || k.contains("NAME")).findFirst().get();
+            tmpName = anAtomContainer.getProperty(key);
+        }
+        if((tmpName == null || tmpName.equals("None") || tmpName.equals("NONE")) && keySet.stream().anyMatch(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID"))){
+            String key = keySet.stream().filter(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID")).findFirst().get();
+            tmpName = anAtomContainer.getProperty(key);
+        } //TODO: add keys, maybe SMILES
+        if(tmpName != null && (tmpName.equals("None") || tmpName.equals("NONE")))
+            tmpName = null;
+        return tmpName;
+    }
     //</editor-fold>
 }
