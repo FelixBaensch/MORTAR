@@ -22,6 +22,8 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,7 +70,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
         Objects.requireNonNull(aFragmenter, "aFragmenter must not be null");
         //</editor-fold>
         this.molecules = anArrayOfMolecules;
-        this.numberOfTasks = aNumberOfTasks;
+        this.numberOfTasks = aNumberOfTasks; //TODO: get from global settings
         this.fragmentationName = aFragmentationName;
         this.fragmenter = aFragmenter;
     }
@@ -132,7 +134,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
             FragmentationThread.LOGGER.log(Level.SEVERE, "Fragmentation \"" + this.fragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");
         }
         tmpExecutor.shutdown();
-        tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() -Runtime.getRuntime().freeMemory()) / (1024*1024);
+        tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
         long tmpEndTime = System.currentTimeMillis();
         FragmentationThread.LOGGER.info("Fragmentation \"" + this.fragmentationName + "\" of " + this.molecules.size()
                 + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "

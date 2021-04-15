@@ -28,15 +28,16 @@ import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
-import de.unijena.cheminf.mortar.main.Main;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
-import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.preference.PreferenceContainer;
+import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -116,7 +117,6 @@ public class MainViewController {
         //</editor-fold>
         this.selectionAll = true;
         this.moleculeDataModelList = FXCollections.observableArrayList(param -> new Observable[]{param.selectionProperty()});
-//        this.fragmentDataModelList = FXCollections.observableArrayList();
         this.primaryStage = aStage;
         this.mainView = aMainView;
         this.appDir = anAppDir;
@@ -140,7 +140,7 @@ public class MainViewController {
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
-     *
+     * Adds listeners and event handlers to control elements etc.
      */
     private void addListener() {
         this.mainView.getMainMenuBar().getExitMenuItem().addEventHandler(
@@ -152,7 +152,9 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openFragmentationSettingsView());
-//        this.primaryStage.setOnCloseRequest(event -> this.closeApplication(0));
+        this.mainView.getMainMenuBar().getGlobalSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openGlobalSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //TODO: More implementation needed
     }
@@ -172,6 +174,7 @@ public class MainViewController {
         Platform.exit();
         System.exit(aStatus);
     }
+    //
     private void closeWindowEvent(WindowEvent anEvent){
         this.closeApplication(0);
         anEvent.consume();
@@ -200,7 +203,7 @@ public class MainViewController {
             try {
                 SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique);
                 tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
-            } catch (CDKException anException){
+            } catch (CDKException | NullPointerException anException){
                 MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
             MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer.getID(), tmpAtomContainer, tmpSmiles);
@@ -211,7 +214,6 @@ public class MainViewController {
         this.OpenMoleculesTab();
     }
     //
-
     private void openFragmentationSettingsView(){
         FragmentationSettingsViewController tmpFragmentationSettingsViewController =
                 new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
@@ -222,7 +224,7 @@ public class MainViewController {
         for(IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()){
             RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmName());
             tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
-            this.mainView.getMainMenuBar().getFragmentationAlgorithmMenuItem().getItems().add(tmpRadioMenuItem);
+            this.mainView.getMainMenuBar().getFragmentationAlgorithmMenu().getItems().add(tmpRadioMenuItem);
         }
         tmpToggleGroup.selectedToggleProperty().addListener((observableValue, oldValue, newValue) -> {
             if(tmpToggleGroup.getSelectedToggle() != null){
@@ -230,6 +232,10 @@ public class MainViewController {
             }
         });
         tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
+    }
+    //
+    private void openGlobalSettingsView(){
+
     }
     //
     /**
@@ -330,10 +336,10 @@ public class MainViewController {
             //TODO
         }
     }
-
+    //
     private void addFragmentationResultTabs(String aFragmentationName){
         //fragments tab
-        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title"), TabNames.Fragments.name());
+        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name());
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
         ObservableList<FragmentDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
@@ -365,7 +371,7 @@ public class MainViewController {
         for(int i= 0; i < moleculeDataModelList.size(); i++){
                     tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).size());
         }
-        GridTabForTableView tmpItemizationTab = new GridTabForTableView("Items", TabNames.Itemization.name());
+        GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name());
         mainTabPane.getTabs().add(tmpItemizationTab);
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
         tmpPageCount = moleculeDataModelList.size() / rowsPerPage;
@@ -387,7 +393,6 @@ public class MainViewController {
      * @param aFragmentsDataTableView
      * @return
      */
-//    private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView, List<FragmentDataModel> aListOfFragments) {
     private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView) {
         int fromIndex = pageIndex * rowsPerPage;
         int toIndex = Math.min(fromIndex + rowsPerPage, aFragmentsDataTableView.getFragmentDataModelList().size());
@@ -418,7 +423,7 @@ public class MainViewController {
         this.moleculesDataTableView = null;
         this.mainTabPane.getTabs().clear();
     }
-
+    //
     private void sortGivenFragmentListByPropertyAndSortType(List<FragmentDataModel> aList, String aProperty, String aSortType){
         Collections.sort(aList, new Comparator<FragmentDataModel>() {
             @Override

@@ -22,11 +22,14 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.List;
 
 /**
@@ -51,6 +54,7 @@ public class FragmentsDataTableView extends TableView {
     public FragmentsDataTableView(){
         super();
         this.setEditable(false);
+        DecimalFormat tmpDecForm = new DecimalFormat("#.###");
         //-structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
         this.structureColumn.setMinWidth(150);
@@ -97,6 +101,17 @@ public class FragmentsDataTableView extends TableView {
         this.percentageColumn.setEditable(false);
         this.percentageColumn.setSortable(true);
         this.percentageColumn.setCellValueFactory(new PropertyValueFactory("absolutePercentage"));
+        this.percentageColumn.setCellFactory(tc -> new TableCell<>(){
+            @Override
+            protected void updateItem(Double value, boolean empty){
+                super.updateItem(value, empty);
+                if(empty){
+                    setText(null);
+                } else{
+                    setText(tmpDecForm.format(value));
+                }
+            }
+        });
         this.percentageColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.percentageColumn);
         //-frequencyColumn
@@ -121,6 +136,17 @@ public class FragmentsDataTableView extends TableView {
         this.moleculePercentageColumn.setEditable(false);
         this.moleculePercentageColumn.setSortable(true);
         this.moleculePercentageColumn.setCellValueFactory(new PropertyValueFactory("moleculePercentage"));
+        this.moleculePercentageColumn.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double value, boolean empty) {
+                super.updateItem(value, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(tmpDecForm.format(value));
+                }
+            }
+        });
         this.moleculePercentageColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.moleculePercentageColumn);
     }

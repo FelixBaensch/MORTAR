@@ -788,7 +788,7 @@ public final class ErtlFunctionalGroupsFinderUtility {
         IAtomContainer tmpMolecule = aMolecule;
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         //Might throw CDKException if the SMILES string cannot be created
-        String tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule);
+        String tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule); //TODO: can also throw NullPointerException; this one has been observed: “NullPointerException: One or more atoms had an undefined number of implicit hydrogens”
         tmpPseudoSmilesCode = tmpPseudoSmilesCode.replaceAll("\\*", "R");
         tmpPseudoSmilesCode = tmpPseudoSmilesCode.replaceAll("\\[se", "[Se*");
         StringBuilder tmpStringBuilder = new StringBuilder(tmpPseudoSmilesCode);
@@ -935,7 +935,7 @@ public final class ErtlFunctionalGroupsFinderUtility {
         }
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique);
         //Might throw CDKException
-        String tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule);
+        String tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule); //TODO: can also throw NullPointerException; this one has been observed: “NullPointerException: One or more atoms had an undefined number of implicit hydrogens”
         for (String tmpPlaceholderElementSymbol : placeholderElementToPseudoSmilesSymbolMap.keySet()) {
             tmpPseudoSmilesCode = tmpPseudoSmilesCode.replaceAll("(\\[" + tmpPlaceholderElementSymbol + "\\])",
                     placeholderElementToPseudoSmilesSymbolMap.get(tmpPlaceholderElementSymbol))

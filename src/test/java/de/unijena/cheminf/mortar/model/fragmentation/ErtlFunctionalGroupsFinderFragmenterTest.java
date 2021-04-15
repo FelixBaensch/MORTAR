@@ -20,6 +20,8 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import javafx.beans.property.Property;
 import org.junit.Assert;
 import org.junit.Test;

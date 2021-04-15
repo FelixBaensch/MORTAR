@@ -20,7 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
-import de.unijena.cheminf.mortar.model.fragmentation.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import org.junit.Test;
 
 public class SimpleEnumConstantNamePropertyTest {

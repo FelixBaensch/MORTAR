@@ -43,7 +43,8 @@ public class MainMenuBar extends MenuBar {
     private MenuItem exitMenuItem;
     private MenuItem loadMenuItem;
     private MenuItem fragmentationSettingsMenuItem;
-    private Menu fragmentationAlgorithmMenuItem;
+    private MenuItem globalSettingsMenuItem;
+    private Menu fragmentationAlgorithmMenu;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -61,7 +62,8 @@ public class MainMenuBar extends MenuBar {
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
         //settingsMenu
         this.settingsMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.text"));
-        this.fragmentationAlgorithmMenuItem = new Menu(Message.get("MainView.menuBar.settingsMenu.fragmentationAlgorithmMenuItem.text"));
+        this.globalSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.globalSettingsMenuItem.text"));
+        this.fragmentationAlgorithmMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.fragmentationAlgorithmMenuItem.text"));
         this.fragmentationSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.fragmentationSettingsMenuItem.text"));
         //helpMenu
         this.helpMenu = new Menu(Message.get("MainView.menuBar.helpMenu.text"));
@@ -87,8 +89,12 @@ public class MainMenuBar extends MenuBar {
         //</editor-fold>
         //<editor-fold desc="settingsMenu" defaultstate="collapsed">
         this.getMenus().add(this.settingsMenu);
-        //fragmentationAlgorithmMenuItem
-        this.settingsMenu.getItems().add(this.fragmentationAlgorithmMenuItem);
+        //globalSettingsMenuItem
+        this.settingsMenu.getItems().add(this.globalSettingsMenuItem);
+        //separator
+        this.settingsMenu.getItems().add(new SeparatorMenuItem());
+        //fragmentationAlgorithmMenu
+        this.settingsMenu.getItems().add(this.fragmentationAlgorithmMenu);
         //fragmentationSettingsMenuItem
         this.settingsMenu.getItems().add(this.fragmentationSettingsMenuItem);
         //</editor-fold>
@@ -120,14 +126,24 @@ public class MainMenuBar extends MenuBar {
         return this.exitMenuItem;
     }
     //</editor-fold>
+    //<editor-fold desc="getGlobalSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that opens the global settings view
+     *
+     * @return the menu item that opens the global settings view
+     */
+    public MenuItem getGlobalSettingsMenuItem() {
+        return this.globalSettingsMenuItem;
+    }
+    //</editor-fold>
     //<editor-fold desc="getFragmentationAlgorithmMenuItem" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to choose the fragmentation algorithm
      *
      * @return the menu item that should choose the fragmentation algorithm
      */
-    public Menu getFragmentationAlgorithmMenuItem() {
-        return this.fragmentationAlgorithmMenuItem;
+    public Menu getFragmentationAlgorithmMenu() {
+        return this.fragmentationAlgorithmMenu;
     }
     //</editor-fold>
     //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">

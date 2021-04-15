@@ -472,7 +472,7 @@ public class SugarRemovalUtility {
         for (IAtomContainer tmpLinearSugar : this.linearSugarStructuresList) {
             String tmpSmiles = null;
             try {
-                tmpSmiles = tmpSmilesGen.create(tmpLinearSugar);
+                tmpSmiles = tmpSmilesGen.create(tmpLinearSugar); //TODO: can also throw NullPointerException; this one has been observed: “NullPointerException: One or more atoms had an undefined number of implicit hydrogens”
             } catch (CDKException aCDKException) {
                 SugarRemovalUtility.LOGGER.log(Level.WARNING, aCDKException.toString(), aCDKException);
             }
@@ -536,7 +536,7 @@ public class SugarRemovalUtility {
         for (IAtomContainer tmpRingSugar : this.circularSugarStructuresList) {
             String tmpSmiles = null;
             try {
-                tmpSmiles = tmpSmilesGen.create(tmpRingSugar);
+                tmpSmiles = tmpSmilesGen.create(tmpRingSugar); //TODO: can also throw NullPointerException; this one has been observed: “NullPointerException: One or more atoms had an undefined number of implicit hydrogens”
             } catch (CDKException aCDKException) {
                 SugarRemovalUtility.LOGGER.log(Level.WARNING, aCDKException.toString(), aCDKException);
             }
@@ -3039,7 +3039,7 @@ public class SugarRemovalUtility {
                 continue;
             }
             try {
-                System.out.println(tmpSmiGen.create(tmpCandidate));
+                System.out.println(tmpSmiGen.create(tmpCandidate)); //TODO: can also throw NullPointerException; this one has been observed: “NullPointerException: One or more atoms had an undefined number of implicit hydrogens”
             } catch (CDKException anException) {
                 SugarRemovalUtility.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                 System.out.println("[molecule could not be parsed to SMILES code]");
