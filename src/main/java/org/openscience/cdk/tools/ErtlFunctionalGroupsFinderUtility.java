@@ -1,7 +1,7 @@
 /*
  * Utilities for
  * ErtlFunctionalGroupsFinder for CDK
- * Copyright (C) 2020 Jonas Schaub
+ * Copyright (C) 2021 Jonas Schaub
  *
  * Source code is available at <https://github.com/JonasSchaub/Ertl-FG-for-COCONUT>
  * ErtlFunctionalGroupsFinder for CDK is available at <https://github.com/zielesny/ErtlFunctionalGroupsFinder>
@@ -25,7 +25,7 @@ package org.openscience.cdk.tools;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/JonasSchaub/Ertl-FG-for-COCONUT/blob/master/src/main/java/org/openscience/cdk/tools/ErtlFunctionalGroupsFinderUtility.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on December 18th 2020
+ * Last copied on April 15th 2021
  */
 
 import org.openscience.cdk.Atom;
@@ -55,7 +55,13 @@ import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,9 +71,9 @@ import java.util.logging.Logger;
  * become bottle necks in parallelized computations.
  *
  * @author Jonas Schaub
- * @version 1.0.0.0
+ * @version 1.0.0.1
  */
-public final class ErtlFunctionalGroupsFinderUtility {
+public class ErtlFunctionalGroupsFinderUtility {
     //<editor-fold defaultstate="collapsed" desc="Enum CustomAtomEncoder">
     /**
      * Custom enumeration of atom encoders for seeding atomic hash codes.
@@ -122,15 +128,6 @@ public final class ErtlFunctionalGroupsFinderUtility {
         for (int i : ErtlFunctionalGroupsFinderUtility.VALID_ATOMIC_NUMBERS) {
             ErtlFunctionalGroupsFinderUtility.VALID_ATOMIC_NUMBERS_SET.add(i);
         }
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Private Constructor">
-    /**
-     * Private, uncalled Constructor.
-     */
-    private ErtlFunctionalGroupsFinderUtility() {
-        //Not called since this is a purely static utility class
     }
     //</editor-fold>
     //
@@ -638,7 +635,14 @@ public final class ErtlFunctionalGroupsFinderUtility {
     //
     //<editor-fold desc="Other">
     /**
-     * TODO
+     * Extracts functional groups from the given molecule, using the Ertl algorithm / ErtlFunctionalGroupsFinder, but
+     * only the marked atoms of every functional group are returned. They do not contain their environment (i.e. connected,
+     * unmarked carbon atoms) and are also not generalized.
+     *
+     * @param aMolecule the molecule to extracts functional groups from; it is not cloned in this method
+     * @return List of IAtomContainer objects representing the detected functional groups
+     * @throws NullPointerException if the given atom container is null
+     * @throws IllegalArgumentException if the given atom container cannot be fragmented
      */
     public static List<IAtomContainer> findMarkedAtoms(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
@@ -647,7 +651,7 @@ public final class ErtlFunctionalGroupsFinderUtility {
         }
         boolean tmpCanBeFragmented = ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule);
         if (!tmpCanBeFragmented) {
-            throw new IllegalArgumentException("Given molecule cannot be frgamented but needs to be filtered or preprocessed.");
+            throw new IllegalArgumentException("Given molecule cannot be fragmented but needs to be filtered or preprocessed.");
         }
         HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(aMolecule.getAtomCount() + 1, 1);
         for (int i = 0; i < aMolecule.getAtomCount(); i++) {
@@ -691,7 +695,7 @@ public final class ErtlFunctionalGroupsFinderUtility {
 
     /**
      * Aims at doing a deep copy of the given atom container, i.e. all information stored in the object is copied exactly
-     * but original and copy do not share any references. The method used here writes an SD representation (via CDK's
+     * but original and copy do not share any references. The method used here writes an SDF representation (via CDK's
      * SDFWriter) of the given atom container as a string and then constructs a new atom container by reading this string
      * using IteratingSDFReader. Furthermore, all properties that were stored in the original atom container are transferred
      * to the clone.
@@ -787,8 +791,14 @@ public final class ErtlFunctionalGroupsFinderUtility {
         Objects.requireNonNull(aMolecule, "Given molecule is 'null'.");
         IAtomContainer tmpMolecule = aMolecule;
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
-        //Might throw CDKException if the SMILES string cannot be created
-        String tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule); //TODO: can also throw NullPointerException; this one has been observed: NullPointerException: One or more atoms had an undefined number of implicit hydrogens
+        String tmpPseudoSmilesCode;
+        try {
+            //Might throw CDKException if the SMILES string cannot be created or NullPointerException if an atom has an
+            //  undefined number of implicit hydrogen atoms in the SMILES string
+            tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule);
+        } catch (NullPointerException anException) {
+            throw new CDKException(anException.getMessage(), anException);
+        }
         tmpPseudoSmilesCode = tmpPseudoSmilesCode.replaceAll("\\*", "R");
         tmpPseudoSmilesCode = tmpPseudoSmilesCode.replaceAll("\\[se", "[Se*");
         StringBuilder tmpStringBuilder = new StringBuilder(tmpPseudoSmilesCode);
@@ -934,8 +944,14 @@ public final class ErtlFunctionalGroupsFinderUtility {
             }
         }
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique);
-        //Might throw CDKException
-        String tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule); //TODO: can also throw NullPointerException; this one has been observed: NullPointerException: One or more atoms had an undefined number of implicit hydrogens
+        String tmpPseudoSmilesCode;
+        try {
+            //Might throw CDKException if the SMILES string cannot be created or NullPointerException if an atom has an
+            //  undefined number of implicit hydrogen atoms in the SMILES string
+            tmpPseudoSmilesCode = tmpSmilesGenerator.create(tmpMolecule);
+        } catch (NullPointerException anException) {
+            throw new CDKException(anException.getMessage(), anException);
+        }
         for (String tmpPlaceholderElementSymbol : placeholderElementToPseudoSmilesSymbolMap.keySet()) {
             tmpPseudoSmilesCode = tmpPseudoSmilesCode.replaceAll("(\\[" + tmpPlaceholderElementSymbol + "\\])",
                     placeholderElementToPseudoSmilesSymbolMap.get(tmpPlaceholderElementSymbol))
