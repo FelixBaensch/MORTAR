@@ -113,7 +113,7 @@ public final class LogUtil {
                 @Override
                 public void uncaughtException(Thread aThread, Throwable aThrowable) {
                     Logger.getLogger(aThread.getClass().getName()).log(Level.SEVERE, aThrowable.toString(), aThrowable);
-                    if (aThread.getName().equals("main")) {
+                    if (aThread.getThreadGroup().getName().equals("main")) {
                         GuiUtil.GuiMessageAlert(Alert.AlertType.ERROR,
                                 Message.get("Error.Notification.Title"),
                                 null,

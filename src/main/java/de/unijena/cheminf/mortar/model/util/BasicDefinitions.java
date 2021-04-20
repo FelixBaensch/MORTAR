@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -79,6 +79,21 @@ public final class BasicDefinitions {
      * Name extension (denoting the file type) of log files
      */
     public static final String LOG_FILE_NAME_EXTENSION = ".txt";
+
+    /**
+     *
+     */
+    public static final String PREFERENCE_CONTAINER_FILE_DIRECTORY = "Preferences";
+
+    /**
+     *
+     */
+    public static final String PREFERENCE_CONTAINER_FILE_NAME = "Mortar_Preferences";
+
+    /**
+     * Note, the file extension (.txt or .gzip) defines whether the preference container file is compressed or not.
+     */
+    public static final String PREFERENCE_CONTAINER_FILE_EXTENSION = ".txt";
     //</editor-fold>
     //
     //<editor-fold desc="Session">

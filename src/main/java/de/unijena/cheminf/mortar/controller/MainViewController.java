@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -35,9 +35,8 @@ import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.preference.PreferenceContainer;
-import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -62,7 +61,12 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -84,6 +88,7 @@ public class MainViewController {
     private FragmentationSettingsViewController fragmentationSettingsViewController;
     private ObservableList<MoleculeDataModel> moleculeDataModelList;
     private MoleculesDataTableView moleculesDataTableView;
+    private SettingsContainer settingsContainer;
     private int rowsPerPage;
     private boolean selectionAll;
     private boolean selectionAllCheckBoxAction;
@@ -120,6 +125,7 @@ public class MainViewController {
         this.primaryStage = aStage;
         this.mainView = aMainView;
         this.appDir = anAppDir;
+        this.settingsContainer = new SettingsContainer();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
