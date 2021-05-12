@@ -19,7 +19,7 @@ java {
 //The supplied Adopt Open JDK is used for compilation and running
 //TODO: Omit?
 compileJava.options.fork = true
-compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.5_10' +  File.separator + 'bin' + File.separator + 'javac'
+//compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.5_10' +  File.separator + 'bin' + File.separator + 'javac'
 
 repositories {
     mavenCentral()
@@ -28,7 +28,7 @@ repositories {
 dependencies {
     implementation 'org.jetbrains:annotations:19.0.0'
     testImplementation group: 'junit', name: 'junit', version: '4.13'
-    implementation group: 'org.openscience.cdk', name: 'cdk-bundle', version: '2.3'
+    implementation group: 'org.openscience.cdk', name: 'cdk-bundle', version: '2.5'
 }
 
 javafx {
