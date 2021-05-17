@@ -371,14 +371,14 @@ public class MainViewController {
         });
         //itemization tab
         int tmpAmount = 0;
-        for(int i= 0; i < moleculeDataModelList.size(); i++){
-                    tmpAmount = Math.max(tmpAmount, moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).size());
+        for(int i= 0; i < this.moleculeDataModelList.size(); i++){
+                    tmpAmount = Math.max(tmpAmount, this.moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).size());
         }
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name());
-        mainTabPane.getTabs().add(tmpItemizationTab);
+        this.mainTabPane.getTabs().add(tmpItemizationTab);
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
-        tmpPageCount = moleculeDataModelList.size() / rowsPerPage;
-        if(moleculeDataModelList.size() % rowsPerPage > 0){
+        tmpPageCount = this.moleculeDataModelList.size() / rowsPerPage;
+        if(this.moleculeDataModelList.size() % rowsPerPage > 0){
             tmpPageCount++;
         }
         Pagination tmpPaginationItems = new Pagination( tmpPageCount, 0);
@@ -386,7 +386,8 @@ public class MainViewController {
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
         tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
-
+        //
+        this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
     }
     //
     /**
