@@ -36,8 +36,6 @@ import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.preference.PreferenceContainer;
-import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -96,6 +94,10 @@ public class MainViewController {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(MainViewController.class.getName());
+    /**
+     * Path to css style sheet
+     */
+    private static final String STYLE_SHEET_PATH = "/de/unijena/cheminf/mortar/style/StyleSheet.css";
     //</editor-fold>
     //
     /**
@@ -125,6 +127,7 @@ public class MainViewController {
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
         GuiUtil.GuiBindControlSizeToParentPane(this.mainView.getMainCenterPane(), this.mainTabPane);
         this.scene = new Scene(this.mainView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
+        this.scene.getStylesheets().add(this.getClass().getResource(this.STYLE_SHEET_PATH).toExternalForm());
         this.primaryStage.setTitle(Message.get("Title.text"));
         this.primaryStage.setScene(this.scene);
         this.primaryStage.show();
