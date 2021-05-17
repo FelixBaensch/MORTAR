@@ -315,6 +315,7 @@ public class MainViewController {
             }
         });
         this.moleculesDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(tmpFromIndex, tmpToIndex)));
+        this.moleculesDataTableView.scrollTo(0);
         return new BorderPane(this.moleculesDataTableView);
     }
     //
@@ -401,6 +402,7 @@ public class MainViewController {
         int fromIndex = pageIndex * rowsPerPage;
         int toIndex = Math.min(fromIndex + rowsPerPage, aFragmentsDataTableView.getFragmentDataModelList().size());
         aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aFragmentsDataTableView.getFragmentDataModelList().subList(fromIndex, toIndex)));
+        aFragmentsDataTableView.scrollTo(0);
         return new BorderPane(aFragmentsDataTableView);
     }
     //
@@ -415,6 +417,7 @@ public class MainViewController {
         int fromIndex = pageIndex * rowsPerPage;
         int toIndex = Math.min(fromIndex + rowsPerPage, this.moleculeDataModelList.size());
         anItemizationDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(fromIndex, toIndex)));
+        anItemizationDataTableView.scrollTo(0);
         return new BorderPane(anItemizationDataTableView);
     }
     //
