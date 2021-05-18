@@ -21,14 +21,19 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Pos;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.text.Text;
 
 /**
  * Custom table view for the itemization table view
@@ -37,9 +42,22 @@ import javafx.scene.image.ImageView;
 public class ItemizationDataTableView extends TableView {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * TableColumn for name of the molecule
+     */
     private TableColumn<MoleculeDataModel, String> nameColumn;
+    /**
+     * TableColumn for 2D structure of the molecule
+     */
     private TableColumn<MoleculeDataModel, Image> moleculeStructureColumn;
-    private TableColumn<MoleculeDataModel, Image> fragmentStructureColumn;
+    /**
+     * TableColumn for 2D structure of the fragments of the molecule with labelling of how often
+     * the respective fragment occurs in the molecule. BorderPane is used to align text and image.
+     */
+    private TableColumn<MoleculeDataModel, BorderPane> fragmentStructureColumn;
+    /**
+     * Name of the fragmentation algorithm used
+     */
     private String fragmentationName;
     //</editor-fold>
     //
@@ -83,12 +101,21 @@ public class ItemizationDataTableView extends TableView {
         this.fragmentStructureColumn.setStyle("-fx-alignment: CENTER");
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
-            TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
+            TableColumn<MoleculeDataModel, BorderPane> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
                 if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).size())
                     return null;
-                return cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex).getStructure();
-
+//                return cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex).getStructure();
+                FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex);
+                String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
+                ImageView tmpStructureImg = tmpFragment.getStructure();
+                Text tmpFrequencyText = new Text(tmpFrequency);
+                BorderPane tmpBorderPane = new BorderPane();
+                HBox tmpHBox = new HBox(tmpFrequencyText);
+                tmpHBox.setAlignment(Pos.BOTTOM_LEFT);
+                tmpBorderPane.setBottom(tmpHBox);
+                tmpBorderPane.setCenter(tmpStructureImg);
+                return tmpBorderPane;
             }));
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);
