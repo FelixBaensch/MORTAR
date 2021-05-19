@@ -34,10 +34,9 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.preference.PreferenceContainer;
-import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -353,6 +352,13 @@ public class MainViewController {
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+        Button tmpExportButton = new Button("export"); // TODO Message? nachgucken
+        tmpFragmentsTab.addNodeToGridPane(tmpExportButton, 1,1,1,1);
+        tmpExportButton.setOnAction(event->{
+            Exporter tmpExporter = new Exporter();
+            tmpExporter.csvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), ',');
+        });
+
         tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
             @Override
             public void handle(SortEvent<TableView> event) {
