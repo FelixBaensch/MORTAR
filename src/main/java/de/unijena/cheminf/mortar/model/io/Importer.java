@@ -20,8 +20,10 @@
 
 package de.unijena.cheminf.mortar.model.io;
 
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import javafx.scene.control.Alert;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.openscience.cdk.AtomContainer;
@@ -273,7 +275,11 @@ public class Importer {
                     tmpFilesLine++;
             }
             if (tmpMolecule.isEmpty()) {
-                Importer.LOGGER.log(Level.SEVERE, "Given file is no SMILES file or couldn't be read as a SMILES file.");
+                Importer.LOGGER.log(Level.SEVERE, "Given file is no SMILES file or couldn't be read as one.");    //TODO: should this String be written in Message (resources)?
+                GuiUtil.GuiMessageAlert(Alert.AlertType.ERROR,
+                        Message.get("Error.Notification.Title"),
+                        null,
+                        Message.get("Importer.ImportSMILESFile.UnsupportedFileFormat"));
                 return null;    //TODO: give feedback to the user!!
             }
             //from this point on: line by line
