@@ -17,6 +17,7 @@
  */
 package de.unijena.cheminf.mortar.model.io;
 
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import javafx.collections.ObservableList;
 import javafx.stage.FileChooser;
@@ -34,6 +35,7 @@ public class Exporter {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(Exporter.class.getName());
+
     /**
      * Constructor
      */
@@ -47,6 +49,7 @@ public class Exporter {
      * @param aSeperator is the seperator for the csv file
      * @return  Csv file which contains the results of the fragmentation
      */
+
     public File csvFile(Stage aParentStage, ObservableList<FragmentDataModel> aList, char aSeperator) {
         try {
             File tmpCsvFile = this.saveFile(aParentStage);
@@ -62,7 +65,7 @@ public class Exporter {
             tmpWriter.close();
             return tmpCsvFile;
         } catch (FileNotFoundException anException) {
-            Exporter.LOGGER.log(Level.SEVERE, "File error", anException);
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return null;
         }
     }
@@ -72,20 +75,21 @@ public class Exporter {
      * @param aParentStage Stage where FileChooser should be shown
      * @return File
      */
+
     private File saveFile(Stage aParentStage){
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
-        //Überprüft, ob der angegebene Objektverweis nicht angegeben ist, und löst eine benutzerdefinierte NullPointerException aus, falls dies der Fall ist.null
         FileChooser tmpFileChooser = new FileChooser();
-        tmpFileChooser.setTitle("Save a File"); // TODO Message?
+        tmpFileChooser.setTitle((Message.get("Exporter.fileChooser.title")));
         tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Csv File", "*.csv"));
         File tmpFile = null;
         try{ 
             tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         } catch(Exception anException){
-            Exporter.LOGGER.log(Level.SEVERE, "Exception", anException);
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             //TODO handle exception
         } finally {
             return tmpFile;
         }
     }
+
 }
