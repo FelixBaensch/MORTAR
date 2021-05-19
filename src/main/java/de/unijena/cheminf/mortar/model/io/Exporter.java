@@ -49,7 +49,6 @@ public class Exporter {
      * @param aSeperator is the seperator for the csv file
      * @return  Csv file which contains the results of the fragmentation
      */
-
     public File csvFile(Stage aParentStage, ObservableList<FragmentDataModel> aList, char aSeperator) {
         try {
             File tmpCsvFile = this.saveFile(aParentStage);
@@ -75,7 +74,6 @@ public class Exporter {
      * @param aParentStage Stage where FileChooser should be shown
      * @return File
      */
-
     private File saveFile(Stage aParentStage){
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         FileChooser tmpFileChooser = new FileChooser();
@@ -86,7 +84,6 @@ public class Exporter {
             tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         } catch(Exception anException){
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            //TODO handle exception
         } finally {
             return tmpFile;
         }

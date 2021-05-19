@@ -352,7 +352,7 @@ public class MainViewController {
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
-        Button tmpExportButton = new Button(Message.get("MainTabPane.moleculesTab.button.txt")); // TODO Message? nachgucken
+        Button tmpExportButton = new Button(Message.get("MainTabPane.fragments.button.txt"));
         tmpFragmentsTab.addNodeToGridPane(tmpExportButton, 1,1,1,1);
         tmpExportButton.setOnAction(event->{
             Exporter tmpExporter = new Exporter();
