@@ -352,11 +352,17 @@ public class MainViewController {
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
-        Button tmpExportButton = new Button(Message.get("MainTabPane.fragments.button.txt"));
-        tmpFragmentsTab.addNodeToGridPane(tmpExportButton, 1,1,1,1);
-        tmpExportButton.setOnAction(event->{
-            Exporter tmpExporter = new Exporter();
-            tmpExporter.csvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), ',');
+        Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
+        Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
+        ButtonBar tmpBarForButtons = new ButtonBar();
+        Exporter tmpExporter = new Exporter();
+        tmpBarForButtons.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
+        tmpFragmentsTab.addNodeToGridPane(tmpBarForButtons, 0,1,1,1);
+        tmpExportPdfButton.setOnAction(event->{
+                tmpExporter.createPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), this.moleculeDataModelList);
+        });
+        tmpExportCsvButton.setOnAction(event->{
+            tmpExporter.createCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), ',');
         });
 
         tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
