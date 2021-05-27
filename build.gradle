@@ -29,6 +29,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:19.0.0'
     testImplementation group: 'junit', name: 'junit', version: '4.13'
     implementation group: 'org.openscience.cdk', name: 'cdk-bundle', version: '2.5'
+    implementation 'com.lowagie:itext:4.2.2'
 }
 
 javafx {
