@@ -22,9 +22,10 @@ package de.unijena.cheminf.mortar.model.settings;
 
 /**
  * TODO:
- * - Test persistence
- * - clean-up
- * - include it in main view controller, especially at start-up and exiting
+ * - clean-up and write doc
+ * - include/use it in main view controller, especially at start-up and exiting
+ * - add possibility of externally adding more settings?
+ * - Move setting names and defaults to definitions?
  */
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -48,113 +49,121 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Container for general settings in MORTAR, capable of managing, preserving, and reloading application settings.
+ * Externally, the settings can be accessed via JavaFX properties and internally, they are managed via
+ * de.unijena.cheminf.mortar.preference.IPreference objects for persistence.
  */
 public class SettingsContainer {
-
     //<editor-fold desc="private static final constants" defaultstate="collapsed">
     /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(SettingsContainer.class.getName());
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="public static final constants" defaultstate="collapsed">
     //TODO: Move the following to definitions?
     /**
-     *
+     * Name of preference wrapping the number of rows per page setting.
      */
-    private static final String ROWS_PER_PAGE_PREFERENCE_NAME = "Rows per page preference";
+    public static final String ROWS_PER_PAGE_PREFERENCE_NAME = "Rows per page preference";
 
     /**
-     *
+     * Default value of the number of rows per page.
      */
-    private static final int ROWS_PER_PAGE_SETTING_DEFAULT = 5;
+    public static final int ROWS_PER_PAGE_SETTING_DEFAULT = 5;
 
     /**
-     *
+     * Name of preference wrapping the number of parallel tasks to use for fragmentation.
      */
-    private static final String NR_OF_TASKS_FOR_FRAGMENTATION_PREFERENCE_NAME = "Nr of tasks for fragmentation preference";
+    public static final String NR_OF_TASKS_FOR_FRAGMENTATION_PREFERENCE_NAME = "Nr of tasks for fragmentation preference";
 
     /**
-     *
+     * Default value of the number of parallel tasks to use for fragmentation.
      */
-    private static final int NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT = Runtime.getRuntime().availableProcessors();
+    public static final int NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT = Runtime.getRuntime().availableProcessors();
 
     /**
-     *
+     * Name of preference wrapping the last directory used by the user.
      */
-    private static final String RECENT_DIRECTORY_PATH_PREFERENCE_NAME = "Recent directory path preference";
+    public static final String RECENT_DIRECTORY_PATH_PREFERENCE_NAME = "Recent directory path preference";
 
     /**
-     *
+     * Default value of the recent directory to use when there is no last directory used by the user.
      */
-    private static final String RECENT_DIRECTORY_PATH_SETTING_DEFAULT = System.getProperty("user.home");
+    public static final String RECENT_DIRECTORY_PATH_SETTING_DEFAULT = System.getProperty("user.home");
 
     /**
-     *
+     * Name of preference wrapping the setting whether to add implicit hydrogen atoms to open valences in the imported
+     * molecules.
      */
-    private static final String ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME = "Add implicit hydrogens at import preference name";
+    public static final String ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME = "Add implicit hydrogens at import preference";
 
     /**
-     *
+     * Default value of whether to add implicit hydrogen atoms to open valences in the imported molecules.
      */
-    private static final boolean ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT = true;
+    public static final boolean ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT = true;
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
     /**
-     *
+     * Property of rows per page setting.
      */
     private SimpleIntegerProperty rowsPerPageSetting;
 
     /**
-     *
+     * Preference of rows per page setting.
      */
     private SingleIntegerPreference rowsPerPagePreference;
 
     /**
-     *
+     * Property of number of fragmentation tasks setting.
      */
     private SimpleIntegerProperty numberOfTasksForFragmentationSetting;
 
     /**
-     *
+     * Preference of number of fragmentation tasks setting.
      */
     private SingleIntegerPreference numberOfTasksForFragmentationPreference;
 
     /**
-     *
+     * Property of recent directory.
      */
     private SimpleStringProperty recentDirectoryPathSetting;
 
     /**
-     *
+     * Preference of recent directory.
      */
     private SingleTermPreference recentDirectoryPathPreference;
 
     /**
-     *
+     * Property of implicit hydrogens setting.
      */
     private SimpleBooleanProperty addImplicitHydrogensAtImportSetting;
 
     /**
-     *
+     * Preference of implicit hydrogens setting.
      */
     private BooleanPreference addImplicitHydrogensAtImportPreference;
 
     /**
-     *
+     * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
+     * for internal use, not intended to be changed by the user via this dialogue.
      */
     private List<Property> settings;
 
     /**
-     *
+     * Internal preference container for persisting the settings via their analogous preference objects stored in this
+     * container.
      */
     private PreferenceContainer preferenceContainer;
     //</editor-fold>
     //
     //<editor-fold desc="constructors">
     /**
-     *
+     * Constructor that first tries to reload a previously persisted preference container from the respective directory
+     * specified in the basic definitions to reload the settings from the previous session. If this fails, the settings
+     * (and preferences) are set to their respective default values.
      */
     public SettingsContainer() {
         String tmpPreferenceContainerDirectoryPathName = FileUtil.getAppDirPath() + File.separator
@@ -191,45 +200,85 @@ public class SettingsContainer {
         this.initialiseSettings();
     }
     //</editor-fold>
+    //
+    //<editor-fold desc="public properties">
     /**
      *
+     * @return
      */
     public List<Property> settingsProperties() {
         return this.settings;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getRowsPerPageSetting() {
         return this.rowsPerPageSetting.get();
     }
 
+    /**
+     *
+     * @return
+     */
     public Property rowsPerPageSettingProperty() {
         return this.rowsPerPageSetting;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getNumberOfTasksForFragmentationSetting() {
         return this.numberOfTasksForFragmentationSetting.get();
     }
 
+    /**
+     *
+     * @return
+     */
     public Property numberOfTasksForFragmentationSettingProperty() {
         return this.numberOfTasksForFragmentationSetting;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getRecentDirectoryPathSetting() {
         return this.recentDirectoryPathSetting.get();
     }
 
+    /**
+     *
+     * @return
+     */
     public Property recentDirectoryPathSettingProperty() {
         return this.recentDirectoryPathSetting;
     }
 
+    /**
+     *
+     * @return
+     */
     public boolean getAddImplicitHydrogensAtImportSetting() {
         return this.addImplicitHydrogensAtImportSetting.get();
     }
 
+    /**
+     *
+     * @return
+     */
     public Property addImplicitHydrogensAtImportSettingProperty() {
         return this.addImplicitHydrogensAtImportSetting;
     }
 
+    /**
+     *
+     * @param anInteger
+     * @throws IllegalArgumentException
+     */
     public void setRowsPerPageSetting(int anInteger) throws IllegalArgumentException {
         if (this.isLegalRowsPerPageSetting(anInteger)) {
             //synchronises the preference also
@@ -239,6 +288,11 @@ public class SettingsContainer {
         }
     }
 
+    /**
+     *
+     * @param anInteger
+     * @throws IllegalArgumentException
+     */
     public void setNumberOfTasksForFragmentationSetting(int anInteger) throws IllegalArgumentException {
         if (this.isLegalNumberOfTasksForFragmentationSetting(anInteger)) {
             //synchronises the preference also
@@ -249,6 +303,11 @@ public class SettingsContainer {
         }
     }
 
+    /**
+     *
+     * @param aPath
+     * @throws IllegalArgumentException
+     */
     public void setRecentDirectoryPathSetting(String aPath) throws IllegalArgumentException {
         if (this.isLegalRecentDirectoryPath(aPath)) {
             //synchronises the preference also
@@ -259,6 +318,10 @@ public class SettingsContainer {
         }
     }
 
+    /**
+     *
+     * @param aBoolean
+     */
     public void setAddImplicitHydrogensAtImportSetting(boolean aBoolean) {
         //synchronises the preference also
         this.addImplicitHydrogensAtImportSetting.set(aBoolean);
@@ -273,14 +336,18 @@ public class SettingsContainer {
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="public methods">
     /**
      *
      */
     public void preserveSettings() throws IOException, SecurityException {
         this.preferenceContainer.writeRepresentation();
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="private methods">
     /**
      *
      */
@@ -409,14 +476,29 @@ public class SettingsContainer {
         //note: recent directory path is only internal, all settings in the list are for the user
     }
 
+    /**
+     *
+     * @param anInteger
+     * @return
+     */
     private boolean isLegalRowsPerPageSetting(int anInteger) {
         return !(anInteger <= 0);
     }
 
+    /**
+     *
+     * @param anInteger
+     * @return
+     */
     private boolean isLegalNumberOfTasksForFragmentationSetting(int anInteger) {
         return !(anInteger <= 0 || anInteger > SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
     }
 
+    /**
+     *
+     * @param aPath
+     * @return
+     */
     private boolean isLegalRecentDirectoryPath(String aPath) {
         boolean tmpIsNull = Objects.isNull(aPath);
         if (tmpIsNull) {
@@ -433,4 +515,5 @@ public class SettingsContainer {
             return true;
         }
     }
+    //</editor-fold>
 }
