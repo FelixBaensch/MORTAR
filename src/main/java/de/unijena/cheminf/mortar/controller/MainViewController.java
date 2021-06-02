@@ -36,6 +36,7 @@ import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -196,9 +197,23 @@ public class MainViewController {
             }
         }
         Importer tmpImporter = new Importer();
-        IAtomContainerSet tmpAtomContainerSet = tmpImporter.Import(aParentStage);
-        if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
+        IAtomContainerSet tmpAtomContainerSet = null;
+        try {
+            tmpAtomContainerSet = tmpImporter.Import(aParentStage);
+        } catch (Exception anException) {
+            MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.GuiExceptionAlert(
+                    Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Importer.FileImportExceptionAlert.Header"),
+                    Message.get("Importer.FileImportExceptionAlert.Text") + "\n" +
+                            FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
+                    anException
+            );
             return;
+        }
+        if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
+            return;
+        }
         this.clearGuiAndCollections();
         this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {

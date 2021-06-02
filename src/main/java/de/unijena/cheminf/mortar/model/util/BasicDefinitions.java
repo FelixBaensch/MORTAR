@@ -43,6 +43,11 @@ public final class BasicDefinitions {
      * Timestamp format for filename extensions
      */
     public static final String FILENAME_TIMESTAMP_FORMAT = "uuuu_MM_dd_HH_mm";
+
+    /**
+     * Possible SMILES file separators used to separate SMILES code from ID
+     */
+    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {"\t", ";", ",", " "};
     //</editor-fold>
     //
     // <editor-fold defaultstate="collapsed" desc="Buffer">
