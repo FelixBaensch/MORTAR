@@ -39,6 +39,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -61,6 +62,7 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -126,6 +128,7 @@ public class MainViewController {
         this.mainView = aMainView;
         this.appDir = anAppDir;
         this.settingsContainer = new SettingsContainer();
+        //TODO: Add listeners to settings properties in the container, e.g. for the rows per page setting?
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -137,7 +140,7 @@ public class MainViewController {
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
-        this.rowsPerPage = 5; //TODO: get this from settings
+        this.rowsPerPage = this.settingsContainer.getRowsPerPageSetting(); //TODO: get rid of class variable and always get it from the container?
         this.fragmentationService = new FragmentationService();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
@@ -175,6 +178,12 @@ public class MainViewController {
                 return;
             }
         }
+        try {
+            this.settingsContainer.preserveSettings();
+        } catch (IOException anIOException) {
+            //TODO: add dialog?
+            MainViewController.LOGGER.log(Level.WARNING, anIOException.toString(), anIOException);
+        }
         //TODO: bind/addListener to top right corner X
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
@@ -198,6 +207,8 @@ public class MainViewController {
                 return;
             }
         }
+        //TODO use recent directory path from settings and update it after a file has been chosen
+        //TODO specify whether the add implicit hydrogens from the settings container
         Importer tmpImporter = new Importer();
         IAtomContainerSet tmpAtomContainerSet = tmpImporter.Import(aParentStage);
         if(tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty())
@@ -216,6 +227,7 @@ public class MainViewController {
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
+        //TODO: Turn Level into INFO
         MainViewController.LOGGER.log(Level.SEVERE, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName());
         this.OpenMoleculesTab();
     }
@@ -241,7 +253,8 @@ public class MainViewController {
     }
     //
     private void openGlobalSettingsView(){
-
+        List<Property> tmpSettingsPropertiesList = this.settingsContainer.settingsProperties();
+        //TODO
     }
     //
     /**
@@ -326,7 +339,7 @@ public class MainViewController {
      */
     private void startFragmentation(){
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).collect(Collectors.toList());
-        int tmpNumberOfCores = Runtime.getRuntime().availableProcessors(); //TODO: implement settings
+        int tmpNumberOfCores = this.settingsContainer.getNumberOfTasksForFragmentationSetting();
         try{
             this.fragmentationButton.setDisable(true);
             FragmentationThread tmpFragmentationThread = this.fragmentationService.startFragmentationThread(tmpSelectedMolecules, tmpNumberOfCores);

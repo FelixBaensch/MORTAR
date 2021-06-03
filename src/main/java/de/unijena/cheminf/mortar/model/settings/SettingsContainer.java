@@ -22,8 +22,6 @@ package de.unijena.cheminf.mortar.model.settings;
 
 /**
  * TODO:
- * - clean-up and write doc
- * - include/use it in main view controller, especially at start-up and exiting
  * - add possibility of externally adding more settings?
  * - Move setting names and defaults to definitions?
  */
@@ -203,81 +201,92 @@ public class SettingsContainer {
     //
     //<editor-fold desc="public properties">
     /**
+     * Returns a list of all settings intended to be set by the user as JavaFX properties. For example, the recent
+     * directory path is excluded from this list.
      *
-     * @return
+     * @return list of settings as properties
      */
     public List<Property> settingsProperties() {
         return this.settings;
     }
 
     /**
+     * Returns the current value of the rows or molecules per page setting.
      *
-     * @return
+     * @return rows per page setting value
      */
     public int getRowsPerPageSetting() {
         return this.rowsPerPageSetting.get();
     }
 
     /**
+     * Returns the property wrapping the rows per page setting.
      *
-     * @return
+     * @return rows per page setting property
      */
     public Property rowsPerPageSettingProperty() {
         return this.rowsPerPageSetting;
     }
 
     /**
+     * Returns the current value of the number of tasks for fragmentation setting.
      *
-     * @return
+     * @return number of tasks for fragmentation setting value
      */
     public int getNumberOfTasksForFragmentationSetting() {
         return this.numberOfTasksForFragmentationSetting.get();
     }
 
     /**
+     * Returns the property wrapping the number of tasks for fragmentation setting.
      *
-     * @return
+     * @return number of tasks for fragmentation setting property
      */
     public Property numberOfTasksForFragmentationSettingProperty() {
         return this.numberOfTasksForFragmentationSetting;
     }
 
     /**
+     * Returns the current value of the recent directory path setting.
      *
-     * @return
+     * @return recent directory path setting value
      */
     public String getRecentDirectoryPathSetting() {
         return this.recentDirectoryPathSetting.get();
     }
 
     /**
+     * Returns the property wrapping the recent directory path setting.
      *
-     * @return
+     * @return recent directory path setting property
      */
     public Property recentDirectoryPathSettingProperty() {
         return this.recentDirectoryPathSetting;
     }
 
     /**
+     * Returns the current value of the add implicit hydrogens at import setting.
      *
-     * @return
+     * @return add implicit hydrogens at import setting value
      */
     public boolean getAddImplicitHydrogensAtImportSetting() {
         return this.addImplicitHydrogensAtImportSetting.get();
     }
 
     /**
+     * Returns the property wrapping the add implicit hydrogens at import setting.
      *
-     * @return
+     * @return add implicit hydrogens at import setting property
      */
     public Property addImplicitHydrogensAtImportSettingProperty() {
         return this.addImplicitHydrogensAtImportSetting;
     }
 
     /**
+     * Sets the setting for how many rows/molecules should be displayed per page in the tabs.
      *
-     * @param anInteger
-     * @throws IllegalArgumentException
+     * @param anInteger the number of molecules displayed per page in the tabs
+     * @throws IllegalArgumentException if the parameter is 0 or negative
      */
     public void setRowsPerPageSetting(int anInteger) throws IllegalArgumentException {
         if (this.isLegalRowsPerPageSetting(anInteger)) {
@@ -289,9 +298,11 @@ public class SettingsContainer {
     }
 
     /**
+     * Sets the setting for how many parallel threads should be used for a fragmentation.
      *
-     * @param anInteger
-     * @throws IllegalArgumentException
+     * @param anInteger the number of threads to use
+     * @throws IllegalArgumentException if the given parameter is 0 or negative or is higher than the number of
+     * available processors
      */
     public void setNumberOfTasksForFragmentationSetting(int anInteger) throws IllegalArgumentException {
         if (this.isLegalNumberOfTasksForFragmentationSetting(anInteger)) {
@@ -304,9 +315,11 @@ public class SettingsContainer {
     }
 
     /**
+     * Sets the recent directory path, i.e. the path that was opened last to import or export a file.
      *
-     * @param aPath
-     * @throws IllegalArgumentException
+     * @param aPath the last used path
+     * @throws IllegalArgumentException if the parameter is null, empty, does not exist, is no directory, or cannot be
+     * read
      */
     public void setRecentDirectoryPathSetting(String aPath) throws IllegalArgumentException {
         if (this.isLegalRecentDirectoryPath(aPath)) {
@@ -319,8 +332,9 @@ public class SettingsContainer {
     }
 
     /**
+     * Sets the setting for whether to add implicit hydrogen atoms to incomplete valences in the imported molecules.
      *
-     * @param aBoolean
+     * @param aBoolean whether to add implicit hydrogens at molecule import
      */
     public void setAddImplicitHydrogensAtImportSetting(boolean aBoolean) {
         //synchronises the preference also
@@ -328,7 +342,7 @@ public class SettingsContainer {
     }
 
     /**
-     *
+     * Restores all setting to their default setting according to the respective public constants in this class.
      */
     public void restoreDefaultSettings() {
         this.rowsPerPageSetting.set(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT);
@@ -340,7 +354,10 @@ public class SettingsContainer {
     //
     //<editor-fold desc="public methods">
     /**
+     * Triggers the preservation of the current settings values in a file for re-import at the next application session.
      *
+     * @throws IOException if anything goes wrong
+     * @throws SecurityException if the MORTAR settings directory cannot be accessed
      */
     public void preserveSettings() throws IOException, SecurityException {
         this.preferenceContainer.writeRepresentation();
@@ -349,7 +366,11 @@ public class SettingsContainer {
     //
     //<editor-fold desc="private methods">
     /**
+     * Reloads the setting values from a previous MORTAR session via the persisted preference container.
      *
+     * @param aPreferenceContainerFile the persisted preference container representation from the previous run
+     * @throws IOException if the file loading fails or if a setting cannot be re-imported
+     * @throws SecurityException if the given file cannot be accessed
      */
     private void extractGeneralSettingsPreferencesFromContainer(File aPreferenceContainerFile) throws IOException, SecurityException {
         this.preferenceContainer = new PreferenceContainer(aPreferenceContainerFile);
@@ -384,7 +405,9 @@ public class SettingsContainer {
     }
 
     /**
+     * Instantiates a new preference container and new preference objects for all setting based on the default values.
      *
+     * @param aPreferenceContainerFilePathName path of a file where the new setting container should persist itself
      */
     private void initialisePreferences(String aPreferenceContainerFilePathName) {
         this.preferenceContainer = new PreferenceContainer(aPreferenceContainerFilePathName);
@@ -406,7 +429,9 @@ public class SettingsContainer {
     }
 
     /**
-     * Test the reloaded settings also?
+     * Initialises the properties representing the settings based on the respective preference objects. Related
+     * preferences and properties are synced via overriding the properties set() methods and the properties are added
+     * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
@@ -477,27 +502,33 @@ public class SettingsContainer {
     }
 
     /**
+     * Tests whether an integer value would be an allowed argument for the rows per page setting. For this, it must be
+     * positive and non-zero.
      *
-     * @param anInteger
-     * @return
+     * @param anInteger the integer to test
+     * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalRowsPerPageSetting(int anInteger) {
         return !(anInteger <= 0);
     }
 
     /**
+     * Tests whether an integer value would be an allowed argument for the number of tasks for fragmentation setting. For
+     * this, it must be positive, non-zero, and not higher than the number of available processors.
      *
-     * @param anInteger
-     * @return
+     * @param anInteger the integer to test
+     * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalNumberOfTasksForFragmentationSetting(int anInteger) {
         return !(anInteger <= 0 || anInteger > SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
     }
 
     /**
+     * Tests whether a path would be an allowed argument for the recent directory path setting. For this, it must be
+     * not null, not empty, existing, a directory, and readable.
      *
-     * @param aPath
-     * @return
+     * @param aPath the path to test
+     * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalRecentDirectoryPath(String aPath) {
         boolean tmpIsNull = Objects.isNull(aPath);
