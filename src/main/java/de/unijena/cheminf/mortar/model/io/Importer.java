@@ -32,9 +32,10 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
-import org.openscience.cdk.io.IChemObjectReader;
-import org.openscience.cdk.io.MDLV2000Reader;
-import org.openscience.cdk.io.PDBReader;
+import org.openscience.cdk.io.*;
+import org.openscience.cdk.io.formats.IChemFormat;
+import org.openscience.cdk.io.formats.MDLV2000Format;
+import org.openscience.cdk.io.formats.MDLV3000Format;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.smiles.SmilesParser;
 
@@ -148,8 +149,21 @@ public class Importer {
      */
     private IAtomContainerSet ImportMolFile(File aFile) throws CDKException, IOException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-        MDLV2000Reader tmpReader = new MDLV2000Reader(new FileInputStream(aFile), IChemObjectReader.Mode.RELAXED);
-        IAtomContainer tmpAtomContainer = tmpReader.read(new AtomContainer());
+        BufferedInputStream tmpInputStream = new BufferedInputStream(new FileInputStream(aFile));
+        FormatFactory tmpFactory = new FormatFactory();
+        IChemFormat tmpFormat = tmpFactory.guessFormat(tmpInputStream);
+        IAtomContainer tmpAtomContainer;
+        if(tmpFormat.getFormatName().equalsIgnoreCase(MDLV2000Format.getInstance().getFormatName())){
+            MDLV2000Reader tmpReader = new MDLV2000Reader(new FileInputStream(aFile), IChemObjectReader.Mode.RELAXED);
+            tmpAtomContainer = tmpReader.read(new AtomContainer());
+        }
+        else if(tmpFormat.getFormatName().equalsIgnoreCase(MDLV3000Format.getInstance().getFormatName())){
+            MDLV3000Reader tmpReader = new MDLV3000Reader(new FileInputStream(aFile), IChemObjectReader.Mode.RELAXED);
+            tmpAtomContainer = tmpReader.read(new AtomContainer());
+        }
+        else{
+            throw new CDKException("The mol file does not correspond to either the MDLV2000 or the MDLV3000 format and therefore cannot be imported.");
+        }
         //TODO: add a preference depending if clause to add implicit hydrogens or not
         String tmpName = this.findMoleculeName(tmpAtomContainer);
         if(tmpName == null){
@@ -161,6 +175,7 @@ public class Importer {
         }
         tmpAtomContainer.setProperty("NAME", tmpName);
         tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
+        tmpInputStream.close();
         return tmpAtomContainerSet;
     }
     //
