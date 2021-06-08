@@ -221,6 +221,30 @@ public class Importer {
     }
     //
     /**
+     * Searches the properties of the given atom container for a property
+     * containing either 'name' or 'ID' and
+     * returns the corresponding value as a string.
+     * If nothing is found or value equals 'None', null is returned.
+     * @param anAtomContainer IAtomContainer
+     * @return String or null
+     */
+    private String findMoleculeName(IAtomContainer anAtomContainer){
+        String tmpName = anAtomContainer.getTitle();
+        Set<String> keySet = (Set<String>)(Set<?>)anAtomContainer.getProperties().keySet();
+        if(tmpName == null  && keySet.stream().anyMatch(k -> k.contains("name") || k.contains("Name") || k.contains("NAME"))){
+            String key = keySet.stream().filter(k -> k.contains("name") || k.contains("Name") || k.contains("NAME")).findFirst().get();
+            tmpName = anAtomContainer.getProperty(key);
+        }
+        if((tmpName == null || tmpName.equals("None") || tmpName.equals("NONE")) && keySet.stream().anyMatch(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID"))){
+            String key = keySet.stream().filter(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID")).findFirst().get();
+            tmpName = anAtomContainer.getProperty(key);
+        } //TODO: add keys, maybe SMILES
+        if(tmpName != null && (tmpName.equals("None") || tmpName.equals("NONE")))
+            tmpName = null;
+        return tmpName;
+    }
+    //<editor-fold desc="protected methods" defaultstate="collapsed">
+    /**
      * Imports a SMILES file.   TODO: specify ImportSMILESFile doc String
      * @param aFile a SMILES codes containing *.txt or *.smi file
      * @throws IOException if the given file does not fit to the expected format of a SMILES file
@@ -293,7 +317,7 @@ public class Importer {
             if (tmpMolecule.isEmpty()) {
                 throw new IOException("Chosen file does not fit to the expected format of a SMILES file.");
             }
-            //resetting the BufferedReaders to the file's first line
+            //resetting the BufferedReader to the file's first line
             tmpSmilesFileBufferedReader.reset();
             tmpSmilesFileBufferedReader.mark(0);    //to avoid the memory of unnecessary data
             /*  second block
@@ -314,7 +338,7 @@ public class Importer {
                     tmpSmilesFileInvalidLinesCounter++;
                     continue;
                 }
-                //setting the AtomContainers "NAME"
+                //setting the AtomContainer's "NAME"
                 String tmpName = "";
                 if (tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].isEmpty()) {
                     tmpName = tmpProcessedLineArray[tmpIDExpectedPosition];
@@ -329,30 +353,6 @@ public class Importer {
                     "\n\tSmilesFile InvalidLinesCounter:\t\t" + tmpSmilesFileInvalidLinesCounter);
             return tmpAtomContainerSet;
         }
-    }
-    //
-    /**
-     * Searches the properties of the given atom container for a property
-     * containing either 'name' or 'ID' and
-     * returns the corresponding value as a string.
-     * If nothing is found or value equals 'None', null is returned.
-     * @param anAtomContainer IAtomContainer
-     * @return String or null
-     */
-    private String findMoleculeName(IAtomContainer anAtomContainer){
-        String tmpName = anAtomContainer.getTitle();
-        Set<String> keySet = (Set<String>)(Set<?>)anAtomContainer.getProperties().keySet();
-        if(tmpName == null  && keySet.stream().anyMatch(k -> k.contains("name") || k.contains("Name") || k.contains("NAME"))){
-            String key = keySet.stream().filter(k -> k.contains("name") || k.contains("Name") || k.contains("NAME")).findFirst().get();
-            tmpName = anAtomContainer.getProperty(key);
-        }
-        if((tmpName == null || tmpName.equals("None") || tmpName.equals("NONE")) && keySet.stream().anyMatch(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID"))){
-            String key = keySet.stream().filter(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID")).findFirst().get();
-            tmpName = anAtomContainer.getProperty(key);
-        } //TODO: add keys, maybe SMILES
-        if(tmpName != null && (tmpName.equals("None") || tmpName.equals("NONE")))
-            tmpName = null;
-        return tmpName;
     }
     //</editor-fold>
 }
