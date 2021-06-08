@@ -22,8 +22,7 @@ package de.unijena.cheminf.mortar.model.settings;
 
 /**
  * TODO:
- * - add possibility of externally adding more settings?
- * - Move setting names and defaults to definitions?
+ * -
  */
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -60,7 +59,6 @@ public class SettingsContainer {
     //</editor-fold>
     //
     //<editor-fold desc="public static final constants" defaultstate="collapsed">
-    //TODO: Move the following to definitions?
     /**
      * Name of preference wrapping the number of rows per page setting.
      */

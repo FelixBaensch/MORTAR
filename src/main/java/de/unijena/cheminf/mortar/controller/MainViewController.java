@@ -91,7 +91,6 @@ public class MainViewController {
     private ObservableList<MoleculeDataModel> moleculeDataModelList;
     private MoleculesDataTableView moleculesDataTableView;
     private SettingsContainer settingsContainer;
-    private int rowsPerPage;
     private boolean selectionAll;
     private boolean selectionAllCheckBoxAction;
     private FragmentationService fragmentationService;
@@ -128,7 +127,6 @@ public class MainViewController {
         this.mainView = aMainView;
         this.appDir = anAppDir;
         this.settingsContainer = new SettingsContainer();
-        //TODO: Add listeners to settings properties in the container, e.g. for the rows per page setting?
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -140,7 +138,6 @@ public class MainViewController {
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
-        this.rowsPerPage = this.settingsContainer.getRowsPerPageSetting(); //TODO: get rid of class variable and always get it from the container?
         this.fragmentationService = new FragmentationService();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
@@ -166,6 +163,7 @@ public class MainViewController {
                 anEvent -> this.openGlobalSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //TODO: More implementation needed
+        //TODO: Add listener to rows per page setting in settings container
     }
     //
     /**
@@ -173,6 +171,7 @@ public class MainViewController {
      */
     private void closeApplication(int aStatus) {
         if(moleculeDataModelList.size() > 0){
+            //Todo: move text to message resource file and maybe create a separate method for this because it is called again below in loadMoleculeFile()
             ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost and application will be closed if you press Ok. Click cancel to return to application."); //TODO
             if(tmpConformationResult!= ButtonType.OK){
                 return;
@@ -181,10 +180,13 @@ public class MainViewController {
         try {
             this.settingsContainer.preserveSettings();
         } catch (IOException anIOException) {
-            //TODO: add dialog?
+            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.SettingsPersistence.Header"),
+                    Message.get("Error.SettingsPersistence"),
+                    anIOException);
             MainViewController.LOGGER.log(Level.WARNING, anIOException.toString(), anIOException);
         }
-        //TODO: bind/addListener to top right corner X
+        //TODO: bind/addListener to top right corner X - done?
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
         System.exit(aStatus);
@@ -227,9 +229,8 @@ public class MainViewController {
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
-        //TODO: Turn Level into INFO
-        MainViewController.LOGGER.log(Level.SEVERE, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName());
-        this.OpenMoleculesTab();
+        MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName());
+        this.openMoleculesTab();
     }
     //
     private void openFragmentationSettingsView(){
@@ -260,12 +261,13 @@ public class MainViewController {
     /**
      * Opens molecules tab
      */
-    private void OpenMoleculesTab() {
+    private void openMoleculesTab() {
         GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name());
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
         this.moleculesDataTableView = new MoleculesDataTableView();
-        int tmpPageCount = this.moleculeDataModelList.size() / rowsPerPage;
-        if(this.moleculeDataModelList.size() % rowsPerPage > 0){
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+        int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
+        if(this.moleculeDataModelList.size() % tmpRowsPerPage > 0){
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
@@ -289,8 +291,9 @@ public class MainViewController {
      * @return Node, page of pagination
      */
     private Node createDataTableViewPage(int aPageIndex){
-        int tmpFromIndex = aPageIndex * this.rowsPerPage;
-        int tmpToIndex = Math.min(tmpFromIndex + this.rowsPerPage, this.moleculeDataModelList.size());
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+        int tmpFromIndex = aPageIndex * tmpRowsPerPage;
+        int tmpToIndex = Math.min(tmpFromIndex + tmpRowsPerPage, this.moleculeDataModelList.size());
         this.moleculesDataTableView.getSelectAllCheckBox().setOnAction(event -> {
             this.selectionAllCheckBoxAction = true;
             for (int i = 0; i < this.moleculeDataModelList.size(); i++) {
@@ -363,8 +366,9 @@ public class MainViewController {
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
         ObservableList<FragmentDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
         tmpFragmentsDataTableView.setFragmentDataModelList(tmpList);
-        int tmpPageCount = tmpList.size() / rowsPerPage;
-        if(tmpList.size() % rowsPerPage > 0){
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+        int tmpPageCount = tmpList.size() / tmpRowsPerPage;
+        if(tmpList.size() % tmpRowsPerPage > 0){
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
@@ -379,8 +383,8 @@ public class MainViewController {
                 String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
                 TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
                 sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList(), tmpSortProp, tmpSortType.toString());
-                int fromIndex = tmpPagination.getCurrentPageIndex() * rowsPerPage;
-                int toIndex = Math.min(fromIndex + rowsPerPage, ((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().size());
+                int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
+                int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().size());
                 event.getSource().getItems().clear();
                 event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().subList(fromIndex,toIndex));
             }
@@ -393,8 +397,8 @@ public class MainViewController {
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name());
         mainTabPane.getTabs().add(tmpItemizationTab);
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
-        tmpPageCount = moleculeDataModelList.size() / rowsPerPage;
-        if(moleculeDataModelList.size() % rowsPerPage > 0){
+        tmpPageCount = moleculeDataModelList.size() / tmpRowsPerPage;
+        if(moleculeDataModelList.size() % tmpRowsPerPage > 0){
             tmpPageCount++;
         }
         Pagination tmpPaginationItems = new Pagination( tmpPageCount, 0);
@@ -413,8 +417,9 @@ public class MainViewController {
      * @return
      */
     private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView) {
-        int fromIndex = pageIndex * rowsPerPage;
-        int toIndex = Math.min(fromIndex + rowsPerPage, aFragmentsDataTableView.getFragmentDataModelList().size());
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+        int fromIndex = pageIndex * tmpRowsPerPage;
+        int toIndex = Math.min(fromIndex + tmpRowsPerPage, aFragmentsDataTableView.getFragmentDataModelList().size());
         aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aFragmentsDataTableView.getFragmentDataModelList().subList(fromIndex, toIndex)));
         return new BorderPane(aFragmentsDataTableView);
     }
@@ -427,8 +432,9 @@ public class MainViewController {
      * @return
      */
     private Node createItemizationTableViewPage(int pageIndex, ItemizationDataTableView anItemizationDataTableView){
-        int fromIndex = pageIndex * rowsPerPage;
-        int toIndex = Math.min(fromIndex + rowsPerPage, this.moleculeDataModelList.size());
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+        int fromIndex = pageIndex * tmpRowsPerPage;
+        int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.moleculeDataModelList.size());
         anItemizationDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(fromIndex, toIndex)));
         return new BorderPane(anItemizationDataTableView);
     }
