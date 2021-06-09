@@ -22,7 +22,8 @@ package de.unijena.cheminf.mortar.model.settings;
 
 /**
  * TODO:
- * -
+ * - Important note for developers: When adding a new setting represented by a string, also consider the
+ * SingleTermPreference class input restrictions when testing whether an input is valid!
  */
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -534,6 +535,9 @@ public class SettingsContainer {
             return false;
         }
         boolean tmpIsEmpty = aPath.trim().isEmpty();
+        if (!SingleTermPreference.isValidContent(aPath.trim())) {
+            return false;
+        }
         File tmpFile = new File(aPath);
         boolean tmpExists = tmpFile.exists();
         boolean tmpIsDirectory = tmpFile.isDirectory();

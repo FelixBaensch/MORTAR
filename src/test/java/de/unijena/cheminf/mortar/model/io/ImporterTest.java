@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.io;
 
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import org.junit.Test;
 
 import java.net.URL;
@@ -27,10 +28,17 @@ import java.nio.file.Paths;
 
 /**
  * Test class for the ImportSMILESFile() method of the Importer class.
+ *
  * @author Samuel Behr
  */
 public class ImporterTest extends Importer {
-
+    /**
+     *
+     */
+    public ImporterTest() {
+        super(new SettingsContainer());
+    }
+    //
     /**
      * The ImportSMILESFile() method expects one parsable SMILES code per line of the file and
      * an optional second element, which is interpreted as the molecule's ID or name and is
@@ -45,7 +53,6 @@ public class ImporterTest extends Importer {
      */
     @Test
     public void ImportSMILESFileTest() throws Exception{
-
         /*
         Expected output:    3 parsable lines
                             3 invalid lines
@@ -56,7 +63,7 @@ public class ImporterTest extends Importer {
         - including blank lines
          */
         URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
-        this.ImportSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
 
         /*
         Expected output:    5 parsable lines
@@ -68,7 +75,7 @@ public class ImporterTest extends Importer {
         - used separator: "\t"
          */
         tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
-        this.ImportSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
 
         /*
         Expected output:    3 parsable lines
@@ -79,7 +86,7 @@ public class ImporterTest extends Importer {
         - two lines with invalid SMILES code
          */
         tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
-        this.ImportSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
 
         /*
         Expected output:    1 parsable lines
@@ -90,8 +97,6 @@ public class ImporterTest extends Importer {
         - used separator: " "
          */
         tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
-        this.ImportSMILESFile(Paths.get(tmpURL.toURI()).toFile());
-
+        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
     }
-
 }

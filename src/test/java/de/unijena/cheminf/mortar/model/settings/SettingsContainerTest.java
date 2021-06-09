@@ -65,5 +65,7 @@ public class SettingsContainerTest {
         Assert.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5, tmpSecondContainer.getRowsPerPageSetting());
         Assert.assertEquals(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT, tmpSecondContainer.getAddImplicitHydrogensAtImportSetting());
         Assert.assertEquals(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT - 1, tmpSecondContainer.getNumberOfTasksForFragmentationSetting());
+        tmpSecondContainer.restoreDefaultSettings();
+        tmpSecondContainer.preserveSettings();
     }
 }

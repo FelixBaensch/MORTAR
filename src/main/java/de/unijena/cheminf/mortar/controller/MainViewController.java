@@ -186,11 +186,11 @@ public class MainViewController {
         try {
             this.settingsContainer.preserveSettings();
         } catch (IOException anIOException) {
+            MainViewController.LOGGER.log(Level.WARNING, anIOException.toString(), anIOException);
             GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.SettingsPersistence.Header"),
                     Message.get("Error.SettingsPersistence"),
                     anIOException);
-            MainViewController.LOGGER.log(Level.WARNING, anIOException.toString(), anIOException);
         }
         //TODO: bind/addListener to top right corner X - done?
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
@@ -215,12 +215,10 @@ public class MainViewController {
                 return;
             }
         }
-        //TODO use recent directory path from settings and update it after a file has been chosen
-        //TODO specify whether the add implicit hydrogens from the settings container
-        Importer tmpImporter = new Importer();
+        Importer tmpImporter = new Importer(this.settingsContainer);
         IAtomContainerSet tmpAtomContainerSet = null;
         try {
-            tmpAtomContainerSet = tmpImporter.Import(aParentStage);
+            tmpAtomContainerSet = tmpImporter.importMoleculeFile(aParentStage);
         } catch (Exception anException) {
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.GuiExceptionAlert(
@@ -228,8 +226,7 @@ public class MainViewController {
                     Message.get("Importer.FileImportExceptionAlert.Header"),
                     Message.get("Importer.FileImportExceptionAlert.Text") + "\n" +
                             FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
-                    anException
-            );
+                    anException);
             return;
         }
         if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
@@ -376,6 +373,7 @@ public class MainViewController {
             this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
             this.fragmentationButton.setDisable(false);
         } catch(Exception anException){
+            MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             //TODO
         }
     }
@@ -411,9 +409,15 @@ public class MainViewController {
             }
         });
         //itemization tab
+        //TODO: Specify more clearly what the "amount" is
         int tmpAmount = 0;
         for(int i= 0; i < this.moleculeDataModelList.size(); i++){
-                    tmpAmount = Math.max(tmpAmount, this.moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).size());
+            HashMap<String, Integer> tmpCurrentFragmentsMap = this.moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
+            if (tmpCurrentFragmentsMap == null) {
+                continue;
+            }
+            int tmpNrOfFragmentsOfCurrentMolecule = tmpCurrentFragmentsMap.size();
+            tmpAmount = Math.max(tmpAmount, tmpNrOfFragmentsOfCurrentMolecule);
         }
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name());
         this.mainTabPane.getTabs().add(tmpItemizationTab);

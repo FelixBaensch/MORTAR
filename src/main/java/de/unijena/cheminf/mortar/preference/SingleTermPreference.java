@@ -44,9 +44,13 @@ public class SingleTermPreference extends BasePreference {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
      * Regex pattern for testing the content input.
-     * Allowed characters: 0-9, a-z, A-z, -, [], (), {}, :, /, \, ., space (ASCII 32, hexadecimal value: 20, see below) and ,.
+     * Allowed characters: 0-9, a-z, ä (hexadecimal value: E4, see below), ü (hexadecimal value: FC, see below),
+     * ö (hexadecimal value: F6, see below), ß (hexadecimal value: DF, see below), A-Z,
+     * Ä (hexadecimal value: C4, see below), Ü (hexadecimal value: DC, see below), Ö (hexadecimal value: D6, see below),
+     * -, _, [], (), {}, :, /, \, ., space (ASCII 32, hexadecimal value: 20, see below) and ,.
      */
-    private static final Pattern INPUT_TEST_PATTERN = Pattern.compile("\\A[0-9a-zA-Z\\.\\,\\-\\[\\]\\(\\)\\{\\}\\:\\/\\\\\\x20]++\\z");
+    private static final Pattern INPUT_TEST_PATTERN =
+            Pattern.compile("\\A[0-9a-z\\xE4\\xFC\\xF6\\xDFA-Z\\xC4\\xDC\\xD6\\.\\,\\-\\_\\[\\]\\(\\)\\{\\}\\:\\/\\\\\\x20]++\\z");
 
     /**
      * The version of this class.

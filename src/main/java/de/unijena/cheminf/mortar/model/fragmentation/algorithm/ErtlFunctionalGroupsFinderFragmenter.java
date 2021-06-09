@@ -525,7 +525,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                         ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
                 return tmpReturnList;
             }
-        } catch(IllegalArgumentException | CDKException anException) {
+        } catch(Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
         }
         List<IAtomContainer> tmpFragments = new ArrayList<IAtomContainer>(tmpFunctionalGroupFragments.size() + tmpNonFGFragments.size());
