@@ -39,7 +39,7 @@ public class DepictionUtil {
     public static Image depictImage(IAtomContainer anAtomContainer) { //TODO: add , int aWidth, int aHeight
         try {
             DepictionGenerator tmpGenerator = new DepictionGenerator();
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(250,250); //TODO: add .withSize(aWidth, aHeight)
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(200,200); //TODO: add .withSize(aWidth, aHeight)
             BufferedImage tmpBufferedImage = null;
             tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
