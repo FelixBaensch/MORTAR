@@ -20,11 +20,6 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import com.itextpdf.text.BadElementException;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.pdf.PdfWriter;
 import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
@@ -371,10 +366,10 @@ public class MainViewController {
         tmpBarForButtons.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
         tmpFragmentsTab.addNodeToGridPane(tmpBarForButtons, 0,1,1,1);
         tmpExportPdfButton.setOnAction(event->{
-                tmpExporter.createPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), this.moleculeDataModelList);
+            tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), this.moleculeDataModelList);
         });
         tmpExportCsvButton.setOnAction(event->{
-            tmpExporter.createCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), ',');
+            tmpExporter.createFragmentationCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), ',');
         });
 
         tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
@@ -407,10 +402,16 @@ public class MainViewController {
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
         tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
-        Button button = new Button("Export PDF");
-        tmpItemizationTab.addNodeToGridPane(button,1,1,1,1);
-        button.setOnAction(event-> {
-                tmpExporter.ItemPdf(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),this.moleculeDataModelList,aFragmentationName );
+        Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
+        Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
+        ButtonBar tmpItemizationTabButtonBar = new ButtonBar();
+        tmpItemizationTabButtonBar.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
+        tmpItemizationTab.addNodeToGridPane(tmpItemizationTabButtonBar, 0, 1,1,1);
+        tmpItemizationExportCsvButton.setOnAction(event-> {
+            tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList,aFragmentationName ,',');
+        });
+        tmpItemizationTabExportPDfButton.setOnAction(event -> {
+            tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName), this.moleculeDataModelList,aFragmentationName );
         });
     }
     //
