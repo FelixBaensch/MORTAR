@@ -25,7 +25,12 @@ import de.unijena.cheminf.mortar.message.Message;
 import javafx.scene.control.Alert;
 
 import java.io.File;
-import java.util.Objects;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.LogManager;
@@ -160,6 +165,57 @@ public final class LogUtil {
         } catch (Exception anException) {
             LogUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return false;
+        }
+    }
+
+    /**
+     * Manages the folder the log-file get saved in if the folder exists.
+     * If the folder holds more .txt files than a specific limit or a minimum of .txt files while exceeding
+     * a maximum limit of bytes used, half of the .txt files get deleted and the method is called again.
+     * Remaining LCK-files (suffix "*.txt.lck") are generally deleted out of the log-files' folder.
+     * @author Samuel Behr
+     */
+    public static void manageLogFilesFolderIfExists() {
+        Path tmpLogFileDirectory = Paths.get(FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY);
+        if (!(Files.exists(tmpLogFileDirectory) && Files.isDirectory(tmpLogFileDirectory))) {
+            return;
+        }
+        //deleting all of the *.txt.lck files out of the log-files' folder
+        try (DirectoryStream<Path> tmpLCKFilePaths = Files.newDirectoryStream(tmpLogFileDirectory, "*.txt.lck")) {
+            for (Path tmpLCKFilePath : tmpLCKFilePaths) {
+                try {
+                    Files.delete(tmpLogFileDirectory.resolve(tmpLCKFilePath));
+                } catch (IOException anException) {
+                    //TODO
+                }
+            }
+        } catch (IOException anException) {
+            //TODO
+        }
+        File [] tmpLogFiles = tmpLogFileDirectory.toFile().listFiles((dir, name) -> name.endsWith(".txt"));
+        int tmpTotalOfBytesUsed = 0;
+        for (File tmpLogFile : tmpLogFiles) {
+            tmpTotalOfBytesUsed += tmpLogFile.length();
+        }
+        //managing the log-files if the limits are exceeded
+        //the parameters of this if statement's condition should be changed with caution or otherwise an infinite loop is risked
+        if (tmpLogFiles.length > BasicDefinitions.UPPER_LIMIT_OF_LOG_FILES || (tmpTotalOfBytesUsed > BasicDefinitions.LIMIT_OF_BYTES_USED_BY_LOG_FILES
+                && tmpLogFiles.length > BasicDefinitions.LOWER_LIMIT_OF_LOG_FILES)) {
+            Arrays.sort(tmpLogFiles, Comparator.comparingLong(File::lastModified));
+            //deleting the first half of the files of the sorted File array out of the log-files' folder
+            int tmpDeletedLogFilesCounter = 0;  //TODO: remove??
+            for (int i = 0; i < (tmpLogFiles.length * BasicDefinitions.FACTOR_TO_TRIM_LOG_FILE_FOLDER); i++) {
+                try {
+                    Files.delete(tmpLogFileDirectory.resolve(tmpLogFiles[i].toPath()));
+                    tmpDeletedLogFilesCounter++;
+                } catch (IOException anException) {
+                    //TODO
+                }
+            }
+            System.out.println("Deleted files counter: " + tmpDeletedLogFilesCounter);  //TODO: remove!
+            //calling the method again to check whether the limits are still exceeded
+            LogUtil.manageLogFilesFolderIfExists();
+            //log-files' folder has been managed and ... log-files have been deleted. //TODO??
         }
     }
     // </editor-fold>
