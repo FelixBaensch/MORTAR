@@ -40,7 +40,6 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
-import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -64,12 +63,7 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -271,8 +265,7 @@ public class MainViewController {
     }
     //
     private void openGlobalSettingsView(){
-        List<Property> tmpSettingsPropertiesList = this.settingsContainer.settingsProperties();
-        //TODO
+        SettingsViewController tmpSettingsViewController =  new SettingsViewController(this.primaryStage, this.settingsContainer);
     }
     //
     /**
