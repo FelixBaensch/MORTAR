@@ -66,6 +66,11 @@ public final class LogUtil {
      * Log file that is currently logged in
      */
     private static File logFile;
+
+    /**
+     * Storage for exceptions thrown in the process of managing the log-files' folder
+     */
+    private static ArrayList<Exception> storedExceptions;
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static synchronized methods">
@@ -127,6 +132,12 @@ public final class LogUtil {
                     }
                 }
             });
+            if (LogUtil.storedExceptions != null && !LogUtil.storedExceptions.isEmpty()) {  //TODO: mention this in the doc string?
+                for (Exception tmpException : LogUtil.storedExceptions) {
+                    LogUtil.LOGGER.log(Level.SEVERE, tmpException.toString(), tmpException);
+                }
+                LogUtil.storedExceptions.clear();
+            }
             return true;
         } catch (Exception anException) {
             LogManager.getLogManager().reset();
@@ -167,12 +178,15 @@ public final class LogUtil {
             return false;
         }
     }
-
+    // </editor-fold>
+    //
+    //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
-     * Manages the folder the log-file get saved in if the folder exists.
-     * If the folder holds more .txt files than a specific limit or a minimum of .txt files while exceeding
-     * a maximum limit of bytes used, half of the .txt files get deleted and the method is called again.
-     * Remaining LCK-files (suffix "*.txt.lck") are generally deleted out of the log-files' folder.
+     * Manages the folder in which the log-file get saved in if it exists.
+     * If the folder holds more *.txt files than a specific limit or a minimum of *.txt files while exceeding a maximum
+     * limit of bytes used, half of the *.txt files get deleted and the method is called again. Remaining LCK-files
+     * (suffix "*.txt.lck") are generally deleted out of the log-files' folder.
+     * Exceptions occurring in the process are being stored and logged when initializing the logging environment.
      * @author Samuel Behr
      */
     public static void manageLogFilesFolderIfExists() {
@@ -180,19 +194,23 @@ public final class LogUtil {
         if (!(Files.exists(tmpLogFileDirectory) && Files.isDirectory(tmpLogFileDirectory))) {
             return;
         }
+        LogUtil.storedExceptions = new ArrayList<>();
         //deleting all of the *.txt.lck files out of the log-files' folder
         try (DirectoryStream<Path> tmpLCKFilePaths = Files.newDirectoryStream(tmpLogFileDirectory, "*.txt.lck")) {
             for (Path tmpLCKFilePath : tmpLCKFilePaths) {
                 try {
                     Files.delete(tmpLogFileDirectory.resolve(tmpLCKFilePath));
                 } catch (IOException anException) {
-                    //TODO
+                    LogUtil.storedExceptions.add(anException);
                 }
             }
         } catch (IOException anException) {
-            //TODO
+            LogUtil.storedExceptions.add(anException);
         }
         File [] tmpLogFiles = tmpLogFileDirectory.toFile().listFiles((dir, name) -> name.endsWith(".txt"));
+        if (tmpLogFiles == null) {
+            return;
+        }
         int tmpTotalOfBytesUsed = 0;
         for (File tmpLogFile : tmpLogFiles) {
             tmpTotalOfBytesUsed += tmpLogFile.length();
@@ -203,19 +221,15 @@ public final class LogUtil {
                 && tmpLogFiles.length > BasicDefinitions.LOWER_LIMIT_OF_LOG_FILES)) {
             Arrays.sort(tmpLogFiles, Comparator.comparingLong(File::lastModified));
             //deleting the first half of the files of the sorted File array out of the log-files' folder
-            int tmpDeletedLogFilesCounter = 0;  //TODO: remove??
             for (int i = 0; i < (tmpLogFiles.length * BasicDefinitions.FACTOR_TO_TRIM_LOG_FILE_FOLDER); i++) {
                 try {
                     Files.delete(tmpLogFileDirectory.resolve(tmpLogFiles[i].toPath()));
-                    tmpDeletedLogFilesCounter++;
                 } catch (IOException anException) {
-                    //TODO
+                    LogUtil.storedExceptions.add(anException);
                 }
             }
-            System.out.println("Deleted files counter: " + tmpDeletedLogFilesCounter);  //TODO: remove!
             //calling the method again to check whether the limits are still exceeded
             LogUtil.manageLogFilesFolderIfExists();
-            //log-files' folder has been managed and ... log-files have been deleted. //TODO??
         }
     }
     // </editor-fold>
