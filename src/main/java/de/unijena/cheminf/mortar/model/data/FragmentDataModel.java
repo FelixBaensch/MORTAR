@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 /**
  * Model class for fragment data
  */
-public class FragmentDataModel {
+public class FragmentDataModel implements IMolecularDataModel {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     private String uniqueSmiles;
@@ -80,6 +80,7 @@ public class FragmentDataModel {
      * Returns string unique SMILES
      * @return String uniqueSmiles
      */
+    @Override
     public String getUniqueSmiles() {
         return this.uniqueSmiles;
     }
@@ -88,6 +89,7 @@ public class FragmentDataModel {
      * Returns IAtomContainer
      * @return IAtomContainer
      */
+    @Override
     public IAtomContainer getAtomContainer() throws CDKException {
         SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         tmpSmiPar.kekulise(false);
@@ -132,6 +134,7 @@ public class FragmentDataModel {
      * Creates and returns ImageView of this fragment
      * @return ImageView of this fragment
      */
+    @Override
     public ImageView getStructure() {
         try {
             IAtomContainer tmpFragmentAtomContainer = this.getAtomContainer();
@@ -146,6 +149,7 @@ public class FragmentDataModel {
      * Returns property map of this fragment
      * @return property map
      */
+    @Override
     public Map getProperties() {
         return this.properties;
     }

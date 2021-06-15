@@ -39,13 +39,13 @@ import java.util.logging.Logger;
 /**
  * Model class for molecule data
  */
-public class MoleculeDataModel {
+public class MoleculeDataModel implements IMolecularDataModel {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     //TODO: Omit? Is not the unique SMILES the id for us?
     private String iD;
     private String name;
-    private String smiles;
+    private String uniqueSmiles;
     private BooleanProperty selection;
     private HashMap<String, Boolean> hasFragmentsMap; // HashMap<FragmentationAlgorithmName, hasFragments>
     private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
@@ -65,7 +65,7 @@ public class MoleculeDataModel {
         this.iD = anID;
         this.name = anAtomContainer.getTitle();
         this.properties = anAtomContainer.getProperties();
-        this.smiles = aUniqueSmiles;
+        this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
         this.fragments = new HashMap<>(5);
         this.fragmentFrequencies = new HashMap<>(5);
@@ -95,21 +95,23 @@ public class MoleculeDataModel {
      * Returns IAtomContainer which represents the molecule
      * @return IAtomContainer
      */
+    @Override
     public IAtomContainer getAtomContainer() throws CDKException {
         SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         //TODO: Necessary here? For fragments definitely necessary, but here also?
         tmpSmiPar.kekulise(false);
-        IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.smiles);
+        IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
         tmpAtomContainer.addProperties(this.properties);
         return tmpAtomContainer;
     }
     //
     /**
-     * Returns SMILES
-     * @return String SMILES
+     * Returns unique SMILES
+     * @return String uniqueSmiles
      */
-    public String getSmiles(){
-        return this.smiles;
+    @Override
+    public String getUniqueSmiles(){
+        return this.uniqueSmiles;
     }
     //
     //TODO: should this not be getSelection(), following the properties naming convention?
@@ -150,7 +152,7 @@ public class MoleculeDataModel {
             return this.fragments.get(aKey);
         }
         else{
-            //ToDO
+            //TODO
             return null;
         }
     }
@@ -212,6 +214,7 @@ public class MoleculeDataModel {
      * Creates and returns an ImageView of this molecule as 2D structure
      * @return ImageView
      */
+    @Override
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
@@ -226,6 +229,7 @@ public class MoleculeDataModel {
      * Returns property map of this molecule
      * @return property map
      */
+    @Override
     public Map getProperties() {
         return this.properties;
     }
