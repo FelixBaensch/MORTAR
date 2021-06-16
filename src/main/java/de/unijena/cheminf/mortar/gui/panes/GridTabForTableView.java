@@ -21,7 +21,9 @@
 package de.unijena.cheminf.mortar.gui.panes;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import javafx.scene.control.Pagination;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TableView;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -33,27 +35,42 @@ import javafx.scene.layout.RowConstraints;
 public class GridTabForTableView extends Tab {
 
     //<editor-fold desc="private class variables">
+    /**
+     * GridPane to align nodes
+     */
     private GridPane gridPane;
+    /**
+     * Pagination for table view
+     */
+    private Pagination pagination;
+    /**
+     *
+     */
+    private TableView tableView;
     //</editor-fold>
     //
     /**
      * Constructor
      *
      * Creates a 'No Title' grid tab
+     *
+     * @param aTableView
      */
-    public GridTabForTableView(){
-        this("No Title", "");
+    public GridTabForTableView(TableView aTableView){
+        this("No Title", "", aTableView);
     }
     //
     /**
      * Constructor
      * @param aTitle
      * @param anIdString
+     * @param aTableView
      */
-    public GridTabForTableView(String aTitle, String anIdString){
+    public GridTabForTableView(String aTitle, String anIdString, TableView aTableView){
         super(aTitle);
         this.setClosable(false);
         this.setId(anIdString);
+        this.tableView = aTableView;
         //gridPane to add button to pagination
         this.gridPane = new GridPane();
         this.setContent(this.gridPane);
@@ -94,11 +111,42 @@ public class GridTabForTableView extends Tab {
     }
     //
     /**
+     * Adds given Pagination to specified column (aColIndex) and row (aRowIndex) to GridPane
+     * Necessary to add the pagination via  MainViewController
+     *
+     * @param aPagination Pagination to add
+     * @param aColIndex index in which col the node should be added, only be 1 or 2
+     * @param aRowIndex index in which row the node should be added, only be 1 or 2
+     * @param aColSpan
+     * @param aRowSpan
+     */
+    public void addPaginationToGridPane(Pagination aPagination, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan) {
+        this.pagination = aPagination;
+        this.addNodeToGridPane(this.pagination, 0, 0, 2, 2);
+    }
+    //
+    /**
      * Sets the given string as title of this tab
      *
      * @param aTitle String
      */
     public void setTitle(String aTitle){
         this.setText(aTitle);
+    }
+    //
+    /**
+     * Returns Pagination
+     * @return pagination
+     */
+    public Pagination getPagination(){
+        return this.pagination;
+    }
+    //
+    /**
+     * Returns TableView
+     * @return tableView
+     */
+    public TableView getTableView(){
+        return this.tableView;
     }
 }

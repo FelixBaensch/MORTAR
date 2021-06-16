@@ -244,11 +244,17 @@ public class MainViewController {
         this.openMoleculesTab();
     }
     //
+    /**
+     * Opens settings view for fragmentationSettings
+     */
     private void openFragmentationSettingsView(){
         FragmentationSettingsViewController tmpFragmentationSettingsViewController =
                 new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
     }
     //
+    /**
+     * Adds CheckMenuItems for fragmentation algorithms to MainMenuBar
+     */
     private void addFragmentationAlgorithmCheckMenuItems(){
         ToggleGroup tmpToggleGroup = new ToggleGroup();
         for(IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()){
@@ -264,17 +270,36 @@ public class MainViewController {
         tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
     }
     //
+    /**
+     * Opens settings view for global settings
+     */
     private void openGlobalSettingsView(){
         SettingsViewController tmpSettingsViewController =  new SettingsViewController(this.primaryStage, this.settingsContainer);
+        if(tmpSettingsViewController.hasRowsPerPageChanged()){
+            for(Tab tmpTab : this.mainTabPane.getTabs()){
+                int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
+                int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+                int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
+                if(this.moleculeDataModelList.size() % tmpRowsPerPage > 0){
+                    tmpPageCount++;
+                }
+                if(tmpPageIndex > tmpPageCount){
+                    tmpPageIndex = tmpPageCount;
+                }
+                ((GridTabForTableView) tmpTab).getTableView().refresh();
+                ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
+                ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
+            }
+        }
     }
     //
     /**
      * Opens molecules tab
      */
     private void openMoleculesTab() {
-        GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name());
-        this.mainTabPane.getTabs().add(tmpMoleculesTab);
         this.moleculesDataTableView = new MoleculesDataTableView();
+        GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name(), this.moleculesDataTableView);
+        this.mainTabPane.getTabs().add(tmpMoleculesTab);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
         if(this.moleculeDataModelList.size() % tmpRowsPerPage > 0){
@@ -284,7 +309,7 @@ public class MainViewController {
         tmpPagination.setPageFactory(this::createDataTableViewPage);
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpMoleculesTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+        tmpMoleculesTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
         this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
         tmpMoleculesTab.addNodeToGridPane(this.fragmentationButton, 1,1,1,1);
         //TODO: disable 'tmpFragmentButton' while fragmentation is running
@@ -371,11 +396,16 @@ public class MainViewController {
         }
     }
     //
+    /**
+     * Adds a tab for fragments and a tab for items (results of fragmentation)
+     *
+     * @param aFragmentationName
+     */
     private void addFragmentationResultTabs(String aFragmentationName){
         //fragments tab
-        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name());
-        this.mainTabPane.getTabs().add(tmpFragmentsTab);
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
+        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name(), tmpFragmentsDataTableView);
+        this.mainTabPane.getTabs().add(tmpFragmentsTab);
         ObservableList<FragmentDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
         tmpFragmentsDataTableView.setFragmentDataModelList(tmpList);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
@@ -387,11 +417,12 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+        tmpFragmentsTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
         tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
             @Override
             public void handle(SortEvent<TableView> event) {
-                int i = 5;
+                if(event.getSource().getSortOrder().size() == 0)
+                    return;
                 String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
                 TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
                 sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList(), tmpSortProp, tmpSortType.toString());
@@ -412,9 +443,9 @@ public class MainViewController {
             int tmpNrOfFragmentsOfCurrentMolecule = tmpCurrentFragmentsMap.size();
             tmpAmount = Math.max(tmpAmount, tmpNrOfFragmentsOfCurrentMolecule);
         }
-        GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name());
-        this.mainTabPane.getTabs().add(tmpItemizationTab);
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
+        GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name(), tmpItemizationDataTableView);
+        this.mainTabPane.getTabs().add(tmpItemizationTab);
         tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
         if(this.moleculeDataModelList.size() % tmpRowsPerPage > 0){
             tmpPageCount++;
@@ -423,7 +454,7 @@ public class MainViewController {
         tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
-        tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
+        tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems,0,0,2,2);
         //
         this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
     }

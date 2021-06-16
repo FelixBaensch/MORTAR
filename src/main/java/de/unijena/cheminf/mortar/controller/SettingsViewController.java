@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
@@ -31,7 +32,6 @@ import javafx.stage.Stage;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class SettingsViewController {
 
@@ -40,6 +40,7 @@ public class SettingsViewController {
      * SettingsContainer
      */
     private final SettingsContainer settingsContainer;
+    private final SettingsContainer recentSettingsContainer;
     /**
      * Main stage object of the application
      */
@@ -65,14 +66,15 @@ public class SettingsViewController {
     public SettingsViewController(Stage aStage, SettingsContainer aSettingsContainer){
         this.mainStage = aStage;
         this.settingsContainer = aSettingsContainer;
+        this.recentSettingsContainer = aSettingsContainer;
         this.recentProperties = new HashMap<>(this.settingsContainer.settingsProperties().size());
-        this.openSettingsView();
+        this.showSettingsView();
     }
 
     /**
      * Initialises and opens settingsView
      */
-    private void openSettingsView(){
+    private void showSettingsView(){
         if(this.settingsView == null)
             this.settingsView = new SettingsView();
         this.settingsViewStage = new Stage();
@@ -80,12 +82,14 @@ public class SettingsViewController {
         this.settingsViewStage.setScene(tmpScene);
         this.settingsViewStage.initModality(Modality.WINDOW_MODAL);
         this.settingsViewStage.initOwner(this.mainStage);
-        this.settingsViewStage.show();
         this.settingsViewStage.setTitle(Message.get("FragmentationSettingsView.title"));
         this.settingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.settingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        this.addListeners();
-        this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title"), this.settingsContainer.settingsProperties(), this.recentProperties);
+        Platform.runLater(()->{
+            this.addListeners();
+            this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title"), this.settingsContainer.settingsProperties(), this.recentProperties);
+        });
+        this.settingsViewStage.showAndWait();
     }
 
     /**
@@ -99,6 +103,7 @@ public class SettingsViewController {
         });
         //apply button
         this.settingsView.getApplyButton().setOnAction(event -> {
+            this.hasRowsPerPageChanged = (int) this.settingsContainer.rowsPerPageSettingProperty().getValue() != (int) this.recentProperties.get(this.settingsContainer.rowsPerPageSettingProperty().getName());
             this.settingsViewStage.close();
         });
         //cancel button
@@ -109,9 +114,6 @@ public class SettingsViewController {
         //default button
         this.settingsView.getDefaultButton().setOnAction(event -> {
             this.settingsContainer.restoreDefaultSettings();
-        });
-        this.settingsContainer.rowsPerPageSettingProperty().addListener((observableValue, oldValue, newValue) -> {
-            this.hasRowsPerPageChanged = Objects.equals(oldValue, newValue);
         });
     }
 
