@@ -47,22 +47,22 @@ public final class BasicDefinitions {
     /**
      * Upper limit of bytes used in the log-file folder for entering the managing routine
      */
-    public static final int LIMIT_OF_BYTES_USED_BY_LOG_FILES = 100000;
+    public static final int LIMIT_OF_BYTES_USED_BY_LOG_FILES = 1000000;
 
     /**
      * Upper limit of files stored in the log-file folder for entering the managing routine
      */
-    public static final int UPPER_LIMIT_OF_LOG_FILES = 32;
+    public static final int UPPER_LIMIT_OF_LOG_FILES = 64;
 
     /**
      * Lower limit of files stored in the log-file folder for entering the managing routine
      */
-    public static final int LOWER_LIMIT_OF_LOG_FILES = 8;
+    public static final int LOWER_LIMIT_OF_LOG_FILES = 32;
 
     /**
      * Factor by which to trim the log-file folder
      */
-    public static final double FACTOR_TO_TRIM_LOG_FILE_FOLDER = 0.5;
+    public static final double FACTOR_TO_TRIM_LOG_FILE_FOLDER = 0.2;
 
     /**
      * Possible SMILES file separators used to separate SMILES code from ID

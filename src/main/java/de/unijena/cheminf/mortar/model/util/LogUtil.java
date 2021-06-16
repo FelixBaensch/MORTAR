@@ -220,7 +220,7 @@ public final class LogUtil {
         if (tmpLogFiles.length > BasicDefinitions.UPPER_LIMIT_OF_LOG_FILES || (tmpTotalOfBytesUsed > BasicDefinitions.LIMIT_OF_BYTES_USED_BY_LOG_FILES
                 && tmpLogFiles.length > BasicDefinitions.LOWER_LIMIT_OF_LOG_FILES)) {
             Arrays.sort(tmpLogFiles, Comparator.comparingLong(File::lastModified));
-            //deleting the first half of the files of the sorted File array out of the log-files' folder
+            //trimming the log-files' folder by deleting the oldest files
             for (int i = 0; i < (tmpLogFiles.length * BasicDefinitions.FACTOR_TO_TRIM_LOG_FILE_FOLDER); i++) {
                 try {
                     Files.delete(tmpLogFileDirectory.resolve(tmpLogFiles[i].toPath()));
