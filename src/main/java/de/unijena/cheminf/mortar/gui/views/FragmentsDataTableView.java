@@ -29,7 +29,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.List;
 
 /**
@@ -39,13 +38,34 @@ import java.util.List;
 public class FragmentsDataTableView extends TableView {
 
     //<editor-fold desc="private class variables", defaultstate="collapsed">
+    /**
+     * TableColumn for 2D structure state of the fragment
+     */
     private TableColumn<FragmentDataModel, Image> structureColumn;
+    /**
+     * TableColumn for SMILES of the fragment
+     */
     private TableColumn<FragmentDataModel, String> smilesColumn;
+    /**
+     * TableColumn for frequency of the fragment
+     */
     private TableColumn<FragmentDataModel, Integer> frequencyColumn;
+    /**
+     * TableColumn for percentage frequency of the fragment
+     */
     private TableColumn<FragmentDataModel, Double> percentageColumn;
+    /**
+     * TableColumn for the frequency in how many molecules this fragment occurs in
+     */
     private TableColumn<FragmentDataModel, Integer> moleculeFrequencyColumn;
+    /**
+     * TableColumn for the percentage frequency in how many molecules this fragment occurs in
+     */
     private TableColumn<FragmentDataModel, Double> moleculePercentageColumn;
-    private List<FragmentDataModel> fragmentDataModelList;
+    /**
+     * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination)
+     */
+    private List<FragmentDataModel> itemsList;
     //</editor-fold>
     //
     /**
@@ -158,9 +178,9 @@ public class FragmentsDataTableView extends TableView {
     public TableColumn getPercentageColumn() { return this.percentageColumn; }
     public TableColumn getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
     public TableColumn getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
-    public List<FragmentDataModel> getFragmentDataModelList() { return this.fragmentDataModelList; }
-    public void setFragmentDataModelList(List<FragmentDataModel> aListOfFragments){
-        this.fragmentDataModelList = aListOfFragments;
+    public List<FragmentDataModel> getItemsList() { return this.itemsList; }
+    public void setItemsList(List<FragmentDataModel> aListOfFragments){
+        this.itemsList = aListOfFragments;
     }
     //</editor-fold>
 }

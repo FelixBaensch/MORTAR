@@ -35,6 +35,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
 
+import java.util.List;
+
 /**
  * Custom table view for the itemization table view
  *
@@ -59,6 +61,10 @@ public class ItemizationDataTableView extends TableView {
      * Name of the fragmentation algorithm used
      */
     private String fragmentationName;
+    /**
+     * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination)
+     */
+    private List<MoleculeDataModel> itemsList;
     //</editor-fold>
     //
     /**
@@ -122,5 +128,10 @@ public class ItemizationDataTableView extends TableView {
         }
         //
         this.getColumns().addAll(this.nameColumn, this.moleculeStructureColumn, this.fragmentStructureColumn);
+    }
+
+    public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public void setItemsList(List<MoleculeDataModel> aListOfFragments){
+        this.itemsList = aListOfFragments;
     }
 }

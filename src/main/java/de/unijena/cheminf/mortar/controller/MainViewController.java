@@ -275,22 +275,36 @@ public class MainViewController {
      */
     private void openGlobalSettingsView(){
         SettingsViewController tmpSettingsViewController =  new SettingsViewController(this.primaryStage, this.settingsContainer);
-        if(tmpSettingsViewController.hasRowsPerPageChanged()){
-            for(Tab tmpTab : this.mainTabPane.getTabs()){
-                int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
-                int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-                int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
-                if(this.moleculeDataModelList.size() % tmpRowsPerPage > 0){
-                    tmpPageCount++;
+        Platform.runLater(()->{
+            if(tmpSettingsViewController.hasRowsPerPageChanged()){
+                for(Tab tmpTab : this.mainTabPane.getTabs()){
+                    TableView tmpTableView = ((GridTabForTableView) tmpTab).getTableView();
+                    int tmpListSize = 0;
+                    //TODO: change this when FragmentDataModel extends MoleculeDataModel via Interface IDataTableView
+                    if(tmpTableView.getClass().equals(MoleculesDataTableView.class)){
+                        tmpListSize = ((MoleculesDataTableView)tmpTableView).getItemsList().size();
+                    }
+                    else if(tmpTableView.getClass().equals(FragmentsDataTableView.class)){
+                        tmpListSize = ((FragmentsDataTableView)tmpTableView).getItemsList().size();
+                    }
+                    else if(tmpTableView.getClass().equals(ItemizationDataTableView.class)){
+                        tmpListSize = ((ItemizationDataTableView)tmpTableView).getItemsList().size();
+                    }
+                    int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
+                    int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+                    int tmpPageCount = tmpListSize / tmpRowsPerPage;
+                    if(tmpListSize % tmpRowsPerPage > 0){
+                        tmpPageCount++;
+                    }
+                    if(tmpPageIndex > tmpPageCount){
+                        tmpPageIndex = tmpPageCount;
+                    }
+                    ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
+                    ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
+                    ((GridTabForTableView) tmpTab).getTableView().refresh();
                 }
-                if(tmpPageIndex > tmpPageCount){
-                    tmpPageIndex = tmpPageCount;
-                }
-                ((GridTabForTableView) tmpTab).getTableView().refresh();
-                ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
-                ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
             }
-        }
+        });
     }
     //
     /**
@@ -298,6 +312,7 @@ public class MainViewController {
      */
     private void openMoleculesTab() {
         this.moleculesDataTableView = new MoleculesDataTableView();
+        this.moleculesDataTableView.setItemsList(this.moleculeDataModelList);
         GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name(), this.moleculesDataTableView);
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
@@ -407,7 +422,7 @@ public class MainViewController {
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name(), tmpFragmentsDataTableView);
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         ObservableList<FragmentDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
-        tmpFragmentsDataTableView.setFragmentDataModelList(tmpList);
+        tmpFragmentsDataTableView.setItemsList(tmpList);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = tmpList.size() / tmpRowsPerPage;
         if(tmpList.size() % tmpRowsPerPage > 0){
@@ -425,11 +440,11 @@ public class MainViewController {
                     return;
                 String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
                 TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
-                sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList(), tmpSortProp, tmpSortType.toString());
+                sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
                 int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
-                int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().size());
+                int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
                 event.getSource().getItems().clear();
-                event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().subList(fromIndex,toIndex));
+                event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
             }
         });
         //itemization tab
@@ -444,6 +459,7 @@ public class MainViewController {
             tmpAmount = Math.max(tmpAmount, tmpNrOfFragmentsOfCurrentMolecule);
         }
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
+        tmpItemizationDataTableView.setItemsList(this.moleculeDataModelList);
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
         tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
@@ -462,15 +478,15 @@ public class MainViewController {
     /**
      * Creates a fragments tableview page
      *
-     * @param pageIndex
+     * @param aPageIndex
      * @param aFragmentsDataTableView
      * @return
      */
-    private Node createFragmentsTableViewPage(int pageIndex, FragmentsDataTableView aFragmentsDataTableView) {
+    private Node createFragmentsTableViewPage(int aPageIndex, FragmentsDataTableView aFragmentsDataTableView) {
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int fromIndex = pageIndex * tmpRowsPerPage;
-        int toIndex = Math.min(fromIndex + tmpRowsPerPage, aFragmentsDataTableView.getFragmentDataModelList().size());
-        aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aFragmentsDataTableView.getFragmentDataModelList().subList(fromIndex, toIndex)));
+        int fromIndex = aPageIndex * tmpRowsPerPage;
+        int toIndex = Math.min(fromIndex + tmpRowsPerPage, aFragmentsDataTableView.getItemsList().size());
+        aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aFragmentsDataTableView.getItemsList().subList(fromIndex, toIndex)));
         aFragmentsDataTableView.scrollTo(0);
         return new BorderPane(aFragmentsDataTableView);
     }
@@ -485,8 +501,8 @@ public class MainViewController {
     private Node createItemizationTableViewPage(int pageIndex, ItemizationDataTableView anItemizationDataTableView){
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int fromIndex = pageIndex * tmpRowsPerPage;
-        int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.moleculeDataModelList.size());
-        anItemizationDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(fromIndex, toIndex)));
+        int toIndex = Math.min(fromIndex + tmpRowsPerPage, anItemizationDataTableView.getItemsList().size());
+        anItemizationDataTableView.setItems(FXCollections.observableArrayList(anItemizationDataTableView.getItemsList().subList(fromIndex, toIndex)));
         anItemizationDataTableView.scrollTo(0);
         return new BorderPane(anItemizationDataTableView);
     }

@@ -33,6 +33,10 @@ import javafx.stage.Stage;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * SettingsViewController
+ * controls {@link SettingsView} for {@link SettingsContainer}
+ */
 public class SettingsViewController {
 
     //<editor-fold desc="private and private final class variables">
@@ -63,6 +67,12 @@ public class SettingsViewController {
     private boolean hasRowsPerPageChanged;
     //</editor-fold>
 
+    /**
+     * Constructor
+     *
+     * @param aStage Parent stage
+     * @param aSettingsContainer SettingsContainer
+     */
     public SettingsViewController(Stage aStage, SettingsContainer aSettingsContainer){
         this.mainStage = aStage;
         this.settingsContainer = aSettingsContainer;
@@ -121,11 +131,13 @@ public class SettingsViewController {
      * Sets the properties to the values of the 'recentPropertiesMap'
      */
     private void setRecentProperties(){
-        for (Property tmpProperty : this.settingsContainer.settingsProperties()) {
-            if (this.recentProperties.containsKey(tmpProperty.getName())){
-                tmpProperty.setValue(this.recentProperties.get(tmpProperty.getName()));
+        Platform.runLater(()->{
+            for (Property tmpProperty : this.settingsContainer.settingsProperties()) {
+                if (this.recentProperties.containsKey(tmpProperty.getName())){
+                    tmpProperty.setValue(this.recentProperties.get(tmpProperty.getName()));
+                }
             }
-        }
+        });
     }
 
     /**

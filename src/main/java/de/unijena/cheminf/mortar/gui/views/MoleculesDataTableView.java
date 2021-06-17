@@ -31,6 +31,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 
+import java.util.List;
+
 /**
  * MoleculesDataTableView extends TableView
  * Customized table view for molecules data table view
@@ -38,10 +40,26 @@ import javafx.scene.image.Image;
 public class MoleculesDataTableView extends TableView {
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * TableColumn for selection state of the molecule
+     */
     private TableColumn<MoleculeDataModel, Boolean> selectionColumn;
+    /**
+     * TableColumn for name of the molecule
+     */
     private TableColumn<MoleculeDataModel, String> nameColumn;
+    /**
+     * TableColumn for 2D structure of the molecule
+     */
     private TableColumn<MoleculeDataModel, Image> structureColumn;
+    /**
+     * CheckBox in table header to select or deselect all items
+     */
     private CheckBox selectAllCheckBox;
+    /**
+     * List which contains all items to be shown in this tableView not only the displayed ones for this page (Pagination)
+     */
+    private List<MoleculeDataModel> itemsList;
     //</editor-fold>
     //
     /**
@@ -103,5 +121,9 @@ public class MoleculesDataTableView extends TableView {
         return this.structureColumn;
     }
     public CheckBox getSelectAllCheckBox() { return this.selectAllCheckBox; }
+    public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public void setItemsList(List<MoleculeDataModel> aListOfFragments){
+        this.itemsList = aListOfFragments;
+    }
     //</editor-fold>
 }
