@@ -22,29 +22,24 @@ package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import javafx.scene.image.ImageView;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.smiles.SmilesParser;
 
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Model class for fragment data
  */
-public class FragmentDataModel implements IMolecularDataModel {
+public class FragmentDataModel extends MoleculeDataModel {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private String uniqueSmiles;
     private int absoluteFrequency;
     private double absolutePercentage;
     private int moleculeFrequency;
     private double moleculePercentage;
     //TODO: omit?
     private String algorithmName;
-    private Map<Object, Object> properties;
     //</editor-fold>
     //
     /**
@@ -54,11 +49,10 @@ public class FragmentDataModel implements IMolecularDataModel {
      * @param aUniqueSmiles - unique SMILES code
      * @param anAtomContainer - IAtomContainer
      */
-    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer){
-        this.uniqueSmiles = aUniqueSmiles;
+    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {
+        super(aUniqueSmiles, anAtomContainer, anAtomContainer.getID());     //TODO: third parameter okay like this? @Felix,Jonas
         this.absoluteFrequency = 1;
         //TODO: Set other frequencies to 0?
-        this.properties = anAtomContainer.getProperties();
     }
     //
     /**
@@ -76,28 +70,6 @@ public class FragmentDataModel implements IMolecularDataModel {
     }
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
-    /**
-     * Returns string unique SMILES
-     * @return String uniqueSmiles
-     */
-    @Override
-    public String getUniqueSmiles() {
-        return this.uniqueSmiles;
-    }
-    //
-    /**
-     * Returns IAtomContainer
-     * @return IAtomContainer
-     */
-    @Override
-    public IAtomContainer getAtomContainer() throws CDKException {
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        tmpSmiPar.kekulise(false);
-        IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
-        tmpAtomContainer.addProperties(this.properties);
-        return tmpAtomContainer;
-    }
-    //
     /**
      * Returns absolute frequency of this fragment
      * @return int absoluteFrequency
@@ -135,7 +107,7 @@ public class FragmentDataModel implements IMolecularDataModel {
      * @return ImageView of this fragment
      */
     @Override
-    public ImageView getStructure() {
+    public ImageView getStructure() {   //TODO: Only difference to the inherited method in the class name used when logging
         try {
             IAtomContainer tmpFragmentAtomContainer = this.getAtomContainer();
             return new ImageView(DepictionUtil.depictImage(tmpFragmentAtomContainer));
@@ -143,15 +115,6 @@ public class FragmentDataModel implements IMolecularDataModel {
             Logger.getLogger(FragmentDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250,250));
         }
-    }
-    //
-    /**
-     * Returns property map of this fragment
-     * @return property map
-     */
-    @Override
-    public Map getProperties() {
-        return this.properties;
     }
     //
     /**

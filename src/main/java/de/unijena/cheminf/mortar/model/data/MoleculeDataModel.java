@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 /**
  * Model class for molecule data
  */
-public class MoleculeDataModel implements IMolecularDataModel {
+public class MoleculeDataModel {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     //TODO: Omit? Is not the unique SMILES the id for us?
@@ -61,7 +61,7 @@ public class MoleculeDataModel implements IMolecularDataModel {
      * @param anAtomContainer - IAtomContainer
      * @param aUniqueSmiles - unique SMILES representation of the molecule
      */
-    public MoleculeDataModel(String anID, IAtomContainer anAtomContainer, String aUniqueSmiles){
+    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer, String anID){
         this.iD = anID;
         this.name = anAtomContainer.getTitle();
         this.properties = anAtomContainer.getProperties();
@@ -95,7 +95,6 @@ public class MoleculeDataModel implements IMolecularDataModel {
      * Returns IAtomContainer which represents the molecule
      * @return IAtomContainer
      */
-    @Override
     public IAtomContainer getAtomContainer() throws CDKException {
         SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         //TODO: Necessary here? For fragments definitely necessary, but here also?
@@ -109,7 +108,6 @@ public class MoleculeDataModel implements IMolecularDataModel {
      * Returns unique SMILES
      * @return String uniqueSmiles
      */
-    @Override
     public String getUniqueSmiles(){
         return this.uniqueSmiles;
     }
@@ -214,14 +212,13 @@ public class MoleculeDataModel implements IMolecularDataModel {
      * Creates and returns an ImageView of this molecule as 2D structure
      * @return ImageView
      */
-    @Override
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
             return new ImageView(DepictionUtil.depictImage(tmpAtomContainer));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250,250));
+            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250, 250));
         }
     }
     //
@@ -229,7 +226,6 @@ public class MoleculeDataModel implements IMolecularDataModel {
      * Returns property map of this molecule
      * @return property map
      */
-    @Override
     public Map getProperties() {
         return this.properties;
     }
