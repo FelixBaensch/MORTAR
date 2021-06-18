@@ -50,7 +50,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * @param anAtomContainer - IAtomContainer
      */
     public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {
-        super(aUniqueSmiles, anAtomContainer, anAtomContainer.getID());     //TODO: third parameter okay like this? @Felix,Jonas
+        super(aUniqueSmiles, anAtomContainer, anAtomContainer.getID());     //TODO: third parameter okay like this?  @Felix,Jonas
         this.absoluteFrequency = 1;
         //TODO: Set other frequencies to 0?
     }
@@ -107,7 +107,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * @return ImageView of this fragment
      */
     @Override
-    public ImageView getStructure() {   //TODO: Only difference to the inherited method in the class name used when logging
+    public ImageView getStructure() {   //TODO: Only difference to the inherited method in the class name used when logging  @Felix,Jonas
         try {
             IAtomContainer tmpFragmentAtomContainer = this.getAtomContainer();
             return new ImageView(DepictionUtil.depictImage(tmpFragmentAtomContainer));
