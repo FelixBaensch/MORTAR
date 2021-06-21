@@ -50,7 +50,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * @param anAtomContainer - IAtomContainer
      */
     public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {
-        super(aUniqueSmiles, anAtomContainer, anAtomContainer.getID());     //TODO: third parameter okay like this?  @Felix,Jonas
+        super(aUniqueSmiles, anAtomContainer);
         this.absoluteFrequency = 1;
         //TODO: Set other frequencies to 0?
     }
@@ -100,21 +100,6 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public double getMoleculePercentage() {
         return this.moleculePercentage;
-    }
-    //
-    /**
-     * Creates and returns ImageView of this fragment
-     * @return ImageView of this fragment
-     */
-    @Override
-    public ImageView getStructure() {   //TODO: Only difference to the inherited method in the class name used when logging  @Felix,Jonas
-        try {
-            IAtomContainer tmpFragmentAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImage(tmpFragmentAtomContainer));
-        } catch (CDKException aCDKException) {
-            Logger.getLogger(FragmentDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250,250));
-        }
     }
     //
     /**

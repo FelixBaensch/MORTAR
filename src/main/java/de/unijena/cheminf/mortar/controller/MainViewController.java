@@ -240,7 +240,7 @@ public class MainViewController {
             } catch (CDKException | NullPointerException anException){
                 MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
-            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer, tmpAtomContainer.getID());
+            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer);
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }

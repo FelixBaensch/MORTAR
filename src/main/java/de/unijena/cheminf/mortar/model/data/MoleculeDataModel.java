@@ -57,12 +57,10 @@ public class MoleculeDataModel {
      * Constructor for MoleculeDataModel. From the atom container, only the properties map is retained, and
      * the molecular information is taken from the given unique SMILES code.
      *
-     * @param anID - unique identifier
      * @param anAtomContainer - IAtomContainer
      * @param aUniqueSmiles - unique SMILES representation of the molecule
      */
-    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer, String anID){
-        this.iD = anID;
+    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer){
         this.name = anAtomContainer.getTitle();
         this.properties = anAtomContainer.getProperties();
         this.uniqueSmiles = aUniqueSmiles;
@@ -73,14 +71,6 @@ public class MoleculeDataModel {
     }
     //
     //<editor-fold desc="public properties">
-    /**
-     * Returns unique identifier as String
-     * @return String unique identifier
-     */
-    public String getId(){
-        return this.iD;
-    }
-    //
     /**
      * Returns name (String) of the molecule, if it is null, "NoName" will be returned
      * @return String name of molecule
