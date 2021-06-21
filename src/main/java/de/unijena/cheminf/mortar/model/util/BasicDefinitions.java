@@ -71,14 +71,29 @@ public final class BasicDefinitions {
     public static final String LOG_FILES_DIRECTORY = "Logs";
 
     /**
+     *  Directory name for storing image files
+     */
+    public static final String IMAGE_FILES_DIRECTORY = "Images";
+
+    /**
      * Name for Log files
      */
     public static final String LOG_FILE_NAME = "Mortar_Log";
 
     /**
+     *  Name for Image files
+     */
+    public static final String IMAGE_FILE_NAME = "Molecule_File";
+
+    /**
      * Name extension (denoting the file type) of log files
      */
     public static final String LOG_FILE_NAME_EXTENSION = ".txt";
+
+    /**
+     *  Name extension of (denoting the file type) of image files
+     */
+    public static final String IMAGE_FILE_NAME_EXTENSION = ".png";
     //</editor-fold>
     //
     //<editor-fold desc="Session">
