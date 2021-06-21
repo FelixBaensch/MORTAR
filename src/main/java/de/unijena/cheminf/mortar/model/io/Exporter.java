@@ -267,7 +267,7 @@ public class Exporter {
                         cell.addElement(tmpFragment);
                         tmpCell.add(cell);
                         tmpFragmentNumber++;
-                        //tmpFragmentFile.delete();
+                        tmpFragmentFile.delete();
                     }
                     for (int tmpCellIterator = 0; tmpCellIterator <3 ; tmpCellIterator++) {
                         if (tmpCellIterator < tmpImagesNumbers) {
