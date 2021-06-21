@@ -42,14 +42,12 @@ import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -62,12 +60,7 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -143,6 +136,10 @@ public class MainViewController {
         this.addFragmentationAlgorithmCheckMenuItems();
         this.mapOfFragmentDataModelLists = new HashMap<>(5);
         }
+
+    public MainViewController() {
+
+    }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
@@ -366,12 +363,13 @@ public class MainViewController {
         tmpBarForButtons.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
         tmpFragmentsTab.addNodeToGridPane(tmpBarForButtons, 0,1,1,1);
         tmpExportPdfButton.setOnAction(event->{
-            tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), this.moleculeDataModelList);
+            tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
+                    this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
         });
         tmpExportCsvButton.setOnAction(event->{
-            tmpExporter.createFragmentationCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName), ',');
+            tmpExporter.createFragmentationTabCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
+                    ',');
         });
-
         tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
             @Override
             public void handle(SortEvent<TableView> event) {
@@ -408,10 +406,12 @@ public class MainViewController {
         tmpItemizationTabButtonBar.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
         tmpItemizationTab.addNodeToGridPane(tmpItemizationTabButtonBar, 0, 1,1,1);
         tmpItemizationExportCsvButton.setOnAction(event-> {
-            tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList,aFragmentationName ,',');
+            tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList,aFragmentationName,
+                    ',');
         });
         tmpItemizationTabExportPDfButton.setOnAction(event -> {
-            tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName), this.moleculeDataModelList,aFragmentationName );
+            tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName),
+                    this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
         });
     }
     //
