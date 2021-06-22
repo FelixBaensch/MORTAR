@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Deprecated
  * Thread class to run the fragmentation in a new parallel thread. This thread itself distributes the molecules onto
  * multiple parallel tasks to speed up the fragmentation.
  *

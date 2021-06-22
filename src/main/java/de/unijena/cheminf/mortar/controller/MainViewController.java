@@ -32,7 +32,6 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
-import de.unijena.cheminf.mortar.model.fragmentation.FragmentationThread;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -43,6 +42,7 @@ import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
@@ -392,19 +392,43 @@ public class MainViewController {
      * Starts fragmentation task and opens fragment and itemiztation tabs
      */
     private void startFragmentation(){
+        long tmpStartTime = System.nanoTime();
+        LOGGER.info("Start of method startFragmentation");
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).collect(Collectors.toList());
         int tmpNumberOfCores = this.settingsContainer.getNumberOfTasksForFragmentationSetting();
         try{
+            this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
             this.fragmentationButton.setDisable(true);
-            FragmentationThread tmpFragmentationThread = this.fragmentationService.startFragmentationThread(tmpSelectedMolecules, tmpNumberOfCores);
-            ObservableList<FragmentDataModel> tmpObservableFragments = FXCollections.observableArrayList();
-            Set<String> tmpKeys = this.fragmentationService.getFragments().keySet();
-            for(String tmpKey : tmpKeys){
-                tmpObservableFragments.add(this.fragmentationService.getFragments().get(tmpKey));
-            }
-            this.mapOfFragmentDataModelLists.put(this.fragmentationService.getCurrentFragmentationName(), tmpObservableFragments);
-            this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
-            this.fragmentationButton.setDisable(false);
+            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Running"));
+            Task<Void> tmpTaskVoidTask = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    fragmentationService.startFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+                    return null;
+                }
+            };
+            tmpTaskVoidTask.setOnSucceeded(event -> {
+                Platform.runLater(()->{
+                    try {
+                        ObservableList<FragmentDataModel> tmpObservableFragments = FXCollections.observableArrayList();
+                        Set<String> tmpKeys = this.fragmentationService.getFragments().keySet();
+                        for(String tmpKey : tmpKeys){
+                            tmpObservableFragments.add(this.fragmentationService.getFragments().get(tmpKey));
+                        }
+                        this.mapOfFragmentDataModelLists.put(this.fragmentationService.getCurrentFragmentationName(), tmpObservableFragments);
+                        this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
+                        this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+                        this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Finished"));
+                        this.fragmentationButton.setDisable(false);
+                        long tmpEndTime = System.nanoTime();
+                        LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
+                    } catch (Exception anException) {
+                        MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                    }
+                });
+            });
+            Thread tmpThread = new Thread(tmpTaskVoidTask);
+            tmpThread.start();
         } catch(Exception anException){
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             //TODO
@@ -433,19 +457,16 @@ public class MainViewController {
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
-        tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
-            @Override
-            public void handle(SortEvent<TableView> event) {
-                if(event.getSource().getSortOrder().size() == 0)
-                    return;
-                String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
-                TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
-                sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
-                int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
-                int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
-                event.getSource().getItems().clear();
-                event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
-            }
+        tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
+            if(event.getSource().getSortOrder().size() == 0)
+                return;
+            String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
+            TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
+            sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
+            int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
+            int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
+            event.getSource().getItems().clear();
+            event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
         });
         //itemization tab
         //TODO: Specify more clearly what the "amount" is
