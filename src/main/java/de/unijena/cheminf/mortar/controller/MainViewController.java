@@ -44,6 +44,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -89,6 +91,16 @@ public class MainViewController {
     private FragmentationService fragmentationService;
     private Button fragmentationButton;
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
+
+    /**
+     *
+     */
+    private double insets = 13;
+
+    /**
+     *
+     */
+    private double buttonWidht = 75;
     //</editor-fold>
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
     /**
@@ -258,7 +270,11 @@ public class MainViewController {
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
         this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
-        tmpMoleculesTab.addNodeToGridPane(this.fragmentationButton, 1,1,1,1);
+        HBox tmpHBox = new HBox();
+        HBox.setMargin(this.fragmentationButton, new Insets(this.insets));
+        this.fragmentationButton.setPrefWidth(this.buttonWidht);
+        tmpHBox.getChildren().add(this.fragmentationButton);
+        tmpMoleculesTab.addNodeToGridPane(tmpHBox, 1,1,1,1);
         //TODO: disable 'tmpFragmentButton' while fragmentation is running
         this.fragmentationButton.setOnAction(event->{
             //TODO: add implementation to start fragmentation algorithm
@@ -358,10 +374,14 @@ public class MainViewController {
         tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
         Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
         Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
-        ButtonBar tmpBarForButtons = new ButtonBar();
+        HBox tmpHBox = new HBox();
+        HBox.setMargin(tmpExportCsvButton, new Insets(this.insets));
+        HBox.setMargin(tmpExportPdfButton, new Insets(this.insets));
+        tmpExportCsvButton.setPrefWidth(this.buttonWidht);
+        tmpExportPdfButton.setPrefWidth(this.buttonWidht);
+        tmpHBox.getChildren().addAll(tmpExportCsvButton, tmpExportPdfButton);
         Exporter tmpExporter = new Exporter();
-        tmpBarForButtons.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
-        tmpFragmentsTab.addNodeToGridPane(tmpBarForButtons, 0,1,1,1);
+        tmpFragmentsTab.addNodeToGridPane(tmpHBox, 1,1,1,1);
         tmpExportPdfButton.setOnAction(event->{
             tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
                     this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
@@ -402,9 +422,13 @@ public class MainViewController {
         tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
         Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
         Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
-        ButtonBar tmpItemizationTabButtonBar = new ButtonBar();
-        tmpItemizationTabButtonBar.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
-        tmpItemizationTab.addNodeToGridPane(tmpItemizationTabButtonBar, 0, 1,1,1);
+        HBox tmpItemizationTabHBox = new HBox();
+        HBox.setMargin(tmpItemizationExportCsvButton, new Insets(this.insets));
+        HBox.setMargin(tmpItemizationTabExportPDfButton, new Insets(this.insets));
+        tmpItemizationExportCsvButton.setPrefWidth(this.buttonWidht);
+        tmpItemizationTabExportPDfButton.setPrefWidth(this.buttonWidht);
+        tmpItemizationTabHBox.getChildren().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
+        tmpItemizationTab.addNodeToGridPane(tmpItemizationTabHBox, 1, 1,1,1);
         tmpItemizationExportCsvButton.setOnAction(event-> {
             tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList,aFragmentationName,
                     ',');

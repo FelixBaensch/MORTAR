@@ -68,7 +68,8 @@ public class Exporter {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(Exporter.class.getName());
-
+    //</editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="Private class constants">
     /**
      * Font of any cells
      */
@@ -165,21 +166,21 @@ public class Exporter {
                 File tmpFragmentFile = this.getImageFile(tmpBufferedImageFragment);
                 Image tmpImageFragment = Image.getInstance(tmpFragmentFile.getAbsolutePath());
                 //inserts the data into the table
-                PdfPCell cell1 = new PdfPCell(new Paragraph(tmpStringAbsoluteFrequency));
-                cell1.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                PdfPCell cell2 = new PdfPCell(new Paragraph(tmpStringAbsolutePercentage));
-                cell2.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                PdfPCell cell3 = new PdfPCell(new Paragraph(tmpStringMoleculeFrequency));
-                cell3.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                PdfPCell cell4 = new PdfPCell(new Paragraph(tmpStringMoleculePercentage));
-                cell4.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfFrequency = new PdfPCell(new Paragraph(tmpStringAbsoluteFrequency));
+                tmpCellOfFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfPercentage = new PdfPCell(new Paragraph(tmpStringAbsolutePercentage));
+                tmpCellOfPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfMolFrequency = new PdfPCell(new Paragraph(tmpStringMoleculeFrequency));
+                tmpCellOfMolFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfMolPercentage = new PdfPCell(new Paragraph(tmpStringMoleculePercentage));
+                tmpCellOfMolPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 tmpImageFragmentCell.addElement(tmpImageFragment);
                 tmpFragmentationTable.addCell(tmpImageFragmentCell);
                 tmpFragmentationTable.addCell(tmpFragmentDataModel.getUniqueSmiles());
-                tmpFragmentationTable.addCell(cell1);
-                tmpFragmentationTable.addCell(cell2);
-                tmpFragmentationTable.addCell(cell3);
-                tmpFragmentationTable.addCell(cell4);
+                tmpFragmentationTable.addCell(tmpCellOfFrequency);
+                tmpFragmentationTable.addCell(tmpCellOfPercentage);
+                tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
+                tmpFragmentationTable.addCell(tmpCellOfMolPercentage);
                 tmpFragmentFile.delete();
             }
             tmpDocument.add(tmpHeader);
@@ -357,8 +358,7 @@ public class Exporter {
      * @param aMoleculeDataModelList a list to iterate through MoleculeDataModel
      * @return  table with this informations
      */
-    private PdfPTable createHeaderTable(ObservableList<FragmentDataModel> aFragmentDataModelList,
-                                        ObservableList<MoleculeDataModel> aMoleculeDataModelList, String anAlgorthimName) {
+    private PdfPTable createHeaderTable(ObservableList<FragmentDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String anAlgorthimName) {
         int tmpFragmentNumbers =  aFragmentDataModelList.size();
         int tmpMoleculeNumbers = aMoleculeDataModelList.size();
         // creates the header
