@@ -45,7 +45,7 @@ public class MoleculeDataModel {
     //TODO: Omit? Is not the unique SMILES the id for us?
     private String iD;
     private String name;
-    private String smiles;
+    private String uniqueSmiles;
     private BooleanProperty selection;
     private HashMap<String, Boolean> hasFragmentsMap; // HashMap<FragmentationAlgorithmName, hasFragments>
     private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
@@ -57,15 +57,13 @@ public class MoleculeDataModel {
      * Constructor for MoleculeDataModel. From the atom container, only the properties map is retained, and
      * the molecular information is taken from the given unique SMILES code.
      *
-     * @param anID - unique identifier
      * @param anAtomContainer - IAtomContainer
      * @param aUniqueSmiles - unique SMILES representation of the molecule
      */
-    public MoleculeDataModel(String anID, IAtomContainer anAtomContainer, String aUniqueSmiles){
-        this.iD = anID;
+    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer){
         this.name = anAtomContainer.getTitle();
         this.properties = anAtomContainer.getProperties();
-        this.smiles = aUniqueSmiles;
+        this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
         this.fragments = new HashMap<>(5);
         this.fragmentFrequencies = new HashMap<>(5);
@@ -73,14 +71,6 @@ public class MoleculeDataModel {
     }
     //
     //<editor-fold desc="public properties">
-    /**
-     * Returns unique identifier as String
-     * @return String unique identifier
-     */
-    public String getId(){
-        return this.iD;
-    }
-    //
     /**
      * Returns name (String) of the molecule, if it is null, "NoName" will be returned
      * @return String name of molecule
@@ -99,17 +89,17 @@ public class MoleculeDataModel {
         SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         //TODO: Necessary here? For fragments definitely necessary, but here also?
         tmpSmiPar.kekulise(false);
-        IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.smiles);
+        IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
         tmpAtomContainer.addProperties(this.properties);
         return tmpAtomContainer;
     }
     //
     /**
-     * Returns SMILES
-     * @return String SMILES
+     * Returns unique SMILES
+     * @return String uniqueSmiles
      */
-    public String getSmiles(){
-        return this.smiles;
+    public String getUniqueSmiles(){
+        return this.uniqueSmiles;
     }
     //
     //TODO: should this not be getSelection(), following the properties naming convention?
@@ -150,7 +140,7 @@ public class MoleculeDataModel {
             return this.fragments.get(aKey);
         }
         else{
-            //ToDO
+            //TODO
             return null;
         }
     }
@@ -218,7 +208,7 @@ public class MoleculeDataModel {
             return new ImageView(DepictionUtil.depictImage(tmpAtomContainer));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250,250));
+            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250, 250));
         }
     }
     //

@@ -215,11 +215,9 @@ public class MainViewController {
             tmpAtomContainerSet = tmpImporter.importMoleculeFile(aParentStage);
         } catch (Exception anException) {
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            GuiUtil.GuiExceptionAlert(
-                    Message.get("Error.ExceptionAlert.Title"),
+            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Importer.FileImportExceptionAlert.Header"),
-                    Message.get("Importer.FileImportExceptionAlert.Text") + "\n" +
-                            FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
+                    Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
                     anException);
             return;
         }
@@ -236,7 +234,7 @@ public class MainViewController {
             } catch (CDKException | NullPointerException anException){
                 MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
-            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer.getID(), tmpAtomContainer, tmpSmiles);
+            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer);
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
