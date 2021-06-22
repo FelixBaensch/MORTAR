@@ -45,6 +45,26 @@ public final class BasicDefinitions {
     public static final String FILENAME_TIMESTAMP_FORMAT = "uuuu_MM_dd_HH_mm";
 
     /**
+     * Upper limit of bytes used in the log-file folder for entering the managing routine
+     */
+    public static final int LIMIT_OF_BYTES_USED_BY_LOG_FILES = 1000000;
+
+    /**
+     * Upper limit of files stored in the log-file folder for entering the managing routine
+     */
+    public static final int UPPER_LIMIT_OF_LOG_FILES = 64;
+
+    /**
+     * Lower limit of files stored in the log-file folder for entering the managing routine
+     */
+    public static final int LOWER_LIMIT_OF_LOG_FILES = 32;
+
+    /**
+     * Factor by which to trim the log-file folder
+     */
+    public static final double FACTOR_TO_TRIM_LOG_FILE_FOLDER = 0.2;
+
+    /**
      * Possible SMILES file separators used to separate SMILES code from ID
      */
     public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {"\t", ";", ",", " "};
