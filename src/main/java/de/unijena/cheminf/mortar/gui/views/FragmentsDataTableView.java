@@ -74,7 +74,7 @@ public class FragmentsDataTableView extends TableView {
     public FragmentsDataTableView(){
         super();
         this.setEditable(false);
-        DecimalFormat tmpDecForm = new DecimalFormat("#.###");
+        DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
         //-structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
         this.structureColumn.setMinWidth(150);
@@ -128,7 +128,7 @@ public class FragmentsDataTableView extends TableView {
                 if(empty){
                     setText(null);
                 } else{
-                    setText(tmpDecForm.format(value));
+                    setText(tmpPercentageForm.format(value));
                 }
             }
         });
@@ -163,7 +163,7 @@ public class FragmentsDataTableView extends TableView {
                 if (empty) {
                     setText(null);
                 } else {
-                    setText(tmpDecForm.format(value));
+                    setText(tmpPercentageForm.format(value));
                 }
             }
         });
