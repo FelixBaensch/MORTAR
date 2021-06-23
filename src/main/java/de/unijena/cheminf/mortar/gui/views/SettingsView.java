@@ -183,7 +183,9 @@ public class SettingsView extends AnchorPane {
             }
             else if(tmpProperty instanceof SimpleIntegerProperty){
                 TextField tmpIntegerTextField = new TextField();
-                tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH_VALUE);
+                tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
                 TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToIntegerConverter(), 0, GuiUtil.GetIntegerFilter());
                 tmpIntegerTextField.setTextFormatter(tmpFormatter);
                 tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
@@ -193,7 +195,9 @@ public class SettingsView extends AnchorPane {
             }
             else if(tmpProperty instanceof SimpleDoubleProperty){
                 TextField tmpDoubleTextField = new TextField();
-                tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH_VALUE);
+                tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
                 TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToDoubleConverter(), 0.0, GuiUtil.GetDoubleFilter());
                 tmpDoubleTextField.setTextFormatter(tmpFormatter);
                 tmpFormatter.valueProperty().bindBidirectional(tmpProperty);

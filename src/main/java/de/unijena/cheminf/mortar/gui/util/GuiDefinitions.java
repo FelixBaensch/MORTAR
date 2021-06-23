@@ -49,7 +49,8 @@ public final class GuiDefinitions {
 
     public static final double GUI_CONTROL_CONTAINER_HEIGHT = 50.0;
 
-    public static final double GUI_TEXT_FIELD_WIDTH_VALUE = 50.0;
+    public static final double GUI_TEXT_FIELD_PREF_WIDTH_VALUE = 50.0;
+    public static final double GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE = 70.0;
     /**
      *  Selection column width
      */
