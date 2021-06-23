@@ -91,16 +91,6 @@ public class MainViewController {
     private FragmentationService fragmentationService;
     private Button fragmentationButton;
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
-
-    /**
-     *
-     */
-    private double insets = 13;
-
-    /**
-     *
-     */
-    private double buttonWidht = 75;
     //</editor-fold>
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
     /**
@@ -271,8 +261,9 @@ public class MainViewController {
         tmpMoleculesTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
         this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
         HBox tmpHBox = new HBox();
-        HBox.setMargin(this.fragmentationButton, new Insets(this.insets));
-        this.fragmentationButton.setPrefWidth(this.buttonWidht);
+        HBox.setMargin(this.fragmentationButton, new Insets(GuiDefinitions.GUI_BUTTON_SPACING_VALUE));
+        this.fragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpHBox.getChildren().add(this.fragmentationButton);
         tmpMoleculesTab.addNodeToGridPane(tmpHBox, 1,1,1,1);
         //TODO: disable 'tmpFragmentButton' while fragmentation is running
@@ -375,10 +366,12 @@ public class MainViewController {
         Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
         Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
         HBox tmpHBox = new HBox();
-        HBox.setMargin(tmpExportCsvButton, new Insets(this.insets));
-        HBox.setMargin(tmpExportPdfButton, new Insets(this.insets));
-        tmpExportCsvButton.setPrefWidth(this.buttonWidht);
-        tmpExportPdfButton.setPrefWidth(this.buttonWidht);
+        tmpHBox.setPadding(new Insets(GuiDefinitions.GUI_BUTTON_INSETS_VALUE));
+        tmpHBox.setSpacing(GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
+        tmpExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpExportPdfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpHBox.getChildren().addAll(tmpExportCsvButton, tmpExportPdfButton);
         Exporter tmpExporter = new Exporter();
         tmpFragmentsTab.addNodeToGridPane(tmpHBox, 1,1,1,1);
@@ -423,10 +416,12 @@ public class MainViewController {
         Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
         Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
         HBox tmpItemizationTabHBox = new HBox();
-        HBox.setMargin(tmpItemizationExportCsvButton, new Insets(this.insets));
-        HBox.setMargin(tmpItemizationTabExportPDfButton, new Insets(this.insets));
-        tmpItemizationExportCsvButton.setPrefWidth(this.buttonWidht);
-        tmpItemizationTabExportPDfButton.setPrefWidth(this.buttonWidht);
+        tmpItemizationTabHBox.setPadding(new Insets(GuiDefinitions.GUI_BUTTON_INSETS_VALUE));
+        tmpItemizationTabHBox.setSpacing(GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
+        tmpItemizationExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpItemizationExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpItemizationTabExportPDfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpItemizationTabExportPDfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpItemizationTabHBox.getChildren().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
         tmpItemizationTab.addNodeToGridPane(tmpItemizationTabHBox, 1, 1,1,1);
         tmpItemizationExportCsvButton.setOnAction(event-> {
