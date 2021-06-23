@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -35,7 +36,7 @@ import java.util.List;
  + FragmentsDataTableView extends TableView
  * Customized table view for fragments data table view
  */
-public class FragmentsDataTableView extends TableView {
+public class FragmentsDataTableView extends TableView implements IDataTableView{
 
     //<editor-fold desc="private class variables", defaultstate="collapsed">
     /**
@@ -65,7 +66,7 @@ public class FragmentsDataTableView extends TableView {
     /**
      * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination)
      */
-    private List<FragmentDataModel> itemsList;
+    private List<MoleculeDataModel> itemsList;
     //</editor-fold>
     //
     /**
@@ -178,8 +179,8 @@ public class FragmentsDataTableView extends TableView {
     public TableColumn getPercentageColumn() { return this.percentageColumn; }
     public TableColumn getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
     public TableColumn getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
-    public List<FragmentDataModel> getItemsList() { return this.itemsList; }
-    public void setItemsList(List<FragmentDataModel> aListOfFragments){
+    public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;
     }
     //</editor-fold>

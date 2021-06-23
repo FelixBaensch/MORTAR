@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
+import de.unijena.cheminf.mortar.gui.views.IDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
@@ -47,7 +48,15 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.SortEvent;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -63,7 +72,12 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -279,15 +293,7 @@ public class MainViewController {
                     TableView tmpTableView = ((GridTabForTableView) tmpTab).getTableView();
                     int tmpListSize = 0;
                     //TODO: change this when FragmentDataModel extends MoleculeDataModel via Interface IDataTableView
-                    if(tmpTableView.getClass().equals(MoleculesDataTableView.class)){
-                        tmpListSize = ((MoleculesDataTableView)tmpTableView).getItemsList().size();
-                    }
-                    else if(tmpTableView.getClass().equals(FragmentsDataTableView.class)){
-                        tmpListSize = ((FragmentsDataTableView)tmpTableView).getItemsList().size();
-                    }
-                    else if(tmpTableView.getClass().equals(ItemizationDataTableView.class)){
-                        tmpListSize = ((ItemizationDataTableView)tmpTableView).getItemsList().size();
-                    }
+                    tmpListSize = ((IDataTableView)tmpTableView).getItemsList().size();
                     int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
                     int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
                     int tmpPageCount = tmpListSize / tmpRowsPerPage;
@@ -443,7 +449,7 @@ public class MainViewController {
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name(), tmpFragmentsDataTableView);
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
-        ObservableList<FragmentDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
+        ObservableList<MoleculeDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
         tmpFragmentsDataTableView.setItemsList(tmpList);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = tmpList.size() / tmpRowsPerPage;
@@ -536,10 +542,12 @@ public class MainViewController {
         this.mainTabPane.getTabs().clear();
     }
     //
-    private void sortGivenFragmentListByPropertyAndSortType(List<FragmentDataModel> aList, String aProperty, String aSortType){
-        Collections.sort(aList, new Comparator<FragmentDataModel>() {
+    private void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType){
+        Collections.sort(aList, new Comparator<MoleculeDataModel>() {
             @Override
-            public int compare(FragmentDataModel f1, FragmentDataModel f2) {
+            public int compare(MoleculeDataModel m1, MoleculeDataModel m2) {
+                FragmentDataModel f1 = (FragmentDataModel)m1;
+                FragmentDataModel f2 = (FragmentDataModel)m2;
                 switch(aProperty){
                     case "absoluteFrequency":
                         switch(aSortType){

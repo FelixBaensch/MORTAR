@@ -41,7 +41,7 @@ import java.util.List;
  * Custom table view for the itemization table view
  *
  */
-public class ItemizationDataTableView extends TableView {
+public class ItemizationDataTableView extends TableView implements IDataTableView{
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
@@ -109,11 +109,10 @@ public class ItemizationDataTableView extends TableView {
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, BorderPane> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
-                if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).size())
+                if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size())
                     return null;
-//                return cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex).getStructure();
-                FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(aFragmentationName).get(tmpIndex);
-                String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
+                FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).get(tmpIndex);
+                String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
                 ImageView tmpStructureImg = tmpFragment.getStructure();
                 Text tmpFrequencyText = new Text(tmpFrequency);
                 BorderPane tmpBorderPane = new BorderPane();
@@ -131,7 +130,7 @@ public class ItemizationDataTableView extends TableView {
     }
 
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
-    public void setItemsList(List<MoleculeDataModel> aListOfFragments){
+    public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;
     }
 }

@@ -37,7 +37,7 @@ import java.util.List;
  * MoleculesDataTableView extends TableView
  * Customized table view for molecules data table view
  */
-public class MoleculesDataTableView extends TableView {
+public class MoleculesDataTableView extends TableView implements IDataTableView {
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
@@ -122,7 +122,7 @@ public class MoleculesDataTableView extends TableView {
     }
     public CheckBox getSelectAllCheckBox() { return this.selectAllCheckBox; }
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
-    public void setItemsList(List<MoleculeDataModel> aListOfFragments){
+    public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;
     }
     //</editor-fold>
