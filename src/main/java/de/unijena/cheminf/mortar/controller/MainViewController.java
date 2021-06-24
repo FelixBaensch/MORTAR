@@ -250,7 +250,7 @@ public class MainViewController {
             try {
                 SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique);
                 tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
-            } catch (CDKException | NullPointerException anException){
+            } catch (CDKException | NullPointerException | IllegalArgumentException anException){
                 MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
             MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer);
@@ -472,7 +472,7 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+        tmpFragmentsTab.addPaginationToGridPane(tmpPagination, 0,0,2,2);
         Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
         Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
         ButtonBar tmpButtonBarFragments = new ButtonBar();
@@ -529,7 +529,7 @@ public class MainViewController {
         tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
-        tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
+        tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems, 0,0,2,2);
         Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
         Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
         ButtonBar tmpButtonBarItemization = new ButtonBar();
