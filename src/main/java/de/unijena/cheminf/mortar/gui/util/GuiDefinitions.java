@@ -41,9 +41,17 @@ public final class GuiDefinitions {
      */
     public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 768.0;
 
-    public static final double GUI_BUTTON_WIDTH_VALUE = 40.0;
+    public static final double GUI_BUTTON_WIDTH_VALUE = 75.0;
 
     public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
+    /**
+     * Value for the distance between the buttons
+     */
+    public static final double GUI_BUTTON_SPACING_VALUE = 13.0;
+    /**
+     * Value for the Button insets
+     */
+    public static final double GUI_BUTTON_INSETS_VALUE = 13.0;
 
     public static final double GUI_STATUSBAR_HEIGHT_VALUE = 25.0;
 

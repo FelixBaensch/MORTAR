@@ -34,10 +34,12 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -46,6 +48,8 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -330,7 +334,12 @@ public class MainViewController {
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
         this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
-        tmpMoleculesTab.addNodeToGridPane(this.fragmentationButton, 1,1,1,1);
+        HBox tmpHBox = new HBox();
+        HBox.setMargin(this.fragmentationButton, new Insets(GuiDefinitions.GUI_BUTTON_SPACING_VALUE));
+        this.fragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpHBox.getChildren().add(this.fragmentationButton);
+        tmpMoleculesTab.addNodeToGridPane(tmpHBox, 1,1,1,1);
         //TODO: disable 'tmpFragmentButton' while fragmentation is running
         this.fragmentationButton.setOnAction(event->{
             //TODO: add implementation to start fragmentation algorithm
@@ -460,17 +469,39 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpFragmentsTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
-        tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
-            if(event.getSource().getSortOrder().size() == 0)
-                return;
-            String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
-            TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
-            sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
-            int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
-            int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
-            event.getSource().getItems().clear();
-            event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
+        tmpFragmentsTab.addNodeToGridPane(tmpPagination, 0,0,2,2);
+        Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
+        Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
+        HBox tmpHBox = new HBox();
+        tmpHBox.setPadding(new Insets(GuiDefinitions.GUI_BUTTON_INSETS_VALUE));
+        tmpHBox.setSpacing(GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
+        tmpExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpExportPdfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpHBox.getChildren().addAll(tmpExportCsvButton, tmpExportPdfButton);
+        Exporter tmpExporter = new Exporter();
+        tmpFragmentsTab.addNodeToGridPane(tmpHBox, 1,1,1,1);
+        tmpExportPdfButton.setOnAction(event->{
+            tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
+                    this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+        });
+        tmpExportCsvButton.setOnAction(event->{
+            tmpExporter.createFragmentationTabCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
+                    ',');
+        });
+        tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
+            @Override
+            public void handle(SortEvent<TableView> event) {
+                int i = 5;
+                String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
+                TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
+                sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList(), tmpSortProp, tmpSortType.toString());
+                int fromIndex = tmpPagination.getCurrentPageIndex() * rowsPerPage;
+                int toIndex = Math.min(fromIndex + rowsPerPage, ((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().size());
+                event.getSource().getItems().clear();
+                event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getFragmentDataModelList().subList(fromIndex,toIndex));
+            }
         });
         //itemization tab
         //TODO: Specify more clearly what the "amount" is
@@ -495,6 +526,26 @@ public class MainViewController {
         tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
+        tmpItemizationTab.addNodeToGridPane(tmpPaginationItems, 0,0,2,2);
+        Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
+        Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
+        HBox tmpItemizationTabHBox = new HBox();
+        tmpItemizationTabHBox.setPadding(new Insets(GuiDefinitions.GUI_BUTTON_INSETS_VALUE));
+        tmpItemizationTabHBox.setSpacing(GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
+        tmpItemizationExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpItemizationExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpItemizationTabExportPDfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpItemizationTabExportPDfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpItemizationTabHBox.getChildren().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
+        tmpItemizationTab.addNodeToGridPane(tmpItemizationTabHBox, 1, 1,1,1);
+        tmpItemizationExportCsvButton.setOnAction(event-> {
+            tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList,aFragmentationName,
+                    ',');
+        });
+        tmpItemizationTabExportPDfButton.setOnAction(event -> {
+            tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName),
+                    this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+        });
         tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems,0,0,2,2);
         //
         this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);

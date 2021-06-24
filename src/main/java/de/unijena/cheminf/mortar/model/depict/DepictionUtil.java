@@ -32,14 +32,24 @@ import java.awt.image.BufferedImage;
 public class DepictionUtil {
 
     /**
-     *
+     * Creates a Image of the AtomContainer
      * @param anAtomContainer
      * @return
      */
     public static Image depictImage(IAtomContainer anAtomContainer) { //TODO: add , int aWidth, int aHeight
+        return depictImageWithZoom(anAtomContainer, 1.0);
+    }
+
+    /**
+     * Creates a Image of the AtomContainer with a any zoom factor
+     * @param anAtomContainer
+     * @param aZoom
+     * @return
+     */
+    public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom) { //TODO: add , int aWidth, int aHeight
         try {
             DepictionGenerator tmpGenerator = new DepictionGenerator();
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(250,250); //TODO: add .withSize(aWidth, aHeight)
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(250,250).withZoom(aZoom); //TODO: add .withSize(aWidth, aHeight)
             BufferedImage tmpBufferedImage = null;
             tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
