@@ -69,6 +69,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
@@ -249,7 +250,16 @@ public class MainViewController {
             String tmpSmiles = "";
             try {
                 SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique);
-                tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                try {
+                    tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                } catch (CDKException anException){
+                    try {
+                        Kekulization.kekulize(tmpAtomContainer);
+                        tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                    } catch (CDKException anInnerException){
+                        throw anInnerException;
+                    }
+                }
             } catch (CDKException | NullPointerException | IllegalArgumentException anException){
                 MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
