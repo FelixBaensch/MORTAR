@@ -117,7 +117,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
                 Text tmpFrequencyText = new Text(tmpFrequency);
                 BorderPane tmpBorderPane = new BorderPane();
                 HBox tmpHBox = new HBox(tmpFrequencyText);
-                tmpHBox.setAlignment(Pos.BOTTOM_LEFT);
+                tmpHBox.setAlignment(Pos.BOTTOM_RIGHT);
                 tmpBorderPane.setBottom(tmpHBox);
                 tmpBorderPane.setCenter(tmpStructureImg);
                 return tmpBorderPane;

@@ -110,7 +110,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.frequencyColumn.setEditable(false);
         this.frequencyColumn.setSortable(true);
         this.frequencyColumn.setCellValueFactory(new PropertyValueFactory("absoluteFrequency"));
-        this.frequencyColumn.setStyle("-fx-alignment: CENTER");
+        this.frequencyColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.frequencyColumn);
         //-percentageColumn
         this.percentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.percentageColumn.header"));
@@ -133,7 +133,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
                 }
             }
         });
-        this.percentageColumn.setStyle("-fx-alignment: CENTER");
+        this.percentageColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.percentageColumn);
         //-frequencyColumn
         this.moleculeFrequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.header"));
@@ -145,7 +145,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculeFrequencyColumn.setEditable(false);
         this.moleculeFrequencyColumn.setSortable(true);
         this.moleculeFrequencyColumn.setCellValueFactory(new PropertyValueFactory("moleculeFrequency"));
-        this.moleculeFrequencyColumn.setStyle("-fx-alignment: CENTER");
+        this.moleculeFrequencyColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.moleculeFrequencyColumn);
         //-percentageColumn
         this.moleculePercentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
@@ -168,7 +168,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
                 }
             }
         });
-        this.moleculePercentageColumn.setStyle("-fx-alignment: CENTER");
+        this.moleculePercentageColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.moleculePercentageColumn);
     }
     //
