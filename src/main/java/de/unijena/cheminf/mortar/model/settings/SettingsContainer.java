@@ -100,6 +100,16 @@ public class SettingsContainer {
      * Default value of whether to add implicit hydrogen atoms to open valences in the imported molecules.
      */
     public static final boolean ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT = true;
+
+    /** TODO @Samuel
+     * Name of preference wrapping the setting whether to keep the atom container in the molecule/fragment data model.
+     */
+    public static final String KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME = "Keep atom container in data model preference";
+
+    /** TODO @Samuel
+     * Default value of whether to keep the atom container in the molecule/fragment data model.
+     */
+    public static final boolean KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT = false;
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
@@ -142,6 +152,16 @@ public class SettingsContainer {
      * Preference of implicit hydrogens setting.
      */
     private BooleanPreference addImplicitHydrogensAtImportPreference;
+
+    /** TODO @Samuel
+     * Property of keep atom container setting.
+     */
+    private SimpleBooleanProperty keepAtomContainerInDataModelSetting;
+
+    /** TODO @Samuel
+     * Preference of keep atom container setting.
+     */
+    private BooleanPreference keepAtomContainerInDataModelPreference;
 
     /**
      * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
@@ -282,6 +302,26 @@ public class SettingsContainer {
     }
 
     /**
+     * TODO @Samuel
+     * Returns the current value of the keep atom container in data model setting.
+     *
+     * @return keep atom container in data model setting value
+     */
+    public boolean getKeepAtomContainerInDataModelSetting() {
+        return this.keepAtomContainerInDataModelSetting.get();
+    }
+
+    /**
+     * TODO @Samuel
+     * Returns the property wrapping the keep atom container in data model setting.
+     *
+     * @return keep atom container in data model setting property
+     */
+    public Property keepAtomContainerInDataModelSettingProperty() {
+        return this.keepAtomContainerInDataModelSetting;
+    }
+
+    /**
      * Sets the setting for how many rows/molecules should be displayed per page in the tabs.
      *
      * @param anInteger the number of molecules displayed per page in the tabs
@@ -341,6 +381,16 @@ public class SettingsContainer {
     }
 
     /**
+     * TODO @Samuel     Method only used in the test class
+     * Sets the setting for whether to keep the atom container in the molecule/fragment data model.
+     *
+     * @param aBoolean whether to keep the atom container in the molecule/fragment data model
+     */
+    public void setKeepAtomContainerInDataModelSetting(boolean aBoolean) {
+        this.keepAtomContainerInDataModelSetting.set(aBoolean);
+    }
+
+    /**
      * Restores all setting to their default setting according to the respective public constants in this class.
      */
     public void restoreDefaultSettings() {
@@ -348,6 +398,8 @@ public class SettingsContainer {
         this.numberOfTasksForFragmentationSetting.set(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
+        //TODO @Samuel
+        this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
     }
     //</editor-fold>
     //
@@ -401,6 +453,14 @@ public class SettingsContainer {
         } else {
             throw new IOException("One or multiple settings could not be restored from the previous run.");
         }
+        //TODO @Samuel
+        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME)) {
+            this.keepAtomContainerInDataModelPreference =
+                    (BooleanPreference) this.preferenceContainer.getPreferences(
+                            SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME)[0];
+        } else {
+            throw new IOException("One or multiple settings could not be restored from the previous run.");
+        }
     }
 
     /**
@@ -425,6 +485,11 @@ public class SettingsContainer {
                 SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME,
                 SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.preferenceContainer.add(this.addImplicitHydrogensAtImportPreference);
+        //TODO @Samuel
+        this.keepAtomContainerInDataModelPreference = new BooleanPreference(
+                SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME,
+                SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
+        this.preferenceContainer.add(this.keepAtomContainerInDataModelPreference);
     }
 
     /**
@@ -493,10 +558,22 @@ public class SettingsContainer {
                 super.set(newValue);
             }
         };
+        //TODO @Samuel
+        this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
+                "Keep AtomContainers in the DataModels setting",
+                this.keepAtomContainerInDataModelPreference.getContent()) {
+            @Override
+            public void set(boolean newValue) {
+                SettingsContainer.this.keepAtomContainerInDataModelPreference.setContent(newValue);
+                super.set(newValue);
+            }
+        };
         this.settings = new ArrayList<Property>(3);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
+        //TODO @Samuel
+        this.settings.add(this.keepAtomContainerInDataModelSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
     }
 

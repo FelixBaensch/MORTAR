@@ -43,10 +43,11 @@ public class MoleculeDataModel {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     //TODO: Omit? Is not the unique SMILES the id for us?
-    private String iD;
     private String name;
     private String uniqueSmiles;
     private BooleanProperty selection;
+    private boolean keepAtomContainer;
+    private IAtomContainer atomContainer;
     private HashMap<String, Boolean> hasFragmentsMap; // HashMap<FragmentationAlgorithmName, hasFragments>
     private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
     private HashMap<String, HashMap<String, Integer>> fragmentFrequencies; // HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
@@ -54,20 +55,36 @@ public class MoleculeDataModel {
     //</editor-fold>
     //
     /**
+     * TODO: adjust doc string to changes!  @Samuel
      * Constructor for MoleculeDataModel. From the atom container, only the properties map is retained, and
      * the molecular information is taken from the given unique SMILES code.
      *
-     * @param anAtomContainer - IAtomContainer
      * @param aUniqueSmiles - unique SMILES representation of the molecule
+     * @param aName - name of the molecule
+     * @param aPropertyMap - property map of the molecule
      */
-    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer){
-        this.name = anAtomContainer.getTitle();
-        this.properties = anAtomContainer.getProperties();
+    public MoleculeDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap){
+        this.keepAtomContainer = false;
+        this.name = aName;
+        this.properties = aPropertyMap;
         this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
         this.fragments = new HashMap<>(5);
         this.fragmentFrequencies = new HashMap<>(5);
         this.hasFragmentsMap = new HashMap<>(5); //TODO: magic number go to definitions
+    }
+    //
+    /**
+     * TODO @Samuel
+     * Constructor for MoleculeDataModel. Retains the given atom container.
+     *
+     * @param aUniqueSmiles - unique SMILES representation of the molecule
+     * @param anAtomContainer - AtomContainer of the molecule
+     */
+    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer){
+        this(aUniqueSmiles, anAtomContainer.getTitle(), anAtomContainer.getProperties());
+        this.keepAtomContainer = true;
+        this.atomContainer = anAtomContainer;
     }
     //
     //<editor-fold desc="public properties">
@@ -82,11 +99,22 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Returns IAtomContainer which represents the molecule
+     * TODO: adjust to changes! @Samuel
+     * Returns IAtomContainer which represents the molecule. Depending on the preference, ....
      * @return IAtomContainer
      */
     public IAtomContainer getAtomContainer() throws CDKException {
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        SmilesParser tmpSmiPar;
+        if(keepAtomContainer){
+            if(this.atomContainer == null){
+                tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+                tmpSmiPar.kekulise(false);
+                this.atomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
+                this.atomContainer.addProperties(this.properties);
+            }
+            return this.atomContainer;
+        }
+        tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         //TODO: Necessary here? For fragments definitely necessary, but here also?
         tmpSmiPar.kekulise(false);
         IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
@@ -221,6 +249,15 @@ public class MoleculeDataModel {
     }
     //
     /**
+     * TODO @Samuel
+     * Returns whether the molecule's atom container is kept or not  TODO? @Samuel
+     * @return boolean keepAtomContainer
+     */
+    public boolean getKeepAtomContainer(){
+        return this.keepAtomContainer;
+    }
+    //
+    /**
      * Sets given String as name of this molecule
      * @param aName String
      */
@@ -234,6 +271,17 @@ public class MoleculeDataModel {
      */
     public void setSelection(boolean aValue){
         this.selection.set(aValue);
+    }
+    //
+    /**
+     * TODO @Samuel
+     * Sets whether the molecule's atom container should be kept. If not, the atom container is set to null
+     * @param aValue boolean
+     */
+    public void setKeepAtomContainer(boolean aValue){
+        if(!(this.keepAtomContainer = aValue)){
+            this.atomContainer = null;
+        }
     }
     //</editor-fold>
 }

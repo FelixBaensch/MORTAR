@@ -20,13 +20,9 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
-import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
-import javafx.scene.image.ImageView;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Map;
 
 /**
  * Model class for fragment data
@@ -43,16 +39,30 @@ public class FragmentDataModel extends MoleculeDataModel {
     //</editor-fold>
     //
     /**
+     * TODO: adjust doc string  @Samuel
      * Constructor, sets absolute frequency to 1. From the atom container, only the properties map is retained, and
      * the molecular information is taken from the given unique SMILES code.
      *
      * @param aUniqueSmiles - unique SMILES code
-     * @param anAtomContainer - IAtomContainer
+     * @param aName - name of the molecule
+     * @param aPropertyMap - property map of the molecule
+     */
+    public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) {
+        super(aUniqueSmiles, aName, aPropertyMap);
+        this.absoluteFrequency = 1;
+        //TODO: Set other frequencies to 0?
+    }
+    //
+    /**
+     * TODO @Samuel
+     * Constructor, sets absolute frequency to 1. Retains the given data as atom container.
+     *
+     * @param aUniqueSmiles - unique SMILES representation of the fragment
+     * @param anAtomContainer - AtomContainer of the molecule
      */
     public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {
         super(aUniqueSmiles, anAtomContainer);
         this.absoluteFrequency = 1;
-        //TODO: Set other frequencies to 0?
     }
     //
     /**

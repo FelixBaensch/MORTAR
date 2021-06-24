@@ -234,7 +234,13 @@ public class MainViewController {
             } catch (CDKException | NullPointerException anException){
                 MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
-            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer);
+            //TODO @Samuel
+            MoleculeDataModel tmpMoleculeDataModel;
+            if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer);
+            } else {
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
+            }
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
@@ -300,6 +306,12 @@ public class MainViewController {
                     ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
                     ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
+                }
+            }
+            //TODO @Samuel
+            if(tmpSettingsViewController.hasKeepAtomContainerInDataModelChanged()){
+                for(MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList){
+                    tmpMoleculeDataModel.setKeepAtomContainer(this.settingsContainer.getKeepAtomContainerInDataModelSetting());
                 }
             }
         });
