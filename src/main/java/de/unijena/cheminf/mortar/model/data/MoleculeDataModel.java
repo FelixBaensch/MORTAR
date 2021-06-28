@@ -21,6 +21,7 @@
 package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
@@ -40,30 +41,66 @@ import java.util.logging.Logger;
  * Model class for molecule data
  */
 public class MoleculeDataModel {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    //TODO: Omit? Is not the unique SMILES the id for us?
+    /**
+     * Name of molecule.
+     */
     private String name;
+    //
+    /**
+     * Unique SMILES code of molecule.
+     */
     private String uniqueSmiles;
+    //
+    /**
+     * Property whether the molecule is selected or not.
+     */
     private BooleanProperty selection;
+    //
+    /**
+     * Boolean, whether to keep the atom container of the molecule.
+     */
     private boolean keepAtomContainer;
+    //
+    /**
+     * Atom container of the molecule. Only initialized, if the atom container should be kept.
+     */
     private IAtomContainer atomContainer;
+    //
+    /**
+     * Map that contains fragmentation names as keys and boolean values that specify whether the molecule has fragments
+     * resulting from the respective fragmentation process or not.
+     */
     private HashMap<String, Boolean> hasFragmentsMap; // HashMap<FragmentationAlgorithmName, hasFragments>
+    //
+    /**
+     * Fragments map containing names of fragmentations done to the molecule as keys and lists of
+     * {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that resulted from these fragmentations
+     * as values.
+     */
     private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
+    //
+    /**
+     * Fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique SMILES
+     * representations of the fragments and values are the frequencies of the respective fragments in the molecule.
+     */
     private HashMap<String, HashMap<String, Integer>> fragmentFrequencies; // HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
+    //
+    /**
+     * Property map of this molecule.
+     */
     private Map<Object, Object> properties;
     //</editor-fold>
     //
     /**
-     * TODO: adjust doc string to changes!  @Samuel
-     * Constructor for MoleculeDataModel. From the atom container, only the properties map is retained, and
-     * the molecular information is taken from the given unique SMILES code.
+     * Constructor for MoleculeDataModel. Molecular information is taken from the given unique SMILES code. The data
+     * is not kept as atom container.
      *
      * @param aUniqueSmiles - unique SMILES representation of the molecule
      * @param aName - name of the molecule
      * @param aPropertyMap - property map of the molecule
      */
-    public MoleculeDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap){
+    public MoleculeDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) {
         this.keepAtomContainer = false;
         this.name = aName;
         this.properties = aPropertyMap;
@@ -75,13 +112,22 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * TODO @Samuel
      * Constructor for MoleculeDataModel. Retains the given atom container.
      *
-     * @param aUniqueSmiles - unique SMILES representation of the molecule
      * @param anAtomContainer - AtomContainer of the molecule
      */
-    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer){
+    public MoleculeDataModel(IAtomContainer anAtomContainer) {
+        this(null, anAtomContainer.getTitle(), anAtomContainer.getProperties());
+        try {
+            this.uniqueSmiles = ChemUtil.createUniqueSmiles(anAtomContainer);       //TODO: NullPointerException gets thrown in line 116 of ItemizationDataTableView
+        } catch (CDKException | NullPointerException | IllegalArgumentException anException) {
+            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString(), anException);
+        }
+        this.keepAtomContainer = true;
+        this.atomContainer = anAtomContainer;
+    }
+    //
+    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {    //TODO: remove! Only for test purposes
         this(aUniqueSmiles, anAtomContainer.getTitle(), anAtomContainer.getProperties());
         this.keepAtomContainer = true;
         this.atomContainer = anAtomContainer;
@@ -99,9 +145,9 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * TODO: adjust to changes! @Samuel
-     * Returns IAtomContainer which represents the molecule. Depending on the preference, ....
-     * @return IAtomContainer
+     * Returns IAtomContainer which represents the molecule. Depending on the preference, the atom container is saved
+     * as class variable.
+     * @return IAtomContainer AtomContainer of the molecule
      */
     public IAtomContainer getAtomContainer() throws CDKException {
         SmilesParser tmpSmiPar;
@@ -249,11 +295,10 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * TODO @Samuel
-     * Returns whether the molecule's atom container is kept or not  TODO? @Samuel
+     * Returns whether the atom container of the molecule should be kept or not
      * @return boolean keepAtomContainer
      */
-    public boolean getKeepAtomContainer(){
+    public boolean isKeepAtomContainer(){
         return this.keepAtomContainer;
     }
     //
@@ -274,7 +319,6 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * TODO @Samuel
      * Sets whether the molecule's atom container should be kept. If not, the atom container is set to null
      * @param aValue boolean
      */

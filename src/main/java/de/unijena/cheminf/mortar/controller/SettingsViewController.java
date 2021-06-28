@@ -66,7 +66,6 @@ public class SettingsViewController {
      */
     private boolean hasRowsPerPageChanged;
     /**
-     * TODO @Samuel
      * Boolean value to check if the keepAtomContainerInDataModel property has changed
      */
     private boolean hasKeepAtomContainerInDataModelChanged;
@@ -118,9 +117,10 @@ public class SettingsViewController {
         });
         //apply button
         this.settingsView.getApplyButton().setOnAction(event -> {
-            this.hasRowsPerPageChanged = (int) this.settingsContainer.rowsPerPageSettingProperty().getValue() != (int) this.recentProperties.get(this.settingsContainer.rowsPerPageSettingProperty().getName());
-            //TODO @Samuel  ask, if this is correct
-            this.hasKeepAtomContainerInDataModelChanged = this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getValue() != this.recentProperties.get(this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getName());
+            this.hasRowsPerPageChanged = (int) this.settingsContainer.rowsPerPageSettingProperty().getValue()
+                    != (int) this.recentProperties.get(this.settingsContainer.rowsPerPageSettingProperty().getName());
+            this.hasKeepAtomContainerInDataModelChanged = this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getValue()
+                    != this.recentProperties.get(this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getName());
             this.settingsViewStage.close();
         });
         //cancel button
@@ -156,7 +156,6 @@ public class SettingsViewController {
     }
 
     /**
-     * TODO @Samuel
      * Returns boolean value whether if keepAtomContainerInDataModel property has changed or not.
      * @return hasKeepAtomContainerInDataModelChanged
      */

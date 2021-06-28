@@ -28,20 +28,37 @@ import java.util.Map;
  * Model class for fragment data
  */
 public class FragmentDataModel extends MoleculeDataModel {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * Absolute frequency of the fragment.
+     */
     private int absoluteFrequency;
+    //
+    /**
+     * Absolute frequency of the fragment as a percentage.
+     */
     private double absolutePercentage;
+    //
+    /**
+     * Molecule frequency of the fragment.
+     */
     private int moleculeFrequency;
+    //
+    /**
+     * Molecule frequency of the fragment as a percentage.
+     */
     private double moleculePercentage;
+    //
     //TODO: omit?
+    /**
+     * Name of the used fragmentation algorithm.
+     */
     private String algorithmName;
     //</editor-fold>
     //
     /**
-     * TODO: adjust doc string  @Samuel
-     * Constructor, sets absolute frequency to 1. From the atom container, only the properties map is retained, and
-     * the molecular information is taken from the given unique SMILES code.
+     * Constructor, sets absolute frequency to 1. Molecular information is taken from the given unique SMILES code. The
+     * data is not kept as atom container.
      *
      * @param aUniqueSmiles - unique SMILES code
      * @param aName - name of the molecule
@@ -54,14 +71,14 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
-     * TODO @Samuel
      * Constructor, sets absolute frequency to 1. Retains the given data as atom container.
      *
-     * @param aUniqueSmiles - unique SMILES representation of the fragment
+     * @param aUniqueSmiles - unique SMILES representation of the fragment  TODO: remove!
      * @param anAtomContainer - AtomContainer of the molecule
      */
-    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {
-        super(aUniqueSmiles, anAtomContainer);
+    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {    //TODO: remove aUniqueSmiles
+        super(anAtomContainer);     //NullPointerException in line 116 of ItemizationDataTableView
+        //super(aUniqueSmiles, anAtomContainer);    //calls test constructor -> works without any problems
         this.absoluteFrequency = 1;
     }
     //
