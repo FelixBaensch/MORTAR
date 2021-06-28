@@ -234,10 +234,9 @@ public class MainViewController {
             } catch (CDKException | NullPointerException anException){
                 MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
-            //TODO @Samuel
             MoleculeDataModel tmpMoleculeDataModel;
             if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer);
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
             } else {
                 tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
             }
@@ -308,10 +307,14 @@ public class MainViewController {
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
                 }
             }
-            //TODO @Samuel
             if(tmpSettingsViewController.hasKeepAtomContainerInDataModelChanged()){
                 for(MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList){
                     tmpMoleculeDataModel.setKeepAtomContainer(this.settingsContainer.getKeepAtomContainerInDataModelSetting());
+                }
+                for(ObservableList<FragmentDataModel> tmpFragmentDataModelList : this.mapOfFragmentDataModelLists.values()){
+                    for(FragmentDataModel tmpFragmentDataModel : tmpFragmentDataModelList){
+                        tmpFragmentDataModel.setKeepAtomContainer(this.settingsContainer.getKeepAtomContainerInDataModelSetting());
+                    }
                 }
             }
         });
