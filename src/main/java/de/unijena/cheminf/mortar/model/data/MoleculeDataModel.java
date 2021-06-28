@@ -51,6 +51,7 @@ public class MoleculeDataModel {
     private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
     private HashMap<String, HashMap<String, Integer>> fragmentFrequencies; // HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
     private Map<Object, Object> properties;
+    private double structureImageHeight;
     //</editor-fold>
     //
     /**
@@ -205,7 +206,7 @@ public class MoleculeDataModel {
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImage(tmpAtomContainer));
+            return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, this.structureImageHeight));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250, 250));
@@ -234,6 +235,14 @@ public class MoleculeDataModel {
      */
     public void setSelection(boolean aValue){
         this.selection.set(aValue);
+    }
+
+    public double getStructureImageHeight() {
+        return structureImageHeight;
+    }
+
+    public void setStructureImageHeight(double structureImageHeight) {
+        this.structureImageHeight = structureImageHeight;
     }
     //</editor-fold>
 }

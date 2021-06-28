@@ -47,7 +47,7 @@ public final class GuiDefinitions {
     /**
      * Value for the distance between the buttons
      */
-    public static final double GUI_BUTTON_SPACING_VALUE = 13.0;
+    public static final double GUI_BUTTON_SPACING_VALUE = 5.0;
     /**
      * Value for the Button insets
      */
@@ -63,4 +63,17 @@ public final class GuiDefinitions {
      *  Selection column width
      */
     public static final double GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH = 40.0;
+    /**
+     * Height of the table view header
+     */
+    public static final double GUI_TABLE_VIEW_HEADER_HEIGHT = 25.0;
+    /**
+     * Min height for a structure image of a molecule shown in gui
+     */
+    public static final double GUI_STRUCTURE_IMAGE_MIN_HEIGHT = 50.0;
+    /**
+     * Height of the control panel of pagination
+     */
+    public static final double GUI_PAGINATION_CONTROL_PANEL_HEIGHT = 45.0;
+
 }

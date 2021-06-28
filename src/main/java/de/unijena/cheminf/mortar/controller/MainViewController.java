@@ -24,11 +24,7 @@ import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
-import de.unijena.cheminf.mortar.gui.views.IDataTableView;
-import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
-import de.unijena.cheminf.mortar.gui.views.MainView;
-import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
+import de.unijena.cheminf.mortar.gui.views.*;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -39,7 +35,6 @@ import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -51,16 +46,7 @@ import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Pagination;
-import javafx.scene.control.RadioMenuItem;
-import javafx.scene.control.SortEvent;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -68,7 +54,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -78,12 +63,7 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -184,6 +164,55 @@ public class MainViewController {
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //TODO: More implementation needed
         //TODO: Add listener to rows per page setting in settings container
+    }
+
+    /**
+     * Adds a changes listener to the height property of given table view which sets the height for structure images to
+     * each MoleculeDataModel object of the items list and refreshes the table view
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     *
+     * @param aTableView
+     */
+    private void addTableViewWidthListener(TableView aTableView){
+        aTableView.heightProperty().addListener((observable, oldValue, newValue) -> {
+            this.setImageStructureHeight(aTableView, newValue.doubleValue());
+            aTableView.refresh();
+        });
+    }
+    //
+
+    /**
+     * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     *
+     * @param aTableView TableView
+     * @param aHeight double
+     */
+    private void setImageStructureHeight(TableView aTableView, double aHeight){
+        double tmpHeight =
+                (aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                        / settingsContainer.getRowsPerPageSetting();
+        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
+            tmpHeight =
+                    (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                            / settingsContainer.getRowsPerPageSetting();
+        }
+        if(tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT){
+            tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
+        }
+        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
+            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
+                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(((ItemizationDataTableView) aTableView).getFragmentationName())){
+                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
+                }
+            }
+        }
+        else{
+            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
+            }
+        }
     }
     //
     /**
@@ -321,6 +350,8 @@ public class MainViewController {
                     ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
                     ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
+                    this.setImageStructureHeight(((GridTabForTableView) tmpTab).getTableView(), ((GridTabForTableView) tmpTab).getTableView().getHeight());
+                    ((GridTabForTableView) tmpTab).getTableView().refresh();
                 }
             }
         });
@@ -358,6 +389,7 @@ public class MainViewController {
             //TODO: add implementation to start fragmentation algorithm
             this.startFragmentation();
         });
+        this.addTableViewWidthListener(this.moleculesDataTableView);
     }
     //
     /**
@@ -516,9 +548,9 @@ public class MainViewController {
                 event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
             }
         });
+        this.addTableViewWidthListener(tmpFragmentsDataTableView);
         //itemization tab
-        //TODO: Specify more clearly what the "amount" is
-        int tmpAmount = 0;
+        int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
         for(int i= 0; i < this.moleculeDataModelList.size(); i++){
             HashMap<String, Integer> tmpCurrentFragmentsMap = this.moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
             if (tmpCurrentFragmentsMap == null) {
@@ -558,6 +590,7 @@ public class MainViewController {
             tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName),
                     this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
         });
+        this.addTableViewWidthListener(tmpItemizationDataTableView);
         //
         this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
     }

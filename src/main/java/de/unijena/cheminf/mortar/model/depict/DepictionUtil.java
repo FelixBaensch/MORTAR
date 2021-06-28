@@ -31,25 +31,57 @@ import java.awt.image.BufferedImage;
 
 public class DepictionUtil {
 
+    public static final double IMAGE_WIDTH_DEFAULT = 250.0;
+    public static final double IMAGE_HEIGHT_DEFAULT = 250.0;
+
     /**
-     * Creates a Image of the AtomContainer
+     * Creates a Image of the AtomContainer with default width (250.0) and height (250.0)
      * @param anAtomContainer
      * @return
      */
     public static Image depictImage(IAtomContainer anAtomContainer) { //TODO: add , int aWidth, int aHeight
-        return depictImageWithZoom(anAtomContainer, 1.0);
+        return depictImageWithZoom(anAtomContainer, 1.0, IMAGE_WIDTH_DEFAULT, IMAGE_HEIGHT_DEFAULT);
+    }
+    /**
+     * Creates a Image of the AtomContainer with given height and default width (250.0)
+     * @param anAtomContainer
+     * @param aHeight
+     * @return
+     */
+    public static Image depictImageWithHeight(IAtomContainer anAtomContainer, double aHeight) { //TODO: add , int aWidth, int aHeight
+        return depictImageWithZoom(anAtomContainer, 1.0, IMAGE_WIDTH_DEFAULT, aHeight);
+    }
+    /**
+     * Creates a Image of the AtomContainer with given width and default height (250.0)
+     * @param anAtomContainer
+     * @param aWidth
+     * @return
+     */
+    public static Image depictImageWithWidth(IAtomContainer anAtomContainer, double aWidth) { //TODO: add , int aWidth, int aHeight
+        return depictImageWithZoom(anAtomContainer, 1.0, aWidth, IMAGE_HEIGHT_DEFAULT);
+    }
+    /**
+     * Creates a Image of the AtomContainer with a any zoom factor and default width (250.0) and height (250.0)
+     * @param anAtomContainer
+     * @param aZoom
+     * @return Image
+     */
+    public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom){
+        return depictImageWithZoom(anAtomContainer, aZoom, IMAGE_WIDTH_DEFAULT, IMAGE_HEIGHT_DEFAULT);
     }
 
     /**
-     * Creates a Image of the AtomContainer with a any zoom factor
+     * Creates a Image of the AtomContainer with a any zoom factor and given width and height
      * @param anAtomContainer
      * @param aZoom
-     * @return
+     * @param aWidth
+     * @param aHeight
+     * @return Image
      */
-    public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom) { //TODO: add , int aWidth, int aHeight
+    public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) {
         try {
             DepictionGenerator tmpGenerator = new DepictionGenerator();
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(250,250).withZoom(aZoom); //TODO: add .withSize(aWidth, aHeight)
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
             BufferedImage tmpBufferedImage = null;
             tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
