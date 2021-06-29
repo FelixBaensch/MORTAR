@@ -538,7 +538,8 @@ public class MainViewController {
         tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
             @Override
             public void handle(SortEvent<TableView> event) {
-                int i = 5;
+                if(event.getSource().getSortOrder().size() == 0)
+                    return;
                 String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
                 TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
                 sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
