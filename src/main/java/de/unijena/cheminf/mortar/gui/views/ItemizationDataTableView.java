@@ -129,6 +129,9 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.getColumns().addAll(this.nameColumn, this.moleculeStructureColumn, this.fragmentStructureColumn);
     }
 
+    public String getFragmentationName(){
+        return this.fragmentationName;
+    }
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
     public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;
