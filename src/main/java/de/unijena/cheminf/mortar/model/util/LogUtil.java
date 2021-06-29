@@ -148,7 +148,7 @@ public final class LogUtil {
                                     Message.get("Error.UnexpectedError.Content"),
                                     (Exception) aThrowable);
                         } else {
-                            //? logging is enough in this case
+                            //logging is enough in this case
                         }
                     }
                 }
@@ -205,11 +205,13 @@ public final class LogUtil {
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
-     * Manages the folder in which the log-file get saved in if it exists.
-     * If the folder holds more *.txt files than a specific limit or a minimum of *.txt files while exceeding a maximum
-     * limit of bytes used, half of the *.txt files get deleted and the method is called again. Remaining LCK-files
-     * (suffix "*.txt.lck") are generally deleted out of the log-files' folder.
-     * Exceptions occurring in the process are being stored and logged when initializing the logging environment.
+     * Manages the folder in which the log files get saved if it exists.
+     * If the folder contains more *.txt files than a specific limit or a minimum of *.txt files while exceeding a maximum
+     * limit of bytes used, the older half of the *.txt files gets deleted and the method is called again. Remaining LCK-files
+     * (suffix "*.txt.lck") are generally deleted out of the log-files folder.
+     * Exceptions occurring in the process are statically stored in this class and logged after initializing the logging
+     * environment. The method is intended to be called before startup of the application and before the logging
+     * environment is initialized (because the created lock-file will be deleted!).
      *
      * @author Samuel Behr
      */
@@ -241,10 +243,10 @@ public final class LogUtil {
         }
         //managing the log-files if the limits are exceeded
         //the parameters of this if statement's condition should be changed with caution or otherwise an infinite loop is risked
-        if (tmpLogFiles.length > BasicDefinitions.UPPER_LIMIT_OF_LOG_FILES || (tmpTotalOfBytesUsed > BasicDefinitions.LIMIT_OF_BYTES_USED_BY_LOG_FILES
-                && tmpLogFiles.length > BasicDefinitions.LOWER_LIMIT_OF_LOG_FILES)) {
+        if (tmpLogFiles.length > BasicDefinitions.UPPER_LIMIT_OF_LOG_FILES
+                || (tmpTotalOfBytesUsed > BasicDefinitions.LIMIT_OF_BYTES_USED_BY_LOG_FILES && tmpLogFiles.length > BasicDefinitions.LOWER_LIMIT_OF_LOG_FILES)) {
             Arrays.sort(tmpLogFiles, Comparator.comparingLong(File::lastModified));
-            //trimming the log-files' folder by deleting the oldest files
+            //trimming the log-files folder by deleting the oldest files
             for (int i = 0; i < (tmpLogFiles.length * BasicDefinitions.FACTOR_TO_TRIM_LOG_FILE_FOLDER); i++) {
                 try {
                     Files.delete(tmpLogFileDirectory.resolve(tmpLogFiles[i].toPath()));
