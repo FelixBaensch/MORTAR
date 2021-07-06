@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -30,7 +30,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.LogManager;
@@ -41,7 +44,7 @@ import java.util.logging.SimpleFormatter;
 /**
  * Logging utilities. The Java-own logging API is employed.
  *
- * @author Jonas Schaub
+ * @author Jonas Schaub, Samuel Behr
  */
 public final class LogUtil {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
@@ -123,18 +126,37 @@ public final class LogUtil {
                 @Override
                 public void uncaughtException(Thread aThread, Throwable aThrowable) {
                     Logger.getLogger(aThread.getClass().getName()).log(Level.SEVERE, aThrowable.toString(), aThrowable);
-                    if (aThread.getThreadGroup().getName().equals("main")) {
-                        GuiUtil.GuiMessageAlert(Alert.AlertType.ERROR,
+                    boolean tmpIsError = aThrowable instanceof Error;
+                    //error means out of memory or stack overflow
+                    if (tmpIsError) {
+                        GuiUtil.GuiMessageAlert(
+                                Alert.AlertType.ERROR,
                                 Message.get("Error.Notification.Title"),
-                                null,
-                                Message.get("Error.UnknownError"));
+                                Message.get("Error.SevereError"),
+                                aThrowable.toString());
                         System.exit(-1);
+                    } else {
+                        //the JavaFx GUI thread deals with such exceptions by resetting the binding to a previous value. No need to intervene here
+                        if (aThrowable.getMessage().equals("Bidirectional binding failed, setting to the previous value")) {
+                            return;
+                        }
+                        //it is an exception (runtime- or IO-), no error
+                        if (aThread.getThreadGroup().getName().equals("main")) {
+                            GuiUtil.GuiExceptionAlert(
+                                    Message.get("Error.Notification.Title"),
+                                    Message.get("Error.UnexpectedError.Header"),
+                                    Message.get("Error.UnexpectedError.Content"),
+                                    (Exception) aThrowable);
+                        } else {
+                            //logging is enough in this case
+                        }
                     }
                 }
             });
-            if (LogUtil.storedExceptions != null && !LogUtil.storedExceptions.isEmpty()) {  //TODO: mention this in the doc string?
+            //exceptions that occurred during managing log files at start up are logged now
+            if (LogUtil.storedExceptions != null && !LogUtil.storedExceptions.isEmpty()) {
                 for (Exception tmpException : LogUtil.storedExceptions) {
-                    LogUtil.LOGGER.log(Level.SEVERE, tmpException.toString(), tmpException);
+                    LogUtil.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                 }
                 LogUtil.storedExceptions.clear();
             }
@@ -150,6 +172,7 @@ public final class LogUtil {
      * Reset log file. LogUtils.initializeLoggingEnvironment() will be called to reset the logging environment.
      * <p>
      * NOTE: Log file related methods need to be synchronized.
+     *
      * @return true, if all actions were successfully executed; false, if an exception was thrown or the log file in use
      * is not a file
      */
@@ -182,11 +205,14 @@ public final class LogUtil {
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
-     * Manages the folder in which the log-file get saved in if it exists.
-     * If the folder holds more *.txt files than a specific limit or a minimum of *.txt files while exceeding a maximum
-     * limit of bytes used, half of the *.txt files get deleted and the method is called again. Remaining LCK-files
-     * (suffix "*.txt.lck") are generally deleted out of the log-files' folder.
-     * Exceptions occurring in the process are being stored and logged when initializing the logging environment.
+     * Manages the folder in which the log files get saved if it exists.
+     * If the folder contains more *.txt files than a specific limit or a minimum of *.txt files while exceeding a maximum
+     * limit of bytes used, the older half of the *.txt files gets deleted and the method is called again. Remaining LCK-files
+     * (suffix "*.txt.lck") are generally deleted out of the log-files folder.
+     * Exceptions occurring in the process are statically stored in this class and logged after initializing the logging
+     * environment. The method is intended to be called before startup of the application and before the logging
+     * environment is initialized (because the created lock-file will be deleted!).
+     *
      * @author Samuel Behr
      */
     public static void manageLogFilesFolderIfExists() {
@@ -217,10 +243,10 @@ public final class LogUtil {
         }
         //managing the log-files if the limits are exceeded
         //the parameters of this if statement's condition should be changed with caution or otherwise an infinite loop is risked
-        if (tmpLogFiles.length > BasicDefinitions.UPPER_LIMIT_OF_LOG_FILES || (tmpTotalOfBytesUsed > BasicDefinitions.LIMIT_OF_BYTES_USED_BY_LOG_FILES
-                && tmpLogFiles.length > BasicDefinitions.LOWER_LIMIT_OF_LOG_FILES)) {
+        if (tmpLogFiles.length > BasicDefinitions.UPPER_LIMIT_OF_LOG_FILES
+                || (tmpTotalOfBytesUsed > BasicDefinitions.LIMIT_OF_BYTES_USED_BY_LOG_FILES && tmpLogFiles.length > BasicDefinitions.LOWER_LIMIT_OF_LOG_FILES)) {
             Arrays.sort(tmpLogFiles, Comparator.comparingLong(File::lastModified));
-            //trimming the log-files' folder by deleting the oldest files
+            //trimming the log-files folder by deleting the oldest files
             for (int i = 0; i < (tmpLogFiles.length * BasicDefinitions.FACTOR_TO_TRIM_LOG_FILE_FOLDER); i++) {
                 try {
                     Files.delete(tmpLogFileDirectory.resolve(tmpLogFiles[i].toPath()));
