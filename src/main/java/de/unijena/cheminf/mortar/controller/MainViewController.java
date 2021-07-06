@@ -36,6 +36,7 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragment
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -55,11 +56,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -227,12 +225,9 @@ public class MainViewController {
         this.clearGuiAndCollections();
         this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-            String tmpSmiles = "";
-            try {
-                SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique);
-                tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
-            } catch (CDKException | NullPointerException anException){
-                MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
+            if (tmpSmiles == null) {
+                continue;
             }
             MoleculeDataModel tmpMoleculeDataModel;
             if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {

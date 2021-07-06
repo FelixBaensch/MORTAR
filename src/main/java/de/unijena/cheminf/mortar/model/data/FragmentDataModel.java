@@ -60,11 +60,12 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Constructor, sets absolute frequency to 1. Molecular information is taken from the given unique SMILES code. The
      * data is not kept as atom container.
      *
-     * @param aUniqueSmiles - unique SMILES code
-     * @param aName - name of the molecule
-     * @param aPropertyMap - property map of the molecule
+     * @param aUniqueSmiles unique SMILES code
+     * @param aName name of the molecule
+     * @param aPropertyMap property map of the molecule
+     * @throws NullPointerException if given SMILES string is null
      */
-    public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) {
+    public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) throws NullPointerException {
         super(aUniqueSmiles, aName, aPropertyMap);
         this.absoluteFrequency = 1;
         //TODO: Set other frequencies to 0?
@@ -73,12 +74,12 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Constructor, sets absolute frequency to 1. Retains the given data as atom container.
      *
-     * @param aUniqueSmiles - unique SMILES representation of the fragment  TODO: remove!
-     * @param anAtomContainer - AtomContainer of the molecule
+     * @param aUniqueSmiles unique SMILES representation of the fragment  TODO: remove after adaptation to FragmentationTask class!
+     * @param anAtomContainer AtomContainer of the molecule
+     * @throws NullPointerException if given SMILES string is null
      */
-    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {    //TODO: remove aUniqueSmiles
-        super(anAtomContainer);     //NullPointerException in line 116 of ItemizationDataTableView
-        //super(aUniqueSmiles, anAtomContainer);    //calls test constructor -> works without any problems
+    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) throws NullPointerException {    //TODO: remove aUniqueSmiles
+        super(anAtomContainer);
         this.absoluteFrequency = 1;
     }
     //

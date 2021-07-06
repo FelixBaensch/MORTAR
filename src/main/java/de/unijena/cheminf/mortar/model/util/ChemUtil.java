@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -26,40 +26,52 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Chemistry utility
+ *
+ * @author Samuel Behr
  */
-public class ChemUtil {
-    //<editor-fold defaultstate="collapsed" desc="Public static final class constants">
+public final class ChemUtil {
+    //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
      * Logger of this class.
      */
-    private static final Logger LOGGER = Logger.getLogger(FileUtil.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ChemUtil.class.getName());
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
-     * TODO: has problems with creating the SMILES for the fragments -> why?? how to solve it?!
-     * Creates a unique SMILES out of the given atom container. If no SMILES could be created, null is returned.
+     * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
+     * If the SMILES could not be created in first place, it is retried with a kekulized clone of the given atom
+     * container. Aromaticity information is encoded in the returned SMILES string, if there is any given.
      *
-     * @param anAtomContainer representing the atom container whose unique SMILES should be created
-     * @return unique SMILES of the given atom container or null if an exception occurred
-     * @throws CDKException
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anAtomContainer atom container the unique SMILES should be created of
+     * @return unique SMILES of the given atom container or 'null' if no creation was possible
      */
-    public static String createUniqueSmiles(IAtomContainer anAtomContainer) throws CDKException, NullPointerException, IllegalArgumentException {
-        String tmpUniqueSmiles = "";
-        SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique);
+    public static String createUniqueSmiles(IAtomContainer anAtomContainer) {
+        String tmpSmiles = null;
+        SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         try {
-            tmpUniqueSmiles = tmpSmilesGen.create(anAtomContainer);
-        } catch (CDKException anException) {
-            Kekulization.kekulize(anAtomContainer);
-            tmpUniqueSmiles = tmpSmilesGen.create(anAtomContainer);
+            try {
+                tmpSmiles = tmpSmilesGen.create(anAtomContainer);
+            } catch (CDKException anException){
+                try {
+                    IAtomContainer tmpAtomContainer = anAtomContainer.clone();
+                    Kekulization.kekulize(tmpAtomContainer);
+                    tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                } catch (CDKException anInnerException){
+                    throw anInnerException;
+                }
+            }
+        } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException anException){
+            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }
-        return tmpUniqueSmiles;
+        return tmpSmiles;
     }
-    // </editor-fold>
+    //TODO: reposition the public static method generateMolecularFormula() from the Exporter class to ChemUtil            (branch sdf_and_pdb_Exporter @SamuelBehr)
+    //TODO: reposition the public static method convertExplicitToImplicitHydrogens() from the Exporter class to ChemUtil  (branch sdf_and_pdb_Exporter @SamuelBehr)
+    //</editor-fold>
 }

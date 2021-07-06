@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  *
  * @author Achim Zielesny, Jonas Schaub, Felix Baensch
  */
-public class FileUtil {
+public final class FileUtil {
     //<editor-fold defaultstate="collapsed" desc="Public static final class constants">
     /**
      * Logger of this class.

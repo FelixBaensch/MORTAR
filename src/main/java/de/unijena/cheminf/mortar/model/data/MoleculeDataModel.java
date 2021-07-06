@@ -96,11 +96,13 @@ public class MoleculeDataModel {
      * Constructor for MoleculeDataModel. Molecular information is taken from the given unique SMILES code. The data
      * is not kept as atom container.
      *
-     * @param aUniqueSmiles - unique SMILES representation of the molecule
-     * @param aName - name of the molecule
-     * @param aPropertyMap - property map of the molecule
+     * @param aUniqueSmiles unique SMILES representation of the molecule
+     * @param aName name of the molecule
+     * @param aPropertyMap property map of the molecule
+     * @throws NullPointerException if given SMILES string is null
      */
-    public MoleculeDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) {
+    public MoleculeDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) throws NullPointerException {
+        Objects.requireNonNull(aUniqueSmiles, "SMILES is null");
         this.keepAtomContainer = false;
         this.name = aName;
         this.properties = aPropertyMap;
@@ -114,21 +116,11 @@ public class MoleculeDataModel {
     /**
      * Constructor for MoleculeDataModel. Retains the given atom container.
      *
-     * @param anAtomContainer - AtomContainer of the molecule
+     * @param anAtomContainer AtomContainer of the molecule
+     * @throws NullPointerException if given SMILES string is null
      */
-    public MoleculeDataModel(IAtomContainer anAtomContainer) {
-        this(null, anAtomContainer.getTitle(), anAtomContainer.getProperties());
-        try {
-            this.uniqueSmiles = ChemUtil.createUniqueSmiles(anAtomContainer);       //TODO: NullPointerException gets thrown in line 116 of ItemizationDataTableView
-        } catch (CDKException | NullPointerException | IllegalArgumentException anException) {
-            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString(), anException);
-        }
-        this.keepAtomContainer = true;
-        this.atomContainer = anAtomContainer;
-    }
-    //
-    public MoleculeDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {    //TODO: remove! Only for test purposes
-        this(aUniqueSmiles, anAtomContainer.getTitle(), anAtomContainer.getProperties());
+    public MoleculeDataModel(IAtomContainer anAtomContainer) throws NullPointerException {
+        this(ChemUtil.createUniqueSmiles(anAtomContainer), anAtomContainer.getTitle(), anAtomContainer.getProperties());
         this.keepAtomContainer = true;
         this.atomContainer = anAtomContainer;
     }
