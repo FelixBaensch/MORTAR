@@ -41,18 +41,26 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.io.PDBWriter;
+import org.openscience.cdk.io.SDFWriter;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
+
 import javax.imageio.ImageIO;
+import javax.vecmath.Point3d;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -69,6 +77,7 @@ public class Exporter {
      */
     private static final Logger LOGGER = Logger.getLogger(Exporter.class.getName());
     //</editor-fold>
+    //
     // <editor-fold defaultstate="collapsed" desc="Private class constants">
     /**
      * Font of any cells
@@ -205,6 +214,231 @@ public class Exporter {
                     anException.toString(), anException);
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return null;
+        }
+    }
+
+    /**
+     * TODO @Samuel
+     * Opens a file chooser and exports the chemical data of the given fragments as a single MDL SD file, which is
+     * generated of kekulized clones of the fragments' atom containers. Whether the MDLV3000 format is used instead of
+     * the MDLV2000 format depends on preference or whether a fragment exceeds an atom count of 999 atoms.
+     *
+     * @param aParentStage Stage to show the FileChooser
+     * @param aFragmentDataModelList List of FragmentDataModels
+     * @param anAlwaysMDLV3000 boolean whether to always use the MDLV3000 format in the MDL SD file
+     * @author Samuel Behr
+     */
+    public void createFragmentationTabSingleSDFile(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList, boolean anAlwaysMDLV3000) {
+        try {
+            File tmpFile = this.saveFile(aParentStage, "SD-File", "*.sdf",
+                    "FragmentExport");
+            if (tmpFile != null) {
+                try (
+                        PrintWriter tmpWriter = new PrintWriter(tmpFile.getPath());
+                        BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                        SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
+                ) {
+                    tmpSDFWriter.setAlwaysV3000(anAlwaysMDLV3000);
+                    for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                        try {   //TODO: kekulize only if exception occurred while writing? tmpSDFWriter is not accessible in catch
+                            IAtomContainer tmpAtomContainerClone = tmpFragmentDataModel.getAtomContainer().clone();
+                            Kekulization.kekulize(tmpAtomContainerClone);
+                            tmpSDFWriter.write(tmpAtomContainerClone);
+                        } catch (CDKException | CloneNotSupportedException anException) {
+                            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                        }
+                    }
+                }
+            }
+        } catch (NullPointerException | IOException anException) {
+            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    anException.toString(),
+                    anException);
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        }
+    }
+
+    /**
+     * TODO @Samuel
+     * Opens a directory chooser and exports the chemical data of the given fragments as separate MDL SD files to an
+     * empty folder generated at the chosen path; the files are created out of kekulized clones of the fragments' atom
+     * containers. Whether the MDLV3000 format is used instead of the MDLV2000 format depends on preference or
+     * whether a fragment exceeds an atom count of 999 atoms.
+     *
+     * @param aParentStage stage to show the DirectoryChooser
+     * @param aFragmentDataModelList list of FragmentDataModels
+     * @param anAlwaysMDLV3000 boolean whether to always use the MDLV3000 format in the MDL SD files
+     * @author Samuel Behr
+     */
+    public void createFragmentationTabSeparateSDFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList, boolean anAlwaysMDLV3000) {
+        try {
+            File tmpDirectory = this.chooseDirectory(aParentStage);
+            if (tmpDirectory != null && tmpDirectory.isDirectory()) {
+                String tmpSDFFilesDirectoryPathName = tmpDirectory
+                        + File.separator
+                        + "MORTAR_Fragments_Export" + "_" + FileUtil.getTimeStampFileNameExtension();   //TODO: outsource String
+                String tmpFinalSDFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpSDFFilesDirectoryPathName, File.separator);
+                File tmpSDFilesDirectory = Files.createDirectory(Paths.get(tmpFinalSDFilesDirectoryPathName)).toFile();
+                for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                    IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                    String tmpMolecularFormula = Exporter.generateMolecularFormula(tmpFragment);  //TODO: replace with call of ChemUtil
+                    String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
+                            + File.separator + tmpMolecularFormula, ".sdf");
+                    File tmpSDFile = new File(tmpSDFilePathName);
+                    try (
+                            PrintWriter tmpWriter = new PrintWriter(tmpSDFile);
+                            BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                            SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
+                    ) {
+                        try {   //TODO: kekulize only if exception occurred while writing? tmpSDFWriter is not accessible in catch
+                            tmpSDFWriter.setAlwaysV3000(anAlwaysMDLV3000);
+                            tmpSDFWriter.write(tmpFragment);
+                        } catch (CDKException anException) {
+                            System.out.println("Writing without kelulization was not possible!");
+                            try {
+                                IAtomContainer tmpFragmentClone = tmpFragment.clone();
+                                Kekulization.kekulize(tmpFragmentClone);        //TODO: throws exception
+                                tmpSDFWriter.write(tmpFragmentClone);
+                            } catch (CDKException | CloneNotSupportedException anInnerException) {
+                                Exporter.LOGGER.log(Level.SEVERE, anInnerException.toString(), anInnerException);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
+            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    anException.toString(),
+                    anException);
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        }
+    }
+
+    /**
+     * TODO @Samuel
+     * Opens a directory chooser and exports the chemical data of the fragments resulting out of the carried out
+     * fragmentation process as separate PDB files to an empty folder generated at the chosen destination. The molecular formula
+     * of each fragment is used as name for the associated file.
+     *
+     * @param aParentStage stage to show the DirectoryChooser
+     * @param aFragmentDataModelList list of FragmentDataModels
+     * @author Samuel Behr
+     */
+    public void createFragmentationTabSeparatePDBFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+        try {
+            File tmpDirectory = this.chooseDirectory(aParentStage);
+            if (tmpDirectory != null && tmpDirectory.isDirectory()) {
+                String tmpPDBFilesDirectoryPathName = tmpDirectory
+                        + File.separator
+                        + "MORTAR_Fragments_Export" + "_" + FileUtil.getTimeStampFileNameExtension();   //TODO: outsource String
+                String tmpFinalPDBFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectoryPathName, File.separator);
+                File tmpPDBFilesDirectory = Files.createDirectory(Paths.get(tmpFinalPDBFilesDirectoryPathName)).toFile();
+                for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                    IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
+
+                    //TODO: lines of test code!
+                    /*Iterator<IAtom> tmpAtoms = tmpFragment.atoms().iterator();
+                    IAtom tmpAtom = tmpAtoms.next();
+                    //Point3d tmpPosition = tmpAtom.getPoint3d();
+                    Point3d tmpPosition = new Point3d();
+                    System.out.println("Point3d is null:\t" + (tmpPosition == null));
+                    tmpPosition.set(0.1,0.1,0.1);
+                    System.out.println(tmpPosition.x);
+                    System.out.println(tmpPosition.y);
+                    System.out.println(tmpPosition.z);*/
+
+                    //TODO: following lines are for test purposes only; should be replaced when a solution for the atoms' missing 3d information is found
+                    try {
+                        tmpFragment = tmpFragmentDataModel.getAtomContainer().clone();
+                        for (IAtom tmpAtom : tmpFragment.atoms()) {
+                            tmpAtom.setPoint3d(new Point3d(0.1, 0.1, 0.1)); //random choice of values
+                        }
+                    } catch (CloneNotSupportedException anException) {
+                        System.out.println("Clone could not be generated!");
+                        throw new IllegalArgumentException("Clone could not be generated!");
+                    }
+
+                    String tmpMolecularFormula = Exporter.generateMolecularFormula(tmpFragment);  //TODO: replace with call of ChemUtil method
+                    String tmpPDBFilePathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectory
+                            + File.separator + tmpMolecularFormula, ".pdb");
+                    File tmpPDBFile = new File(tmpPDBFilePathName);
+                    try (
+                            PDBWriter tmpPDBWriter = new PDBWriter(new FileOutputStream(tmpPDBFile));
+                    ) {
+                        tmpPDBWriter.write(tmpFragment);
+                    } catch (CDKException anException) {
+                        Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                    }
+                }
+            }
+        } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
+            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    anException.toString(),
+                    anException);
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        }
+    }
+
+    /**
+     * TODO: place method in ChemUtil
+     * Generates the molecular formula of a given atom container. If the molecular formula could not be generated, null
+     * is returned.
+     *
+     * @param anAtomContainer AtomContainer the formula is generated of
+     * @return the molecular formula of the given atom container
+     * @author Samuel Behr
+     */
+    public static String generateMolecularFormula(IAtomContainer anAtomContainer) {
+        IAtomContainer tmpAtomContainerClone = null;
+        String tmpMolecularFormulaString = null;
+        try {
+            tmpAtomContainerClone = anAtomContainer.clone();
+            //TODO: method: copyAndSuppressedHydrogens() or suppressHydrogens() from AtomContainerManipulator?
+            Exporter.convertExplicitToImplicitHydrogens(tmpAtomContainerClone); //TODO: replace with call of ChemUtil method
+            IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(tmpAtomContainerClone);
+            tmpMolecularFormulaString = MolecularFormulaManipulator.getString(tmpMolecularFormula);
+        } catch (CloneNotSupportedException anException) {
+            Exporter.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
+                    + tmpAtomContainerClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
+        }
+        return tmpMolecularFormulaString;
+    }
+
+    /**
+     * TODO: place method in ChemUtil
+     * Converts all explicit hydrogen atoms in the given molecule to implicit hydrogens, increasing the respective counters
+     * on the heavy atom objects. Note that the given atom container object is altered.
+     *
+     * @param aMolecule the structure the convert all explicit hydrogens of
+     * @throws NullPointerException if the given molecule is null
+     * @author Michael Wenk, Jonas Schaub
+     */
+    public static void convertExplicitToImplicitHydrogens(IAtomContainer aMolecule) throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return;
+        }
+        List<IAtom> tmpRemoveList = new ArrayList<>();
+        IAtom tmpAtomB;
+        for (IAtom tmpAtomA : aMolecule.atoms()) {
+            //check each atom for whether it is a hydrogen;
+            // if yes, increase the number of implicit hydrogens for its connected heavy atom
+            if (tmpAtomA.getAtomicNumber().equals(1)) {
+                tmpAtomB = aMolecule.getConnectedAtomsList(tmpAtomA).get(0);
+                //precaution for unset property
+                if (tmpAtomB.getImplicitHydrogenCount() == null) {
+                    tmpAtomB.setImplicitHydrogenCount(0);
+                }
+                tmpAtomB.setImplicitHydrogenCount(tmpAtomB.getImplicitHydrogenCount() + 1);
+                tmpRemoveList.add(tmpAtomA);
+            }
+        }
+        //remove all explicit hydrogen atoms from the molecule
+        for (IAtom tmpAtom : tmpRemoveList) {
+            aMolecule.removeAtom(tmpAtom);
         }
     }
 
@@ -413,6 +647,23 @@ public class Exporter {
         tmpFileChooser.setInitialFileName(aFileName);
         File  tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         return tmpFile;
+    }
+
+    /**
+     * TODO @Samuel
+     * Opens a DirectoryChooser to choose a directory. Returns null if no directory has been selected.
+     *
+     * @param aParentStage Stage to show the DirectoryChooser
+     * @return the selected directory or null if no directory has been selected
+     * @throws NullPointerException if the given stage is null
+     * @author Samuel Behr
+     */
+    private File chooseDirectory(Stage aParentStage) throws NullPointerException {
+        Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
+        DirectoryChooser tmpDirectoryChooser = new DirectoryChooser();
+        tmpDirectoryChooser.setTitle(Message.get("Exporter.directoryChooser.title"));
+        tmpDirectoryChooser.setInitialDirectory(new File(System.getProperty("user.home"))); //TODO: make dependent on recent directory path
+        return tmpDirectoryChooser.showDialog(aParentStage);
     }
     //</editor-fold>
 }
