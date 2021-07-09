@@ -24,7 +24,11 @@ import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.*;
+import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
+import de.unijena.cheminf.mortar.gui.views.IDataTableView;
+import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
+import de.unijena.cheminf.mortar.gui.views.MainView;
+import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -47,7 +51,16 @@ import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.SortEvent;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -55,14 +68,17 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import org.openscience.cdk.aromaticity.Kekulization;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -74,7 +90,6 @@ import java.util.stream.Collectors;
  * @author Felix Baensch, Jonas Schaub
  */
 public class MainViewController {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     private Stage primaryStage;
     private MainView mainView;
@@ -91,6 +106,7 @@ public class MainViewController {
     private Button fragmentationButton;
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
     //</editor-fold>
+    //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
     /**
      * Logger of this class.
@@ -164,7 +180,7 @@ public class MainViewController {
         //TODO: More implementation needed
         //TODO: Add listener to rows per page setting in settings container
     }
-
+    //
     /**
      * Adds a changes listener to the height property of given table view which sets the height for structure images to
      * each MoleculeDataModel object of the items list and refreshes the table view
@@ -179,7 +195,6 @@ public class MainViewController {
         });
     }
     //
-
     /**
      * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView
      * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
