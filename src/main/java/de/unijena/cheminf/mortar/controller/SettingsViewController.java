@@ -65,6 +65,10 @@ public class SettingsViewController {
      * Boolean value to check if the rowsPerPage property has changed
      */
     private boolean hasRowsPerPageChanged;
+    /**
+     * Boolean value to check if the keepAtomContainerInDataModel property has changed
+     */
+    private boolean hasKeepAtomContainerInDataModelChanged;
     //</editor-fold>
 
     /**
@@ -113,7 +117,10 @@ public class SettingsViewController {
         });
         //apply button
         this.settingsView.getApplyButton().setOnAction(event -> {
-            this.hasRowsPerPageChanged = (int) this.settingsContainer.rowsPerPageSettingProperty().getValue() != (int) this.recentProperties.get(this.settingsContainer.rowsPerPageSettingProperty().getName());
+            this.hasRowsPerPageChanged = (int) this.settingsContainer.rowsPerPageSettingProperty().getValue()
+                    != (int) this.recentProperties.get(this.settingsContainer.rowsPerPageSettingProperty().getName());
+            this.hasKeepAtomContainerInDataModelChanged = this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getValue()
+                    != this.recentProperties.get(this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getName());
             this.settingsViewStage.close();
         });
         //cancel button
@@ -147,4 +154,13 @@ public class SettingsViewController {
     public boolean hasRowsPerPageChanged() {
         return this.hasRowsPerPageChanged;
     }
+
+    /**
+     * Returns boolean value whether if keepAtomContainerInDataModel property has changed or not.
+     * @return hasKeepAtomContainerInDataModelChanged
+     */
+    public boolean hasKeepAtomContainerInDataModelChanged() {
+        return this.hasKeepAtomContainerInDataModelChanged;
+    }
+
 }

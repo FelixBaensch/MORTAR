@@ -23,9 +23,8 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,7 +74,6 @@ public class FragmentationTask implements Callable<Integer> {
     @Override
     public Integer call() throws Exception{
         int tmpExceptionsCounter = 0;
-        SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         for (MoleculeDataModel tmpMolecule : this.moleculesList) {
             try{
                 IAtomContainer tmpAtomContainer = tmpMolecule.getAtomContainer();
@@ -93,7 +91,10 @@ public class FragmentationTask implements Callable<Integer> {
                 tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(tmpFragmentsList.size()));
                 tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(tmpFragmentsList.size()));
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
-                    String tmpSmiles = tmpSmilesGenerator.create(tmpFragment);
+                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
+                    if (tmpSmiles == null) {
+                        continue;
+                    }
                     FragmentDataModel tmpFragmentDataModel;
                     LOCK.lock();
                     try{

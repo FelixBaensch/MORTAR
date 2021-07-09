@@ -34,6 +34,7 @@ import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -58,8 +59,6 @@ import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -276,23 +275,16 @@ public class MainViewController {
         this.clearGuiAndCollections();
         this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-            String tmpSmiles = "";
-            try {
-                SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique);
-                try {
-                    tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
-                } catch (CDKException anException){
-                    try {
-                        Kekulization.kekulize(tmpAtomContainer);
-                        tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
-                    } catch (CDKException anInnerException){
-                        throw anInnerException;
-                    }
-                }
-            } catch (CDKException | NullPointerException | IllegalArgumentException anException){
-                MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
+            if (tmpSmiles == null) {
+                continue;
             }
-            MoleculeDataModel tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer);
+            MoleculeDataModel tmpMoleculeDataModel;
+            if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
+            } else {
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
+            }
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
@@ -352,6 +344,16 @@ public class MainViewController {
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
                     this.setImageStructureHeight(((GridTabForTableView) tmpTab).getTableView(), ((GridTabForTableView) tmpTab).getTableView().getHeight());
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
+                }
+            }
+            if(tmpSettingsViewController.hasKeepAtomContainerInDataModelChanged()){
+                for(MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList){
+                    tmpMoleculeDataModel.setKeepAtomContainer(this.settingsContainer.getKeepAtomContainerInDataModelSetting());
+                }
+                for(ObservableList<FragmentDataModel> tmpFragmentDataModelList : this.mapOfFragmentDataModelLists.values()){
+                    for(FragmentDataModel tmpFragmentDataModel : tmpFragmentDataModelList){
+                        tmpFragmentDataModel.setKeepAtomContainer(this.settingsContainer.getKeepAtomContainerInDataModelSetting());
+                    }
                 }
             }
         });

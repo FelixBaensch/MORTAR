@@ -20,39 +20,67 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
-import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
-import javafx.scene.image.ImageView;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Map;
 
 /**
  * Model class for fragment data
  */
 public class FragmentDataModel extends MoleculeDataModel {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * Absolute frequency of the fragment.
+     */
     private int absoluteFrequency;
+    //
+    /**
+     * Absolute frequency of the fragment as a percentage.
+     */
     private double absolutePercentage;
+    //
+    /**
+     * Molecule frequency of the fragment.
+     */
     private int moleculeFrequency;
+    //
+    /**
+     * Molecule frequency of the fragment as a percentage.
+     */
     private double moleculePercentage;
+    //
     //TODO: omit?
+    /**
+     * Name of the used fragmentation algorithm.
+     */
     private String algorithmName;
     //</editor-fold>
     //
     /**
-     * Constructor, sets absolute frequency to 1. From the atom container, only the properties map is retained, and
-     * the molecular information is taken from the given unique SMILES code.
+     * Constructor, sets absolute frequency to 1. Molecular information is taken from the given unique SMILES code. The
+     * data is not kept as atom container.
      *
-     * @param aUniqueSmiles - unique SMILES code
-     * @param anAtomContainer - IAtomContainer
+     * @param aUniqueSmiles unique SMILES code
+     * @param aName name of the molecule
+     * @param aPropertyMap property map of the molecule
+     * @throws NullPointerException if given SMILES string is null
      */
-    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) {
-        super(aUniqueSmiles, anAtomContainer);
+    public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) throws NullPointerException {
+        super(aUniqueSmiles, aName, aPropertyMap);
         this.absoluteFrequency = 1;
         //TODO: Set other frequencies to 0?
+    }
+    //
+    /**
+     * Constructor, sets absolute frequency to 1. Retains the given data as atom container.
+     *
+     * @param aUniqueSmiles unique SMILES representation of the fragment  TODO: remove after adaptation to FragmentationTask class!
+     * @param anAtomContainer AtomContainer of the molecule
+     * @throws NullPointerException if given SMILES string is null
+     */
+    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) throws NullPointerException {    //TODO: remove aUniqueSmiles
+        super(anAtomContainer);
+        this.absoluteFrequency = 1;
     }
     //
     /**
