@@ -50,9 +50,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Wrapper class that makes the Ertl algorithm for automatic identification and extraction of functional groups
- * available in MORTAR, using the ErtlFunctionalGroupsFinder.
- * TODO: Add references
+ * Wrapper class that makes the
+ * <a href="https://doi.org/10.1186/s13321-017-0225-z">Ertl algorithm for automated identification and extraction of functional groups</a>
+ * available in MORTAR, using the <a href="https://doi.org/10.1186/s13321-019-0361-8">ErtlFunctionalGroupsFinder</a>
+ * CDK implementation of the algorithm.
  *
  * @author Jonas Schaub
  */
