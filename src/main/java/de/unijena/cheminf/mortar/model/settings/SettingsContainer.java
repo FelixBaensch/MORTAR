@@ -110,6 +110,16 @@ public class SettingsContainer {
      * Default value of whether to keep the atom container in the molecule/fragment data model.
      */
     public static final boolean KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT = false;
+
+    /**
+     * Name of preference wrapping the setting whether to always use the MDL V3000 format for file export.
+     */
+    public static final String ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME = "Always use MDL V3000 format at export preference";
+
+    /**
+     * Default value of whether to always use the MDL V3000 format for file export.
+     */
+    public static final boolean ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT = false;
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
@@ -162,6 +172,16 @@ public class SettingsContainer {
      * Preference of keep atom container setting.
      */
     private BooleanPreference keepAtomContainerInDataModelPreference;
+
+    /**
+     * Property of always MDL V3000 format setting.
+     */
+    private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
+
+    /**
+     * Preference of always MDL V3000 format setting.
+     */
+    private BooleanPreference alwaysMDLV3000FormatAtExportPreference;
 
     /**
      * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
@@ -320,6 +340,24 @@ public class SettingsContainer {
     }
 
     /**
+     * Returns the current value of the always MDL V3000 format at export setting.
+     *
+     * @return always MDLV3000 format at export setting value
+     */
+    public boolean getAlwaysMDLV3000FormatAtExportSetting() {
+        return this.alwaysMDLV3000FormatAtExportSetting.get();
+    }
+
+    /**
+     * Returns the property wrapping the always MDL V3000 format at export setting.
+     *
+     * @return always MDLV3000 format at export setting property
+     */
+    public Property alwaysMDLV3000FormatAtExportSettingProperty() {
+        return this.alwaysMDLV3000FormatAtExportSetting;
+    }
+
+    /**
      * Sets the setting for how many rows/molecules should be displayed per page in the tabs.
      *
      * @param anInteger the number of molecules displayed per page in the tabs
@@ -388,6 +426,15 @@ public class SettingsContainer {
     }
 
     /**
+     * Sets the setting for whether to always use MDL V3000 format for file export.
+     *
+     * @param aBoolean whether to always use the MDL V3000 format for file export
+     */
+    public void setAlwaysMDLV3000FormatAtExportSetting(boolean aBoolean) {
+        this.alwaysMDLV3000FormatAtExportSetting.set(aBoolean);
+    }
+
+    /**
      * Restores all setting to their default setting according to the respective public constants in this class.
      */
     public void restoreDefaultSettings() {
@@ -396,6 +443,7 @@ public class SettingsContainer {
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
+        this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
     }
     //</editor-fold>
     //
@@ -456,6 +504,13 @@ public class SettingsContainer {
         } else {
             throw new IOException("One or multiple settings could not be restored from the previous run.");
         }
+        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME)) {
+            this.alwaysMDLV3000FormatAtExportPreference =
+                    (BooleanPreference) this.preferenceContainer.getPreferences(
+                            SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME)[0];
+        } else {
+            throw new IOException("One or multiple settings could not be restored from the previous run.");
+        }
     }
 
     /**
@@ -484,6 +539,10 @@ public class SettingsContainer {
                 SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME,
                 SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.preferenceContainer.add(this.keepAtomContainerInDataModelPreference);
+        this.alwaysMDLV3000FormatAtExportPreference = new BooleanPreference(
+                SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME,
+                SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
+        this.preferenceContainer.add(this.alwaysMDLV3000FormatAtExportPreference);
     }
 
     /**
@@ -561,11 +620,21 @@ public class SettingsContainer {
                 super.set(newValue);
             }
         };
+        this.alwaysMDLV3000FormatAtExportSetting = new SimpleBooleanProperty(this,
+                "Always MDL V3000 format at export setting",     //TODO: better phrasing??   @Samuel
+                this.alwaysMDLV3000FormatAtExportPreference.getContent()) {
+            @Override
+            public void set(boolean newValue) {
+                SettingsContainer.this.alwaysMDLV3000FormatAtExportPreference.setContent(newValue);
+                super.set(newValue);
+            }
+        };
         this.settings = new ArrayList<Property>(3);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
         this.settings.add(this.keepAtomContainerInDataModelSetting);
+        this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
     }
 

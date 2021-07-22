@@ -20,12 +20,19 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.model.io.Importer;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,7 +78,63 @@ public final class ChemUtil {
         }
         return tmpSmiles;
     }
-    //TODO: reposition the public static method generateMolecularFormula() from the Exporter class to ChemUtil            (branch sdf_and_pdb_Exporter @SamuelBehr)
-    //TODO: reposition the public static method convertExplicitToImplicitHydrogens() from the Exporter class to ChemUtil  (branch sdf_and_pdb_Exporter @SamuelBehr)
+
+    /**
+     * Generates the molecular formula of a given atom container. If the molecular formula could not be generated, null
+     * is returned.
+     *
+     * @param anAtomContainer AtomContainer the formula is generated of
+     * @return the molecular formula of the given atom container
+     * @author Samuel Behr
+     */
+    public static String generateMolecularFormula(IAtomContainer anAtomContainer) {
+        IAtomContainer tmpAtomContainerClone = null;
+        String tmpMolecularFormulaString = null;
+        try {
+            tmpAtomContainerClone = anAtomContainer.clone();
+            //TODO: method: copyAndSuppressedHydrogens() or suppressHydrogens() from AtomContainerManipulator?
+            ChemUtil.convertExplicitToImplicitHydrogens(tmpAtomContainerClone);
+            IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(tmpAtomContainerClone);
+            tmpMolecularFormulaString = MolecularFormulaManipulator.getString(tmpMolecularFormula);
+        } catch (CloneNotSupportedException anException) {
+            ChemUtil.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
+                    + tmpAtomContainerClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
+        }
+        return tmpMolecularFormulaString;
+    }
+
+    /**
+     * Converts all explicit hydrogen atoms in the given molecule to implicit hydrogens, increasing the respective counters
+     * on the heavy atom objects. Note that the given atom container object is altered.
+     *
+     * @param aMolecule the structure the convert all explicit hydrogens of
+     * @throws NullPointerException if the given molecule is null
+     * @author Michael Wenk, Jonas Schaub
+     */
+    public static void convertExplicitToImplicitHydrogens(IAtomContainer aMolecule) throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return;
+        }
+        List<IAtom> tmpRemoveList = new ArrayList<>();
+        IAtom tmpAtomB;
+        for (IAtom tmpAtomA : aMolecule.atoms()) {
+            //check each atom for whether it is a hydrogen;
+            // if yes, increase the number of implicit hydrogens for its connected heavy atom
+            if (tmpAtomA.getAtomicNumber().equals(1)) {
+                tmpAtomB = aMolecule.getConnectedAtomsList(tmpAtomA).get(0);
+                //precaution for unset property
+                if (tmpAtomB.getImplicitHydrogenCount() == null) {
+                    tmpAtomB.setImplicitHydrogenCount(0);
+                }
+                tmpAtomB.setImplicitHydrogenCount(tmpAtomB.getImplicitHydrogenCount() + 1);
+                tmpRemoveList.add(tmpAtomA);
+            }
+        }
+        //remove all explicit hydrogen atoms from the molecule
+        for (IAtom tmpAtom : tmpRemoveList) {
+            aMolecule.removeAtom(tmpAtom);
+        }
+    }
     //</editor-fold>
 }

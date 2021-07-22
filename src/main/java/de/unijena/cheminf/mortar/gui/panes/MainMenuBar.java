@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -31,7 +31,7 @@ import javafx.scene.control.SeparatorMenuItem;
  * A MenuBar for the application's {@link MainView}.
  * It contains menus for file handling (I/O), shutting down the application, settings and help menu entries
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch, Jonas Schaub, Samuel Behr
  */
 public class MainMenuBar extends MenuBar {
 
@@ -42,6 +42,17 @@ public class MainMenuBar extends MenuBar {
     private Menu helpMenu;
     private MenuItem exitMenuItem;
     private MenuItem loadMenuItem;
+    private Menu exportMenu;
+    private Menu fragmentsExportMenu;
+    private MenuItem fragmentsExportToCSVMenuItem;
+    private MenuItem fragmentsExportToPDBMenuItem;
+    private MenuItem fragmentsExportToPDFMenuItem;
+    private Menu fragmentsExportToSDFMenu;
+    private MenuItem fragmentsExportToSingleSDFMenuItem;
+    private MenuItem fragmentsExportToSeparateSDFsMenuItem;
+    private Menu itemsExportMenu;
+    private MenuItem itemsExportToCSVMenuItem;
+    private MenuItem itemsExportToPDFMenuItem;
     private MenuItem fragmentationSettingsMenuItem;
     private MenuItem globalSettingsMenuItem;
     private Menu fragmentationAlgorithmMenu;
@@ -59,6 +70,23 @@ public class MainMenuBar extends MenuBar {
         //fileMenu
         this.fileMenu = new Menu(Message.get("MainView.menuBar.fileMenu.text"));
         this.loadMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.loadMenuItem.text"));
+        this.exportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.text"));
+        //<editor-fold desc="exportMenu components" defaultstate="collapsed">
+        //fragmentsExportMenu
+        this.fragmentsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.fragmentsExportMenu.text"));
+        //components
+        this.fragmentsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toCSV.text"));
+        this.fragmentsExportToPDBMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toPDB.text"));
+        this.fragmentsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toPDF.text"));
+        this.fragmentsExportToSDFMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.toSDF.text"));
+        this.fragmentsExportToSingleSDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.asOneFile.text"));
+        this.fragmentsExportToSeparateSDFsMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.asSeparateFiles.text"));
+        //itemsExportMenu
+        this.itemsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.itemsExportMenu.text"));
+        //components
+        this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toCSV.text"));
+        this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toPDF.text"));
+        //</editor-fold>
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
         //settingsMenu
         this.settingsMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.text"));
@@ -82,6 +110,10 @@ public class MainMenuBar extends MenuBar {
         this.getMenus().add(this.fileMenu);
         //loadMenuItem
         this.fileMenu.getItems().add(this.loadMenuItem);
+        //exportMenu
+        this.fileMenu.getItems().add(this.exportMenu);
+        this.addComponentsToExportMenu();
+        this.exportMenu.setDisable(true);
         //separator
         this.fileMenu.getItems().add(new SeparatorMenuItem());
         //exitMenuItem
@@ -103,6 +135,28 @@ public class MainMenuBar extends MenuBar {
         //</editor-fold>
     }
     //</editor-fold>
+    //<editor-fold desc="addComponentsToExportMenu" defaultstate="collapsed">
+    /**
+     * Adds the menu items to the export menu
+     */
+    private void addComponentsToExportMenu(){
+        //<editor-fold desc="fragmentsExportMenu" defaultstate="collapsed">
+        this.exportMenu.getItems().add(this.fragmentsExportMenu);
+        this.fragmentsExportMenu.getItems().add(this.fragmentsExportToCSVMenuItem);
+        this.fragmentsExportMenu.getItems().add(this.fragmentsExportToPDBMenuItem);
+        this.fragmentsExportMenu.getItems().add(this.fragmentsExportToPDFMenuItem);
+        this.fragmentsExportMenu.getItems().add(this.fragmentsExportToSDFMenu);
+        this.fragmentsExportToSDFMenu.getItems().add(this.fragmentsExportToSingleSDFMenuItem);
+        this.fragmentsExportToSDFMenu.getItems().add(this.fragmentsExportToSeparateSDFsMenuItem);
+        this.exportMenu.show();
+        //</editor-fold>
+        //<editor-fold desc="itemsExportMenu" defaultstate="collapsed">
+        this.exportMenu.getItems().add(this.itemsExportMenu);
+        this.itemsExportMenu.getItems().add(this.itemsExportToCSVMenuItem);
+        this.itemsExportMenu.getItems().add(this.itemsExportToPDFMenuItem);
+        //</editor-fold>
+    }
+    //</editor-fold>
     //</editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
@@ -114,6 +168,116 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getLoadMenuItem() {
         return this.loadMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getExportMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of export options
+     *
+     * @return the menu that should open a list of export options
+     */
+    public Menu getExportMenu() {
+        return this.exportMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentsExportMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of fragments export options
+     *
+     * @return the menu that should open a list of fragments export options
+     */
+    public Menu getFragmentsExportMenu() {
+        return this.fragmentsExportMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentsExportToCSVMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the fragments to a CSV file
+     *
+     * @return the menu item that should export the fragments to a CSV file
+     */
+    public MenuItem getFragmentsExportToCSVMenuItem() {
+        return this.fragmentsExportToCSVMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentsExportToPDBMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the fragments to a PDB file
+     *
+     * @return the menu item that should export the fragments to a PDB file
+     */
+    public MenuItem getFragmentsExportToPDBMenuItem() {
+        return this.fragmentsExportToPDBMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentsExportToPDFMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the fragments to a PDF
+     *
+     * @return the menu item that should export the fragments to a PDF
+     */
+    public MenuItem getFragmentsExportToPDFMenuItem() {
+        return this.fragmentsExportToPDFMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentsExportToSDFMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of SDF export options
+     *
+     * @return the menu that should open a list of SDF export options
+     */
+    public Menu getFragmentsExportToSDFMenu() {
+        return this.fragmentsExportToSDFMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentsExportToSingleSDFMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the fragments to a single SD file
+     *
+     * @return the menu item that should export the fragments to a single SD file
+     */
+    public MenuItem getFragmentsExportToSingleSDFMenuItem() {
+        return this.fragmentsExportToSingleSDFMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentsExportToSeparateSDFsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the fragments to separate SD files
+     *
+     * @return the menu item that should export the fragments to separate SD files
+     */
+    public MenuItem getFragmentsExportToSeparateSDFsMenuItem() {
+        return this.fragmentsExportToSeparateSDFsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getItemsExportMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of items export options
+     *
+     * @return the menu that should open a list of items export options
+     */
+    public Menu getItemsExportMenu() {
+        return this.itemsExportMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getItemsExportToCSVMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the items to a CSV file
+     *
+     * @return the menu item that should export the items to a CSV file
+     */
+    public MenuItem getItemsExportToCSVMenuItem() {
+        return this.itemsExportToCSVMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getItemsExportToPDFMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the items to a PDF
+     *
+     * @return the menu item that should export the items to a PDF
+     */
+    public MenuItem getItemsExportToPDFMenuItem() {
+        return this.itemsExportToPDFMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getExitMenuItem" defaultstate="collapsed">
@@ -136,7 +300,7 @@ public class MainMenuBar extends MenuBar {
         return this.globalSettingsMenuItem;
     }
     //</editor-fold>
-    //<editor-fold desc="getFragmentationAlgorithmMenuItem" defaultstate="collapsed">
+    //<editor-fold desc="getFragmentationAlgorithmMenu" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to choose the fragmentation algorithm
      *

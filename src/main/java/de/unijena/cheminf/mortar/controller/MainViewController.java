@@ -166,16 +166,70 @@ public class MainViewController {
     private void addListener() {
         this.mainView.getMainMenuBar().getExitMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.closeApplication(0));
+                anEvent -> this.closeApplication(0)
+        );
         this.mainView.getMainMenuBar().getLoadMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.loadMoleculeFile(this.primaryStage));
+                anEvent -> this.loadMoleculeFile(this.primaryStage)
+        );
+        //fragments export to CSV
+        this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> new Exporter(this.settingsContainer).createFragmentationTabCsvFile(this.primaryStage,
+                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()),
+                        ',')
+        );
+        //fragments export to PDB
+        this.mainView.getMainMenuBar().getFragmentsExportToPDBMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> new Exporter(this.settingsContainer).createFragmentationTabPDBFiles(this.primaryStage,
+                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()))
+        );
+        //fragments export to PDF
+        this.mainView.getMainMenuBar().getFragmentsExportToPDFMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> new Exporter(this.settingsContainer).createFragmentationTabPdfFile(this.primaryStage,
+                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()),
+                        this.moleculeDataModelList,
+                        this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())
+        );
+        //fragments export to single SDF
+        this.mainView.getMainMenuBar().getFragmentsExportToSingleSDFMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> new Exporter(this.settingsContainer).createFragmentationTabSingleSDFile(this.primaryStage,
+                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()))
+        );
+        //fragments export to separate SDFs
+        this.mainView.getMainMenuBar().getFragmentsExportToSeparateSDFsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> new Exporter(this.settingsContainer).createFragmentationTabSeparateSDFiles(this.primaryStage,
+                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()))
+        );
+        //items export to CSV
+        this.mainView.getMainMenuBar().getItemsExportToCSVMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> new Exporter(this.settingsContainer).createItemizationTabCsvFile(this.primaryStage,
+                        this.moleculeDataModelList,
+                        this.fragmentationService.getCurrentFragmentationName(),
+                        ',')
+        );
+        //items export to PDF
+        this.mainView.getMainMenuBar().getItemsExportToPDFMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> new Exporter(this.settingsContainer).createItemizationTabPdfFile(this.primaryStage,
+                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()),
+                        this.moleculeDataModelList,
+                        this.fragmentationService.getCurrentFragmentationName(),
+                        this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())
+        );
         this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.openFragmentationSettingsView());
+                anEvent -> this.openFragmentationSettingsView()
+        );
         this.mainView.getMainMenuBar().getGlobalSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.openGlobalSettingsView());
+                anEvent -> this.openGlobalSettingsView()
+        );
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //TODO: More implementation needed
         //TODO: Add listener to rows per page setting in settings container
@@ -288,6 +342,7 @@ public class MainViewController {
             return;
         }
         this.clearGuiAndCollections();
+        this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
         this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
             String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
@@ -494,6 +549,7 @@ public class MainViewController {
                         this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
                         this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
                         this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Finished"));
+                        this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         long tmpEndTime = System.nanoTime();
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
@@ -542,7 +598,7 @@ public class MainViewController {
         tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpExportPdfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
-        Exporter tmpExporter = new Exporter();
+        Exporter tmpExporter = new Exporter(settingsContainer);
         tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0,1,1,1);
         tmpExportPdfButton.setOnAction(event->{
             tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
