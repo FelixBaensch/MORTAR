@@ -43,6 +43,7 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -51,6 +52,7 @@ import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.io.MDLV2000Writer;
 import org.openscience.cdk.io.PDBWriter;
 import org.openscience.cdk.io.SDFWriter;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
@@ -259,6 +261,13 @@ public class Exporter {
      * @author Samuel Behr
      */
     public void createFragmentationTabSingleSDFile(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+        if (aFragmentDataModelList == null) {
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,    //TODO: ??
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null);  //TODO: try, if null is possible or if an empty string is needed
+            return;
+        }
         try {
             //opening file chooser to get the file for the export
             File tmpFile = this.saveFile(aParentStage, "SD-File", "*.sdf",
@@ -271,24 +280,91 @@ public class Exporter {
                 ) {
                     //specifying format of export
                     tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());   //setting whether to always use MDL V3000 format
-                    tmpSDFWriter.getSetting("WriteAromaticBondTypes").setSetting("true");   //accessing the WriteAromaticBondType setting
+                    tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");   //accessing the WriteAromaticBondType setting
+                    //booleans for whether conformation alert has been shown yet and whether 2D coordinates should be generated
+                    boolean tmpHasNo2dInformationAlertBeenShown = false;    //whether conformation alert has been shown yet
+                    boolean tmpGenerate2dAtomCoordinates = false;           //whether coordinates should be generated
                     //iterating threw the fragments held by the list of fragments
                     for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                         IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                        IAtomContainer tmpFragmentClone = null;
+                        //checking whether 3D or else 2D atom coordinates of the fragment are available
+                        boolean tmpPoint3dAvailable = true;
+                        boolean tmpPoint2dAvailable = true;
+                        for (IAtom tmpAtom : tmpFragment.atoms()) {
+                            if (tmpPoint3dAvailable) {
+                                if (tmpAtom.getPoint3d() != null) {
+                                    continue;
+                                }
+                                tmpPoint3dAvailable = false;
+                            }
+                            if (tmpAtom.getPoint2d() == null) {
+                                if (!tmpHasNo2dInformationAlertBeenShown) {
+                                    ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
+                                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"), //TODO: mention "of at least one fragment"!!
+                                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                                    );
+                                    if (tmpConformationResult == ButtonType.OK) {   //TODO: what to do if the exit button is clicked
+                                        tmpGenerate2dAtomCoordinates = true;
+                                    }
+                                    tmpHasNo2dInformationAlertBeenShown = true;
+                                }
+                                tmpPoint2dAvailable = false;
+                                break;
+                            }
+                        }
+                        //checking whether 3D information are available
+                        if (!tmpPoint3dAvailable) {
+                            try {
+                                tmpFragmentClone = tmpFragment.clone();
+                                //checking whether 2D coordinates need to be generated
+                                boolean tmpErrorAtGenerating2dAtomCoordinates = false;
+                                if (!tmpPoint2dAvailable && tmpGenerate2dAtomCoordinates) {
+                                    try {
+                                        StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
+                                        tmpStructureDiagramGenerator.generateCoordinates(tmpFragmentClone);
+                                    } catch (CDKException anException) {
+                                        //TODO: thrown by .generateCoordinates() if there is a problem with the layout
+                                        Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException); //TODO: remove?!
+                                        tmpErrorAtGenerating2dAtomCoordinates = true;
+                                    }
+                                }
+                                if (tmpPoint2dAvailable || (tmpGenerate2dAtomCoordinates && !tmpErrorAtGenerating2dAtomCoordinates)) {
+                                    //transfer of 2D coordinates to 3D coordinates with z = 0
+                                    for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
+                                        Point3d tmpPoint3d = new Point3d(tmpAtom.getPoint2d().x, tmpAtom.getPoint2d().y, 0.0);
+                                        tmpAtom.setPoint3d(tmpPoint3d);
+                                    }
+                                }
+                            } catch (CloneNotSupportedException anException) {
+                                //TODO
+                                Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                                continue;
+                            }
+                        }
                         //writing to file
                         try {
-                            tmpSDFWriter.write(tmpFragment);
+                            if (tmpPoint3dAvailable) {
+                                tmpSDFWriter.write(tmpFragment);
+                            } else {
+                                tmpSDFWriter.write(tmpFragmentClone);   //TODO: care: clone can be null if "continue" is removed out of CloneNotSupportedException catch
+                            }
                         } catch (CDKException anException) {
                             //retrying with a kekulized clone of the fragment
                             try {
-                                IAtomContainer tmpFragmentClone = tmpFragment.clone();
+                                if (tmpPoint3dAvailable) {
+                                    tmpFragmentClone = tmpFragment.clone();
+                                }
                                 Kekulization.kekulize(tmpFragmentClone);
+                                tmpSDFWriter.write(tmpFragmentClone);
                             } catch (CDKException | CloneNotSupportedException anInnerException) {
-                                Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anInnerException);
+                                Exporter.LOGGER.log(Level.SEVERE, anInnerException.toString(), anInnerException);
                             }
                         }
                     }
                 }
+                //TODO: should the export be evident in the log file?
             }
         } catch (NullPointerException | IOException | CDKException anException) {
             GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -314,6 +390,13 @@ public class Exporter {
      * @author Samuel Behr
      */
     public void createFragmentationTabSeparateSDFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+        if (aFragmentDataModelList == null) {
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,    //TODO: ??
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null);  //TODO: try, if null is possible or if an empty string is needed
+            return;
+        }
         try {
             //opening a directory chooser and creating an empty directory as destination for the exported files
             File tmpDirectory = this.chooseDirectory(aParentStage);
@@ -323,10 +406,69 @@ public class Exporter {
                         + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
                 String tmpFinalSDFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpSDFFilesDirectoryPathName, File.separator);
                 File tmpSDFilesDirectory = Files.createDirectory(Paths.get(tmpFinalSDFilesDirectoryPathName)).toFile();
+                //booleans for whether conformation alert has been shown yet and whether 2D coordinates should be generated
+                boolean tmpHasNo2dInformationAlertBeenShown = false;    //whether conformation alert has been shown yet
+                boolean tmpGenerate2dAtomCoordinates = false;           //whether coordinates should be generated
                 //iterating threw the fragments held by the list of fragments
                 for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
-                    //generating file
                     IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                    IAtomContainer tmpFragmentClone = null;
+                    //checking whether 3D or else 2D atom coordinates of the fragment are available
+                    boolean tmpPoint3dAvailable = true;
+                    boolean tmpPoint2dAvailable = true;
+                    for (IAtom tmpAtom : tmpFragment.atoms()) {
+                        if (tmpPoint3dAvailable) {
+                            if (tmpAtom.getPoint3d() != null) {
+                                continue;
+                            }
+                            tmpPoint3dAvailable = false;
+                        }
+                        if (tmpAtom.getPoint2d() == null) {
+                            if (!tmpHasNo2dInformationAlertBeenShown) {
+                                ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"), //TODO: mention "of at least one fragment"!!
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                                );
+                                if (tmpConformationResult == ButtonType.OK) {   //TODO: what to do if the exit button is clicked
+                                    tmpGenerate2dAtomCoordinates = true;
+                                }
+                                tmpHasNo2dInformationAlertBeenShown = true;
+                            }
+                            tmpPoint2dAvailable = false;
+                            break;
+                        }
+                    }
+                    //checking whether 3D information are available
+                    if (!tmpPoint3dAvailable) {
+                        try {
+                            tmpFragmentClone = tmpFragment.clone();
+                            //checking whether 2D coordinates need to be generated
+                            boolean tmpErrorAtGenerating2dAtomCoordinates = false;
+                            if (!tmpPoint2dAvailable && tmpGenerate2dAtomCoordinates) {
+                                try {
+                                    StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
+                                    tmpStructureDiagramGenerator.generateCoordinates(tmpFragmentClone);
+                                } catch (CDKException anException) {
+                                    //TODO: thrown by .generateCoordinates() if there is a problem with the layout
+                                    Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException); //TODO: remove?!
+                                    tmpErrorAtGenerating2dAtomCoordinates = true;
+                                }
+                            }
+                            if (tmpPoint2dAvailable || (tmpGenerate2dAtomCoordinates && !tmpErrorAtGenerating2dAtomCoordinates)) {
+                                //transfer of 2D coordinates to 3D coordinates with z = 0
+                                for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
+                                    Point3d tmpPoint3d = new Point3d(tmpAtom.getPoint2d().x, tmpAtom.getPoint2d().y, 0.0);
+                                    tmpAtom.setPoint3d(tmpPoint3d);
+                                }
+                            }
+                        } catch (CloneNotSupportedException anException) {
+                            //TODO
+                            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                            continue;
+                        }
+                    }
+                    //generating file
                     String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
                     String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
                             + File.separator + tmpMolecularFormula, ".sdf");
@@ -340,12 +482,18 @@ public class Exporter {
                         try {
                             //specifying format of export
                             tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());   //setting whether to always use MDL V3000 format
-                            tmpSDFWriter.getSetting("WriteAromaticBondTypes").setSetting("true");   //accessing the WriteAromaticBondType setting
-                            tmpSDFWriter.write(tmpFragment);
+                            tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");   //accessing the WriteAromaticBondType setting
+                            if (tmpPoint3dAvailable) {
+                                tmpSDFWriter.write(tmpFragment);
+                            } else {
+                                tmpSDFWriter.write(tmpFragmentClone);   //TODO: care: clone can be null if "continue" is removed out of CloneNotSupportedException catch
+                            }
                         } catch (CDKException anException) {
                             //retrying with a kekulized clone of the fragment
                             try {
-                                IAtomContainer tmpFragmentClone = tmpFragment.clone();
+                                if (tmpPoint3dAvailable) {
+                                    tmpFragmentClone = tmpFragment.clone();
+                                }
                                 Kekulization.kekulize(tmpFragmentClone);
                                 tmpSDFWriter.write(tmpFragmentClone);
                             } catch (CDKException | CloneNotSupportedException anInnerException) {
@@ -354,6 +502,7 @@ public class Exporter {
                         }
                     }
                 }
+                //TODO: should the export be evident in the log file?
             }
         } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
             GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -379,28 +528,14 @@ public class Exporter {
      * @author Samuel Behr
      */
     public void createFragmentationTabPDBFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+        if (aFragmentDataModelList == null) {
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,    //TODO: ??
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null);  //TODO: try, if null is possible or if an empty string is needed
+            return;
+        }
         try {
-            //TODO: may I assume, that there is a minimum of one element in aFragmentDataModelList
-            //TODO: aktuell setze ich voraus, dass die Informationslage (bzgl. 2d / 3d) bei allen Atomen aller Fragmente die selbe ist; ?!?!
-            IAtomContainer tmpTestFragment = aFragmentDataModelList.get(0).getAtomContainer();
-            IAtom tmpTestAtom = tmpTestFragment.atoms().iterator().next();
-            boolean tmpPoint3dAvailable = true;
-            boolean tmpPoint2dAvailable = true;
-            if (tmpTestAtom.getPoint3d() == null) {
-                tmpPoint3dAvailable = false;
-                System.out.println("getPoint3d == null");
-                if (tmpTestAtom.getPoint2d() == null) {
-                    tmpPoint2dAvailable = false;
-                    System.out.println("getPoint2d == null");
-                    ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert("Notification",  //TODO: outsource (Strings of other calls of this method too? "Data will be lost")
-                            "No 3d information available.",
-                            "PDB file will be generated using 2d information equally setting the z coordinate to 0 if you press OK. The data should be used with caution." +
-                                    "\n\nClick cancel to return.");
-                    if (tmpConformationResult != ButtonType.OK) {
-                        return;
-                    }
-                }
-            }
             //opening a directory chooser and creating an empty directory as destination for the exported files
             File tmpDirectory = this.chooseDirectory(aParentStage);
             if (tmpDirectory != null && tmpDirectory.isDirectory()) {
@@ -409,29 +544,71 @@ public class Exporter {
                         + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
                 String tmpFinalPDBFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectoryPathName, File.separator);
                 File tmpPDBFilesDirectory = Files.createDirectory(Paths.get(tmpFinalPDBFilesDirectoryPathName)).toFile();
+                //booleans for whether conformation alert has been shown yet and whether 2D coordinates should be generated
+                boolean tmpHasNo2dInformationAlertBeenShown = false;    //whether conformation alert has been shown yet
+                boolean tmpGenerate2dAtomCoordinates = false;           //whether coordinates should be generated
                 //iterating threw the fragments held by the list of fragments
                 for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                     IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
-                    //checking whether 3d information are available
+                    IAtomContainer tmpFragmentClone = null;
+                    //checking whether 3D or else 2D atom coordinates of the fragment are available
+                    boolean tmpPoint3dAvailable = true;
+                    boolean tmpPoint2dAvailable = true;
+                    for (IAtom tmpAtom : tmpFragment.atoms()) {
+                        if (tmpPoint3dAvailable) {
+                            if (tmpAtom.getPoint3d() != null) {
+                                continue;
+                            }
+                            tmpPoint3dAvailable = false;
+                        }
+                        if (tmpAtom.getPoint2d() == null) {
+                            if (!tmpHasNo2dInformationAlertBeenShown) {
+                                ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"), //TODO: mention "of at least one fragment"!!
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                                );
+                                if (tmpConformationResult == ButtonType.OK) {   //TODO: what to do if the exit button is clicked
+                                    tmpGenerate2dAtomCoordinates = true;
+                                }
+                                tmpHasNo2dInformationAlertBeenShown = true;
+                            }
+                            tmpPoint2dAvailable = false;
+                            break;
+                        }
+                    }
+                    //checking whether 3D information are available
                     if (!tmpPoint3dAvailable) {
                         try {
-                            tmpFragment = tmpFragmentDataModel.getAtomContainer().clone();  //TODO: new variable to show that it is a clone?
-                            //checking whether 2d coordinates need to be generated
-                            if (!tmpPoint2dAvailable) {
-                                StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
-                                tmpStructureDiagramGenerator.generateCoordinates(tmpFragment);  //TODO: could also be generated for the fragment it self to safe runtime at an later export
+                            tmpFragmentClone = tmpFragment.clone();
+                            //checking whether 2D coordinates need to be generated
+                            boolean tmpErrorAtGenerating2dAtomCoordinates = false;
+                            if (!tmpPoint2dAvailable && tmpGenerate2dAtomCoordinates) {
+                                try {
+                                    StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
+                                    tmpStructureDiagramGenerator.generateCoordinates(tmpFragmentClone);
+                                } catch (CDKException anException) {
+                                    //TODO: thrown by .generateCoordinates() if there is a problem with the layout
+                                    Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException); //TODO: remove?!
+                                    tmpErrorAtGenerating2dAtomCoordinates = true;
+                                }
                             }
-                            //transfer of 2d coordinates to 3d coordinates with z = 0
-                            for (IAtom tmpAtom : tmpFragment.atoms()) {
-                                Point3d tmpPoint3d = new Point3d(tmpAtom.getPoint2d().x, tmpAtom.getPoint2d().y, 0.0);
-                                tmpAtom.setPoint3d(tmpPoint3d);
+                            if (!tmpPoint2dAvailable && (!tmpGenerate2dAtomCoordinates || tmpErrorAtGenerating2dAtomCoordinates)) {
+                                //setting all atom coordinates to 0
+                                for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
+                                    tmpAtom.setPoint3d(new Point3d(0.0, 0.0, 0.0));
+                                }
+                            } else {
+                                //transfer of 2D coordinates to 3D coordinates with z = 0
+                                for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
+                                    Point3d tmpPoint3d = new Point3d(tmpAtom.getPoint2d().x, tmpAtom.getPoint2d().y, 0.0);
+                                    tmpAtom.setPoint3d(tmpPoint3d);
+                                }
                             }
                         } catch (CloneNotSupportedException anException) {
                             //TODO
                             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                        } catch (CDKException anException) {
-                            //TODO: thrown by .generateCoordinates() if there is a problem with the layout
-                            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                            continue;
                         }
                     }
                     //generating file
@@ -443,11 +620,16 @@ public class Exporter {
                     try (
                             PDBWriter tmpPDBWriter = new PDBWriter(new FileOutputStream(tmpPDBFile));
                     ) {
-                        tmpPDBWriter.write(tmpFragment);
+                        if (tmpPoint3dAvailable) {
+                            tmpPDBWriter.writeMolecule(tmpFragment);
+                        } else {
+                            tmpPDBWriter.writeMolecule(tmpFragmentClone);   //TODO: care: clone can be null if "continue" is removed out of CloneNotSupportedException catch
+                        }
                     } catch (CDKException anException) {
                         Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
                 }
+                Exporter.LOGGER.log(Level.INFO, "Exported ... fragments to PDB files.");    //TODO: should the export be evident in the log file?
             }
         } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
             GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),

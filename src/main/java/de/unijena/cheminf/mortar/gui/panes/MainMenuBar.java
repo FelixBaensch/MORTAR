@@ -38,9 +38,6 @@ public class MainMenuBar extends MenuBar {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     private MenuBar menuBar;
     private Menu fileMenu;
-    private Menu settingsMenu;
-    private Menu helpMenu;
-    private MenuItem exitMenuItem;
     private MenuItem loadMenuItem;
     private Menu exportMenu;
     private Menu fragmentsExportMenu;
@@ -53,9 +50,12 @@ public class MainMenuBar extends MenuBar {
     private Menu itemsExportMenu;
     private MenuItem itemsExportToCSVMenuItem;
     private MenuItem itemsExportToPDFMenuItem;
+    private MenuItem exitMenuItem;
+    private Menu settingsMenu;
     private MenuItem fragmentationSettingsMenuItem;
     private MenuItem globalSettingsMenuItem;
     private Menu fragmentationAlgorithmMenu;
+    private Menu helpMenu;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -75,17 +75,17 @@ public class MainMenuBar extends MenuBar {
         //fragmentsExportMenu
         this.fragmentsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.fragmentsExportMenu.text"));
         //components
-        this.fragmentsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toCSV.text"));
-        this.fragmentsExportToPDBMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toPDB.text"));
-        this.fragmentsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toPDF.text"));
-        this.fragmentsExportToSDFMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.toSDF.text"));
-        this.fragmentsExportToSingleSDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.asOneFile.text"));
-        this.fragmentsExportToSeparateSDFsMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.asSeparateFiles.text"));
+        this.fragmentsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.fragmentsExportToPDBMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDB.text"));
+        this.fragmentsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
+        this.fragmentsExportToSDFMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.SDF.text"));
+        this.fragmentsExportToSingleSDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.singleFile.text"));
+        this.fragmentsExportToSeparateSDFsMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.separateFiles.text"));
         //itemsExportMenu
         this.itemsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.itemsExportMenu.text"));
         //components
-        this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toCSV.text"));
-        this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.toPDF.text"));
+        this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
         //</editor-fold>
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
         //settingsMenu

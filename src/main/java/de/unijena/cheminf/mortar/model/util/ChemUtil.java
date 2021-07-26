@@ -28,6 +28,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import java.util.ArrayList;
@@ -83,8 +84,8 @@ public final class ChemUtil {
      * Generates the molecular formula of a given atom container. If the molecular formula could not be generated, null
      * is returned.
      *
-     * @param anAtomContainer AtomContainer the formula is generated of
-     * @return the molecular formula of the given atom container
+     * @param anAtomContainer AtomContainer to generate the molecular formula of
+     * @return String containing the molecular formula of the given atom container
      * @author Samuel Behr
      */
     public static String generateMolecularFormula(IAtomContainer anAtomContainer) {
@@ -92,49 +93,14 @@ public final class ChemUtil {
         String tmpMolecularFormulaString = null;
         try {
             tmpAtomContainerClone = anAtomContainer.clone();
-            //TODO: method: copyAndSuppressedHydrogens() or suppressHydrogens() from AtomContainerManipulator?
-            ChemUtil.convertExplicitToImplicitHydrogens(tmpAtomContainerClone);
+            AtomContainerManipulator.suppressHydrogens(tmpAtomContainerClone);
             IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(tmpAtomContainerClone);
             tmpMolecularFormulaString = MolecularFormulaManipulator.getString(tmpMolecularFormula);
         } catch (CloneNotSupportedException anException) {
             ChemUtil.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
-                    + tmpAtomContainerClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
+                    + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
         }
         return tmpMolecularFormulaString;
-    }
-
-    /**
-     * Converts all explicit hydrogen atoms in the given molecule to implicit hydrogens, increasing the respective counters
-     * on the heavy atom objects. Note that the given atom container object is altered.
-     *
-     * @param aMolecule the structure the convert all explicit hydrogens of
-     * @throws NullPointerException if the given molecule is null
-     * @author Michael Wenk, Jonas Schaub
-     */
-    public static void convertExplicitToImplicitHydrogens(IAtomContainer aMolecule) throws NullPointerException {
-        Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            return;
-        }
-        List<IAtom> tmpRemoveList = new ArrayList<>();
-        IAtom tmpAtomB;
-        for (IAtom tmpAtomA : aMolecule.atoms()) {
-            //check each atom for whether it is a hydrogen;
-            // if yes, increase the number of implicit hydrogens for its connected heavy atom
-            if (tmpAtomA.getAtomicNumber().equals(1)) {
-                tmpAtomB = aMolecule.getConnectedAtomsList(tmpAtomA).get(0);
-                //precaution for unset property
-                if (tmpAtomB.getImplicitHydrogenCount() == null) {
-                    tmpAtomB.setImplicitHydrogenCount(0);
-                }
-                tmpAtomB.setImplicitHydrogenCount(tmpAtomB.getImplicitHydrogenCount() + 1);
-                tmpRemoveList.add(tmpAtomA);
-            }
-        }
-        //remove all explicit hydrogen atoms from the molecule
-        for (IAtom tmpAtom : tmpRemoveList) {
-            aMolecule.removeAtom(tmpAtom);
-        }
     }
     //</editor-fold>
 }
