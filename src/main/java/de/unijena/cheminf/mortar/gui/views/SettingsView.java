@@ -116,7 +116,7 @@ public class SettingsView extends AnchorPane {
     /**
      * Adds a tab which contains the properties of the given properties list
      * @param aStage Stage to bind width and height
-     * @param aLabel Label for the tab title
+     * @param aLabel Label for the tab title and the tab Id
      * @param aPropertiesList List of properties to show in created tab
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      * @return Tab
@@ -124,6 +124,7 @@ public class SettingsView extends AnchorPane {
     public Tab addTab(Stage aStage, String aLabel, List<Property> aPropertiesList, Map<String, Object> aRecentPropertiesMap){
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
+        tmpTab.setId(aLabel);
         Label tmpTabTitle = new Label(aLabel);
         StackPane tmpStackPane = new StackPane(new Group(tmpTabTitle));
         tmpTab.setGraphic(tmpStackPane);
