@@ -86,9 +86,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         /**
          * Constructor.
          *
-         * @param aMode the EFGF mode to use with the respective option
+         * @param aMode the EFGF mode to use with the respective option; the internal EFGF instance will be set with this
+         *              mode when the option is chosen
          */
-        FGEnvOption(ErtlFunctionalGroupsFinder.Mode aMode) {
+        private FGEnvOption(ErtlFunctionalGroupsFinder.Mode aMode) {
             this.mode = aMode;
         }
 
@@ -103,12 +104,13 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Enum AromaticityModelOption">
+    //<editor-fold desc="Enum ElectronDonationModelOption">
     /**
-     * Enum for available aromaticity/electron donation models. Utility for defining the options in a GUI. The electron
-     * donation model specified in the constant name is used and a predefined cycle finder algorithm.
+     * Enum for available electron donation models that combined with a cycle finder algorithm is used to define an
+     * aromaticity model to use. Utility for defining the options in a GUI. The electron
+     * donation model specified in the constant name is used and a cycle finder algorithm set via the respective option.
      */
-    public static enum AromaticityModelOption {
+    public static enum ElectronDonationModelOption {
         /**
          * Daylight electron donation model.
          */
@@ -120,7 +122,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         CDK,
 
         /**
-         * CDK electron donation model that additionally allows exocyclic bonds to be part of the aromatic system.
+         * CDK electron donation model that additionally allows exocyclic bonds to contribute electrons to the aromatic system.
          */
         CDK_ALLOWING_EXOCYCLIC,
 
@@ -156,46 +158,48 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Enum CycleFinderOption">
     /**
-     *
+     * Enum for defining which cycle finder algorithm should be used to define an aromaticity model. The electron
+     * donation model is set via the respective option. See CDK class "Cycles" for more detailed descriptions of the
+     * available cycle finders.
      */
     public static enum CycleFinderOption {
         /**
-         *
+         * Algorithm that tries to find all possible rings in a given structure. Might cause IntractableException.
          */
         ALL,
 
         /**
-         *
+         * Algorithm that looks for cycles usually checked by the CDK when detecting aromaticity.
          */
         CDK_AROMATIC_SET,
 
         /**
-         *
+         * Gives the shortest cycles through each edge.
          */
         EDGE_SHORT,
 
         /**
-         *
+         * Unique set of essential cycles of a molecule.
          */
         ESSENTIAL,
 
         /**
-         *
+         * Minimum Cycle Basis (MCB, aka. SSSR - smalles set of smallest rings).
          */
         MCB,
 
         /**
-         *
+         * Union of all possible MCB cycle sets of a molecule.
          */
         RELEVANT,
 
         /**
-         *
+         *  Shortest cycle through each triple of vertices.
          */
         TRIPLET_SHORT,
 
         /**
-         *
+         * Shortest cycles through each vertex.
          */
         VERTEX_SHORT;
     }
@@ -203,7 +207,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Public static final constants">
     /**
-     * Name of the used algorithm.
+     * Name of the algorithm used in this fragmenter.
      */
     public static final String ALGORITHM_NAME = "Ertl algorithm";
 
@@ -213,9 +217,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public static final String INTERNAL_INDEX_PROPERTY_KEY = "EFGFFragmenter.INDEX";
 
     /**
-     * Default aromaticity model.
+     * Default electron donation model for aromaticity detection.
      */
-    public static final AromaticityModelOption AROMATICITY_MODEL_OPTION_DEFAULT = AromaticityModelOption.DAYLIGHT;
+    public static final ElectronDonationModelOption Electron_Donation_MODEL_OPTION_DEFAULT = ElectronDonationModelOption.DAYLIGHT;
 
     /**
      * Default functional group environment option.
@@ -228,12 +232,12 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public static final EFGFFragmenterReturnedFragmentsOption RETURNED_FRAGMENTS_OPTION_DEFAULT = EFGFFragmenterReturnedFragmentsOption.ALL_FRAGMENTS;
 
     /**
-     *
+     * Default option for the cycle finder algorithm employed for aromaticity detection.
      */
     public static final CycleFinderOption CYCLE_FINDER_OPTION_DEFAULT = CycleFinderOption.CDK_AROMATIC_SET;
 
     /**
-     *
+     * Cycle finder algorithm that is used should the set option cause an IntractableException.
      */
     public static final CycleFinder AUXILIARY_CYCLE_FINDER = Cycles.cdkAromaticSet();
 
@@ -251,12 +255,13 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //<editor-fold desc="Private variables">
     /**
      * Instance of ErtlfFunctionalGroupsFinder class used to do the extraction of functional groups. If the FG
-     * environment setting changes, this object needs to be reset in most of cases with the respectively needed mode.
+     * environment setting changes, this object needs to be reset in most cases with the respectively needed mode.
      */
     private ErtlFunctionalGroupsFinder ertlFGFInstance;
 
     /**
-     * The aromaticity model used for preprocessing prior to FG extraction.
+     * The aromaticity model used for preprocessing prior to FG extraction. Constructed from the set electron donation
+     * model and cycle finder algorithm.
      */
     private Aromaticity aromaticityModelInstance;
 
@@ -264,6 +269,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * A cycle finder instance for construction of the aromaticity model.
      */
     private CycleFinder cycleFinderInstance;
+
+    /**
+     * An electron donation instance for construction of the aromaticity model.
+     */
+    private ElectronDonation electronDonationInstance;
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
@@ -273,9 +283,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     private final SimpleEnumConstantNameProperty environmentModeSetting;
 
     /**
-     * A property that has a constant name from the AromaticityModelOption enum as value.
+     * A property that has a constant name from the ElectronDonationModelOption enum as value.
      */
-    private final SimpleEnumConstantNameProperty aromaticityModelSetting;
+    private final SimpleEnumConstantNameProperty electronDonationModelSetting;
 
     /**
      * A property that has a constant name from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
@@ -283,12 +293,12 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
     /**
-     * A property that has a constant name from EFGFFragmenterReturnedFragmentsOption enum as value.
+     * A property that has a constant name from the EFGFFragmenterReturnedFragmentsOption enum as value.
      */
     private final SimpleEnumConstantNameProperty returnedFragmentsSetting;
 
     /**
-     *
+     * A property that has a constant name from the CycleFinderOption enum as value.
      */
     private final SimpleEnumConstantNameProperty cycleFinderSetting;
 
@@ -303,24 +313,17 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     private final Logger logger = Logger.getLogger(ErtlFunctionalGroupsFinderFragmenter.class.getName());
     //</editor-fold>
     //
-    //<editor-fold desc="Constructors">
+    //<editor-fold desc="Constructor">
     /**
-     * TODO
+     * Constructor, all settings are initialised with their default values.
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
-        this(ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT);
-    }
-
-    /**
-     * TODO
-     */
-    public ErtlFunctionalGroupsFinderFragmenter(FGEnvOption aMode) throws NullPointerException {
-        Objects.requireNonNull(aMode, "Given mode is null.");
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 try {
+                    //call to super.set() for parameter checks
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ErtlFunctionalGroupsFinderFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
@@ -331,7 +334,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             }
         };
         this.environmentModeSetting = new SimpleEnumConstantNameProperty(this, "Environment mode setting",
-                aMode.name(), ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.class) {
+                ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.name(), ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 try {
@@ -347,11 +350,14 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderFragmenter.this.setErtlFGFInstance(FGEnvOption.valueOf(newValue));
             }
         };
+        //initialisation of EFGF instance
+        this.setErtlFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
         this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",
                 ErtlFunctionalGroupsFinderFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name(), EFGFFragmenterReturnedFragmentsOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 try {
+                    //call to super.set() for parameter checks
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ErtlFunctionalGroupsFinderFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
@@ -361,9 +367,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 }
             }
         };
-        //initialisation of EFGF instance
-        this.setErtlFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
-        //note: cycle finder has to be set prior to setting the aromaticity model!
+        //note: cycle finder and electron donation model have to be set prior to setting the aromaticity model!
         this.cycleFinderSetting = new SimpleEnumConstantNameProperty(this, "Cycle finder algorithm setting",
                 ErtlFunctionalGroupsFinderFragmenter.CYCLE_FINDER_OPTION_DEFAULT.name(),
                 ErtlFunctionalGroupsFinderFragmenter.CycleFinderOption.class) {
@@ -380,14 +384,15 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 }
                 //throws no exception if super.set() throws no exception
                 ErtlFunctionalGroupsFinderFragmenter.this.setCycleFinderInstance(CycleFinderOption.valueOf(newValue));
-                ErtlFunctionalGroupsFinderFragmenter.this.setAromaticityModelInstance(AromaticityModelOption.valueOf(
-                        ErtlFunctionalGroupsFinderFragmenter.this.aromaticityModelSetting.get()));
+                ErtlFunctionalGroupsFinderFragmenter.this.setAromaticityInstance(
+                        ErtlFunctionalGroupsFinderFragmenter.this.electronDonationInstance,
+                        ErtlFunctionalGroupsFinderFragmenter.this.cycleFinderInstance);
             }
         };
         this.setCycleFinderInstance(CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
-        this.aromaticityModelSetting = new SimpleEnumConstantNameProperty(this, "Aromaticity model setting",
-                ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name(),
-                ErtlFunctionalGroupsFinderFragmenter.AromaticityModelOption.class) {
+        this.electronDonationModelSetting = new SimpleEnumConstantNameProperty(this, "Electron donation model setting",
+                ErtlFunctionalGroupsFinderFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name(),
+                ElectronDonationModelOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 try {
@@ -400,14 +405,20 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                     throw anException;
                 }
                 //throws no exception if super.set() throws no exception
-                ErtlFunctionalGroupsFinderFragmenter.this.setAromaticityModelInstance(AromaticityModelOption.valueOf(newValue));
+                ErtlFunctionalGroupsFinderFragmenter.this.setElectronDonationInstance(ElectronDonationModelOption.valueOf(newValue));
+                ErtlFunctionalGroupsFinderFragmenter.this.setAromaticityInstance(
+                        ErtlFunctionalGroupsFinderFragmenter.this.electronDonationInstance,
+                        ErtlFunctionalGroupsFinderFragmenter.this.cycleFinderInstance);
             }
         };
-        //aromaticity model instance is set in method
-        this.setAromaticityModelInstance(AromaticityModelOption.valueOf(this.aromaticityModelSetting.get()));
+        this.setElectronDonationInstance(ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get()));
+        this.setAromaticityInstance(
+                ErtlFunctionalGroupsFinderFragmenter.this.electronDonationInstance,
+                ErtlFunctionalGroupsFinderFragmenter.this.cycleFinderInstance
+        );
         this.settings = new ArrayList<Property>(5);
         this.settings.add(this.fragmentSaturationSetting);
-        this.settings.add(this.aromaticityModelSetting);
+        this.settings.add(this.electronDonationModelSetting);
         this.settings.add(this.cycleFinderSetting);
         this.settings.add(this.environmentModeSetting);
         this.settings.add(this.returnedFragmentsSetting);
@@ -440,22 +451,29 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      *
      */
-    public String getAromaticityModelSetting() {
-        return this.aromaticityModelSetting.get();
+    public String getElectronDonationModelSetting() {
+        return this.electronDonationModelSetting.get();
     }
 
     /**
      *
      */
-    public SimpleEnumConstantNameProperty aromaticityModelSettingProperty() {
-        return this.aromaticityModelSetting;
+    public SimpleEnumConstantNameProperty electronDonationModelSettingProperty() {
+        return this.electronDonationModelSetting;
     }
 
     /**
      *
      */
-    public AromaticityModelOption getAromaticityModelSettingConstant() {
-        return AromaticityModelOption.valueOf(this.aromaticityModelSetting.get());
+    public ElectronDonationModelOption getElectronDonationModelSettingConstant() {
+        return ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get());
+    }
+
+    /**
+     *
+     */
+    public String getReturnedFragmentsSetting() {
+        return this.returnedFragmentsSetting.get();
     }
 
     /**
@@ -470,6 +488,13 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      */
     public EFGFFragmenterReturnedFragmentsOption getReturnedFragmentsSettingConstant() {
         return EFGFFragmenterReturnedFragmentsOption.valueOf(this.returnedFragmentsSetting.get());
+    }
+
+    /**
+     *
+     */
+    public String getCycleFinderSetting() {
+        return this.cycleFinderSetting.get();
     }
 
     /**
@@ -511,11 +536,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      *
      */
-    public void setAromaticityModelSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+    public void setElectronDonationModelSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        AromaticityModelOption tmpConstant = AromaticityModelOption.valueOf(anOptionName);
-        this.setAromaticityModelSetting(tmpConstant);
+        ElectronDonationModelOption tmpConstant = ElectronDonationModelOption.valueOf(anOptionName);
+        this.setElectronDonationModelSetting(tmpConstant);
     }
 
     /**
@@ -524,10 +549,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * @throws NullPointerException
      * @throws IllegalArgumentException
      */
-    public void setAromaticityModelSetting(AromaticityModelOption anOption) throws NullPointerException, IllegalArgumentException {
+    public void setElectronDonationModelSetting(ElectronDonationModelOption anOption) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOption, "Given option is null.");
         //synchronisation with aromaticity model instance done in overridden set() function of the property
-        this.aromaticityModelSetting.set(anOption.name());
+        this.electronDonationModelSetting.set(anOption.name());
     }
 
     /**
@@ -617,7 +642,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         ErtlFunctionalGroupsFinderFragmenter tmpCopy = new ErtlFunctionalGroupsFinderFragmenter();
         tmpCopy.setEnvironmentModeSetting(this.environmentModeSetting.get());
         tmpCopy.setCycleFinderSetting(this.cycleFinderSetting.get());
-        tmpCopy.setAromaticityModelSetting(this.aromaticityModelSetting.get());
+        tmpCopy.setElectronDonationModelSetting(this.electronDonationModelSetting.get());
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
         tmpCopy.setReturnedFragmentsSetting(this.returnedFragmentsSetting.get());
         return tmpCopy;
@@ -630,9 +655,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.setErtlFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
         this.cycleFinderSetting.set(ErtlFunctionalGroupsFinderFragmenter.CYCLE_FINDER_OPTION_DEFAULT.name());
         this.setCycleFinderSetting(CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
-        this.aromaticityModelSetting.set(ErtlFunctionalGroupsFinderFragmenter.AROMATICITY_MODEL_OPTION_DEFAULT.name());
+        this.electronDonationModelSetting.set(ErtlFunctionalGroupsFinderFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name());
         //this.aromaticityModel is set in the method
-        this.setAromaticityModelInstance(AromaticityModelOption.valueOf(this.aromaticityModelSetting.get()));
+        this.setAromaticityInstance(this.electronDonationInstance, this.cycleFinderInstance);
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
         this.returnedFragmentsSetting.set(ErtlFunctionalGroupsFinderFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name());
     }
@@ -855,32 +880,20 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Private methods">
     /**
-     * Sets only the instance, not the property! So its safe for the property to call this method when overriding set().
+     * Sets only the instance, not the property! So it is safe for the property to call this method when overriding set().
      */
-    private void setAromaticityModelInstance(AromaticityModelOption anOption) throws NullPointerException {
-        Objects.requireNonNull(anOption, "Given option is null.");
-        switch (anOption) {
-            case CDK:
-                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.cdk(), this.cycleFinderInstance);
-                break;
-            case DAYLIGHT:
-                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.daylight(), this.cycleFinderInstance);
-                break;
-            case CDK_ALLOWING_EXOCYCLIC:
-                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.cdkAllowingExocyclic(), this.cycleFinderInstance);
-                break;
-            case PI_BONDS:
-                this.aromaticityModelInstance = new Aromaticity(ElectronDonation.piBonds(), this.cycleFinderInstance);
-                break;
-            default:
-                throw new IllegalArgumentException("Undefined aromaticity model option.");
-        }
+    private void setAromaticityInstance(ElectronDonation anElectronDonation, CycleFinder aCycleFinder) throws NullPointerException {
+        Objects.requireNonNull(anElectronDonation, "Given electron donation model is null.");
+        Objects.requireNonNull(aCycleFinder, "Given cycle finder algorithm is null.");
+        this.aromaticityModelInstance = new Aromaticity(anElectronDonation, aCycleFinder);
     }
 
     /**
      * Calling method needs to update the aromaticity model!
      */
     private void setCycleFinderInstance(CycleFinderOption anOption) throws NullPointerException {
+        //Developer comment: the switch way is used instead of having the CycleFinder objects as variables of the enum constants
+        // to not have static objects becoming bottlenecks in parallelization.
         Objects.requireNonNull(anOption, "Given option is null.");
         switch (anOption) {
             case ALL:
@@ -909,6 +922,31 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 break;
             default:
                 throw new IllegalArgumentException("Undefined cycle finder option.");
+        }
+    }
+
+    /**
+     * Calling method needs to update the aromaticity model!
+     */
+    private void setElectronDonationInstance(ElectronDonationModelOption anOption) throws NullPointerException {
+        //Developer comment: the switch way is used instead of having the CycleFinder objects as variables of the enum constants
+        // to not have static objects becoming bottlenecks in parallelization.
+        Objects.requireNonNull(anOption, "Given option is null.");
+        switch (anOption) {
+            case CDK:
+                this.electronDonationInstance = ElectronDonation.cdk();
+                break;
+            case DAYLIGHT:
+                this.electronDonationInstance = ElectronDonation.daylight();
+                break;
+            case CDK_ALLOWING_EXOCYCLIC:
+                this.electronDonationInstance = ElectronDonation.cdkAllowingExocyclic();
+                break;
+            case PI_BONDS:
+                this.electronDonationInstance = ElectronDonation.piBonds();
+                break;
+            default:
+                throw new IllegalArgumentException("Undefined electron donation model option.");
         }
     }
 

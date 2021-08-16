@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -38,7 +38,7 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
     public void basicTest() throws Exception {
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
         System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
-        System.out.println(tmpFragmenter.getAromaticityModelSetting());
+        System.out.println(tmpFragmenter.getElectronDonationModelSetting());
         System.out.println(tmpFragmenter.getEnvironmentModeSetting());
         for (Property tmpSetting : tmpFragmenter.settingsProperties()) {
             System.out.println(tmpSetting.getName());
@@ -52,12 +52,12 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Canonical));
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
-        ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter(
-                ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.NO_ENVIRONMENT);
+        ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
+        tmpFragmenter.setEnvironmentModeSetting(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.NO_ENVIRONMENT);
         tmpFragmenter.setEnvironmentModeSetting(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.GENERALIZATION);
         tmpFragmenter.environmentModeSettingProperty().set(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.FULL_ENVIRONMENT.name());
         tmpFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION);
-        tmpFragmenter.setAromaticityModelSetting(ErtlFunctionalGroupsFinderFragmenter.AromaticityModelOption.CDK);
+        tmpFragmenter.setElectronDonationModelSetting(ErtlFunctionalGroupsFinderFragmenter.ElectronDonationModelOption.CDK);
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 //CNP0151033
                 "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4");

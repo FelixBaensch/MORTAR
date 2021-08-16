@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -68,7 +68,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Enum ReturnedFragmentsOption">
+    //<editor-fold desc="Enum SRUFragmenterReturnedFragmentsOption">
     /**
      * Enum for defining which fragments should be returned by the fragmentation methods, only the sugars,
      * only the aglycones, or both.
