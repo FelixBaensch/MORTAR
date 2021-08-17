@@ -22,8 +22,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 /**
  * TODO:
- * - write doc
- * - see other todos
+ * -
  */
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -427,85 +426,110 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Public properties get">
     /**
+     * Returns the string representation of the currently set option for the environment mode setting .
      *
-     * @return
+     * @return enum constant name of the set option
      */
     public String getEnvironmentModeSetting() {
         return this.environmentModeSetting.get();
     }
 
     /**
+     * Returns the property object of the environment mode setting that can be used to configure this setting.
      *
+     * @return property object of the environment mode setting
      */
     public SimpleEnumConstantNameProperty environmentModeSettingProperty() {
         return this.environmentModeSetting;
     }
 
     /**
+     * Returns the enum constant currently set as option for the environment mode setting.
      *
+     * @return enum constant for environment mode setting
      */
     public FGEnvOption getEnvironmentModeSettingConstant() {
         return FGEnvOption.valueOf(this.environmentModeSetting.get());
     }
 
     /**
+     * Returns the string representation of the currently set option for the electron donation model setting used for
+     * aromaticity detection together with the set cycle finder algorithm.
      *
+     * @return enum constant name of the set option
      */
     public String getElectronDonationModelSetting() {
         return this.electronDonationModelSetting.get();
     }
 
     /**
+     * Returns the property object of the electron donation model setting that can be used to configure this setting.
      *
+     * @return property object of the electron donation model setting
      */
     public SimpleEnumConstantNameProperty electronDonationModelSettingProperty() {
         return this.electronDonationModelSetting;
     }
 
     /**
+     * Returns the enum constant currently set as option for the electron donation model setting.
      *
+     * @return enum constant for electron donation model setting
      */
     public ElectronDonationModelOption getElectronDonationModelSettingConstant() {
         return ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get());
     }
 
     /**
+     * Returns the string representation of the currently set option for the returned fragments setting
      *
+     * @return enum constant name of the set option
      */
     public String getReturnedFragmentsSetting() {
         return this.returnedFragmentsSetting.get();
     }
 
     /**
+     * Returns the property object of the returned fragments setting that can be used to configure this setting.
      *
+     * @return property object of the returned fragments setting
      */
     public SimpleEnumConstantNameProperty returnedFragmentsSettingProperty() {
         return this.returnedFragmentsSetting;
     }
 
     /**
+     * Returns the enum constant currently set as option for the returned fragments setting.
      *
+     * @return enum constant for returned fragments setting
      */
     public EFGFFragmenterReturnedFragmentsOption getReturnedFragmentsSettingConstant() {
         return EFGFFragmenterReturnedFragmentsOption.valueOf(this.returnedFragmentsSetting.get());
     }
 
     /**
+     * Returns the string representation of the currently set option for the cycle finder setting used for aromaticity
+     * detection together with the electron donation model setting.
      *
+     * @return enum constant name of the set option
      */
     public String getCycleFinderSetting() {
         return this.cycleFinderSetting.get();
     }
 
     /**
+     * Returns the property object of the cycle finder setting that can be used to configure this setting.
      *
+     * @return property object of the cycle finder setting
      */
     public SimpleEnumConstantNameProperty cycleFinderSettingProperty() {
         return this.cycleFinderSetting;
     }
 
     /**
+     * Returns the enum constant currently set as option for the cycle finder setting.
      *
+     * @return enum constant for cycle finder setting
      */
     public CycleFinderOption getCycleFinderSettingConstant() {
         return CycleFinderOption.valueOf(this.cycleFinderSetting.get());
@@ -515,6 +539,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //<editor-fold desc="Public properties set">
     /**
      *
+     *
+     * @param anOptionName
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
      */
     public void setEnvironmentModeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -525,7 +553,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
 
     /**
      *
-     * @return
+     *
+     * @param anOption
+     * @throws NullPointerException
      */
     public void setEnvironmentModeSetting(FGEnvOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
@@ -535,6 +565,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
 
     /**
      *
+     *
+     * @param anOptionName
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
      */
     public void setElectronDonationModelSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -544,6 +578,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
+     *
      *
      * @param anOption
      * @throws NullPointerException
@@ -557,7 +592,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
 
     /**
      *
-     * @return
+     *
+     * @param anOptionName
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
      */
     public void setReturnedFragmentsSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -568,7 +606,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
 
     /**
      *
-     * @return
+     *
+     * @param
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
      */
     public void setReturnedFragmentsSetting(EFGFFragmenterReturnedFragmentsOption anOption) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOption, "Given option is null.");
@@ -577,7 +618,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
 
     /**
      *
-     * @return
+     *
+     * @param anOptionName
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
      */
     public void setCycleFinderSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -588,7 +632,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
 
     /**
      *
-     * @return
+     *
+     * @param anOption
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
      */
     public void setCycleFinderSetting(CycleFinderOption anOption) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOption, "Given option is null.");
@@ -597,6 +644,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+    //without the empty line, the code folding does not work properly here...
 
     @Override
     public List<Property> settingsProperties() {
@@ -662,31 +710,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.returnedFragmentsSetting.set(ErtlFunctionalGroupsFinderFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name());
     }
 
-    /**
-     * TODO
-     * If molecule is empty, it is returned inside a list as sole element
-     * If no FG are identified, the molecule is returned as sole element in the list (one alkane fragment, ignoring the
-     * return fragment setting!)
-     *
-     * @param aMolecule
-     * @return
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     * @throws CloneNotSupportedException
-     */
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         //<editor-fold desc="Parameter tests">
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            IAtomContainer tmpClone = aMolecule.clone();
-            List<IAtomContainer> tmpReturnList = new ArrayList<IAtomContainer>(1);
-            tmpReturnList.add(0, tmpClone);
-            tmpClone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                    ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
-            return tmpReturnList;
-        }
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
         if (!tmpCanBeFragmented) {
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
@@ -740,16 +768,20 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 //Partition unconnected alkane fragments in distinct atom containers
                 if (this.returnedFragmentsSetting.get().equals(EFGFFragmenterReturnedFragmentsOption.ALL_FRAGMENTS.name())
                         || this.returnedFragmentsSetting.get().equals(EFGFFragmenterReturnedFragmentsOption.ONLY_ALKANE_FRAGMENTS.name())) {
-                    IAtomContainerSet tmpPartitionedMoietiesSet = ConnectivityChecker.partitionIntoMolecules(tmpMoleculeClone);
-                    tmpNonFGFragments = new ArrayList<>(tmpPartitionedMoietiesSet.getAtomContainerCount());
-                    for (IAtomContainer tmpContainer : tmpPartitionedMoietiesSet.atomContainers()) {
-                        //post-processing of alkane fragments
-                        tmpContainer.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                                ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
-                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                            IMoleculeFragmenter.saturateWithHydrogen(tmpContainer);
+                    if (!tmpMoleculeClone.isEmpty()) {
+                        IAtomContainerSet tmpPartitionedMoietiesSet = ConnectivityChecker.partitionIntoMolecules(tmpMoleculeClone);
+                        tmpNonFGFragments = new ArrayList<>(tmpPartitionedMoietiesSet.getAtomContainerCount());
+                        for (IAtomContainer tmpContainer : tmpPartitionedMoietiesSet.atomContainers()) {
+                            //post-processing of alkane fragments
+                            tmpContainer.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                                    ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
+                            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                                IMoleculeFragmenter.saturateWithHydrogen(tmpContainer);
+                            }
+                            tmpNonFGFragments.add(tmpContainer);
                         }
-                        tmpNonFGFragments.add(tmpContainer);
+                    } else {
+                        tmpNonFGFragments = new ArrayList<>(0);
                     }
                 }
             } else {
@@ -761,6 +793,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                     tmpMoleculeClone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
                 }
+                //if only FG should be returned (but none have been detected), this list is empty
                 return tmpReturnList;
             }
         } catch(Exception anException) {
@@ -783,15 +816,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         return tmpFragments;
     }
 
-    /**
-     * TODO
-     *
-     * @param aFragmentList
-     * @return
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     */
-    @Override
+    /*@Override
     public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aFragmentList, "Given fragment list is null.");
         //happens if only FG fragments are set to be returned but there are no FG in the molecule
@@ -810,7 +835,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                     "should be the original molecule, an alkane or a functional group fragment.");
         }
         return !(aFragmentList.size() == 1);
-    }
+    }*/
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
@@ -840,14 +865,6 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         return ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule);
     }
 
-    /**
-     * TODO
-     *
-     * @param aMolecule
-     * @return
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     */
     @Override
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
