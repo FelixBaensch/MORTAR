@@ -183,7 +183,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         ESSENTIAL,
 
         /**
-         * Minimum Cycle Basis (MCB, aka. SSSR - smalles set of smallest rings).
+         * Minimum Cycle Basis (MCB, aka. SSSR - smallest set of smallest rings).
          */
         MCB,
 
@@ -307,14 +307,14 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     private final List<Property> settings;
 
     /**
-     * Logger of this class
+     * Logger of this class.
      */
     private final Logger logger = Logger.getLogger(ErtlFunctionalGroupsFinderFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
     /**
-     * Constructor, all settings are initialised with their default values.
+     * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
@@ -538,11 +538,12 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Public properties set">
     /**
+     * Sets the environment mode setting defining whether the returned functional group fragments should have full environments,
+     * generalized environments or no environments.
      *
-     *
-     * @param anOptionName
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anOptionName name of a constant from the FGEnvOption enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
      */
     public void setEnvironmentModeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -552,10 +553,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
+     * Sets the environment mode setting defining whether the returned functional group fragments should have full environments,
+     * generalized environments or no environments.
      *
-     *
-     * @param anOption
-     * @throws NullPointerException
+     * @param anOption a constant from the FGEnvOption enum
+     * @throws NullPointerException if the given parameter is null
      */
     public void setEnvironmentModeSetting(FGEnvOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
@@ -564,11 +566,12 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
+     * Sets the electron donation model setting. The set electron donation model is used for aromaticity detection in
+     * preprocessing together with the set cycle finder algorithm.
      *
-     *
-     * @param anOptionName
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anOptionName name of a constant from the ElectronDonationModelOption enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
      */
     public void setElectronDonationModelSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -578,24 +581,25 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
+     * Sets the electron donation model setting. The set electron donation model is used for aromaticity detection in
+     * preprocessing together with the set cycle finder algorithm.
      *
-     *
-     * @param anOption
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anOption a constant from the ElectronDonationModelOption enum
+     * @throws NullPointerException is the given parameter is null
      */
-    public void setElectronDonationModelSetting(ElectronDonationModelOption anOption) throws NullPointerException, IllegalArgumentException {
+    public void setElectronDonationModelSetting(ElectronDonationModelOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
         //synchronisation with aromaticity model instance done in overridden set() function of the property
         this.electronDonationModelSetting.set(anOption.name());
     }
 
     /**
+     * Sets the returned fragments setting defining whether only functional groups, only alkane fragments, or both should
+     * be returned.
      *
-     *
-     * @param anOptionName
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anOptionName name of a constant from the EFGFFragmenterReturnedFragmentsOption enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
      */
     public void setReturnedFragmentsSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -605,23 +609,24 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
+     * Sets the returned fragments setting defining whether only functional groups, only alkane fragments, or both should
+     * be returned.
      *
-     *
-     * @param
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anOption a constant from the EFGFFragmenterReturnedFragmentsOption enum
+     * @throws NullPointerException if the given parameter is null
      */
-    public void setReturnedFragmentsSetting(EFGFFragmenterReturnedFragmentsOption anOption) throws NullPointerException, IllegalArgumentException {
+    public void setReturnedFragmentsSetting(EFGFFragmenterReturnedFragmentsOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
         this.returnedFragmentsSetting.set(anOption.name());
     }
 
     /**
+     * Sets the cycle finder setting. The chosen cycle finder algorithm is used for aromaticity detection in
+     * preprocessing together with the set electron donation model.
      *
-     *
-     * @param anOptionName
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anOptionName name of a constant from the CycleFinderOption enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
      */
     public void setCycleFinderSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -631,13 +636,13 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
+     * Sets the cycle finder setting. The chosen cycle finder algorithm is used for aromaticity detection in
+     * preprocessing together with the set electron donation model.
      *
-     *
-     * @param anOption
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
+     * @param anOption a constant from the CycleFinderOption enum
+     * @throws NullPointerException if the given parameter is null
      */
-    public void setCycleFinderSetting(CycleFinderOption anOption) throws NullPointerException, IllegalArgumentException {
+    public void setCycleFinderSetting(CycleFinderOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
         this.cycleFinderSetting.set(anOption.name());
     }
@@ -968,7 +973,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
-     * Sets only the instance, not the property! So its safe for the property to call this method when overriding set().
+     * Sets only the instance, not the property! So it is safe for the property to call this method when overriding set().
      */
     private void setErtlFGFInstance(FGEnvOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");

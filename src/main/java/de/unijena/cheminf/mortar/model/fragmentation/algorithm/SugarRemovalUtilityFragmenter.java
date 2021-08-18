@@ -145,81 +145,82 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
     /**
-     *
+     * Property wrapping the 'detect circular sugars only with glycosidic bond' setting of the SRU.
      */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
 
     /**
-     *
+     * Property wrapping the 'remove only terminal sugars' setting of the SRU.
      */
     private final SimpleBooleanProperty removeOnlyTerminalSugarsSetting;
 
     /**
-     *
+     * Property wrapping the 'preservation mode' setting of the SRU; has a constant from the
+     * SugarRemovalUtility.PreservationModeOption enum as value.
      */
     private final SimpleEnumConstantNameProperty preservationModeSetting;
 
     /**
+     * Property wrapping the 'preservation mode threshold' setting of the SRU.
      * The threshold is actually an integer in the SRU but wrapped in a double here to make setup of
-     * the settings window easier
+     * the settings window easier.
      */
     private final SimpleIntegerProperty preservationModeThresholdSetting;
 
     /**
-     *
+     * Property wrapping the 'detect circular sugars only with enough exocyclic oxygen atoms' setting of the SRU.
      */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting;
 
     /**
-     *
+     * Property wrapping the 'exocyclic oxygen atoms to atoms in ring ratio threshold' setting of the SRU.
      */
     private final SimpleDoubleProperty exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting;
 
     /**
-     *
+     * Property wrapping the 'detect linear sugars in rings' setting of the SRU.
      */
     private final SimpleBooleanProperty detectLinearSugarsInRingsSetting;
 
     /**
-     *
+     * Property wrapping the 'linear sugar candidates minimum size' setting of the SRU.
      */
     private final SimpleIntegerProperty linearSugarCandidateMinimumSizeSetting;
 
     /**
-     *
+     * Property wrapping the 'linear sugar candidates maximum size' setting of the SRU.
      */
     private final SimpleIntegerProperty linearSugarCandidateMaximumSizeSetting;
 
     /**
-     *
+     * Property wrapping the 'detect linear acidic sugars' setting of the SRU.
      */
     private final SimpleBooleanProperty detectLinearAcidicSugarsSetting;
 
     /**
-     *
+     * Property wrapping the 'detect spiro rings as circular sugars' setting of the SRU.
      */
     private final SimpleBooleanProperty detectSpiroRingsAsCircularSugarsSetting;
 
     /**
-     *
+     * Property wrapping the 'detect circular sugars with keto groups' setting of the SRU.
      */
     private final SimpleBooleanProperty detectCircularSugarsWithKetoGroupsSetting;
 
     /**
-     *
+     * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
      */
     private final List<Property> settings;
 
     /**
-     * Logger of this class
+     * Logger of this class.
      */
     private final Logger logger = Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
     /**
-     * TODO
-     * all settings in default, calls the SRU sole constructor
+     * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public SugarRemovalUtilityFragmenter() {
         this.sugarRUInstance = new SugarRemovalUtility();
@@ -439,7 +440,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Public properties get">
     /**
-     *
+     * 
      */
     public SimpleEnumConstantNameProperty returnedFragmentsSettingProperty() {
         return this.returnedFragmentsSetting;
@@ -812,6 +813,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+    //without the empty line, the code folding does not work properly here...
 
     @Override
     public List<Property> settingsProperties() {
@@ -893,13 +895,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.detectCircularSugarsWithKetoGroupsSetting.set(this.sugarRUInstance.areCircularSugarsWithKetoGroupsDetected());
     }
 
-    /**
-     *
-     * @param aMolecule
-     * @return
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     */
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
@@ -998,13 +993,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         return tmpFragments;
     }
 
-    /**
-     *
-     * @param
-     * @return
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     */
     /*@Override
     public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aFragmentList, "Given fragment list is null.");
