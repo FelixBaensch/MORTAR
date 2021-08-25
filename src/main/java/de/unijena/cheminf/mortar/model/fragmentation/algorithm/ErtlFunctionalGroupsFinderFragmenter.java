@@ -426,7 +426,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //
     //<editor-fold desc="Public properties get">
     /**
-     * Returns the string representation of the currently set option for the environment mode setting .
+     * Returns the string representation of the currently set option for the environment mode setting.
      *
      * @return enum constant name of the set option
      */
