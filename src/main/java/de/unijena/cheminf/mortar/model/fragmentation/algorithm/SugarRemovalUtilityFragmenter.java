@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -22,7 +22,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 /**
  * TODO:
- * - write doc
+ * -
  */
 
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
@@ -43,150 +43,202 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * TODO
+ * Wrapper class that makes the
+ * <a href="https://doi.org/10.1186/s13321-020-00467-y">Sugar Removal Utility for in-silico deglycosylation</a>
+ * available in MORTAR. For additional documentation see the linked journal article or the original
+ * SugarRemovalUtility class.
+ *
+ * @author Jonas Schaub
  */
 public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="Enum SugarTypeToRemoveOption">
     /**
-     *
+     * Enum for options concerning the type of sugars to remove or detect.
      */
     public static enum SugarTypeToRemoveOption {
         /**
-         *
+         * Remove/detect only circular sugars.
          */
         CIRCULAR,
 
         /**
-         *
+         * Remove/detect only linear sugars.
          */
         LINEAR,
 
         /**
-         *
+         * Remove/detect both circular and linear sugars.
          */
         CIRCULAR_AND_LINEAR;
     }
     //</editor-fold>
     //
+    //<editor-fold desc="Enum SRUFragmenterReturnedFragmentsOption">
+    /**
+     * Enum for defining which fragments should be returned by the fragmentation methods, only the sugars,
+     * only the aglycones, or both.
+     */
+    public static enum SRUFragmenterReturnedFragmentsOption {
+        /**
+         * Option to return only the identified sugar moieties of a molecule after fragmentation.
+         */
+        ONLY_SUGAR_MOIETIES,
+
+        /**
+         * Option to return only the aglycone of a molecule after fragmentation.
+         */
+        ONLY_AGLYCONE,
+
+        /**
+         * Option to return both, aglycone and sugar moieties, after fragmentation.
+         */
+        ALL_FRAGMENTS;
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Public static final constants">
     /**
-     *
+     * Name of the algorithm used in this fragmenter.
      */
     public static final String ALGORITHM_NAME = "Sugar Removal Utility";
 
     /**
-     *
+     * Aglycone fragments will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
      */
     public static final String FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE = "SRUFragmenter.DeglycosylatedCore";
 
     /**
-     *
+     * Sugar moiety fragments will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
      */
     public static final String FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE = "SRUFragmenter.SugarMoiety";
 
     /**
-     *
+     * Default option for the sugar type to remove setting.
      */
     public static final SugarTypeToRemoveOption SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT = SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR;
+
+    /**
+     * Default returned fragments option.
+     */
+    public static final SRUFragmenterReturnedFragmentsOption RETURNED_FRAGMENTS_OPTION_DEFAULT = SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS;
     //</editor-fold>
     //
     //<editor-fold desc="Private variables">
     /**
-     *
+     * Instance of the Sugar Removal Utility used internally to detect and remove the sugar moieties.
      */
     private SugarRemovalUtility sugarRUInstance;
     //</editor-fold>
     //<editor-fold desc="Private final variables">
     /**
-     *
+     * A property that has a constant name from SRUFragmenterReturnedFragmentsOption enum as value.
+     */
+    private final SimpleEnumConstantNameProperty returnedFragmentsSetting;
+
+    /**
+     * A property that has a constant name from SugarTypeToRemoveOption enum as value.
      */
     private final SimpleEnumConstantNameProperty sugarTypeToRemoveSetting;
 
     /**
-     *
+     * A property that has a constant name from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
     /**
-     *
+     * Property wrapping the 'detect circular sugars only with glycosidic bond' setting of the SRU.
      */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
 
     /**
-     *
+     * Property wrapping the 'remove only terminal sugars' setting of the SRU.
      */
     private final SimpleBooleanProperty removeOnlyTerminalSugarsSetting;
 
     /**
-     *
+     * Property wrapping the 'preservation mode' setting of the SRU; has a constant from the
+     * SugarRemovalUtility.PreservationModeOption enum as value.
      */
     private final SimpleEnumConstantNameProperty preservationModeSetting;
 
     /**
-     * The threshold is actually an integer in the SRU but wrapped in a double here to make setup of
-     * settings window easier
+     * Property wrapping the 'preservation mode threshold' setting of the SRU.
      */
     private final SimpleIntegerProperty preservationModeThresholdSetting;
 
     /**
-     *
+     * Property wrapping the 'detect circular sugars only with enough exocyclic oxygen atoms' setting of the SRU.
      */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting;
 
     /**
-     *
+     * Property wrapping the 'exocyclic oxygen atoms to atoms in ring ratio threshold' setting of the SRU.
      */
     private final SimpleDoubleProperty exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting;
 
     /**
-     *
+     * Property wrapping the 'detect linear sugars in rings' setting of the SRU.
      */
     private final SimpleBooleanProperty detectLinearSugarsInRingsSetting;
 
     /**
-     *
+     * Property wrapping the 'linear sugar candidates minimum size' setting of the SRU.
      */
     private final SimpleIntegerProperty linearSugarCandidateMinimumSizeSetting;
 
     /**
-     *
+     * Property wrapping the 'linear sugar candidates maximum size' setting of the SRU.
      */
     private final SimpleIntegerProperty linearSugarCandidateMaximumSizeSetting;
 
     /**
-     *
+     * Property wrapping the 'detect linear acidic sugars' setting of the SRU.
      */
     private final SimpleBooleanProperty detectLinearAcidicSugarsSetting;
 
     /**
-     *
+     * Property wrapping the 'detect spiro rings as circular sugars' setting of the SRU.
      */
     private final SimpleBooleanProperty detectSpiroRingsAsCircularSugarsSetting;
 
     /**
-     *
+     * Property wrapping the 'detect circular sugars with keto groups' setting of the SRU.
      */
     private final SimpleBooleanProperty detectCircularSugarsWithKetoGroupsSetting;
 
     /**
-     *
+     * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
      */
     private final List<Property> settings;
 
     /**
-     * Logger of this class
+     * Logger of this class.
      */
     private final Logger logger = Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
     /**
-     * TODO
-     * all settings in default, calls the SRU sole constructor
+     * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public SugarRemovalUtilityFragmenter() {
         this.sugarRUInstance = new SugarRemovalUtility();
         this.settings = new ArrayList<>(14);
+        this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",
+                SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name(), SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
+        this.settings.add(this.returnedFragmentsSetting);
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
@@ -387,197 +439,287 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Public properties get">
     /**
+     * Returns the string representation of the currently set option for the returned fragments setting
      *
-     * @return
+     * @return enum constant name of the set option
+     */
+    public String getReturnedFragmentsSetting() {
+        return this.returnedFragmentsSetting.get();
+    }
+
+    /**
+     * Returns the property object of the returned fragments setting that can be used to configure this setting.
+     *
+     * @return property object of the returned fragments setting
+     */
+    public SimpleEnumConstantNameProperty returnedFragmentsSettingProperty() {
+        return this.returnedFragmentsSetting;
+    }
+
+    /**
+     * Returns the enum constant currently set as option for the returned fragments setting.
+     *
+     * @return enum constant for returned fragments setting
+     */
+    public SRUFragmenterReturnedFragmentsOption getReturnedFragmentsSettingConstant() {
+        return SRUFragmenterReturnedFragmentsOption.valueOf(this.returnedFragmentsSetting.get());
+    }
+
+    /**
+     * Returns the string representation of the currently set option for the sugar type to remove setting.
+     *
+     * @return enum constant name of the set option
      */
     public String getSugarTypeToRemoveSetting() {
         return this.sugarTypeToRemoveSetting.get();
     }
 
     /**
+     * Returns the property object of the sugar type to remove setting that can be used to configure this setting.
      *
+     * @return property object of the sugar type to remove setting
      */
     public SimpleEnumConstantNameProperty sugarTypeToRemoveSettingProperty() {
         return this.sugarTypeToRemoveSetting;
     }
 
     /**
+     * Returns the enum constant currently set as option for the sugar type to remove setting.
      *
+     * @return enum constant for sugar type to remove setting
      */
     public SugarTypeToRemoveOption getSugarTypeToRemoveSettingConstant() {
         return SugarTypeToRemoveOption.valueOf(this.sugarTypeToRemoveSetting.get());
     }
 
     /**
+     * Returns the current state of the detect circular sugars only with glycosidic bond setting.
      *
+     * @return true if circular sugars should be detected/removed only if they have a glycosidic bond
      */
     public boolean getDetectCircularSugarsOnlyWithGlycosidicBondSetting() {
         return this.detectCircularSugarsOnlyWithGlycosidicBondSetting.get();
     }
 
     /**
+     * Returns the property object of the detect circular sugars only with glycosidic bond setting that can be used to
+     * configure this setting.
      *
+     * @return property object of the detect circular sugars only with glycosidic bond setting
      */
     public SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSettingProperty() {
         return this.detectCircularSugarsOnlyWithGlycosidicBondSetting;
     }
 
     /**
+     * Returns the current state of the remove only terminal sugars setting.
      *
+     * @return true if only terminal sugars should be detected/removed
      */
     public boolean getRemoveOnlyTerminalSugarsSetting() {
         return this.removeOnlyTerminalSugarsSetting.get();
     }
 
     /**
+     * Returns the property object of the remove only terminal sugars setting that can be used to configure this setting.
      *
+     * @return property object of the remove only terminal sugars setting
      */
     public SimpleBooleanProperty removeOnlyTerminalSugarsSettingProperty() {
         return this.removeOnlyTerminalSugarsSetting;
     }
 
     /**
+     * Returns the string representation of the currently set option for the preservation mode setting.
      *
+     * @return enum constant name of the set option
      */
     public String getPreservationModeSetting() {
         return this.preservationModeSetting.get();
     }
 
     /**
+     * Returns the property object of the preservation mode setting that can be used to configure this setting.
      *
+     * @return property object of the preservation mode setting
      */
     public SimpleEnumConstantNameProperty preservationModeSettingProperty() {
         return this.preservationModeSetting;
     }
 
     /**
+     * Returns the enum constant currently set as option for the preservation mode setting.
      *
+     * @return enum constant for preservation mode setting
      */
     public SugarRemovalUtility.PreservationModeOption getPreservationModeSettingConstant() {
         return SugarRemovalUtility.PreservationModeOption.valueOf(this.preservationModeSetting.get());
     }
 
     /**
+     * Returns the current value of the preservation mode threshold setting.
      *
+     * @return value of preservation mode threshold setting
      */
-    public double getPreservationModeThresholdSetting() {
+    public int getPreservationModeThresholdSetting() {
         return this.preservationModeThresholdSetting.get();
     }
 
     /**
+     * Returns the property object of the preservation mode threshold setting that can be used to configure this setting.
      *
+     * @return property object of the preservation mode threshold setting
      */
     public SimpleIntegerProperty preservationModeThresholdSettingProperty() {
         return this.preservationModeThresholdSetting;
     }
 
     /**
+     * Returns the current state of the detect circular sugars only with enough exocyclic oxygen atoms setting.
      *
+     * @return true if circular sugars should be detected/removed only if they have a sufficient number of exocyclic
+     * oxygen atoms connected to the central ring
      */
     public boolean getDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting() {
         return this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get();
     }
 
     /**
+     * Returns the property object of the detect circular sugars only with enough exocyclic oxygen atoms setting
+     * that can be used to configure this setting.
      *
+     * @return property object of the detect circular sugars only with enough exocyclic oxygen atoms setting
      */
     public SimpleBooleanProperty detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSettingProperty() {
         return this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting;
     }
 
     /**
+     * Returns the current value of the exocyclic oxygen atoms to atoms in ring ratio threshold setting.
      *
+     * @return value of exocyclic oxygen atoms to atoms in ring ratio threshold setting
      */
     public double getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting() {
         return this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.get();
     }
 
     /**
+     * Returns the property object of the exocyclic oxygen atoms to atoms in ring ratio threshold setting that can be
+     * used to configure this setting.
      *
+     * @return property object of the exocyclic oxygen atoms to atoms in ring ratio threshold setting
      */
     public SimpleDoubleProperty exocyclicOxygenAtomsToAtomsInRingRatioThresholdSettingProperty() {
         return this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting;
     }
 
     /**
+     * Returns the current state of the detect linear sugars in rings setting.
      *
+     * @return true if linear sugars in rings should be detected/removed
      */
     public boolean getDetectLinearSugarsInRingsSetting() {
         return this.detectLinearSugarsInRingsSetting.get();
     }
 
     /**
+     * Returns the property object of the detect linear sugars in rings setting that can be used to configure this setting.
      *
+     * @return property object of the detect linear sugars in rings setting
      */
     public SimpleBooleanProperty detectLinearSugarsInRingsSettingProperty() {
         return this.detectLinearSugarsInRingsSetting;
     }
 
     /**
+     * Returns the current value of the linear sugar candidate minimum size setting.
      *
+     * @return value of linear sugar candidate minimum size setting
      */
-    public double getLinearSugarCandidateMinimumSizeSetting() {
+    public int getLinearSugarCandidateMinimumSizeSetting() {
         return this.linearSugarCandidateMinimumSizeSetting.get();
     }
 
     /**
+     * Returns the property object of the linear sugar candidate minimum size setting that can be used to configure this
+     * setting.
      *
+     * @return property object of the linear sugar candidate minimum size setting.
      */
     public SimpleIntegerProperty linearSugarCandidateMinimumSizeSettingProperty() {
         return this.linearSugarCandidateMinimumSizeSetting;
     }
 
     /**
+     * Returns the current value of the linear sugar candidate maximum size setting.
      *
+     * @return value of linear sugar candidate maximum size setting
      */
-    public double getLinearSugarCandidateMaximumSizeSetting() {
+    public int getLinearSugarCandidateMaximumSizeSetting() {
         return this.linearSugarCandidateMaximumSizeSetting.get();
     }
 
     /**
+     * Returns the property object of the linear sugar candidate maximum size setting that can be used to configure this
+     * setting.
      *
+     * @return property object of the linear sugar candidate maximum size setting.
      */
     public SimpleIntegerProperty linearSugarCandidateMaximumSizeSettingProperty() {
         return this.linearSugarCandidateMaximumSizeSetting;
     }
 
     /**
+     * Returns the current state of the detect linear acidic sugars setting.
      *
+     * @return true if linear acidic sugars should be detected/removed
      */
     public boolean getDetectLinearAcidicSugarsSetting() {
         return this.detectLinearAcidicSugarsSetting.get();
     }
 
     /**
+     * Returns the property object of the detect linear acidic sugars setting that can be used to configure this setting.
      *
+     * @return property object of the detect linear acidic sugars setting
      */
     public SimpleBooleanProperty detectLinearAcidicSugarsSettingProperty() {
         return this.detectLinearAcidicSugarsSetting;
     }
 
     /**
+     * Returns the current state of the detect spiro rings as circular sugars setting.
      *
+     * @return true if spiro rings should be considered when detecting sugar rings
      */
     public boolean getDetectSpiroRingsAsCircularSugarsSetting() {
         return this.detectSpiroRingsAsCircularSugarsSetting.get();
     }
 
     /**
+     * Returns the property object of the detect spiro rings as circular sugars setting that can be used to configure
+     * this setting.
      *
+     * @return property object of the detect spiro rings as circular sugars setting
      */
     public SimpleBooleanProperty detectSpiroRingsAsCircularSugarsSettingProperty() {
         return this.detectSpiroRingsAsCircularSugarsSetting;
     }
 
     /**
+     * Returns the current state of the detect circular sugars with keto groups setting.
      *
+     * @return true if potential sugar rings with keto groups should be considered when detecting circular sugars
      */
     public boolean getDetectCircularSugarsWithKetoGroupsSetting() {
         return this.detectCircularSugarsWithKetoGroupsSetting.get();
     }
 
     /**
+     * Returns the property object of the detect circular sugars with keto groups setting that can be used to configure
+     * this setting.
      *
+     * @return property object of the detect circular sugars with keto groups setting
      */
     public SimpleBooleanProperty detectCircularSugarsWithKetoGroupsSettingProperty() {
         return this.detectCircularSugarsWithKetoGroupsSetting;
@@ -586,7 +728,39 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Public properties set">
     /**
+     * Sets the returned fragments setting, defining whether only sugar moieties, only the aglycone, or both should
+     * be returned.
      *
+     * @param anOptionName name of a constant from the SRUFragmenterReturnedFragmentsOption enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
+     */
+    public void setReturnedFragmentsSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        SRUFragmenterReturnedFragmentsOption tmpConstant = SRUFragmenterReturnedFragmentsOption.valueOf(anOptionName);
+        this.setReturnedFragmentsSetting(tmpConstant);
+    }
+
+    /**
+     * Sets the returned fragments setting, defining whether only sugar moieties, only the aglycone, or both should
+     * be returned.
+     *
+     * @param anOption a constant from the SRUFragmenterReturnedFragmentsOption enum
+     * @throws NullPointerException if the given parameter is null
+     */
+    public void setReturnedFragmentsSetting(SRUFragmenterReturnedFragmentsOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given option is null.");
+        this.returnedFragmentsSetting.set(anOption.name());
+    }
+
+    /**
+     * Sets the sugar type to remove setting, defining whether only circular, only linear, or both kinds of sugar
+     * moieties should be detected/removed.
+     *
+     * @param anOptionName name of a constant from the SugarTypeToRemoveOption enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
      */
     public void setSugarTypeToRemoveSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -596,7 +770,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the sugar type to remove setting, defining whether only circular, only linear, or both kinds of sugar
+     * moieties should be detected/removed.
      *
+     * @param aSugarTypeToRemoveOption a constant from the SugarTypeToRemoveOption enum
+     * @throws NullPointerException if the given parameter is null
      */
     public void setSugarTypeToRemoveSetting(SugarTypeToRemoveOption aSugarTypeToRemoveOption) throws NullPointerException {
         Objects.requireNonNull(aSugarTypeToRemoveOption, "Given type of sugars to remove is null.");
@@ -604,8 +782,9 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the setting defining whether circular sugars should only be detected/removed if they have an O-glycosidic bond.
      *
-     * @return
+     * @param aBoolean true, if on circular sugar moieties with a glycosidic bonds should be removed
      */
     public void setDetectCircularSugarsOnlyWithGlycosidicBondSetting(boolean aBoolean) {
         //synchronisation with SRU instance done in overridden set() function of the property
@@ -613,8 +792,9 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the setting defining whether only terminal sugar moieties should be detected/removed.
      *
-     * @return
+     * @param aBoolean true, if only terminal sugars should be detected/removed
      */
     public void setRemoveOnlyTerminalSugarsSetting(boolean aBoolean) {
         //synchronisation with SRU instance done in overridden set() function of the property
@@ -622,8 +802,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the preservation mode setting, defining what molecular characteristic should be considered when judging
+     * whether a fragment is 'big enough' to  be kept and not discarded.
      *
-     * @return
+     * @param anOptionName name of a constant from the SugarRemovalUtility.PreservationModeOption enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
      */
     public void setPreservationModeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
@@ -633,19 +817,26 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the preservation mode setting, defining what molecular characteristic should be considered when judging
+     * whether a fragment is 'big enough' to be kept and not discarded.
      *
-     * @return
+     * @param anOption a constant from the SugarRemovalUtility.PreservationModeOption enum
+     * @throws NullPointerException if the given parameter is null
      */
-    public void setPreservationModeSetting(SugarRemovalUtility.PreservationModeOption anOption)
-            throws NullPointerException, IllegalArgumentException {
+    public void setPreservationModeSetting(SugarRemovalUtility.PreservationModeOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
         //synchronisation with SRU instance done in overridden set() function of the property
         this.preservationModeSetting.set(anOption.name());
     }
 
     /**
+     * Sets the preservation mode setting, defining how 'big' a fragment has to be in order to be kept and not discarded. E.g.,
+     * if the preservation mode is set to HEAVY_ATOM_COUNT, the threshold defines how many heavy atoms a fragment needs
+     * to have to be considered as 'big enough'.
      *
-     * @return
+     * @param aThreshold a new threshold, e.g. a number of heavy atoms
+     * @throws IllegalArgumentException if the preservation mode is currently set to preserve all structures or the
+     * threshold is negative
      */
     public void setPreservationModeThresholdSetting(int aThreshold) throws IllegalArgumentException {
         //parameter test, conversion, and synchronisation with SRU instance in overridden set() method of the property
@@ -653,8 +844,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the setting defining whether circular sugar candidates should only be detected/removed if they have a
+     * sufficient number of attached, exocyclic, single-bonded oxygen atoms.
      *
-     * @return
+     * @param aBoolean true, if only circular sugars with a sufficient number of exocyclic oxygen atoms should be
+     *                 detected/removed
      */
     public void setDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting(boolean aBoolean) {
         //synchronisation with SRU instance in overridden set() method
@@ -662,8 +856,13 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the exocyclic oxygen atoms to atoms in ring ratio threshold setting, defining how many attached, exocyclic
+     * single-bonded oxygen atoms a circular sugar candidate needs to have in relation to its ring size to be
+     * detected as a sugar moiety.
      *
-     * @return
+     * @param aThreshold the new ratio threshold
+     * @throws IllegalArgumentException if the given number is infinite, 'NaN' or smaller than 0 or if the ratio is not
+     * evaluated under the current settings and a non-zero value is passed
      */
     public void setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(double aThreshold) throws IllegalArgumentException {
         //synchronisation with SRU instance and parameter test done in overridden set() method
@@ -671,8 +870,10 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the detect linear sugars in rings setting, defining whether substructures of rings that match the SRU's
+     * linear sugar patterns are detected as linear sugars.
      *
-     * @return
+     * @param aBoolean true if substructures of rings should be considered in linear sugar detection
      */
     public void setDetectLinearSugarsInRingsSetting(boolean aBoolean) {
         //synchronisation with SRU instance done in overridden set() method
@@ -680,8 +881,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the linear sugar candidate minimum size setting, defining the minimum number of carbon atoms a linear sugar
+     * candidate must have in order to be detected as a sugar moiety.
      *
-     * @return
+     * @param aMinSize the new minimum size (inclusive) of linear sugars detected, interpreted as carbon atom count
+     * @throws IllegalArgumentException if the given size is smaller than one
      */
     public void setLinearSugarCandidateMinimumSizeSetting(int aMinSize) throws IllegalArgumentException {
         //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
@@ -689,8 +893,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the linear sugar candidate maximum size setting, defining the maximum number of carbon atoms a linear sugar
+     * candidate can have in order to be detected as a sugar moiety.
      *
-     * @return
+     * @param aMaxSize the new maximum size (inclusive) of linear sugars detected, interpreted as carbon atom count
+     * @throws IllegalArgumentException if the given size is smaller than one
      */
     public void setLinearSugarCandidateMaximumSizeSetting(int aMaxSize) throws IllegalArgumentException {
         //parameter test, conversion to int, and synchronisation with SRU instance done in overridden set() method
@@ -698,8 +905,10 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the detect linear acidic sugars setting, defining whether patterns for linear sugar acids should also be
+     * included in the initial linear sugar detection.
      *
-     * @return
+     * @param aBoolean true, if linear acidic sugars should also be detected
      */
     public void setDetectLinearAcidicSugarsSetting(boolean aBoolean) {
         //synchronisation with SRU instance done in overridden set() method
@@ -707,8 +916,10 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the detect spiro rings as circular sugars setting, defining whether spiro rings systems should also be
+     * considered at circular sugar detection.
      *
-     * @return
+     * @param aBoolean true, if spiro rings should be detectable as circular sugars
      */
     public void setDetectSpiroRingsAsCircularSugarsSetting(boolean aBoolean) {
         //synchronisation with SRU instance done in overridden set() method
@@ -716,8 +927,10 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the detect circular sugars with keto groups setting, defining whether circular sugar candidates with keto
+     * groups should be considered at circular sugar detection.
      *
-     * @return
+     * @param aBoolean true, if circular sugars with keto groups should be detected
      */
     public void setDetectCircularSugarsWithKetoGroupsSetting(boolean aBoolean) {
         //synchronisation with SRU instance done in overridden set() method
@@ -726,6 +939,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+    //without the empty line, the code folding does not work properly here...
 
     @Override
     public List<Property> settingsProperties() {
@@ -769,6 +983,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     @Override
     public IMoleculeFragmenter copy() {
         SugarRemovalUtilityFragmenter tmpCopy = new SugarRemovalUtilityFragmenter();
+        tmpCopy.setReturnedFragmentsSetting(this.returnedFragmentsSetting.get());
         tmpCopy.setSugarTypeToRemoveSetting(this.sugarTypeToRemoveSetting.get());
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
         tmpCopy.setDetectCircularSugarsOnlyWithGlycosidicBondSetting(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get());
@@ -788,6 +1003,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     @Override
     public void restoreDefaultSettings() {
+        this.returnedFragmentsSetting.set(SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name());
         this.sugarTypeToRemoveSetting.set(SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT.name());
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
         this.sugarRUInstance.restoreDefaultSettings();
@@ -805,13 +1021,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.detectCircularSugarsWithKetoGroupsSetting.set(this.sugarRUInstance.areCircularSugarsWithKetoGroupsDetected());
     }
 
-    /**
-     *
-     * @param aMolecule
-     * @return
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     */
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
@@ -845,33 +1054,64 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         } catch (IllegalArgumentException | CloneNotSupportedException anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
         }
-        //post-processing of aglycon, it is always saturated with implicit hydrogen atoms
-        IAtomContainer tmpAglycon = tmpFragments.get(0);
-        tmpAglycon.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+        //post-processing of aglycone, it is always saturated with implicit hydrogen atoms (might be empty)
+        IAtomContainer tmpAglycone = tmpFragments.get(0);
+        tmpAglycone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
         boolean tmpSugarsWereDetected = (tmpFragments.size() > 1);
-        if (!ConnectivityChecker.isConnected(tmpAglycon)) {
-            List<IAtomContainer> tmpAglyconFragments = SugarRemovalUtility.partitionAndSortUnconnectedFragments(tmpAglycon);
-            for (IAtomContainer tmpAglyconFragment : tmpAglyconFragments) {
-                tmpAglyconFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                        SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+        if (this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS.name())
+                || this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ONLY_AGLYCONE.name())) {
+            if (!tmpAglycone.isEmpty()) {
+                if (!ConnectivityChecker.isConnected(tmpAglycone)) {
+                    List<IAtomContainer> tmpAglyconeFragments = SugarRemovalUtility.partitionAndSortUnconnectedFragments(tmpAglycone);
+                    for (IAtomContainer tmpAglyconeFragment : tmpAglyconeFragments) {
+                        tmpAglyconeFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                                SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
+                    }
+                    tmpFragments.remove(0);
+                    tmpFragments.addAll(0, tmpAglyconeFragments);
+                }
+            } else {
+                tmpFragments.remove(0);
             }
+            //else: only sugars are returned, dispose of aglycone
+        } else {
             tmpFragments.remove(0);
-            tmpFragments.addAll(0, tmpAglyconFragments);
         }
         //sugars were detected, postprocessing
         if (tmpSugarsWereDetected) {
-            for (int i = 1; i < tmpFragments.size(); i++) {
-                IAtomContainer tmpSugarFragment = tmpFragments.get(i);
-                if (Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))) {
-                    tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                            SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
+            if (this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS.name())
+                    || this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES.name())) {
+                for (int i = 0; i < tmpFragments.size(); i++) {
+                    IAtomContainer tmpSugarFragment = tmpFragments.get(i);
+                    if (!Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
+                            && ((String) tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
+                                    .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
+                        continue;
+                    }
+                    if (Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))) {
+                        tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                                SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
+                    }
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                        try {
+                            IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
+                        } catch (CDKException aCDKException) {
+                            Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                        }
+                    }
                 }
-                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                    try {
-                        IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
-                    } catch (CDKException aCDKException) {
-                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+            //else: only aglycone is returned, dispose of sugars
+            } else {
+                for (int i = 0; i < tmpFragments.size(); i++) {
+                    IAtomContainer tmpFragment = tmpFragments.get(i);
+                    if (!Objects.isNull(tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
+                            && ((String) tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
+                            .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
+                        continue;
+                    } else {
+                        tmpFragments.remove(i);
+                        i--;
                     }
                 }
             }
@@ -879,28 +1119,25 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         return tmpFragments;
     }
 
-    /**
-     *
-     * @param aFragmentList
-     * @return
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     */
-    @Override
+    /*@Override
     public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aFragmentList, "Given fragment list is null.");
+        //happens if only sugar moieties are set to be returned but there are no glycosides in the molecule
+        // otherwise, the molecule as a whole (aglycone) is returned
         if (aFragmentList.size() == 0) {
-            throw new IllegalArgumentException("Given fragment list is empty.");
+            return false;
         }
         if (Objects.isNull(aFragmentList.get(0))) {
-            throw new IllegalArgumentException("Object at position 0 is null, should be the deglycosylated molecule.");
+            throw new IllegalArgumentException("Object at position 0 is null, should be the deglycosylated molecule or a " +
+                    "sugar moiety.");
         }
         String tmpCategory = aFragmentList.get(0).getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY);
-        if (Objects.isNull(tmpCategory) || tmpCategory.isEmpty() || !tmpCategory.equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
-            throw new IllegalArgumentException("Object at position 0 has no or an incorrect fragment category property, should be the deglycosylated molecule.");
+        if (Objects.isNull(tmpCategory) || tmpCategory.isEmpty()) {
+            throw new IllegalArgumentException("Object at position 0 has no or an incorrect fragment category property, " +
+                    "should be the deglycosylated molecule or a sugar moiety.");
         }
         return !(aFragmentList.size() == 1);
-    }
+    }*/
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {

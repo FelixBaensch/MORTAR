@@ -22,10 +22,8 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 /**
  * TODO:
- * - Add methods for processing of lists of molecules, think about return values -> Molecule/FragmentDataModel
- *      - frequencies of fragments should contain two values, how many molecules contain them and their total frequencies
-*  - implement FragmenterService class that manages fragmenters and fragments
- * - Add methods for uniquely identifying returned fragments (like the hash generator of the EFGF utilities)
+ * - Move saturateWithHydrogen() method to ChemUtil and implement a general-purpose post-removal-processing method
+ *   (including also the electron configuration) there
  */
 
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
@@ -41,6 +39,8 @@ import java.util.Objects;
 
 /**
  * Central interface for implementing wrapper classes for fragmentation algorithms.
+ *
+ * @author Jonas Schaub
  */
 public interface IMoleculeFragmenter {
     //<editor-fold desc="FragmentSaturationOption enum">
@@ -139,12 +139,10 @@ public interface IMoleculeFragmenter {
     //
     //<editor-fold desc="Public methods">
     /**
-     * Fragments a clone (!) of the given molecule according to the respective algorithm and returns the resulting fragments.
-     * Usually, the molecule clone should be returned if no specific fragments (functional groups, sugar moieties etc.)
-     * can be detected.
+     * Fragments a clone(!) of the given molecule according to the respective algorithm and returns the resulting fragments.
      *
      * @param aMolecule to fragment
-     * @return a list of fragments
+     * @return a list of fragments (might be empty, but the fragments should not be!)
      * @throws NullPointerException if aMolecule is null
      * @throws IllegalArgumentException if the given molecule cannot be fragmented but should be filtered or preprocessed
      * @throws CloneNotSupportedException if cloning the given molecule fails
@@ -152,11 +150,13 @@ public interface IMoleculeFragmenter {
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException;
 
+    //TODO: Is this method necessary? The "returned fragments option" makes it very complicated. A check of the returned list should be sufficient
     /**
      * Returns true if the fragmented molecule has e.g. functional groups or sugar moieties that are detected by the respective
      * algorithm. The Ertl functional groups fragmenter, for example, returns the unchanged molecule as an alkane fragment
      * if no functional groups can be identified. In this case, this method would return false. Other fragmenters might
      * return no fragment at all in such a case. For harmonising these different behaviours, this method is implemented.
+     * Also, the type of returned fragments may depend on the fragmenter settings.
      *
      * @param aFragmentList a list of fragments resulting from one molecule through fragmentation by this fragmenter
      * @return true if the fragmenter identified its specific type of molecular moieties, e.g. functional groups or
@@ -164,7 +164,7 @@ public interface IMoleculeFragmenter {
      * @throws NullPointerException if fragment list is null
      * @throws IllegalArgumentException if the given list did not result from a fragmentation done by this class
      */
-    public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException;
+    //public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Returns true if the given molecule cannot be fragmented by the respective algorithm, even after preprocessing.
