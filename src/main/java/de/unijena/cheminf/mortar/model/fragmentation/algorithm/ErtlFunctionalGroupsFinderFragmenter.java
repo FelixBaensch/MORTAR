@@ -594,7 +594,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
-     * Sets the returned fragments setting defining whether only functional groups, only alkane fragments, or both should
+     * Sets the returned fragments setting, defining whether only functional groups, only alkane fragments, or both should
      * be returned.
      *
      * @param anOptionName name of a constant from the EFGFFragmenterReturnedFragmentsOption enum
@@ -609,7 +609,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     /**
-     * Sets the returned fragments setting defining whether only functional groups, only alkane fragments, or both should
+     * Sets the returned fragments setting, defining whether only functional groups, only alkane fragments, or both should
      * be returned.
      *
      * @param anOption a constant from the EFGFFragmenterReturnedFragmentsOption enum

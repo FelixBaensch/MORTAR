@@ -22,7 +22,8 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 /**
  * TODO:
- * -
+ * - Move saturateWithHydrogen() method to ChemUtil and implement a general-purpose post-removal-processing method
+ *   (including also the electron configuration) there
  */
 
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
