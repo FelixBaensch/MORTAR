@@ -75,10 +75,12 @@ public class FragmentationTask implements Callable<Integer> {
     public Integer call() throws Exception{
         int tmpExceptionsCounter = 0;
         for (MoleculeDataModel tmpMolecule : this.moleculesList) {
+            HashMap<String, List<FragmentDataModel>> tmpFragmentsMapOfMolecule = null;
+            HashMap<String, HashMap<String, Integer>> tmpFragmentFrequenciesMapOfMolecule = null;
             try{
                 IAtomContainer tmpAtomContainer = tmpMolecule.getAtomContainer();
-                HashMap<String, List<FragmentDataModel>> tmpFragmentsMapOfMolecule = tmpMolecule.getAllFragments();
-                HashMap<String, HashMap<String, Integer>> tmpFragmentFrequenciesMapOfMolecule = tmpMolecule.getFragmentFrequencies();
+                tmpFragmentsMapOfMolecule = tmpMolecule.getAllFragments();
+                tmpFragmentFrequenciesMapOfMolecule = tmpMolecule.getFragmentFrequencies();
                 if(this.fragmenter.shouldBeFiltered(tmpAtomContainer)){
                     tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
                     tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
@@ -87,7 +89,16 @@ public class FragmentationTask implements Callable<Integer> {
                 if(this.fragmenter.shouldBePreprocessed(tmpAtomContainer)){
                     tmpAtomContainer = this.fragmenter.applyPreprocessing(tmpAtomContainer);
                 }
-                List<IAtomContainer> tmpFragmentsList = this.fragmenter.fragmentMolecule(tmpAtomContainer);
+                List<IAtomContainer> tmpFragmentsList = null;
+                try {
+                    tmpFragmentsList = this.fragmenter.fragmentMolecule(tmpAtomContainer);
+                } catch (NullPointerException | IllegalArgumentException | CloneNotSupportedException anException) {
+                    FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                    tmpExceptionsCounter++;
+                    tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
+                    tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
+                    continue;
+                }
                 tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(tmpFragmentsList.size()));
                 tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(tmpFragmentsList.size()));
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
@@ -114,16 +125,22 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
                             tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
                         }
-                    } catch (Exception anException){
+                    } catch (Exception anException) {
                         FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                         tmpExceptionsCounter++;
-                    }finally {
+                    } finally {
                         LOCK.unlock();
                     }
                 }
             } catch(Exception anException){
                 tmpExceptionsCounter++;
                 FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                if (tmpFragmentsMapOfMolecule != null && !tmpFragmentsMapOfMolecule.containsKey(this.fragmentationName)) {
+                    tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
+                }
+                if (tmpFragmentFrequenciesMapOfMolecule != null && !tmpFragmentFrequenciesMapOfMolecule.containsKey(this.fragmentationName)) {
+                    tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
+                }
             }
         }
         return tmpExceptionsCounter;
