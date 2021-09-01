@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -20,22 +20,45 @@
 
 package de.unijena.cheminf.mortar.model.depict;
 
+/**
+ * TODO:
+ * - Add doc and code folds
+ */
+
 import javafx.scene.image.Image;
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import javafx.embed.swing.SwingFXUtils;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DepictionUtil {
 
+    /**
+     *
+     */
     public static final double IMAGE_WIDTH_DEFAULT = 250.0;
+    /**
+     *
+     */
     public static final double IMAGE_HEIGHT_DEFAULT = 250.0;
 
     /**
-     * Creates a Image of the AtomContainer with default width (250.0) and height (250.0)
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(DepictionUtil.class.getName());
+
+    /**
+     * Creates an Image of the AtomContainer with default width (250.0) and height (250.0).
+     *
      * @param anAtomContainer
      * @return
      */
@@ -43,7 +66,8 @@ public class DepictionUtil {
         return depictImageWithZoom(anAtomContainer, 1.0, IMAGE_WIDTH_DEFAULT, IMAGE_HEIGHT_DEFAULT);
     }
     /**
-     * Creates a Image of the AtomContainer with given height and default width (250.0)
+     * Creates an Image of the AtomContainer with given height and default width (250.0).
+     *
      * @param anAtomContainer
      * @param aHeight
      * @return
@@ -52,7 +76,8 @@ public class DepictionUtil {
         return depictImageWithZoom(anAtomContainer, 1.0, IMAGE_WIDTH_DEFAULT, aHeight);
     }
     /**
-     * Creates a Image of the AtomContainer with given width and default height (250.0)
+     * Creates an Image of the AtomContainer with given width and default height (250.0).
+     *
      * @param anAtomContainer
      * @param aWidth
      * @return
@@ -61,7 +86,8 @@ public class DepictionUtil {
         return depictImageWithZoom(anAtomContainer, 1.0, aWidth, IMAGE_HEIGHT_DEFAULT);
     }
     /**
-     * Creates a Image of the AtomContainer with a any zoom factor and default width (250.0) and height (250.0)
+     * Creates an Image of the AtomContainer with any zoom factor and default width (250.0) and height (250.0)
+     *
      * @param anAtomContainer
      * @param aZoom
      * @return Image
@@ -71,7 +97,8 @@ public class DepictionUtil {
     }
 
     /**
-     * Creates a Image of the AtomContainer with a any zoom factor and given width and height
+     * Creates an Image of the AtomContainer with any zoom factor and given width and height.
+     *
      * @param anAtomContainer
      * @param aZoom
      * @param aWidth
@@ -85,14 +112,14 @@ public class DepictionUtil {
             BufferedImage tmpBufferedImage = null;
             tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
-        } catch (CDKException anException) {
-            //TODO: Logging
-            return createErrorImage(anException.getMessage(), 250,250);
+        } catch (CDKException | NullPointerException anException) {
+            DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            return DepictionUtil.createErrorImage(anException.getMessage(), 250,250);
         }
     }
 
     /**
-     * Creates an image of the given message
+     * Creates an image of the given message.
      *
      * @param aMessage
      * @param aWidth
