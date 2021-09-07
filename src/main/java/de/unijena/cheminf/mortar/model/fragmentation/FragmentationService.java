@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -92,6 +93,119 @@ public class FragmentationService {
         this.existingFragmentations = new LinkedList<String>();
     }
 
+
+    public void startSingleFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
+        String tmpFragmentationName = this.createAndCheckFragmentationName(this.selectedFragmenter.getFragmentationAlgorithmName());
+        this.existingFragmentations.add(tmpFragmentationName);
+        this.currentFragmentationName = tmpFragmentationName;
+        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
+    }
+
+    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, IMoleculeFragmenter[] anArrayOfFragmenter) throws Exception{
+        this.fragments = new Hashtable<>(aListOfMolecules.size() * anArrayOfFragmenter.length);
+
+        Hashtable<String, FragmentDataModel> tmpFragmentHashtable = null;
+
+        String tmpPipelineFragmentationName = this.createAndCheckFragmentationName("Pipeline"); //TODO: how to name pipeline fragmentation? user setting?
+        this.existingFragmentations.add(tmpPipelineFragmentationName);
+        this.currentFragmentationName = tmpPipelineFragmentationName;
+        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, anArrayOfFragmenter[0], tmpPipelineFragmentationName);
+
+
+        List<MoleculeDataModel> tmpMolecules = new LinkedList<>();
+        tmpMolecules.addAll(this.fragments.values());
+
+        for(int i = 1; i < anArrayOfFragmenter.length; i++){
+            String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + anArrayOfFragmenter[i].getFragmentationAlgorithmName()); //TODO: how to name pipeline fragmentation? user setting?
+
+            tmpFragmentHashtable = this.startFragmentation(tmpMolecules, aNumberOfTasks, anArrayOfFragmenter[i], tmpFragmentationName);
+
+            if(i!=0){
+                for(MoleculeDataModel tmpParentMol : aListOfMolecules){
+                    LinkedList<MoleculeDataModel> tmpNewFragments = new LinkedList<>();
+                    for(MoleculeDataModel tmpChildMol : tmpMolecules){
+                        if(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(tmpChildMol)){
+                            for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
+                                tmpFrag.setAbsoluteFrequency(tmpFrag.getAbsoluteFrequency() * ((FragmentDataModel)tmpChildMol).getAbsoluteFrequency());
+                                tmpNewFragments.add(tmpFrag);
+                            }
+
+                        }
+                    }
+                    tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).clear();
+                    tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).clear();
+                    for(MoleculeDataModel tmpNewFrag : tmpNewFragments){
+                        String tmpUniqueSmiles = ChemUtil.createUniqueSmiles(tmpNewFrag.getAtomContainer());
+                        tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).add((FragmentDataModel) tmpNewFrag);
+                        if(tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).containsKey(tmpUniqueSmiles)){
+                            tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).replace(
+                              tmpUniqueSmiles, tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpUniqueSmiles) + 1
+                            );
+                        }
+                        else{
+                            tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).put(tmpUniqueSmiles, 1);
+                        }
+                    }
+                }
+            }
+
+//            Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(tmpFragmentHashtable.size());
+//            for(MoleculeDataModel tmpMol : aListOfMolecules){
+//                for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName)){
+//                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+//                    if(!tmpFragmentsHash.containsKey(tmpSmiles)){
+//                        tmpFragmentsHash.put(tmpSmiles, tmpFrag);
+//                    }
+//                }
+//            }
+
+            tmpMolecules.clear();
+            tmpMolecules.addAll(tmpFragmentHashtable.values());
+
+            if(i == anArrayOfFragmenter.length-1){
+                this.fragments = tmpFragmentHashtable;
+            }
+        }
+        int tmpFragmentAmount = 0;
+        Set<String> tmpKeySet = this.fragments.keySet();
+        for(String tmpKey : tmpKeySet){
+            tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
+            this.fragments.get(tmpKey).setMoleculeFrequency(0);
+            for(MoleculeDataModel tmpParentMol : aListOfMolecules){
+                if(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(this.fragments.get(tmpKey))){
+                    this.fragments.get(tmpKey).incrementMoleculeFrequency();
+                }
+            }
+        }
+        for(String tmpKey : tmpKeySet){
+            this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+            this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+        }
+        System.out.println("TODO: Remove after debugging");
+    }
+
+    private List<MoleculeDataModel> searchListForChildFragments(MoleculeDataModel aParentMolecule, List<MoleculeDataModel> aListOfFragments, String anAlgorithmName){
+        List<MoleculeDataModel> tmpChildFragments = new LinkedList<>();
+        for(MoleculeDataModel tmpFrag : aListOfFragments) {
+            if(aParentMolecule.getFragmentsOfSpecificAlgorithm(anAlgorithmName).contains(tmpFrag)){
+                tmpChildFragments.add(tmpFrag);
+            }
+        }
+        return tmpChildFragments;
+    }
+
+    private String createAndCheckFragmentationName(String anAlgorithmName){
+        String tmpFragmentationName = anAlgorithmName;
+        if(this.existingFragmentations.contains(tmpFragmentationName)){
+            int tmpIndex = 0;
+            do {
+                tmpFragmentationName = anAlgorithmName + "_" + ++tmpIndex;
+            }
+            while(this.existingFragmentations.contains(tmpFragmentationName));
+        }
+        return tmpFragmentationName;
+    }
+
     /**
      * Manages the fragmentation, creates {@link FragmentationTask} equal to the amount of {@param aNumberOfTasks}, assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation
      *
@@ -99,18 +213,9 @@ public class FragmentationService {
      * @param aNumberOfTasks
      * @throws Exception
      */
-    public void startFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
+    private Hashtable<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, IMoleculeFragmenter aFragmenter, String aFragmentationName) throws Exception {
         int tmpNumberOfTasks = aNumberOfTasks;
-        String tmpFragmentationName = this.selectedFragmenter.getFragmentationAlgorithmName();
-        if(this.existingFragmentations.contains(tmpFragmentationName)){
-            int tmpIndex = 0;
-            do {
-                tmpFragmentationName = this.selectedFragmenter.getFragmentationAlgorithmName() + "_" + ++tmpIndex;
-            }
-            while(this.existingFragmentations.contains(tmpFragmentationName));
-        }
-        this.existingFragmentations.add(tmpFragmentationName);
-        this.currentFragmentationName = tmpFragmentationName;
+        String tmpFragmentationName = aFragmentationName;
         Hashtable<String, FragmentDataModel> tmpFragmentHashtable = new Hashtable<>(aListOfMolecules.size() * 2);
         if(aListOfMolecules.size() < tmpNumberOfTasks){
             tmpNumberOfTasks = aListOfMolecules.size();
@@ -128,8 +233,8 @@ public class FragmentationService {
         List<FragmentationTask> tmpFragmentationTaskList = new LinkedList<>();
         for(int i = 1; i <= tmpNumberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
-            IMoleculeFragmenter tmpFragmenterForTask = this.selectedFragmenter.copy();
-            tmpFragmentationTaskList.add (new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, tmpFragmentationName));
+            IMoleculeFragmenter tmpFragmenterForTask = aFragmenter.copy();
+            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, tmpFragmentationName));
             tmpFromIndex = tmpToIndex;
             tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
             if(tmpMoleculeModulo > 0){
@@ -173,7 +278,7 @@ public class FragmentationService {
         FragmentationService.LOGGER.info("Fragmentation \"" + tmpFragmentationName + "\" of " + aListOfMolecules.size()
                 + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "
                 + tmpMemoryConsumption + " MB");
-        this.fragments = tmpFragmentHashtable;
+        return tmpFragmentHashtable;
     }
 
     //<editor-fold desc="public properties" defaultstate="collapsed">

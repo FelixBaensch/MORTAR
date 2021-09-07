@@ -33,7 +33,9 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -478,7 +480,12 @@ public class MainViewController {
             Task<Void> tmpTaskVoidTask = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
-                    fragmentationService.startFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+//                    fragmentationService.startSingleFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+                    IMoleculeFragmenter[] tmpArray = new IMoleculeFragmenter[3];
+                    tmpArray[0] = new SugarRemovalUtilityFragmenter();
+                    tmpArray[1] = new ErtlFunctionalGroupsFinderFragmenter();
+                    tmpArray[2] = new SugarRemovalUtilityFragmenter();
+                    fragmentationService.startPipelineFragmentation(tmpSelectedMolecules, tmpNumberOfCores, tmpArray);
                     return null;
                 }
             };
