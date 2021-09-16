@@ -39,11 +39,13 @@ public class MainMenuBar extends MenuBar {
     private MenuBar menuBar;
     private Menu fileMenu;
     private Menu settingsMenu;
+    private Menu pipelineMenu;
     private Menu helpMenu;
     private MenuItem exitMenuItem;
     private MenuItem loadMenuItem;
     private MenuItem fragmentationSettingsMenuItem;
     private MenuItem globalSettingsMenuItem;
+    private MenuItem pipelineSettingsMenuItem;
     private Menu fragmentationAlgorithmMenu;
     //</editor-fold>
     //
@@ -65,6 +67,9 @@ public class MainMenuBar extends MenuBar {
         this.globalSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.globalSettingsMenuItem.text"));
         this.fragmentationAlgorithmMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.fragmentationAlgorithmMenuItem.text"));
         this.fragmentationSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.fragmentationSettingsMenuItem.text"));
+        //pipelineMenu
+        this.pipelineMenu = new Menu(Message.get("MainView.menuBar.pipelineMenu.text"));
+        this.pipelineSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.pipelineMenu.pipelineSettingsMenuItem.text"));
         //helpMenu
         this.helpMenu = new Menu(Message.get("MainView.menuBar.helpMenu.text"));
         //</editor-fold>
@@ -97,6 +102,11 @@ public class MainMenuBar extends MenuBar {
         this.settingsMenu.getItems().add(this.fragmentationAlgorithmMenu);
         //fragmentationSettingsMenuItem
         this.settingsMenu.getItems().add(this.fragmentationSettingsMenuItem);
+        //</editor-fold>
+        //<editor-fold desc="pipelineMenu" defaultstate="collapsed">
+        this.getMenus().add(this.pipelineMenu);
+        //pipelineSettingsMenuItem
+        this.pipelineMenu.getItems().add(this.pipelineSettingsMenuItem);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
         this.getMenus().add(this.helpMenu);
@@ -154,6 +164,16 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getFragmentationSettingsMenuItem() {
         return this.fragmentationSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the pipeline settings window
+     *
+     * @return the menu item that should open the pipeline settings window
+     */
+    public MenuItem getPipelineSettingsMenuItem() {
+        return this.pipelineSettingsMenuItem;
     }
     //</editor-fold>
     //</editor-fold>

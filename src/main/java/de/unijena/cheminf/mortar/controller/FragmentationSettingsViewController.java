@@ -32,6 +32,7 @@ import javafx.stage.Stage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * SettingsViewController
@@ -64,13 +65,17 @@ public class FragmentationSettingsViewController {
      * Name of the selected fragmentation algorithm
      */
     private String selectedFragmenterName;
+    /**
+     * Logger
+     */
+    private static final Logger LOGGER = Logger.getLogger(FragmentationSettingsViewController.class.getName());
     //</editor-fold>
 
 
-    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] fragmenters, String aSelectedFragmenterAlgorithmName){
+    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayofFragmenters, String aSelectedFragmenterAlgorithmName){
         this.mainStage = aStage;
-        this.recentProperties = new HashMap<>(fragmenters.length);
-        this.fragmenters = fragmenters;
+        this.recentProperties = new HashMap<>(anArrayofFragmenters.length);
+        this.fragmenters = anArrayofFragmenters;
         this.selectedFragmenterName = aSelectedFragmenterAlgorithmName;
         this.openFragmentationSettingsView();
     }
@@ -78,7 +83,7 @@ public class FragmentationSettingsViewController {
     /**
      * Initialises and opens a settings view for fragmentationSettings
      */
-    public void openFragmentationSettingsView(){
+    private void openFragmentationSettingsView(){
         if(this.settingsView == null)
             this.settingsView = new SettingsView();
         this.fragmentationSettingsViewStage = new Stage();

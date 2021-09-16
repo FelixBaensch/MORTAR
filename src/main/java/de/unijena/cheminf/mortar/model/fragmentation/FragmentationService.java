@@ -27,10 +27,13 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragment
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,6 +58,10 @@ public class FragmentationService {
      */
     private IMoleculeFragmenter selectedFragmenter;
     /**
+     * Array for the fragmentation algorithms to use during pipeline fragmentation
+     */
+    private IMoleculeFragmenter[] pipelineFragmenter;
+    /**
      * Ertl
      */
     private IMoleculeFragmenter ertlFGF;
@@ -74,6 +81,7 @@ public class FragmentationService {
      *
      */
     private String currentFragmentationName;
+    private String pipeliningFragmentationName;
     //</editor-fold>
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
@@ -94,26 +102,41 @@ public class FragmentationService {
         this.existingFragmentations = new LinkedList<String>();
     }
 
-
     public void startSingleFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
+        //<editor-fold desc="checks" defualtstate="collapsed">
+        Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
+        if(aNumberOfTasks == 0){
+            aNumberOfTasks = 1;
+        }
+        //</editor-fold>
         String tmpFragmentationName = this.createAndCheckFragmentationName(this.selectedFragmenter.getFragmentationAlgorithmName());
         this.existingFragmentations.add(tmpFragmentationName);
         this.currentFragmentationName = tmpFragmentationName;
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
     }
 
-    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, IMoleculeFragmenter[] anArrayOfFragmenter) throws Exception{
-        this.fragments = new Hashtable<>(aListOfMolecules.size() * anArrayOfFragmenter.length);
+    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
+        //<editor-fold desc="checks" defualtstate="collapsed">
+        Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
+        Objects.requireNonNull(this.pipelineFragmenter, "pipelineFragmenter must not be null");
+        if(aNumberOfTasks == 0){
+            aNumberOfTasks = 1;
+        }
+        //</editor-fold>
+        this.fragments = new Hashtable<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
         Hashtable<String, FragmentDataModel> tmpFragmentHashtable = null;
-        String tmpPipelineFragmentationName = this.createAndCheckFragmentationName("Pipeline"); //TODO: how to name pipeline fragmentation? user setting?
+        if(this.pipeliningFragmentationName == null || this.pipeliningFragmentationName.isEmpty()){
+            this.pipeliningFragmentationName = "Pipeline";
+        }
+        String tmpPipelineFragmentationName = this.createAndCheckFragmentationName(this.pipeliningFragmentationName);
         this.existingFragmentations.add(tmpPipelineFragmentationName);
         this.currentFragmentationName = tmpPipelineFragmentationName;
-        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, anArrayOfFragmenter[0], tmpPipelineFragmentationName);
+        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName);
         List<MoleculeDataModel> tmpMolecules = new LinkedList<>();
         tmpMolecules.addAll(this.fragments.values());
-        for(int i = 1; i < anArrayOfFragmenter.length; i++){
-            String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + anArrayOfFragmenter[i].getFragmentationAlgorithmName()); //TODO: how to name pipeline fragmentation? user setting?
-            tmpFragmentHashtable = this.startFragmentation(tmpMolecules, aNumberOfTasks, anArrayOfFragmenter[i], tmpFragmentationName);
+        for(int i = 1; i < this.pipelineFragmenter.length; i++){
+            String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmName());
+            tmpFragmentHashtable = this.startFragmentation(tmpMolecules, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName);
             if(i!=0){
                 for(MoleculeDataModel tmpParentMol : aListOfMolecules){
                     LinkedList<MoleculeDataModel> tmpNewFragments = new LinkedList<>();
@@ -149,7 +172,7 @@ public class FragmentationService {
             }
             tmpMolecules.clear();
             tmpMolecules.addAll(tmpFragmentsHash.values());
-            if(i == anArrayOfFragmenter.length-1){
+            if(i == this.pipelineFragmenter.length-1){
                 this.fragments = tmpFragmentsHash;
             }
         }
@@ -169,6 +192,21 @@ public class FragmentationService {
             this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
         System.out.println("TODO: Remove after debugging");
+    }
+
+    public IMoleculeFragmenter createNewFragmenterObjectByName(String anAlgorithmName) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        String tmpClassName = "";
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            if (anAlgorithmName.equals(tmpFragmenter.getFragmentationAlgorithmName()))
+               tmpClassName = tmpFragmenter.getClass().getName();
+        }
+        if(tmpClassName.isBlank() || tmpClassName.isEmpty()){
+            //ToDo throw exception
+        }
+        Class tmpClazz = Class.forName(tmpClassName);
+        Constructor tmpCtor = tmpClazz.getConstructor();
+
+        return (IMoleculeFragmenter) tmpCtor.newInstance();
     }
 
     /**
@@ -272,6 +310,13 @@ public class FragmentationService {
         return this.fragmenters;
     }
     /**
+     * Returns array of {@link IMoleculeFragmenter} for pipelining
+     * @return pipelineFragmenters
+     */
+    public IMoleculeFragmenter[] getPipelineFragmenter(){
+        return this.pipelineFragmenter;
+    }
+    /**
      * Returns selected {@link IMoleculeFragmenter}
      *
      * @return selectedFragmenter
@@ -295,6 +340,9 @@ public class FragmentationService {
     public String getCurrentFragmentationName(){
         return this.currentFragmentationName;
     }
+    public String getPipeliningFragmentationName(){
+        return this.pipeliningFragmentationName;
+    }
     /**
      * Sets the selectedFragmenter
      * @param anAlgorithmName
@@ -304,6 +352,17 @@ public class FragmentationService {
             if (anAlgorithmName.equals(tmpFragmenter.getFragmentationAlgorithmName()))
                 this.selectedFragmenter = tmpFragmenter;
         }
+    }
+
+    /**
+     * Sets the fragmenters to use for pipeline fragmentation
+     * @param anArrayOfFragmenter IMolecueFragmenter[]
+     */
+    public void setPipelineFragmenter(IMoleculeFragmenter[] anArrayOfFragmenter){
+        this.pipelineFragmenter = anArrayOfFragmenter;
+    }
+    public void setPipeliningFragmentationName(String aName){
+        this.pipeliningFragmentationName = aName;
     }
     //</editor-fold>
 }

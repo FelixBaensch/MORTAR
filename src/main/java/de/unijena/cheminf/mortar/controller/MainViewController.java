@@ -33,9 +33,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -178,6 +176,9 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getGlobalSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openGlobalSettingsView());
+        this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openPipelineSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //TODO: More implementation needed
         //TODO: Add listener to rows per page setting in settings container
@@ -315,6 +316,14 @@ public class MainViewController {
     private void openFragmentationSettingsView(){
         FragmentationSettingsViewController tmpFragmentationSettingsViewController =
                 new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+    }
+    //
+    private void openPipelineSettingsView(){
+        PipelineSettingsViewController tmpPipelineSettingsViewController =
+                new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, this.moleculeDataModelList.size() > 0);
+        if(tmpPipelineSettingsViewController.isFragmentationButtonClicked()){
+            this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationButtonClicked());
+        }
     }
     //
     /**
@@ -465,10 +474,13 @@ public class MainViewController {
         return new BorderPane(this.moleculesDataTableView);
     }
     //
+    private void startFragmentation(){
+        this.startFragmentation(false);
+    }
     /**
      * Starts fragmentation task and opens fragment and itemiztation tabs
      */
-    private void startFragmentation(){
+    private void startFragmentation(boolean isPipelining){
         long tmpStartTime = System.nanoTime();
         LOGGER.info("Start of method startFragmentation");
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).collect(Collectors.toList());
@@ -480,12 +492,12 @@ public class MainViewController {
             Task<Void> tmpTaskVoidTask = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
-//                    fragmentationService.startSingleFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
-                    IMoleculeFragmenter[] tmpArray = new IMoleculeFragmenter[3];
-                    tmpArray[0] = new SugarRemovalUtilityFragmenter();
-                    tmpArray[1] = new ErtlFunctionalGroupsFinderFragmenter();
-                    tmpArray[2] = new SugarRemovalUtilityFragmenter();
-                    fragmentationService.startPipelineFragmentation(tmpSelectedMolecules, tmpNumberOfCores, tmpArray);
+                    if(isPipelining){
+                        fragmentationService.startPipelineFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+                    }
+                    else{
+                        fragmentationService.startSingleFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+                    }
                     return null;
                 }
             };
@@ -662,7 +674,7 @@ public class MainViewController {
         this.mainTabPane.getTabs().clear();
     }
     //
-    private void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType){
+    private void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType){ //TODO: Move to util class
         Collections.sort(aList, new Comparator<MoleculeDataModel>() {
             @Override
             public int compare(MoleculeDataModel m1, MoleculeDataModel m2) {
