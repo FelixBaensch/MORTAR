@@ -26,6 +26,8 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Scene;
@@ -140,8 +142,8 @@ public class PipelineSettingsViewController {
         }
         tmpComboBox.setOnAction(anActionEvent -> {
             Object tmpSelectedFragmenterString = tmpComboBox.getSelectionModel().getSelectedItem();
-            if(this.fragmenterList.size() > this.algorithmCounter){
-                this.fragmenterList.remove(this.algorithmCounter);
+            if(this.fragmenterList.size() >= this.algorithmCounter){
+                this.fragmenterList.remove(this.algorithmCounter - 1);
             }
             for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
                 if (tmpSelectedFragmenterString.equals(tmpFragmenter.getFragmentationAlgorithmName())){
@@ -160,6 +162,8 @@ public class PipelineSettingsViewController {
         tmpFragmenterSettingsButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpFragmenterSettingsButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpFragmenterSettingsButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        BooleanBinding tmpBooleanBinding = Bindings.isNull(tmpComboBox.getSelectionModel().selectedItemProperty());
+        tmpFragmenterSettingsButton.disableProperty().bind(tmpBooleanBinding);
         tmpFragmenterSettingsButton.setOnAction(anActionEvent -> {
             int tmpFragmenterListIndex = GridPane.getRowIndex(tmpFragmenterSettingsButton) - 1;
             IMoleculeFragmenter[] tmpArray = new IMoleculeFragmenter[1];
