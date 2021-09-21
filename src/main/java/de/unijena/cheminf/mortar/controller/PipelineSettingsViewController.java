@@ -142,13 +142,17 @@ public class PipelineSettingsViewController {
         }
         tmpComboBox.setOnAction(anActionEvent -> {
             Object tmpSelectedFragmenterString = tmpComboBox.getSelectionModel().getSelectedItem();
-            if(this.fragmenterList.size() >= this.algorithmCounter){
-                this.fragmenterList.remove(this.algorithmCounter - 1);
-            }
+            int tmpIndex = GridPane.getRowIndex(tmpComboBox) - 1;
             for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
                 if (tmpSelectedFragmenterString.equals(tmpFragmenter.getFragmentationAlgorithmName())){
                     try{
-                        this.fragmenterList.add(this.fragmentationService.createNewFragmenterObjectByName((String)tmpSelectedFragmenterString));
+                        if(this.fragmenterList.size() > tmpIndex){ // will not work cause size of list is set
+                            this.fragmenterList.set(tmpIndex, this.fragmentationService.createNewFragmenterObjectByName((String)tmpSelectedFragmenterString));
+                        }
+                        else{
+                            this.fragmenterList.add(this.fragmentationService.createNewFragmenterObjectByName((String)tmpSelectedFragmenterString));
+                        }
+                        break;
                     }
                     catch (Exception anException){
                         LOGGER.log(Level.SEVERE, anException.toString(), anException);
