@@ -238,7 +238,7 @@ public class FragmentationService {
                                                     tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
                             );
                         }else{
-                            tmpNewFrequencies.put(
+                             tmpNewFrequencies.put(
                                     tmpKey,
                                     tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) *
                                             tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
@@ -246,29 +246,36 @@ public class FragmentationService {
                         }
                     }
                 }
-
-
-
                 tmpParentMol.getFragmentFrequencies().replace(tmpPipelineFragmentationName, tmpNewFrequencies);
                 tmpParentMol.getAllFragments().replace(tmpPipelineFragmentationName, tmpFrags);
             }
         }
 
 
-            Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(this.fragments.size() * this.pipelineFragmenter.length);
-            for(MoleculeDataModel tmpMol : aListOfMolecules){
-                for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName)){
-                    String tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
-                    if(!tmpFragmentsHash.containsKey(tmpKey)){
-                        tmpFragmentsHash.put(tmpKey, tmpFrag);
-                    }
-                    else{
-
-                        tmpFragmentsHash.get(tmpKey).incrementAbsoluteFrequency();
-                    }
+        Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(this.fragments.size() * this.pipelineFragmenter.length);
+        for(MoleculeDataModel tmpMol : aListOfMolecules){
+            for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName))
+            {
+                String tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                if(!tmpFragmentsHash.containsKey(tmpKey)){
+                    tmpFragmentsHash.put(tmpKey, tmpFrag);
+                    tmpFrag.setAbsoluteFrequency(tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
                 }
-
-            this.fragments = tmpFragmentsHash;
+                else{
+                    tmpFragmentsHash.get(tmpKey).setAbsoluteFrequency(tmpFragmentsHash.get(tmpKey).getAbsoluteFrequency() + tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
+                    tmpFragmentsHash.get(tmpKey).incrementMoleculeFrequency();
+                }
+            }
+        }
+        this.fragments = tmpFragmentsHash;
+        int tmpFragmentAmount = 0;
+        Set<String> tmpKeySet = this.fragments.keySet();
+        for(String tmpKey : tmpKeySet){
+            tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
+        }
+        for(String tmpKey : tmpKeySet){
+            this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+            this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
     }
 
