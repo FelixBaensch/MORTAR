@@ -260,6 +260,7 @@ public class FragmentationService {
                 if(!tmpFragmentsHash.containsKey(tmpKey)){
                     tmpFragmentsHash.put(tmpKey, tmpFrag);
                     tmpFrag.setAbsoluteFrequency(tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
+                    tmpFrag.setMoleculeFrequency(1);
                 }
                 else{
                     tmpFragmentsHash.get(tmpKey).setAbsoluteFrequency(tmpFragmentsHash.get(tmpKey).getAbsoluteFrequency() + tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
