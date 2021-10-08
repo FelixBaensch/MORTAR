@@ -493,8 +493,8 @@ public class MainViewController {
                 @Override
                 protected Void call() throws Exception {
                     if(isPipelining){
-//                        fragmentationService.startPipelineFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
-                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
+                        fragmentationService.startPipelineFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+//                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
                     }
                     else{
                         fragmentationService.startSingleFragmentation(tmpSelectedMolecules, tmpNumberOfCores);

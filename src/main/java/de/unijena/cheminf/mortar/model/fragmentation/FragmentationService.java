@@ -115,6 +115,15 @@ public class FragmentationService {
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
     }
 
+    /**
+     * Starts fragmentation pipeline for given List of molecules.
+     * Fragmentation will be done on fragments of previous step
+     * TODO
+     *
+     * @param aListOfMolecules List<MoleculeDataModel>
+     * @param aNumberOfTasks int
+     * @throws Exception
+     */
     public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
         //<editor-fold desc="checks" defualtstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
@@ -134,32 +143,29 @@ public class FragmentationService {
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName);
         List<MoleculeDataModel> tmpMolecules = new LinkedList<>();
         tmpMolecules.addAll(this.fragments.values());
-        for(int i = 1; i < this.pipelineFragmenter.length; i++){
+        for (int i = 1; i < this.pipelineFragmenter.length; i++) {
             String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmName());
             tmpFragmentHashtable = this.startFragmentation(tmpMolecules, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName);
-            if(i!=0){
-                for(MoleculeDataModel tmpParentMol : aListOfMolecules){
-                    LinkedList<MoleculeDataModel> tmpNewFragments = new LinkedList<>();
-                    HashMap<String, Integer> tmpNewFrequencies = new HashMap<>(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size()*2);
-                    for(MoleculeDataModel tmpChildMol : tmpMolecules){
-                        if(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(tmpChildMol)){
-                            if(tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName).size() <= 1){
-                                tmpNewFragments.add(tmpChildMol);
-                                String tmpKey = ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer());
-                                tmpNewFrequencies.put(tmpKey, tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
-                            }
-                            else{
-                                for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
-                                    tmpNewFragments.add(tmpFrag);
-                                    String tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
-                                    tmpNewFrequencies.put(tmpKey, tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) * tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer())));
-                                }
+            for (MoleculeDataModel tmpParentMol : aListOfMolecules) {
+                LinkedList<MoleculeDataModel> tmpNewFragments = new LinkedList<>();
+                HashMap<String, Integer> tmpNewFrequencies = new HashMap<>(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size() * 2);
+                for (MoleculeDataModel tmpChildMol : tmpMolecules) {
+                    if (tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(tmpChildMol)) {
+                        if (tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName).size() <= 1) {
+                            tmpNewFragments.add(tmpChildMol);
+                            String tmpKey = ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer());
+                            tmpNewFrequencies.put(tmpKey, tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
+                        } else {
+                            for (FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)) {
+                                tmpNewFragments.add(tmpFrag);
+                                String tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                                tmpNewFrequencies.put(tmpKey, tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) * tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer())));
                             }
                         }
                     }
-                    tmpParentMol.getAllFragments().replace(tmpPipelineFragmentationName, (List<FragmentDataModel>)(List<?>)tmpNewFragments); //one cannot cast a generic type to another, but through an intermediate wild card type
-                    tmpParentMol.getFragmentFrequencies().replace(tmpPipelineFragmentationName, tmpNewFrequencies);
                 }
+                tmpParentMol.getAllFragments().replace(tmpPipelineFragmentationName, (List<FragmentDataModel>) (List<?>) tmpNewFragments); //one cannot cast a generic type to another, but through an intermediate wild card type
+                tmpParentMol.getFragmentFrequencies().replace(tmpPipelineFragmentationName, tmpNewFrequencies);
             }
             Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(tmpFragmentHashtable.size());
             for(MoleculeDataModel tmpMol : aListOfMolecules){
@@ -191,9 +197,18 @@ public class FragmentationService {
             this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
             this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
-        System.out.println("TODO: Remove after debugging");
-    }
+     }
 
+    /**
+     * Under construction
+     * Start fragmentation pipeline
+     * Fragmentation will be done molecule by molecule
+     * TODO: After adapting the data models, this method must be modified so that the resulting fragments are kept separate for each molecule.
+     *
+     * @param aListOfMolecules List<MoleculeDataModel>
+     * @param aNumberOfTasks int
+     * @throws Exception
+     */
     public void startPipelineFragmentationMolByMol(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
         //<editor-fold desc="checks" defualtstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
@@ -224,8 +239,6 @@ public class FragmentationService {
                 for(String tmpKey : tmpKeySet){
                     tmpFrags.add(tmpFragmentHashtable.get(tmpKey));
                 }
-
-
                 HashMap<String, Integer> tmpNewFrequencies = new HashMap<>(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size()*2);
                 for(MoleculeDataModel tmpChildMol : tmpChildMols){
                     for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
@@ -250,8 +263,6 @@ public class FragmentationService {
                 tmpParentMol.getAllFragments().replace(tmpPipelineFragmentationName, tmpFrags);
             }
         }
-
-
         Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(this.fragments.size() * this.pipelineFragmenter.length);
         for(MoleculeDataModel tmpMol : aListOfMolecules){
             for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName))
