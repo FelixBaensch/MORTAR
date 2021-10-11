@@ -426,7 +426,10 @@ public class SettingsContainer {
     }
 
     /**
-     * Sets the setting for whether to always use MDL V3000 format for file export.
+     * Sets the setting for whether to always use MDL V3000 format for file export. Per default, this is set to false and
+     * the MOL file and SD file export will in most cases create MDL V2000 representations of the exported molecules,
+     * except for molecules that have more than 999 atoms because the V2000 cannot handle it. In the opposite case, the
+     * export routines will always use the MDL V3000 format.
      *
      * @param aBoolean whether to always use the MDL V3000 format for file export
      */
