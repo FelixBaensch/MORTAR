@@ -248,13 +248,16 @@ public class Exporter {
     }
 
     /**
-     * TODO @Samuel
      * Opens a file chooser and exports the chemical data of the given fragments as a single MDL SD file to the chosen
      * destination. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format depends
      * on the current status of the alwaysMDLV3000FormatAtExportSetting of the instances settingsContainer or whether a
      * fragment exceeds an atom count of 999 atoms; the option of writing aromatic bond types is enabled. If a fragment
      * could not be written in first place, a second attempt with a kekulized clone of the fragments' atom container
      * is made.
+     * In case no 3D information are being held in a fragments atom container, the specific fragments are exported
+     * using 2D information equally setting each z coordinate to 0. If no 2D information are available, the user can
+     * choose via confirmation alert to either generate 2D atom coordinates for layout purposes or to export without
+     * specifying the atom coordinates (x, y, z = 0).
      *
      * @param aParentStage stage to show the FileChooser
      * @param aFragmentDataModelList list of FragmentDataModels
@@ -262,7 +265,7 @@ public class Exporter {
      */
     public void createFragmentationTabSingleSDFile(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
-            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,    //TODO: ??
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
                     Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
                     null);
@@ -293,7 +296,6 @@ public class Exporter {
                         boolean tmpPoint3dAvailable = true;
                         boolean tmpPoint2dAvailable = true;
                         for (IAtom tmpAtom : tmpFragment.atoms()) {
-                            //TODO: eventually outsource recursive code
                             if (tmpPoint3dAvailable) {
                                 if (tmpAtom.getPoint3d() != null) {
                                     continue;
@@ -349,7 +351,7 @@ public class Exporter {
                         "(export of %d fragments failed). File name: %s", tmpExportedFragmentsCounter,
                         tmpFailedFragmentExportCounter, tmpFile.getName()));
                 if (tmpFailedFragmentExportCounter > 0) {
-                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,    //TODO ??
+                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                             null);
@@ -365,14 +367,17 @@ public class Exporter {
     }
 
     /**
-     * TODO @Samuel
      * Opens a directory chooser and exports the chemical data of the given fragments as separate MDL SD files to an
-     * empty folder generated at the chosen; the molecular formula of each fragment is used as name for the associated
-     * file. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format depends on
-     * the current status of the alwaysMDLV3000FormatAtExportSetting of the instances settingsContainer or whether a
-     * fragment exceeds an atom count of 999 atoms; the option of writing aromatic bond types is enabled. If a fragment
-     * could not be written in first place, a second attempt with a kekulized clone of the fragments' atom container is
-     * made.
+     * empty folder generated at the chosen path; the molecular formula of each fragment is used as name for the
+     * associated file. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format
+     * depends on the current status of the alwaysMDLV3000FormatAtExportSetting of the instances settingsContainer or
+     * whether a fragment exceeds an atom count of 999 atoms; the option of writing aromatic bond types is enabled. If
+     * a fragment could not be written in first place, a second attempt with a kekulized clone of the fragments' atom
+     * container is made.
+     * In case no 3D information are being held in a fragments atom container, the specific SD files are created using
+     * 2D information equally setting each z coordinate to 0. If no 2D information are available, the user can choose
+     * via confirmation alert to either generate 2D atom coordinates for layout purposes or to export without specifying
+     * the atom coordinates (x, y, z = 0).
      *
      * @param aParentStage stage to show the DirectoryChooser
      * @param aFragmentDataModelList list of FragmentDataModels
@@ -380,7 +385,7 @@ public class Exporter {
      */
     public void createFragmentationTabSeparateSDFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
-            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,    //TODO: ??
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
                     Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
                     null);
@@ -476,7 +481,7 @@ public class Exporter {
                         "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
                         tmpFailedFragmentExportCounter, tmpSDFilesDirectory.getName()));
                 if (tmpFailedFragmentExportCounter > 0) {
-                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,    //TODO ??
+                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                             null);
@@ -492,14 +497,12 @@ public class Exporter {
     }
 
     /**
-     * TODO @Samuel
      * Opens a directory chooser and exports the chemical data of the given fragments as PDB files to an empty folder
      * generated at the chosen path; the molecular formula of each fragment is used as name for the associated file. In
-     * case no 3d information are being held in the fragments' atom containers, the PDB files are created using 2d
-     * information equally setting each z coordinate to 0 informing the user via a GUI confirmation alert. The 2d
-     * information is being generated if not available. The process can be canceled by clicking the cancel button of
-     * the GUI confirmation alert. The data should be used with caution considering the atom coordinates are only
-     * pseudo three dimensional.
+     * case no 3D information are being held in a fragments atom container, the specific PDB files are created using 2D
+     * information equally setting each z coordinate to 0. If no 2D information are available, the user can choose via
+     * confirmation alert to either generate 2D atom coordinates for layout purposes or to export without specifying the
+     * atom coordinates (x, y, z = 0).
      *
      * @param aParentStage stage to show the DirectoryChooser
      * @param aFragmentDataModelList list of FragmentDataModels
@@ -507,7 +510,7 @@ public class Exporter {
      */
     public void createFragmentationTabPDBFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
-            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,    //TODO: ??
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
                     Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
                     null);
@@ -586,7 +589,7 @@ public class Exporter {
                         "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
                         tmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
                 if (tmpFailedFragmentExportCounter > 0) {
-                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,    //TODO ??
+                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                             null);
@@ -819,7 +822,6 @@ public class Exporter {
     }
 
     /**
-     * TODO @Samuel
      * Opens a DirectoryChooser to choose a directory. Returns null if no directory has been selected.
      *
      * @param aParentStage Stage to show the DirectoryChooser
@@ -841,10 +843,11 @@ public class Exporter {
     }
 
     /**
-     * TODO @Samuel
      * Completes the given information of a clone of the given fragment to 3D atom coordinates by using 2D atom
-     * coordinates setting every z-coordinate to 0. If no 2D atom coordinates are available 2D coordinates for layout
-     * purposes can be generated or all coordinates can equally be set to 0 (according to the given parameters).
+     * coordinates setting every z-coordinate to 0. In case no 2D information are being held by the fragments atom
+     * container, either 2D atom coordinates for layout purposes can be generated or all coordinates can be equally set
+     * to 0 (according to the given parameters).
+     * If no clone could be generated, the exception is printed in the log file and the process is done without.
      *
      * @param aFragment fragment to handle
      * @param aPoint2dAvailable whether 2D atom coordinates of the fragment are available
@@ -869,7 +872,6 @@ public class Exporter {
                 StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
                 tmpStructureDiagramGenerator.generateCoordinates(tmpFragmentClone);
             } catch (CDKException anException) {
-                //TODO: thrown by .generateCoordinates() if there is a problem at generating 2D coordinates
                 Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException); //TODO: somehow specify at which fragment the exception appeared?
                 tmpErrorAtGenerating2dAtomCoordinates = true;
             }
