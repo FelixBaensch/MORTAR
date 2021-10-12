@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.model.settings;
 
 /**
  * TODO:
+ * - Remove atom container switch
  * - Important note for developers: When adding a new setting represented by a string, also consider the
  * SingleTermPreference class input restrictions when testing whether an input is valid!
  */
@@ -50,6 +51,8 @@ import java.util.logging.Logger;
  * Container for general settings in MORTAR, capable of managing, preserving, and reloading application settings.
  * Externally, the settings can be accessed via JavaFX properties and internally, they are managed via
  * de.unijena.cheminf.mortar.preference.IPreference objects for persistence.
+ *
+ * @author Jonas Schaub
  */
 public class SettingsContainer {
     //<editor-fold desc="private static final constants" defaultstate="collapsed">
@@ -548,6 +551,7 @@ public class SettingsContainer {
         this.preferenceContainer.add(this.alwaysMDLV3000FormatAtExportPreference);
     }
 
+    //TODO: Move String literals of GuiExceptionAlerts to message file
     /**
      * Initialises the properties representing the settings based on the respective preference objects. Related
      * preferences and properties are synced via overriding the properties set() methods and the properties are added

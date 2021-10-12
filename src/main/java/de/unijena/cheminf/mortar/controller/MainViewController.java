@@ -172,6 +172,8 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.loadMoleculeFile(this.primaryStage)
         );
+        //TODO for all export functions: Don't export the current fragmentation results but the one that has the focus!
+        //TODO: Get CSV file separator from settings
         //fragments export to CSV
         this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
                 EventType.ROOT,

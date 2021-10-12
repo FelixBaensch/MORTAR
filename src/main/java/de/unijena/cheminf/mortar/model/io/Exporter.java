@@ -646,7 +646,7 @@ public class Exporter {
             String aName) {
         try {
             File tmpPdfFile = null;
-            tmpPdfFile = this.saveFile(aParentStage, "PDF", "*.pdf","FragmentExport");
+            tmpPdfFile = this.saveFile(aParentStage, "PDF", "*.pdf","ItemsExport");
             if (tmpPdfFile != null) {
                 Document tmpDocument = new Document(PageSize.A4);
                 PdfWriter.getInstance(tmpDocument, new FileOutputStream(tmpPdfFile.getPath()));
@@ -750,7 +750,7 @@ public class Exporter {
     public File createItemizationTabCsvFile(Stage aParentStage, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator) {
         try {
             File tmpCsvFile = null;
-            tmpCsvFile = this.saveFile(aParentStage, "CSV", "*.csv", "FragmentExport");
+            tmpCsvFile = this.saveFile(aParentStage, "CSV", "*.csv", "ItemsExport");
             if (tmpCsvFile != null) {
                 PrintWriter tmpWriter = new PrintWriter(tmpCsvFile.getPath());
                 StringBuilder tmpCsvHeader = new StringBuilder();
@@ -842,15 +842,16 @@ public class Exporter {
         return tmpTableIntro;
     }
 
-    //TODO: use and set recent directory
+    //TODO: use and set recent directory from settings container
     /**
      * Opens a FileChooser to be able to save a file.
      *
-     * @param aParentStage Stage where FileChooser should be shown
-     * @param aDescription
-     * @param anExtension
-     * @param aFileName
-     * @return
+     * @param aParentStage Stage where the FileChooser should be shown
+     * @param aDescription file type description to be used in the dialog (not the file extension)
+     * @param anExtension file extension for extension filter of the file chooser dialog
+     * @param aFileName initial file name to suggest to the user in the dialog
+     * @return the selected file or null if no file has been selected
+     * @throws NullPointerException if the given stage is null
      * @author Betül Sevindik
      */
     private File saveFile(Stage aParentStage, String aDescription, String anExtension, String aFileName) throws NullPointerException {
@@ -864,7 +865,7 @@ public class Exporter {
         return tmpFile;
     }
 
-    //TODO: use and set recent directory
+    //TODO: update recent directory path in settings container
     /**
      * Opens a DirectoryChooser to choose a directory. Returns null if no directory has been selected.
      *
@@ -886,21 +887,25 @@ public class Exporter {
         return tmpDirectoryChooser.showDialog(aParentStage);
     }
 
+    //TODO: Split this up or at least introduce input restrictions for	irreconcilable parameter combinations
     /**
-     * Completes the given information of a clone of the given fragment to 3D atom coordinates by using 2D atom
-     * coordinates setting every z-coordinate to 0. In case no 2D information are being held by the fragments atom
-     * container, either 2D atom coordinates for layout purposes can be generated or all coordinates can be equally set
-     * to 0 (according to the given parameters).
-     * If no clone could be generated, the exception is printed in the log file and the process is done without.
+     * Optionally completes 2D coordinates of a given fragment by setting all z-coordinates to 0 or generates new
+     * pseudo-3D-coordinates for it using a structure diagram generator. As a third option, all coordinates of the given
+     * atoms can be set to 0. Which option is applied depends on the given parameters. Initially, the given fragment is
+     * cloned but if this fails, the original, given atom container is processed and the exception logged.
      *
-     * @param aFragment fragment to handle
-     * @param aPoint2dAvailable whether 2D atom coordinates of the fragment are available
+     * @param aFragment atom container of a fragment to handle
+     * @param aPoint2dAvailable whether 2D atom coordinates are available; this is not checked by this method
      * @param aGenerate2dAtomCoordinates whether 2D atom coordinates should be generated
      * @param aSetCoordinatesToZero whether all coordinates need to be set to 0
      * @return a clone of the given fragment with 3D atom coordinates created according to the given parameters
      * @author Samuel Behr
      */
-    private IAtomContainer handleFragmentWithNo3dInformationAvailable(IAtomContainer aFragment, boolean aPoint2dAvailable, boolean aGenerate2dAtomCoordinates, boolean aSetCoordinatesToZero) {
+    private IAtomContainer handleFragmentWithNo3dInformationAvailable(
+            IAtomContainer aFragment,
+            boolean aPoint2dAvailable,
+            boolean aGenerate2dAtomCoordinates,
+            boolean aSetCoordinatesToZero) {
         //generating a clone of the fragment
         IAtomContainer tmpFragmentClone;
         try {
@@ -916,7 +921,7 @@ public class Exporter {
                 StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
                 tmpStructureDiagramGenerator.generateCoordinates(tmpFragmentClone);
             } catch (CDKException anException) {
-                Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException); //TODO: somehow specify at which fragment the exception appeared?
+                Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                 tmpErrorAtGenerating2dAtomCoordinates = true;
             }
         }
