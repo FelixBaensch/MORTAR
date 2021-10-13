@@ -37,10 +37,14 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -48,19 +52,23 @@ import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.io.MDLV2000Writer;
 import org.openscience.cdk.io.PDBWriter;
 import org.openscience.cdk.io.SDFWriter;
-import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
+import org.openscience.cdk.layout.StructureDiagramGenerator;
 
 import javax.imageio.ImageIO;
 import javax.vecmath.Point3d;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -69,49 +77,80 @@ import java.util.logging.Logger;
 /**
  * Exporter
  *
+ * @author Betül Sevindik, Samuel Behr
  */
 public class Exporter {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
-     * Logger of this class.
+     * Logger of this class
      */
     private static final Logger LOGGER = Logger.getLogger(Exporter.class.getName());
+
+    /**
+     * Name of directory generated for exporting a stream of fragment files
+     */
+    private static final String FRAGMENTS_EXPORT_DIRECTORY_NAME = "MORTAR_Fragments_Export";
+
+    /**
+     * Font for cells in exported PDF files
+     */
+    private final Font fontFactory =  FontFactory.getFont(FontFactory.TIMES, 12, Font.BOLD);
     //</editor-fold>
     //
-    // <editor-fold defaultstate="collapsed" desc="Private class constants">
+    // <editor-fold defaultstate="collapsed" desc="Private variables">
     /**
-     * Font of any cells
+     * Container for general settings for managing, preserving, and reloading application settings
      */
-    private Font fontFactory =  FontFactory.getFont(FontFactory.TIMES, 12, Font.BOLD);
+    private SettingsContainer settingsContainer;
     //</editor-fold>
     //
+    //<editor-fold desc="Constructors">
     /**
-     * Constructor
+     * Constructor. Should the recent directory path provided by the container be faulty, it is set to its default
+     * value as defined by the respective constant in the SettingsContainer class.
+     *
+     * @param aSettingsContainer the MORTAR general settings container providing a recent directory path and other
+     *                           export-related settings
+     * @throws NullPointerException if the settings container is null
      */
-    public Exporter() {
+    public Exporter(SettingsContainer aSettingsContainer) throws NullPointerException {
+        Objects.requireNonNull(aSettingsContainer, "Given settings container is null.");
+        this.settingsContainer = aSettingsContainer;
+        String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
+        if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+        }
     }
+    //</editor-fold>
+    //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
+    //TODO: Get separator from general settings
+    //TODO: Parameter tests necessary?
+    //TODO: Move literals like header texts to properties file or constants?
     /**
-     * Exports the fragmentation results that appear on the fragmentationtab as a CSV file
-     * @param aParentStage  Stage to show the FileChooser
-     * @param aList a list to iterate through FragmentDataModel
-     * @param aSeperator is the seperator for the csv file
-     * @return  Csv file which contains the results of the fragmentation
+     * Exports the fragmentation results as they are displayed on the fragments tab as a CSV file. Opens a file chooser
+     * dialog for the user to determine a directory and file for the exported data.
+     *
+     * @param aParentStage Stage to show the FileChooser
+     * @param aList a list of FragmentDataModel instances to export
+     * @param aSeparator the separator for the csv file
+     * @return Csv file which contains the results of the fragmentation
+     * @author Betül Sevindik
      */
-    public File createFragmentationTabCsvFile(Stage aParentStage, ObservableList<FragmentDataModel> aList, char aSeperator) {
+    public File createFragmentationTabCsvFile(Stage aParentStage, ObservableList<FragmentDataModel> aList, char aSeparator) {
         try {
             File tmpFragmentationCsvFile = null;
             tmpFragmentationCsvFile = this.saveFile(aParentStage, "CSV", "*.csv",
                     "FragmentExport");
-            if ( tmpFragmentationCsvFile != null) {
+            if (tmpFragmentationCsvFile != null) {
                 PrintWriter tmpWriter = new PrintWriter(tmpFragmentationCsvFile.getPath());
                 StringBuilder tmpFragmentationCsvHeader = new StringBuilder();
-                tmpFragmentationCsvHeader.append("SmilesString" + aSeperator + "Frequency" + aSeperator + "Percentage"
-                        + aSeperator + "MolecularFrequency"
-                        + aSeperator + "MolecularPercentage\n");
+                tmpFragmentationCsvHeader.append("SmilesString" + aSeparator + "Frequency" + aSeparator + "Percentage"
+                        + aSeparator + "MolecularFrequency"
+                        + aSeparator + "MolecularPercentage\n");
                 tmpWriter.write(tmpFragmentationCsvHeader.toString());
                 for (FragmentDataModel tmpFragmentDataModel : aList) {
-                    tmpWriter.printf("%s" + aSeperator + "%d" + aSeperator + "%.3f" + aSeperator + "%d" + aSeperator + "%.2f\n",
+                    tmpWriter.printf("%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f\n",
                             tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
                             tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
                             tmpFragmentDataModel.getMoleculePercentage());
@@ -129,19 +168,29 @@ public class Exporter {
         }
     }
 
+    //TODO: Improve exception handling so that it does not kill the whole export if one fragment is faulty
+    //TODO: See tasks and issues document for further to dos concerning the PDF export
     /**
-     * Exports the fragmentation results that appear on the fragmentationtab as a PDF file
-     * @param aParentstage Stage to show the FileChooser
-     * @param aFragmentDataModelList  a list to iterate through FragmentDataModel
-     * @param aMoleculeDataModelList a list to iterate through MoleculeDataModel
+     * Exports the fragmentation results as they are displayed on the fragments tab as a PDF file. Opens a file chooser
+     * dialog for the user to determine a directory and file for the exported data.
+     *
+     * @param aParentStage Stage to show the FileChooser
+     * @param aFragmentDataModelList a list of FragmentDataModel instances to export
+     * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
+     * @param aName fragmentation name to be displayed in the header of the PDF file
      * @return PDF file which contains the results of the fragmentation
+     * @author Betül Sevindik
      */
-    public Document createFragmentationTabPdfFile(Stage aParentstage, ObservableList<FragmentDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aName) {
+    public Document createFragmentationTabPdfFile(
+            Stage aParentStage,
+            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+            String aName) {
         try {
-            File tmpFragmentationPdfFile;
-            tmpFragmentationPdfFile = this.saveFile(aParentstage, "PDF", "*.pdf",
+            File tmpFragmentationPdfFile = null;
+            tmpFragmentationPdfFile = this.saveFile(aParentStage, "PDF", "*.pdf",
                     "FragmentExport");
-            if ( tmpFragmentationPdfFile != null) {
+            if (tmpFragmentationPdfFile != null) {
                 Document tmpDocument = new Document(PageSize.A4);
                 tmpDocument.setPageSize(tmpDocument.getPageSize().rotate());
                 PdfWriter.getInstance(tmpDocument, new FileOutputStream(tmpFragmentationPdfFile.getPath()));
@@ -217,40 +266,118 @@ public class Exporter {
         }
     }
 
+    //TODO: Return file as with the other export methods?
     /**
-     * TODO @Samuel
-     * Opens a file chooser and exports the chemical data of the given fragments as a single MDL SD file, which is
-     * generated of kekulized clones of the fragments' atom containers. Whether the MDLV3000 format is used instead of
-     * the MDLV2000 format depends on preference or whether a fragment exceeds an atom count of 999 atoms.
+     * Opens a file chooser and exports the chemical data of the given fragments as a single MDL SD file to the chosen
+     * destination. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format depends
+     * on the current status of the alwaysMDLV3000FormatAtExportSetting of the instance's settingsContainer or whether a
+     * fragment exceeds an atom count of 999 atoms. The option for writing aromatic bond types is enabled. If a fragment
+     * could not be exported in the first place, a second attempt with a kekulized clone of the fragment's atom container
+     * is made.
+     * In case no 3D information are being held in a fragment atom container, the specific fragments are exported
+     * using 2D information equally setting each z coordinate to 0. If no 2D information are available, the user can
+     * choose via a confirmation alert to either generate (pseudo-) 2D atom coordinates (originally intended for layout
+     * purposes) or to export without specifying the atom coordinates (x, y, z = 0).
      *
-     * @param aParentStage Stage to show the FileChooser
-     * @param aFragmentDataModelList List of FragmentDataModels
-     * @param anAlwaysMDLV3000 boolean whether to always use the MDLV3000 format in the MDL SD file
+     * @param aParentStage stage to show the FileChooser
+     * @param aFragmentDataModelList list of FragmentDataModel instances
      * @author Samuel Behr
      */
-    public void createFragmentationTabSingleSDFile(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList, boolean anAlwaysMDLV3000) {
+    public void createFragmentationTabSingleSDFile(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+        if (aFragmentDataModelList == null) {
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null);
+            return;
+        }
         try {
+            //opening file chooser to determine the file to export to
             File tmpFile = this.saveFile(aParentStage, "SD-File", "*.sdf",
                     "FragmentExport");
             if (tmpFile != null) {
+                int tmpExportedFragmentsCounter = 0;
+                int tmpFailedFragmentExportCounter = 0;
                 try (
                         PrintWriter tmpWriter = new PrintWriter(tmpFile.getPath());
                         BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
                         SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
                 ) {
-                    tmpSDFWriter.setAlwaysV3000(anAlwaysMDLV3000);
+                    //specifying format of export
+                    tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());   //setting whether to always use MDL V3000 format
+                    tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");   //accessing the WriteAromaticBondType setting
+                    boolean tmpHasNo2dInformationAlertBeenShown = false;    //whether the conformation alert has been shown yet
+                    boolean tmpGenerate2dAtomCoordinates = false;           //whether coordinates should be generated
+                    //iterating through the fragments held by the list of fragments
                     for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
-                        try {   //TODO: kekulize only if exception occurred while writing? tmpSDFWriter is not accessible in catch
-                            IAtomContainer tmpAtomContainerClone = tmpFragmentDataModel.getAtomContainer().clone();
-                            Kekulization.kekulize(tmpAtomContainerClone);
-                            tmpSDFWriter.write(tmpAtomContainerClone);
-                        } catch (CDKException | CloneNotSupportedException anException) {
-                            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                        IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                        IAtomContainer tmpFragmentClone = null;
+                        //looping through all the fragments atoms checking whether 3D or else 2D atom coordinates are available
+                        boolean tmpPoint3dAvailable = true;
+                        boolean tmpPoint2dAvailable = true;
+                        for (IAtom tmpAtom : tmpFragment.atoms()) {
+                            if (tmpPoint3dAvailable) {
+                                if (tmpAtom.getPoint3d() != null) {
+                                    continue;
+                                }
+                                tmpPoint3dAvailable = false;
+                            }
+                            if (tmpAtom.getPoint2d() == null) {
+                                if (!tmpHasNo2dInformationAlertBeenShown) {
+                                    ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
+                                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
+                                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                                    );
+                                    if (tmpConformationResult == ButtonType.OK) {
+                                        tmpGenerate2dAtomCoordinates = true;
+                                    }
+                                    tmpHasNo2dInformationAlertBeenShown = true;
+                                }
+                                tmpPoint2dAvailable = false;
+                                break;
+                            }
+                        }
+                        //checking whether 3D information are available
+                        if (!tmpPoint3dAvailable) {
+                            tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
+                                    tmpPoint2dAvailable, tmpGenerate2dAtomCoordinates, false);
+                        }
+                        //writing to file
+                        try {
+                            if (tmpPoint3dAvailable) {
+                                tmpSDFWriter.write(tmpFragment);
+                            } else {
+                                tmpSDFWriter.write(tmpFragmentClone);
+                            }
+                            tmpExportedFragmentsCounter++;
+                        } catch (CDKException anException) {
+                            //retrying with a kekulized clone of the fragment
+                            try {
+                                if (tmpPoint3dAvailable) {
+                                    tmpFragmentClone = tmpFragment.clone();
+                                }
+                                Kekulization.kekulize(tmpFragmentClone);
+                                tmpSDFWriter.write(tmpFragmentClone);
+                                tmpExportedFragmentsCounter++;
+                            } catch (CDKException | CloneNotSupportedException anInnerException) {
+                                Exporter.LOGGER.log(Level.SEVERE, anInnerException.toString(), anInnerException);
+                                tmpFailedFragmentExportCounter++;
+                            }
                         }
                     }
                 }
+                Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as single SD file " +
+                        "(export of %d fragments failed). File name: %s", tmpExportedFragmentsCounter,
+                        tmpFailedFragmentExportCounter, tmpFile.getName()));
+                if (tmpFailedFragmentExportCounter > 0) {
+                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
+                            Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                            Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                            null);
+                }
             }
-        } catch (NullPointerException | IOException anException) {
+        } catch (NullPointerException | IOException | CDKException anException) {
             GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(),
@@ -259,53 +386,126 @@ public class Exporter {
         }
     }
 
+    //TODO: Return file as with the other export methods?
     /**
-     * TODO @Samuel
      * Opens a directory chooser and exports the chemical data of the given fragments as separate MDL SD files to an
-     * empty folder generated at the chosen path; the files are created out of kekulized clones of the fragments' atom
-     * containers. Whether the MDLV3000 format is used instead of the MDLV2000 format depends on preference or
-     * whether a fragment exceeds an atom count of 999 atoms.
+     * empty folder generated at the chosen path. The molecular formula of each fragment is used as name for each respective
+     * file. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format
+     * depends on the current status of the alwaysMDLV3000FormatAtExportSetting of the instance's settingsContainer or
+     * whether a fragment exceeds an atom count of 999 atoms. The option for writing aromatic bond types is enabled. If
+     * a fragment could not be exported in the first place, a second attempt with a kekulized clone of the fragment's atom
+     * container is made.
+     * In case no 3D information are being held in a fragment atom container, the specific fragments are exported
+     * using 2D information equally setting each z coordinate to 0. If no 2D information are available, the user can
+     * choose via a confirmation alert to either generate (pseudo-) 2D atom coordinates (originally intended for layout
+     * purposes) or to export without specifying the atom coordinates (x, y, z = 0).
      *
      * @param aParentStage stage to show the DirectoryChooser
-     * @param aFragmentDataModelList list of FragmentDataModels
-     * @param anAlwaysMDLV3000 boolean whether to always use the MDLV3000 format in the MDL SD files
+     * @param aFragmentDataModelList list of FragmentDataModel instances
      * @author Samuel Behr
      */
-    public void createFragmentationTabSeparateSDFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList, boolean anAlwaysMDLV3000) {
+    public void createFragmentationTabSeparateSDFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+        if (aFragmentDataModelList == null) {
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null);
+            return;
+        }
         try {
+            //opening a directory chooser and creating an empty directory as destination for the exported files
             File tmpDirectory = this.chooseDirectory(aParentStage);
             if (tmpDirectory != null && tmpDirectory.isDirectory()) {
                 String tmpSDFFilesDirectoryPathName = tmpDirectory
                         + File.separator
-                        + "MORTAR_Fragments_Export" + "_" + FileUtil.getTimeStampFileNameExtension();   //TODO: outsource String
+                        + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
                 String tmpFinalSDFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpSDFFilesDirectoryPathName, File.separator);
                 File tmpSDFilesDirectory = Files.createDirectory(Paths.get(tmpFinalSDFilesDirectoryPathName)).toFile();
+                boolean tmpHasNo2dInformationAlertBeenShown = false;    //whether the conformation alert has been shown yet
+                boolean tmpGenerate2dAtomCoordinates = false;           //whether coordinates should be generated
+                int tmpExportedFragmentsCounter = 0;
+                int tmpFailedFragmentExportCounter = 0;
+                //iterating through the fragments held by the list of fragments
                 for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                     IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
-                    String tmpMolecularFormula = Exporter.generateMolecularFormula(tmpFragment);  //TODO: replace with call of ChemUtil
+                    IAtomContainer tmpFragmentClone = null;
+                    //looping through all the fragments atoms checking whether 3D or else 2D atom coordinates are available
+                    boolean tmpPoint3dAvailable = true;
+                    boolean tmpPoint2dAvailable = true;
+                    for (IAtom tmpAtom : tmpFragment.atoms()) {
+                        if (tmpPoint3dAvailable) {
+                            if (tmpAtom.getPoint3d() != null) {
+                                continue;
+                            }
+                            tmpPoint3dAvailable = false;
+                        }
+                        if (tmpAtom.getPoint2d() == null) {
+                            if (!tmpHasNo2dInformationAlertBeenShown) {
+                                ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                                );
+                                if (tmpConformationResult == ButtonType.OK) {
+                                    tmpGenerate2dAtomCoordinates = true;
+                                }
+                                tmpHasNo2dInformationAlertBeenShown = true;
+                            }
+                            tmpPoint2dAvailable = false;
+                            break;
+                        }
+                    }
+                    //checking whether 3D information are available
+                    if (!tmpPoint3dAvailable) {
+                        tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
+                                tmpPoint2dAvailable, tmpGenerate2dAtomCoordinates, false);
+                    }
+                    //generating file
+                    String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
                     String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
                             + File.separator + tmpMolecularFormula, ".sdf");
                     File tmpSDFile = new File(tmpSDFilePathName);
+                    //writing to file
                     try (
                             PrintWriter tmpWriter = new PrintWriter(tmpSDFile);
                             BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
                             SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
                     ) {
-                        try {   //TODO: kekulize only if exception occurred while writing? tmpSDFWriter is not accessible in catch
-                            tmpSDFWriter.setAlwaysV3000(anAlwaysMDLV3000);
-                            tmpSDFWriter.write(tmpFragment);
-                        } catch (CDKException anException) {
-                            System.out.println("Writing without kelulization was not possible!");
-                            try {
-                                IAtomContainer tmpFragmentClone = tmpFragment.clone();
-                                Kekulization.kekulize(tmpFragmentClone);        //TODO: throws exception
+                        try {
+                            //specifying format of export
+                            tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());   //setting whether to always use MDL V3000 format
+                            tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");   //accessing the WriteAromaticBondType setting
+                            if (tmpPoint3dAvailable) {
+                                tmpSDFWriter.write(tmpFragment);
+                            } else {
                                 tmpSDFWriter.write(tmpFragmentClone);
+                            }
+                            tmpExportedFragmentsCounter++;
+                        } catch (CDKException anException) {
+                            //retrying with a kekulized clone of the fragment
+                            try {
+                                if (tmpPoint3dAvailable) {
+                                    tmpFragmentClone = tmpFragment.clone();
+                                }
+                                Kekulization.kekulize(tmpFragmentClone);
+                                tmpSDFWriter.write(tmpFragmentClone);
+                                tmpExportedFragmentsCounter++;
                             } catch (CDKException | CloneNotSupportedException anInnerException) {
                                 Exporter.LOGGER.log(Level.SEVERE, anInnerException.toString(), anInnerException);
+                                tmpFailedFragmentExportCounter++;
                             }
                         }
                     }
                 }
+                Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as separate SD files " +
+                        "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
+                        tmpFailedFragmentExportCounter, tmpSDFilesDirectory.getName()));
+                if (tmpFailedFragmentExportCounter > 0) {
+                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
+                            Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                            Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                            null);
+                }
             }
         } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
             GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -316,61 +516,103 @@ public class Exporter {
         }
     }
 
+    //TODO: Return file as with the other export methods?
     /**
-     * TODO @Samuel
-     * Opens a directory chooser and exports the chemical data of the fragments resulting out of the carried out
-     * fragmentation process as separate PDB files to an empty folder generated at the chosen destination. The molecular formula
-     * of each fragment is used as name for the associated file.
+     * Opens a directory chooser and exports the chemical data of the given fragments as PDB files to an empty folder
+     * generated at the chosen path. The molecular formula of each fragment is used as name for the associated file. In
+     * case no 3D information are being held in a fragment atom container, the respective PDB files are created using 2D
+     * information equally setting each z coordinate to 0. If no 2D information are available, the user can choose via a
+     * confirmation alert to either generate (pseudo-) 2D atom coordinates (originally intended for layout
+     * purposes) or to export without specifying the atom coordinates (x, y, z = 0).
      *
      * @param aParentStage stage to show the DirectoryChooser
-     * @param aFragmentDataModelList list of FragmentDataModels
+     * @param aFragmentDataModelList list of FragmentDataModel instances
      * @author Samuel Behr
      */
-    public void createFragmentationTabSeparatePDBFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+    public void createFragmentationTabPDBFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+        if (aFragmentDataModelList == null) {
+            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null);
+            return;
+        }
         try {
+            //opening a directory chooser and creating an empty directory as destination for the exported files
             File tmpDirectory = this.chooseDirectory(aParentStage);
             if (tmpDirectory != null && tmpDirectory.isDirectory()) {
                 String tmpPDBFilesDirectoryPathName = tmpDirectory
                         + File.separator
-                        + "MORTAR_Fragments_Export" + "_" + FileUtil.getTimeStampFileNameExtension();   //TODO: outsource String
+                        + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
                 String tmpFinalPDBFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectoryPathName, File.separator);
                 File tmpPDBFilesDirectory = Files.createDirectory(Paths.get(tmpFinalPDBFilesDirectoryPathName)).toFile();
+                boolean tmpHasNo2dInformationAlertBeenShown = false;    //whether the conformation alert has been shown yet
+                boolean tmpGenerate2dAtomCoordinates = false;           //whether coordinates should be generated
+                int tmpExportedFragmentsCounter = 0;
+                int tmpFailedFragmentExportCounter = 0;
+                //iterating through the fragments held by the list of fragments
                 for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                     IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
-
-                    //TODO: lines of test code!
-                    /*Iterator<IAtom> tmpAtoms = tmpFragment.atoms().iterator();
-                    IAtom tmpAtom = tmpAtoms.next();
-                    //Point3d tmpPosition = tmpAtom.getPoint3d();
-                    Point3d tmpPosition = new Point3d();
-                    System.out.println("Point3d is null:\t" + (tmpPosition == null));
-                    tmpPosition.set(0.1,0.1,0.1);
-                    System.out.println(tmpPosition.x);
-                    System.out.println(tmpPosition.y);
-                    System.out.println(tmpPosition.z);*/
-
-                    //TODO: following lines are for test purposes only; should be replaced when a solution for the atoms' missing 3d information is found
-                    try {
-                        tmpFragment = tmpFragmentDataModel.getAtomContainer().clone();
-                        for (IAtom tmpAtom : tmpFragment.atoms()) {
-                            tmpAtom.setPoint3d(new Point3d(0.1, 0.1, 0.1)); //random choice of values
+                    IAtomContainer tmpFragmentClone = null;
+                    //looping through all the fragments atoms checking whether 3D or else 2D atom coordinates are available
+                    boolean tmpPoint3dAvailable = true;
+                    boolean tmpPoint2dAvailable = true;
+                    for (IAtom tmpAtom : tmpFragment.atoms()) {
+                        if (tmpPoint3dAvailable) {
+                            if (tmpAtom.getPoint3d() != null) {
+                                continue;
+                            }
+                            tmpPoint3dAvailable = false;
                         }
-                    } catch (CloneNotSupportedException anException) {
-                        System.out.println("Clone could not be generated!");
-                        throw new IllegalArgumentException("Clone could not be generated!");
+                        if (tmpAtom.getPoint2d() == null) {
+                            if (!tmpHasNo2dInformationAlertBeenShown) {
+                                ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
+                                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                                );
+                                if (tmpConformationResult == ButtonType.OK) {
+                                    tmpGenerate2dAtomCoordinates = true;
+                                }
+                                tmpHasNo2dInformationAlertBeenShown = true;
+                            }
+                            tmpPoint2dAvailable = false;
+                            break;
+                        }
                     }
-
-                    String tmpMolecularFormula = Exporter.generateMolecularFormula(tmpFragment);  //TODO: replace with call of ChemUtil method
+                    //checking whether 3D information are available
+                    if (!tmpPoint3dAvailable) {
+                        tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
+                                tmpPoint2dAvailable, tmpGenerate2dAtomCoordinates, true);
+                    }
+                    //generating file
+                    String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
                     String tmpPDBFilePathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectory
                             + File.separator + tmpMolecularFormula, ".pdb");
                     File tmpPDBFile = new File(tmpPDBFilePathName);
+                    //writing to file
                     try (
                             PDBWriter tmpPDBWriter = new PDBWriter(new FileOutputStream(tmpPDBFile));
                     ) {
-                        tmpPDBWriter.write(tmpFragment);
+                        if (tmpPoint3dAvailable) {
+                            tmpPDBWriter.writeMolecule(tmpFragment);
+                        } else {
+                            tmpPDBWriter.writeMolecule(tmpFragmentClone);
+                        }
+                        tmpExportedFragmentsCounter++;
                     } catch (CDKException anException) {
                         Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                        tmpFailedFragmentExportCounter++;
                     }
+                }
+                Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as PDB files " +
+                        "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
+                        tmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
+                if (tmpFailedFragmentExportCounter > 0) {
+                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
+                            Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                            Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                            null);
                 }
             }
         } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
@@ -382,79 +624,30 @@ public class Exporter {
         }
     }
 
+    //TODO: Improve exception handling so that it does not kill the whole export if one fragment is faulty
+    //TODO: See tasks and issues document for further to dos concerning the PDF export
     /**
-     * TODO: place method in ChemUtil
-     * Generates the molecular formula of a given atom container. If the molecular formula could not be generated, null
-     * is returned.
+     * Exports the fragmentation results as they are displayed on the itemization tab as a PDF file. Opens a file chooser
+     * dialog for the user to determine a directory and file for the exported data.
      *
-     * @param anAtomContainer AtomContainer the formula is generated of
-     * @return the molecular formula of the given atom container
-     * @author Samuel Behr
+     * @param aParentStage Stage to show the FileChooser
+     * @param aFragmentDataModelList a list of FragmentDataModel instances to export
+     * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
+     * @param aFragmentationName fragmentation name to retrieve the specific set of fragments from the molecule data models
+     * @param aName fragmentation name to be displayed in the header of the PDF file
+     * @return PDF file with the data that appears on the itemization tab
+     * @author Betül Sevindik
      */
-    public static String generateMolecularFormula(IAtomContainer anAtomContainer) {
-        IAtomContainer tmpAtomContainerClone = null;
-        String tmpMolecularFormulaString = null;
-        try {
-            tmpAtomContainerClone = anAtomContainer.clone();
-            //TODO: method: copyAndSuppressedHydrogens() or suppressHydrogens() from AtomContainerManipulator?
-            Exporter.convertExplicitToImplicitHydrogens(tmpAtomContainerClone); //TODO: replace with call of ChemUtil method
-            IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(tmpAtomContainerClone);
-            tmpMolecularFormulaString = MolecularFormulaManipulator.getString(tmpMolecularFormula);
-        } catch (CloneNotSupportedException anException) {
-            Exporter.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
-                    + tmpAtomContainerClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
-        }
-        return tmpMolecularFormulaString;
-    }
-
-    /**
-     * TODO: place method in ChemUtil
-     * Converts all explicit hydrogen atoms in the given molecule to implicit hydrogens, increasing the respective counters
-     * on the heavy atom objects. Note that the given atom container object is altered.
-     *
-     * @param aMolecule the structure the convert all explicit hydrogens of
-     * @throws NullPointerException if the given molecule is null
-     * @author Michael Wenk, Jonas Schaub
-     */
-    public static void convertExplicitToImplicitHydrogens(IAtomContainer aMolecule) throws NullPointerException {
-        Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            return;
-        }
-        List<IAtom> tmpRemoveList = new ArrayList<>();
-        IAtom tmpAtomB;
-        for (IAtom tmpAtomA : aMolecule.atoms()) {
-            //check each atom for whether it is a hydrogen;
-            // if yes, increase the number of implicit hydrogens for its connected heavy atom
-            if (tmpAtomA.getAtomicNumber().equals(1)) {
-                tmpAtomB = aMolecule.getConnectedAtomsList(tmpAtomA).get(0);
-                //precaution for unset property
-                if (tmpAtomB.getImplicitHydrogenCount() == null) {
-                    tmpAtomB.setImplicitHydrogenCount(0);
-                }
-                tmpAtomB.setImplicitHydrogenCount(tmpAtomB.getImplicitHydrogenCount() + 1);
-                tmpRemoveList.add(tmpAtomA);
-            }
-        }
-        //remove all explicit hydrogen atoms from the molecule
-        for (IAtom tmpAtom : tmpRemoveList) {
-            aMolecule.removeAtom(tmpAtom);
-        }
-    }
-
-    /**
-     * Exports the fragmentation results that appear on the Itemizationtab as a PDF file
-     * @param aParentstage Stage to show the FileChooser
-     * @param aFragmentDataModelList  a list to iterate through FragmentDataModel
-     * @param aMoleculeDataModelList  a list to iterate through MoleculeDataModel
-     * @param aFragmentationName
-     * @return PDF file with the data that appears on the itemisation tab
-     */
-    public Document createItemizationTabPdfFile(Stage aParentstage, ObservableList<FragmentDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aName) {
+    public Document createItemizationTabPdfFile(
+            Stage aParentStage,
+            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+            String aFragmentationName,
+            String aName) {
         try {
             File tmpPdfFile = null;
-            tmpPdfFile = this.saveFile(aParentstage, "PDF", "*.pdf","fragmentExport");
-            if ( tmpPdfFile != null) {
+            tmpPdfFile = this.saveFile(aParentStage, "PDF", "*.pdf","ItemsExport");
+            if (tmpPdfFile != null) {
                 Document tmpDocument = new Document(PageSize.A4);
                 PdfWriter.getInstance(tmpDocument, new FileOutputStream(tmpPdfFile.getPath()));
                 tmpDocument.open();
@@ -489,7 +682,7 @@ public class Exporter {
                     Image tmpMolecule = Image.getInstance(tmpMoleculeFile.getAbsolutePath());
                     tmpMoleculeStructureCell.addElement(tmpMolecule);
                     tmpTable.addCell(tmpMoleculeStructureCell);
-                    PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph("Fragements", this.fontFactory));
+                    PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph("Fragments", this.fontFactory));
                     tmpCellOfFragment.setHorizontalAlignment(Element.ALIGN_CENTER);
                     tmpFragmentTableversuch.addCell(tmpCellOfFragment);
                     tmpDocument.add(tmpTable);
@@ -540,19 +733,25 @@ public class Exporter {
         }
     }
 
+    //TODO: Get separator from general settings
+    //TODO: Parameter tests necessary?
+    //TODO: Move literals like header texts to properties file or constants?
     /**
-     * Exports the fragmentation results that appear on the Itemization tab as a Csv file
-     * @param aParentstage Stage to show the FileChooser
-     * @param aMoleculeDataModelList  a list to iterate through FragmentDataModel
-     * @param aFragmentationName
-     * @param aSeparator is the separator for the csv file
-     * @return Csv file with the data that appears on the itemisation tab
+     * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file. Opens a file chooser
+     * dialog for the user to determine a directory and file for the exported data.
+     *
+     * @param aParentStage Stage to show the FileChooser
+     * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
+     * @param aFragmentationName fragmentation name to retrieve the specific set of fragments from the molecule data models
+     * @param aSeparator the separator for the csv file
+     * @return Csv file with the data that appears on the itemization tab
+     * @author Betül Sevindik
      */
-    public File createItemizationTabCsvFile(Stage aParentstage, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator) {
+    public File createItemizationTabCsvFile(Stage aParentStage, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator) {
         try {
             File tmpCsvFile = null;
-            tmpCsvFile = this.saveFile(aParentstage, "CSV", "*.csv", "FragmentExport");
-            if ( tmpCsvFile != null) {
+            tmpCsvFile = this.saveFile(aParentStage, "CSV", "*.csv", "ItemsExport");
+            if (tmpCsvFile != null) {
                 PrintWriter tmpWriter = new PrintWriter(tmpCsvFile.getPath());
                 StringBuilder tmpCsvHeader = new StringBuilder();
                 tmpCsvHeader.append("MoleculeName" + aSeparator + "SmilesOfStructure" + aSeparator + "SmilesOfFragments\n");
@@ -582,14 +781,17 @@ public class Exporter {
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
-     * Creates a ImageFile
-     * @param aBufferedImage
-     * @return File with a Image of Molecule or Structure
+     * Writes an image file from a buffered image in the application's scrap directory for images. The file intended to
+     * be deleted after usage!
+     *
+     * @param aBufferedImage the buffered image to write
+     * @return File with an image of Molecule or Structure or null if an exception occurred
+     * @author Betül Sevindik
      */
     private File getImageFile(BufferedImage aBufferedImage) {
         try {
             String tmpImageDirectoryPathName = FileUtil.getAppDirPath() + File.separator
-                    + BasicDefinitions.IMAGE_FILES_DIRECTORY+ File.separator;
+                    + BasicDefinitions.IMAGE_FILES_DIRECTORY + File.separator;
             File tmpImageDirectoryFile = new File(tmpImageDirectoryPathName);
             String tmpImagesFilePathName = tmpImageDirectoryPathName + BasicDefinitions.IMAGE_FILE_NAME;
             if (!tmpImageDirectoryFile.exists()) {
@@ -606,20 +808,27 @@ public class Exporter {
         }
     }
 
+    //TODO: This method only needs the sizes, not the complete lists of fragments and molecules
     /**
-     * Creates a header with general information for the PDf files
-     * @param aFragmentDataModelList a list to iterate through FragmentDataModel
-     * @param aMoleculeDataModelList a list to iterate through MoleculeDataModel
-     * @return  table with this informations
+     * Creates a header with general information for the PDf files.
+     *
+     * @param aFragmentDataModelList list of fragments
+     * @param aMoleculeDataModelList list of molecules
+     * @param anAlgorithmName name of the used algorithm
+     * @return fragmentation report table for a PDF file header
+     * @author Betül Sevindik
      */
-    private PdfPTable createHeaderTable(ObservableList<FragmentDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String anAlgorthimName) {
+    private PdfPTable createHeaderTable(
+            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+            String anAlgorithmName) {
         int tmpFragmentNumbers =  aFragmentDataModelList.size();
         int tmpMoleculeNumbers = aMoleculeDataModelList.size();
-        // creates the header
+        //creates the header
         float tmpCellLengthIntro[] = {60f, 60f}; // relative sizes
         PdfPTable tmpTableIntro = new PdfPTable(tmpCellLengthIntro);
         PdfPCell tmpIntroCell1 = new PdfPCell(new Paragraph("Algorithm used",this.fontFactory));
-        PdfPCell tmpIntroCell2 = new PdfPCell(new Paragraph(anAlgorthimName));
+        PdfPCell tmpIntroCell2 = new PdfPCell(new Paragraph(anAlgorithmName));
         PdfPCell tmpIntroCell3 = new PdfPCell(new Paragraph("Number of molecules",this.fontFactory));
         PdfPCell tmpIntroCell4 = new PdfPCell(new Paragraph(String.valueOf(tmpMoleculeNumbers)));
         PdfPCell tmpIntroCell5 = new PdfPCell(new Paragraph("Number of fragments",this.fontFactory));
@@ -633,10 +842,17 @@ public class Exporter {
         return tmpTableIntro;
     }
 
+    //TODO: use and set recent directory from settings container
     /**
-     * Opens a FileChooser to be able to save a file
-     * @param aParentStage Stage where FileChooser should be shown
-     * @return File
+     * Opens a FileChooser to be able to save a file.
+     *
+     * @param aParentStage Stage where the FileChooser should be shown
+     * @param aDescription file type description to be used in the dialog (not the file extension)
+     * @param anExtension file extension for extension filter of the file chooser dialog
+     * @param aFileName initial file name to suggest to the user in the dialog
+     * @return the selected file or null if no file has been selected
+     * @throws NullPointerException if the given stage is null
+     * @author Betül Sevindik
      */
     private File saveFile(Stage aParentStage, String aDescription, String anExtension, String aFileName) throws NullPointerException {
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
@@ -649,8 +865,8 @@ public class Exporter {
         return tmpFile;
     }
 
+    //TODO: update recent directory path in settings container
     /**
-     * TODO @Samuel
      * Opens a DirectoryChooser to choose a directory. Returns null if no directory has been selected.
      *
      * @param aParentStage Stage to show the DirectoryChooser
@@ -662,8 +878,66 @@ public class Exporter {
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         DirectoryChooser tmpDirectoryChooser = new DirectoryChooser();
         tmpDirectoryChooser.setTitle(Message.get("Exporter.directoryChooser.title"));
-        tmpDirectoryChooser.setInitialDirectory(new File(System.getProperty("user.home"))); //TODO: make dependent on recent directory path
+        File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
+        if(!tmpRecentDirectory.isDirectory()) {
+            tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+        }
+        tmpDirectoryChooser.setInitialDirectory(tmpRecentDirectory);
         return tmpDirectoryChooser.showDialog(aParentStage);
+    }
+
+    //TODO: Split this up or at least introduce input restrictions for	irreconcilable parameter combinations
+    /**
+     * Optionally completes 2D coordinates of a given fragment by setting all z-coordinates to 0 or generates new
+     * pseudo-3D-coordinates for it using a structure diagram generator. As a third option, all coordinates of the given
+     * atoms can be set to 0. Which option is applied depends on the given parameters. Initially, the given fragment is
+     * cloned but if this fails, the original, given atom container is processed and the exception logged.
+     *
+     * @param aFragment atom container of a fragment to handle
+     * @param aPoint2dAvailable whether 2D atom coordinates are available; this is not checked by this method
+     * @param aGenerate2dAtomCoordinates whether 2D atom coordinates should be generated
+     * @param aSetCoordinatesToZero whether all coordinates need to be set to 0
+     * @return a clone of the given fragment with 3D atom coordinates created according to the given parameters
+     * @author Samuel Behr
+     */
+    private IAtomContainer handleFragmentWithNo3dInformationAvailable(
+            IAtomContainer aFragment,
+            boolean aPoint2dAvailable,
+            boolean aGenerate2dAtomCoordinates,
+            boolean aSetCoordinatesToZero) {
+        //generating a clone of the fragment
+        IAtomContainer tmpFragmentClone;
+        try {
+            tmpFragmentClone = aFragment.clone();
+        } catch (CloneNotSupportedException anException) {
+            tmpFragmentClone = aFragment;
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        }
+        //generating 2D atom coordinates if needed
+        boolean tmpErrorAtGenerating2dAtomCoordinates = false;
+        if (!aPoint2dAvailable && aGenerate2dAtomCoordinates) {
+            try {
+                StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
+                tmpStructureDiagramGenerator.generateCoordinates(tmpFragmentClone);
+            } catch (CDKException anException) {
+                Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                tmpErrorAtGenerating2dAtomCoordinates = true;
+            }
+        }
+        if (aPoint2dAvailable || (aGenerate2dAtomCoordinates && !tmpErrorAtGenerating2dAtomCoordinates)) {
+            //transfer of 2D coordinates to 3D coordinates with z = 0
+            for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
+                Point3d tmpPoint3d = new Point3d(tmpAtom.getPoint2d().x, tmpAtom.getPoint2d().y, 0.0);
+                tmpAtom.setPoint3d(tmpPoint3d);
+            }
+        } else if (aSetCoordinatesToZero) {
+            //setting all atom coordinates to 0
+            for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
+                tmpAtom.setPoint3d(new Point3d(0.0, 0.0, 0.0));
+            }
+        }
+        return tmpFragmentClone;
     }
     //</editor-fold>
 }

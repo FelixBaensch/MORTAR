@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -20,11 +20,15 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.model.io.Importer;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,7 +49,7 @@ public final class ChemUtil {
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
      * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
-     * If the SMILES could not be created in first place, it is retried with a kekulized clone of the given atom
+     * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
      * container. Aromaticity information is encoded in the returned SMILES string, if there is any given.
      *
      * @param anAtomContainer atom container the unique SMILES should be created of
@@ -71,7 +75,28 @@ public final class ChemUtil {
         }
         return tmpSmiles;
     }
-    //TODO: reposition the public static method generateMolecularFormula() from the Exporter class to ChemUtil            (branch sdf_and_pdb_Exporter @SamuelBehr)
-    //TODO: reposition the public static method convertExplicitToImplicitHydrogens() from the Exporter class to ChemUtil  (branch sdf_and_pdb_Exporter @SamuelBehr)
+
+    /**
+     * Generates the molecular formula of a given atom container. If the molecular formula could not be generated, null
+     * is returned.
+     *
+     * @param anAtomContainer AtomContainer to generate the molecular formula of
+     * @return String containing the molecular formula of the given atom container
+     * @author Samuel Behr
+     */
+    public static String generateMolecularFormula(IAtomContainer anAtomContainer) {
+        IAtomContainer tmpAtomContainerClone = null;
+        String tmpMolecularFormulaString = null;
+        try {
+            tmpAtomContainerClone = anAtomContainer.clone();
+            AtomContainerManipulator.suppressHydrogens(tmpAtomContainerClone);
+            IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(tmpAtomContainerClone);
+            tmpMolecularFormulaString = MolecularFormulaManipulator.getString(tmpMolecularFormula);
+        } catch (CloneNotSupportedException anException) {
+            ChemUtil.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
+                    + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
+        }
+        return tmpMolecularFormulaString;
+    }
     //</editor-fold>
 }
