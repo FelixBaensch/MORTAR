@@ -61,6 +61,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -104,6 +105,7 @@ public class MainViewController {
     private boolean selectionAllCheckBoxAction;
     private FragmentationService fragmentationService;
     private Button fragmentationButton;
+    private Button cancelFragmentationButton;
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
     //</editor-fold>
     //
@@ -237,7 +239,7 @@ public class MainViewController {
                 anEvent -> this.openPipelineSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //TODO: More implementation needed
-        //TODO: Add listener to rows per page setting in settings container
+        //TODO: Add listener to rows per page setting in settings container //deprecated?
     }
     //
     /**
@@ -460,19 +462,29 @@ public class MainViewController {
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
-        this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.button.text"));
+        this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.fragmentButton.text"));
         ButtonBar tmpButtonBar = new ButtonBar(); //TODO: adjust button bar height to pagination control height
-        HBox.setMargin(this.fragmentationButton, new Insets(GuiDefinitions.GUI_BUTTON_SPACING_VALUE));
+        tmpButtonBar.setPadding(new Insets(0,0,0,0));
         this.fragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.fragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.fragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBar.getButtons().add(this.fragmentationButton);
+        this.cancelFragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.text"));
+        this.cancelFragmentationButton.setTooltip(new Tooltip(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")));
+        this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.cancelFragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.cancelFragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.cancelFragmentationButton.setVisible(false);
+        tmpButtonBar.getButtons().add(this.cancelFragmentationButton);
         tmpMoleculesTab.addNodeToGridPane(tmpButtonBar, 0,1,1,1);
-        //TODO: disable 'tmpFragmentButton' while fragmentation is running
         this.fragmentationButton.setOnAction(event->{
             //TODO: add implementation to start fragmentation algorithm
             this.startFragmentation();
+        });
+        this.cancelFragmentationButton.setOnAction(event ->{
+            this.interruptFragmentation();
         });
         this.addTableViewWidthListener(this.moleculesDataTableView);
     }
@@ -531,6 +543,12 @@ public class MainViewController {
         return new BorderPane(this.moleculesDataTableView);
     }
     //
+    private void interruptFragmentation(){
+        this.fragmentationService.abortExecutor();
+        this.cancelFragmentationButton.setVisible(false);
+        this.fragmentationButton.setDisable(false);
+    }
+    //
     private void startFragmentation(){
         this.startFragmentation(false);
     }
@@ -545,6 +563,7 @@ public class MainViewController {
         try{
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
             this.fragmentationButton.setDisable(true);
+            this.cancelFragmentationButton.setVisible(true);
             this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Running"));
             Task<Void> tmpTaskVoidTask = new Task<Void>() {
                 @Override
@@ -573,12 +592,21 @@ public class MainViewController {
                         this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Finished"));
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                         this.fragmentationButton.setDisable(false);
+                        this.cancelFragmentationButton.setVisible(false);
                         long tmpEndTime = System.nanoTime();
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
                 });
+            });
+            tmpTaskVoidTask.setOnCancelled(event -> {
+                this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
+            });
+            tmpTaskVoidTask.setOnFailed(event -> {
+                this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
             });
             Thread tmpThread = new Thread(tmpTaskVoidTask);
             tmpThread.start();
@@ -614,7 +642,6 @@ public class MainViewController {
         Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
         ButtonBar tmpButtonBarFragments = new ButtonBar();
         tmpButtonBarFragments.setPadding(new Insets(0,0,0,0));
-//        tmpHBox.setSpacing(GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
         tmpExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);

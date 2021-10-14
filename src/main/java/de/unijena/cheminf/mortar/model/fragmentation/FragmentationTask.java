@@ -142,6 +142,10 @@ public class FragmentationTask implements Callable<Integer> {
                     tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
                 }
             }
+            if(Thread.currentThread().isInterrupted()){
+                LOGGER.log(Level.INFO, "Thread interrupted"); //TODO add log message
+                return null;
+            }
         }
         return tmpExceptionsCounter;
     }

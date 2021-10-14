@@ -54,13 +54,10 @@ public class MainMenuBar extends MenuBar {
     private Menu settingsMenu;
     private Menu pipelineMenu;
     private Menu helpMenu;
-    private MenuItem exitMenuItem;
-    private MenuItem loadMenuItem;
     private MenuItem fragmentationSettingsMenuItem;
     private MenuItem globalSettingsMenuItem;
     private MenuItem pipelineSettingsMenuItem;
     private Menu fragmentationAlgorithmMenu;
-    private Menu helpMenu;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -161,7 +158,7 @@ public class MainMenuBar extends MenuBar {
         this.fragmentsExportMenu.getItems().add(this.fragmentsExportToSDFMenu);
         this.fragmentsExportToSDFMenu.getItems().add(this.fragmentsExportToSingleSDFMenuItem);
         this.fragmentsExportToSDFMenu.getItems().add(this.fragmentsExportToSeparateSDFsMenuItem);
-        this.exportMenu.show();
+//        this.exportMenu.show();
         //</editor-fold>
         //<editor-fold desc="itemsExportMenu" defaultstate="collapsed">
         this.exportMenu.getItems().add(this.itemsExportMenu);

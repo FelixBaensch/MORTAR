@@ -29,15 +29,11 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -78,10 +74,17 @@ public class FragmentationService {
      */
     private Hashtable<String, FragmentDataModel> fragments;
     /**
-     *
+     * String for the name of the current fragmentation algorithm
      */
     private String currentFragmentationName;
+    /**
+     * String for the name of the current pipeline fragmentation
+     */
     private String pipeliningFragmentationName;
+    /**
+     * ExecutorService for the fragmentation tasks
+     */
+    private ExecutorService executorService;
     //</editor-fold>
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
@@ -346,7 +349,7 @@ public class FragmentationService {
             tmpToIndex++;
             tmpMoleculeModulo--;
         }
-        ExecutorService tmpExecutor = Executors.newFixedThreadPool(tmpNumberOfTasks);
+        this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks);
         List<FragmentationTask> tmpFragmentationTaskList = new LinkedList<>();
         for(int i = 1; i <= tmpNumberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
@@ -368,7 +371,7 @@ public class FragmentationService {
                 + "\" starting. Current memory consumption: " + tmpMemoryConsumption + " MB");
         long tmpStartTime = System.currentTimeMillis();
         try {
-            tmpFuturesList = tmpExecutor.invokeAll(tmpFragmentationTaskList);
+            tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
         }catch (Exception anException){
             FragmentationService.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             throw anException; //TODO ? GUIAlert?
@@ -389,13 +392,28 @@ public class FragmentationService {
         if(tmpExceptionsCounter > 0){
             FragmentationService.LOGGER.log(Level.SEVERE, "Fragmentation \"" + tmpFragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");
         }
-        tmpExecutor.shutdown();
+        this.executorService.shutdown();
         tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
         long tmpEndTime = System.currentTimeMillis();
         FragmentationService.LOGGER.info("Fragmentation \"" + tmpFragmentationName + "\" of " + aListOfMolecules.size()
                 + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "
                 + tmpMemoryConsumption + " MB");
         return tmpFragmentHashtable;
+    }
+
+    /**
+     * Shuts down executor service
+     * Used as recommended by oracle (https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ExecutorService.html)
+     */
+    public void abortExecutor(){
+        this.executorService.shutdown();
+        try {
+            if (!this.executorService.awaitTermination(600, TimeUnit.MILLISECONDS)) {
+                this.executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            this.executorService.shutdownNow();
+        }
     }
 
     //<editor-fold desc="public properties" defaultstate="collapsed">
