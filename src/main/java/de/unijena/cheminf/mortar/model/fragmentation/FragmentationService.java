@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGeneratorFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
@@ -70,6 +71,10 @@ public class FragmentationService {
      */
     private IMoleculeFragmenter sugarRUF;
     /**
+     * Scaffold Generator
+     */
+    private IMoleculeFragmenter ScaffoldGF;
+    /**
      * List of  names of fragmentation algorithms that have already been run
      */
     private List<String> existingFragmentations;
@@ -94,11 +99,13 @@ public class FragmentationService {
      * Constructor
      */
     public FragmentationService(){
-        this.fragmenters = new IMoleculeFragmenter[2];
+        this.fragmenters = new IMoleculeFragmenter[3];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
         this.fragmenters[1] = this.sugarRUF;
+        this.ScaffoldGF = new ScaffoldGeneratorFragmenter();
+        this.fragmenters[2] = this.ScaffoldGF;
         this.existingFragmentations = new LinkedList<String>();
     }
 
