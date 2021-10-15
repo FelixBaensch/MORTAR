@@ -107,6 +107,7 @@ public class MainViewController {
     private Button fragmentationButton;
     private Button cancelFragmentationButton;
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
+    private boolean isFragmentationRunning;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -295,8 +296,13 @@ public class MainViewController {
      */
     private void closeApplication(int aStatus) {
         if(moleculeDataModelList.size() > 0){
+            ButtonType tmpConformationResult;
             //Todo: move text to message resource file and maybe create a separate method for this because it is called again below in loadMoleculeFile()
-            ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost and application will be closed if you press Ok. Click cancel to return to application."); //TODO
+            if(this.isFragmentationRunning){
+                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
+            } else {
+                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
+            }
             if(tmpConformationResult!= ButtonType.OK){
                 return;
             }
@@ -310,7 +316,9 @@ public class MainViewController {
                     Message.get("Error.SettingsPersistence"),
                     anIOException);
         }
-        //TODO: bind/addListener to top right corner X - done?
+        if(this.isFragmentationRunning){
+            this.interruptFragmentation();
+        }
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
         System.exit(aStatus);
@@ -327,11 +335,19 @@ public class MainViewController {
      * @param aParentStage
      */
     private void loadMoleculeFile(Stage aParentStage) {
-        if(moleculeDataModelList.size() > 0){
-            ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return."); //TODO
+        if(this.moleculeDataModelList.size() > 0){
+            ButtonType tmpConformationResult;
+            if(this.isFragmentationRunning){
+                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
+            } else {
+                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
+            }
             if(tmpConformationResult!= ButtonType.OK){
                 return;
             }
+        }
+        if(this.isFragmentationRunning){
+            this.interruptFragmentation();
         }
         Importer tmpImporter = new Importer(this.settingsContainer);
         IAtomContainerSet tmpAtomContainerSet = null;
@@ -568,6 +584,7 @@ public class MainViewController {
             Task<Void> tmpTaskVoidTask = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
+                    isFragmentationRunning = true;
                     if(isPipelining){
                         fragmentationService.startPipelineFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
@@ -593,6 +610,7 @@ public class MainViewController {
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         this.cancelFragmentationButton.setVisible(false);
+                        this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
                     } catch (Exception anException) {
