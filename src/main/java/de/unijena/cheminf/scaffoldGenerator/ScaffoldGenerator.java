@@ -160,7 +160,7 @@ public class ScaffoldGenerator {
      * Default setting for whether hybridisation should only be retained for aromatic bonds.
      * By default, the hybridisation of all bonds is retained.
      */
-    public static final boolean RETAIN_ONLY_HYBRIDISATIONS_AT_AROMATIC_BONDS_SETTING_DEFAULT = true;
+    public static final boolean RETAIN_ONLY_HYBRIDISATIONS_AT_AROMATIC_BONDS_SETTING_DEFAULT = false;
 
     /**
      * Default setting for which scaffold mode should be used.
