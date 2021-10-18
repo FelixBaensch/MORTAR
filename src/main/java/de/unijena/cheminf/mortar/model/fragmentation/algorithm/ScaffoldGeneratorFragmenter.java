@@ -259,7 +259,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
         };
         this.determineAromaticitySetting = new SimpleBooleanProperty(this,
-                "scaffoldModeSetting", this.scaffoldGeneratorInstance.isAromaticityDetermined()) {
+                "Determine aromaticity", this.scaffoldGeneratorInstance.isAromaticityDetermined()) {
             @Override
             public void set(boolean newValue) {
                 //throws no exceptions
@@ -657,7 +657,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         this.scaffoldGeneratorInstance.setRuleSevenAppliedSetting(this.ruleSevenAppliedSetting.get());
         this.scaffoldGeneratorInstance.setRetainOnlyHybridisationsAtAromaticBondsSetting(this.retainOnlyHybridisationsAtAromaticBondsSetting.get());
         this.scaffoldGeneratorInstance.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.valueOf(this.scaffoldModeSetting.get()));
-        List<IAtomContainer> tmpReturnList = null;
+        List<IAtomContainer> tmpReturnList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCHUFFENHAUER_FRAGMENTATION.toString())) {
