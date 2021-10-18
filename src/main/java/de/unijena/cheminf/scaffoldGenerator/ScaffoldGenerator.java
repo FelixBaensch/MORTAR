@@ -2341,7 +2341,7 @@ public class ScaffoldGenerator {
             //Remove linker
             IAtomContainer tmpScaffold = this.getScaffoldInternal(tmpRingRemoved, true, false, null, this.scaffoldModeSetting);
             //A few structures do not produce a truly unique SMILES. These are overwritten and are therefore not considered for further selection.
-            tmpRingRemovedMap.put(this.getSmilesGenerator().create(tmpScaffold), tmpScaffold);
+            tmpRingRemovedMap.put(ScaffoldGenerator.SMILES_GENERATOR_SETTING_DEFAULT.create(tmpScaffold), tmpScaffold);
         }
         //The first key in the map is automatically the SMILES key, which has the lower rank in alphabetical order
         IAtomContainer tmpReturnedStructure = tmpRingRemovedMap.get(tmpRingRemovedMap.firstKey());
