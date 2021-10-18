@@ -67,7 +67,8 @@ public class GridTabForTableView extends Tab {
      * @param aTableView
      */
     public GridTabForTableView(String aTitle, String anIdString, TableView aTableView){
-        super(aTitle);
+        super();
+        setText(aTitle);
         this.setClosable(false);
         this.setId(anIdString);
         this.tableView = aTableView;

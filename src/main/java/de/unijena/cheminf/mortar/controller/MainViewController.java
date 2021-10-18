@@ -24,11 +24,7 @@ import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
-import de.unijena.cheminf.mortar.gui.views.IDataTableView;
-import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
-import de.unijena.cheminf.mortar.gui.views.MainView;
-import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
+import de.unijena.cheminf.mortar.gui.views.*;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -51,17 +47,7 @@ import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Pagination;
-import javafx.scene.control.RadioMenuItem;
-import javafx.scene.control.SortEvent;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -74,12 +60,7 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -175,26 +156,25 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.loadMoleculeFile(this.primaryStage)
         );
-        //TODO for all export functions: Don't export the current fragmentation results but the one that has the focus!
         //TODO: Get CSV file separator from settings
         //fragments export to CSV
         this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createFragmentationTabCsvFile(this.primaryStage,
-                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()),
+                        ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems(),
                         ',')
         );
         //fragments export to PDB
         this.mainView.getMainMenuBar().getFragmentsExportToPDBMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createFragmentationTabPDBFiles(this.primaryStage,
-                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()))
+                        ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems())
         );
         //fragments export to PDF
         this.mainView.getMainMenuBar().getFragmentsExportToPDFMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createFragmentationTabPdfFile(this.primaryStage,
-                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()),
+                        ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems(),
                         this.moleculeDataModelList,
                         this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())
         );
@@ -202,13 +182,13 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentsExportToSingleSDFMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createFragmentationTabSingleSDFile(this.primaryStage,
-                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()))
+                        ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems())
         );
         //fragments export to separate SDFs
         this.mainView.getMainMenuBar().getFragmentsExportToSeparateSDFsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createFragmentationTabSeparateSDFiles(this.primaryStage,
-                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()))
+                        ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems())
         );
         //items export to CSV
         this.mainView.getMainMenuBar().getItemsExportToCSVMenuItem().addEventHandler(
@@ -222,7 +202,7 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getItemsExportToPDFMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createItemizationTabPdfFile(this.primaryStage,
-                        this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()),
+                        ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems(),
                         this.moleculeDataModelList,
                         this.fragmentationService.getCurrentFragmentationName(),
                         this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())
