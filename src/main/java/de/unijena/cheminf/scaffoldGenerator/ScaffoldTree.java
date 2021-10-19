@@ -1,4 +1,4 @@
-package de.unijena.cheminf.scaffoldGenerator;/*
+/*
  * Copyright (c) 2021 Julian Zander, Jonas Schaub, Achim Zielesny, Christoph Steinbeck
  *
  * This program is free software; you can redistribute it and/or
@@ -14,6 +14,15 @@ package de.unijena.cheminf.scaffoldGenerator;/*
  * along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
+ */
+
+package de.unijena.cheminf.scaffoldGenerator;
+
+/**
+ * IMPORTANT NOTE: This is a copy of
+ * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldTree.java
+ * Therefore, do not make any changes here but in the original repository!
+ * Last copied on October 19th 2021
  */
 
 import org.openscience.cdk.exception.CDKException;

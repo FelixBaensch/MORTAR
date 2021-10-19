@@ -18,6 +18,13 @@
 
 package de.unijena.cheminf.scaffoldGenerator;
 
+/**
+ * IMPORTANT NOTE: This is a copy of
+ * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldNodeCollectionBase.java
+ * Therefore, do not make any changes here but in the original repository!
+ * Last copied on October 19th 2021
+ */
+
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import org.openscience.cdk.exception.CDKException;
