@@ -62,7 +62,7 @@ import java.util.TreeMap;
  * Different trees or networks can also be merged together.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.0.1
+ * @version 1.0.0.2
  */
 public class ScaffoldGenerator {
 
@@ -361,7 +361,7 @@ public class ScaffoldGenerator {
     }
 
     /**
-     * Generates a set of rings depending on the CycleFinder selected by {@link ScaffoldGenerator#getCycleFinder(IAtomContainer)}.
+     * Generates a set of rings depending on the selected CycleFinder.
      * The removal of atoms can create open valences. These open valences can be compensated with implicit hydrogens.
      * Can optional add non-single bounded atoms to the rings.
      * @param aMolecule molecule whose rings are produced.
