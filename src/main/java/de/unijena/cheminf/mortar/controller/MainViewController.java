@@ -162,7 +162,7 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createFragmentationTabCsvFile(this.primaryStage,
                         ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems(),
-                        ',')
+                        this.settingsContainer.getCsvExportSeparatorSetting())
         );
         //fragments export to PDB
         this.mainView.getMainMenuBar().getFragmentsExportToPDBMenuItem().addEventHandler(
@@ -196,7 +196,7 @@ public class MainViewController {
                 anEvent -> new Exporter(this.settingsContainer).createItemizationTabCsvFile(this.primaryStage,
                         this.moleculeDataModelList,
                         this.fragmentationService.getCurrentFragmentationName(),
-                        ',')
+                        this.settingsContainer.getCsvExportSeparatorSetting())
         );
         //items export to PDF
         this.mainView.getMainMenuBar().getItemsExportToPDFMenuItem().addEventHandler(
@@ -653,7 +653,7 @@ public class MainViewController {
         });
         tmpExportCsvButton.setOnAction(event->{
             tmpExporter.createFragmentationTabCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
-                    ',');
+                    this.settingsContainer.getCsvExportSeparatorSetting());
         });
         tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
             @Override
@@ -705,7 +705,7 @@ public class MainViewController {
         tmpItemizationTab.addNodeToGridPane(tmpButtonBarItemization, 0, 1,1,1);
         tmpItemizationExportCsvButton.setOnAction(event-> {
             tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList,aFragmentationName,
-                    ',');
+                    this.settingsContainer.getCsvExportSeparatorSetting());
         });
         tmpItemizationTabExportPDfButton.setOnAction(event -> {
             tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName),

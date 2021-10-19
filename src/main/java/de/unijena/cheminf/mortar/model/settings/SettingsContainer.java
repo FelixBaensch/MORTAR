@@ -123,6 +123,16 @@ public class SettingsContainer {
      * Default value of whether to always use the MDL V3000 format for file export.
      */
     public static final boolean ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT = false;
+
+    /**
+     * Name of preference wrapping the separator for the csv export.
+     */
+    public static final String CSV_EXPORT_SEPARATOR_PREFERENCE_NAME = "Csv export separator preference";
+
+    /**
+     * Default string for separator for the csv export
+     */
+    public static final String CSV_EXPORT_SEPARATOR_SETTING_DEFAULT = ",";
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
@@ -185,6 +195,16 @@ public class SettingsContainer {
      * Preference of always MDL V3000 format setting.
      */
     private BooleanPreference alwaysMDLV3000FormatAtExportPreference;
+
+    /**
+     * Property of csv export separator.
+     */
+    private SimpleStringProperty csvExportSeparatorSetting;
+
+    /**
+     *
+     */
+    private SingleTermPreference csvExportSeparatorPreference;
 
     /**
      * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
@@ -361,6 +381,24 @@ public class SettingsContainer {
     }
 
     /**
+     * Returns the current value of the separator setting for csv export.
+     *
+     * @return csv export separator value
+     */
+    public String getCsvExportSeparatorSetting() {
+        return this.csvExportSeparatorSetting.get();
+    }
+
+    /**
+     * Returns the property wrapping the separator setting for csv export.
+     *
+     * @return csv export separator setting property
+     */
+    public Property csvExportSeparatorSettingProperty() {
+        return this.csvExportSeparatorSetting;
+    }
+
+    /**
      * Sets the setting for how many rows/molecules should be displayed per page in the tabs.
      *
      * @param anInteger the number of molecules displayed per page in the tabs
@@ -441,6 +479,21 @@ public class SettingsContainer {
     }
 
     /**
+     * Sets the setting for the separator for the csv export
+     *
+     * @param aSeparator String for separator
+     * @throws IllegalArgumentException if the string is null, empty, blank or not valid.
+     */
+    //TODO add valid string to doc
+    public void setCsvExportSeparatorSetting(String aSeparator) throws IllegalArgumentException {
+        if(this.isLegalCsvExportSeparator(aSeparator)){
+            this.csvExportSeparatorSetting.set(aSeparator);
+        } else {
+            throw new IllegalArgumentException("Given separator for csv export is null, empty, blank or not valid");
+        }
+    }
+
+    /**
      * Restores all setting to their default setting according to the respective public constants in this class.
      */
     public void restoreDefaultSettings() {
@@ -450,6 +503,7 @@ public class SettingsContainer {
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
+        this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
     }
     //</editor-fold>
     //
@@ -517,6 +571,13 @@ public class SettingsContainer {
         } else {
             throw new IOException("One or multiple settings could not be restored from the previous run.");
         }
+        if(this.preferenceContainer.containsPreferenceName(SettingsContainer.CSV_EXPORT_SEPARATOR_PREFERENCE_NAME)) {
+            this.csvExportSeparatorPreference =
+                    (SingleTermPreference) this.preferenceContainer.getPreferences(
+                            SettingsContainer.CSV_EXPORT_SEPARATOR_PREFERENCE_NAME)[0];
+        } else {
+            throw new IOException("One or multiple settings could not be restored from the previous run.");
+        }
     }
 
     /**
@@ -549,6 +610,10 @@ public class SettingsContainer {
                 SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME,
                 SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.preferenceContainer.add(this.alwaysMDLV3000FormatAtExportPreference);
+        this.csvExportSeparatorPreference = new SingleTermPreference(
+                SettingsContainer.CSV_EXPORT_SEPARATOR_PREFERENCE_NAME,
+                SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
+        this.preferenceContainer.add(this.csvExportSeparatorPreference);
     }
 
     //TODO: Move String literals of GuiExceptionAlerts to message file
@@ -636,12 +701,30 @@ public class SettingsContainer {
                 super.set(newValue);
             }
         };
+        this.csvExportSeparatorSetting = new SimpleStringProperty( this,
+                "Csv export separator setting",
+                this.csvExportSeparatorPreference.getContent()) {
+            @Override
+            public void set(String newValue) throws IllegalArgumentException {
+                if(SettingsContainer.this.isLegalCsvExportSeparator(newValue)) {
+                    SettingsContainer.this.csvExportSeparatorPreference.setContent(newValue);
+                    super.set(newValue);
+                } else {
+                    IllegalArgumentException tmpException = new IllegalArgumentException("An illegal value for the separator for the csv export was given: " + newValue);
+                    SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
+                    //re-throws the exception to properly reset the binding
+                    throw tmpException;
+                }
+            }
+        };
         this.settings = new ArrayList<Property>(3);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
         this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
+        this.settings.add(this.csvExportSeparatorSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
     }
 
@@ -691,6 +774,36 @@ public class SettingsContainer {
             return false;
         } else {
             return true;
+        }
+    }
+
+    /**
+     * Tests whether a string is an allowed separator for csv export. For this, it must be not null, not empty, not blank
+     * and an allowed ASCII char
+     *
+     * @param aSeparator the separator to test
+     * @return true if the given parameter is a legal value for the setting
+     */
+    private boolean isLegalCsvExportSeparator(String aSeparator){
+        if(Objects.isNull(aSeparator)){
+            return false;
+        }
+        if(aSeparator.isEmpty()){
+            return false;
+        }
+        if(aSeparator.isBlank()){
+            return false;
+        }
+        if(aSeparator.length()>1){
+            return false;
+        }
+        //TODO: add more legal separators or remove illegal ones
+        switch (aSeparator){
+            case ",":
+            case ".":
+                return true;
+            default:
+                return false;
         }
     }
     //</editor-fold>

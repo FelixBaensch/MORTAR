@@ -38,6 +38,7 @@ public class SettingsContainerTest {
      */
     @Test
     public void testSettingsContainerBasics() throws Exception {
+        String tmpCsvExportSeparatorTest = ".";
         //if there is a persisted settings container file already on the machine, it is loaded into the new SettingsContainer object
         SettingsContainer tmpSettingsContainer = new SettingsContainer();
         //restoring to default because a previous settings file with altered settings may have been imported (see below)
@@ -57,11 +58,13 @@ public class SettingsContainerTest {
         Assert.assertEquals(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT, tmpSettingsContainer.getRecentDirectoryPathSetting());
         Assert.assertEquals(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
         Assert.assertEquals(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+        Assert.assertEquals(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT, tmpSettingsContainer.getCsvExportSeparatorSetting());
         tmpSettingsContainer.setRowsPerPageSetting(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5);
         tmpSettingsContainer.setAddImplicitHydrogensAtImportSetting(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         tmpSettingsContainer.setNumberOfTasksForFragmentationSetting(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT - 1);
         tmpSettingsContainer.setKeepAtomContainerInDataModelSetting(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         tmpSettingsContainer.setAlwaysMDLV3000FormatAtExportSetting(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
+        tmpSettingsContainer.setCsvExportSeparatorSetting(tmpCsvExportSeparatorTest);
         //persisting the settings container
         tmpSettingsContainer.preserveSettings();
         //reload persisted container
@@ -71,6 +74,7 @@ public class SettingsContainerTest {
         Assert.assertEquals(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT - 1, tmpSecondContainer.getNumberOfTasksForFragmentationSetting());
         Assert.assertEquals(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
         Assert.assertEquals(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+        Assert.assertEquals(tmpCsvExportSeparatorTest, tmpSecondContainer.getCsvExportSeparatorSetting());
         tmpSecondContainer.restoreDefaultSettings();
         tmpSecondContainer.preserveSettings();
     }

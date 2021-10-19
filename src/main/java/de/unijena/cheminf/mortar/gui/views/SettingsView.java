@@ -28,6 +28,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -213,6 +214,16 @@ public class SettingsView extends AnchorPane {
                 //add to gridpane
                 aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+            }
+            else if(tmpProperty instanceof SimpleStringProperty){
+                TextField tmpStringTextField = new TextField();
+                tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
+                tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
+                //add to gridpane
+                aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
+                GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             }
         }
     }

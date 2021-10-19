@@ -137,7 +137,7 @@ public class Exporter {
      * @return Csv file which contains the results of the fragmentation
      * @author Betül Sevindik
      */
-    public File createFragmentationTabCsvFile(Stage aParentStage, ObservableList<FragmentDataModel> aList, char aSeparator) {
+    public File createFragmentationTabCsvFile(Stage aParentStage, ObservableList<FragmentDataModel> aList, String aSeparator) {
         try {
             File tmpFragmentationCsvFile = null;
             tmpFragmentationCsvFile = this.saveFile(aParentStage, "CSV", "*.csv",
@@ -749,7 +749,7 @@ public class Exporter {
      * @return Csv file with the data that appears on the itemization tab
      * @author Betül Sevindik
      */
-    public File createItemizationTabCsvFile(Stage aParentStage, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator) {
+    public File createItemizationTabCsvFile(Stage aParentStage, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aSeparator) {
         try {
             File tmpCsvFile = null;
             tmpCsvFile = this.saveFile(aParentStage, "CSV", "*.csv", "ItemsExport");
