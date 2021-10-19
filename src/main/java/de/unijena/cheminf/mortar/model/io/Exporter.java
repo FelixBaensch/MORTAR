@@ -626,7 +626,6 @@ public class Exporter {
 
     //TODO: Improve exception handling so that it does not kill the whole export if one fragment is faulty
     //TODO: See tasks and issues document for further to dos concerning the PDF export
-    //TODO: Reimplement for pipeline fragmentation
     /**
      * Exports the fragmentation results as they are displayed on the itemization tab as a PDF file. Opens a file chooser
      * dialog for the user to determine a directory and file for the exported data.
@@ -737,7 +736,6 @@ public class Exporter {
     //TODO: Get separator from general settings
     //TODO: Parameter tests necessary?
     //TODO: Move literals like header texts to properties file or constants?
-    //TODO: Reimplement for pipeline fragmentation
     /**
      * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file. Opens a file chooser
      * dialog for the user to determine a directory and file for the exported data.
