@@ -133,12 +133,12 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public static enum SmilesGeneratorOption {
 
         /**
-         * Output canonical SMILES without stereochemistry, atomic masses.
+         * Output canonical SMILES without stereochemistry and without atomic masses.
          */
         UNIQUE_WITHOUT_STEREO,
 
         /**
-         * Output canonical SMILES with stereochemistry, atomic masses.
+         * Output canonical SMILES with stereochemistry and without atomic masses.
          */
         UNIQUE_WITH_STEREO;
     }
@@ -191,17 +191,12 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Default SmiFlavor for the default SmilesGenerator.
      */
-    private static final ScaffoldGeneratorFragmenter.SmilesGeneratorOption SMILES_GENERATOR_OPTION_DEFAULT = SmilesGeneratorOption.UNIQUE_WITH_STEREO;
+    public static final ScaffoldGeneratorFragmenter.SmilesGeneratorOption SMILES_GENERATOR_OPTION_DEFAULT = SmilesGeneratorOption.UNIQUE_WITHOUT_STEREO;
 
     /**
      * Default fragmentation type.
      */
     public static final FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = FragmentationTypeOption.ENUMERATIVE_FRAGMENTATION;
-
-    /**
-     * A property that has a constant name from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
-     */
-    private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
     //</editor-fold>
     //
     //<editor-fold desc="Private variables">
@@ -219,12 +214,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * A cycle finder instance for construction of the aromaticity model.
      */
     private ElectronDonation electronDonationInstance;
-    
-    /**
-     * The aromaticity model used for preprocessing prior to FG extraction. Constructed from the set electron donation
-     * model and cycle finder algorithm.
-     */
-    private Aromaticity aromaticityModelInstance;
 
     /**
      * Instance of the ScaffoldGenerator class used to do generate fragments or scaffolds from the molecules.
@@ -269,6 +258,11 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     private final SimpleEnumConstantNameProperty cycleFinderSetting;
 
     /**
+     * A property that has a constant name from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
+     */
+    private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+
+    /**
      * A property that has a constant name from the ElectronDonationModelOption enum as value.
      */
     private final SimpleEnumConstantNameProperty electronDonationModelSetting;
@@ -281,7 +275,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Logger of this class.
      */
-    private final Logger logger = Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName());
+    private final Logger logger = Logger.getLogger(ScaffoldGeneratorFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -348,9 +342,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
                 //throws no exception if super.set() throws no exception
                 ScaffoldGeneratorFragmenter.this.setCycleFinderInstance(ScaffoldGeneratorFragmenter.CycleFinderOption.valueOf(newValue));
-                ScaffoldGeneratorFragmenter.this.setAromaticityInstance(
-                        ScaffoldGeneratorFragmenter.this.electronDonationInstance,
-                        ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
+                Aromaticity tmpAromaticity = new Aromaticity(ScaffoldGeneratorFragmenter.this.electronDonationInstance, ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
+                ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
             }
         };
         this.setCycleFinderInstance(ScaffoldGeneratorFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
@@ -370,16 +363,11 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
                 //throws no exception if super.set() throws no exception
                 ScaffoldGeneratorFragmenter.this.setElectronDonationInstance(ScaffoldGeneratorFragmenter.ElectronDonationModelOption.valueOf(newValue));
-                ScaffoldGeneratorFragmenter.this.setAromaticityInstance(
-                        ScaffoldGeneratorFragmenter.this.electronDonationInstance,
-                        ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
+                Aromaticity tmpAromaticity = new Aromaticity(ScaffoldGeneratorFragmenter.this.electronDonationInstance, ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
+                ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
             }
         };
         this.setElectronDonationInstance(ScaffoldGeneratorFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get()));
-        this.setAromaticityInstance(
-                ScaffoldGeneratorFragmenter.this.electronDonationInstance,
-                ScaffoldGeneratorFragmenter.this.cycleFinderInstance
-        );
         this.smilesGeneratorSetting = new SimpleEnumConstantNameProperty(this, "Smiles generator setting",
                 ScaffoldGeneratorFragmenter.SMILES_GENERATOR_OPTION_DEFAULT.name(), ScaffoldGeneratorFragmenter.SmilesGeneratorOption.class) {
             @Override
@@ -397,7 +385,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
         };
         this.ruleSevenAppliedSetting = new SimpleBooleanProperty(this,
-                "Rule seven  setting", this.scaffoldGeneratorInstance.isRuleSevenApplied()) {
+                "Rule seven setting", this.scaffoldGeneratorInstance.isRuleSevenApplied()) {
             @Override
             public void set(boolean newValue) {
                 //throws no exceptions
@@ -605,6 +593,154 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
     //</editor-fold>
     //
+    //<editor-fold desc="get">
+    /**
+     * Returns the string representation of the currently set option for the fragmentation type.
+     *
+     * @return enum constant name of the set option
+     */
+    public String getFragmentationTypeSetting() {
+        return this.fragmentationTypeSetting.get();
+    }
+
+    /**
+     * Returns the property object of the fragmentation type setting that can be used to configure this setting.
+     *
+     * @return property object of the returned scaffold mode setting
+     */
+    public SimpleEnumConstantNameProperty fragmentationTypeSettingProperty() {
+        return this.fragmentationTypeSetting;
+    }
+
+    /**
+     * Returns the current state of retain only hybridisation at aromatic bonds setting
+     *
+     * @return true if only the hybridisation at aromatic bonds is retained
+     */
+    public boolean getRetainOnlyHybridisationAtAromaticBondsSetting() {
+        return this.retainOnlyHybridisationsAtAromaticBondsSetting.get();
+    }
+
+    /**
+     * Returns the current state of rule seven applied setting.
+     *
+     * @return true if rule seven should be applied
+     */
+    public boolean getRuleSevenAppliedSetting() {
+        return this.ruleSevenAppliedSetting.get();
+    }
+
+    /**
+     * Returns the string representation of the currently set option for the SMILES generator.
+     *
+     * @return enum constant name of the set option
+     */
+    public String getSmilesGeneratorSetting() {
+        return this.smilesGeneratorSetting.get();
+    }
+
+    /**
+     * Returns the property object of the returned smiles generator setting that can be used to configure this setting.
+     *
+     * @return property object of the returned scaffold mode setting
+     */
+    public SimpleEnumConstantNameProperty smilesGeneratorSettingProperty() {
+        return this.smilesGeneratorSetting;
+    }
+
+    /**
+     * Returns the current state of determine aromaticity setting.
+     *
+     * @return true if aromaticity should be determined
+     */
+    public boolean getDetermineAromaticitySetting() {
+        return this.determineAromaticitySetting.get();
+    }
+
+    /**
+     * Returns the string representation of the currently set option for the returned scaffold mode.
+     *
+     * @return enum constant name of the set option
+     */
+    public String getScaffoldModeSetting() {
+        return this.scaffoldModeSetting.get();
+    }
+
+    /**
+     * Returns the property object of the returned scaffold mode setting that can be used to configure this setting.
+     *
+     * @return property object of the returned scaffold mode setting
+     */
+    public SimpleEnumConstantNameProperty scaffoldModeSettingProperty() {
+        return this.scaffoldModeSetting;
+    }
+
+    /**
+     * Returns the enum constant currently set as option for the returned scaffold mode setting.
+     *
+     * @return enum constant for returned scaffold mode setting
+     */
+    public ScaffoldGenerator.ScaffoldModeOption getScaffoldModeSettingConstant() {
+        return ScaffoldGenerator.ScaffoldModeOption.valueOf(this.scaffoldModeSetting.get());
+    }
+
+    /**
+     * Returns the string representation of the currently set option for the electron donation model setting used for
+     * aromaticity detection together with the set cycle finder algorithm.
+     *
+     * @return enum constant name of the set option
+     */
+    public String getElectronDonationModelSetting() {
+        return this.electronDonationModelSetting.get();
+    }
+
+    /**
+     * Returns the property object of the electron donation model setting that can be used to configure this setting.
+     *
+     * @return property object of the electron donation model setting
+     */
+    public SimpleEnumConstantNameProperty electronDonationModelSettingProperty() {
+        return this.electronDonationModelSetting;
+    }
+
+    /**
+     * Returns the enum constant currently set as option for the electron donation model setting.
+     *
+     * @return enum constant for electron donation model setting
+     */
+    public ErtlFunctionalGroupsFinderFragmenter.ElectronDonationModelOption getElectronDonationModelSettingConstant() {
+        return ErtlFunctionalGroupsFinderFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get());
+    }
+
+    /**
+     * Returns the string representation of the currently set option for the cycle finder setting used for aromaticity
+     * detection together with the electron donation model setting.
+     *
+     * @return enum constant name of the set option
+     */
+    public String getCycleFinderSetting() {
+        return this.cycleFinderSetting.get();
+    }
+
+    /**
+     * Returns the property object of the cycle finder setting that can be used to configure this setting.
+     *
+     * @return property object of the cycle finder setting
+     */
+    public SimpleEnumConstantNameProperty cycleFinderSettingProperty() {
+        return this.cycleFinderSetting;
+    }
+
+    /**
+     * Returns the enum constant currently set as option for the cycle finder setting.
+     *
+     * @return enum constant for cycle finder setting
+     */
+    public ErtlFunctionalGroupsFinderFragmenter.CycleFinderOption getCycleFinderSettingConstant() {
+        return ErtlFunctionalGroupsFinderFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get());
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="IMoleculeFragmenter methods">
     //without the empty line, the code folding does not work properly here...
 
@@ -670,8 +806,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         this.cycleFinderSetting.set(ScaffoldGeneratorFragmenter.CYCLE_FINDER_OPTION_DEFAULT.name());
         this.setCycleFinderSetting(CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
         this.electronDonationModelSetting.set(ScaffoldGeneratorFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name());
-        //this.aromaticityModel is set in the method
-        this.setAromaticityInstance(this.electronDonationInstance, this.cycleFinderInstance);
         this.smilesGeneratorSetting.set(ScaffoldGeneratorFragmenter.SMILES_GENERATOR_OPTION_DEFAULT.name());
         this.ruleSevenAppliedSetting.set(ScaffoldGenerator.RULE_SEVEN_APPLIED_SETTING_DEFAULT);
         this.retainOnlyHybridisationsAtAromaticBondsSetting.set(ScaffoldGenerator.RETAIN_ONLY_HYBRIDISATIONS_AT_AROMATIC_BONDS_SETTING_DEFAULT);
@@ -686,13 +820,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         if (!tmpCanBeFragmented) {
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
-        /*Update the settings*/
-        this.scaffoldGeneratorInstance.setAromaticityModelSetting(this.aromaticityModelInstance);
-        this.scaffoldGeneratorInstance.setDetermineAromaticitySetting(this.determineAromaticitySetting.get());
-        this.scaffoldGeneratorInstance.setSmilesGeneratorSetting(this.smilesGeneratorInstance);
-        this.scaffoldGeneratorInstance.setRuleSevenAppliedSetting(this.ruleSevenAppliedSetting.get());
-        this.scaffoldGeneratorInstance.setRetainOnlyHybridisationsAtAromaticBondsSetting(this.retainOnlyHybridisationsAtAromaticBondsSetting.get());
-        this.scaffoldGeneratorInstance.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.valueOf(this.scaffoldModeSetting.get()));
         /*Generate fragments*/
         List<IAtomContainer> tmpReturnList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
@@ -707,7 +834,12 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
             /*Generate the scaffold only*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCAFFOLD_ONLY.toString())) {
-                tmpReturnList.add(this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, true));
+                /*Scaffold without saturation*/
+                if(this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION.toString())) {
+                    tmpReturnList.add(this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, false));
+                } else { /*Scaffold with saturation*/
+                    tmpReturnList.add(this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, true));
+                }
             }
         } catch (Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
@@ -716,48 +848,36 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public boolean shouldBeFiltered(IAtomContainer aMolecule) throws IllegalArgumentException, NullPointerException {
-        Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            throw new IllegalArgumentException("Given molecule is empty.");
-        }
+    public boolean shouldBeFiltered(IAtomContainer aMolecule) {
         return false;
     }
 
     @Override
-    public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws IllegalArgumentException, NullPointerException {
+    public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            throw new IllegalArgumentException("Given molecule is empty.");
-        }
         return false;
     }
 
     @Override
-    public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+    public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            throw new IllegalArgumentException("Given molecule is empty.");
-        }
         return true;
     }
 
     @Override
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
-        return null;
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        IAtomContainer tmpClonedMolecule;
+        try {
+            tmpClonedMolecule = aMolecule.clone();
+        } catch(CloneNotSupportedException anException) {
+            throw new CloneNotSupportedException("An error occurred during cloning: " + anException.toString());
+        }
+        return tmpClonedMolecule;
     }
     //</editor-fold>
     //
     //<editor-fold desc="Private methods">
-    /**
-     * Sets only the instance, not the property! So it is safe for the property to call this method when overriding set().
-     */
-    private void setAromaticityInstance(ElectronDonation anElectronDonation, CycleFinder aCycleFinder) throws NullPointerException {
-        Objects.requireNonNull(anElectronDonation, "Given electron donation model is null.");
-        Objects.requireNonNull(aCycleFinder, "Given cycle finder algorithm is null.");
-        this.aromaticityModelInstance = new Aromaticity(anElectronDonation, aCycleFinder);
-    }
-
     /**
      * Calling method needs to update the aromaticity model!
      */
