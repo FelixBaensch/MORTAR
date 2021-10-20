@@ -27,6 +27,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -143,7 +144,30 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         UNIQUE_WITH_STEREO;
     }
     //</editor-fold>
+    //
+    //<editor-fold desc="Enum SideChainOption">
+    /**
+     * Enum that defines whether only scaffolds, only sidechains or both are to be generated.
+     */
+    public static enum SideChainOption {
 
+        /**
+         * Generate only the scaffold without sidechains.
+         */
+        ONLY_SCAFFOLDS,
+
+        /**
+         * Generate only the sidechains without scaffolds.
+         */
+        ONLY_SIDECHAINS,
+
+        /**
+         * Generate scaffolds and sidechains.
+         */
+        SCAFFOLDS_AND_SIDECHAINS;
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Enum FragmentationTypeOption">
     /**
      * Enum for defining which kind of fragmentation is used and shows how much fragmentation is to take place.
@@ -197,6 +221,11 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * Default fragmentation type.
      */
     public static final FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = FragmentationTypeOption.ENUMERATIVE_FRAGMENTATION;
+
+    /**
+     * Default sidechain option.
+     */
+    public static final SideChainOption SIDE_CHAIN_OPTION_DEFAULT = SideChainOption.ONLY_SCAFFOLDS;
     //</editor-fold>
     //
     //<editor-fold desc="Private variables">
@@ -247,6 +276,10 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      */
     private final SimpleBooleanProperty retainOnlyHybridisationsAtAromaticBondsSetting;
 
+    /**
+     * Property that has a constant name from SideChainSetting enum as value.
+     */
+    public final SimpleEnumConstantNameProperty sideChainSetting;
     /**
      * Property that has a constant name from FragmentationTypeSetting enum as value.
      */
@@ -416,7 +449,21 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
-        this.settings = new ArrayList<>(9);
+        this.sideChainSetting = new SimpleEnumConstantNameProperty(this, "SideChain setting",
+                ScaffoldGeneratorFragmenter.SIDE_CHAIN_OPTION_DEFAULT.name(), ScaffoldGeneratorFragmenter.SideChainOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
+        this.settings = new ArrayList<>(10);
         this.settings.add(this.fragmentationTypeSetting);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.scaffoldModeSetting);
@@ -426,6 +473,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.smilesGeneratorSetting);
         this.settings.add(this.ruleSevenAppliedSetting);
         this.settings.add(this.retainOnlyHybridisationsAtAromaticBondsSetting);
+        this.settings.add(this.sideChainSetting);
     }
     //</editor-fold>
     //
@@ -591,9 +639,52 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         Objects.requireNonNull(anOption, "Given type of sugars to remove is null.");
         this.fragmentationTypeSetting.set(anOption.name());
     }
+
+    /**
+     * Sets the SideChain setting, defining whether only scaffolds, only sidechains or both are to be generated.
+     *
+     * @param anOptionName name of a constant from the SideChain enum
+     * @throws NullPointerException if the given string is null
+     * @throws IllegalArgumentException if the given string is not an enum constant name
+     */
+    public void setSideChainSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        SideChainOption tmpConstant = SideChainOption.valueOf(anOptionName);
+        this.setSideChainSetting(tmpConstant);
+    }
+
+    /**
+     *Sets the SideChain setting, defining whether only scaffolds, only sidechains or both are to be generated.
+     *
+     * @param anOption a constant from the SideChain enum
+     * @throws NullPointerException if the given parameter is null
+     */
+    public void setSideChainSetting(SideChainOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given type of sugars to remove is null.");
+        this.sideChainSetting.set(anOption.name());
+    }
     //</editor-fold>
     //
     //<editor-fold desc="get">
+    /**
+     * Returns the string representation of the currently set option for the sidechain.
+     *
+     * @return enum constant name of the set option
+     */
+    public String getSideChainSetting() {
+        return this.sideChainSetting.get();
+    }
+
+    /**
+     * Returns the property object of the sidechain setting that can be used to configure this setting.
+     *
+     * @return property object of the returned sidechain setting
+     */
+    public SimpleEnumConstantNameProperty sideChainSettingProperty() {
+        return this.sideChainSetting;
+    }
+    
     /**
      * Returns the string representation of the currently set option for the fragmentation type.
      *
@@ -606,7 +697,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Returns the property object of the fragmentation type setting that can be used to configure this setting.
      *
-     * @return property object of the returned scaffold mode setting
+     * @return property object of the returned fragmentation tpyesetting
      */
     public SimpleEnumConstantNameProperty fragmentationTypeSettingProperty() {
         return this.fragmentationTypeSetting;
@@ -795,6 +886,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         tmpCopy.setRuleSevenAppliedSetting(this.ruleSevenAppliedSetting.get());
         tmpCopy.setRetainOnlyHybridisationAtAromaticBondsSetting(this.retainOnlyHybridisationsAtAromaticBondsSetting.get());
         tmpCopy.setFragmentationTypeSetting(this.fragmentationTypeSetting.get());
+        tmpCopy.setSideChainSetting(this.sideChainSetting.get());
         return tmpCopy;
     }
 
@@ -810,6 +902,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         this.ruleSevenAppliedSetting.set(ScaffoldGenerator.RULE_SEVEN_APPLIED_SETTING_DEFAULT);
         this.retainOnlyHybridisationsAtAromaticBondsSetting.set(ScaffoldGenerator.RETAIN_ONLY_HYBRIDISATIONS_AT_AROMATIC_BONDS_SETTING_DEFAULT);
         this.setFragmentationTypeSetting(ScaffoldGeneratorFragmenter.FRAGMENTATION_TYPE_OPTION_DEFAULT.name());
+        this.setSideChainSetting(ScaffoldGeneratorFragmenter.SIDE_CHAIN_OPTION_DEFAULT.name());
     }
 
     @Override
@@ -824,13 +917,27 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         List<IAtomContainer> tmpReturnList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
+            /*Generate Sidechains*/
+            if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.toString()) || 
+                    this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDECHAINS.toString())) {
+                /*Sidechains without saturation*/
+                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION.toString())) {
+                    tmpReturnList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, false);
+                } else { /*Sidechains with saturation*/
+                    tmpReturnList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, true);
+                }
+            }
+            /*Return only the Sidechains*/
+            if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.toString())) {
+                return tmpReturnList;
+            }
             /*Decomposition according to the Schuffenhauer rules*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCHUFFENHAUER_FRAGMENTATION.toString())) {
-                tmpReturnList = this.scaffoldGeneratorInstance.applySchuffenhauerRules(tmpMoleculeClone);
+                tmpReturnList.addAll(this.scaffoldGeneratorInstance.applySchuffenhauerRules(tmpMoleculeClone));
             }
             /*Enumerative decomposition*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.ENUMERATIVE_FRAGMENTATION.toString())) {
-                tmpReturnList = this.scaffoldGeneratorInstance.applyEnumerativeRemoval(tmpMoleculeClone);
+                tmpReturnList.addAll(this.scaffoldGeneratorInstance.applyEnumerativeRemoval(tmpMoleculeClone));
             }
             /*Generate the scaffold only*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCAFFOLD_ONLY.toString())) {
