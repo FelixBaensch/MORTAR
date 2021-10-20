@@ -226,6 +226,21 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * Default sidechain option.
      */
     public static final SideChainOption SIDE_CHAIN_OPTION_DEFAULT = SideChainOption.ONLY_SCAFFOLDS;
+
+    /**
+     * Scaffolds will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
+     */
+    public static final String FRAGMENT_CATEGORY_SCAFFOLD_VALUE = "SGFragmenter.Scaffold";
+
+    /**
+     * Sidechains will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
+     */
+    public static final String FRAGMENT_CATEGORY_SIDECHAIN_VALUE = "SGFragmenter.Sidechain";
+
+    /**
+     * Parent scaffolds will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
+     */
+    public static final String FRAGMENT_CATEGORY_PARENT_SCAFFOLD_VALUE = "SGFragmenter.ParentScaffold";
     //</editor-fold>
     //
     //<editor-fold desc="Private variables">
@@ -636,7 +651,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @throws NullPointerException if the given parameter is null
      */
     public void setFragmentationTypeSetting(FragmentationTypeOption anOption) throws NullPointerException {
-        Objects.requireNonNull(anOption, "Given type of sugars to remove is null.");
+        Objects.requireNonNull(anOption, "Given type of fragmentaton to remove is null.");
         this.fragmentationTypeSetting.set(anOption.name());
     }
 
@@ -661,7 +676,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @throws NullPointerException if the given parameter is null
      */
     public void setSideChainSetting(SideChainOption anOption) throws NullPointerException {
-        Objects.requireNonNull(anOption, "Given type of sugars to remove is null.");
+        Objects.requireNonNull(anOption, "Given type of side chain option is null.");
         this.sideChainSetting.set(anOption.name());
     }
     //</editor-fold>
@@ -799,8 +814,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant for electron donation model setting
      */
-    public ErtlFunctionalGroupsFinderFragmenter.ElectronDonationModelOption getElectronDonationModelSettingConstant() {
-        return ErtlFunctionalGroupsFinderFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get());
+    public ElectronDonationModelOption getElectronDonationModelSettingConstant() {
+        return ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get());
     }
 
     /**
@@ -827,8 +842,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant for cycle finder setting
      */
-    public ErtlFunctionalGroupsFinderFragmenter.CycleFinderOption getCycleFinderSettingConstant() {
-        return ErtlFunctionalGroupsFinderFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get());
+    public CycleFinderOption getCycleFinderSettingConstant() {
+        return CycleFinderOption.valueOf(this.cycleFinderSetting.get());
     }
     //</editor-fold>
     //
@@ -927,25 +942,68 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     tmpReturnList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, true);
                 }
             }
+            /*Add SideChain Property*/
+            for(IAtomContainer tmpSideChain : tmpReturnList) {
+                tmpSideChain.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SIDECHAIN_VALUE);
+            }
             /*Return only the Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.toString())) {
                 return tmpReturnList;
             }
             /*Decomposition according to the Schuffenhauer rules*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCHUFFENHAUER_FRAGMENTATION.toString())) {
-                tmpReturnList.addAll(this.scaffoldGeneratorInstance.applySchuffenhauerRules(tmpMoleculeClone));
+                List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.applySchuffenhauerRules(tmpMoleculeClone);
+                /*Set fragment category property*/
+                boolean tmpIsFirstFragment = true;
+                for(IAtomContainer tmpFragment : tmpFragmentList) {
+                    /*First fragment is the scaffold*/
+                    if(tmpIsFirstFragment) {
+                        tmpIsFirstFragment = false;
+                        tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                                ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                        continue;
+                    }
+                    /*All other fragments are the parents*/
+                    tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_PARENT_SCAFFOLD_VALUE);
+                }
+                tmpReturnList.addAll(tmpFragmentList);
             }
             /*Enumerative decomposition*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.ENUMERATIVE_FRAGMENTATION.toString())) {
-                tmpReturnList.addAll(this.scaffoldGeneratorInstance.applyEnumerativeRemoval(tmpMoleculeClone));
+                List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.applyEnumerativeRemoval(tmpMoleculeClone);
+                /*Set fragment category property*/
+                boolean tmpIsFirstFragment = true;
+                for(IAtomContainer tmpFragment : tmpFragmentList) {
+                    /*First fragment is the scaffold*/
+                    if(tmpIsFirstFragment) {
+                        tmpIsFirstFragment = false;
+                        tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                                ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                        continue;
+                    }
+                    /*All other fragments are the parents*/
+                    tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_PARENT_SCAFFOLD_VALUE);
+                }
+                tmpReturnList.addAll(tmpFragmentList);
             }
             /*Generate the scaffold only*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCAFFOLD_ONLY.toString())) {
                 /*Scaffold without saturation*/
                 if(this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION.toString())) {
-                    tmpReturnList.add(this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, false));
+                    IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, false);
+                    //Set Scaffold Property
+                    tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                    tmpReturnList.add(tmpScaffold);
                 } else { /*Scaffold with saturation*/
-                    tmpReturnList.add(this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, true));
+                    IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, true);
+                    //Set Scaffold Property
+                    tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                    tmpReturnList.add(tmpScaffold);
                 }
             }
         } catch (Exception anException) {
