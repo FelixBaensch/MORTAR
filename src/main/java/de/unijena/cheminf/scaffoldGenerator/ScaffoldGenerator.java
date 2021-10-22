@@ -69,7 +69,7 @@ import java.util.TreeMap;
  * Different trees or networks can also be merged together.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.0.2
+ * @version 1.0.0.4
  */
 public class ScaffoldGenerator {
 
@@ -100,7 +100,7 @@ public class ScaffoldGenerator {
          * It is a very abstract form of representation.
          * All side chains are removed, all bonds are converted into single bonds and all atoms are converted into carbons.
          */
-        BECCARI_BASIC_WIRE_FRAME(),
+        BASIC_WIRE_FRAME(),
 
         /**
          * All side chains are removed and multiple bonds are converted to single bonds, but the atomic elements remain.
@@ -113,7 +113,7 @@ public class ScaffoldGenerator {
          * Paper by Beccari et al. 2021.
          * All side chains are removed and all atoms are converted into carbons. The order of the remaining bonds is not changed.
          */
-        BECCARI_BASIC_FRAMEWORK()
+        BASIC_FRAMEWORK()
     }
     //</editor-fold>
 
@@ -406,7 +406,7 @@ public class ScaffoldGenerator {
      * The scaffold is therefore subtracted from the original molecule and
      * all remaining fragments are saturated with hydrogens if anAddImplicitHydrogens is true. <p>
      *
-     * SideChains cannot be generated for ELEMENTAL_WIRE_FRAME, BECCARI_BASIC_FRAMEWORK and BECCARI_BASIC_WIRE_FRAME themselves.
+     * SideChains cannot be generated for ELEMENTAL_WIRE_FRAME, BASIC_FRAMEWORK and BASIC_WIRE_FRAME themselves.
      * Their SideChains are identical to those of MURCKO_FRAMEWORK. Therefore, they are used.
      * @param aMolecule Molecule whose side chains are to be returned
      * @param anAddImplicitHydrogens Specifies whether implicit hydrogens are to be added at the end.
@@ -430,10 +430,10 @@ public class ScaffoldGenerator {
         }
         /*Generate scaffold*/
         IAtomContainer tmpScaffold = new AtomContainer();
-        /*SideChains cannot be generated for ELEMENTAL_WIRE_FRAME, BECCARI_BASIC_FRAMEWORK and BECCARI_BASIC_WIRE_FRAME themselves.
+        /*SideChains cannot be generated for ELEMENTAL_WIRE_FRAME, BASIC_FRAMEWORK and BASIC_WIRE_FRAME themselves.
         Their SideChains are identical to those of MURCKO_FRAMEWORK. Therefore, they can be used.*/
-        if(this.scaffoldModeSetting.equals(ScaffoldModeOption.ELEMENTAL_WIRE_FRAME) || this.scaffoldModeSetting.equals(ScaffoldModeOption.BECCARI_BASIC_FRAMEWORK)
-                || this.scaffoldModeSetting.equals(ScaffoldModeOption.BECCARI_BASIC_WIRE_FRAME)) {
+        if(this.scaffoldModeSetting.equals(ScaffoldModeOption.ELEMENTAL_WIRE_FRAME) || this.scaffoldModeSetting.equals(ScaffoldModeOption.BASIC_FRAMEWORK)
+                || this.scaffoldModeSetting.equals(ScaffoldModeOption.BASIC_WIRE_FRAME)) {
             /*Use MURCKO_FRAMEWORK as ScaffoldModeOption for those scaffolds*/
             //Get scaffold
             tmpScaffold = this.getScaffoldInternal(tmpClonedMolecule, anAddImplicitHydrogens,
@@ -546,7 +546,7 @@ public class ScaffoldGenerator {
      */
     public List<IAtomContainer> applyEnumerativeRemoval(IAtomContainer aMolecule) throws CDKException, CloneNotSupportedException, NullPointerException {
         Objects.requireNonNull(aMolecule, "Input molecule must be non null");
-        IAtomContainer tmpScaffoldOriginal = this.getScaffoldInternal(aMolecule, true, true, this.aromaticityModelSetting, this.scaffoldModeSetting);
+        IAtomContainer tmpScaffoldOriginal = this.getScaffoldInternal(aMolecule, true, this.determineAromaticitySetting, this.aromaticityModelSetting, this.scaffoldModeSetting);
         int tmpRingCount = this.getRingsInternal(tmpScaffoldOriginal, true).size();
         List<String> tmpAddedSMILESList = new ArrayList<>(tmpRingCount * 45);
         //List of all fragments already created and size estimated on the basis of an empirical value
@@ -563,7 +563,7 @@ public class ScaffoldGenerator {
                 }
                 if(this.isRingTerminal(tmpIterMol, tmpRing) && this.isRingRemovable(tmpRing, tmpAllRingsList, tmpIterMol)) { //Consider all terminal rings
                     boolean tmpIsInList = false;
-                    IAtomContainer tmpRingRemoved = this.getScaffoldInternal(this.removeRing(tmpIterMol, true, tmpRing), true, false, null, this.scaffoldModeSetting); //Remove next ring
+                    IAtomContainer tmpRingRemoved = this.getScaffoldInternal(this.removeRing(tmpIterMol, true, tmpRing), true, this.determineAromaticitySetting, this.aromaticityModelSetting, this.scaffoldModeSetting); //Remove next ring
                     String tmpRingRemovedSMILES = this.getSmilesGenerator().create(tmpRingRemoved); //Generate SMILES
                     if(tmpAddedSMILESList.contains(tmpRingRemovedSMILES)) { //Check if the molecule has already been added to the list
                         tmpIsInList = true;
@@ -599,7 +599,7 @@ public class ScaffoldGenerator {
     public ScaffoldNetwork generateScaffoldNetwork(IAtomContainer aMolecule) throws CDKException, CloneNotSupportedException, NullPointerException {
         Objects.requireNonNull(aMolecule, "Input molecule must be non null");
         ScaffoldNetwork tmpScaffoldNetwork = new ScaffoldNetwork(this.getSmilesGenerator());
-        IAtomContainer tmpScaffoldOriginal = this.getScaffoldInternal(aMolecule, true, true, this.aromaticityModelSetting, this.scaffoldModeSetting);
+        IAtomContainer tmpScaffoldOriginal = this.getScaffoldInternal(aMolecule, true, this.determineAromaticitySetting, this.aromaticityModelSetting, this.scaffoldModeSetting);
         int tmpRingCount = this.getRingsInternal(tmpScaffoldOriginal, true).size();
         //List of all fragments already created and size estimated on the basis of an empirical value
         List<IAtomContainer> tmpIterativeRemovalList = new ArrayList<>(tmpRingCount * 45);
@@ -625,7 +625,7 @@ public class ScaffoldGenerator {
                 /*Consider all removable terminal rings*/
                 if (this.isRingTerminal(tmpIterMol, tmpRing) && this.isRingRemovable(tmpRing, tmpAllRingsList, tmpIterMol)) {
                     //Remove next ring
-                    IAtomContainer tmpRingRemoved = this.getScaffoldInternal(this.removeRing(tmpIterMol, true, tmpRing), true, false, null, this.scaffoldModeSetting);
+                    IAtomContainer tmpRingRemoved = this.getScaffoldInternal(this.removeRing(tmpIterMol, true, tmpRing), true, this.determineAromaticitySetting, aromaticityModelSetting, this.scaffoldModeSetting);
                     /*The node is not yet in the network and must therefore still be added.*/
                     if(!tmpScaffoldNetwork.containsMolecule(tmpRingRemoved)) {
                         tmpIterativeRemovalList.add(tmpRingRemoved);
@@ -715,7 +715,7 @@ public class ScaffoldGenerator {
             }
             /*Apply the new CycleFinder to the molecules*/
             tmpRingNumber = this.getRingsInternal(tmpScaffold, false).size();
-            tmpScaffold = this.getScaffoldInternal(tmpClonedMolecule, true, false ,null, this.scaffoldModeSetting);
+            tmpScaffold = this.getScaffoldInternal(tmpClonedMolecule, true, this.determineAromaticitySetting ,this.aromaticityModelSetting, this.scaffoldModeSetting);
         }
         //List of all generated fragments
         List<IAtomContainer> tmpScaffoldFragments = new ArrayList<>(tmpRingNumber);
@@ -820,7 +820,9 @@ public class ScaffoldGenerator {
                 continue;
             }
             /*Apply rule number thirteen, the tiebreaking rule */
-            tmpScaffoldFragments.add(this.applySchuffenhauerRuleThirteen(tmpScaffoldFragments.get(tmpScaffoldFragments.size() - 1), tmpRemovableRings));
+            IAtomContainer tmpFragment = this.getScaffoldInternal(this.applySchuffenhauerRuleThirteen(tmpScaffoldFragments.get(tmpScaffoldFragments.size() - 1),
+                    tmpRemovableRings), true, this.determineAromaticitySetting, this.aromaticityModelSetting, this.scaffoldModeSetting);
+            tmpScaffoldFragments.add(tmpFragment);
         }
         return tmpScaffoldFragments;
     }
@@ -938,7 +940,7 @@ public class ScaffoldGenerator {
     protected IAtomContainer getScaffoldInternal(IAtomContainer aMolecule, boolean anAddImplicitHydrogens, boolean anIsAromaticitySet, Aromaticity anAromaticity, ScaffoldModeOption aScaffoldModeOption) throws CDKException, CloneNotSupportedException {
         IAtomContainer tmpClonedMolecule = aMolecule.clone();
         /*Basic wire frames and element wire frames will be numbered later, as their number will be deleted immediately by anonymization and skeleton*/
-        if(!ScaffoldModeOption.BECCARI_BASIC_WIRE_FRAME.equals(aScaffoldModeOption) && !ScaffoldModeOption.ELEMENTAL_WIRE_FRAME.equals(aScaffoldModeOption)) {
+        if(!ScaffoldModeOption.BASIC_WIRE_FRAME.equals(aScaffoldModeOption) && !ScaffoldModeOption.ELEMENTAL_WIRE_FRAME.equals(aScaffoldModeOption)) {
             /*Mark each atom with ascending number*/
             Integer tmpCounter = 0;
             for(IAtom tmpAtom : tmpClonedMolecule.atoms()) {
@@ -953,7 +955,7 @@ public class ScaffoldGenerator {
             case MURCKO_FRAMEWORK:
                 break;
             /*Generate the basic wire frame*/
-            case BECCARI_BASIC_WIRE_FRAME:
+            case BASIC_WIRE_FRAME:
                 tmpMurckoFragment = AtomContainerManipulator.anonymise(tmpMurckoFragment);
                 /*Mark each atom with ascending number after anonymization because all properties are removed*/
                 Integer tmpCounterBWF = 0;
@@ -1034,7 +1036,7 @@ public class ScaffoldGenerator {
                 }
                 break;
             /*Generate the basic framework*/
-            case BECCARI_BASIC_FRAMEWORK:
+            case BASIC_FRAMEWORK:
                 for(IAtom tmpAtom : tmpMurckoFragment.atoms()) {
                     if(!tmpAtom.getSymbol().equals("C")) {
                         tmpAtom.setSymbol("C");
@@ -1529,7 +1531,7 @@ public class ScaffoldGenerator {
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(aFragmentList.get(aFragmentList.size() - 1), true, aRing);
         //Remove the linkers
-        IAtomContainer tmpSchuffRingRemoved = this.getScaffoldInternal(tmpRingRemoved, true, false, null, this.scaffoldModeSetting);
+        IAtomContainer tmpSchuffRingRemoved = this.getScaffoldInternal(tmpRingRemoved, true, this.determineAromaticitySetting, this.aromaticityModelSetting, this.scaffoldModeSetting);
         //Add the fragment to the list of fragments
         aFragmentList.add(tmpSchuffRingRemoved);
     }
