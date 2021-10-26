@@ -69,7 +69,7 @@ import java.util.TreeMap;
  * Different trees or networks can also be merged together.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.0.4
+ * @version 1.0.0.6
  */
 public class ScaffoldGenerator {
 
@@ -92,7 +92,7 @@ public class ScaffoldGenerator {
          * All terminal side chains are removed and only linkers and rings are retained.
          */
         MURCKO_FRAMEWORK(),
-        
+
         /**
          * Basic wire frames are generated based on the <a href="https://doi.org/10.1186/s13321-021-00526-y">
          * "Molecular Anatomy: a new multi‑dimensional hierarchical scaffold analysis tool"</a>
@@ -108,7 +108,7 @@ public class ScaffoldGenerator {
         ELEMENTAL_WIRE_FRAME(),
 
         /**
-         * Basic Frameworks are generated based on the <"https://doi.org/10.1186/s13321-021-00526-y">
+         * Basic Frameworks are generated based on the <a href="https://doi.org/10.1186/s13321-021-00526-y">
          * "Molecular Anatomy: a new multi‑dimensional hierarchical scaffold analysis tool"</a>
          * Paper by Beccari et al. 2021.
          * All side chains are removed and all atoms are converted into carbons. The order of the remaining bonds is not changed.
@@ -276,6 +276,7 @@ public class ScaffoldGenerator {
     //<editor-fold desc="set/restore">
     /**
      * Sets the option to not determine the aromaticity.
+     * If false, then no structures labelled as aromatic are created and previously existing ones are not changed.
      * @param anIsAromaticitySet if true the aromaticity is determined
      */
     public void setDetermineAromaticitySetting(boolean anIsAromaticitySet) {
@@ -368,7 +369,7 @@ public class ScaffoldGenerator {
     }
 
     /**
-     * Generates a set of rings depending on the selected CycleFinder.
+     * Generates a set of rings depending on the used CycleFinder.
      * The removal of atoms can create open valences. These open valences can be compensated with implicit hydrogens.
      * Can optional add non-single bounded atoms to the rings.
      * @param aMolecule molecule whose rings are produced.
@@ -866,7 +867,7 @@ public class ScaffoldGenerator {
             tmpNode.addChild(tmpTestMol);
             TreeNode tmpChildNode = (TreeNode) tmpScaffoldTree.getAllNodesOnLevel(i - 1).get(0).getChildren().get(0);
             tmpChildNode.addOriginSmiles(tmpSmiles);
-            /*the last and thus largest fragment is directly related to the original molecule*/
+            /*The last and thus largest fragment is directly related to the original molecule*/
             if(i == (tmpFragmentList.size() - 1)){
                 tmpChildNode.addNonVirtualOriginSmiles(tmpSmiles);
             }
@@ -1043,7 +1044,7 @@ public class ScaffoldGenerator {
                     }
                 }
                 break;
-            }
+        }
         /*The Murcko fragmenter class does not adjust the hybridisation when the atoms are removed.
         Therefore, this is deleted and determined again.*/
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMurckoFragment);
@@ -1063,7 +1064,7 @@ public class ScaffoldGenerator {
     /**
      * Generates a set of rings depending on the CycleFinder selected by {@link ScaffoldGenerator#getCycleFinder(IAtomContainer)}.
      * Can optional add non-single bounded atoms to the rings and returns them.
-     * Important: Property (scaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule.
+     * Important: Property (ScaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule.
      * @param aMolecule molecule whose rings are produced.
      * @param anIsKeepingNonSingleBonds if true, non-single bonded atoms are retained on the ring.
      * @return rings of the inserted molecule.
@@ -1176,14 +1177,14 @@ public class ScaffoldGenerator {
                         tmpAllElementsStillPresent = false;
                         break;
                     }
-                /*Object is a bond*/
+                    /*Object is a bond*/
                 } else if (tmpObj instanceof IBond) {
                     /*Change the boolean if an object is missing*/
                     if (!tmpMurckoFragment.contains((IBond) tmpObj)) {
                         tmpAllElementsStillPresent = false;
                         break;
                     }
-                /*Object is something else (UFO)*/
+                    /*Object is something else (UFO)*/
                 } else {
                     /*Change the boolean if it is an unknown object*/
                     tmpAllElementsStillPresent = false;
@@ -1203,7 +1204,7 @@ public class ScaffoldGenerator {
      * Preserves the sp2 hybridisation of a border atom when an aromatic ring is removed.
      * Preserves the hybridisation of all molecules if {@link ScaffoldGenerator#retainOnlyHybridisationsAtAromaticBondsSetting} == true
      * With the removal of heterocycles of size 3 a double bond is inserted if it is directly adjacent to another ring.
-     * Important: Property (scaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule/aRing and match.
+     * Important: Property (ScaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule/aRing and match.
      * @param aMolecule Molecule whose ring is to be removed.
      * @param anAddImplicitHydrogens Specifies whether implicit hydrogens are to be added at the end.
      * The removal of atoms can create open valences. These are not compensated with hydrogens at the end if this parameter is false.
@@ -1383,10 +1384,10 @@ public class ScaffoldGenerator {
                     tmpEdgeAtomNumbers.remove(tmpBondProperty1);
                 }
             }
-            /*Increase the number of hydrogens by 1 for all previously untreated edge atoms to compensate for the removed atom.*/
+            /*Increase the number of hydrogens by 1 for all previously untreated edge C atoms to compensate for the removed atom.*/
             for(IAtom tmpAtom : tmpMoleculeClone.atoms()) {
                 Integer tmpAtomProperty = tmpAtom.getProperty(ScaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY);
-                if(tmpEdgeAtomNumbers.contains(tmpAtomProperty)) {
+                if(tmpEdgeAtomNumbers.contains(tmpAtomProperty) && tmpAtom.getSymbol() == "C") {
                     tmpAtom.setImplicitHydrogenCount(tmpAtom.getImplicitHydrogenCount() + 1);
                 }
             }
@@ -1407,7 +1408,7 @@ public class ScaffoldGenerator {
     /**
      * Checks whether the tmpRing in the tmpMolecule is terminal. This means whether it can be removed without creating several unconnected parts.
      * Rings that lead to spiro ring systems when removed are also considered non-terminal.
-     * Important: Property (scaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule/aRing and match.
+     * Important: Property (ScaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule/aRing and match.
      * @param aMolecule Molecule whose ring is to be checked
      * @param aRing Ring to check
      * @return true if the tmpRing is terminal
@@ -1437,7 +1438,7 @@ public class ScaffoldGenerator {
      * Checks whether rings may be removed.
      * If the ring does not contain atoms that are not present in any other rings, it is not removable.
      * Furthermore, removal is impossible when it is an aromatic ring, that borders two consecutive rings.
-     * Important: Property (scaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule/aRings/aRing and match.
+     * Important: Property (ScaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule/aRings/aRing and match.
      * @param aRing Ring being tested for its removability
      * @param aRings All rings of the molecule
      * @param aMolecule Whole molecule
@@ -1536,7 +1537,7 @@ public class ScaffoldGenerator {
         aFragmentList.add(tmpSchuffRingRemoved);
     }
     /**
-     * Selects the correct CycleFinder based on scaffoldGenerator.CYCLE_FINDER_BACKUP_PROPERTY.
+     * Selects the correct CycleFinder based on ScaffoldGenerator.CYCLE_FINDER_BACKUP_PROPERTY.
      * @param aMolecule Molecule for which a CycleFinder is to be generated
      * @return CycleFinder that matches the properties of the molecule
      */
@@ -1546,11 +1547,11 @@ public class ScaffoldGenerator {
         for(IAtom tmpAtom : aMolecule.atoms()) {
             /*If no CycleFinder has been assigned to the Atom yet*/
             if(tmpAtom.getProperty(ScaffoldGenerator.CYCLE_FINDER_BACKUP_PROPERTY) == null) {
-                //The scaffoldGenerator.CYCLE_FINDER is used by default
+                //The ScaffoldGenerator.CYCLE_FINDER is used by default
                 tmpAtom.setProperty(ScaffoldGenerator.CYCLE_FINDER_BACKUP_PROPERTY, false);
                 continue;
             }
-            /*If one of the atoms has been assigned to the scaffoldGenerator.CYCLE_FINDER_BACKUP cycle finder, it is used.*/
+            /*If one of the atoms has been assigned to the ScaffoldGenerator.CYCLE_FINDER_BACKUP cycle finder, it is used.*/
             if(tmpAtom.getProperty(ScaffoldGenerator.CYCLE_FINDER_BACKUP_PROPERTY).equals(true)) {
                 tmpIsBackupFinderUsed = true;
                 break;
