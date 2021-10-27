@@ -589,7 +589,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
 
     /**
-     * Sets the smiles generator, defining which smiles generator should be used.
+     * Sets the SMILES generator, defining which smiles generator should be used.
      *
      * @param anOptionName name of a constant from the SmilesGeneratorOption enum
      * @throws NullPointerException if the given string is null
@@ -603,7 +603,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
 
     /**
-     * Sets the smiles generator setting, defining which form of smiles generator is to be created.
+     * Sets the SMILES generator setting, defining which form of smiles generator is to be created.
      *
      * @param anOption a constant from the SmilesGeneratorOption enum
      * @throws NullPointerException if the given parameter is null
@@ -725,7 +725,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Returns the property object of the fragmentation type setting that can be used to configure this setting.
      *
-     * @return property object of the returned fragmentation tpyesetting
+     * @return property object of the returned fragmentation type setting
      */
     public SimpleEnumConstantNameProperty fragmentationTypeSettingProperty() {
         return this.fragmentationTypeSetting;
@@ -984,13 +984,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
-        SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.UseAromaticSymbols));
-        try {
-            System.out.println("Input: " +  tmpSmilesGenerator.create(aMolecule));
-        } catch (CDKException e) {
-            e.printStackTrace();
-        }
-
         /*Parameter test*/
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
@@ -1002,7 +995,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         List<IAtomContainer> tmpSideChainList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
-            Kekulization.kekulize(tmpMoleculeClone);
+            Kekulization.kekulize(tmpMoleculeClone); //Hotfix for SMILES loader bug
             /*Generate Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.name()) ||
                     this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDECHAINS.name())) {
@@ -1012,11 +1005,11 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 } else { /*Sidechains with saturation*/
                     tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, true);
                 }
-            }
-            /*Add SideChain Property*/
-            for(IAtomContainer tmpSideChain : tmpSideChainList) {
-                tmpSideChain.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                        ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SIDECHAIN_VALUE);
+                /*Add SideChain Property*/
+                for(IAtomContainer tmpSideChain : tmpSideChainList) {
+                    tmpSideChain.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SIDECHAIN_VALUE);
+                }
             }
             /*Return only the Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.name())) {
@@ -1079,17 +1072,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
         } catch (Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
-        }
-        for(IAtomContainer tmpFragment : tmpReturnList) {
-            try {
-                System.out.println("Aromaticity Determined: " + scaffoldGeneratorInstance.isAromaticityDetermined());
-                System.out.println(tmpSmilesGenerator.create(tmpFragment));
-                for(IAtom tmpAtom : tmpFragment.atoms()) {
-                    System.out.println(tmpAtom.getFlag(CDKConstants.ISAROMATIC));
-                }
-            } catch (CDKException e) {
-                e.printStackTrace();
-            }
         }
         tmpReturnList.addAll(tmpSideChainList);
         return tmpReturnList;
