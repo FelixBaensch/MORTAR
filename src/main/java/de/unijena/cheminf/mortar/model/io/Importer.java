@@ -196,7 +196,7 @@ public class Importer {
            }
         } catch (Exception anException){
            Importer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-           GuiUtil.GuiExceptionAlert(
+           GuiUtil.guiExceptionAlert(
                    Message.get("Error.ExceptionAlert.Title"),
                    Message.get("Importer.FileImportExceptionAlert.Header"),
                    Message.get("Importer.FileImportExceptionAlert.Text") + "\n" +

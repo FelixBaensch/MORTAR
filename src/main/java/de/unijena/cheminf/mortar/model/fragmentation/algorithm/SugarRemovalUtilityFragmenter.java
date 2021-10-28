@@ -232,7 +232,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -247,7 +247,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -263,7 +263,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -301,7 +301,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeSetting(tmpEnumConstant);
                 } catch (IllegalArgumentException | NullPointerException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -318,7 +318,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeThresholdSetting(newValue);
                 }catch(IllegalArgumentException anException){
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -347,7 +347,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(newValue);
                 } catch (IllegalArgumentException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -375,7 +375,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMinSizeSetting(newValue);
                 } catch (IllegalArgumentException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -393,7 +393,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMaxSizeSetting(newValue);
                 } catch (IllegalArgumentException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }

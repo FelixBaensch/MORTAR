@@ -20,6 +20,10 @@
 
 package de.unijena.cheminf.mortar.gui.util;
 
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+
 /**
  * GUI definitions
  *
@@ -75,5 +79,9 @@ public final class GuiDefinitions {
      * Height of the control panel of pagination
      */
     public static final double GUI_PAGINATION_CONTROL_PANEL_HEIGHT = 45.0;
+    /**
+     * KeyCodeCombination for Control + C
+     */
+    public static final KeyCodeCombination KEY_CODE_COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_ANY);
 
 }

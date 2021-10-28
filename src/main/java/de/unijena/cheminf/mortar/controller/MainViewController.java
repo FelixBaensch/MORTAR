@@ -128,7 +128,7 @@ public class MainViewController {
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
-        GuiUtil.GuiBindControlSizeToParentPane(this.mainView.getMainCenterPane(), this.mainTabPane);
+        GuiUtil.guiBindControlSizeToParentPane(this.mainView.getMainCenterPane(), this.mainTabPane);
         this.scene = new Scene(this.mainView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.scene.getStylesheets().add(this.getClass().getResource(this.STYLE_SHEET_PATH).toExternalForm());
         this.primaryStage.setTitle(Message.get("Title.text"));
@@ -279,9 +279,9 @@ public class MainViewController {
             ButtonType tmpConformationResult;
             //Todo: move text to message resource file and maybe create a separate method for this because it is called again below in loadMoleculeFile()
             if(this.isFragmentationRunning){
-                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
+                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
             } else {
-                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
+                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
             }
             if(tmpConformationResult!= ButtonType.OK){
                 return;
@@ -291,7 +291,7 @@ public class MainViewController {
             this.settingsContainer.preserveSettings();
         } catch (IOException anIOException) {
             MainViewController.LOGGER.log(Level.WARNING, anIOException.toString(), anIOException);
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.SettingsPersistence.Header"),
                     Message.get("Error.SettingsPersistence"),
                     anIOException);
@@ -318,9 +318,9 @@ public class MainViewController {
         if(this.moleculeDataModelList.size() > 0){
             ButtonType tmpConformationResult;
             if(this.isFragmentationRunning){
-                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
+                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
             } else {
-                tmpConformationResult = GuiUtil.GuiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
+                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
             }
             if(tmpConformationResult!= ButtonType.OK){
                 return;
@@ -335,7 +335,7 @@ public class MainViewController {
             tmpAtomContainerSet = tmpImporter.importMoleculeFile(aParentStage);
         } catch (Exception anException) {
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Importer.FileImportExceptionAlert.Header"),
                     Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
                     anException);
@@ -483,6 +483,12 @@ public class MainViewController {
             this.interruptFragmentation();
         });
         this.addTableViewWidthListener(this.moleculesDataTableView);
+        this.moleculesDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView));
+        this.moleculesDataTableView.setOnKeyPressed(event -> {
+            if(GuiDefinitions.KEY_CODE_COPY.match(event)){
+                GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView);
+            }
+        });
     }
     //
     /**
@@ -655,21 +661,24 @@ public class MainViewController {
             tmpExporter.createFragmentationTabCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
                     this.settingsContainer.getCsvExportSeparatorSetting());
         });
-        tmpFragmentsDataTableView.setOnSort(new EventHandler<SortEvent<TableView>>() {
-            @Override
-            public void handle(SortEvent<TableView> event) {
-                if(event.getSource().getSortOrder().size() == 0)
-                    return;
-                String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
-                TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
-                sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
-                int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
-                int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
-                event.getSource().getItems().clear();
-                event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
-            }
+        tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
+            if(event.getSource().getSortOrder().size() == 0)
+                return;
+            String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
+            TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
+            sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
+            int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
+            int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
+            event.getSource().getItems().clear();
+            event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
         });
         this.addTableViewWidthListener(tmpFragmentsDataTableView);
+        tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
+        tmpFragmentsDataTableView.setOnKeyPressed(event -> {
+            if(GuiDefinitions.KEY_CODE_COPY.match(event)){
+                GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
+            }
+        });
         //itemization tab
         int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
         for(int i= 0; i < this.moleculeDataModelList.size(); i++){
@@ -712,6 +721,12 @@ public class MainViewController {
                     this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
         });
         this.addTableViewWidthListener(tmpItemizationDataTableView);
+        tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
+        tmpItemizationDataTableView.setOnKeyPressed(event -> {
+            if(GuiDefinitions.KEY_CODE_COPY.match(event)){
+                GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView);
+            }
+        });
         //
         this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
     }

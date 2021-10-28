@@ -161,7 +161,7 @@ public class Exporter {
                 return null;
             }
         } catch (FileNotFoundException | NullPointerException anException) {
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(), anException);
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return null;
@@ -259,7 +259,7 @@ public class Exporter {
                 return null;
             }
         } catch (IOException | DocumentException | CDKException | NullPointerException anException) {
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(), anException);
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return null;
@@ -285,7 +285,7 @@ public class Exporter {
      */
     public void createFragmentationTabSingleSDFile(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
-            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
+            GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
                     Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
                     null);
@@ -324,7 +324,7 @@ public class Exporter {
                             }
                             if (tmpAtom.getPoint2d() == null) {
                                 if (!tmpHasNo2dInformationAlertBeenShown) {
-                                    ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                    ButtonType tmpConformationResult = GuiUtil.guiConformationAlert(
                                             Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
                                             Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
                                             Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
@@ -371,14 +371,14 @@ public class Exporter {
                         "(export of %d fragments failed). File name: %s", tmpExportedFragmentsCounter,
                         tmpFailedFragmentExportCounter, tmpFile.getName()));
                 if (tmpFailedFragmentExportCounter > 0) {
-                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
+                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                             null);
                 }
             }
         } catch (NullPointerException | IOException | CDKException anException) {
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(),
                     anException);
@@ -406,7 +406,7 @@ public class Exporter {
      */
     public void createFragmentationTabSeparateSDFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
-            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
+            GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
                     Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
                     null);
@@ -441,7 +441,7 @@ public class Exporter {
                         }
                         if (tmpAtom.getPoint2d() == null) {
                             if (!tmpHasNo2dInformationAlertBeenShown) {
-                                ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                ButtonType tmpConformationResult = GuiUtil.guiConformationAlert(
                                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
                                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
                                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
@@ -501,14 +501,14 @@ public class Exporter {
                         "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
                         tmpFailedFragmentExportCounter, tmpSDFilesDirectory.getName()));
                 if (tmpFailedFragmentExportCounter > 0) {
-                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
+                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                             null);
                 }
             }
         } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(),
                     anException);
@@ -531,7 +531,7 @@ public class Exporter {
      */
     public void createFragmentationTabPDBFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
-            GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION,
+            GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
                     Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
                     null);
@@ -566,7 +566,7 @@ public class Exporter {
                         }
                         if (tmpAtom.getPoint2d() == null) {
                             if (!tmpHasNo2dInformationAlertBeenShown) {
-                                ButtonType tmpConformationResult = GuiUtil.GuiConformationAlert(
+                                ButtonType tmpConformationResult = GuiUtil.guiConformationAlert(
                                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
                                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
                                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
@@ -609,14 +609,14 @@ public class Exporter {
                         "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
                         tmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
                 if (tmpFailedFragmentExportCounter > 0) {
-                    GuiUtil.GuiMessageAlert(Alert.AlertType.WARNING,
+                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                             Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                             null);
                 }
             }
         } catch (NullPointerException | IOException | CDKException | IllegalArgumentException anException) {
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(),
                     anException);
@@ -726,7 +726,7 @@ public class Exporter {
                 return null;
             }
         } catch(IOException | DocumentException | CDKException | NullPointerException anException) {
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(), anException);
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return null;
@@ -771,7 +771,7 @@ public class Exporter {
                 return null;
             }
         } catch (FileNotFoundException | NullPointerException anException) {
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(), anException);
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return null;

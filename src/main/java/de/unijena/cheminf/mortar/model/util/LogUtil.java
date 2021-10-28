@@ -129,7 +129,7 @@ public final class LogUtil {
                     boolean tmpIsError = aThrowable instanceof Error;
                     //error means out of memory or stack overflow
                     if (tmpIsError) {
-                        GuiUtil.GuiMessageAlert(
+                        GuiUtil.guiMessageAlert(
                                 Alert.AlertType.ERROR,
                                 Message.get("Error.Notification.Title"),
                                 Message.get("Error.SevereError"),
@@ -142,7 +142,7 @@ public final class LogUtil {
                         }
                         //it is an exception (runtime- or IO-), no error
                         if (aThread.getThreadGroup().getName().equals("main")) {
-                            GuiUtil.GuiExceptionAlert(
+                            GuiUtil.guiExceptionAlert(
                                     Message.get("Error.Notification.Title"),
                                     Message.get("Error.UnexpectedError.Header"),
                                     Message.get("Error.UnexpectedError.Content"),

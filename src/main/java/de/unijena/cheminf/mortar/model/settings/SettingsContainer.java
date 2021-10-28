@@ -634,7 +634,7 @@ public class SettingsContainer {
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal rows per page number was given: " + newValue);
                     SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
                     //re-throws the exception to properly reset the binding
                     throw tmpException;
                 }
@@ -651,7 +651,7 @@ public class SettingsContainer {
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal number of tasks for fragmentation was given: " + newValue);
                     SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
                     //re-throws the exception to properly reset the binding
                     throw tmpException;
                 }
@@ -712,7 +712,7 @@ public class SettingsContainer {
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal value for the separator for the csv export was given: " + newValue);
                     SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
                     //re-throws the exception to properly reset the binding
                     throw tmpException;
                 }

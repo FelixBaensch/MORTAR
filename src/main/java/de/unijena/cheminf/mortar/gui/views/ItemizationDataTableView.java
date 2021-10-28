@@ -25,6 +25,8 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -65,6 +67,14 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination)
      */
     private List<MoleculeDataModel> itemsList;
+    /**
+     * ContextMenu ot the TableView
+     */
+    private ContextMenu contextMenu;
+    /**
+     * MenuItem of ContextMenu to copy selected cell to clipboard
+     */
+    private MenuItem copyMenuItem;
     //</editor-fold>
     //
     /**
@@ -76,6 +86,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         super();
         this.setEditable(false);
         this.fragmentationName = aFragmentationName;
+        this.getSelectionModel().setCellSelectionEnabled(true);
         //-nameColumn
         this.nameColumn = new TableColumn<>(Message.get("MainTabPane.itemizationTab.tableView.nameColumn.header"));
         this.nameColumn.setMinWidth(100);
@@ -127,12 +138,22 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         }
         //
         this.getColumns().addAll(this.nameColumn, this.moleculeStructureColumn, this.fragmentStructureColumn);
+        //context menu
+        this.contextMenu = new ContextMenu();
+        this.setContextMenu(this.contextMenu);
+        //-copyMenuItem
+        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
+        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        this.contextMenu.getItems().add(this.copyMenuItem);
     }
 
     public String getFragmentationName(){
         return this.fragmentationName;
     }
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public MenuItem getCopyMenuItem(){
+        return this.copyMenuItem;
+    }
     public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;
     }

@@ -23,11 +23,10 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -67,6 +66,14 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination)
      */
     private List<MoleculeDataModel> itemsList;
+    /**
+     * ContextMenu ot the TableView
+     */
+    private ContextMenu contextMenu;
+    /**
+     * MenuItem of ContextMenu to copy selected cell to clipboard
+     */
+    private MenuItem copyMenuItem;
     //</editor-fold>
     //
     /**
@@ -75,6 +82,8 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     public FragmentsDataTableView(){
         super();
         this.setEditable(false);
+        this.getSelectionModel().setCellSelectionEnabled(true);
+//        this.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
         //-structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
@@ -170,6 +179,13 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         });
         this.moleculePercentageColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.moleculePercentageColumn);
+        //context menu
+        this.contextMenu = new ContextMenu();
+        this.setContextMenu(this.contextMenu);
+        //-copyMenuItem
+        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
+        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        this.contextMenu.getItems().add(this.copyMenuItem);
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
@@ -179,6 +195,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     public TableColumn getPercentageColumn() { return this.percentageColumn; }
     public TableColumn getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
     public TableColumn getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
+    public MenuItem getCopyMenuItem(){
+        return this.copyMenuItem;
+    }
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
     public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;

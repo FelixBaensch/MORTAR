@@ -188,7 +188,7 @@ public class SettingsView extends AnchorPane {
                 tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                 tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
                 tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
-                TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToIntegerConverter(), 0, GuiUtil.GetIntegerFilter());
+                TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
                 tmpIntegerTextField.setTextFormatter(tmpFormatter);
                 tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
                 //add to gridpane
@@ -200,7 +200,7 @@ public class SettingsView extends AnchorPane {
                 tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                 tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
                 tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
-                TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.GetStringToDoubleConverter(), 0.0, GuiUtil.GetDoubleFilter());
+                TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(), 0.0, GuiUtil.getDoubleFilter());
                 tmpDoubleTextField.setTextFormatter(tmpFormatter);
                 tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
                 //add to gridpane

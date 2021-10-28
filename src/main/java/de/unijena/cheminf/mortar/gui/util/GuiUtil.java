@@ -21,7 +21,17 @@
 package de.unijena.cheminf.mortar.gui.util;
 
 import de.unijena.cheminf.mortar.message.Message;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.TablePosition;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -56,7 +66,7 @@ public class GuiUtil {
      * @param aHeaderText Header of the alert message
      * @param aContentText Text that the alert message contains
      */
-    public static void GuiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText){
+    public static void guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText){
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -73,7 +83,7 @@ public class GuiUtil {
      * @param aContentText Text that the conformation alert contains
      * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
      */
-    public static ButtonType GuiConformationAlert(String aTitle, String aHeaderText, String aContentText){
+    public static ButtonType guiConformationAlert(String aTitle, String aHeaderText, String aContentText){
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -90,7 +100,7 @@ public class GuiUtil {
      * @param aContentText Text that the exception alert contains
      * @param anException Exception that was thrown
      */
-    public static void GuiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException){
+    public static void guiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException){
         if(anException == null){
             //TODO: What happens if anException is null? GuiMessageAlert!
             return;
@@ -122,7 +132,7 @@ public class GuiUtil {
             //Show and wait exception alert
             tmpAlert.showAndWait();
         }catch(Exception aNewThrownException){
-            GuiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), aNewThrownException.toString());
+            guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), aNewThrownException.toString());
             LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
         }
     }
@@ -133,7 +143,7 @@ public class GuiUtil {
      * @param aParentPane
      * @param aChildControl
      */
-    public static void GuiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl){
+    public static void guiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl){
         aChildControl.prefHeightProperty().bind(aParentPane.heightProperty());
         aChildControl.prefWidthProperty().bind(aParentPane.widthProperty());
     }
@@ -142,7 +152,7 @@ public class GuiUtil {
      * TODO
      * @return
      */
-    public static Pattern GetIntegerPattern(){
+    public static Pattern getIntegerPattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?");
 
     }
@@ -159,10 +169,10 @@ public class GuiUtil {
      * TODO
      * @return
      */
-    public static UnaryOperator<TextFormatter.Change> GetIntegerFilter(){
+    public static UnaryOperator<TextFormatter.Change> getIntegerFilter(){
         return c ->{
             String text = c.getControlNewText();
-            if(GetIntegerPattern().matcher(text).matches()) {
+            if(getIntegerPattern().matcher(text).matches()) {
                 return c;
             } else {
                 return null;
@@ -174,7 +184,7 @@ public class GuiUtil {
      * TODO
      * @return
      */
-    public static UnaryOperator<TextFormatter.Change> GetDoubleFilter(){
+    public static UnaryOperator<TextFormatter.Change> getDoubleFilter(){
         return c ->{
           String text = c.getControlNewText();
           if(GetDoublePattern().matcher(text).matches()) {
@@ -189,7 +199,7 @@ public class GuiUtil {
      * TODO
      * @return
      */
-    public static StringConverter<Integer> GetStringToIntegerConverter(){
+    public static StringConverter<Integer> getStringToIntegerConverter(){
         return new StringConverter<Integer>() {
             @Override
             public String toString(Integer anObject) {
@@ -211,7 +221,7 @@ public class GuiUtil {
      * TODO
      * @return
      */
-    public static StringConverter<Double> GetStringToDoubleConverter(){
+    public static StringConverter<Double> getStringToDoubleConverter(){
         return new StringConverter<Double>() {
             @Override
             public String toString(Double anObject) {
@@ -227,6 +237,43 @@ public class GuiUtil {
                 }
             }
         };
+    }
+    //
+    /**
+     * Copies content of selected cell to system clipboard
+     * TODO: Maybe multiply double values by 100 to avoid possible misunderstandings between the internal value and the visualised value.
+     *
+     * @param aTableView
+     */
+    public static void copySelectedTableViewCellsToClipboard(TableView<?> aTableView){
+
+        for(TablePosition tmpPos :aTableView.getSelectionModel().getSelectedCells()){
+            int tmpRowIndex = tmpPos.getRow();
+            int tmpColIndex = tmpPos.getColumn();
+            Object tmpCell = aTableView.getColumns().get(tmpColIndex).getCellData(tmpRowIndex);
+            if(tmpCell == null){
+                return;
+            }
+            else{
+                ClipboardContent tmpClipboardContent = new ClipboardContent();
+                if(tmpCell.getClass() == String.class){
+                    tmpClipboardContent.putString((String) tmpCell);
+                }
+                else if(tmpCell.getClass() == Integer.class){
+                    tmpClipboardContent.putString(((Integer)tmpCell).toString());
+                }
+                else if(tmpCell.getClass() == Double.class){
+                    tmpClipboardContent.putString(((Double)tmpCell).toString());
+                }
+                else if(tmpCell.getClass() == ImageView.class){
+                    tmpClipboardContent.putImage(((ImageView)tmpCell).getImage());
+                }
+                else{
+                    return;
+                }
+                Clipboard.getSystemClipboard().setContent(tmpClipboardContent);
+            }
+        }
     }
     //</editor-fold>
 }

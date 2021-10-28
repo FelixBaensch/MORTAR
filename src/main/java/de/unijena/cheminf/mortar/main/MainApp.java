@@ -56,7 +56,7 @@ public class MainApp extends Application {
             LogUtil.manageLogFilesFolderIfExists();
             boolean tmpWasLoggingInitializationSuccessful = LogUtil.initializeLoggingEnvironment();
             if (!tmpWasLoggingInitializationSuccessful) {
-                GuiUtil.GuiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Error.LoggingInitialization.Title"),
+                GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Error.LoggingInitialization.Title"),
                         null,
                         Message.get("Error.LoggingInitialization"));
             }
@@ -69,7 +69,7 @@ public class MainApp extends Application {
             MainView tmpMainView = new MainView();
             MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
         } catch (Exception anException){
-            GuiUtil.GuiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"), anException.getMessage(), anException);
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"), anException.getMessage(), anException);
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             System.exit(-1);
         }

@@ -23,13 +23,12 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.util.List;
 
@@ -60,6 +59,14 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      * List which contains all items to be shown in this tableView not only the displayed ones for this page (Pagination)
      */
     private List<MoleculeDataModel> itemsList;
+    /**
+     * ContextMenu ot the TableView
+     */
+    private ContextMenu contextMenu;
+    /**
+     * MenuItem of ContextMenu to copy selected cell to clipboard
+     */
+    private MenuItem copyMenuItem;
     //</editor-fold>
     //
     /**
@@ -68,6 +75,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     public MoleculesDataTableView(){
         super();
         this.setEditable(true);
+        this.getSelectionModel().setCellSelectionEnabled(true);
         //-selectionColumn
         this.selectionColumn = new TableColumn<>();
         this.selectAllCheckBox = new CheckBox();
@@ -108,6 +116,13 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.structureColumn.setStyle("-fx-alignment: CENTER");
         //
         this.getColumns().addAll(this.selectionColumn, this.nameColumn, this.structureColumn);
+        //context menu
+        this.contextMenu = new ContextMenu();
+        this.setContextMenu(this.contextMenu);
+        //-copyMenuItem
+        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
+        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        this.contextMenu.getItems().add(this.copyMenuItem);
     }
     //
     //<editor-fold desc="properties" defaulstate="collapsed">
@@ -119,6 +134,9 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     }
     public TableColumn getStructureColumn() {
         return this.structureColumn;
+    }
+    public MenuItem getCopyMenuItem(){
+        return this.copyMenuItem;
     }
     public CheckBox getSelectAllCheckBox() { return this.selectAllCheckBox; }
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
