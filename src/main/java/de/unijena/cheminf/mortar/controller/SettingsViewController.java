@@ -101,7 +101,9 @@ public class SettingsViewController {
         this.settingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         Platform.runLater(()->{
             this.addListeners();
-            this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title"), this.settingsContainer.settingsProperties(), this.recentProperties);
+            this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title"),
+                    this.settingsContainer.settingsProperties(), this.settingsContainer.getSettingNameToTooltipTextMap(),
+                    this.recentProperties);
         });
         this.settingsViewStage.showAndWait();
     }

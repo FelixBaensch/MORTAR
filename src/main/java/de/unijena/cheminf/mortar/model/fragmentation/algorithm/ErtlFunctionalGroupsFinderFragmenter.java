@@ -26,6 +26,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
  */
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -40,10 +41,7 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -307,6 +305,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     private final List<Property> settings;
 
     /**
+     * Map to store pairs of {@literal <setting name, tooltip text>}.
+     */
+    private final HashMap<String, String> settingNameTooltipTextMap;
+
+    /**
      * Logger of this class.
      */
     private final Logger logger = Logger.getLogger(ErtlFunctionalGroupsFinderFragmenter.class.getName());
@@ -317,6 +320,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
+        this.settingNameTooltipTextMap = new HashMap(10, 0.9f);
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
@@ -332,6 +336,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.fragmentSaturationSetting.tooltip"));
         this.environmentModeSetting = new SimpleEnumConstantNameProperty(this, "Environment mode setting",
                 ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.name(), ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.class) {
             @Override
@@ -349,6 +355,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderFragmenter.this.setErtlFGFInstance(FGEnvOption.valueOf(newValue));
             }
         };
+        this.settingNameTooltipTextMap.put(this.environmentModeSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.environmentModeSetting.tooltip"));
         //initialisation of EFGF instance
         this.setErtlFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
         this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",
@@ -366,6 +374,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.returnedFragmentsSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.returnedFragmentsSetting.tooltip"));
         //note: cycle finder and electron donation model have to be set prior to setting the aromaticity model!
         this.cycleFinderSetting = new SimpleEnumConstantNameProperty(this, "Cycle finder algorithm setting",
                 ErtlFunctionalGroupsFinderFragmenter.CYCLE_FINDER_OPTION_DEFAULT.name(),
@@ -388,6 +398,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                         ErtlFunctionalGroupsFinderFragmenter.this.cycleFinderInstance);
             }
         };
+        this.settingNameTooltipTextMap.put(this.cycleFinderSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.cycleFinderSetting.tooltip"));
         this.setCycleFinderInstance(CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
         this.electronDonationModelSetting = new SimpleEnumConstantNameProperty(this, "Electron donation model setting",
                 ErtlFunctionalGroupsFinderFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name(),
@@ -410,6 +422,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                         ErtlFunctionalGroupsFinderFragmenter.this.cycleFinderInstance);
             }
         };
+        this.settingNameTooltipTextMap.put(this.electronDonationModelSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.electronDonationModelSetting.tooltip"));
         this.setElectronDonationInstance(ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get()));
         this.setAromaticityInstance(
                 ErtlFunctionalGroupsFinderFragmenter.this.electronDonationInstance,
@@ -654,6 +668,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     @Override
     public List<Property> settingsProperties() {
         return this.settings;
+    }
+
+    @Override
+    public Map<String, String> getSettingNameToTooltipTextMap() {
+        return this.settingNameTooltipTextMap;
     }
 
     @Override

@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.settings;
  */
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
@@ -41,9 +42,7 @@ import javafx.beans.property.SimpleStringProperty;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -202,7 +201,7 @@ public class SettingsContainer {
     private SimpleStringProperty csvExportSeparatorSetting;
 
     /**
-     *
+     * Preference of csv export separator.
      */
     private SingleTermPreference csvExportSeparatorPreference;
 
@@ -211,6 +210,11 @@ public class SettingsContainer {
      * for internal use, not intended to be changed by the user via this dialogue.
      */
     private List<Property> settings;
+
+    /**
+     * Map to store pairs of {@literal <setting name, tooltip text>}.
+     */
+    private HashMap<String, String> settingNameTooltipTextMap;
 
     /**
      * Internal preference container for persisting the settings via their analogous preference objects stored in this
@@ -270,6 +274,16 @@ public class SettingsContainer {
      */
     public List<Property> settingsProperties() {
         return this.settings;
+    }
+
+    /**
+     * Returns a map containing descriptive texts (values) for the settings with the given names (keys) to be used as
+     * tooltips in the GUI.
+     *
+     * @return map with tooltip texts
+     */
+    public Map<String, String> getSettingNameToTooltipTextMap() {
+        return this.settingNameTooltipTextMap;
     }
 
     /**
@@ -623,6 +637,7 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
+        this.settingNameTooltipTextMap = new HashMap<String, String>(10, 0.9f);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 "Rows per page setting",
                 this.rowsPerPagePreference.getContent()) {
@@ -640,6 +655,7 @@ public class SettingsContainer {
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.rowsPerPageSetting.getName(), Message.get("SettingsContainer.rowsPerPageSetting.tooltip"));
         this.numberOfTasksForFragmentationSetting = new SimpleIntegerProperty(this,
                 "Nr of tasks for fragmentation setting",
                 this.numberOfTasksForFragmentationPreference.getContent()) {
@@ -657,6 +673,7 @@ public class SettingsContainer {
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.numberOfTasksForFragmentationSetting.getName(), Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.tooltip"));
         this.recentDirectoryPathSetting = new SimpleStringProperty(this,
                 "Recent directory path setting",
                 this.recentDirectoryPathPreference.getContent()) {
@@ -683,6 +700,7 @@ public class SettingsContainer {
                 super.set(newValue);
             }
         };
+        this.settingNameTooltipTextMap.put(this.addImplicitHydrogensAtImportSetting.getName(), Message.get("SettingsContainer.addImplicitHydrogensAtImportSetting.tooltip"));
         this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
                 "Keep AtomContainers in the DataModels setting",
                 this.keepAtomContainerInDataModelPreference.getContent()) {
@@ -701,6 +719,7 @@ public class SettingsContainer {
                 super.set(newValue);
             }
         };
+        this.settingNameTooltipTextMap.put(this.alwaysMDLV3000FormatAtExportSetting.getName(), Message.get("SettingsContainer.alwaysMDLV3000FormatAtExportSetting.tooltip"));
         this.csvExportSeparatorSetting = new SimpleStringProperty( this,
                 "Csv export separator setting",
                 this.csvExportSeparatorPreference.getContent()) {
@@ -718,7 +737,8 @@ public class SettingsContainer {
                 }
             }
         };
-        this.settings = new ArrayList<Property>(3);
+        this.settingNameTooltipTextMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.tooltip"));
+        this.settings = new ArrayList<Property>(6);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
