@@ -409,7 +409,7 @@ public class MainViewController {
                 for(Tab tmpTab : this.mainTabPane.getTabs()){
                     TableView tmpTableView = ((GridTabForTableView) tmpTab).getTableView();
                     int tmpListSize = 0;
-                    //TODO: change this when FragmentDataModel extends MoleculeDataModel via Interface IDataTableView
+                    //TODO: change this when FragmentDataModel extends MoleculeDataModel via Interface IDataTableView - done?
                     tmpListSize = ((IDataTableView)tmpTableView).getItemsList().size();
                     int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
                     int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();

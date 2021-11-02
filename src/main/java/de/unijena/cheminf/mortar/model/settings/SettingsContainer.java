@@ -42,7 +42,11 @@ import javafx.beans.property.SimpleStringProperty;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -364,7 +368,9 @@ public class SettingsContainer {
      * @return keep atom container in data model setting value
      */
     public boolean getKeepAtomContainerInDataModelSetting() {
-        return this.keepAtomContainerInDataModelSetting.get();
+        //DEPRECATED
+        //return this.keepAtomContainerInDataModelSetting.get();
+        return false;
     }
 
     /**
@@ -476,9 +482,10 @@ public class SettingsContainer {
      *
      * @param aBoolean whether to keep the atom container in the molecule/fragment data model
      */
-    public void setKeepAtomContainerInDataModelSetting(boolean aBoolean) {
+    //DEPRECATED
+    /*public void setKeepAtomContainerInDataModelSetting(boolean aBoolean) {
         this.keepAtomContainerInDataModelSetting.set(aBoolean);
-    }
+    }*/
 
     /**
      * Sets the setting for whether to always use MDL V3000 format for file export. Per default, this is set to false and
@@ -515,7 +522,8 @@ public class SettingsContainer {
         this.numberOfTasksForFragmentationSetting.set(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
-        this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
+        //DEPRECATED
+        //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
     }
@@ -571,13 +579,14 @@ public class SettingsContainer {
         } else {
             throw new IOException("One or multiple settings could not be restored from the previous run.");
         }
-        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME)) {
+        //DEPRECATED
+        /*if (this.preferenceContainer.containsPreferenceName(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME)) {
             this.keepAtomContainerInDataModelPreference =
                     (BooleanPreference) this.preferenceContainer.getPreferences(
                             SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME)[0];
         } else {
             throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
+        }*/
         if (this.preferenceContainer.containsPreferenceName(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME)) {
             this.alwaysMDLV3000FormatAtExportPreference =
                     (BooleanPreference) this.preferenceContainer.getPreferences(
@@ -616,10 +625,11 @@ public class SettingsContainer {
                 SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME,
                 SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.preferenceContainer.add(this.addImplicitHydrogensAtImportPreference);
-        this.keepAtomContainerInDataModelPreference = new BooleanPreference(
+        //DEPRECATED
+        /*this.keepAtomContainerInDataModelPreference = new BooleanPreference(
                 SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME,
                 SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.keepAtomContainerInDataModelPreference);
+        this.preferenceContainer.add(this.keepAtomContainerInDataModelPreference);*/
         this.alwaysMDLV3000FormatAtExportPreference = new BooleanPreference(
                 SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME,
                 SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
@@ -701,13 +711,22 @@ public class SettingsContainer {
             }
         };
         this.settingNameTooltipTextMap.put(this.addImplicitHydrogensAtImportSetting.getName(), Message.get("SettingsContainer.addImplicitHydrogensAtImportSetting.tooltip"));
-        this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
+        //DEPRECATED
+        /*this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
                 "Keep AtomContainers in the DataModels setting",
                 this.keepAtomContainerInDataModelPreference.getContent()) {
             @Override
             public void set(boolean newValue) {
                 SettingsContainer.this.keepAtomContainerInDataModelPreference.setContent(newValue);
                 super.set(newValue);
+            }
+        };*/
+        //Dummy:
+        this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
+                "Keep AtomContainers in the DataModels setting", false) {
+            @Override
+            public void set(boolean newValue) {
+                //do nothing, the value should remain false!
             }
         };
         this.alwaysMDLV3000FormatAtExportSetting = new SimpleBooleanProperty(this,
@@ -742,7 +761,8 @@ public class SettingsContainer {
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
-        this.settings.add(this.keepAtomContainerInDataModelSetting);
+        //DEPRECATED
+        //this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
         this.settings.add(this.csvExportSeparatorSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
