@@ -282,7 +282,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settingNameTooltipTextMap.put(this.sugarTypeToRemoveSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.sugarTypeToRemoveSetting.tooltip"));
         this.detectCircularSugarsOnlyWithGlycosidicBondSetting = new SimpleBooleanProperty(this,
-                "detectCircularSugarsOnlyWithGlycosidicBondSetting",
+                "Detect circular sugars only with glycosidic bond setting",
                 this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected()) {
             @Override
             public void set(boolean newValue) {

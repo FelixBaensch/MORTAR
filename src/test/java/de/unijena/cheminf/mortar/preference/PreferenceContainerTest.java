@@ -20,12 +20,16 @@
 
 package de.unijena.cheminf.mortar.preference;
 
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.awt.*;
 import java.io.File;
+import java.util.Locale;
 
 import static org.junit.Assert.*;
 
@@ -102,5 +106,23 @@ public class PreferenceContainerTest {
         Assert.assertEquals(tmpContainer.toString(), tmpReloadedContainer.toString());
         Assert.assertEquals(tmpContainer, tmpReloadedContainer);
         System.out.println();
+    }
+
+    @Test
+    public void testPropertyToPreferenceConversion() throws Exception {
+        Locale.setDefault(new Locale("en", "GB"));
+        SugarRemovalUtilityFragmenter tmpSRUFragmenter = new SugarRemovalUtilityFragmenter();
+        String tmpDir = FileUtil.getAppDirPath()
+                + File.separatorChar
+                + "Test"
+                + File.separatorChar;
+        (new File(tmpDir)).mkdirs();
+        String tmpFilePathname = tmpDir + "SRUFragmenterSettings.txt";
+        PreferenceContainer tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSRUFragmenter.settingsProperties(), tmpFilePathname);
+        tmpContainer.writeRepresentation();
+        tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new ErtlFunctionalGroupsFinderFragmenter().settingsProperties(), tmpDir + "EFGFFragmenterSettings.txt");
+        tmpContainer.writeRepresentation();
+        tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new SettingsContainer().settingsProperties(), tmpDir + "SettingContainer.txt");
+        tmpContainer.writeRepresentation();
     }
 }

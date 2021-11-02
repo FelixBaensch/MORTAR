@@ -20,6 +20,13 @@
 
 package de.unijena.cheminf.mortar.preference;
 
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import javafx.beans.property.*;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -45,6 +52,44 @@ public final class PreferenceUtil {
      */
     public static boolean isValidName(String aName) {
         return BasePreference.isValidName(aName);
+    }
+
+    //TODO: There are several restrictions unchecked here, e.g. whether the property names are valid preference names or whether the string values are valid values of SingleTermPreference objects
+    /**
+     *
+     */
+    public static PreferenceContainer translateJavaFxPropertiesToPreferences(List<Property> aPropertiesList, String aContainerFilePathname) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(aPropertiesList);
+        if (!PreferenceContainer.isValidContainerFilePathname(aContainerFilePathname)) {
+            throw new IllegalArgumentException("File pathname " + aContainerFilePathname + " is no valid path.");
+        }
+        if (aPropertiesList.isEmpty()) {
+            return new PreferenceContainer(aContainerFilePathname);
+        }
+        PreferenceContainer tmpContainer = new PreferenceContainer(aContainerFilePathname);
+        for (Property tmpProperty : aPropertiesList) {
+            try {
+                if (tmpProperty instanceof SimpleBooleanProperty){
+                    BooleanPreference tmpBooleanPreference = new BooleanPreference(tmpProperty.getName(), ((SimpleBooleanProperty) tmpProperty).get());
+                    tmpContainer.add(tmpBooleanPreference);
+                } else if (tmpProperty instanceof SimpleIntegerProperty) {
+                    SingleIntegerPreference tmpIntPreference = new SingleIntegerPreference(tmpProperty.getName(), ((SimpleIntegerProperty) tmpProperty).get());
+                    tmpContainer.add(tmpIntPreference);
+                } else if (tmpProperty instanceof SimpleDoubleProperty) {
+                    SingleNumberPreference tmpDoublePreference = new SingleNumberPreference(tmpProperty.getName(), ((SimpleDoubleProperty) tmpProperty).get());
+                    tmpContainer.add(tmpDoublePreference);
+                } else if (tmpProperty instanceof SimpleEnumConstantNameProperty || tmpProperty instanceof SimpleStringProperty) {
+                    SingleTermPreference tmpStringPreference = new SingleTermPreference(tmpProperty.getName(), ((SimpleStringProperty) tmpProperty).get());
+                    tmpContainer.add(tmpStringPreference);
+                } else {
+                    throw new IllegalArgumentException("Unknown property type was given.");
+                }
+            } catch (IllegalArgumentException anException) {
+                PreferenceUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                continue;
+            }
+        }
+        return tmpContainer;
     }
     //</editor-fold>
 }
