@@ -1078,6 +1078,12 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
         }
         tmpReturnList.addAll(tmpSideChainList);
+        /*Remove all empty fragments*/
+        for(IAtomContainer tmpReturnMolecule : tmpReturnList) {
+            if(tmpReturnMolecule.isEmpty()){
+                tmpReturnList.remove(tmpReturnMolecule);
+            }
+        }
         return tmpReturnList;
     }
 
