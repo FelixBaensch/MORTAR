@@ -419,6 +419,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
         };
         this.setElectronDonationInstance(ScaffoldGeneratorFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get()));
+        Aromaticity tmpAromaticity = new Aromaticity(ScaffoldGeneratorFragmenter.this.electronDonationInstance, ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
+        ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
         this.smilesGeneratorSetting = new SimpleEnumConstantNameProperty(this, "Smiles generator setting",
                 ScaffoldGeneratorFragmenter.SMILES_GENERATOR_OPTION_DEFAULT.name(), ScaffoldGeneratorFragmenter.SmilesGeneratorOption.class) {
             @Override
@@ -436,6 +438,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setSmilesGeneratorSetting(smilesGeneratorInstance);
             }
         };
+        this.setSmilesGeneratorInstance(ScaffoldGeneratorFragmenter.SmilesGeneratorOption.valueOf(this.smilesGeneratorSetting.get()));
+        ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setSmilesGeneratorSetting(ScaffoldGeneratorFragmenter.this.smilesGeneratorInstance);
         this.ruleSevenAppliedSetting = new SimpleBooleanProperty(this,
                 "Rule seven setting", ScaffoldGenerator.RULE_SEVEN_APPLIED_SETTING_DEFAULT) {
             @Override
