@@ -154,4 +154,11 @@ public final class BasicDefinitions {
      */
     public static final String MORTAR_VERSION = "0.0.1.0";
     //</editor-fold>
+    //
+    //<editor-fold desc="GitHub repository url">
+    /**
+     * URL which links to GitHub repository of MORTAR
+     */
+    public static final String GITHUB_REPOSITORY_URL = "https://github.com/FelixBaensch/MORTAR";
+    //</editor-fold>
 }

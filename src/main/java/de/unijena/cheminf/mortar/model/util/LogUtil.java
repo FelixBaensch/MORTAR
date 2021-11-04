@@ -259,4 +259,19 @@ public final class LogUtil {
         }
     }
     // </editor-fold>
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    //<editor-fold desc="getLogFileDirectoryPath" defaultstate="collapsed">
+    /**
+     * Returns the path to directory in which log files are stored
+     *
+     * @return path (String) to log file directory
+     */
+    public static String getLogFileDirectoryPath(){
+        return FileUtil.getAppDirPath() + File.separator
+                + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator;
+
+    }
+    //</editor-fold>
+    //</editor-fold>
 }

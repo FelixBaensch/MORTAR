@@ -54,6 +54,8 @@ public class MainMenuBar extends MenuBar {
     private Menu settingsMenu;
     private Menu pipelineMenu;
     private Menu helpMenu;
+    private MenuItem logFilesMenuItem;
+    private MenuItem gitHubRepoMenuItem;
     private MenuItem fragmentationSettingsMenuItem;
     private MenuItem globalSettingsMenuItem;
     private MenuItem pipelineSettingsMenuItem;
@@ -100,6 +102,8 @@ public class MainMenuBar extends MenuBar {
         this.pipelineSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.pipelineMenu.pipelineSettingsMenuItem.text"));
         //helpMenu
         this.helpMenu = new Menu(Message.get("MainView.menuBar.helpMenu.text"));
+        this.logFilesMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.logFilesMenuItem.text"));
+        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -141,6 +145,8 @@ public class MainMenuBar extends MenuBar {
         this.pipelineMenu.getItems().add(this.pipelineSettingsMenuItem);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
+        this.helpMenu.getItems().add(this.logFilesMenuItem);
+        this.helpMenu.getItems().add(this.gitHubRepoMenuItem);
         this.getMenus().add(this.helpMenu);
         //</editor-fold>
     }
@@ -338,6 +344,26 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getPipelineSettingsMenuItem() {
         return this.pipelineSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the log files directory in explorer
+     *
+     * @return the menu item that should open the log files directory
+     */
+    public MenuItem getLogFilesMenuItem() {
+        return this.logFilesMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the GitHub repository in browser
+     *
+     * @return the menu item that should open the GitHub repository
+     */
+    public MenuItem getGitHubRepoMenuItem() {
+        return this.gitHubRepoMenuItem;
     }
     //</editor-fold>
     //</editor-fold>
