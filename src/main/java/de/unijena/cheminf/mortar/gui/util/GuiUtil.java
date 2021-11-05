@@ -20,7 +20,12 @@
 
 package de.unijena.cheminf.mortar.gui.util;
 
+import de.unijena.cheminf.mortar.gui.views.IDataTableView;
+import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Control;
@@ -272,6 +277,40 @@ public class GuiUtil {
                     return;
                 }
                 Clipboard.getSystemClipboard().setContent(tmpClipboardContent);
+            }
+        }
+    }
+    //
+    /**
+     * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     *
+     * @param aTableView TableView
+     * @param aHeight double
+     */
+    public static void setImageStructureHeight(TableView aTableView, double aHeight, SettingsContainer aSettingsContainer){
+        double tmpHeight =
+                (aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                        / aSettingsContainer.getRowsPerPageSetting();
+        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
+            tmpHeight =
+                    (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                            / aSettingsContainer.getRowsPerPageSetting();
+        }
+        if(tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT){
+            tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
+        }
+        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
+            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
+                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(((ItemizationDataTableView) aTableView).getFragmentationName())){
+                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
+                }
+            }
+        }
+        else{
+            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
             }
         }
     }

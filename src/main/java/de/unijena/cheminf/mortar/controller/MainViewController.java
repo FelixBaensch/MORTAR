@@ -40,17 +40,14 @@ import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -175,7 +172,7 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentsExportToPDFMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> new Exporter(this.settingsContainer).createFragmentationTabPdfFile(this.primaryStage,
-                        ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView().getItems(),
+                        ((IDataTableView)((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView()).getItemsList(),
                         this.moleculeDataModelList,
                         this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())
         );
@@ -231,54 +228,6 @@ public class MainViewController {
         );
         //TODO: More implementation needed
         //TODO: Add listener to rows per page setting in settings container //deprecated?
-    }
-    //
-    /**
-     * Adds a changes listener to the height property of given table view which sets the height for structure images to
-     * each MoleculeDataModel object of the items list and refreshes the table view
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
-     *
-     * @param aTableView
-     */
-    private void addTableViewWidthListener(TableView aTableView){
-        aTableView.heightProperty().addListener((observable, oldValue, newValue) -> {
-            this.setImageStructureHeight(aTableView, newValue.doubleValue());
-            aTableView.refresh();
-        });
-    }
-    //
-    /**
-     * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
-     *
-     * @param aTableView TableView
-     * @param aHeight double
-     */
-    private void setImageStructureHeight(TableView aTableView, double aHeight){
-        double tmpHeight =
-                (aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                        / settingsContainer.getRowsPerPageSetting();
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
-            tmpHeight =
-                    (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                            / settingsContainer.getRowsPerPageSetting();
-        }
-        if(tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT){
-            tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
-        }
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
-                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
-                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(((ItemizationDataTableView) aTableView).getFragmentationName())){
-                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
-                }
-            }
-        }
-        else{
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
-                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
-            }
-        }
     }
     //
     /**
@@ -433,7 +382,7 @@ public class MainViewController {
                     ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
                     ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
-                    this.setImageStructureHeight(((GridTabForTableView) tmpTab).getTableView(), ((GridTabForTableView) tmpTab).getTableView().getHeight());
+                    GuiUtil.setImageStructureHeight(((GridTabForTableView) tmpTab).getTableView(), ((GridTabForTableView) tmpTab).getTableView().getHeight(), this.settingsContainer);
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
                 }
             }
@@ -464,7 +413,7 @@ public class MainViewController {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setPageFactory(this::createDataTableViewPage);
+        tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
@@ -492,67 +441,13 @@ public class MainViewController {
         this.cancelFragmentationButton.setOnAction(event ->{
             this.interruptFragmentation();
         });
-        this.addTableViewWidthListener(this.moleculesDataTableView);
+        this.moleculesDataTableView.addTableViewWidthListener(this.settingsContainer);
         this.moleculesDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView));
         this.moleculesDataTableView.setOnKeyPressed(event -> {
             if(GuiDefinitions.KEY_CODE_COPY.match(event)){
                 GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView);
             }
         });
-    }
-    //
-    /**
-     * Creates a page for the pagination for the dataTableView //TODO: refine comment
-     *
-     * @param aPageIndex
-     * @return Node, page of pagination
-     */
-    private Node createDataTableViewPage(int aPageIndex){
-        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int tmpFromIndex = aPageIndex * tmpRowsPerPage;
-        int tmpToIndex = Math.min(tmpFromIndex + tmpRowsPerPage, this.moleculeDataModelList.size());
-        this.moleculesDataTableView.getSelectAllCheckBox().setOnAction(event -> {
-            this.selectionAllCheckBoxAction = true;
-            for (int i = 0; i < this.moleculeDataModelList.size(); i++) {
-                if(this.moleculesDataTableView.getSelectAllCheckBox().isSelected()){
-                    this.moleculeDataModelList.get(i).setSelection(true);
-                }
-                else if(!this.moleculesDataTableView.getSelectAllCheckBox().isSelected()){
-                    this.moleculeDataModelList.get(i).setSelection(false);
-                }
-            }
-            this.selectionAllCheckBoxAction = false;
-        });
-        this.moleculeDataModelList.addListener((ListChangeListener) change ->{
-            if(this.selectionAllCheckBoxAction){
-                // No further action needed with column checkbox data when the select all checkbox is operated on
-                return;
-            }
-            while(change.next()){
-                if(change.wasUpdated()){
-                    int checked = 0;
-                    for(MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList){
-                        if(tmpMoleculeDataModel.isSelected())
-                            checked++;
-                    }
-                    if(checked == this.moleculeDataModelList.size()){
-                        this.moleculesDataTableView.getSelectAllCheckBox().setSelected(true);
-                        this.moleculesDataTableView.getSelectAllCheckBox().setIndeterminate(false);
-                    }
-                    else if(checked == 0){
-                        this.moleculesDataTableView.getSelectAllCheckBox().setSelected(false);
-                        this.moleculesDataTableView.getSelectAllCheckBox().setIndeterminate(false);
-                    }
-                    else if(checked > 0){
-                        this.moleculesDataTableView.getSelectAllCheckBox().setSelected(false);
-                        this.moleculesDataTableView.getSelectAllCheckBox().setIndeterminate(true);
-                    }
-                }
-            }
-        });
-        this.moleculesDataTableView.setItems(FXCollections.observableArrayList(this.moleculeDataModelList.subList(tmpFromIndex, tmpToIndex)));
-        this.moleculesDataTableView.scrollTo(0);
-        return new BorderPane(this.moleculesDataTableView);
     }
     //
     private void interruptFragmentation(){
@@ -648,7 +543,7 @@ public class MainViewController {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setPageFactory((pageIndex) -> createFragmentsTableViewPage(pageIndex, tmpFragmentsDataTableView));
+        tmpPagination.setPageFactory((pageIndex) -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addPaginationToGridPane(tmpPagination, 0,0,2,2);
@@ -663,10 +558,10 @@ public class MainViewController {
         tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
         Exporter tmpExporter = new Exporter(settingsContainer);
         tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0,1,1,1);
-        tmpExportPdfButton.setOnAction(event->{
-            tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
-                    this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
-        });
+//        tmpExportPdfButton.setOnAction(event->{
+//            tmpExporter.createFragmentationTabPdfFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
+//                    this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+//        });
         tmpExportCsvButton.setOnAction(event->{
             tmpExporter.createFragmentationTabCsvFile(this.primaryStage, this.mapOfFragmentDataModelLists.get(aFragmentationName),
                     this.settingsContainer.getCsvExportSeparatorSetting());
@@ -682,7 +577,7 @@ public class MainViewController {
             event.getSource().getItems().clear();
             event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
         });
-        this.addTableViewWidthListener(tmpFragmentsDataTableView);
+        tmpFragmentsDataTableView.addTableViewWidthListener(this.settingsContainer);
         tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
         tmpFragmentsDataTableView.setOnKeyPressed(event -> {
             if(GuiDefinitions.KEY_CODE_COPY.match(event)){
@@ -708,7 +603,7 @@ public class MainViewController {
             tmpPageCount++;
         }
         Pagination tmpPaginationItems = new Pagination(tmpPageCount, 0);
-        tmpPaginationItems.setPageFactory((pageIndex) -> createItemizationTableViewPage(pageIndex, tmpItemizationDataTableView));
+        tmpPaginationItems.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
         tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems, 0,0,2,2);
@@ -726,11 +621,11 @@ public class MainViewController {
             tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList,aFragmentationName,
                     this.settingsContainer.getCsvExportSeparatorSetting());
         });
-        tmpItemizationTabExportPDfButton.setOnAction(event -> {
-            tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName),
-                    this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
-        });
-        this.addTableViewWidthListener(tmpItemizationDataTableView);
+//        tmpItemizationTabExportPDfButton.setOnAction(event -> {
+//            tmpExporter.createItemizationTabPdfFile(this.primaryStage,this.mapOfFragmentDataModelLists.get(aFragmentationName),
+//                    this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+//        });
+        tmpItemizationDataTableView.addTableViewWidthListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
         tmpItemizationDataTableView.setOnKeyPressed(event -> {
             if(GuiDefinitions.KEY_CODE_COPY.match(event)){
@@ -739,38 +634,6 @@ public class MainViewController {
         });
         //
         this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
-    }
-    //
-    /**
-     * Creates a fragments tableview page
-     *
-     * @param aPageIndex
-     * @param aFragmentsDataTableView
-     * @return
-     */
-    private Node createFragmentsTableViewPage(int aPageIndex, FragmentsDataTableView aFragmentsDataTableView) {
-        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int fromIndex = aPageIndex * tmpRowsPerPage;
-        int toIndex = Math.min(fromIndex + tmpRowsPerPage, aFragmentsDataTableView.getItemsList().size());
-        aFragmentsDataTableView.setItems(FXCollections.observableArrayList(aFragmentsDataTableView.getItemsList().subList(fromIndex, toIndex)));
-        aFragmentsDataTableView.scrollTo(0);
-        return new BorderPane(aFragmentsDataTableView);
-    }
-    //
-    /**
-     * Creates an itemization tableview page
-     *
-     * @param pageIndex
-     * @param anItemizationDataTableView
-     * @return
-     */
-    private Node createItemizationTableViewPage(int pageIndex, ItemizationDataTableView anItemizationDataTableView){
-        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int fromIndex = pageIndex * tmpRowsPerPage;
-        int toIndex = Math.min(fromIndex + tmpRowsPerPage, anItemizationDataTableView.getItemsList().size());
-        anItemizationDataTableView.setItems(FXCollections.observableArrayList(anItemizationDataTableView.getItemsList().subList(fromIndex, toIndex)));
-        anItemizationDataTableView.scrollTo(0);
-        return new BorderPane(anItemizationDataTableView);
     }
     //
     /**

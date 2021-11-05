@@ -21,14 +21,21 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 
 import java.util.List;
 
@@ -56,9 +63,9 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      */
     private CheckBox selectAllCheckBox;
     /**
-     * List which contains all items to be shown in this tableView not only the displayed ones for this page (Pagination)
+     * Observable list which contains all items to be shown in this tableView not only the displayed ones for this page (Pagination)
      */
-    private List<MoleculeDataModel> itemsList;
+    private ObservableList<MoleculeDataModel> itemsObservableList;
     /**
      * ContextMenu ot the TableView
      */
@@ -67,6 +74,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      * MenuItem of ContextMenu to copy selected cell to clipboard
      */
     private MenuItem copyMenuItem;
+    private boolean selectionAllCheckBoxAction;
     //</editor-fold>
     //
     /**
@@ -125,6 +133,74 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.contextMenu.getItems().add(this.copyMenuItem);
     }
     //
+    /**
+     * Creates a page for the pagination for the dataTableView //TODO: refine comment
+     *
+     * @param aPageIndex
+     * @return Node, page of pagination
+     */
+    public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer){
+        int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
+        int tmpFromIndex = aPageIndex * tmpRowsPerPage;
+        int tmpToIndex = Math.min(tmpFromIndex + tmpRowsPerPage, this.itemsObservableList.size());
+        this.getSelectAllCheckBox().setOnAction(event -> {
+            this.selectionAllCheckBoxAction = true;
+            for (int i = 0; i < this.itemsObservableList.size(); i++) {
+                if(this.getSelectAllCheckBox().isSelected()){
+                    this.itemsObservableList.get(i).setSelection(true);
+                }
+                else if(!this.getSelectAllCheckBox().isSelected()){
+                    this.itemsObservableList.get(i).setSelection(false);
+                }
+            }
+            this.selectionAllCheckBoxAction = false;
+        });
+        this.itemsObservableList.addListener((ListChangeListener) change ->{
+            if(this.selectionAllCheckBoxAction){
+                // No further action needed with column checkbox data when the select all checkbox is operated on
+                return;
+            }
+            while(change.next()){
+                if(change.wasUpdated()){
+                    int checked = 0;
+                    for(MoleculeDataModel tmpMoleculeDataModel : this.itemsObservableList){
+                        if(tmpMoleculeDataModel.isSelected())
+                            checked++;
+                    }
+                    if(checked == this.itemsObservableList.size()){
+                        this.getSelectAllCheckBox().setSelected(true);
+                        this.getSelectAllCheckBox().setIndeterminate(false);
+                    }
+                    else if(checked == 0){
+                        this.getSelectAllCheckBox().setSelected(false);
+                        this.getSelectAllCheckBox().setIndeterminate(false);
+                    }
+                    else if(checked > 0){
+                        this.getSelectAllCheckBox().setSelected(false);
+                        this.getSelectAllCheckBox().setIndeterminate(true);
+                    }
+                }
+            }
+        });
+        this.setItems(FXCollections.observableArrayList(this.itemsObservableList.subList(tmpFromIndex, tmpToIndex)));
+        this.scrollTo(0);
+        return new BorderPane(this);
+    }
+    //
+    /**
+     * Adds a changes listener to the height property of table view which sets the height for structure images to
+     * each MoleculeDataModel object of the items list and refreshes the table view
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     *
+     * @param aSettingsContainer
+     */
+    public void addTableViewWidthListener(SettingsContainer aSettingsContainer){
+        this.heightProperty().addListener((observable, oldValue, newValue) -> {
+            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer);
+            this.refresh();
+        });
+    }
+    //
     //<editor-fold desc="properties" defaulstate="collapsed">
     public TableColumn getSelectionColumn(){
         return this.selectionColumn;
@@ -139,9 +215,12 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         return this.copyMenuItem;
     }
     public CheckBox getSelectAllCheckBox() { return this.selectAllCheckBox; }
-    public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public List<MoleculeDataModel> getItemsList()
+    {
+        return this.itemsObservableList;
+    }
     public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
-        this.itemsList = aListOfFragments;
+        this.itemsObservableList = FXCollections.observableList(aListOfFragments);
     }
     //</editor-fold>
 }

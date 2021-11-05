@@ -183,7 +183,7 @@ public class Exporter {
      */
     public Document createFragmentationTabPdfFile(
             Stage aParentStage,
-            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            List<MoleculeDataModel> aFragmentDataModelList,
             ObservableList<MoleculeDataModel> aMoleculeDataModelList,
             String aName) {
         try {
@@ -212,7 +212,8 @@ public class Exporter {
                 tmpFragmentationTable.addCell(tmpPercentageCell);
                 tmpFragmentationTable.addCell(tmpMolFrequencyCell);
                 tmpFragmentationTable.addCell(tmpMolPercentageCell);
-                for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
+                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
                     int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
                     String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
                     double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
@@ -640,7 +641,7 @@ public class Exporter {
      */
     public Document createItemizationTabPdfFile(
             Stage aParentStage,
-            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            List<MoleculeDataModel> aFragmentDataModelList,
             ObservableList<MoleculeDataModel> aMoleculeDataModelList,
             String aFragmentationName,
             String aName) {
@@ -819,7 +820,7 @@ public class Exporter {
      * @author Betül Sevindik
      */
     private PdfPTable createHeaderTable(
-            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            List<MoleculeDataModel> aFragmentDataModelList,
             ObservableList<MoleculeDataModel> aMoleculeDataModelList,
             String anAlgorithmName) {
         int tmpFragmentNumbers =  aFragmentDataModelList.size();

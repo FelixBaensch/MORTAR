@@ -21,6 +21,7 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
 import java.util.List;
 
@@ -28,4 +29,5 @@ public interface IDataTableView {
 
     public List<MoleculeDataModel> getItemsList();
     public void setItemsList(List<MoleculeDataModel> aListOfFragments);
+    public void addTableViewWidthListener(SettingsContainer aSettingsContainer);
 }
