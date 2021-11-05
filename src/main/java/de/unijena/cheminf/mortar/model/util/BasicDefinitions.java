@@ -123,12 +123,12 @@ public final class BasicDefinitions {
     /**
      *
      */
-    public static final String PREFERENCE_CONTAINER_FILE_DIRECTORY = "Preferences";
+    public static final String SETTINGS_CONTAINER_FILE_DIRECTORY = "Settings";
 
     /**
      *
      */
-    public static final String PREFERENCE_CONTAINER_FILE_NAME = "Mortar_Preferences";
+    public static final String SETTINGS_CONTAINER_FILE_NAME = "Mortar_Settings";
 
     /**
      * Note, the file extension (.txt or .gzip) defines whether the preference container file is compressed or not.

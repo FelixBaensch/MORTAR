@@ -197,6 +197,13 @@ public final class FileUtil {
     }
 
     /**
+     * TODO
+     */
+    public static String getSettingsDirPath() throws SecurityException {
+        return FileUtil.getAppDirPath() + File.separator + BasicDefinitions.SETTINGS_CONTAINER_FILE_DIRECTORY + File.separator;
+    }
+
+    /**
      * Returns a timestamp to add to a filename.
      *
      * @throws DateTimeException if the time cannot be determined or formatted

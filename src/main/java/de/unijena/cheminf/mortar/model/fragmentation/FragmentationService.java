@@ -25,11 +25,33 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.preference.BooleanPreference;
+import de.unijena.cheminf.mortar.preference.IPreference;
+import de.unijena.cheminf.mortar.preference.PreferenceContainer;
+import de.unijena.cheminf.mortar.preference.PreferenceUtil;
+import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
+import de.unijena.cheminf.mortar.preference.SingleNumberPreference;
+import de.unijena.cheminf.mortar.preference.SingleTermPreference;
+import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -307,6 +329,76 @@ public class FragmentationService {
         Constructor tmpCtor = tmpClazz.getConstructor();
 
         return (IMoleculeFragmenter) tmpCtor.newInstance();
+    }
+
+    /**
+     * TODO
+     */
+    public void persistFragmenterSettings() throws IOException, SecurityException {
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            List<Property> tmpSettings = tmpFragmenter.settingsProperties();
+            if (Objects.isNull(tmpSettings)) {
+                continue;
+            }
+            String tmpFilePath = FileUtil.getSettingsDirPath()
+                    + tmpFragmenter.getClass().getSimpleName()
+                    + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
+            PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
+            tmpPrefContainer.writeRepresentation();
+        }
+    }
+
+    /**
+     * TODO
+     */
+    public void reloadFragmenterSettings() {
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            String tmpClassName = tmpFragmenter.getClass().getSimpleName();
+            File tmpFragmenterSettingsFile = new File(FileUtil.getSettingsDirPath()
+                    + tmpClassName
+                    + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION);
+            if (tmpFragmenterSettingsFile.exists() && tmpFragmenterSettingsFile.isFile() && tmpFragmenterSettingsFile.canRead()) {
+                PreferenceContainer tmpContainer;
+                try {
+                    tmpContainer = new PreferenceContainer(tmpFragmenterSettingsFile);
+                } catch (IllegalArgumentException | IOException anException) {
+                    FragmentationService.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    continue;
+                }
+                for (Property tmpSettingProperty : tmpFragmenter.settingsProperties()) {
+                    String tmpPropertyName = tmpSettingProperty.getName();
+                    if (tmpContainer.containsPreferenceName(tmpPropertyName)) {
+                        IPreference[] tmpPreferences = tmpContainer.getPreferences(tmpPropertyName);
+                        try {
+                            if (tmpSettingProperty instanceof SimpleBooleanProperty) {
+                                BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpBooleanPreference.getContent());
+                            } else if (tmpSettingProperty instanceof SimpleIntegerProperty) {
+                                SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpIntPreference.getContent());
+                            } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
+                                SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpDoublePreference.getContent());
+                            } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
+                                SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpStringPreference.getContent());
+                            } else {
+                                //setting will remain in default
+                                FragmentationService.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
+                            }
+                        } catch (ClassCastException aCastingException) {
+                            FragmentationService.LOGGER.log(Level.WARNING, aCastingException.toString(), aCastingException);
+                        }
+                    } else {
+                        //setting will remain in default
+                        FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
+                    }
+                }
+            } else {
+                //settings will remain in default
+                FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpClassName + " available.");
+            }
+        }
     }
 
     /**

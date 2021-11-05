@@ -235,10 +235,10 @@ public class SettingsContainer {
      */
     public SettingsContainer() {
         String tmpPreferenceContainerDirectoryPathName = FileUtil.getAppDirPath() + File.separator
-                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_DIRECTORY + File.separator;
+                + BasicDefinitions.SETTINGS_CONTAINER_FILE_DIRECTORY + File.separator;
         File tmpPreferencesDirectoryFile = new File(tmpPreferenceContainerDirectoryPathName);
         String tmpPreferenceContainerFilePathName = tmpPreferenceContainerDirectoryPathName
-                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_NAME
+                + BasicDefinitions.SETTINGS_CONTAINER_FILE_NAME
                 + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
         File tmpPreferenceContainerFile = new File(tmpPreferenceContainerFilePathName);
         boolean tmpDoNewInitialisation = false;

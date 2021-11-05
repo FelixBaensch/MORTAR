@@ -125,6 +125,8 @@ public class MainViewController {
         this.mainView = aMainView;
         this.appDir = anAppDir;
         this.settingsContainer = new SettingsContainer();
+        this.fragmentationService = new FragmentationService();
+        this.fragmentationService.reloadFragmenterSettings();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -137,7 +139,6 @@ public class MainViewController {
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
-        this.fragmentationService = new FragmentationService();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
         this.mapOfFragmentDataModelLists = new HashMap<>(5);
@@ -289,12 +290,21 @@ public class MainViewController {
         }
         try {
             this.settingsContainer.preserveSettings();
-        } catch (IOException anIOException) {
-            MainViewController.LOGGER.log(Level.WARNING, anIOException.toString(), anIOException);
+        } catch (IOException | SecurityException anException) {
+            MainViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.SettingsPersistence.Header"),
                     Message.get("Error.SettingsPersistence"),
-                    anIOException);
+                    anException);
+        }
+        try {
+            this.fragmentationService.persistFragmenterSettings();
+        } catch (IOException | SecurityException anException) {
+            MainViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.SettingsPersistence.Header"),
+                    Message.get("Error.SettingsPersistence"),
+                    anException);
         }
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
