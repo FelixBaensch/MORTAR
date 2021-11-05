@@ -840,7 +840,7 @@ public class SettingsContainer {
         //TODO: add more legal separators or remove illegal ones
         switch (aSeparator){
             case ",":
-            case ".":
+            case ";":
                 return true;
             default:
                 return false;
