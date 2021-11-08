@@ -127,6 +127,7 @@ public class MainViewController {
         this.settingsContainer = new SettingsContainer();
         this.fragmentationService = new FragmentationService();
         this.fragmentationService.reloadFragmenterSettings();
+        this.fragmentationService.reloadActiveFragmenterAndPipeline();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -299,6 +300,7 @@ public class MainViewController {
         }
         try {
             this.fragmentationService.persistFragmenterSettings();
+            this.fragmentationService.persistActiveFragmenterAndPipeline();
         } catch (IOException | SecurityException anException) {
             MainViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
