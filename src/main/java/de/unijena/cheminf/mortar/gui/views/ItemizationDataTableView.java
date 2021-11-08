@@ -123,6 +123,9 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, BorderPane> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
+            tmpColumn.setResizable(true);
+            tmpColumn.setEditable(false);
+            tmpColumn.setSortable(false);
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
                 if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size())
                     return null;
