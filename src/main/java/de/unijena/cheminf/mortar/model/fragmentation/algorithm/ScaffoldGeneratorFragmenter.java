@@ -25,14 +25,11 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.scaffoldGenerator.ScaffoldGenerator;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
@@ -472,7 +469,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
-        this.sideChainSetting = new SimpleEnumConstantNameProperty(this, "SideChain setting",
+        this.sideChainSetting = new SimpleEnumConstantNameProperty(this, "Side chain setting",
                 ScaffoldGeneratorFragmenter.SIDE_CHAIN_OPTION_DEFAULT.name(), ScaffoldGeneratorFragmenter.SideChainOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
