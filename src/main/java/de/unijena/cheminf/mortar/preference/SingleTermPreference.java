@@ -47,10 +47,10 @@ public class SingleTermPreference extends BasePreference {
      * Allowed characters: 0-9, a-z, ä (hexadecimal value: E4, see below), ü (hexadecimal value: FC, see below),
      * ö (hexadecimal value: F6, see below), ß (hexadecimal value: DF, see below), A-Z,
      * Ä (hexadecimal value: C4, see below), Ü (hexadecimal value: DC, see below), Ö (hexadecimal value: D6, see below),
-     * -, _, [], (), {}, :, ;, /, \, ., space (ASCII 32, hexadecimal value: 20, see below) and ,.
+     * -, _, [], (), {}, :, ;, /, \, ., ', space (ASCII 32, hexadecimal value: 20, see below) and ,.
      */
     private static final Pattern INPUT_TEST_PATTERN =
-            Pattern.compile("\\A[0-9a-z\\xE4\\xFC\\xF6\\xDFA-Z\\xC4\\xDC\\xD6\\.\\,\\-\\_\\[\\]\\(\\)\\{\\}\\:\\;\\/\\\\\\x20]++\\z");
+            Pattern.compile("\\A[0-9a-z\\xE4\\xFC\\xF6\\xDFA-Z\\xC4\\xDC\\xD6\\.\\,\\'\\-\\_\\[\\]\\(\\)\\{\\}\\:\\;\\/\\\\\\x20]++\\z");
 
     /**
      * The version of this class.

@@ -402,13 +402,17 @@ public class MainViewController {
             RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmName());
             tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
             this.mainView.getMainMenuBar().getFragmentationAlgorithmMenu().getItems().add(tmpRadioMenuItem);
+            if (!Objects.isNull(this.fragmentationService.getSelectedFragmenter()) && tmpFragmenter.getFragmentationAlgorithmName().equals(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())) {
+                tmpToggleGroup.selectToggle(tmpRadioMenuItem);
+            }
         }
         tmpToggleGroup.selectedToggleProperty().addListener((observableValue, oldValue, newValue) -> {
             if(tmpToggleGroup.getSelectedToggle() != null){
                 this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
             }
         });
-        tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
+        //TODO remove?
+        //tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
     }
     //
     /**

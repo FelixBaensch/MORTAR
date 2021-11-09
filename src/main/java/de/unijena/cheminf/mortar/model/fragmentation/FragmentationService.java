@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
@@ -65,7 +66,18 @@ import java.util.logging.Logger;
  * @author Jonas Schaub, Felix Baensch
  */
 public class FragmentationService {
+    //<editor-fold desc="public static final constants">
+    /**
+     * Default selected fragmenter
+     */
+    public static final String DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME = ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME;
 
+    /**
+     * Default pipeline name
+     */
+    public static final String DEFAULT_PIPELINE_NAME = Message.get("FragmentationService.defaultPipelineName");
+    //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Array for the different fragmentation algorithms
@@ -80,15 +92,15 @@ public class FragmentationService {
      */
     private IMoleculeFragmenter[] pipelineFragmenter;
     /**
-     * Ertl
+     * Ertl algorithm fragmenter
      */
     private IMoleculeFragmenter ertlFGF;
     /**
-     * Sugar removal
+     * Sugar removal utility fragmenter
      */
     private IMoleculeFragmenter sugarRUF;
     /**
-     * List of  names of fragmentation algorithms that have already been run
+     * List of names of fragmentation algorithms that have already been run
      */
     private List<String> existingFragmentations;
     /**
@@ -108,15 +120,17 @@ public class FragmentationService {
      */
     private ExecutorService executorService;
     //</editor-fold>
+    //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
      * Logger
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentationService.class.getName());
     //</editor-fold>
-
+    //
+    //<editor-fold desc="Constructors">
     /**
-     * Constructor
+     * Constructor, instantiates the fragmenters and sets the selected fragmenter and the pipeline to their defaults.
      */
     public FragmentationService(){
         this.fragmenters = new IMoleculeFragmenter[2];
@@ -124,9 +138,36 @@ public class FragmentationService {
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
         this.fragmenters[1] = this.sugarRUF;
+        //TODO check fragmenters for restrictions the persistence gives and throw exception if they are not met
+        //algorithm name should be singleton
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
+                this.selectedFragmenter = tmpFragmenter;
+            }
+        }
+        if (Objects.isNull(this.selectedFragmenter)) {
+            this.selectedFragmenter = this.ertlFGF;
+        }
+        try {
+            this.pipelineFragmenter = new IMoleculeFragmenter[] {this.createNewFragmenterObjectByName(this.selectedFragmenter.getFragmentationAlgorithmName())};
+        } catch (Exception anException) {
+            //settings of this instance are still in default at this point
+            this.pipelineFragmenter = new IMoleculeFragmenter[] {this.selectedFragmenter.copy()};
+        }
+        this.pipeliningFragmentationName = FragmentationService.DEFAULT_PIPELINE_NAME;
         this.existingFragmentations = new LinkedList<String>();
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
+    /**
+     * Manages the fragmentation, creates a number of {@link FragmentationTask} objects equal to the amount of
+     * {@param aNumberOfTasks}, assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation.
+     *
+     * @param aListOfMolecules
+     * @param aNumberOfTasks
+     * @throws Exception
+     */
     public void startSingleFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
         //<editor-fold desc="checks" defualtstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
@@ -318,26 +359,33 @@ public class FragmentationService {
 
     /**
      * TODO
+     *
      * @param anAlgorithmName
      * @return
+     * @throws IllegalArgumentException
      * @throws ClassNotFoundException
      * @throws NoSuchMethodException
      * @throws InvocationTargetException
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    public IMoleculeFragmenter createNewFragmenterObjectByName(String anAlgorithmName) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public IMoleculeFragmenter createNewFragmenterObjectByName(String anAlgorithmName)
+            throws IllegalArgumentException,
+            ClassNotFoundException,
+            NoSuchMethodException,
+            InvocationTargetException,
+            InstantiationException,
+            IllegalAccessException {
         String tmpClassName = "";
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             if (anAlgorithmName.equals(tmpFragmenter.getFragmentationAlgorithmName()))
                tmpClassName = tmpFragmenter.getClass().getName();
         }
         if(tmpClassName.isBlank() || tmpClassName.isEmpty()){
-            //ToDo throw exception
+            throw new IllegalArgumentException("Given algorithm name " + anAlgorithmName + " is invalid.");
         }
         Class tmpClazz = Class.forName(tmpClassName);
         Constructor tmpCtor = tmpClazz.getConstructor();
-
         return (IMoleculeFragmenter) tmpCtor.newInstance();
     }
 
@@ -366,6 +414,8 @@ public class FragmentationService {
         File tmpFragmentationServiceSettingsDir = new File(tmpFragmentationServiceSettingsPath);
         if (!tmpFragmentationServiceSettingsDir.exists()) {
             tmpFragmentationServiceSettingsDir.mkdirs();
+        } else {
+            FileUtil.deleteAllFilesInDirectory(tmpFragmentationServiceSettingsPath);
         }
         PreferenceContainer tmpFragmentationServiceSettingsContainer = new PreferenceContainer(
                 tmpFragmentationServiceSettingsPath
@@ -385,7 +435,7 @@ public class FragmentationService {
             List<Property> tmpSettings = tmpFragmenter.settingsProperties();
             String tmpFilePath = tmpFragmentationServiceSettingsPath + "PipelineFragmenter_" + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
             PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
-            tmpPrefContainer.add(new SingleTermPreference("ClassName", tmpFragmenter.getClass().getName()));
+            tmpPrefContainer.add(new SingleTermPreference("ClassName", tmpFragmenter.getFragmentationAlgorithmName()));
             tmpPrefContainer.writeRepresentation();
         }
     }
@@ -461,7 +511,7 @@ public class FragmentationService {
                 String tmpSelectedFragmenterClassName = tmpFragmentationServiceSettingsContainer.getPreferences("SelectedFragmenter")[0].getContentRepresentative();
                 this.pipeliningFragmentationName = tmpPipelineName;
                 for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-                    if (tmpFragmenter.getClass().getName().equals(tmpSelectedFragmenterClassName)) {
+                    if (tmpFragmenter.getClass().getSimpleName().equals(tmpSelectedFragmenterClassName)) {
                         this.selectedFragmenter = tmpFragmenter;
                         break;
                     }
@@ -508,7 +558,7 @@ public class FragmentationService {
                         //TODO
                     }
                 }
-                this.pipelineFragmenter = tmpFragmenterArray;
+                this.setPipelineFragmenter(tmpFragmenterArray);
             } catch (IllegalArgumentException | IOException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException anException) {
                 FragmentationService.LOGGER.log(Level.WARNING, anException.toString(), anException);
                 //TODO do more here
@@ -518,6 +568,87 @@ public class FragmentationService {
         }
     }
 
+    /**
+     * Shuts down executor service
+     * Used as recommended by oracle (https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ExecutorService.html)
+     */
+    public void abortExecutor(){
+        this.executorService.shutdown();
+        try {
+            if (!this.executorService.awaitTermination(600, TimeUnit.MILLISECONDS)) {
+                this.executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            this.executorService.shutdownNow();
+        }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns array of {@link IMoleculeFragmenter}
+     * @return fragmenters
+     */
+    public IMoleculeFragmenter[] getFragmenters(){
+        return this.fragmenters;
+    }
+    /**
+     * Returns array of {@link IMoleculeFragmenter} for pipelining
+     * @return pipelineFragmenters
+     */
+    public IMoleculeFragmenter[] getPipelineFragmenter(){
+        return this.pipelineFragmenter;
+    }
+    /**
+     * Returns selected {@link IMoleculeFragmenter}
+     *
+     * @return selectedFragmenter
+     */
+    public IMoleculeFragmenter getSelectedFragmenter(){
+        return this.selectedFragmenter;
+    }
+    /**
+     * Returns Hashtable of {@link FragmentDataModel}
+     *
+     * @return fragments (results of fragmentation)
+     */
+    public Hashtable<String, FragmentDataModel> getFragments(){
+        return this.fragments;
+    }
+    /**
+     * Returns name of the running fragmentation
+     *
+     * @return currentFragmentation
+     */
+    public String getCurrentFragmentationName(){
+        return this.currentFragmentationName;
+    }
+    public String getPipeliningFragmentationName(){
+        return this.pipeliningFragmentationName;
+    }
+    /**
+     * Sets the selectedFragmenter
+     * @param anAlgorithmName
+     */
+    public void setSelectedFragmenter(String anAlgorithmName){
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            if (anAlgorithmName.equals(tmpFragmenter.getFragmentationAlgorithmName()))
+                this.selectedFragmenter = tmpFragmenter;
+        }
+    }
+
+    /**
+     * Sets the fragmenters to use for pipeline fragmentation
+     * @param anArrayOfFragmenter IMolecueFragmenter[]
+     */
+    public void setPipelineFragmenter(IMoleculeFragmenter[] anArrayOfFragmenter){
+        this.pipelineFragmenter = anArrayOfFragmenter;
+    }
+    public void setPipeliningFragmentationName(String aName){
+        this.pipeliningFragmentationName = aName;
+    }
+    //</editor-fold>
+    //<editor-fold desc="private methods">
     /**
      * Checks whether the name exists, if so, a consecutive number is appended, if not, the name is returned unchanged
      * @param anAlgorithmName String
@@ -608,85 +739,6 @@ public class FragmentationService {
                 + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "
                 + tmpMemoryConsumption + " MB");
         return tmpFragmentHashtable;
-    }
-
-    /**
-     * Shuts down executor service
-     * Used as recommended by oracle (https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ExecutorService.html)
-     */
-    public void abortExecutor(){
-        this.executorService.shutdown();
-        try {
-            if (!this.executorService.awaitTermination(600, TimeUnit.MILLISECONDS)) {
-                this.executorService.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            this.executorService.shutdownNow();
-        }
-    }
-
-    //<editor-fold desc="public properties" defaultstate="collapsed">
-    /**
-     * Returns array of {@link IMoleculeFragmenter}
-     * @return fragmenters
-     */
-    public IMoleculeFragmenter[] getFragmenters(){
-        return this.fragmenters;
-    }
-    /**
-     * Returns array of {@link IMoleculeFragmenter} for pipelining
-     * @return pipelineFragmenters
-     */
-    public IMoleculeFragmenter[] getPipelineFragmenter(){
-        return this.pipelineFragmenter;
-    }
-    /**
-     * Returns selected {@link IMoleculeFragmenter}
-     *
-     * @return selectedFragmenter
-     */
-    public IMoleculeFragmenter getSelectedFragmenter(){
-        return this.selectedFragmenter;
-    }
-    /**
-     * Returns Hashtable of {@link FragmentDataModel}
-     *
-     * @return fragments (results of fragmentation)
-     */
-    public Hashtable<String, FragmentDataModel> getFragments(){
-        return this.fragments;
-    }
-    /**
-     * Returns name of the running fragmentation
-     *
-     * @return currentFragmentation
-     */
-    public String getCurrentFragmentationName(){
-        return this.currentFragmentationName;
-    }
-    public String getPipeliningFragmentationName(){
-        return this.pipeliningFragmentationName;
-    }
-    /**
-     * Sets the selectedFragmenter
-     * @param anAlgorithmName
-     */
-    public void setSelectedFragmenter(String anAlgorithmName){
-        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-            if (anAlgorithmName.equals(tmpFragmenter.getFragmentationAlgorithmName()))
-                this.selectedFragmenter = tmpFragmenter;
-        }
-    }
-
-    /**
-     * Sets the fragmenters to use for pipeline fragmentation
-     * @param anArrayOfFragmenter IMolecueFragmenter[]
-     */
-    public void setPipelineFragmenter(IMoleculeFragmenter[] anArrayOfFragmenter){
-        this.pipelineFragmenter = anArrayOfFragmenter;
-    }
-    public void setPipeliningFragmentationName(String aName){
-        this.pipeliningFragmentationName = aName;
     }
     //</editor-fold>
 }
