@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -20,9 +20,12 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
-import javafx.beans.property.*;
+import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 
 import java.util.List;
 import java.util.Objects;
@@ -54,12 +57,21 @@ public final class PreferenceUtil {
         return BasePreference.isValidName(aName);
     }
 
-    //TODO: There are several restrictions unchecked here, e.g. whether the property names are valid preference names or whether the string values are valid values of SingleTermPreference objects
     /**
+     * Translates a list of JavaFX property objects into their respective preference counterparts, conserving their names
+     * and values. A preference container object containing the created preferences is returned. If a property cannot
+     * be translated because its name or content are no valid arguments for the respective preference, a warning is logged.
      *
+     * @param aPropertiesList list of properties to translate
+     * @param aContainerFilePathname the PreferenceContainer object created needs a valid file pathname where it can write
+     *                               its persisted form to
+     * @return preference container containing all translated preferences
+     * @throws NullPointerException if a given argument is null
+     * @throws IllegalArgumentException if the given file path name is invalid
      */
     public static PreferenceContainer translateJavaFxPropertiesToPreferences(List<Property> aPropertiesList, String aContainerFilePathname) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aPropertiesList);
+        Objects.requireNonNull(aContainerFilePathname);
         if (!PreferenceContainer.isValidContainerFilePathname(aContainerFilePathname)) {
             throw new IllegalArgumentException("File pathname " + aContainerFilePathname + " is no valid path.");
         }
@@ -69,6 +81,9 @@ public final class PreferenceUtil {
         PreferenceContainer tmpContainer = new PreferenceContainer(aContainerFilePathname);
         for (Property tmpProperty : aPropertiesList) {
             try {
+                if (Objects.isNull(tmpProperty)) {
+                    continue;
+                }
                 if (tmpProperty instanceof SimpleBooleanProperty){
                     BooleanPreference tmpBooleanPreference = new BooleanPreference(tmpProperty.getName(), ((SimpleBooleanProperty) tmpProperty).get());
                     tmpContainer.add(tmpBooleanPreference);
@@ -82,10 +97,10 @@ public final class PreferenceUtil {
                     SingleTermPreference tmpStringPreference = new SingleTermPreference(tmpProperty.getName(), ((SimpleStringProperty) tmpProperty).get());
                     tmpContainer.add(tmpStringPreference);
                 } else {
-                    throw new IllegalArgumentException("Unknown property type was given.");
+                    PreferenceUtil.LOGGER.log(Level.WARNING, "Unknown property type " + tmpProperty.getClass().getSimpleName() + " was given.");
                 }
             } catch (IllegalArgumentException anException) {
-                PreferenceUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                PreferenceUtil.LOGGER.log(Level.WARNING, "Setting translation to property went wrong, exception: " + anException.toString(), anException);
                 continue;
             }
         }

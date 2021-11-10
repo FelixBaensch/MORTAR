@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2020  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation;
 
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -61,7 +62,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Service class for fragmentation
+ * Service class for fragmentation, single and in a pipeline.
  *
  * @author Jonas Schaub, Felix Baensch
  */
@@ -80,7 +81,7 @@ public class FragmentationService {
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * Array for the different fragmentation algorithms
+     * Array for the different fragmentation algorithms available
      */
     private IMoleculeFragmenter[] fragmenters;
     /**
@@ -96,7 +97,7 @@ public class FragmentationService {
      */
     private IMoleculeFragmenter ertlFGF;
     /**
-     * Sugar removal utility fragmenter
+     * Sugar Removal Utility fragmenter
      */
     private IMoleculeFragmenter sugarRUF;
     /**
@@ -140,6 +141,8 @@ public class FragmentationService {
         this.fragmenters[1] = this.sugarRUF;
         //TODO check fragmenters for restrictions the persistence gives and throw exception if they are not met
         //algorithm name should be singleton
+        //settings names and values must adhere to the preference input restrictions
+        //setting names must be singletons
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
                 this.selectedFragmenter = tmpFragmenter;
@@ -151,11 +154,12 @@ public class FragmentationService {
         try {
             this.pipelineFragmenter = new IMoleculeFragmenter[] {this.createNewFragmenterObjectByName(this.selectedFragmenter.getFragmentationAlgorithmName())};
         } catch (Exception anException) {
-            //settings of this instance are still in default at this point
+            //settings of this fragmenter instance are still in default at this point
             this.pipelineFragmenter = new IMoleculeFragmenter[] {this.selectedFragmenter.copy()};
         }
         this.pipeliningFragmentationName = FragmentationService.DEFAULT_PIPELINE_NAME;
         this.existingFragmentations = new LinkedList<String>();
+        //fragments hash table, current fragmentation name, and executor service are only instantiated when needed
     }
     //</editor-fold>
     //
@@ -164,9 +168,9 @@ public class FragmentationService {
      * Manages the fragmentation, creates a number of {@link FragmentationTask} objects equal to the amount of
      * {@param aNumberOfTasks}, assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation.
      *
-     * @param aListOfMolecules
-     * @param aNumberOfTasks
-     * @throws Exception
+     * @param aListOfMolecules list of molecules to fragment
+     * @param aNumberOfTasks how many parallel tasks should be used
+     * @throws Exception if anything goes wrong
      */
     public void startSingleFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
         //<editor-fold desc="checks" defualtstate="collapsed">
@@ -357,17 +361,19 @@ public class FragmentationService {
         }
     }
 
+    //TODO: rename to createNewFragmenterObjectByALGORITHMName?
     /**
-     * TODO
+     * Returns a new instance of the fragmenter class with the given algorithm name.
      *
-     * @param anAlgorithmName
-     * @return
-     * @throws IllegalArgumentException
-     * @throws ClassNotFoundException
-     * @throws NoSuchMethodException
-     * @throws InvocationTargetException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
+     * @param anAlgorithmName name of the algorithm implemented in the desired fragmenter class, as returned by
+     * {@link IMoleculeFragmenter#getFragmentationAlgorithmName()  IMoleculeFragmenter.getFragmentationAlgorithmName()}
+     * @return new instance of the fragmenter class
+     * @throws IllegalArgumentException if the given algorithm name does not match any available fragmenter classes
+     * @throws ClassNotFoundException if instantiating the class goes wrong
+     * @throws NoSuchMethodException if instantiating the class goes wrong
+     * @throws InvocationTargetException if instantiating the class goes wrong
+     * @throws InstantiationException if instantiating the class goes wrong
+     * @throws IllegalAccessException if instantiating the class goes wrong
      */
     public IMoleculeFragmenter createNewFragmenterObjectByName(String anAlgorithmName)
             throws IllegalArgumentException,
@@ -390,10 +396,13 @@ public class FragmentationService {
     }
 
     /**
-     * TODO
+     * 
      */
-    public void persistFragmenterSettings() throws IOException, SecurityException {
+    public void persistFragmenterSettings() {
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            if (Objects.isNull(tmpFragmenter)) {
+                continue;
+            }
             List<Property> tmpSettings = tmpFragmenter.settingsProperties();
             if (Objects.isNull(tmpSettings)) {
                 continue;
@@ -401,8 +410,14 @@ public class FragmentationService {
             String tmpFilePath = FileUtil.getSettingsDirPath()
                     + tmpFragmenter.getClass().getSimpleName()
                     + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
-            PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
-            tmpPrefContainer.writeRepresentation();
+            try {
+                PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
+                tmpPrefContainer.writeRepresentation();
+            } catch (NullPointerException | IllegalArgumentException | IOException | SecurityException anException) {
+                FragmentationService.LOGGER.log(Level.WARNING, "Fragmenter settings persistence went wrong, exception: " + anException.toString(), anException);
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),Message.get("FragmentationService.Error.settingsPersistence"),anException);
+                continue;
+            }
         }
     }
 
