@@ -341,7 +341,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -357,7 +357,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setScaffoldModeSetting(tmpEnumConstant);
                 } catch (IllegalArgumentException | NullPointerException anException) {
                     ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -384,7 +384,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -405,7 +405,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -427,7 +427,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -463,7 +463,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -477,7 +477,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ScaffoldGeneratorFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.GuiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
