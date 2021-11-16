@@ -298,16 +298,8 @@ public class MainViewController {
                     Message.get("Error.SettingsPersistence"),
                     anException);
         }
-        try {
-            this.fragmentationService.persistFragmenterSettings();
-            this.fragmentationService.persistActiveFragmenterAndPipeline();
-        } catch (IOException | SecurityException anException) {
-            MainViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
-                    Message.get("Error.SettingsPersistence.Header"),
-                    Message.get("Error.SettingsPersistence"),
-                    anException);
-        }
+        this.fragmentationService.persistFragmenterSettings();
+        this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
         }

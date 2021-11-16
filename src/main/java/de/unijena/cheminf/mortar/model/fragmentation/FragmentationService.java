@@ -43,6 +43,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.Alert;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,6 +78,46 @@ public class FragmentationService {
      * Default pipeline name
      */
     public static final String DEFAULT_PIPELINE_NAME = Message.get("FragmentationService.defaultPipelineName");
+
+    /**
+     * Subfolder name in the settings directory where the fragmenter settings are persisted.
+     */
+    public static final String FRAGMENTER_SETTINGS_SUBFOLDER_NAME = "Fragmenter_Settings";
+
+    /**
+     * Subfolder name in the settings directory where the fragmentation service settings and the pipeline settings are persisted.
+     */
+    public static final String FRAGMENTATION_SERVICE_SETTINGS_SUBFOLDER_NAME = "Fragmentation_Service_Settings";
+
+    /**
+     * File name to persist the fragmentation service settings
+     */
+    public static final String FRAGMENTATION_SERVICE_SETTINGS_FILE_NAME = "FragmentationServiceSettings";
+
+    /**
+     * Name for the selected fragmenter setting for persistence.
+     */
+    public static final String SELECTED_FRAGMENTER_SETTING_NAME = "SelectedFragmenter";
+
+    /**
+     * Name for the given pipeline name for persistence.
+     */
+    public static final String PIPELINE_SETTING_NAME = "PipelineName";
+
+    /**
+     * Name for the setting for persisting the current pipeline size.
+     */
+    public static final String PIPELINE_SIZE_SETTING_NAME = "PipelineSize";
+
+    /**
+     * Beginning of the file names for persisting the pipeline fragmenters.
+     */
+    public static final String PIPELINE_FRAGMENTER_FILE_NAME_PREFIX = "PipelineFragmenter_";
+
+    /**
+     * Name of the setting to persist the algorithm name of a pipeline fragmenter.
+     */
+    public static final String PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME = "AlgorithmName";
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -134,15 +175,16 @@ public class FragmentationService {
      * Constructor, instantiates the fragmenters and sets the selected fragmenter and the pipeline to their defaults.
      */
     public FragmentationService(){
+        //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
         this.fragmenters = new IMoleculeFragmenter[2];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
         this.fragmenters[1] = this.sugarRUF;
         //TODO check fragmenters for restrictions the persistence gives and throw exception if they are not met
-        //algorithm name should be singleton
-        //settings names and values must adhere to the preference input restrictions
-        //setting names must be singletons
+        //algorithm name should be singleton and must be persistable
+        //setting names and values must adhere to the preference input restrictions
+        //setting names must be singletons within the respective class
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
                 this.selectedFragmenter = tmpFragmenter;
@@ -396,9 +438,20 @@ public class FragmentationService {
     }
 
     /**
-     * 
+     * Persists settings of the fragmenters in preference container files in a subfolder of the settings directory. The settings of the
+     * fragmenters are translated to matching preference objects. If a single setting or several cannot be persisted, it
+     * is only logged in the log file. But if persisting a whole fragmenter fails, a warning is given to the user. The
+     * settings are saved to files denoted with the simple class name of the respective fragmenter.
      */
     public void persistFragmenterSettings() {
+        String tmpDirectoryPath = FileUtil.getSettingsDirPath()
+                + FragmentationService.FRAGMENTER_SETTINGS_SUBFOLDER_NAME + File.separator;
+        File tmpDirectory = new File(tmpDirectoryPath);
+        if (!tmpDirectory.exists()) {
+            tmpDirectory.mkdirs();
+        } else {
+            FileUtil.deleteAllFilesInDirectory(tmpDirectoryPath);
+        }
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             if (Objects.isNull(tmpFragmenter)) {
                 continue;
@@ -407,7 +460,7 @@ public class FragmentationService {
             if (Objects.isNull(tmpSettings)) {
                 continue;
             }
-            String tmpFilePath = FileUtil.getSettingsDirPath()
+            String tmpFilePath = tmpDirectoryPath
                     + tmpFragmenter.getClass().getSimpleName()
                     + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
             try {
@@ -415,17 +468,23 @@ public class FragmentationService {
                 tmpPrefContainer.writeRepresentation();
             } catch (NullPointerException | IllegalArgumentException | IOException | SecurityException anException) {
                 FragmentationService.LOGGER.log(Level.WARNING, "Fragmenter settings persistence went wrong, exception: " + anException.toString(), anException);
-                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),Message.get("FragmentationService.Error.settingsPersistence"),anException);
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Error.ExceptionAlert.Header"),
+                        Message.get("FragmentationService.Error.settingsPersistence"),
+                        anException);
                 continue;
             }
         }
     }
 
     /**
-     *
+     * Persists the fragmentation service settings (the selected fragmenter) and the currently configured pipeline.
+     * All settings are saved as matching preference objects in preference container files in a respective subfolder in
+     * the settings directory. If anything fails, a warning is given to the user.
      */
-    public void persistActiveFragmenterAndPipeline() throws IOException, SecurityException {
-        String tmpFragmentationServiceSettingsPath = FileUtil.getSettingsDirPath() + "FragmentationService" + File.separator;
+    public void persistSelectedFragmenterAndPipeline() {
+        String tmpFragmentationServiceSettingsPath = FileUtil.getSettingsDirPath()
+                + FragmentationService.FRAGMENTATION_SERVICE_SETTINGS_SUBFOLDER_NAME + File.separator;
         File tmpFragmentationServiceSettingsDir = new File(tmpFragmentationServiceSettingsPath);
         if (!tmpFragmentationServiceSettingsDir.exists()) {
             tmpFragmentationServiceSettingsDir.mkdirs();
@@ -434,34 +493,77 @@ public class FragmentationService {
         }
         PreferenceContainer tmpFragmentationServiceSettingsContainer = new PreferenceContainer(
                 tmpFragmentationServiceSettingsPath
-                        + "FragmentationServiceSettings"
+                        + FragmentationService.FRAGMENTATION_SERVICE_SETTINGS_FILE_NAME
                         + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION);
-        SingleTermPreference tmpSelectedFragmenterPreference = new SingleTermPreference("SelectedFragmenter", this.selectedFragmenter.getClass().getSimpleName());
-        tmpFragmentationServiceSettingsContainer.add(tmpSelectedFragmenterPreference);
-        if (Objects.isNull(this.pipeliningFragmentationName)) {
-            this.pipeliningFragmentationName = "Pipeline";
+        if (!SingleTermPreference.isValidContent(this.selectedFragmenter.getFragmentationAlgorithmName())) {
+            FragmentationService.LOGGER.log(Level.WARNING, "Selected fragmenter could not be persisted");
+            GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                    Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("FragmentationService.Error.settingsPersistence"));
+            for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+                if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
+                    this.selectedFragmenter = tmpFragmenter;
+                }
+            }
         }
-        SingleTermPreference tmpPipelineNamePreference = new SingleTermPreference("PipelineName", this.pipeliningFragmentationName);
+        SingleTermPreference tmpSelectedFragmenterPreference = new SingleTermPreference(
+                FragmentationService.SELECTED_FRAGMENTER_SETTING_NAME,
+                this.selectedFragmenter.getFragmentationAlgorithmName());
+        tmpFragmentationServiceSettingsContainer.add(tmpSelectedFragmenterPreference);
+        if (Objects.isNull(this.pipeliningFragmentationName) || this.pipeliningFragmentationName.isEmpty()) {
+            this.pipeliningFragmentationName = FragmentationService.DEFAULT_PIPELINE_NAME;
+        }
+        if (!SingleTermPreference.isValidContent(this.pipeliningFragmentationName)) {
+            FragmentationService.LOGGER.log(Level.WARNING, "Given pipeline name " + this.pipeliningFragmentationName
+                    + " is invalid, will be reset to default.");
+            this.pipeliningFragmentationName = FragmentationService.DEFAULT_PIPELINE_NAME;
+        }
+        SingleTermPreference tmpPipelineNamePreference = new SingleTermPreference(FragmentationService.PIPELINE_SETTING_NAME,
+                this.pipeliningFragmentationName);
         tmpFragmentationServiceSettingsContainer.add(tmpPipelineNamePreference);
-        tmpFragmentationServiceSettingsContainer.add(new SingleIntegerPreference("PipelineSize", this.pipelineFragmenter.length));
-        tmpFragmentationServiceSettingsContainer.writeRepresentation();
+        tmpFragmentationServiceSettingsContainer.add(new SingleIntegerPreference(FragmentationService.PIPELINE_SIZE_SETTING_NAME,
+                this.pipelineFragmenter.length));
+        try {
+            tmpFragmentationServiceSettingsContainer.writeRepresentation();
+        } catch (IOException | SecurityException anException) {
+            FragmentationService.LOGGER.log(Level.WARNING, "Fragmentation service settings persistence went wrong, exception: " + anException.toString(), anException);
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("FragmentationService.Error.settingsPersistence"),
+                    anException);
+        }
         for (int i = 0; i < this.pipelineFragmenter.length; i++) {
             IMoleculeFragmenter tmpFragmenter = this.pipelineFragmenter[i];
             List<Property> tmpSettings = tmpFragmenter.settingsProperties();
-            String tmpFilePath = tmpFragmentationServiceSettingsPath + "PipelineFragmenter_" + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
+            String tmpFilePath = tmpFragmentationServiceSettingsPath
+                    + FragmentationService.PIPELINE_FRAGMENTER_FILE_NAME_PREFIX + i
+                    + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
             PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
-            tmpPrefContainer.add(new SingleTermPreference("ClassName", tmpFragmenter.getFragmentationAlgorithmName()));
-            tmpPrefContainer.writeRepresentation();
+            tmpPrefContainer.add(new SingleTermPreference(FragmentationService.PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME,
+                    tmpFragmenter.getFragmentationAlgorithmName()));
+            try {
+                tmpPrefContainer.writeRepresentation();
+            } catch (IOException | SecurityException anException) {
+                FragmentationService.LOGGER.log(Level.WARNING, "Pipeline fragmenter settings persistence went wrong, exception: " + anException.toString(), anException);
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Error.ExceptionAlert.Header"),
+                        Message.get("FragmentationService.Error.settingsPersistence"),
+                        anException);
+                continue;
+            }
         }
     }
 
     /**
-     * TODO
+     * Reloads settings of the available fragmenters. If something goes wrong, it is only logged.
      */
     public void reloadFragmenterSettings() {
+        String tmpDirectoryPath = FileUtil.getSettingsDirPath()
+                + FragmentationService.FRAGMENTER_SETTINGS_SUBFOLDER_NAME + File.separator;
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             String tmpClassName = tmpFragmenter.getClass().getSimpleName();
-            File tmpFragmenterSettingsFile = new File(FileUtil.getSettingsDirPath()
+            File tmpFragmenterSettingsFile = new File(tmpDirectoryPath
                     + tmpClassName
                     + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION);
             if (tmpFragmenterSettingsFile.exists() && tmpFragmenterSettingsFile.isFile() && tmpFragmenterSettingsFile.canRead()) {
@@ -469,7 +571,7 @@ public class FragmentationService {
                 try {
                     tmpContainer = new PreferenceContainer(tmpFragmenterSettingsFile);
                 } catch (IllegalArgumentException | IOException anException) {
-                    FragmentationService.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    FragmentationService.LOGGER.log(Level.WARNING, "Unable to reload settings of fragmenter " + tmpClassName + " : " + anException.toString(), anException);
                     continue;
                 }
                 for (Property tmpSettingProperty : tmpFragmenter.settingsProperties()) {
@@ -512,32 +614,33 @@ public class FragmentationService {
      *
      */
     public void reloadActiveFragmenterAndPipeline() {
-        String tmpFragmentationServiceSettingsPath = FileUtil.getSettingsDirPath() + "FragmentationService" + File.separator;
+        String tmpFragmentationServiceSettingsPath = FileUtil.getSettingsDirPath()
+                + FragmentationService.FRAGMENTATION_SERVICE_SETTINGS_SUBFOLDER_NAME + File.separator;
         String tmpServiceSettingsFilePath = tmpFragmentationServiceSettingsPath
-                + "FragmentationServiceSettings"
+                + FragmentationService.FRAGMENTATION_SERVICE_SETTINGS_FILE_NAME
                 + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
         File tmpServiceSettingsFile = new File(tmpServiceSettingsFilePath);
         if (tmpServiceSettingsFile.exists() && tmpServiceSettingsFile.isFile() && tmpServiceSettingsFile.canRead()) {
             PreferenceContainer tmpFragmentationServiceSettingsContainer;
             try {
                 tmpFragmentationServiceSettingsContainer = new PreferenceContainer(tmpServiceSettingsFile);
-                int tmpPipelineSize = ((SingleIntegerPreference)tmpFragmentationServiceSettingsContainer.getPreferences("PipelineSize")[0]).getContent();
-                String tmpPipelineName = tmpFragmentationServiceSettingsContainer.getPreferences("PipelineName")[0].getContentRepresentative();
-                String tmpSelectedFragmenterClassName = tmpFragmentationServiceSettingsContainer.getPreferences("SelectedFragmenter")[0].getContentRepresentative();
+                int tmpPipelineSize = ((SingleIntegerPreference)tmpFragmentationServiceSettingsContainer.getPreferences(FragmentationService.PIPELINE_SIZE_SETTING_NAME)[0]).getContent();
+                String tmpPipelineName = tmpFragmentationServiceSettingsContainer.getPreferences(FragmentationService.PIPELINE_SETTING_NAME)[0].getContentRepresentative();
+                String tmpSelectedFragmenterAlgorithmName = tmpFragmentationServiceSettingsContainer.getPreferences(FragmentationService.SELECTED_FRAGMENTER_SETTING_NAME)[0].getContentRepresentative();
                 this.pipeliningFragmentationName = tmpPipelineName;
                 for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-                    if (tmpFragmenter.getClass().getSimpleName().equals(tmpSelectedFragmenterClassName)) {
+                    if (tmpFragmenter.getFragmentationAlgorithmName().equals(tmpSelectedFragmenterAlgorithmName)) {
                         this.selectedFragmenter = tmpFragmenter;
                         break;
                     }
                 }
                 IMoleculeFragmenter[] tmpFragmenterArray = new IMoleculeFragmenter[tmpPipelineSize];
                 for (int i = 0; i < tmpPipelineSize; i++) {
-                    String tmpPath = tmpFragmentationServiceSettingsPath + "PipelineFragmenter_" + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
+                    String tmpPath = tmpFragmentationServiceSettingsPath + FragmentationService.PIPELINE_FRAGMENTER_FILE_NAME_PREFIX + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
                     File tmpFragmenterFile = new File(tmpPath);
                     if (tmpFragmenterFile.exists() && tmpFragmenterFile.isFile() && tmpFragmenterFile.canRead()) {
                         PreferenceContainer tmpFragmenterSettingsContainer = new PreferenceContainer(tmpFragmenterFile);
-                        String tmpFragmenterClassName = tmpFragmenterSettingsContainer.getPreferences("ClassName")[0].getContentRepresentative();
+                        String tmpFragmenterClassName = tmpFragmenterSettingsContainer.getPreferences(FragmentationService.PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME)[0].getContentRepresentative();
                         IMoleculeFragmenter tmpFragmenter = this.createNewFragmenterObjectByName(tmpFragmenterClassName);
                         for (Property tmpSettingProperty : tmpFragmenter.settingsProperties()) {
                             String tmpPropertyName = tmpSettingProperty.getName();
@@ -638,6 +741,10 @@ public class FragmentationService {
     public String getCurrentFragmentationName(){
         return this.currentFragmentationName;
     }
+    /**
+     * TODO
+     * @return
+     */
     public String getPipeliningFragmentationName(){
         return this.pipeliningFragmentationName;
     }
@@ -659,6 +766,10 @@ public class FragmentationService {
     public void setPipelineFragmenter(IMoleculeFragmenter[] anArrayOfFragmenter){
         this.pipelineFragmenter = anArrayOfFragmenter;
     }
+    /**
+     * TODO
+     * @param aName
+     */
     public void setPipeliningFragmentationName(String aName){
         this.pipeliningFragmentationName = aName;
     }
