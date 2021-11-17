@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -174,17 +175,18 @@ public class FragmentationService {
     /**
      * Constructor, instantiates the fragmenters and sets the selected fragmenter and the pipeline to their defaults.
      */
-    public FragmentationService(){
+    public FragmentationService() {
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
         this.fragmenters = new IMoleculeFragmenter[2];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
         this.fragmenters[1] = this.sugarRUF;
-        //TODO check fragmenters for restrictions the persistence gives and throw exception if they are not met
-        //algorithm name should be singleton and must be persistable
-        //setting names and values must adhere to the preference input restrictions
-        //setting names must be singletons within the respective class
+        try {
+            this.checkFragmenters();
+        } catch (Exception anException) {
+            //TODO!
+        }
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
                 this.selectedFragmenter = tmpFragmenter;
@@ -556,7 +558,7 @@ public class FragmentationService {
     }
 
     /**
-     * Reloads settings of the available fragmenters. If something goes wrong, it is only logged.
+     * Reloads settings of the available fragmenters. If something goes wrong, it is logged.
      */
     public void reloadFragmenterSettings() {
         String tmpDirectoryPath = FileUtil.getSettingsDirPath()
@@ -574,35 +576,7 @@ public class FragmentationService {
                     FragmentationService.LOGGER.log(Level.WARNING, "Unable to reload settings of fragmenter " + tmpClassName + " : " + anException.toString(), anException);
                     continue;
                 }
-                for (Property tmpSettingProperty : tmpFragmenter.settingsProperties()) {
-                    String tmpPropertyName = tmpSettingProperty.getName();
-                    if (tmpContainer.containsPreferenceName(tmpPropertyName)) {
-                        IPreference[] tmpPreferences = tmpContainer.getPreferences(tmpPropertyName);
-                        try {
-                            if (tmpSettingProperty instanceof SimpleBooleanProperty) {
-                                BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
-                                tmpSettingProperty.setValue(tmpBooleanPreference.getContent());
-                            } else if (tmpSettingProperty instanceof SimpleIntegerProperty) {
-                                SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
-                                tmpSettingProperty.setValue(tmpIntPreference.getContent());
-                            } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
-                                SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
-                                tmpSettingProperty.setValue(tmpDoublePreference.getContent());
-                            } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
-                                SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                                tmpSettingProperty.setValue(tmpStringPreference.getContent());
-                            } else {
-                                //setting will remain in default
-                                FragmentationService.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
-                            }
-                        } catch (ClassCastException aCastingException) {
-                            FragmentationService.LOGGER.log(Level.WARNING, aCastingException.toString(), aCastingException);
-                        }
-                    } else {
-                        //setting will remain in default
-                        FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
-                    }
-                }
+                this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpContainer);
             } else {
                 //settings will remain in default
                 FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpClassName + " available.");
@@ -611,7 +585,8 @@ public class FragmentationService {
     }
 
     /**
-     *
+     * Reloads fragmentation service settings like the selected fragmenter and the pipeline configurations from the previous session.
+     * If anything goes wrong, the errors are logged and in some cases, a warning is given to the user.
      */
     public void reloadActiveFragmenterAndPipeline() {
         String tmpFragmentationServiceSettingsPath = FileUtil.getSettingsDirPath()
@@ -622,9 +597,10 @@ public class FragmentationService {
         File tmpServiceSettingsFile = new File(tmpServiceSettingsFilePath);
         if (tmpServiceSettingsFile.exists() && tmpServiceSettingsFile.isFile() && tmpServiceSettingsFile.canRead()) {
             PreferenceContainer tmpFragmentationServiceSettingsContainer;
+            int tmpPipelineSize = 0;
             try {
                 tmpFragmentationServiceSettingsContainer = new PreferenceContainer(tmpServiceSettingsFile);
-                int tmpPipelineSize = ((SingleIntegerPreference)tmpFragmentationServiceSettingsContainer.getPreferences(FragmentationService.PIPELINE_SIZE_SETTING_NAME)[0]).getContent();
+                tmpPipelineSize = ((SingleIntegerPreference)tmpFragmentationServiceSettingsContainer.getPreferences(FragmentationService.PIPELINE_SIZE_SETTING_NAME)[0]).getContent();
                 String tmpPipelineName = tmpFragmentationServiceSettingsContainer.getPreferences(FragmentationService.PIPELINE_SETTING_NAME)[0].getContentRepresentative();
                 String tmpSelectedFragmenterAlgorithmName = tmpFragmentationServiceSettingsContainer.getPreferences(FragmentationService.SELECTED_FRAGMENTER_SETTING_NAME)[0].getContentRepresentative();
                 this.pipeliningFragmentationName = tmpPipelineName;
@@ -634,55 +610,41 @@ public class FragmentationService {
                         break;
                     }
                 }
-                IMoleculeFragmenter[] tmpFragmenterArray = new IMoleculeFragmenter[tmpPipelineSize];
-                for (int i = 0; i < tmpPipelineSize; i++) {
-                    String tmpPath = tmpFragmentationServiceSettingsPath + FragmentationService.PIPELINE_FRAGMENTER_FILE_NAME_PREFIX + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
-                    File tmpFragmenterFile = new File(tmpPath);
-                    if (tmpFragmenterFile.exists() && tmpFragmenterFile.isFile() && tmpFragmenterFile.canRead()) {
+            } catch (IllegalArgumentException | IOException anException) {
+                FragmentationService.LOGGER.log(Level.WARNING, "FragmentationService settings reload failed: " + anException.toString(), anException);
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Error.ExceptionAlert.Header"),
+                        Message.get("FragmentationService.Error.settingsReload"),
+                        anException);
+                return;
+            }
+            IMoleculeFragmenter[] tmpFragmenterArray = new IMoleculeFragmenter[tmpPipelineSize];
+            for (int i = 0; i < tmpPipelineSize; i++) {
+                String tmpPath = tmpFragmentationServiceSettingsPath + FragmentationService.PIPELINE_FRAGMENTER_FILE_NAME_PREFIX + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
+                File tmpFragmenterFile = new File(tmpPath);
+                if (tmpFragmenterFile.exists() && tmpFragmenterFile.isFile() && tmpFragmenterFile.canRead()) {
+                    try {
                         PreferenceContainer tmpFragmenterSettingsContainer = new PreferenceContainer(tmpFragmenterFile);
                         String tmpFragmenterClassName = tmpFragmenterSettingsContainer.getPreferences(FragmentationService.PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME)[0].getContentRepresentative();
                         IMoleculeFragmenter tmpFragmenter = this.createNewFragmenterObjectByName(tmpFragmenterClassName);
-                        for (Property tmpSettingProperty : tmpFragmenter.settingsProperties()) {
-                            String tmpPropertyName = tmpSettingProperty.getName();
-                            if (tmpFragmenterSettingsContainer.containsPreferenceName(tmpPropertyName)) {
-                                IPreference[] tmpPreferences = tmpFragmenterSettingsContainer.getPreferences(tmpPropertyName);
-                                try {
-                                    if (tmpSettingProperty instanceof SimpleBooleanProperty) {
-                                        BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
-                                        tmpSettingProperty.setValue(tmpBooleanPreference.getContent());
-                                    } else if (tmpSettingProperty instanceof SimpleIntegerProperty) {
-                                        SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
-                                        tmpSettingProperty.setValue(tmpIntPreference.getContent());
-                                    } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
-                                        SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
-                                        tmpSettingProperty.setValue(tmpDoublePreference.getContent());
-                                    } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
-                                        SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                                        tmpSettingProperty.setValue(tmpStringPreference.getContent());
-                                    } else {
-                                        //setting will remain in default
-                                        FragmentationService.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
-                                    }
-                                } catch (ClassCastException aCastingException) {
-                                    FragmentationService.LOGGER.log(Level.WARNING, aCastingException.toString(), aCastingException);
-                                }
-                            } else {
-                                //setting will remain in default
-                                FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
-                            }
-                        }
+                        this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpFragmenterSettingsContainer);
                         tmpFragmenterArray[i] = tmpFragmenter;
-                    } else {
-                        //TODO
+                    } catch (Exception anException) {
+                        FragmentationService.LOGGER.log(Level.WARNING, "FragmentationService settings reload failed: " + anException.toString(), anException);
+                        GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                                Message.get("Error.ExceptionAlert.Header"),
+                                Message.get("FragmentationService.Error.settingsReload"),
+                                anException);
+                        continue;
                     }
+                } else {
+                    FragmentationService.LOGGER.log(Level.WARNING, "Unable to reload pipeline fragmenter " + i + " : No respective file available.");
+                    continue;
                 }
-                this.setPipelineFragmenter(tmpFragmenterArray);
-            } catch (IllegalArgumentException | IOException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException anException) {
-                FragmentationService.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                //TODO do more here
             }
+            this.setPipelineFragmenter(tmpFragmenterArray);
         } else {
-            //TODO
+            FragmentationService.LOGGER.log(Level.WARNING, "File containing persisted FragmentationService settings not found.");
         }
     }
 
@@ -742,15 +704,17 @@ public class FragmentationService {
         return this.currentFragmentationName;
     }
     /**
-     * TODO
-     * @return
+     * Returns name of the current pipeline configuration
+     *
+     * @return pipeline name
      */
     public String getPipeliningFragmentationName(){
         return this.pipeliningFragmentationName;
     }
     /**
-     * Sets the selectedFragmenter
-     * @param anAlgorithmName
+     * Sets the selectedFragmenter.
+     *
+     * @param anAlgorithmName must be retrieved using the respective method of the fragmenter object
      */
     public void setSelectedFragmenter(String anAlgorithmName){
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
@@ -761,14 +725,16 @@ public class FragmentationService {
 
     /**
      * Sets the fragmenters to use for pipeline fragmentation
+     *
      * @param anArrayOfFragmenter IMolecueFragmenter[]
      */
     public void setPipelineFragmenter(IMoleculeFragmenter[] anArrayOfFragmenter){
         this.pipelineFragmenter = anArrayOfFragmenter;
     }
     /**
-     * TODO
-     * @param aName
+     * Sets the pipeline name
+     *
+     * @param aName pipeline name
      */
     public void setPipeliningFragmentationName(String aName){
         this.pipeliningFragmentationName = aName;
@@ -865,6 +831,94 @@ public class FragmentationService {
                 + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "
                 + tmpMemoryConsumption + " MB");
         return tmpFragmentHashtable;
+    }
+
+    /**
+     * Sets the values of the given properties according to the preferences in the given container with the same name.
+     * If no matching preference for a given property is found, the value will remain in its default setting.
+     */
+    private void updatePropertiesFromPreferences(List<Property> aPropertiesList, PreferenceContainer aPreferenceContainer) {
+        for (Property tmpSettingProperty : aPropertiesList) {
+            String tmpPropertyName = tmpSettingProperty.getName();
+            if (aPreferenceContainer.containsPreferenceName(tmpPropertyName)) {
+                IPreference[] tmpPreferences = aPreferenceContainer.getPreferences(tmpPropertyName);
+                try {
+                    if (tmpSettingProperty instanceof SimpleBooleanProperty) {
+                        BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
+                        tmpSettingProperty.setValue(tmpBooleanPreference.getContent());
+                    } else if (tmpSettingProperty instanceof SimpleIntegerProperty) {
+                        SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
+                        tmpSettingProperty.setValue(tmpIntPreference.getContent());
+                    } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
+                        SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
+                        tmpSettingProperty.setValue(tmpDoublePreference.getContent());
+                    } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
+                        SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                        tmpSettingProperty.setValue(tmpStringPreference.getContent());
+                    } else {
+                        //setting will remain in default
+                        FragmentationService.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
+                    }
+                } catch (ClassCastException aCastingException) {
+                    FragmentationService.LOGGER.log(Level.WARNING, aCastingException.toString(), aCastingException);
+                }
+            } else {
+                //setting will remain in default
+                FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
+            }
+        }
+    }
+
+    /**
+     * Checks the available fragmenters and their settings for restrictions imposed by persistence. Throws an exception if
+     * anything does not meet the requirements.
+     */
+    private void checkFragmenters() throws Exception {
+        HashSet<String> tmpAlgorithmNames = new HashSet<>(this.fragmenters.length + 6, 1.0f);
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            //algorithm name should be singleton and must be persistable
+            String tmpAlgName = tmpFragmenter.getFragmentationAlgorithmName();
+            if (!PreferenceUtil.isValidName(tmpAlgName) || !SingleTermPreference.isValidContent(tmpAlgName)) {
+                throw new Exception("Algorithm name " + tmpAlgName + " is invalid.");
+            }
+            if (tmpAlgorithmNames.contains(tmpAlgName)) {
+                throw new Exception("Algorithm name " + tmpAlgName + " is used multiple times.");
+            } else {
+                tmpAlgorithmNames.add(tmpAlgName);
+            }
+            //setting names must be singletons within the respective class
+            //setting names and values must adhere to the preference input restrictions
+            //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
+            List<Property> tmpSettingsList = tmpFragmenter.settingsProperties();
+            HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingsList.size() + 6, 1.0f);
+            for (Property tmpSetting : tmpSettingsList) {
+                if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
+                    throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");
+                }
+                if (tmpSettingNames.contains(tmpSetting.getName())) {
+                    throw new Exception("Setting name " + tmpSetting.getName() + " is used multiple times.");
+                } else {
+                    tmpSettingNames.add(tmpSetting.getName());
+                }
+                if (tmpSetting instanceof SimpleBooleanProperty) {
+                    //nothing to do here, booleans cannot have invalid values
+                } else if (tmpSetting instanceof SimpleIntegerProperty) {
+                   if (!SingleIntegerPreference.isValidContent(Integer.toString(((SimpleIntegerProperty) tmpSetting).get()))) {
+                       throw new Exception("Setting value " + ((SimpleIntegerProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                   }
+                } else if (tmpSetting instanceof SimpleDoubleProperty) {
+                   if (!SingleNumberPreference.isValidContent(((SimpleDoubleProperty) tmpSetting).get())) {
+                       throw new Exception("Setting value " + ((SimpleDoubleProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                   }
+                } else if (tmpSetting instanceof SimpleEnumConstantNameProperty || tmpSetting instanceof SimpleStringProperty) {
+                    if (!SingleTermPreference.isValidContent(((SimpleStringProperty) tmpSetting).get())) {
+                        throw new Exception("Setting value " + ((SimpleStringProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                    }
+                } else {
+                    throw new Exception("Setting " + tmpSetting.getName() + " is of an invalid type.");
+                }
+            }
+        }
     }
     //</editor-fold>
 }

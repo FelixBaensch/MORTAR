@@ -111,7 +111,11 @@ public final class FileUtil {
     }
 
     /**
-     * TODO
+     * Deletes all files in the given directory but NOT in any subdirectory. Returns true if all files have been deleted
+     * successfully.
+     *
+     * @param aDirectoryPath path to the directory
+     * @return true if all files have been deleted successfully
      */
     public static boolean deleteAllFilesInDirectory(String aDirectoryPath) {
         // <editor-fold defaultstate="collapsed" desc="Checks">
