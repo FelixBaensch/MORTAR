@@ -125,6 +125,7 @@ public class MainViewController {
         this.mainView = aMainView;
         this.appDir = anAppDir;
         this.settingsContainer = new SettingsContainer();
+        this.settingsContainer.reloadGlobalSettings();
         this.fragmentationService = new FragmentationService();
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
@@ -289,15 +290,7 @@ public class MainViewController {
                 return;
             }
         }
-        try {
-            this.settingsContainer.preserveSettings();
-        } catch (IOException | SecurityException anException) {
-            MainViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
-                    Message.get("Error.SettingsPersistence.Header"),
-                    Message.get("Error.SettingsPersistence"),
-                    anException);
-        }
+        this.settingsContainer.preserveSettings();
         this.fragmentationService.persistFragmenterSettings();
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if(this.isFragmentationRunning){

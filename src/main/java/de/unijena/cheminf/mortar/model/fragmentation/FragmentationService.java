@@ -458,6 +458,12 @@ public class FragmentationService {
         } else {
             FileUtil.deleteAllFilesInDirectory(tmpDirectoryPath);
         }
+        if (!tmpDirectory.canWrite()) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("FragmentationService.Error.settingsPersistence"));
+            return;
+        }
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             if (Objects.isNull(tmpFragmenter)) {
                 continue;
@@ -496,6 +502,13 @@ public class FragmentationService {
             tmpFragmentationServiceSettingsDir.mkdirs();
         } else {
             FileUtil.deleteAllFilesInDirectory(tmpFragmentationServiceSettingsPath);
+        }
+        if (!tmpFragmentationServiceSettingsDir.canWrite()) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR,
+                    Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("FragmentationService.Error.settingsPersistence"));
+            return;
         }
         PreferenceContainer tmpFragmentationServiceSettingsContainer = new PreferenceContainer(
                 tmpFragmentationServiceSettingsPath
