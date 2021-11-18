@@ -82,7 +82,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.selectAllCheckBox.setAllowIndeterminate(true);
         this.selectAllCheckBox.setSelected(true);
         this.selectionColumn.setGraphic(this.selectAllCheckBox);
-        this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH);
+        this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULES_TAB_TABLEVIEW_SELECTION_COLUMN_WIDTH);
         this.selectionColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.05)
         );

@@ -24,7 +24,11 @@ import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.*;
+import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
+import de.unijena.cheminf.mortar.gui.views.IDataTableView;
+import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
+import de.unijena.cheminf.mortar.gui.views.MainView;
+import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -48,8 +52,20 @@ import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.SortEvent;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -61,7 +77,12 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -229,6 +250,29 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> FileUtil.openGitHubRepositoryInDefaultBrowser()
         );
+        this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+            GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
+            if(tmpGrid == null){
+                keyEvent.consume();
+                return;
+            }
+            if(keyEvent.getCode() == KeyCode.RIGHT){
+                tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() + 1);
+                keyEvent.consume();
+            }
+            else if(keyEvent.getCode() == KeyCode.LEFT){
+                tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() - 1);
+                keyEvent.consume();
+            }
+//            else if(GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent)){
+//                tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getPageCount() - 1);
+//                keyEvent.consume();
+//            }
+//            else if(GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent)){
+//                tmpGrid.getPagination().setCurrentPageIndex(0);
+//                keyEvent.consume();
+//            }
+        });
         //TODO: More implementation needed
         //TODO: Add listener to rows per page setting in settings container //deprecated?
     }
@@ -256,8 +300,8 @@ public class MainViewController {
      */
     private void setImageStructureHeight(TableView aTableView, double aHeight){
         double tmpHeight =
-                (aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                        / settingsContainer.getRowsPerPageSetting();
+                ((aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                        / this.settingsContainer.getRowsPerPageSetting()) - (this.settingsContainer.getRowsPerPageSetting()/2.0 -1);
         if(aTableView.getClass().equals(ItemizationDataTableView.class)){
             tmpHeight =
                     (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)

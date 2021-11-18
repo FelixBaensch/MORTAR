@@ -66,11 +66,11 @@ public final class GuiDefinitions {
     /**
      *  Selection column width
      */
-    public static final double GUI_MOLECULESTAB_TABLEVIEW_SELECTIONCOLUMN_WIDTH = 40.0;
+    public static final double GUI_MOLECULES_TAB_TABLEVIEW_SELECTION_COLUMN_WIDTH = 40.0;
     /**
      * Height of the table view header
      */
-    public static final double GUI_TABLE_VIEW_HEADER_HEIGHT = 25.0;
+    public static final double GUI_TABLE_VIEW_HEADER_HEIGHT = 24.0;
     /**
      * Min height for a structure image of a molecule shown in gui
      */
@@ -82,6 +82,13 @@ public final class GuiDefinitions {
     /**
      * KeyCodeCombination for Control + C
      */
-    public static final KeyCodeCombination KEY_CODE_COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_ANY);
-
+    public static final KeyCodeCombination KEY_CODE_COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
+    /**
+     * KeyCodeCombination to navigate to last page of pagination
+     */
+    public static final KeyCodeCombination KEY_CODE_LAST_PAGE = new KeyCodeCombination(KeyCode.RIGHT, KeyCombination.CONTROL_DOWN);
+    /**
+     * KeyCodeCombination to navigate to first page of pagination
+     */
+    public static final KeyCodeCombination KEY_CODE_FIRST_PAGE = new KeyCodeCombination(KeyCode.LEFT, KeyCombination.CONTROL_DOWN);
 }

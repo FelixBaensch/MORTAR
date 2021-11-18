@@ -131,20 +131,22 @@ public class SettingsView extends AnchorPane {
         tmpTab.setGraphic(tmpStackPane);
         tmpTab.setStyle("-fx-pref-height: 150");
         ScrollPane tmpScrollPane = new ScrollPane();
+        tmpScrollPane.setFitToWidth(true);
+        tmpScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         GridPane tmpGridPane = new GridPane();
         tmpGridPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
         tmpColCon1.setHalignment(HPos.LEFT);
         tmpColCon1.setHgrow(Priority.ALWAYS);
         tmpColCon1.prefWidthProperty().bind(
-                aStage.widthProperty().multiply(0.5)
+                tmpScrollPane.widthProperty().multiply(0.5)
         );
         tmpGridPane.getColumnConstraints().add(tmpColCon1);
         ColumnConstraints tmpColCon2 = new ColumnConstraints();
         tmpColCon2.setHalignment(HPos.RIGHT);
         tmpColCon2.setHgrow(Priority.ALWAYS);
-        tmpColCon1.prefWidthProperty().bind(
-                aStage.widthProperty().multiply(0.5)
+        tmpColCon2.prefWidthProperty().bind(
+                tmpScrollPane.widthProperty().multiply(0.5)
         );
         tmpGridPane.getColumnConstraints().add(tmpColCon2);
         this.addPropertyItems(tmpGridPane, aPropertiesList, aRecentPropertiesMap);
