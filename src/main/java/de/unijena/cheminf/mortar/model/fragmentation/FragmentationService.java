@@ -185,7 +185,11 @@ public class FragmentationService {
         try {
             this.checkFragmenters();
         } catch (Exception anException) {
-            //TODO!
+            FragmentationService.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("FragmentationService.Error.invalidSettingFormat"),
+                    anException);
         }
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
