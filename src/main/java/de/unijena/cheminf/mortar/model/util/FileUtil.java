@@ -112,6 +112,43 @@ public final class FileUtil {
     }
 
     /**
+     * Deletes all files in the given directory but NOT in any subdirectory. Returns true if all files have been deleted
+     * successfully.
+     *
+     * @param aDirectoryPath path to the directory
+     * @return true if all files have been deleted successfully
+     */
+    public static boolean deleteAllFilesInDirectory(String aDirectoryPath) {
+        // <editor-fold defaultstate="collapsed" desc="Checks">
+        if (aDirectoryPath == null ||
+                aDirectoryPath.isEmpty()
+        ) {
+            return false;
+        }
+        // </editor-fold>
+        try {
+            File tmpDirectory = new File(aDirectoryPath);
+            if (!tmpDirectory.isDirectory()) {
+                return false;
+            }
+            File[] tmpFilesArray = tmpDirectory.listFiles();
+            boolean tmpAllFilesDeletedSuccessfully = true;
+            for (File tmpFile : tmpFilesArray) {
+                if (tmpFile.isFile()) {
+                    boolean tmpFileDeleted = tmpFile.delete();
+                    if (!tmpFileDeleted) {
+                        tmpAllFilesDeletedSuccessfully = false;
+                    }
+                }
+            }
+            return tmpAllFilesDeletedSuccessfully;
+        } catch (Exception anException) {
+            FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            return false;
+        }
+    }
+
+    /**
      * Creates directory and all non-existent ancestor directories if necessary
      *
      * @param aDirectoryPath Full directory path to be created
@@ -195,6 +232,13 @@ public final class FileUtil {
         if (!tmpSuccessful)
             throw new SecurityException("Unable to create application data directory");
         return tmpAppDir;
+    }
+
+    /**
+     * TODO
+     */
+    public static String getSettingsDirPath() throws SecurityException {
+        return FileUtil.getAppDirPath() + File.separator + BasicDefinitions.SETTINGS_CONTAINER_FILE_DIRECTORY + File.separator;
     }
 
     /**

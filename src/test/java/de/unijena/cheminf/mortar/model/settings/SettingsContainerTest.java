@@ -62,7 +62,7 @@ public class SettingsContainerTest {
         tmpSettingsContainer.setRowsPerPageSetting(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5);
         tmpSettingsContainer.setAddImplicitHydrogensAtImportSetting(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         tmpSettingsContainer.setNumberOfTasksForFragmentationSetting(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT - 1);
-        tmpSettingsContainer.setKeepAtomContainerInDataModelSetting(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
+        //tmpSettingsContainer.setKeepAtomContainerInDataModelSetting(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         tmpSettingsContainer.setAlwaysMDLV3000FormatAtExportSetting(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         tmpSettingsContainer.setCsvExportSeparatorSetting(tmpCsvExportSeparatorTest);
         //persisting the settings container

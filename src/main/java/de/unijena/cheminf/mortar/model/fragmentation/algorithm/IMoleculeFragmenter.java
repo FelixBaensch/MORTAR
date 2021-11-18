@@ -35,6 +35,7 @@ import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -79,6 +80,14 @@ public interface IMoleculeFragmenter {
      * @return list of settings represented by properties
      */
     public List<Property> settingsProperties();
+
+    /**
+     * Returns a map containing descriptive texts (values) for the settings with the given names (keys) to be used as
+     * tooltips in the GUI.
+     *
+     * @return map with tooltip texts
+     */
+    public Map<String, String> getSettingNameToTooltipTextMap();
 
     /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".

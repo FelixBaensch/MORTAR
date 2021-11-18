@@ -100,7 +100,9 @@ public class FragmentationSettingsViewController {
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             HashMap<String, Object> tmpRecentProperties = new HashMap<>(tmpFragmenter.settingsProperties().size());
             this.recentProperties.put(tmpFragmenter.getFragmentationAlgorithmName(), tmpRecentProperties);
-            Tab tmpTab = this.settingsView.addTab(this.fragmentationSettingsViewStage, tmpFragmenter.getFragmentationAlgorithmName(), tmpFragmenter.settingsProperties(), tmpRecentProperties);
+            Tab tmpTab = this.settingsView.addTab(this.fragmentationSettingsViewStage,
+                    tmpFragmenter.getFragmentationAlgorithmName(), tmpFragmenter.settingsProperties(),
+                    tmpFragmenter.getSettingNameToTooltipTextMap(), tmpRecentProperties);
             if(tmpFragmenter.getFragmentationAlgorithmName().equals(this.selectedFragmenterName)){
                 this.settingsView.getSelectionModel().select(tmpTab);
             }

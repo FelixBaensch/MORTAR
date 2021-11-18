@@ -34,15 +34,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Group;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SelectionModel;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
@@ -119,10 +111,11 @@ public class SettingsView extends AnchorPane {
      * @param aStage Stage to bind width and height
      * @param aLabel Label for the tab title and the tab Id
      * @param aPropertiesList List of properties to show in created tab
+     * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      * @return Tab
      */
-    public Tab addTab(Stage aStage, String aLabel, List<Property> aPropertiesList, Map<String, Object> aRecentPropertiesMap){
+    public Tab addTab(Stage aStage, String aLabel, List<Property> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         tmpTab.setId(aLabel);
@@ -149,7 +142,7 @@ public class SettingsView extends AnchorPane {
                 tmpScrollPane.widthProperty().multiply(0.5)
         );
         tmpGridPane.getColumnConstraints().add(tmpColCon2);
-        this.addPropertyItems(tmpGridPane, aPropertiesList, aRecentPropertiesMap);
+        this.addPropertyItems(tmpGridPane, aPropertiesList, aTooltipTextsMap, aRecentPropertiesMap);
         tmpScrollPane.setContent(tmpGridPane);
         tmpTab.setContent(tmpScrollPane);
         this.tabPane.getTabs().add(tmpTab);
@@ -160,9 +153,10 @@ public class SettingsView extends AnchorPane {
      * Adds a row for each {@link Property} of given List which contains of properties name and a control to change properties value
      * @param aGridPane GridPane to add row
      * @param aPropertiesList List of properties to show in created tab
+     * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      */
-    private void addPropertyItems(GridPane aGridPane, List<Property> aPropertiesList, Map<String, Object> aRecentPropertiesMap){
+    private void addPropertyItems(GridPane aGridPane, List<Property> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
         int tmpRowIndex = 0;
         for(Property tmpProperty : aPropertiesList){
             RowConstraints tmpRow = new RowConstraints();
@@ -173,6 +167,11 @@ public class SettingsView extends AnchorPane {
             aGridPane.getRowConstraints().add(tmpRow);
             String tmpPropName = tmpProperty.getName();
             Label tmpNameLabel = new Label(tmpPropName);
+            Tooltip tmpTooltip = new Tooltip(aTooltipTextsMap.get(tmpProperty.getName()));
+            //TODO: Move to definitions
+            tmpTooltip.setMaxWidth(500);
+            tmpTooltip.setWrapText(true);
+            tmpNameLabel.setTooltip(tmpTooltip);
             aGridPane.add(tmpNameLabel, 0, tmpRowIndex);
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             Object tmpRecentValue = tmpProperty.getValue(); //TODO: Maybe change this line to getDefault() or something else
@@ -181,6 +180,7 @@ public class SettingsView extends AnchorPane {
                 ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
                 tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
                 tmpBooleanComboBox.valueProperty().bindBidirectional(tmpProperty);
+                tmpBooleanComboBox.setTooltip(tmpTooltip);
                 //add to gridpane
                 aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -193,6 +193,7 @@ public class SettingsView extends AnchorPane {
                 TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
                 tmpIntegerTextField.setTextFormatter(tmpFormatter);
                 tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
+                tmpIntegerTextField.setTooltip(tmpTooltip);
                 //add to gridpane
                 aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -205,6 +206,7 @@ public class SettingsView extends AnchorPane {
                 TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(), 0.0, GuiUtil.getDoubleFilter());
                 tmpDoubleTextField.setTextFormatter(tmpFormatter);
                 tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
+                tmpDoubleTextField.setTooltip(tmpTooltip);
                 //add to gridpane
                 aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -213,6 +215,7 @@ public class SettingsView extends AnchorPane {
                 ComboBox<String> tmpEnumComboBox = new ComboBox();
                 tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
                 tmpEnumComboBox.valueProperty().bindBidirectional(tmpProperty);
+                tmpEnumComboBox.setTooltip(tmpTooltip);
                 //add to gridpane
                 aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -223,6 +226,7 @@ public class SettingsView extends AnchorPane {
                 tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
                 tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
                 tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
+                tmpStringTextField.setTooltip(tmpTooltip);
                 //add to gridpane
                 aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));

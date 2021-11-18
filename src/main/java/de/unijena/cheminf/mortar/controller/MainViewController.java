@@ -147,6 +147,10 @@ public class MainViewController {
         this.mainView = aMainView;
         this.appDir = anAppDir;
         this.settingsContainer = new SettingsContainer();
+        this.settingsContainer.reloadGlobalSettings();
+        this.fragmentationService = new FragmentationService();
+        this.fragmentationService.reloadFragmenterSettings();
+        this.fragmentationService.reloadActiveFragmenterAndPipeline();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new MainTabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -159,7 +163,6 @@ public class MainViewController {
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //</editor-fold>
-        this.fragmentationService = new FragmentationService();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
         this.mapOfFragmentDataModelLists = new HashMap<>(5);
@@ -341,15 +344,9 @@ public class MainViewController {
                 return;
             }
         }
-        try {
-            this.settingsContainer.preserveSettings();
-        } catch (IOException anIOException) {
-            MainViewController.LOGGER.log(Level.WARNING, anIOException.toString(), anIOException);
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
-                    Message.get("Error.SettingsPersistence.Header"),
-                    Message.get("Error.SettingsPersistence"),
-                    anIOException);
-        }
+        this.settingsContainer.preserveSettings();
+        this.fragmentationService.persistFragmenterSettings();
+        this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
         }
@@ -444,13 +441,17 @@ public class MainViewController {
             RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmName());
             tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
             this.mainView.getMainMenuBar().getFragmentationAlgorithmMenu().getItems().add(tmpRadioMenuItem);
+            if (!Objects.isNull(this.fragmentationService.getSelectedFragmenter()) && tmpFragmenter.getFragmentationAlgorithmName().equals(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())) {
+                tmpToggleGroup.selectToggle(tmpRadioMenuItem);
+            }
         }
         tmpToggleGroup.selectedToggleProperty().addListener((observableValue, oldValue, newValue) -> {
             if(tmpToggleGroup.getSelectedToggle() != null){
                 this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
             }
         });
-        tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
+        //TODO remove?
+        //tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
     }
     //
     /**
@@ -463,7 +464,7 @@ public class MainViewController {
                 for(Tab tmpTab : this.mainTabPane.getTabs()){
                     TableView tmpTableView = ((GridTabForTableView) tmpTab).getTableView();
                     int tmpListSize = 0;
-                    //TODO: change this when FragmentDataModel extends MoleculeDataModel via Interface IDataTableView
+                    //TODO: change this when FragmentDataModel extends MoleculeDataModel via Interface IDataTableView - done?
                     tmpListSize = ((IDataTableView)tmpTableView).getItemsList().size();
                     int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
                     int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();

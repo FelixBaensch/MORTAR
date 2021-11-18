@@ -22,27 +22,36 @@ package de.unijena.cheminf.mortar.model.settings;
 
 /**
  * TODO:
- * - Remove atom container switch
  * - Important note for developers: When adding a new setting represented by a string, also consider the
  * SingleTermPreference class input restrictions when testing whether an input is valid!
  */
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
+import de.unijena.cheminf.mortar.preference.IPreference;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
+import de.unijena.cheminf.mortar.preference.PreferenceUtil;
 import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
+import de.unijena.cheminf.mortar.preference.SingleNumberPreference;
 import de.unijena.cheminf.mortar.preference.SingleTermPreference;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.Alert;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -64,19 +73,9 @@ public class SettingsContainer {
     //
     //<editor-fold desc="public static final constants" defaultstate="collapsed">
     /**
-     * Name of preference wrapping the number of rows per page setting.
-     */
-    public static final String ROWS_PER_PAGE_PREFERENCE_NAME = "Rows per page preference";
-
-    /**
      * Default value of the number of rows per page.
      */
     public static final int ROWS_PER_PAGE_SETTING_DEFAULT = 5;
-
-    /**
-     * Name of preference wrapping the number of parallel tasks to use for fragmentation.
-     */
-    public static final String NR_OF_TASKS_FOR_FRAGMENTATION_PREFERENCE_NAME = "Nr of tasks for fragmentation preference";
 
     /**
      * Default value of the number of parallel tasks to use for fragmentation.
@@ -84,20 +83,9 @@ public class SettingsContainer {
     public static final int NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT = Runtime.getRuntime().availableProcessors();
 
     /**
-     * Name of preference wrapping the last directory used by the user.
-     */
-    public static final String RECENT_DIRECTORY_PATH_PREFERENCE_NAME = "Recent directory path preference";
-
-    /**
      * Default value of the recent directory to use when there is no last directory used by the user.
      */
     public static final String RECENT_DIRECTORY_PATH_SETTING_DEFAULT = System.getProperty("user.home");
-
-    /**
-     * Name of preference wrapping the setting whether to add implicit hydrogen atoms to open valences in the imported
-     * molecules.
-     */
-    public static final String ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME = "Add implicit hydrogens at import preference";
 
     /**
      * Default value of whether to add implicit hydrogen atoms to open valences in the imported molecules.
@@ -105,29 +93,14 @@ public class SettingsContainer {
     public static final boolean ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT = true;
 
     /**
-     * Name of preference wrapping the setting whether to keep the atom container in the molecule/fragment data model.
-     */
-    public static final String KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME = "Keep atom container in data model preference";
-
-    /**
      * Default value of whether to keep the atom container in the molecule/fragment data model.
      */
     public static final boolean KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT = false;
 
     /**
-     * Name of preference wrapping the setting whether to always use the MDL V3000 format for file export.
-     */
-    public static final String ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME = "Always use MDL V3000 format at export preference";
-
-    /**
      * Default value of whether to always use the MDL V3000 format for file export.
      */
     public static final boolean ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT = false;
-
-    /**
-     * Name of preference wrapping the separator for the csv export.
-     */
-    public static final String CSV_EXPORT_SEPARATOR_PREFERENCE_NAME = "Csv export separator preference";
 
     /**
      * Default string for separator for the csv export
@@ -142,19 +115,9 @@ public class SettingsContainer {
     private SimpleIntegerProperty rowsPerPageSetting;
 
     /**
-     * Preference of rows per page setting.
-     */
-    private SingleIntegerPreference rowsPerPagePreference;
-
-    /**
      * Property of number of fragmentation tasks setting.
      */
     private SimpleIntegerProperty numberOfTasksForFragmentationSetting;
-
-    /**
-     * Preference of number of fragmentation tasks setting.
-     */
-    private SingleIntegerPreference numberOfTasksForFragmentationPreference;
 
     /**
      * Property of recent directory.
@@ -162,19 +125,9 @@ public class SettingsContainer {
     private SimpleStringProperty recentDirectoryPathSetting;
 
     /**
-     * Preference of recent directory.
-     */
-    private SingleTermPreference recentDirectoryPathPreference;
-
-    /**
      * Property of implicit hydrogens setting.
      */
     private SimpleBooleanProperty addImplicitHydrogensAtImportSetting;
-
-    /**
-     * Preference of implicit hydrogens setting.
-     */
-    private BooleanPreference addImplicitHydrogensAtImportPreference;
 
     /**
      * Property of keep atom container setting.
@@ -182,29 +135,14 @@ public class SettingsContainer {
     private SimpleBooleanProperty keepAtomContainerInDataModelSetting;
 
     /**
-     * Preference of keep atom container setting.
-     */
-    private BooleanPreference keepAtomContainerInDataModelPreference;
-
-    /**
      * Property of always MDL V3000 format setting.
      */
     private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
 
     /**
-     * Preference of always MDL V3000 format setting.
-     */
-    private BooleanPreference alwaysMDLV3000FormatAtExportPreference;
-
-    /**
      * Property of csv export separator.
      */
     private SimpleStringProperty csvExportSeparatorSetting;
-
-    /**
-     *
-     */
-    private SingleTermPreference csvExportSeparatorPreference;
 
     /**
      * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
@@ -213,51 +151,26 @@ public class SettingsContainer {
     private List<Property> settings;
 
     /**
-     * Internal preference container for persisting the settings via their analogous preference objects stored in this
-     * container.
+     * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
-    private PreferenceContainer preferenceContainer;
+    private HashMap<String, String> settingNameTooltipTextMap;
     //</editor-fold>
     //
     //<editor-fold desc="constructors">
     /**
-     * Constructor that first tries to reload a previously persisted preference container from the respective directory
-     * specified in the basic definitions to reload the settings from the previous session. If this fails, the settings
-     * (and preferences) are set to their respective default values.
+     * Constructor that sets all settings to their default values.
      */
     public SettingsContainer() {
-        String tmpPreferenceContainerDirectoryPathName = FileUtil.getAppDirPath() + File.separator
-                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_DIRECTORY + File.separator;
-        File tmpPreferencesDirectoryFile = new File(tmpPreferenceContainerDirectoryPathName);
-        String tmpPreferenceContainerFilePathName = tmpPreferenceContainerDirectoryPathName
-                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_NAME
-                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
-        File tmpPreferenceContainerFile = new File(tmpPreferenceContainerFilePathName);
-        boolean tmpDoNewInitialisation = false;
-        if (!tmpPreferencesDirectoryFile.exists()) {
-            FileUtil.createDirectory(tmpPreferencesDirectoryFile.getAbsolutePath());
-            tmpDoNewInitialisation = true;
-        } else {
-            boolean tmpExists = tmpPreferenceContainerFile.exists();
-            boolean tmpIsFile = tmpPreferenceContainerFile.isFile();
-            boolean tmpCanRead = tmpPreferenceContainerFile.canRead();
-            if (!tmpExists || !tmpIsFile || !tmpCanRead) {
-                SettingsContainer.LOGGER.info("Preference container file does not exist or cannot be read. " +
-                        "A new one is initialised.");
-                tmpDoNewInitialisation = true;
-            } else {
-                try {
-                    this.extractGeneralSettingsPreferencesFromContainer(tmpPreferenceContainerFile);
-                } catch (IOException | SecurityException anException) {
-                    SettingsContainer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                    tmpDoNewInitialisation = true;
-                }
-            }
-        }
-        if (tmpDoNewInitialisation) {
-            this.initialisePreferences(tmpPreferenceContainerFilePathName);
-        }
         this.initialiseSettings();
+        try {
+            this.checkSettings();
+        } catch (Exception anException) {
+            SettingsContainer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("SettingsContainer.Error.invalidSettingFormat"),
+                    anException);
+        }
     }
     //</editor-fold>
     //
@@ -270,6 +183,16 @@ public class SettingsContainer {
      */
     public List<Property> settingsProperties() {
         return this.settings;
+    }
+
+    /**
+     * Returns a map containing descriptive texts (values) for the settings with the given names (keys) to be used as
+     * tooltips in the GUI.
+     *
+     * @return map with tooltip texts
+     */
+    public Map<String, String> getSettingNameToTooltipTextMap() {
+        return this.settingNameTooltipTextMap;
     }
 
     /**
@@ -350,7 +273,9 @@ public class SettingsContainer {
      * @return keep atom container in data model setting value
      */
     public boolean getKeepAtomContainerInDataModelSetting() {
-        return this.keepAtomContainerInDataModelSetting.get();
+        //DEPRECATED
+        //return this.keepAtomContainerInDataModelSetting.get();
+        return false;
     }
 
     /**
@@ -462,9 +387,10 @@ public class SettingsContainer {
      *
      * @param aBoolean whether to keep the atom container in the molecule/fragment data model
      */
-    public void setKeepAtomContainerInDataModelSetting(boolean aBoolean) {
+    //DEPRECATED
+    /*public void setKeepAtomContainerInDataModelSetting(boolean aBoolean) {
         this.keepAtomContainerInDataModelSetting.set(aBoolean);
-    }
+    }*/
 
     /**
      * Sets the setting for whether to always use MDL V3000 format for file export. Per default, this is set to false and
@@ -501,7 +427,8 @@ public class SettingsContainer {
         this.numberOfTasksForFragmentationSetting.set(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
-        this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
+        //DEPRECATED
+        //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
     }
@@ -510,126 +437,121 @@ public class SettingsContainer {
     //<editor-fold desc="public methods">
     /**
      * Triggers the preservation of the current settings values in a file for re-import at the next application session.
-     *
-     * @throws IOException if anything goes wrong
-     * @throws SecurityException if the MORTAR settings directory cannot be accessed
      */
-    public void preserveSettings() throws IOException, SecurityException {
-        this.preferenceContainer.writeRepresentation();
+    public void preserveSettings() {
+        String tmpSettingsDirectoryPathName = FileUtil.getSettingsDirPath();
+        File tmpSettingsDirectoryFile = new File(tmpSettingsDirectoryPathName);
+        if (!tmpSettingsDirectoryFile.exists()) {
+            tmpSettingsDirectoryFile.mkdirs();
+        }
+        if (!tmpSettingsDirectoryFile.canWrite()) {
+            SettingsContainer.LOGGER.log(Level.WARNING, "Global settings persistence went wrong, cannot write to settings directory.");
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("SettingsContainer.Error.settingsPersistence"));
+            return;
+        }
+        String tmpPreferenceContainerFilePathName = tmpSettingsDirectoryPathName
+                + BasicDefinitions.SETTINGS_CONTAINER_FILE_NAME
+                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
+        List<Property> tmpSettings = new ArrayList<>(6);
+        tmpSettings.addAll(this.settings);
+        tmpSettings.add(this.recentDirectoryPathSetting);
+        try {
+            PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpPreferenceContainerFilePathName);
+            tmpPrefContainer.writeRepresentation();
+        } catch (NullPointerException | IllegalArgumentException | IOException | SecurityException anException) {
+            SettingsContainer.LOGGER.log(Level.WARNING, "Global settings persistence went wrong, exception: " + anException.toString(), anException);
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    Message.get("SettingsContainer.Error.settingsPersistence"),
+                    anException);
+            return;
+        }
+
+    }
+
+    /**
+     * Reloads the setting values from a previous MORTAR session via the persisted preference container.
+     */
+    public void reloadGlobalSettings() {
+        String tmpSettingsDirectoryPathName = FileUtil.getSettingsDirPath();
+        File tmpSettingsDirectoryFile = new File(tmpSettingsDirectoryPathName);
+        String tmpPreferenceContainerFilePathName = tmpSettingsDirectoryPathName
+                + BasicDefinitions.SETTINGS_CONTAINER_FILE_NAME
+                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
+        File tmpPreferenceContainerFile = new File(tmpPreferenceContainerFilePathName);
+        if (!tmpSettingsDirectoryFile.exists()) {
+            FileUtil.createDirectory(tmpSettingsDirectoryFile.getAbsolutePath());
+            SettingsContainer.LOGGER.info("No persisted global settings could be found, all set to default.");
+            return;
+        } else {
+            boolean tmpExists = tmpPreferenceContainerFile.exists();
+            boolean tmpIsFile = tmpPreferenceContainerFile.isFile();
+            boolean tmpCanRead = tmpPreferenceContainerFile.canRead();
+            if (!tmpExists || !tmpIsFile || !tmpCanRead) {
+                SettingsContainer.LOGGER.warning("Preference container file does not exist or cannot be read. " +
+                        "A new one is initialised.");
+                return;
+            } else {
+                PreferenceContainer tmpContainer;
+                try {
+                    tmpContainer = new PreferenceContainer(tmpPreferenceContainerFile);
+                } catch (IOException | SecurityException anException) {
+                    SettingsContainer.LOGGER.log(Level.SEVERE, "Unable to reload global settings: " + anException.toString(), anException);
+                    return;
+                }
+                List<Property> tmpSettings = new ArrayList<>(6);
+                tmpSettings.addAll(this.settings);
+                tmpSettings.add(this.recentDirectoryPathSetting);
+                for (Property tmpSettingProperty : tmpSettings) {
+                    String tmpPropertyName = tmpSettingProperty.getName();
+                    if (tmpContainer.containsPreferenceName(tmpPropertyName)) {
+                        IPreference[] tmpPreferences = tmpContainer.getPreferences(tmpPropertyName);
+                        try {
+                            if (tmpSettingProperty instanceof SimpleBooleanProperty) {
+                                BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpBooleanPreference.getContent());
+                            } else if (tmpSettingProperty instanceof SimpleIntegerProperty) {
+                                SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpIntPreference.getContent());
+                            } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
+                                SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpDoublePreference.getContent());
+                            } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
+                                SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                                tmpSettingProperty.setValue(tmpStringPreference.getContent());
+                            } else {
+                                //setting will remain in default
+                                SettingsContainer.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
+                            }
+                        } catch (ClassCastException aCastingException) {
+                            SettingsContainer.LOGGER.log(Level.WARNING, aCastingException.toString(), aCastingException);
+                        }
+                    } else {
+                        //setting will remain in default
+                        SettingsContainer.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
+                    }
+                }
+            }
+        }
     }
     //</editor-fold>
     //
     //<editor-fold desc="private methods">
-    /**
-     * Reloads the setting values from a previous MORTAR session via the persisted preference container.
-     *
-     * @param aPreferenceContainerFile the persisted preference container representation from the previous run
-     * @throws IOException if the file loading fails or if a setting cannot be re-imported
-     * @throws SecurityException if the given file cannot be accessed
-     */
-    private void extractGeneralSettingsPreferencesFromContainer(File aPreferenceContainerFile) throws IOException, SecurityException {
-        this.preferenceContainer = new PreferenceContainer(aPreferenceContainerFile);
-        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.ROWS_PER_PAGE_PREFERENCE_NAME)) {
-            this.rowsPerPagePreference =
-                    (SingleIntegerPreference) this.preferenceContainer.getPreferences(
-                            SettingsContainer.ROWS_PER_PAGE_PREFERENCE_NAME)[0];
-        } else {
-            throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
-        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_PREFERENCE_NAME)) {
-            this.numberOfTasksForFragmentationPreference =
-                    (SingleIntegerPreference) this.preferenceContainer.getPreferences(
-                            SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_PREFERENCE_NAME)[0];
-        } else {
-            throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
-        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.RECENT_DIRECTORY_PATH_PREFERENCE_NAME)) {
-            this.recentDirectoryPathPreference =
-                    (SingleTermPreference) this.preferenceContainer.getPreferences(
-                            SettingsContainer.RECENT_DIRECTORY_PATH_PREFERENCE_NAME)[0];
-        } else {
-            throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
-        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME)) {
-            this.addImplicitHydrogensAtImportPreference =
-                    (BooleanPreference) this.preferenceContainer.getPreferences(
-                            SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME)[0];
-        } else {
-            throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
-        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME)) {
-            this.keepAtomContainerInDataModelPreference =
-                    (BooleanPreference) this.preferenceContainer.getPreferences(
-                            SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME)[0];
-        } else {
-            throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
-        if (this.preferenceContainer.containsPreferenceName(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME)) {
-            this.alwaysMDLV3000FormatAtExportPreference =
-                    (BooleanPreference) this.preferenceContainer.getPreferences(
-                            SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME)[0];
-        } else {
-            throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
-        if(this.preferenceContainer.containsPreferenceName(SettingsContainer.CSV_EXPORT_SEPARATOR_PREFERENCE_NAME)) {
-            this.csvExportSeparatorPreference =
-                    (SingleTermPreference) this.preferenceContainer.getPreferences(
-                            SettingsContainer.CSV_EXPORT_SEPARATOR_PREFERENCE_NAME)[0];
-        } else {
-            throw new IOException("One or multiple settings could not be restored from the previous run.");
-        }
-    }
-
-    /**
-     * Instantiates a new preference container and new preference objects for all setting based on the default values.
-     *
-     * @param aPreferenceContainerFilePathName path of a file where the new setting container should persist itself
-     */
-    private void initialisePreferences(String aPreferenceContainerFilePathName) {
-        this.preferenceContainer = new PreferenceContainer(aPreferenceContainerFilePathName);
-        this.rowsPerPagePreference = new SingleIntegerPreference(SettingsContainer.ROWS_PER_PAGE_PREFERENCE_NAME,
-                SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.rowsPerPagePreference);
-        this.numberOfTasksForFragmentationPreference = new SingleIntegerPreference(
-                SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_PREFERENCE_NAME,
-                SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.numberOfTasksForFragmentationPreference);
-        this.recentDirectoryPathPreference = new SingleTermPreference(
-                SettingsContainer.RECENT_DIRECTORY_PATH_PREFERENCE_NAME,
-                SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.recentDirectoryPathPreference);
-        this.addImplicitHydrogensAtImportPreference = new BooleanPreference(
-                SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_PREFERENCE_NAME,
-                SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.addImplicitHydrogensAtImportPreference);
-        this.keepAtomContainerInDataModelPreference = new BooleanPreference(
-                SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_PREFERENCE_NAME,
-                SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.keepAtomContainerInDataModelPreference);
-        this.alwaysMDLV3000FormatAtExportPreference = new BooleanPreference(
-                SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_PREFERENCE_NAME,
-                SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.alwaysMDLV3000FormatAtExportPreference);
-        this.csvExportSeparatorPreference = new SingleTermPreference(
-                SettingsContainer.CSV_EXPORT_SEPARATOR_PREFERENCE_NAME,
-                SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
-        this.preferenceContainer.add(this.csvExportSeparatorPreference);
-    }
-
     //TODO: Move String literals of GuiExceptionAlerts to message file
     /**
-     * Initialises the properties representing the settings based on the respective preference objects. Related
-     * preferences and properties are synced via overriding the properties set() methods and the properties are added
+     * Initialises the properties representing the settings in default values. Properties are added
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
+        this.settingNameTooltipTextMap = new HashMap<String, String>(10, 0.9f);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 "Rows per page setting",
-                this.rowsPerPagePreference.getContent()) {
+                SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT) {
             @Override
             public void set(int newValue) throws IllegalArgumentException {
                 if (SettingsContainer.this.isLegalRowsPerPageSetting(newValue)) {
-                    SettingsContainer.this.rowsPerPagePreference.setContent(newValue);
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal rows per page number was given: " + newValue);
@@ -640,13 +562,13 @@ public class SettingsContainer {
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.rowsPerPageSetting.getName(), Message.get("SettingsContainer.rowsPerPageSetting.tooltip"));
         this.numberOfTasksForFragmentationSetting = new SimpleIntegerProperty(this,
                 "Nr of tasks for fragmentation setting",
-                this.numberOfTasksForFragmentationPreference.getContent()) {
+                SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT) {
             @Override
             public void set(int newValue) throws IllegalArgumentException {
                 if (SettingsContainer.this.isLegalNumberOfTasksForFragmentationSetting(newValue)) {
-                    SettingsContainer.this.numberOfTasksForFragmentationPreference.setContent(newValue);
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal number of tasks for fragmentation was given: " + newValue);
@@ -657,13 +579,13 @@ public class SettingsContainer {
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.numberOfTasksForFragmentationSetting.getName(), Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.tooltip"));
         this.recentDirectoryPathSetting = new SimpleStringProperty(this,
                 "Recent directory path setting",
-                this.recentDirectoryPathPreference.getContent()) {
+                SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT) {
             @Override
             public void set(String newValue) throws IllegalArgumentException {
                 if (SettingsContainer.this.isLegalRecentDirectoryPath(newValue)) {
-                    SettingsContainer.this.recentDirectoryPathPreference.setContent(newValue);
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal number of tasks for fragmentation was given: " + newValue);
@@ -676,14 +598,15 @@ public class SettingsContainer {
         };
         this.addImplicitHydrogensAtImportSetting = new SimpleBooleanProperty(this,
                 "Add implicit hydrogens at import setting",
-                this.addImplicitHydrogensAtImportPreference.getContent()) {
+                SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT) {
             @Override
             public void set(boolean newValue) {
-                SettingsContainer.this.addImplicitHydrogensAtImportPreference.setContent(newValue);
                 super.set(newValue);
             }
         };
-        this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
+        this.settingNameTooltipTextMap.put(this.addImplicitHydrogensAtImportSetting.getName(), Message.get("SettingsContainer.addImplicitHydrogensAtImportSetting.tooltip"));
+        //DEPRECATED
+        /*this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
                 "Keep AtomContainers in the DataModels setting",
                 this.keepAtomContainerInDataModelPreference.getContent()) {
             @Override
@@ -691,23 +614,30 @@ public class SettingsContainer {
                 SettingsContainer.this.keepAtomContainerInDataModelPreference.setContent(newValue);
                 super.set(newValue);
             }
-        };
-        this.alwaysMDLV3000FormatAtExportSetting = new SimpleBooleanProperty(this,
-                "Always MDL V3000 format at export setting",     //TODO: better phrasing??   @Samuel
-                this.alwaysMDLV3000FormatAtExportPreference.getContent()) {
+        };*/
+        //Dummy:
+        this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
+                "Keep AtomContainers in the DataModels setting", false) {
             @Override
             public void set(boolean newValue) {
-                SettingsContainer.this.alwaysMDLV3000FormatAtExportPreference.setContent(newValue);
+                //do nothing, the value should remain false!
+            }
+        };
+        this.alwaysMDLV3000FormatAtExportSetting = new SimpleBooleanProperty(this,
+                "Always MDL V3000 format at export setting",
+                SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT) {
+            @Override
+            public void set(boolean newValue) {
                 super.set(newValue);
             }
         };
+        this.settingNameTooltipTextMap.put(this.alwaysMDLV3000FormatAtExportSetting.getName(), Message.get("SettingsContainer.alwaysMDLV3000FormatAtExportSetting.tooltip"));
         this.csvExportSeparatorSetting = new SimpleStringProperty( this,
                 "Csv export separator setting",
-                this.csvExportSeparatorPreference.getContent()) {
+                SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT) {
             @Override
             public void set(String newValue) throws IllegalArgumentException {
                 if(SettingsContainer.this.isLegalCsvExportSeparator(newValue)) {
-                    SettingsContainer.this.csvExportSeparatorPreference.setContent(newValue);
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal value for the separator for the csv export was given: " + newValue);
@@ -718,14 +648,55 @@ public class SettingsContainer {
                 }
             }
         };
-        this.settings = new ArrayList<Property>(3);
+        this.settingNameTooltipTextMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.tooltip"));
+        this.settings = new ArrayList<Property>(6);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
-        this.settings.add(this.keepAtomContainerInDataModelSetting);
+        //DEPRECATED
+        //this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
         this.settings.add(this.csvExportSeparatorSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
+    }
+
+    /**
+     * Checks the settings for restrictions imposed by persistence. Throws an exception if
+     * anything does not meet the requirements.
+     */
+    private void checkSettings() throws Exception {
+        //setting names must be singletons
+        //setting names and values must adhere to the preference input restrictions
+        //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
+        List<Property> tmpSettingsList = this.settings;
+        HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingsList.size() + 6, 1.0f);
+        for (Property tmpSetting : tmpSettingsList) {
+            if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
+                throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");
+            }
+            if (tmpSettingNames.contains(tmpSetting.getName())) {
+                throw new Exception("Setting name " + tmpSetting.getName() + " is used multiple times.");
+            } else {
+                tmpSettingNames.add(tmpSetting.getName());
+            }
+            if (tmpSetting instanceof SimpleBooleanProperty) {
+                //nothing to do here, booleans cannot have invalid values
+            } else if (tmpSetting instanceof SimpleIntegerProperty) {
+                if (!SingleIntegerPreference.isValidContent(Integer.toString(((SimpleIntegerProperty) tmpSetting).get()))) {
+                    throw new Exception("Setting value " + ((SimpleIntegerProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                }
+            } else if (tmpSetting instanceof SimpleDoubleProperty) {
+                if (!SingleNumberPreference.isValidContent(((SimpleDoubleProperty) tmpSetting).get())) {
+                    throw new Exception("Setting value " + ((SimpleDoubleProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                }
+            } else if (tmpSetting instanceof SimpleEnumConstantNameProperty || tmpSetting instanceof SimpleStringProperty) {
+                if (!SingleTermPreference.isValidContent(((SimpleStringProperty) tmpSetting).get())) {
+                    throw new Exception("Setting value " + ((SimpleStringProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                }
+            } else {
+                throw new Exception("Setting " + tmpSetting.getName() + " is of an invalid type.");
+            }
+        }
     }
 
     /**
@@ -800,7 +771,7 @@ public class SettingsContainer {
         //TODO: add more legal separators or remove illegal ones
         switch (aSeparator){
             case ",":
-            case ".":
+            case ";":
                 return true;
             default:
                 return false;
