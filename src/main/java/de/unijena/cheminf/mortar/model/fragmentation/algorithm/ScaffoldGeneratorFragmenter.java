@@ -21,6 +21,7 @@
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.scaffoldGenerator.ScaffoldGenerator;
 import javafx.beans.property.Property;
@@ -35,7 +36,9 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -321,6 +324,11 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     private final List<Property> settings;
 
     /**
+     * Map to store pairs of {@literal <setting name, tooltip text>}.
+     */
+    private final HashMap<String, String> settingNameTooltipTextMap;
+
+    /**
      * Logger of this class.
      */
     private final Logger logger = Logger.getLogger(ScaffoldGeneratorFragmenter.class.getName());
@@ -332,6 +340,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      */
     public ScaffoldGeneratorFragmenter() {
         this.scaffoldGeneratorInstance = new ScaffoldGenerator();
+        this.settingNameTooltipTextMap = new HashMap(16, 0.9f);
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
@@ -347,6 +356,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.fragmentSaturationSetting.tooltip"));
         this.scaffoldModeSetting = new SimpleEnumConstantNameProperty(this, "Scaffold mode setting",
                 ScaffoldGenerator.SCAFFOLD_MODE_OPTION_DEFAULT.name(), ScaffoldGenerator.ScaffoldModeOption.class) {
             @Override
@@ -364,6 +375,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 super.set(newValue);
             }
         };
+        this.settingNameTooltipTextMap.put(this.scaffoldModeSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.scaffoldModeSetting.tooltip"));
         this.determineAromaticitySetting = new SimpleBooleanProperty(this,
                 "Determine aromaticity setting", ScaffoldGenerator.DETERMINE_AROMATICITY_SETTING_DEFAULT) {
             @Override
@@ -373,6 +386,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 super.set(newValue);
             }
         };
+        this.settingNameTooltipTextMap.put(this.determineAromaticitySetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.determineAromaticitySetting.tooltip"));
         //note: cycle finder and electron donation model have to be set prior to setting the aromaticity model!
         this.cycleFinderSetting = new SimpleEnumConstantNameProperty(this, "Cycle finder algorithm setting",
                 ScaffoldGeneratorFragmenter.CYCLE_FINDER_OPTION_DEFAULT.name(),
@@ -394,6 +409,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
             }
         };
+        this.settingNameTooltipTextMap.put(this.cycleFinderSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.cycleFinderSetting.tooltip"));
         this.setCycleFinderInstance(ScaffoldGeneratorFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
         this.electronDonationModelSetting = new SimpleEnumConstantNameProperty(this, "Electron donation model setting",
                 ScaffoldGeneratorFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name(),
@@ -415,6 +432,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
             }
         };
+        this.settingNameTooltipTextMap.put(this.electronDonationModelSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.electronDonationModelSetting.tooltip"));
         this.setElectronDonationInstance(ScaffoldGeneratorFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get()));
         Aromaticity tmpAromaticity = new Aromaticity(ScaffoldGeneratorFragmenter.this.electronDonationInstance, ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
         ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
@@ -435,6 +454,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setSmilesGeneratorSetting(smilesGeneratorInstance);
             }
         };
+        this.settingNameTooltipTextMap.put(this.smilesGeneratorSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.smilesGeneratorSetting.tooltip"));
         this.setSmilesGeneratorInstance(ScaffoldGeneratorFragmenter.SmilesGeneratorOption.valueOf(this.smilesGeneratorSetting.get()));
         ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setSmilesGeneratorSetting(ScaffoldGeneratorFragmenter.this.smilesGeneratorInstance);
         this.ruleSevenAppliedSetting = new SimpleBooleanProperty(this,
@@ -446,6 +467,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 super.set(newValue);
             }
         };
+        this.settingNameTooltipTextMap.put(this.ruleSevenAppliedSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.ruleSevenAppliedSetting.tooltip"));
         this.retainOnlyHybridisationsAtAromaticBondsSetting = new SimpleBooleanProperty(this,
                 "Retain only hybridisations at aromatic bonds setting", ScaffoldGenerator.RETAIN_ONLY_HYBRIDISATIONS_AT_AROMATIC_BONDS_SETTING_DEFAULT) {
             @Override
@@ -455,6 +478,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 super.set(newValue);
             }
         };
+        this.settingNameTooltipTextMap.put(this.retainOnlyHybridisationsAtAromaticBondsSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.retainOnlyHybridisationsAtAromaticBondsSetting.tooltip"));
         this.fragmentationTypeSetting = new SimpleEnumConstantNameProperty(this, "Fragmentation type setting",
                 ScaffoldGeneratorFragmenter.FRAGMENTATION_TYPE_OPTION_DEFAULT.name(), ScaffoldGeneratorFragmenter.FragmentationTypeOption.class) {
             @Override
@@ -469,6 +494,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.fragmentationTypeSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.fragmentationTypeSetting.tooltip"));
         this.sideChainSetting = new SimpleEnumConstantNameProperty(this, "Side chain setting",
                 ScaffoldGeneratorFragmenter.SIDE_CHAIN_OPTION_DEFAULT.name(), ScaffoldGeneratorFragmenter.SideChainOption.class) {
             @Override
@@ -483,6 +510,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
+        this.settingNameTooltipTextMap.put(this.sideChainSetting.getName(),
+                Message.get("ScaffoldGeneratorFragmenter.sideChainSetting.tooltip"));
         this.settings = new ArrayList<>(10);
         this.settings.add(this.fragmentationTypeSetting);
         this.settings.add(this.fragmentSaturationSetting);
@@ -919,6 +948,11 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
+    public Map<String, String> getSettingNameToTooltipTextMap() {
+        return this.settingNameTooltipTextMap;
+    }
+
+    @Override
     public String getFragmentationAlgorithmName() {
         return ScaffoldGeneratorFragmenter.ALGORITHM_NAME;
     }
@@ -996,7 +1030,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         List<IAtomContainer> tmpSideChainList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
-            Kekulization.kekulize(tmpMoleculeClone); //Hotfix for SMILES loader bug
+            Kekulization.kekulize(tmpMoleculeClone); //Hotfix for SMILES loader bug TODO
             /*Generate Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.name()) ||
                     this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDECHAINS.name())) {
@@ -1076,9 +1110,13 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         }
         tmpReturnList.addAll(tmpSideChainList);
         /*Remove all empty fragments*/
-        for(IAtomContainer tmpReturnMolecule : tmpReturnList) {
-            if(tmpReturnMolecule.isEmpty()){
-                tmpReturnList.remove(tmpReturnMolecule);
+        if (!tmpReturnList.isEmpty()) {
+            for(int i = 0; i < tmpReturnList.size(); i++) {
+                IAtomContainer tmpReturnMolecule = tmpReturnList.get(i);
+                if(tmpReturnMolecule.isEmpty()){
+                    tmpReturnList.remove(tmpReturnMolecule);
+                    i--;
+                }
             }
         }
         return tmpReturnList;
