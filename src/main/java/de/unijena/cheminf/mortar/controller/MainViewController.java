@@ -40,7 +40,6 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -291,13 +290,7 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.openPipelineSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
-        //log files MenuItem
-        this.mainView.getMainMenuBar().getLogFilesMenuItem().addEventHandler(
-                EventType.ROOT,
-                anEvent -> FileUtil.openFilePathInExplorer(LogUtil.getLogFileDirectoryPath()));
-        this.mainView.getMainMenuBar().getGitHubRepoMenuItem().addEventHandler(
-                EventType.ROOT,
-                anEvent -> FileUtil.openGitHubRepositoryInDefaultBrowser());
+        this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
             if(tmpGrid == null){

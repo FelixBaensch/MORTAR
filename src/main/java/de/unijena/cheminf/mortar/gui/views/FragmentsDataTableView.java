@@ -106,7 +106,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
         this.smilesColumn.setMinWidth(50);
         this.smilesColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.3)  //TODO
+                this.widthProperty().multiply(0.2975)  //TODO
         );
         this.smilesColumn.setResizable(true);
         this.smilesColumn.setEditable(false);
@@ -165,7 +165,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculePercentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
         this.moleculePercentageColumn.setMinWidth(20);
         this.moleculePercentageColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1) //TODO
+                this.widthProperty().multiply(0.0975) //TODO
         );
         this.moleculePercentageColumn.setResizable(true);
         this.moleculePercentageColumn.setEditable(false);

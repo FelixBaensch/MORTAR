@@ -59,6 +59,7 @@ public class MainMenuBar extends MenuBar {
     private MenuItem fragmentationSettingsMenuItem;
     private MenuItem globalSettingsMenuItem;
     private MenuItem pipelineSettingsMenuItem;
+    private MenuItem aboutViewMenuItem;
     private Menu fragmentationAlgorithmMenu;
     //</editor-fold>
     //
@@ -102,8 +103,9 @@ public class MainMenuBar extends MenuBar {
         this.pipelineSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.pipelineMenu.pipelineSettingsMenuItem.text"));
         //helpMenu
         this.helpMenu = new Menu(Message.get("MainView.menuBar.helpMenu.text"));
-        this.logFilesMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.logFilesMenuItem.text"));
-        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
+        this.aboutViewMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.aboutViewMenuItem.text"));
+//        this.logFilesMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.logFilesMenuItem.text"));
+//        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -145,8 +147,9 @@ public class MainMenuBar extends MenuBar {
         this.pipelineMenu.getItems().add(this.pipelineSettingsMenuItem);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
-        this.helpMenu.getItems().add(this.logFilesMenuItem);
-        this.helpMenu.getItems().add(this.gitHubRepoMenuItem);
+//        this.helpMenu.getItems().add(this.logFilesMenuItem);
+//        this.helpMenu.getItems().add(this.gitHubRepoMenuItem);
+        this.helpMenu.getItems().add(this.aboutViewMenuItem);
         this.getMenus().add(this.helpMenu);
         //</editor-fold>
     }
@@ -336,7 +339,7 @@ public class MainMenuBar extends MenuBar {
         return this.fragmentationSettingsMenuItem;
     }
     //</editor-fold>
-    //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
+    //<editor-fold desc="getPipelineSettingsMenuItem" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to open the pipeline settings window
      *
@@ -346,7 +349,7 @@ public class MainMenuBar extends MenuBar {
         return this.pipelineSettingsMenuItem;
     }
     //</editor-fold>
-    //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
+    //<editor-fold desc="getLogFilesMenuItem" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to open the log files directory in explorer
      *
@@ -356,7 +359,7 @@ public class MainMenuBar extends MenuBar {
         return this.logFilesMenuItem;
     }
     //</editor-fold>
-    //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
+    //<editor-fold desc="getGitHubRepoMenuItem" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to open the GitHub repository in browser
      *
@@ -364,6 +367,16 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getGitHubRepoMenuItem() {
         return this.gitHubRepoMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getAboutViewMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the AboutView
+     *
+     * @return the menu item that should open the AboutView
+     */
+    public MenuItem getAboutViewMenuItem() {
+        return this.aboutViewMenuItem;
     }
     //</editor-fold>
     //</editor-fold>
