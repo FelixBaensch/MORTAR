@@ -62,6 +62,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -71,7 +73,6 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -325,54 +326,6 @@ public class MainViewController {
     }
     //
     /**
-     * Adds a changes listener to the height property of given table view which sets the height for structure images to
-     * each MoleculeDataModel object of the items list and refreshes the table view
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
-     *
-     * @param aTableView
-     */
-    private void addTableViewWidthListener(TableView aTableView){
-        aTableView.heightProperty().addListener((observable, oldValue, newValue) -> {
-            this.setImageStructureHeight(aTableView, newValue.doubleValue());
-            aTableView.refresh();
-        });
-    }
-    //
-    /**
-     * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
-     *
-     * @param aTableView TableView
-     * @param aHeight double
-     */
-    private void setImageStructureHeight(TableView aTableView, double aHeight){
-        double tmpHeight =
-                ((aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                        / this.settingsContainer.getRowsPerPageSetting()) - (this.settingsContainer.getRowsPerPageSetting()/2.0 -1);
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
-            tmpHeight =
-                    (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                            / settingsContainer.getRowsPerPageSetting();
-        }
-        if(tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT){
-            tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
-        }
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
-                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
-                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(((ItemizationDataTableView) aTableView).getFragmentationName())){
-                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
-                }
-            }
-        }
-        else{
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
-                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
-            }
-        }
-    }
-    //
-    /**
      * Closes application
      */
     private void closeApplication(int aStatus) {
@@ -399,6 +352,11 @@ public class MainViewController {
         System.exit(aStatus);
     }
     //
+    /**
+     * Closes the application via closeApplication method when close window event was fired
+     *
+     * @param anEvent WindowEvent
+     */
     private void closeWindowEvent(WindowEvent anEvent){
         this.closeApplication(0);
         anEvent.consume();
