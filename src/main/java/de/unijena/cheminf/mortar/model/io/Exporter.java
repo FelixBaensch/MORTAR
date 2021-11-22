@@ -124,7 +124,6 @@ public class Exporter {
     //</editor-fold>
     //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
-    //TODO: Get separator from general settings
     //TODO: Parameter tests necessary?
     //TODO: Move literals like header texts to properties file or constants?
     /**
@@ -137,7 +136,7 @@ public class Exporter {
      * @return Csv file which contains the results of the fragmentation
      * @author Betül Sevindik
      */
-    public File createFragmentationTabCsvFile(Stage aParentStage, ObservableList<FragmentDataModel> aList, String aSeparator) {
+    public File createFragmentationTabCsvFile(Stage aParentStage, List<MoleculeDataModel> aList, String aSeparator) {
         try {
             File tmpFragmentationCsvFile = null;
             tmpFragmentationCsvFile = this.saveFile(aParentStage, "CSV", "*.csv",
@@ -149,7 +148,8 @@ public class Exporter {
                         + aSeparator + "MolecularFrequency"
                         + aSeparator + "MolecularPercentage\n");
                 tmpWriter.write(tmpFragmentationCsvHeader.toString());
-                for (FragmentDataModel tmpFragmentDataModel : aList) {
+                for (MoleculeDataModel tmpDataModel : aList) {
+                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel)tmpDataModel;
                     tmpWriter.printf("%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f\n",
                             tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
                             tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
@@ -183,7 +183,7 @@ public class Exporter {
      */
     public Document createFragmentationTabPdfFile(
             Stage aParentStage,
-            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            List<MoleculeDataModel> aFragmentDataModelList,
             ObservableList<MoleculeDataModel> aMoleculeDataModelList,
             String aName) {
         try {
@@ -212,7 +212,8 @@ public class Exporter {
                 tmpFragmentationTable.addCell(tmpPercentageCell);
                 tmpFragmentationTable.addCell(tmpMolFrequencyCell);
                 tmpFragmentationTable.addCell(tmpMolPercentageCell);
-                for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
+                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
                     int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
                     String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
                     double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
@@ -250,7 +251,7 @@ public class Exporter {
                 }
                 tmpDocument.add(tmpHeader);
                 tmpDocument.add(tmpSpace);
-                tmpDocument.add(this.createHeaderTable(aFragmentDataModelList, aMoleculeDataModelList, aName));
+                tmpDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelList.size(), aName));
                 tmpDocument.add(tmpSpace);
                 tmpDocument.add(tmpFragmentationTable);
                 tmpDocument.close();
@@ -283,7 +284,7 @@ public class Exporter {
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @author Samuel Behr
      */
-    public void createFragmentationTabSingleSDFile(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+    public void createFragmentationTabSingleSDFile(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
             GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
@@ -309,7 +310,7 @@ public class Exporter {
                     boolean tmpHasNo2dInformationAlertBeenShown = false;    //whether the conformation alert has been shown yet
                     boolean tmpGenerate2dAtomCoordinates = false;           //whether coordinates should be generated
                     //iterating through the fragments held by the list of fragments
-                    for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                    for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                         IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
                         IAtomContainer tmpFragmentClone = null;
                         //looping through all the fragments atoms checking whether 3D or else 2D atom coordinates are available
@@ -404,7 +405,7 @@ public class Exporter {
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @author Samuel Behr
      */
-    public void createFragmentationTabSeparateSDFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+    public void createFragmentationTabSeparateSDFiles(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
             GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
@@ -426,7 +427,7 @@ public class Exporter {
                 int tmpExportedFragmentsCounter = 0;
                 int tmpFailedFragmentExportCounter = 0;
                 //iterating through the fragments held by the list of fragments
-                for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                     IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
                     IAtomContainer tmpFragmentClone = null;
                     //looping through all the fragments atoms checking whether 3D or else 2D atom coordinates are available
@@ -529,7 +530,7 @@ public class Exporter {
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @author Samuel Behr
      */
-    public void createFragmentationTabPDBFiles(Stage aParentStage, ObservableList<FragmentDataModel> aFragmentDataModelList) {
+    public void createFragmentationTabPDBFiles(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList) {
         if (aFragmentDataModelList == null) {
             GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
@@ -551,7 +552,7 @@ public class Exporter {
                 int tmpExportedFragmentsCounter = 0;
                 int tmpFailedFragmentExportCounter = 0;
                 //iterating through the fragments held by the list of fragments
-                for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                     IAtomContainer tmpFragment = tmpFragmentDataModel.getAtomContainer();
                     IAtomContainer tmpFragmentClone = null;
                     //looping through all the fragments atoms checking whether 3D or else 2D atom coordinates are available
@@ -631,7 +632,7 @@ public class Exporter {
      * dialog for the user to determine a directory and file for the exported data.
      *
      * @param aParentStage Stage to show the FileChooser
-     * @param aFragmentDataModelList a list of FragmentDataModel instances to export
+     * @param aFragmentDataModelListSize size of list of FragmentDataModel instances to export
      * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aName fragmentation name to be displayed in the header of the PDF file
@@ -640,7 +641,7 @@ public class Exporter {
      */
     public Document createItemizationTabPdfFile(
             Stage aParentStage,
-            ObservableList<FragmentDataModel> aFragmentDataModelList,
+            int aFragmentDataModelListSize,
             ObservableList<MoleculeDataModel> aMoleculeDataModelList,
             String aFragmentationName,
             String aName) {
@@ -657,7 +658,7 @@ public class Exporter {
                 Paragraph tmpSpace = new Paragraph(" ");
                 tmpDocument.add(tmpItemizationTabHeader);
                 tmpDocument.add(tmpSpace);
-                tmpDocument.add(this.createHeaderTable(aFragmentDataModelList, aMoleculeDataModelList, aName));
+                tmpDocument.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aName));
                 tmpDocument.add(tmpSpace);
                 for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
                     PdfPTable tmpTable = new PdfPTable(2);
@@ -733,7 +734,6 @@ public class Exporter {
         }
     }
 
-    //TODO: Get separator from general settings
     //TODO: Parameter tests necessary?
     //TODO: Move literals like header texts to properties file or constants?
     /**
@@ -807,23 +807,22 @@ public class Exporter {
             return  null;
         }
     }
-
-    //TODO: This method only needs the sizes, not the complete lists of fragments and molecules
+    //
     /**
      * Creates a header with general information for the PDf files.
      *
-     * @param aFragmentDataModelList list of fragments
-     * @param aMoleculeDataModelList list of molecules
+     * @param aFragmentDataModelListSize size of list of fragments
+     * @param aMoleculeDataModelListSize size of list of molecules
      * @param anAlgorithmName name of the used algorithm
      * @return fragmentation report table for a PDF file header
      * @author Betül Sevindik
      */
     private PdfPTable createHeaderTable(
-            ObservableList<FragmentDataModel> aFragmentDataModelList,
-            ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+            int aFragmentDataModelListSize,
+            int aMoleculeDataModelListSize,
             String anAlgorithmName) {
-        int tmpFragmentNumbers =  aFragmentDataModelList.size();
-        int tmpMoleculeNumbers = aMoleculeDataModelList.size();
+        int tmpFragmentNumbers =  aFragmentDataModelListSize;
+        int tmpMoleculeNumbers = aMoleculeDataModelListSize;
         //creates the header
         float tmpCellLengthIntro[] = {60f, 60f}; // relative sizes
         PdfPTable tmpTableIntro = new PdfPTable(tmpCellLengthIntro);
@@ -841,8 +840,7 @@ public class Exporter {
         tmpTableIntro.addCell(tmpIntroCell6);
         return tmpTableIntro;
     }
-
-    //TODO: use and set recent directory from settings container
+    //
     /**
      * Opens a FileChooser to be able to save a file.
      *
@@ -861,11 +859,14 @@ public class Exporter {
         FileChooser.ExtensionFilter tmpExtensionfilter2 = new FileChooser.ExtensionFilter(aDescription, anExtension);
         tmpFileChooser.getExtensionFilters().addAll(tmpExtensionfilter2);
         tmpFileChooser.setInitialFileName(aFileName);
+        tmpFileChooser.setInitialDirectory(new File(this.settingsContainer.getRecentDirectoryPathSetting()));
         File  tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
+        if(tmpFile != null){
+            this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent());
+        }
         return tmpFile;
     }
-
-    //TODO: update recent directory path in settings container
+    //
     /**
      * Opens a DirectoryChooser to choose a directory. Returns null if no directory has been selected.
      *
@@ -884,10 +885,14 @@ public class Exporter {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         }
         tmpDirectoryChooser.setInitialDirectory(tmpRecentDirectory);
-        return tmpDirectoryChooser.showDialog(aParentStage);
+        File tmpDirectory = tmpDirectoryChooser.showDialog(aParentStage);
+        if(tmpDirectory != null){
+            this.settingsContainer.setRecentDirectoryPathSetting(tmpDirectory.getPath());
+        }
+        return tmpDirectory;
     }
 
-    //TODO: Split this up or at least introduce input restrictions for	irreconcilable parameter combinations
+    //TODO: Split this up or at least introduce input restrictions for  irreconcilable parameter combinations
     /**
      * Optionally completes 2D coordinates of a given fragment by setting all z-coordinates to 0 or generates new
      * pseudo-3D-coordinates for it using a structure diagram generator. As a third option, all coordinates of the given

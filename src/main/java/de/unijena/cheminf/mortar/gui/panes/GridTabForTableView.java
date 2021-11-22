@@ -150,4 +150,23 @@ public class GridTabForTableView extends Tab {
     public TableView getTableView(){
         return this.tableView;
     }
+    //
+    /**
+     * Returns the title of this tab
+     *
+     * @return title
+     */
+    public String getTitle(){
+        return this.getText();
+    }
+    //
+
+    /**
+     * Returns the name of the fragmentation used
+     *
+     * @return fragmentation name
+     */
+    public String getFragmentationNameOutOfTitle(){
+        return this.getText().split("-", 2)[1];
+    }
 }

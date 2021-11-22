@@ -20,11 +20,15 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
@@ -119,6 +123,9 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, BorderPane> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
+            tmpColumn.setResizable(true);
+            tmpColumn.setEditable(false);
+            tmpColumn.setSortable(false);
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
                 if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size())
                     return null;
@@ -146,7 +153,36 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
         this.contextMenu.getItems().add(this.copyMenuItem);
     }
-
+    //
+    /**
+     * Creates an itemization tableview page
+     *
+     * @param pageIndex
+     * @return
+     */
+    public Node createItemizationTableViewPage(int pageIndex, SettingsContainer aSettingsContainer){
+        int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
+        int fromIndex = pageIndex * tmpRowsPerPage;
+        int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
+        this.setItems(FXCollections.observableArrayList(this.itemsList.subList(fromIndex, toIndex)));
+        this.scrollTo(0);
+        return new BorderPane(this);
+    }
+    //
+    /**
+     * Adds a changes listener to the height property of table view which sets the height for structure images to
+     * each MoleculeDataModel object of the items list and refreshes the table view
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     *
+     * @param aSettingsContainer
+     */
+    public void addTableViewWidthListener(SettingsContainer aSettingsContainer){
+        this.heightProperty().addListener((observable, oldValue, newValue) -> {
+            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(),aSettingsContainer);
+            this.refresh();
+        });
+    }
+    //
     public String getFragmentationName(){
         return this.fragmentationName;
     }
