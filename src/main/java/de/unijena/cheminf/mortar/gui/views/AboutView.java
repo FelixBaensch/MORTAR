@@ -134,6 +134,9 @@ public class AboutView extends AnchorPane {
         //-contact
         Text tmpContact = new Text(Message.get("AboutView.contact.text"));
         tmpGridPane.add(tmpContact, 0,4);
+        //-acknowledgement
+        Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text"));
+        tmpGridPane.add(tmpAcknowledgment,0,5);
         //-splitPane bottom -> tabPane for tools etc.
         TabPane tabPane = new TabPane();
         tabPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));

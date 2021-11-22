@@ -23,13 +23,32 @@
     <externalTool>
         <name>CDK</name>
         <version>2.5</version>
-        <author>?</author>
+        <author>Steinbeck et al</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
     <externalTool>
         <name>Ertl Functional Groups Finder</name>
-        <version>?.?</version>
-        <author>?</author>
+        <version>1.0.0.0</version>
+        <author>Sebastian Fritsch</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
+    <externalTool>
+        <name>Sugar Removal Utility (SRU)</name>
+        <version>1.2.1.3</version>
+        <author>Jonas Schaub, Maria Sorokina</author>
+        <license>MIT License</license>
+    </externalTool>
+    <externalTool>
+        <name>ScaffoldGenerator</name>
+        <version>1.0.0.9</version>
+        <author>Julian Zander, Jonas Schaub</author>
+        <license>LGPL v2.1 (or later)</license>
+    </externalTool>
+    <externalTool>
+        <name>librepdf</name>
+        <version>1..26</version>
+        <author>Claudio Clemens et al</author>
+        <license>LGPL v2.1 (or later)</license>
+    </externalTool>
+<!--TODO: to be continued-->
 </tools>
