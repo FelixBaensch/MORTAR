@@ -106,6 +106,11 @@ public class SettingsContainer {
      * Default string for separator for the csv export
      */
     public static final String CSV_EXPORT_SEPARATOR_SETTING_DEFAULT = ",";
+
+    /**
+     * Default value of whether to keep last fragment.
+     */
+    public static final boolean KEEP_LAST_FRAGMENT_SETTING_DEFAULT = false;
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
@@ -140,9 +145,14 @@ public class SettingsContainer {
     private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
 
     /**
-     * Property of csv export separator.
+     * Property of csv export separator setting.
      */
     private SimpleStringProperty csvExportSeparatorSetting;
+
+    /**
+     * Property of keep last fragment setting.
+     */
+    private SimpleBooleanProperty keepLastFragmentSetting;
 
     /**
      * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
@@ -324,6 +334,24 @@ public class SettingsContainer {
     }
 
     /**
+     * Returns the current value of the keep last fragment setting.
+     *
+     * @return keep last fragment setting value
+     */
+    public boolean isKeepLastFragmentSetting(){
+        return this.keepLastFragmentSetting.get();
+    }
+
+    /**
+     * Return the property wrapping the keep last fragment setting.
+     *
+     * @return
+     */
+    public Property keepLastFragmentSettingProperty(){
+        return this.keepLastFragmentSetting;
+    }
+
+    /**
      * Sets the setting for how many rows/molecules should be displayed per page in the tabs.
      *
      * @param anInteger the number of molecules displayed per page in the tabs
@@ -417,6 +445,16 @@ public class SettingsContainer {
         } else {
             throw new IllegalArgumentException("Given separator for csv export is null, empty, blank or not valid");
         }
+    }
+
+    /**
+     * Sets the setting for whether the last fragment is to be kept if no new fragment is created in a
+     * pipeline fragmentation step or whether it is discarded.
+     *
+     * @param aBoolean whether to keep last fragment or to discard
+     */
+    public void setKeepLastFragmentSetting(boolean aBoolean){
+        this.keepLastFragmentSetting.set(aBoolean);
     }
 
     /**
@@ -649,6 +687,15 @@ public class SettingsContainer {
             }
         };
         this.settingNameTooltipTextMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.tooltip"));
+        this.keepLastFragmentSetting = new SimpleBooleanProperty(this,
+                "Keep last fragment in pipelining",
+                SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT){
+            @Override
+            public void set(boolean newValue){
+                super.set(newValue);
+            }
+        };
+        this.settingNameTooltipTextMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.tooltip"));
         this.settings = new ArrayList<Property>(6);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
@@ -657,6 +704,7 @@ public class SettingsContainer {
         //this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
         this.settings.add(this.csvExportSeparatorSetting);
+        this.settings.add(this.keepLastFragmentSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
     }
 
