@@ -22,7 +22,7 @@ package de.unijena.cheminf.scaffoldGenerator;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldNetwork.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on October 19th 2021
+ * Last copied on November 24th 2021
  */
 
 
@@ -42,7 +42,7 @@ import java.util.Objects;
  * A network can have several roots and leaves.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.1.1
+ * @version 1.0.1.2
  */
 public class ScaffoldNetwork extends ScaffoldNodeCollectionBase {
 
@@ -114,7 +114,7 @@ public class ScaffoldNetwork extends ScaffoldNodeCollectionBase {
     }
 
     /**
-     * Adds another ScaffoldNetwork to the existing one if possible.
+     * Adds another ScaffoldNetwork to the existing one.
      * The new network is inserted at the node that both networks have in common.
      * All children of the new network at this node and there linkages are taken over if they do not already exist.
      *
