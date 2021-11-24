@@ -22,7 +22,7 @@ package de.unijena.cheminf.scaffoldGenerator;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldNodeCollectionBase.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on October 19th 2021
+ * Last copied on November 24th 2021
  */
 
 import com.google.common.collect.ArrayListMultimap;
@@ -42,7 +42,7 @@ import java.util.Objects;
  * Top-level class to organise the ScaffoldNodeBase objects.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.0.0
+ * @version 1.0.0.1
  */
 public abstract class ScaffoldNodeCollectionBase {
 
@@ -104,7 +104,8 @@ public abstract class ScaffoldNodeCollectionBase {
 
     //<editor-fold desc="Public methods">
     /**
-     * Add ScaffoldNodeBase to the ScaffoldNodeCollectionBase
+     * Add ScaffoldNodeBase to the ScaffoldNodeCollectionBase.
+     * The same node can also be added several times. It may therefore be necessary to check whether the node already exists. See containsMolecule();
      * @param aNode Node to be added. Must match the tree object. For example, a ScaffoldTree requires a TreeNode.
      * @throws CDKException In case of a problem with the SmilesGenerator
      * @throws IllegalArgumentException if the Node do not match the tree object.
