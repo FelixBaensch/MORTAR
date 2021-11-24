@@ -20,11 +20,10 @@ package de.unijena.cheminf.scaffoldGenerator;
 
 /**
  * IMPORTANT NOTE: This is a copy of
- * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldGenerator.java
+ * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/NetworkNode.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on November 9th 2021
+ * Last copied on November 24th 2021
  */
-
 
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.CDKConstants;
@@ -72,7 +71,7 @@ import java.util.logging.Logger;
  * Different trees or networks can also be merged together.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.0.9
+ * @version 1.0.2.1
  */
 public class ScaffoldGenerator {
 
@@ -177,6 +176,11 @@ public class ScaffoldGenerator {
      * By default, ScaffoldModeOption.SCHUFFENHAUER_SCAFFOLD is used.
      */
     public static final ScaffoldModeOption SCAFFOLD_MODE_OPTION_DEFAULT = ScaffoldModeOption.SCHUFFENHAUER_SCAFFOLD;
+
+    /**
+     * Default logger.
+     */
+    public static final Logger LOGGER = Logger.getLogger(ScaffoldGenerator.class.getName());
     //</editor-fold>
 
     //<editor-fold desc="Private variables">
@@ -686,20 +690,24 @@ public class ScaffoldGenerator {
      */
     public ScaffoldNetwork generateScaffoldNetwork(List<IAtomContainer> aMoleculeList) throws CDKException, CloneNotSupportedException, NullPointerException {
         Objects.requireNonNull(aMoleculeList, "Input molecule list must be non null");
-        ScaffoldNetwork tmpScaffoldNetwork = new ScaffoldNetwork();
+        ScaffoldNetwork tmpScaffoldNetwork = new ScaffoldNetwork(this.smilesGeneratorSetting);
         for(IAtomContainer tmpMolecule : aMoleculeList) {
             Objects.requireNonNull(tmpMolecule, "Input molecule must be non null");
             IAtomContainer tmpClonedMolecule = tmpMolecule.clone();
-            try{
+            try {
                 tmpScaffoldNetwork.mergeNetwork(this.generateScaffoldNetwork(tmpClonedMolecule));
             } catch (Exception anException) {
                 /*Log the skipped molecule*/
-                Logger tmpLogger = Logger.getLogger(ScaffoldGenerator.class.getName());
-                tmpLogger.setLevel(Level.WARNING);
-                tmpLogger.warning("generateScaffoldNetwork Exception.");
-                tmpLogExceptionCounter++;
-                tmpLogger.warning("SMILES of the skipped molecule number " + tmpLogExceptionCounter + ": "
-                        + this.smilesGeneratorSetting.create(tmpClonedMolecule));
+                this.tmpLogExceptionCounter++;
+                try {
+                    ScaffoldGenerator.LOGGER.log(Level.WARNING, anException.toString()
+                            + "\n generateScaffoldNetwork() Exception. SMILES of the skipped molecule number " + this.tmpLogExceptionCounter + ": "
+                            + this.smilesGeneratorSetting.create(tmpClonedMolecule), anException);
+                } catch (Exception anExceptionException) {
+                    ScaffoldGenerator.LOGGER.log(Level.WARNING, anException.toString()
+                                    + "\nException inside the generateScaffoldNetwork() Exception. Probably a problem with the SMILES generator.",
+                            anException);
+                }
             }
         }
         return  tmpScaffoldNetwork;
@@ -876,7 +884,11 @@ public class ScaffoldGenerator {
         TreeNode tmpReverseParentNode =  new TreeNode<IAtomContainer>(tmpFragmentList.get(tmpFragmentList.size()-1));
         String tmpSmiles = this.getSmilesGenerator().create(tmpClonedMolecule);
         tmpReverseParentNode.addOriginSmiles(tmpSmiles);
-        ScaffoldTree tmpScaffoldTree = new ScaffoldTree();
+        //Add non virtual if tmpFragmentList.size loop do not run
+        if(tmpFragmentList.size() == 1) {
+            tmpReverseParentNode.addNonVirtualOriginSmiles(tmpSmiles);
+        }
+        ScaffoldTree tmpScaffoldTree = new ScaffoldTree(this.smilesGeneratorSetting);
         tmpScaffoldTree.addNode(tmpReverseParentNode);
         /*Build the ScaffoldTree with the smallest fragment as root and add the origin to each fragment*/
         for(int i = 1; i < tmpFragmentList.size(); i++) {
@@ -920,7 +932,7 @@ public class ScaffoldGenerator {
         tmpOutputForest.add(tmpFirstTree);
         /*Go through all molecules*/
         for(IAtomContainer tmpMolecule : aMoleculeList) {
-            try{
+            try {
                 boolean isMoleculeMerged = false;
                 ScaffoldTree tmpOldTree = this.generateSchuffenhauerTree(tmpMolecule);
                 /*Go through each newly created tree*/
@@ -937,12 +949,15 @@ public class ScaffoldGenerator {
                 }
             } catch (Exception anException) {
                 /*Log the skipped molecule*/
-                Logger tmpLogger = Logger.getLogger(ScaffoldGenerator.class.getName());
-                tmpLogger.setLevel(Level.WARNING);
-                tmpLogger.warning("generateSchuffenhauerForest Exception.");
-                tmpLogExceptionCounter++;
-                tmpLogger.warning("SMILES of the skipped molecule number " + tmpLogExceptionCounter + ": "
-                        + this.smilesGeneratorSetting.create(tmpMolecule));
+                this.tmpLogExceptionCounter++;
+                try {
+                    ScaffoldGenerator.LOGGER.log(Level.WARNING, anException.toString()
+                            + "\n generateSchuffenhauerForest() Exception. SMILES of the skipped molecule number "
+                            + this.tmpLogExceptionCounter + ": " + this.smilesGeneratorSetting.create(tmpMolecule), anException);
+                } catch (Exception anExceptionException) {
+                    ScaffoldGenerator.LOGGER.log(Level.WARNING, anException.toString()
+                            + "\nException inside the generateSchuffenhauerForest() Exception. Probably a problem with the SMILES generator.", anException);
+                }
             }
         }
         return tmpOutputForest;
