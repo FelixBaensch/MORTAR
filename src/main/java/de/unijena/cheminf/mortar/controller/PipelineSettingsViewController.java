@@ -122,7 +122,6 @@ public class PipelineSettingsViewController {
             this.resetFragmenterList();
             this.pipelineSettingsViewStage.close();
         });
-
         //apply button
         this.pipelineSettingsView.getApplyButton().setOnAction(event -> {
             this.fragmentationService.setPipeliningFragmentationName(this.pipeliningName.get());
@@ -228,6 +227,7 @@ public class PipelineSettingsViewController {
             this.addAddRowButton(tmpRowIndex);
             //
             this.algorithmCounter--;
+            this.fragmenterList.remove(this.fragmenterList.size()-1);
             if(this.algorithmCounter > 1)
                 this.addRemoveRowButton(this.algorithmCounter);
         });

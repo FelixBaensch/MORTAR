@@ -28,6 +28,7 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGro
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGeneratorFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
@@ -167,6 +168,10 @@ public class FragmentationService {
      * ExecutorService for the fragmentation tasks
      */
     private ExecutorService executorService;
+    /**
+     * SettingsContainer to hold settings
+     */
+    private SettingsContainer settingsContainer;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -180,7 +185,9 @@ public class FragmentationService {
     /**
      * Constructor, instantiates the fragmenters and sets the selected fragmenter and the pipeline to their defaults.
      */
-    public FragmentationService(){
+    public FragmentationService(SettingsContainer aSettingsContainer){
+        Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
+        this.settingsContainer = aSettingsContainer;
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
         this.fragmenters = new IMoleculeFragmenter[3];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
@@ -277,9 +284,11 @@ public class FragmentationService {
                 for (MoleculeDataModel tmpChildMol : tmpMolecules) {
                     if (tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(tmpChildMol)) {
                         if (tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName).size() <= 1) {
-                            tmpNewFragments.add(tmpChildMol);
-                            String tmpKey = ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer());
-                            tmpNewFrequencies.put(tmpKey, tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
+                            if(this.settingsContainer.isKeepLastFragmentSetting()){
+                                tmpNewFragments.add(tmpChildMol);
+                                String tmpKey = ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer());
+                                tmpNewFrequencies.put(tmpKey, tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
+                            }
                         } else {
                             for (FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)) {
                                 tmpNewFragments.add(tmpFrag);
@@ -328,7 +337,7 @@ public class FragmentationService {
      * Under construction
      * Start fragmentation pipeline
      * Fragmentation will be done molecule by molecule
-     * TODO: After adapting the data models, this method must be modified so that the resulting fragments are kept separate for each molecule.
+     * TODO: After adapting the data models, this method must be modified so that the resulting fragments are kept separate for each molecule. Note the setting keepLastFragment
      *
      * @param aListOfMolecules List<MoleculeDataModel>
      * @param aNumberOfTasks int

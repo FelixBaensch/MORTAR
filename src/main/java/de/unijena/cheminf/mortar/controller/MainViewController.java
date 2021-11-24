@@ -140,7 +140,7 @@ public class MainViewController {
         this.appDir = anAppDir;
         this.settingsContainer = new SettingsContainer();
         this.settingsContainer.reloadGlobalSettings();
-        this.fragmentationService = new FragmentationService();
+        this.fragmentationService = new FragmentationService(this.settingsContainer);
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
