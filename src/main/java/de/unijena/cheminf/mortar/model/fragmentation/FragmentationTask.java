@@ -104,6 +104,7 @@ public class FragmentationTask implements Callable<Integer> {
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
                     String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
                     if (tmpSmiles == null) {
+                        tmpExceptionsCounter++;
                         continue;
                     }
                     FragmentDataModel tmpFragmentDataModel;
