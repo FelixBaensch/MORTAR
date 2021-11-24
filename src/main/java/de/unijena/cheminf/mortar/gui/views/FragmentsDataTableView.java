@@ -27,11 +27,20 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -51,6 +60,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      * TableColumn for SMILES of the fragment
      */
     private TableColumn<FragmentDataModel, String> smilesColumn;
+    /**
+     * TableColumn for 2D structure state of one (random/first occurred) parent molecule
+     */
+    private TableColumn<FragmentDataModel, Image> parentMolColumn;
     /**
      * TableColumn for frequency of the fragment
      */
@@ -94,7 +107,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
         this.structureColumn.setMinWidth(150);
         this.structureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.3) //TODO
+                this.widthProperty().multiply(0.2) //TODO
         );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
@@ -106,14 +119,39 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
         this.smilesColumn.setMinWidth(50);
         this.smilesColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.2975)  //TODO
+                this.widthProperty().multiply(0.15)  //TODO
         );
         this.smilesColumn.setResizable(true);
         this.smilesColumn.setEditable(false);
         this.smilesColumn.setSortable(true);
         this.smilesColumn.setCellValueFactory(new PropertyValueFactory("uniqueSmiles"));
+        this.smilesColumn.setCellFactory(tableColumn ->{
+            TableCell<FragmentDataModel, String> tmpCell = new TableCell<>();
+            Text tmpText = new Text();
+            tmpText.setTextAlignment(TextAlignment.CENTER);
+            tmpCell.setGraphic(tmpText);
+            tmpCell.setPrefHeight(Control.USE_COMPUTED_SIZE);
+            tmpText.wrappingWidthProperty().bind(this.smilesColumn.widthProperty());
+            tmpText.textProperty().bind(tmpCell.itemProperty());
+            return tmpCell;
+        });
         this.smilesColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.smilesColumn);
+        //-parentMolColumn
+        this.parentMolColumn = new TableColumn<>();
+        Label tmpLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.header"));
+        tmpLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
+        this.parentMolColumn.setGraphic(tmpLabel);
+        this.parentMolColumn.setMinWidth(150);
+        this.parentMolColumn.prefWidthProperty().bind(
+                this.widthProperty().multiply(0.2475) //TODO
+        );
+        this.parentMolColumn.setResizable(true);
+        this.parentMolColumn.setEditable(false);
+        this.parentMolColumn.setSortable(true);
+        this.parentMolColumn.setCellValueFactory(new PropertyValueFactory("parentMoleculeStructure"));
+        this.parentMolColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.parentMolColumn);
         //-frequencyColumn
         this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
         this.frequencyColumn.setMinWidth(50);

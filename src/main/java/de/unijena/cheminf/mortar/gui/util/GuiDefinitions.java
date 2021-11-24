@@ -35,6 +35,9 @@ public final class GuiDefinitions {
      * Value for the GUI insets
      */
     public static final double GUI_INSETS_VALUE = 10.0;
+    /**
+     * Value for the GUI spacing
+     */
     public static final double GUI_SPACING_VALUE = 5.0;
     /**
      * Value for the width of the main view
@@ -44,9 +47,13 @@ public final class GuiDefinitions {
      * Value for the height of the main view
      */
     public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 768.0;
-
+    /**
+     * Value for the width of a button
+     */
     public static final double GUI_BUTTON_WIDTH_VALUE = 75.0;
-
+    /**
+     * Value for the height of a button
+     */
     public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
     /**
      * Value for the distance between the buttons
@@ -56,12 +63,21 @@ public final class GuiDefinitions {
      * Value for the Button insets
      */
     public static final double GUI_BUTTON_INSETS_VALUE = 13.0;
-
+    /**
+     * Value for the height of status bar
+     */
     public static final double GUI_STATUSBAR_HEIGHT_VALUE = 25.0;
-
+    /**
+     * Value for the height of control containers
+     */
     public static final double GUI_CONTROL_CONTAINER_HEIGHT = 50.0;
-
+    /**
+     * Value for the preference width of a text field
+     */
     public static final double GUI_TEXT_FIELD_PREF_WIDTH_VALUE = 50.0;
+    /**
+     * Value for the maximum width of a text field
+     */
     public static final double GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE = 70.0;
     /**
      *  Selection column width

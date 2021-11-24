@@ -108,7 +108,7 @@ public class DepictionUtil {
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) {
         try {
             DepictionGenerator tmpGenerator = new DepictionGenerator();
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom).withBackgroundColor(new Color(0,0,0,0));
             BufferedImage tmpBufferedImage = null;
             tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);

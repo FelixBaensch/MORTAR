@@ -20,9 +20,16 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import javafx.scene.image.ImageView;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Model class for fragment data
@@ -54,6 +61,11 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Name of the used fragmentation algorithm.
      */
     private String algorithmName;
+    //
+    /**
+     * List of parent molecules, which contains this fragment
+     */
+    private List<MoleculeDataModel> parentMolecules;
     //</editor-fold>
     //
     /**
@@ -68,6 +80,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) throws NullPointerException {
         super(aUniqueSmiles, aName, aPropertyMap);
         this.absoluteFrequency = 1;
+        this.parentMolecules = new LinkedList<>();
         //TODO: Set other frequencies to 0?
     }
     //
@@ -81,6 +94,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) throws NullPointerException {    //TODO: remove aUniqueSmiles
         super(anAtomContainer);
         this.absoluteFrequency = 1;
+        this.parentMolecules = new LinkedList<>();
     }
     //
     /**
@@ -128,6 +142,30 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public double getMoleculePercentage() {
         return this.moleculePercentage;
+    }
+    //
+    /**
+     * Returns list of parent molecules which contains this fragment
+     * @return list of parent molecules
+     */
+    public List<MoleculeDataModel> getParentMolecules(){
+        return this.parentMolecules;
+    }
+    //
+    /**
+     * Creates and returns an ImageView of first parent molecule as 2D structure of this fragment
+     * @return ImageView
+     */
+    public ImageView getParentMoleculeStructure() {
+        if(this.parentMolecules.size() < 1)
+            return null;
+        try {
+            IAtomContainer tmpAtomContainer = this.parentMolecules.get(0).getAtomContainer();
+            return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
+        } catch (CDKException aCDKException) {
+            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
+            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250, 250));
+        }
     }
     //
     /**

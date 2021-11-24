@@ -112,10 +112,16 @@ public class FragmentationTask implements Callable<Integer> {
                         if(this.fragmentsHashTable.containsKey(tmpSmiles)){
                             tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
+                            if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
+                                tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
+                            }
                         }
                         else{
                             tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment);
                             this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
+                            if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
+                                tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
+                            }
                         }
                         if(tmpFragmentsMapOfMolecule.get(this.fragmentationName).contains(tmpFragmentDataModel)){
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
