@@ -172,6 +172,10 @@ public class FragmentationService {
      * SettingsContainer to hold settings
      */
     private SettingsContainer settingsContainer;
+    /**
+     * Property of name of selected fragmenter
+      */
+    private SimpleStringProperty selectedFragmenterNameProperty;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -186,8 +190,6 @@ public class FragmentationService {
      * Constructor, instantiates the fragmenters and sets the selected fragmenter and the pipeline to their defaults.
      */
     public FragmentationService(SettingsContainer aSettingsContainer){
-        Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
-        this.settingsContainer = aSettingsContainer;
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
         this.fragmenters = new IMoleculeFragmenter[3];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
@@ -196,6 +198,10 @@ public class FragmentationService {
         this.fragmenters[1] = this.sugarRUF;
         this.ScaffoldGF = new ScaffoldGeneratorFragmenter();
         this.fragmenters[2] = this.ScaffoldGF;
+        //
+        Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
+        this.settingsContainer = aSettingsContainer;
+        this.selectedFragmenterNameProperty = new SimpleStringProperty();
         try {
             this.checkFragmenters();
         } catch (Exception anException) {
@@ -205,14 +211,18 @@ public class FragmentationService {
                     Message.get("FragmentationService.Error.invalidSettingFormat"),
                     anException);
         }
+
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+//            if(tmpFragmenter.getFragmentationAlgorithmName().equals(this.settingsContainer.))
             if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
                 this.selectedFragmenter = tmpFragmenter;
             }
         }
         if (Objects.isNull(this.selectedFragmenter)) {
             this.selectedFragmenter = this.ertlFGF;
+
         }
+        this.setSelectedFragmenterNameProperty(this.selectedFragmenter.getFragmentationAlgorithmName());
         try {
             this.pipelineFragmenter = new IMoleculeFragmenter[] {this.createNewFragmenterObjectByName(this.selectedFragmenter.getFragmentationAlgorithmName())};
         } catch (Exception anException) {
@@ -643,6 +653,7 @@ public class FragmentationService {
                 for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
                     if (tmpFragmenter.getFragmentationAlgorithmName().equals(tmpSelectedFragmenterAlgorithmName)) {
                         this.selectedFragmenter = tmpFragmenter;
+                        this.selectedFragmenterNameProperty.set(this.selectedFragmenter.getFragmentationAlgorithmName());
                         break;
                     }
                 }
@@ -774,6 +785,30 @@ public class FragmentationService {
      */
     public void setPipeliningFragmentationName(String aName){
         this.pipeliningFragmentationName = aName;
+    }
+    /**
+     * Gets the name of the selected fragmenter
+     *
+     * @return String
+     */
+    public String getSelectedFragmenterNameProperty() {
+        return this.selectedFragmenterNameProperty.get();
+    }
+    /**
+     * Returns the property of the name of the selected fragmenter
+     *
+     * @return SimpleStringProperty
+     */
+    public SimpleStringProperty selectedFragmenterNamePropertyProperty() {
+        return this.selectedFragmenterNameProperty;
+    }
+    /**
+     * Sets the name of the selected fragmenter
+     *
+     * @param aFragmenterName
+     */
+    public void setSelectedFragmenterNameProperty(String aFragmenterName) {
+        this.selectedFragmenterNameProperty.set(aFragmenterName);
     }
     //</editor-fold>
     //<editor-fold desc="private methods">

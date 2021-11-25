@@ -52,6 +52,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
@@ -104,6 +105,7 @@ public class MainViewController {
     private Button cancelFragmentationButton;
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
     private boolean isFragmentationRunning;
+    private Label fragmenterNameLabel;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -173,7 +175,8 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.loadMoleculeFile(this.primaryStage)
         );
-        //TODO: Get CSV file separator from settings
+        //TODO: Get CSV file separator from settings; Done?
+        //<editor-fold desc="export">
         //fragments export to CSV
         this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -278,6 +281,7 @@ public class MainViewController {
                             this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName()
                     );
                 });
+        //</editor-fold>
         this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openFragmentationSettingsView()
@@ -443,6 +447,7 @@ public class MainViewController {
         tmpToggleGroup.selectedToggleProperty().addListener((observableValue, oldValue, newValue) -> {
             if(tmpToggleGroup.getSelectedToggle() != null){
                 this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
+                this.fragmentationService.setSelectedFragmenterNameProperty(((RadioMenuItem) newValue).getText());
             }
         });
         //TODO remove?
@@ -516,6 +521,14 @@ public class MainViewController {
         this.fragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBar.getButtons().add(this.fragmentationButton);
+        tmpButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        Label tmpLabel = new Label();
+        tmpLabel.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
+        Tooltip tmpTooltip = new Tooltip();
+        tmpTooltip.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
+        tmpLabel.setTooltip(tmpTooltip);
+        HBox.setHgrow(tmpLabel, Priority.ALWAYS);
+        tmpButtonBar.getButtons().add(tmpLabel);
         this.cancelFragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.text"));
         this.cancelFragmentationButton.setTooltip(new Tooltip(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")));
         this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
