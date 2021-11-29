@@ -314,6 +314,9 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     //valueOf() throws IllegalArgumentException
                     SugarRemovalUtility.PreservationModeOption tmpEnumConstant = SugarRemovalUtility.PreservationModeOption.valueOf(newValue);
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeSetting(tmpEnumConstant);
+                    if (newValue.equals(SugarRemovalUtility.PreservationModeOption.ALL.name())) {
+                        SugarRemovalUtilityFragmenter.this.preservationModeThresholdSetting.set(0);
+                    }
                 } catch (IllegalArgumentException | NullPointerException anException) {
                     SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);

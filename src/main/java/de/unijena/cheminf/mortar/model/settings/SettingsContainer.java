@@ -469,6 +469,7 @@ public class SettingsContainer {
         //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
+        this.keepLastFragmentSetting.set(SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
     }
     //</editor-fold>
     //
@@ -563,8 +564,9 @@ public class SettingsContainer {
                                 //setting will remain in default
                                 SettingsContainer.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
                             }
-                        } catch (ClassCastException aCastingException) {
-                            SettingsContainer.LOGGER.log(Level.WARNING, aCastingException.toString(), aCastingException);
+                        } catch (ClassCastException | IllegalArgumentException anException) {
+                            //setting will remain in default
+                            SettingsContainer.LOGGER.log(Level.WARNING, anException.toString(), anException);
                         }
                     } else {
                         //setting will remain in default

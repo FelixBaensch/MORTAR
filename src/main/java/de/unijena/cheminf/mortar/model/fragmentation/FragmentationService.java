@@ -930,8 +930,9 @@ public class FragmentationService {
                         //setting will remain in default
                         FragmentationService.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
                     }
-                } catch (ClassCastException aCastingException) {
-                    FragmentationService.LOGGER.log(Level.WARNING, aCastingException.toString(), aCastingException);
+                } catch (ClassCastException | IllegalArgumentException anException) {
+                    //setting will remain in default
+                    FragmentationService.LOGGER.log(Level.WARNING, anException.toString(), anException);
                 }
             } else {
                 //setting will remain in default
