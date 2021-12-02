@@ -26,9 +26,11 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
 import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.HashMap;
 import java.util.List;
@@ -139,30 +141,37 @@ public class MoleculeDataModel {
     //
     /**
      * Returns IAtomContainer which represents the molecule. Depending on the preference, the atom container is saved
-     * as class variable.
-     * @return IAtomContainer AtomContainer of the molecule
+     * as class variable. If it is re-created from the SMILES code, bond types and atom types are assigned to it (the
+     * former through kekulization). Aromaticity flags are set if there is aromaticity information present in the
+     * SMILES code.
+     *
+     * @return IAtomContainer atom container of the molecule
      */
     public IAtomContainer getAtomContainer() throws CDKException {
-        SmilesParser tmpSmiPar;
-        if(keepAtomContainer){
+        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        if(this.keepAtomContainer){
             if(this.atomContainer == null){
                 tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
                 tmpSmiPar.kekulise(false);
                 this.atomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
                 this.atomContainer.addProperties(this.properties);
+                Kekulization.kekulize(this.atomContainer);
+                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainer);
             }
             return this.atomContainer;
         }
-        tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        //TODO: Necessary here? For fragments definitely necessary, but here also?
+        //kekulization done separately below
         tmpSmiPar.kekulise(false);
         IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
         tmpAtomContainer.addProperties(this.properties);
+        Kekulization.kekulize(tmpAtomContainer);
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
         return tmpAtomContainer;
     }
     //
     /**
      * Returns unique SMILES
+     *
      * @return String uniqueSmiles
      */
     public String getUniqueSmiles(){

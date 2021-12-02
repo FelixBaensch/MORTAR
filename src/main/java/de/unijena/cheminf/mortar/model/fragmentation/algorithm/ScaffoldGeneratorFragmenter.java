@@ -1030,7 +1030,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         List<IAtomContainer> tmpSideChainList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
-            Kekulization.kekulize(tmpMoleculeClone); //Hotfix for SMILES loader bug TODO
+            //Hotfix for aromatic SMILES loader bug:
+            //Kekulization.kekulize(tmpMoleculeClone);
             /*Generate Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.name()) ||
                     this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDECHAINS.name())) {

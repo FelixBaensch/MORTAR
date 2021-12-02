@@ -30,6 +30,7 @@ import javafx.stage.Stage;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -92,7 +93,7 @@ public class Importer {
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor. Should the recent directory path provided by the container be faulty, it is set to its default value.
+     * Constructor. Should the recent directory path provided by the settings container be faulty, it is set to its default value.
      *
      * @param aSettingsContainer the MORTAR general settings container providing a recent directory path and other
      *                           import-related settings
@@ -153,9 +154,7 @@ public class Importer {
             default:
                 return null;
         }
-        if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
-            this.addImplicitHydrogens(tmpImportedMoleculesSet);
-        }
+        this.preprocessMoleculeSet(tmpImportedMoleculesSet);
         return tmpImportedMoleculesSet;
     }
     //
@@ -319,24 +318,34 @@ public class Importer {
     }
     //
     /**
-     * Adds implicit hydrogen atoms to all incomplete valences in the given molecule set. Molecules that cause an
-     * exception in the routine are logged but remain in the given set.
+     * Iterates over the given molecule set once to do general preprocessing, i.e. assigning atom types and bond orders
+     * (kekulization) and suppressing explicit hydrogen atoms that can also be represented as an implicit hydrogen count
+     * on the respective atom. If the respective setting is activated, empty valences on the atom are completed with implicit
+     * hydrogen atoms as well. Molecules that cause an exception in the routine are logged but remain in the given set.
      *
-     * @param aMoleculeSet the molecule set to add implicit valences to; may be empty but not null
+     * @param aMoleculeSet the molecule set to process; may be empty but not null
      * @throws NullPointerException if the given molecule set is null
      */
-    private void addImplicitHydrogens(IAtomContainerSet aMoleculeSet) throws NullPointerException {
+    private void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet) throws NullPointerException {
         Objects.requireNonNull(aMoleculeSet, "given molecule set is null.");
         if (aMoleculeSet.isEmpty()) {
             return;
         }
+        /* developer's note: Things like assigning bond orders and atom types here is redundant if the atom containers
+        are discarded after molecule set import and molecular information only represented by SMILES codes in
+        the molecule data models. Nevertheless it is done here to ensure that the generated SMILES codes are correct.
+         */
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
             try {
+                Kekulization.kekulize(tmpMolecule);
+                AtomContainerManipulator.suppressHydrogens(tmpMolecule);
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
-                CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
-            } catch (CDKException aCDKException) {
-                Importer.LOGGER.log(Level.WARNING, aCDKException.toString() + " molecule name: "
-                        + tmpMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), aCDKException);
+                if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
+                    CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
+                }
+            } catch (Exception anException) {
+                Importer.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
+                        + tmpMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
             }
         }
     }

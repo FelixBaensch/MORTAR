@@ -408,7 +408,7 @@ public class MainViewController {
             } else {
                 tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
             }
-            tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty("NAME"));
+            tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
         MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName());
