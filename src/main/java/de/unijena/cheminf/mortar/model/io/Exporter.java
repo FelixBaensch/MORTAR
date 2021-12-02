@@ -61,6 +61,7 @@ import javax.imageio.ImageIO;
 import javax.vecmath.Point3d;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -229,8 +230,7 @@ public class Exporter {
                     javafx.scene.image.Image tmpImageStructureOfFragment = DepictionUtil.depictImageWithZoom(tmpStructureOfFragment,
                             4.0);
                     BufferedImage tmpBufferedImageFragment = SwingFXUtils.fromFXImage(tmpImageStructureOfFragment, null);
-                    File tmpFragmentFile = this.getImageFile(tmpBufferedImageFragment);
-                    Image tmpImageFragment = Image.getInstance(tmpFragmentFile.getAbsolutePath());
+                    Image tmpImageFragment = this.getITextImage(tmpBufferedImageFragment);
                     //inserts the data into the table
                     PdfPCell tmpCellOfFrequency = new PdfPCell(new Paragraph(tmpStringAbsoluteFrequency));
                     tmpCellOfFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -247,7 +247,6 @@ public class Exporter {
                     tmpFragmentationTable.addCell(tmpCellOfPercentage);
                     tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
                     tmpFragmentationTable.addCell(tmpCellOfMolPercentage);
-                    tmpFragmentFile.delete();
                 }
                 tmpDocument.add(tmpHeader);
                 tmpDocument.add(tmpSpace);
@@ -679,8 +678,7 @@ public class Exporter {
                     javafx.scene.image.Image tmpMoleculeImage = DepictionUtil.depictImageWithZoom(tmpMoleculeStructure,
                             3.0);
                     BufferedImage tmpBufferedImageOfMolecule = SwingFXUtils.fromFXImage(tmpMoleculeImage, null);
-                    File tmpMoleculeFile = this.getImageFile(tmpBufferedImageOfMolecule);
-                    Image tmpMolecule = Image.getInstance(tmpMoleculeFile.getAbsolutePath());
+                    Image tmpMolecule = this.getITextImage(tmpBufferedImageOfMolecule);
                     tmpMoleculeStructureCell.addElement(tmpMolecule);
                     tmpTable.addCell(tmpMoleculeStructureCell);
                     PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph("Fragments", this.fontFactory));
@@ -688,7 +686,6 @@ public class Exporter {
                     tmpFragmentTableversuch.addCell(tmpCellOfFragment);
                     tmpDocument.add(tmpTable);
                     tmpDocument.add(tmpFragmentTableversuch);
-                    tmpMoleculeFile.delete();
                     List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
                     PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
                     for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
@@ -702,13 +699,11 @@ public class Exporter {
                             javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithZoom(tmpFragmentStructure,
                                     3.0);
                             BufferedImage tmpBufferedImageOfFragment = SwingFXUtils.fromFXImage(tmpFragmentImage, null);
-                            File tmpFragmentFile = this.getImageFile(tmpBufferedImageOfFragment);
-                            Image tmpFragment = Image.getInstance(tmpFragmentFile.getAbsolutePath());
+                            Image tmpFragment = this.getITextImage(tmpBufferedImageOfFragment);
                             PdfPCell cell = new PdfPCell();
                             cell.addElement(tmpFragment);
                             tmpCell.add(cell);
                             tmpFragmentNumber++;
-                            tmpFragmentFile.delete();
                         }
                         for (int tmpCellIterator = 0; tmpCellIterator < 3; tmpCellIterator++) {
                             if (tmpCellIterator < tmpImagesNumbers) {
@@ -781,6 +776,7 @@ public class Exporter {
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
+     * Deprecated (use getITextImage)
      * Writes an image file from a buffered image in the application's scrap directory for images. The file intended to
      * be deleted after usage!
      *
@@ -788,6 +784,7 @@ public class Exporter {
      * @return File with an image of Molecule or Structure or null if an exception occurred
      * @author Betül Sevindik
      */
+    @Deprecated
     private File getImageFile(BufferedImage aBufferedImage) {
         try {
             String tmpImageDirectoryPathName = FileUtil.getAppDirPath() + File.separator
@@ -804,6 +801,24 @@ public class Exporter {
             return tmpImageFile;
         } catch (IOException anIoException) {
             Exporter.LOGGER.log(Level.SEVERE, anIoException.toString(), anIoException);
+            return  null;
+        }
+    }
+    //
+    /**
+     * Converts a buffered image into a com.lowagie.text image (necessary for pdf export with iText) and returns it.
+     *
+     * @param aBufferedImage buffered image to be converted
+     * @return com.lowagie.text image
+     */
+    private Image getITextImage(BufferedImage aBufferedImage){
+        try {
+            ByteArrayOutputStream tmpByteArrayOS = new ByteArrayOutputStream();
+            ImageIO.write(aBufferedImage, "png", tmpByteArrayOS);
+            byte[] bytes = tmpByteArrayOS.toByteArray();
+            return Image.getInstance(bytes);
+        } catch (IOException anException) {
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return  null;
         }
     }
