@@ -24,11 +24,7 @@ import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
-import de.unijena.cheminf.mortar.gui.views.IDataTableView;
-import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
-import de.unijena.cheminf.mortar.gui.views.MainView;
-import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
+import de.unijena.cheminf.mortar.gui.views.*;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -40,6 +36,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -49,18 +46,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.Pagination;
-import javafx.scene.control.RadioMenuItem;
-import javafx.scene.control.SortEvent;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -73,8 +59,6 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -188,7 +172,7 @@ public class MainViewController {
                         return;
                     }
                     new Exporter(this.settingsContainer).createFragmentationTabCsvFile(this.primaryStage,
-                            ((IDataTableView) ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView()).getItemsList(),
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name()),
                             this.settingsContainer.getCsvExportSeparatorSetting());
                 });
         //fragments export to PDB
@@ -203,7 +187,7 @@ public class MainViewController {
                     }
                     new Exporter(this.settingsContainer).createFragmentationTabPDBFiles(
                             this.primaryStage,
-                            ((IDataTableView)((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView()).getItemsList());
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name()));
                 });
         //fragments export to PDF
         this.mainView.getMainMenuBar().getFragmentsExportToPDFMenuItem().addEventHandler(
@@ -216,9 +200,10 @@ public class MainViewController {
                         return;
                     }
                     new Exporter(this.settingsContainer).createFragmentationTabPdfFile(this.primaryStage,
-                            ((IDataTableView)((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView()).getItemsList(),
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name()),
                             this.moleculeDataModelList,
-                            this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle()
+                    );
                 });
         //fragments export to single SDF
         this.mainView.getMainMenuBar().getFragmentsExportToSingleSDFMenuItem().addEventHandler(
@@ -231,7 +216,7 @@ public class MainViewController {
                         return;
                     }
                     new Exporter(this.settingsContainer).createFragmentationTabSingleSDFile(this.primaryStage,
-                            ((IDataTableView)((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView()).getItemsList()
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name())
                     );
                 });
         //fragments export to separate SDFs
@@ -245,7 +230,7 @@ public class MainViewController {
                         return;
                     }
                     new Exporter(this.settingsContainer).createFragmentationTabSeparateSDFiles(this.primaryStage,
-                            ((IDataTableView)((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView()).getItemsList()
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name())
                     );
                 });
         //items export to CSV
@@ -275,10 +260,10 @@ public class MainViewController {
                         return;
                     }
                     new Exporter(this.settingsContainer).createItemizationTabPdfFile(this.primaryStage,
-                            ((IDataTableView)((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getTableView()).getItemsList().size(),
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization.name()).size(),
                             this.moleculeDataModelList,
                             ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                            this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName()
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle()
                     );
                 });
         //</editor-fold>
@@ -675,7 +660,7 @@ public class MainViewController {
                 return;
             String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
             TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
-            sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
+            ListUtil.sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
             int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
             int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
             event.getSource().getItems().clear();
@@ -750,56 +735,55 @@ public class MainViewController {
         this.mainTabPane.getTabs().clear();
     }
     //
-    private void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType){ //TODO: Move to util class
-        Collections.sort(aList, new Comparator<MoleculeDataModel>() {
-            @Override
-            public int compare(MoleculeDataModel m1, MoleculeDataModel m2) {
-                FragmentDataModel f1 = (FragmentDataModel)m1;
-                FragmentDataModel f2 = (FragmentDataModel)m2;
-                switch(aProperty){
-                    case "absoluteFrequency":
-                        switch(aSortType){
-                            case "ASCENDING":
-//                                return (f1.getAbsoluteFrequency() < f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
-                                return (Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency()));
-                            case "DESCENDING":
-                                return (f1.getAbsoluteFrequency() > f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
-                        }
-                    case "absolutePercentage":
-                        switch(aSortType){
-                            case "ASCENDING":
-//                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-                                return (Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage()));
-                            case "DESCENDING":
-                                return (f1.getAbsolutePercentage() > f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-                        }
-                    case "moleculeFrequency":
-                        switch(aSortType){
-                            case "ASCENDING":
-//                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-                                return (Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency()));
-                            case "DESCENDING":
-                                return (f1.getMoleculeFrequency() > f2.getMoleculeFrequency() ? -1 : (f1.getMoleculeFrequency() == f2.getMoleculeFrequency() ? 0 : 1));
-                        }
-                    case "moleculePercentage":
-                        switch(aSortType){
-                            case "ASCENDING":
-//                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-                                return (Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage()));
-                            case "DESCENDING":
-                                return (f1.getMoleculePercentage() > f2.getMoleculePercentage() ? -1 : (f1.getMoleculePercentage() == f2.getMoleculePercentage() ? 0 : 1));
-                        }
-                }
-                return 0;
-            }
-        });
+    private List<MoleculeDataModel> getItemsListOfSelectedFragmenterByTabId(String aTabId){
+        return ((IDataTableView)((GridTabForTableView)(this.mainTabPane.getTabs().stream().filter(tab ->
+                this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle().equals(((GridTabForTableView)tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabId)
+        ).findFirst().get())).getTableView()).getItemsList();
     }
+//    private void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType){ //TODO: Move to util class
+//        Collections.sort(aList, new Comparator<MoleculeDataModel>() {
+//            @Override
+//            public int compare(MoleculeDataModel m1, MoleculeDataModel m2) {
+//                FragmentDataModel f1 = (FragmentDataModel)m1;
+//                FragmentDataModel f2 = (FragmentDataModel)m2;
+//                switch(aProperty){
+//                    case "absoluteFrequency":
+//                        switch(aSortType){
+//                            case "ASCENDING":
+////                                return (f1.getAbsoluteFrequency() < f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
+//                                return (Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency()));
+//                            case "DESCENDING":
+//                                return (f1.getAbsoluteFrequency() > f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
+//                        }
+//                    case "absolutePercentage":
+//                        switch(aSortType){
+//                            case "ASCENDING":
+////                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+//                                return (Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage()));
+//                            case "DESCENDING":
+//                                return (f1.getAbsolutePercentage() > f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+//                        }
+//                    case "moleculeFrequency":
+//                        switch(aSortType){
+//                            case "ASCENDING":
+////                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+//                                return (Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency()));
+//                            case "DESCENDING":
+//                                return (f1.getMoleculeFrequency() > f2.getMoleculeFrequency() ? -1 : (f1.getMoleculeFrequency() == f2.getMoleculeFrequency() ? 0 : 1));
+//                        }
+//                    case "moleculePercentage":
+//                        switch(aSortType){
+//                            case "ASCENDING":
+////                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
+//                                return (Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage()));
+//                            case "DESCENDING":
+//                                return (f1.getMoleculePercentage() > f2.getMoleculePercentage() ? -1 : (f1.getMoleculePercentage() == f2.getMoleculePercentage() ? 0 : 1));
+//                        }
+//                }
+//                return 0;
+//            }
+//        });
+//    }
     //</editor-fold>
 }
 
-/**
- * Enum ro tab names
- */
-enum TabNames{
-    Molecules, Fragments, Itemization
-}

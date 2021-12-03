@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.gui.panes;
 
+import de.unijena.cheminf.mortar.controller.TabNames;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tab;
@@ -167,6 +168,8 @@ public class GridTabForTableView extends Tab {
      * @return fragmentation name
      */
     public String getFragmentationNameOutOfTitle(){
-        return this.getText().split("-", 2)[1];
+        if(this.getId().equals(TabNames.Molecules.name()))
+            return TabNames.Molecules.name();
+        return this.getText().split("-", 2)[1].trim();
     }
 }

@@ -29,4 +29,8 @@ public class MainTabPane extends TabPane{
         //TODO
     }
 
+    public GridTabForTableView getSelectedTab(){
+       return  ((GridTabForTableView)this.getSelectionModel().getSelectedItem());
+    }
+
 }
