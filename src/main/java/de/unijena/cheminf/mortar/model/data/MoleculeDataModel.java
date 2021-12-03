@@ -155,8 +155,8 @@ public class MoleculeDataModel {
                 tmpSmiPar.kekulise(false);
                 this.atomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
                 this.atomContainer.addProperties(this.properties);
-                Kekulization.kekulize(this.atomContainer);
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainer);
+                Kekulization.kekulize(this.atomContainer);
             }
             return this.atomContainer;
         }
@@ -164,8 +164,8 @@ public class MoleculeDataModel {
         tmpSmiPar.kekulise(false);
         IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
         tmpAtomContainer.addProperties(this.properties);
-        Kekulization.kekulize(tmpAtomContainer);
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+        Kekulization.kekulize(tmpAtomContainer);
         return tmpAtomContainer;
     }
     //

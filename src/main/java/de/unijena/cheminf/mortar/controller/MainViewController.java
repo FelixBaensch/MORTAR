@@ -397,9 +397,12 @@ public class MainViewController {
         this.clearGuiAndCollections();
         this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
         this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
+        int tmpExceptionCount = 0;
         for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
+            //returns null if no SMILES code could be created
             String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
             if (tmpSmiles == null) {
+                tmpExceptionCount++;
                 continue;
             }
             MoleculeDataModel tmpMoleculeDataModel;
@@ -411,7 +414,8 @@ public class MainViewController {
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             this.moleculeDataModelList.add(tmpMoleculeDataModel);
         }
-        MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName());
+        MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName()
+                + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
         this.openMoleculesTab();
     }
     //

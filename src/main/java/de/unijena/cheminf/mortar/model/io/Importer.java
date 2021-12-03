@@ -331,23 +331,31 @@ public class Importer {
         if (aMoleculeSet.isEmpty()) {
             return;
         }
-        /* developer's note: Things like assigning bond orders and atom types here is redundant if the atom containers
+        /* note: Things like assigning bond orders and atom types here is redundant if the atom containers
         are discarded after molecule set import and molecular information only represented by SMILES codes in
         the molecule data models. Nevertheless it is done here to ensure that the generated SMILES codes are correct.
          */
+        int tmpExceptionsCounter = 0;
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
             try {
-                Kekulization.kekulize(tmpMolecule);
-                AtomContainerManipulator.suppressHydrogens(tmpMolecule);
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
+                /* note: the doc says: "Suppress any explicit hydrogens in the provided container. Only hydrogens that
+                can be represented as a hydrogen count value on the atom are suppressed." Therefore, there will
+                still be some explicit hydrogen atoms!
+                 */
+                AtomContainerManipulator.suppressHydrogens(tmpMolecule);
                 if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
                     CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
                 }
+                //might throw exceptions if the implicit hydrogen count is unset or kekulization is impossible
+                Kekulization.kekulize(tmpMolecule);
             } catch (Exception anException) {
                 Importer.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
                         + tmpMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
+                tmpExceptionsCounter++;
             }
         }
+        Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. " + tmpExceptionsCounter + " exceptions occurred.");
     }
     //</editor-fold>
     //
