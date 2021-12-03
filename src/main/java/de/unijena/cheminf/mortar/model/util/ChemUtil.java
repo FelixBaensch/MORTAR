@@ -71,7 +71,7 @@ public final class ChemUtil {
                 }
             }
         } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException anException){
-            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "; molecule name: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
         }
         return tmpSmiles;
     }
