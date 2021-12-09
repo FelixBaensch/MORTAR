@@ -20,9 +20,11 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.smiles.SmiFlavor;
@@ -30,6 +32,7 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -97,6 +100,63 @@ public final class ChemUtil {
                     + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
         }
         return tmpMolecularFormulaString;
+    }
+
+    public static boolean has3DCoordinates(MoleculeDataModel aMolecule){
+        IAtomContainer tmpFragment;
+        try{
+            tmpFragment = aMolecule.getAtomContainer();
+        } catch(CDKException anException){
+            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "_" + aMolecule.getName(), anException);
+            return false;
+        }
+        boolean tmpHas3DCoords = true;
+        for(IAtom tmpAtom : tmpFragment.atoms()){
+            if(tmpAtom.getPoint3d() != null){
+                continue;
+            } else {
+                tmpHas3DCoords = false;
+                break;
+            }
+        }
+        return tmpHas3DCoords;
+    }
+
+    public static boolean has2DCoordinates(MoleculeDataModel aMolecule){
+        IAtomContainer tmpFragment;
+        try{
+            tmpFragment = aMolecule.getAtomContainer();
+        } catch(CDKException anException){
+            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "_" + aMolecule.getName(), anException);
+            return false;
+        }
+        boolean tmpHas2DCoords = true;
+        for(IAtom tmpAtom : tmpFragment.atoms()){
+            if(tmpAtom.getPoint2d() != null){
+                continue;
+            } else {
+                tmpHas2DCoords = false;
+                break;
+            }
+        }
+        return tmpHas2DCoords;
+    }
+
+    public static boolean checkMoleculeListForCoordinates(List<MoleculeDataModel> aListOfMolecules){
+        if(aListOfMolecules == null || aListOfMolecules.size() == 0){
+            return false;
+        }
+        boolean tmpHasCoords = true;
+        for(MoleculeDataModel tmpMolecule : aListOfMolecules){
+            if(has3DCoordinates(tmpMolecule)){
+
+            } else if(has2DCoordinates(tmpMolecule)){
+                continue;
+            }else{
+                tmpHasCoords = false;
+            }
+        }
+        return tmpHasCoords;
     }
     //</editor-fold>
 }

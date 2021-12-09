@@ -18,19 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.cheminf.mortar.gui.panes;
+package de.unijena.cheminf.mortar.controller;
 
-import javafx.scene.control.TabPane;
-//TODO: very likely not necessary
-public class MainTabPane extends TabPane{
-
-    public MainTabPane(){
-        super();
-        //TODO
-    }
-
-    public GridTabForTableView getSelectedTab(){
-       return  ((GridTabForTableView)this.getSelectionModel().getSelectedItem());
-    }
-
+/**
+ * Enum for tab names
+ */
+public enum TabNames {
+    Molecules, Fragments, Itemization
 }
