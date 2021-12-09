@@ -24,12 +24,17 @@ import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.*;
+import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
+import de.unijena.cheminf.mortar.gui.views.IDataTableView;
+import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
+import de.unijena.cheminf.mortar.gui.views.MainView;
+import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.io.ChemFileTypes;
 import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -46,7 +51,18 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.SortEvent;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -171,9 +187,13 @@ public class MainViewController {
                                 Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
                         return;
                     }
-                    new Exporter(this.settingsContainer).createFragmentationTabCsvFile(this.primaryStage,
-                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name()),
-                            this.settingsContainer.getCsvExportSeparatorSetting());
+                    new Exporter(this.settingsContainer).exportCsvFile(
+                            this.primaryStage,
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            this.settingsContainer.getCsvExportSeparatorSetting(),
+                            TabNames.Fragments
+                    );
                 });
         //fragments export to PDB
         this.mainView.getMainMenuBar().getFragmentsExportToPDBMenuItem().addEventHandler(
@@ -185,9 +205,12 @@ public class MainViewController {
                                 Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
                         return;
                     }
-                    new Exporter(this.settingsContainer).createFragmentationTabPDBFiles(
+                    new Exporter(this.settingsContainer).exportFragmentsAsChemicalFile(
                             this.primaryStage,
-                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name()));
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ChemFileTypes.PDB
+                    );
                 });
         //fragments export to PDF
         this.mainView.getMainMenuBar().getFragmentsExportToPDFMenuItem().addEventHandler(
@@ -199,10 +222,12 @@ public class MainViewController {
                                 Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
                         return;
                     }
-                    new Exporter(this.settingsContainer).createFragmentationTabPdfFile(this.primaryStage,
-                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name()),
+                    new Exporter(this.settingsContainer).exportPdfFile(
+                            this.primaryStage,
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
                             this.moleculeDataModelList,
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle()
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            TabNames.Fragments
                     );
                 });
         //fragments export to single SDF
@@ -215,8 +240,12 @@ public class MainViewController {
                                 Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
                         return;
                     }
-                    new Exporter(this.settingsContainer).createFragmentationTabSingleSDFile(this.primaryStage,
-                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name())
+                    new Exporter(this.settingsContainer).exportFragmentsAsChemicalFile(
+                            this.primaryStage,
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ChemFileTypes.SDF,
+                            true
                     );
                 });
         //fragments export to separate SDFs
@@ -229,8 +258,12 @@ public class MainViewController {
                                 Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
                         return;
                     }
-                    new Exporter(this.settingsContainer).createFragmentationTabSeparateSDFiles(this.primaryStage,
-                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments.name())
+                    new Exporter(this.settingsContainer).exportFragmentsAsChemicalFile(
+                            this.primaryStage,
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ChemFileTypes.SDF,
+                            false
                     );
                 });
         //items export to CSV
@@ -243,10 +276,12 @@ public class MainViewController {
                                 Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
                         return;
                     }
-                    new Exporter(this.settingsContainer).createItemizationTabCsvFile(this.primaryStage,
+                    new Exporter(this.settingsContainer).exportCsvFile(
+                            this.primaryStage,
                             this.moleculeDataModelList,
-                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                            this.settingsContainer.getCsvExportSeparatorSetting()
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            this.settingsContainer.getCsvExportSeparatorSetting(),
+                            TabNames.Itemization
                     );
                 });
         //items export to PDF
@@ -259,11 +294,12 @@ public class MainViewController {
                                 Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
                         return;
                     }
-                    new Exporter(this.settingsContainer).createItemizationTabPdfFile(this.primaryStage,
-                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization.name()).size(),
+                    new Exporter(this.settingsContainer).exportPdfFile(
+                            this.primaryStage,
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization),
                             this.moleculeDataModelList,
-                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle()
+                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            TabNames.Itemization
                     );
                 });
         //</editor-fold>
@@ -281,7 +317,8 @@ public class MainViewController {
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
-            GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
+//            GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
+            GridTabForTableView tmpGrid = this.mainTabPane.getSelectedTab();
             if(tmpGrid == null){
                 keyEvent.consume();
                 return;
@@ -645,15 +682,29 @@ public class MainViewController {
         tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpExportPdfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
-        Exporter tmpExporter = new Exporter(settingsContainer);
+//        Exporter tmpExporter = new Exporter(settingsContainer);
         tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0,1,1,1);
         tmpExportPdfButton.setOnAction(event->{
-            tmpExporter.createFragmentationTabPdfFile(this.primaryStage, ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
-                    this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+//            new Exporter(settingsContainer).createFragmentationTabPdfFile(this.primaryStage, ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
+//                    this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+            new Exporter(this.settingsContainer).exportPdfFile(
+                    this.primaryStage,
+                    ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
+                    this.moleculeDataModelList,
+                    aFragmentationName,
+                    TabNames.Fragments
+            );
         });
         tmpExportCsvButton.setOnAction(event->{
-            tmpExporter.createFragmentationTabCsvFile(this.primaryStage, ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
-                    this.settingsContainer.getCsvExportSeparatorSetting());
+//            new Exporter(settingsContainer).createFragmentationTabCsvFile(this.primaryStage, ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
+//                    this.settingsContainer.getCsvExportSeparatorSetting());
+            new Exporter(this.settingsContainer).exportCsvFile(
+                    this.primaryStage,
+                    ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
+                    this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                    this.settingsContainer.getCsvExportSeparatorSetting(),
+                    TabNames.Fragments
+            );
         });
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             if(event.getSource().getSortOrder().size() == 0)
@@ -707,12 +758,24 @@ public class MainViewController {
         tmpButtonBarItemization.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
         tmpItemizationTab.addNodeToGridPane(tmpButtonBarItemization, 0, 1,1,1);
         tmpItemizationExportCsvButton.setOnAction(event-> {
-            tmpExporter.createItemizationTabCsvFile(this.primaryStage, this.moleculeDataModelList, aFragmentationName,
-                    this.settingsContainer.getCsvExportSeparatorSetting());
+            new Exporter(this.settingsContainer).exportCsvFile(
+                    this.primaryStage,
+                    this.moleculeDataModelList,
+                    this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                    this.settingsContainer.getCsvExportSeparatorSetting(),
+                    TabNames.Itemization
+            );
         });
         tmpItemizationTabExportPDfButton.setOnAction(event -> {
-            tmpExporter.createItemizationTabPdfFile(this.primaryStage, ((IDataTableView)tmpItemizationTab.getTableView()).getItemsList().size(),
-                    this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+//            new Exporter(settingsContainer).createItemizationTabPdfFile(this.primaryStage, ((IDataTableView)tmpItemizationTab.getTableView()).getItemsList().size(),
+//                    this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+            new Exporter(this.settingsContainer).exportPdfFile(
+                    this.primaryStage,
+                    ((IDataTableView)tmpItemizationTab.getTableView()).getItemsList(),
+                    this.moleculeDataModelList,
+                    aFragmentationName,
+                    TabNames.Itemization
+            );
         });
         tmpItemizationDataTableView.addTableViewWidthListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
@@ -735,55 +798,17 @@ public class MainViewController {
         this.mainTabPane.getTabs().clear();
     }
     //
-    private List<MoleculeDataModel> getItemsListOfSelectedFragmenterByTabId(String aTabId){
+    /**
+     * Returns the items list of the table view of the selected tab
+     *
+     * @param aTabName Enum which specifies which kind of tab
+     * @return List<MoleculeDataModel>
+     */
+    private List<MoleculeDataModel> getItemsListOfSelectedFragmenterByTabId(TabNames aTabName){
         return ((IDataTableView)((GridTabForTableView)(this.mainTabPane.getTabs().stream().filter(tab ->
-                this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle().equals(((GridTabForTableView)tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabId)
+                this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle().equals(((GridTabForTableView)tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabName.name())
         ).findFirst().get())).getTableView()).getItemsList();
     }
-//    private void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType){ //TODO: Move to util class
-//        Collections.sort(aList, new Comparator<MoleculeDataModel>() {
-//            @Override
-//            public int compare(MoleculeDataModel m1, MoleculeDataModel m2) {
-//                FragmentDataModel f1 = (FragmentDataModel)m1;
-//                FragmentDataModel f2 = (FragmentDataModel)m2;
-//                switch(aProperty){
-//                    case "absoluteFrequency":
-//                        switch(aSortType){
-//                            case "ASCENDING":
-////                                return (f1.getAbsoluteFrequency() < f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
-//                                return (Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency()));
-//                            case "DESCENDING":
-//                                return (f1.getAbsoluteFrequency() > f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
-//                        }
-//                    case "absolutePercentage":
-//                        switch(aSortType){
-//                            case "ASCENDING":
-////                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-//                                return (Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage()));
-//                            case "DESCENDING":
-//                                return (f1.getAbsolutePercentage() > f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-//                        }
-//                    case "moleculeFrequency":
-//                        switch(aSortType){
-//                            case "ASCENDING":
-////                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-//                                return (Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency()));
-//                            case "DESCENDING":
-//                                return (f1.getMoleculeFrequency() > f2.getMoleculeFrequency() ? -1 : (f1.getMoleculeFrequency() == f2.getMoleculeFrequency() ? 0 : 1));
-//                        }
-//                    case "moleculePercentage":
-//                        switch(aSortType){
-//                            case "ASCENDING":
-////                                return (f1.getAbsolutePercentage() < f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-//                                return (Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage()));
-//                            case "DESCENDING":
-//                                return (f1.getMoleculePercentage() > f2.getMoleculePercentage() ? -1 : (f1.getMoleculePercentage() == f2.getMoleculePercentage() ? 0 : 1));
-//                        }
-//                }
-//                return 0;
-//            }
-//        });
-//    }
     //</editor-fold>
 }
 
