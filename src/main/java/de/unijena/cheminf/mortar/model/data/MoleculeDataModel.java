@@ -92,7 +92,16 @@ public class MoleculeDataModel {
      * Property map of this molecule.
      */
     private Map<Object, Object> properties;
+    //
+    /**
+     * Height value for image of structure
+     */
     private double structureImageHeight;
+    //
+    /**
+     * Width value for image of structure
+     */
+    private double structureImageWidth;
     //</editor-fold>
     //
     /**
@@ -284,7 +293,17 @@ public class MoleculeDataModel {
             return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, this.structureImageHeight));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250, 250));
+            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
+        }
+    }
+
+    public ImageView getStructureWithText(String aText){
+        try {
+            IAtomContainer tmpAtomContainer = this.getAtomContainer();
+            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, 0, this.structureImageHeight, aText));
+        } catch (CDKException aCDKException) {
+            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
+            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
         }
     }
     //
@@ -340,10 +359,10 @@ public class MoleculeDataModel {
     //
     /**
      * TODO
-     * @param structureImageHeight
+     * @param aStructureImageHeight
      */
-    public void setStructureImageHeight(double structureImageHeight) {
-        this.structureImageHeight = structureImageHeight;
+    public void setStructureImageHeight(double aStructureImageHeight) {
+        this.structureImageHeight = aStructureImageHeight;
     }
     //</editor-fold>
 }

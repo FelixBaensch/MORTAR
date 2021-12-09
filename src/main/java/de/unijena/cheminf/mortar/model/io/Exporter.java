@@ -334,14 +334,14 @@ public class Exporter {
             if (aCsvFile != null) {
                 PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
                 StringBuilder tmpCsvHeader = new StringBuilder();
-                tmpCsvHeader.append("MoleculeName" + aSeparator + "SmilesOfStructure" + aSeparator + "SmilesOfFragments\n");
+                tmpCsvHeader.append("MoleculeName" + aSeparator + "SmilesOfStructure" + aSeparator + "SmilesOfFragments and frequency\n");
                 tmpWriter.write(tmpCsvHeader.toString());
                 for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
                     tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
                     List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
                     for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
                         tmpWriter.append(aSeparator);
-                        tmpWriter.printf("%s", tmpFragmentDataModel.getUniqueSmiles());
+                        tmpWriter.printf("%s %s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
                     }
                     tmpWriter.append("\n");
                 }

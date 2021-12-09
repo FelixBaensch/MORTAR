@@ -27,7 +27,6 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -38,8 +37,6 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.text.Text;
 
 import java.util.List;
 
@@ -122,23 +119,26 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.fragmentStructureColumn.setStyle("-fx-alignment: CENTER");
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
-            TableColumn<MoleculeDataModel, BorderPane> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
+//            TableColumn<MoleculeDataModel, BorderPane> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
+            TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
             tmpColumn.setResizable(true);
             tmpColumn.setEditable(false);
             tmpColumn.setSortable(false);
+            tmpColumn.setStyle( "-fx-alignment: CENTER;");
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
                 if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size())
                     return null;
                 FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).get(tmpIndex);
                 String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
-                ImageView tmpStructureImg = tmpFragment.getStructure();
-                Text tmpFrequencyText = new Text(tmpFrequency);
-                BorderPane tmpBorderPane = new BorderPane();
-                HBox tmpHBox = new HBox(tmpFrequencyText);
-                tmpHBox.setAlignment(Pos.BOTTOM_RIGHT);
-                tmpBorderPane.setBottom(tmpHBox);
-                tmpBorderPane.setCenter(tmpStructureImg);
-                return tmpBorderPane;
+//                ImageView tmpStructureImg = tmpFragment.getStructure();
+//                Text tmpFrequencyText = new Text(tmpFrequency);
+//                BorderPane tmpBorderPane = new BorderPane();
+//                HBox tmpHBox = new HBox(tmpFrequencyText);
+//                tmpHBox.setAlignment(Pos.BOTTOM_RIGHT);
+//                tmpBorderPane.setBottom(tmpHBox);
+//                tmpBorderPane.setCenter(tmpStructureImg);
+//                return tmpBorderPane;
+                return tmpFragment.getStructureWithText(tmpFrequency);
             }));
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);

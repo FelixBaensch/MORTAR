@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 
 public class DepictionUtil {
 
+    public static final int IMAGE_TEXT_SPACE = 0;
     /**
      *
      */
@@ -107,15 +108,22 @@ public class DepictionUtil {
      */
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) {
         try {
-            DepictionGenerator tmpGenerator = new DepictionGenerator();
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
-            BufferedImage tmpBufferedImage = null;
-            tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
+//            DepictionGenerator tmpGenerator = new DepictionGenerator();
+//            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+//            BufferedImage tmpBufferedImage = null;
+//            tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
+            BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight);
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
         } catch (CDKException | NullPointerException anException) {
             DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return DepictionUtil.createErrorImage(anException.getMessage(), 250,250);
+            return DepictionUtil.depictErrorImage(anException.getMessage(), 250,250);
         }
+    }
+
+    public static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) throws CDKException {
+        DepictionGenerator tmpGenerator = new DepictionGenerator();
+        tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+        return tmpGenerator.depict(anAtomContainer).toImg();
     }
 
     /**
@@ -125,7 +133,7 @@ public class DepictionUtil {
      * @param aWidth
      * @param aHeight
      */
-    public static Image createErrorImage(String aMessage, int aWidth, int aHeight) {
+    public static Image depictErrorImage(String aMessage, int aWidth, int aHeight) {
         String tmpMessage;
         if (aMessage == null) {
             tmpMessage = "Error";
@@ -154,5 +162,43 @@ public class DepictionUtil {
         tmpGraphic.dispose();
         tmpGraphic.drawImage(tmpBufferedImage, 0, 0, null);
         return SwingFXUtils.toFXImage(tmpBufferedImage, null);
+    }
+    //
+    /**
+     * Depicts an image with the given text below
+     *
+     * @param anAtomContainer
+     * @param aZoom
+     * @param aWidth
+     * @param aHeight
+     * @param aString
+     * @return
+     */
+    public static Image depictImageWithText(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, String aString){
+        try{
+            BufferedImage tmpMolBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, IMAGE_WIDTH_DEFAULT, aHeight); //TODO
+            BufferedImage tmpBufferedImage = new BufferedImage(tmpMolBufferedImage.getWidth(), tmpMolBufferedImage.getHeight() + IMAGE_TEXT_SPACE, BufferedImage.TRANSLUCENT);
+            Graphics2D tmpGraphics2d = tmpBufferedImage.createGraphics();
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            tmpGraphics2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+            tmpGraphics2d.addRenderingHints(new RenderingHints(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON));
+            tmpGraphics2d.drawImage(tmpMolBufferedImage, 0, 0,null);
+            tmpGraphics2d.setColor(Color.BLACK);
+            tmpGraphics2d.setFont(new Font("Calibri", Font.BOLD, 20));
+            FontMetrics tmpFontMetric = tmpGraphics2d.getFontMetrics();
+            int tmpTextWidth = tmpFontMetric.stringWidth(aString);
+            tmpGraphics2d.drawString(aString, (tmpBufferedImage.getWidth() / 2) - tmpTextWidth / 2, tmpBufferedImage.getHeight());
+            tmpGraphics2d.dispose();
+            return SwingFXUtils.toFXImage(tmpBufferedImage, null);
+        } catch (CDKException anException){
+            DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            return DepictionUtil.depictErrorImage(anException.getMessage(), 250,250);
+        }
     }
 }

@@ -255,11 +255,17 @@ public class GuiUtil {
      * @param aTableView
      */
     public static void copySelectedTableViewCellsToClipboard(TableView<?> aTableView){
-
         for(TablePosition tmpPos :aTableView.getSelectionModel().getSelectedCells()){
             int tmpRowIndex = tmpPos.getRow();
             int tmpColIndex = tmpPos.getColumn();
-            Object tmpCell = aTableView.getColumns().get(tmpColIndex).getCellData(tmpRowIndex);
+            int tmpFragmentColIndexItemsTab = 2;
+            Object tmpCell;
+
+            if(aTableView.getClass() == ItemizationDataTableView.class && tmpColIndex > tmpFragmentColIndexItemsTab -1){
+                tmpCell = aTableView.getColumns().get(tmpFragmentColIndexItemsTab).getColumns().get(tmpColIndex - 2).getCellData(tmpRowIndex);
+            }else{
+                tmpCell = aTableView.getColumns().get(tmpColIndex).getCellData(tmpRowIndex);
+            }
             if(tmpCell == null){
                 return;
             }
@@ -315,6 +321,22 @@ public class GuiUtil {
         else{
             for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
+            }
+        }
+    }
+
+    public static void setImageStructureWidth(TableView aTableView, double aWidth){
+        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
+            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+                tmpMoleculeDataModel.setStructureImageHeight(aWidth);
+                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(((ItemizationDataTableView) aTableView).getFragmentationName())){
+                    tmpFragmentDataModel.setStructureImageHeight(aWidth);
+                }
+            }
+        }
+        else{
+            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+                tmpMoleculeDataModel.setStructureImageHeight(aWidth);
             }
         }
     }

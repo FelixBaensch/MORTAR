@@ -164,7 +164,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            return new ImageView(DepictionUtil.createErrorImage(aCDKException.getMessage(), 250, 250));
+            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
         }
     }
     //
