@@ -130,14 +130,6 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
                     return null;
                 FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).get(tmpIndex);
                 String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
-//                ImageView tmpStructureImg = tmpFragment.getStructure();
-//                Text tmpFrequencyText = new Text(tmpFrequency);
-//                BorderPane tmpBorderPane = new BorderPane();
-//                HBox tmpHBox = new HBox(tmpFrequencyText);
-//                tmpHBox.setAlignment(Pos.BOTTOM_RIGHT);
-//                tmpBorderPane.setBottom(tmpHBox);
-//                tmpBorderPane.setCenter(tmpStructureImg);
-//                return tmpBorderPane;
                 return tmpFragment.getStructureWithText(tmpFrequency);
             }));
             tmpColumn.setMinWidth(300);

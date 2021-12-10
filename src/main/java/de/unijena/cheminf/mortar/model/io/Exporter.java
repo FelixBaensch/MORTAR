@@ -341,7 +341,7 @@ public class Exporter {
                     List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
                     for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
                         tmpWriter.append(aSeparator);
-                        tmpWriter.printf("%s %s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
+                        tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
                     }
                     tmpWriter.append("\n");
                 }
@@ -543,9 +543,10 @@ public class Exporter {
                             if (tmpFragmentNumber >= tmpFragmentList.size()) {
                                 break;
                             }
-                            IAtomContainer tmpFragmentStructure = tmpFragmentList.get(tmpFragmentNumber).getAtomContainer();
-                            javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithZoom(tmpFragmentStructure,
-                                    3.0);
+                            FragmentDataModel tmpFragmentDatModel = tmpFragmentList.get(tmpFragmentNumber);
+                            IAtomContainer tmpFragmentStructure = tmpFragmentDatModel.getAtomContainer();
+                            String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
+                            javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithText(tmpFragmentStructure, 3.0, DepictionUtil.IMAGE_WIDTH_DEFAULT, DepictionUtil.IMAGE_HEIGHT_DEFAULT, tmpFrequency);
                             BufferedImage tmpBufferedImageOfFragment = SwingFXUtils.fromFXImage(tmpFragmentImage, null);
                             Image tmpFragment = this.getITextImage(tmpBufferedImageOfFragment);
                             PdfPCell cell = new PdfPCell();
@@ -620,7 +621,6 @@ public class Exporter {
                             tmpFailedFragmentExportCounter++;
                             continue;
                         }
-
                         IAtomContainer tmpFragmentClone = null;
                         boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
                         boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);

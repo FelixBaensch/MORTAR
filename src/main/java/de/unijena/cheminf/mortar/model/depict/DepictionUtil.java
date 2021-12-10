@@ -63,8 +63,8 @@ public class DepictionUtil {
      * @param anAtomContainer
      * @return
      */
-    public static Image depictImage(IAtomContainer anAtomContainer) { //TODO: add , int aWidth, int aHeight
-        return depictImageWithZoom(anAtomContainer, 1.0, IMAGE_WIDTH_DEFAULT, IMAGE_HEIGHT_DEFAULT);
+    public static Image depictImage(IAtomContainer anAtomContainer, double aWidth, double aHeight) { //TODO: add , int aWidth, int aHeight
+        return depictImageWithZoom(anAtomContainer, 1.0, aWidth, aHeight);
     }
     /**
      * Creates an Image of the AtomContainer with given height and default width (250.0).
@@ -108,10 +108,6 @@ public class DepictionUtil {
      */
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) {
         try {
-//            DepictionGenerator tmpGenerator = new DepictionGenerator();
-//            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
-//            BufferedImage tmpBufferedImage = null;
-//            tmpBufferedImage = tmpGenerator.depict(anAtomContainer).toImg();
             BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight);
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
         } catch (CDKException | NullPointerException anException) {
@@ -119,13 +115,7 @@ public class DepictionUtil {
             return DepictionUtil.depictErrorImage(anException.getMessage(), 250,250);
         }
     }
-
-    public static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) throws CDKException {
-        DepictionGenerator tmpGenerator = new DepictionGenerator();
-        tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
-        return tmpGenerator.depict(anAtomContainer).toImg();
-    }
-
+    //
     /**
      * Creates an image of the given message.
      *
@@ -200,5 +190,20 @@ public class DepictionUtil {
             DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return DepictionUtil.depictErrorImage(anException.getMessage(), 250,250);
         }
+    }
+    //
+    /**
+     *
+     * @param anAtomContainer
+     * @param aZoom
+     * @param aWidth
+     * @param aHeight
+     * @return
+     * @throws CDKException
+     */
+    private static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) throws CDKException {
+        DepictionGenerator tmpGenerator = new DepictionGenerator();
+        tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+        return tmpGenerator.depict(anAtomContainer).toImg();
     }
 }

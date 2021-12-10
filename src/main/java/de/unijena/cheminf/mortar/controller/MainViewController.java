@@ -578,6 +578,12 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView);
             }
         });
+        this.moleculesDataTableView.getStructureColumn().widthProperty().addListener((observableValue, number, t1) -> {
+            for(MoleculeDataModel tmpMol : this.moleculesDataTableView.getItemsList()){
+                tmpMol.setStructureImageWidth((double)observableValue.getValue() - GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
+            }
+            this.moleculesDataTableView.refresh();
+        });
     }
     //
     private void interruptFragmentation(){
@@ -686,11 +692,8 @@ public class MainViewController {
         tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpExportPdfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
-//        Exporter tmpExporter = new Exporter(settingsContainer);
         tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0,1,1,1);
         tmpExportPdfButton.setOnAction(event->{
-//            new Exporter(settingsContainer).createFragmentationTabPdfFile(this.primaryStage, ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
-//                    this.moleculeDataModelList, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
             new Exporter(this.settingsContainer).exportPdfFile(
                     this.primaryStage,
                     ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
@@ -700,8 +703,6 @@ public class MainViewController {
             );
         });
         tmpExportCsvButton.setOnAction(event->{
-//            new Exporter(settingsContainer).createFragmentationTabCsvFile(this.primaryStage, ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
-//                    this.settingsContainer.getCsvExportSeparatorSetting());
             new Exporter(this.settingsContainer).exportCsvFile(
                     this.primaryStage,
                     ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
@@ -728,6 +729,12 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
             }
         });
+//        tmpFragmentsDataTableView.getStructureColumn().widthProperty().addListener((observableValue, number, t1) -> {
+//            for(MoleculeDataModel tmpMol : tmpFragmentsDataTableView.getItemsList()){
+//                tmpMol.setStructureImageWidth((double)observableValue.getValue() - GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
+//            }
+//            tmpFragmentsDataTableView.refresh();
+//        });
         //itemization tab
         int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
         for(int i= 0; i < this.moleculeDataModelList.size(); i++){
@@ -771,8 +778,6 @@ public class MainViewController {
             );
         });
         tmpItemizationTabExportPDfButton.setOnAction(event -> {
-//            new Exporter(settingsContainer).createItemizationTabPdfFile(this.primaryStage, ((IDataTableView)tmpItemizationTab.getTableView()).getItemsList().size(),
-//                    this.moleculeDataModelList,aFragmentationName, this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
             new Exporter(this.settingsContainer).exportPdfFile(
                     this.primaryStage,
                     ((IDataTableView)tmpItemizationTab.getTableView()).getItemsList(),
