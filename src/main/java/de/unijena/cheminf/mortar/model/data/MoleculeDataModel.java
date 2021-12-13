@@ -97,11 +97,6 @@ public class MoleculeDataModel {
      * Height value for image of structure
      */
     private double structureImageHeight;
-    //
-    /**
-     * Width value for image of structure
-     */
-    private double structureImageWidth;
     //</editor-fold>
     //
     /**
@@ -290,7 +285,7 @@ public class MoleculeDataModel {
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImage(tmpAtomContainer, this.structureImageWidth,this.structureImageHeight));
+            return new ImageView(DepictionUtil.depictImage(tmpAtomContainer, DepictionUtil.IMAGE_WIDTH_DEFAULT, this.structureImageHeight));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
@@ -300,7 +295,7 @@ public class MoleculeDataModel {
     public ImageView getStructureWithText(String aText){
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, this.structureImageWidth, this.structureImageHeight, aText));
+            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, DepictionUtil.IMAGE_WIDTH_DEFAULT, this.structureImageHeight, aText));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
@@ -365,24 +360,6 @@ public class MoleculeDataModel {
      */
     public void setStructureImageHeight(double aStructureImageHeight) {
         this.structureImageHeight = aStructureImageHeight;
-    }
-    //
-    /**
-     * Returns the width of the image of the molecular structure
-     *
-     * @return width of image
-     */
-    public double getStructureImageWidth() {
-        return structureImageWidth;
-    }
-    //
-    /**
-     * Sets the width of the image of the molecular structure
-     *
-     * @param aStructureImageWidth double
-     */
-    public void setStructureImageWidth(double aStructureImageWidth){
-        this.structureImageWidth = aStructureImageWidth;
     }
     //</editor-fold>
 }

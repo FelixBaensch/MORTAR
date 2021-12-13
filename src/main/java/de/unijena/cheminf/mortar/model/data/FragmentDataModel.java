@@ -66,7 +66,16 @@ public class FragmentDataModel extends MoleculeDataModel {
      * List of parent molecules, which contains this fragment
      */
     private List<MoleculeDataModel> parentMolecules;
+    //
+    /**
+     * First or random parent molecule which contains this fragment
+     */
+    private MoleculeDataModel parentMolecule;
     //</editor-fold>
+    /**
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(FragmentDataModel.class.getName());
     //
     /**
      * Constructor, sets absolute frequency to 1. Molecular information is taken from the given unique SMILES code. The
@@ -154,18 +163,38 @@ public class FragmentDataModel extends MoleculeDataModel {
     //
     /**
      * Creates and returns an ImageView of first parent molecule as 2D structure of this fragment
+     *
      * @return ImageView
      */
     public ImageView getParentMoleculeStructure() {
-        if(this.parentMolecules.size() < 1)
+        if(this.parentMolecules.size() < 1){
             return null;
+        }
+        if(this.parentMolecule == null){
+            this.parentMolecule = this.parentMolecules.get(0);
+        }
         try {
-            IAtomContainer tmpAtomContainer = this.parentMolecules.get(0).getAtomContainer();
+            IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
             return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
         } catch (CDKException aCDKException) {
-            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
+            FragmentDataModel.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString() + "_" + this.parentMolecule.getName(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
         }
+    }
+    //
+    /**
+     * Returns the name of first parent molecule of this fragment
+     *
+     * @return String
+     */
+    public String getParentMoleculeName(){
+        if(this.parentMolecules.size() < 1){
+            return null;
+        }
+        if(this.parentMolecule == null){
+           this.parentMolecule = this.parentMolecules.get(0);
+        }
+        return this.parentMolecule.getName();
     }
     //
     /**

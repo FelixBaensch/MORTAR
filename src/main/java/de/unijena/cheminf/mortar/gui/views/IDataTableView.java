@@ -29,5 +29,5 @@ public interface IDataTableView {
 
     public List<MoleculeDataModel> getItemsList();
     public void setItemsList(List<MoleculeDataModel> aListOfFragments);
-    public void addTableViewWidthListener(SettingsContainer aSettingsContainer);
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer);
 }

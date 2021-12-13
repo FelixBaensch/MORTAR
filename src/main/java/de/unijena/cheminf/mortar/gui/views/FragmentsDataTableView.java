@@ -27,14 +27,7 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -55,7 +48,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     /**
      * TableColumn for 2D structure state of the fragment
      */
-    private TableColumn<FragmentDataModel, Image> structureColumn;
+    private TableColumn<FragmentDataModel, ImageView> structureColumn;
     /**
      * TableColumn for SMILES of the fragment
      */
@@ -64,6 +57,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      * TableColumn for 2D structure state of one (random/first occurred) parent molecule
      */
     private TableColumn<FragmentDataModel, Image> parentMolColumn;
+    /**
+     * TableColumn for name of one (random/first occurred) parent molecule
+     */
+    private TableColumn<FragmentDataModel, String> parentMolNameColumn;
     /**
      * TableColumn for frequency of the fragment
      */
@@ -119,7 +116,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
         this.smilesColumn.setMinWidth(50);
         this.smilesColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.15)  //TODO
+                this.widthProperty().multiply(0.075)  //TODO
         );
         this.smilesColumn.setResizable(true);
         this.smilesColumn.setEditable(false);
@@ -139,9 +136,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.getColumns().add(this.smilesColumn);
         //-parentMolColumn
         this.parentMolColumn = new TableColumn<>();
-        Label tmpLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.header"));
-        tmpLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
-        this.parentMolColumn.setGraphic(tmpLabel);
+        Label tmpParentMolLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.header"));
+        tmpParentMolLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
+        this.parentMolColumn.setGraphic(tmpParentMolLabel);
         this.parentMolColumn.setMinWidth(150);
         this.parentMolColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.2475) //TODO
@@ -152,6 +149,20 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.parentMolColumn.setCellValueFactory(new PropertyValueFactory("parentMoleculeStructure"));
         this.parentMolColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.parentMolColumn);
+        //-parentMolNameColumn
+        this.parentMolNameColumn = new TableColumn<>();
+        Label tmpParentNameLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.header"));
+        tmpParentNameLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
+        this.parentMolNameColumn.setGraphic(tmpParentNameLabel);
+        this.parentMolNameColumn.prefWidthProperty().bind(
+                this.widthProperty().multiply(0.075)
+        );
+        this.parentMolNameColumn.setResizable(true);
+        this.parentMolNameColumn.setEditable(false);
+        this.parentMolNameColumn.setSortable(true);
+        this.parentMolNameColumn.setCellValueFactory(new PropertyValueFactory("parentMoleculeName"));
+        this.parentMolNameColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.parentMolNameColumn);
         //-frequencyColumn
         this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
         this.frequencyColumn.setMinWidth(50);
@@ -247,13 +258,13 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     }
     //
     /**
-     * Adds a changes listener to the height property of table view which sets the height for structure images to
+     * Adds a change listener to the height property of table view which sets the height for structure images to
      * each MoleculeDataModel object of the items list and refreshes the table view
      * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
      *
      * @param aSettingsContainer
      */
-    public void addTableViewWidthListener(SettingsContainer aSettingsContainer){
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
             GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer);
             this.refresh();
@@ -261,12 +272,14 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
-    public TableColumn getStructureColumn() { return this.structureColumn; }
-    public TableColumn getSmilesColumn() { return this.smilesColumn; }
-    public TableColumn getFrequencyColumn() { return this.frequencyColumn; }
-    public TableColumn getPercentageColumn() { return this.percentageColumn; }
-    public TableColumn getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
-    public TableColumn getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
+    public TableColumn<FragmentDataModel, ImageView> getStructureColumn() { return this.structureColumn; }
+    public TableColumn<FragmentDataModel, String> getSmilesColumn() { return this.smilesColumn; }
+    public TableColumn<FragmentDataModel, Image> getParentMolColumn(){ return this.parentMolColumn; }
+    public TableColumn<FragmentDataModel, String> getParentMolNameColumn() { return this.parentMolNameColumn; }
+    public TableColumn<FragmentDataModel, Integer> getFrequencyColumn() { return this.frequencyColumn; }
+    public TableColumn<FragmentDataModel, Double> getPercentageColumn() { return this.percentageColumn; }
+    public TableColumn<FragmentDataModel, Integer> getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
+    public TableColumn<FragmentDataModel, Double> getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
     public MenuItem getCopyMenuItem(){
         return this.copyMenuItem;
     }

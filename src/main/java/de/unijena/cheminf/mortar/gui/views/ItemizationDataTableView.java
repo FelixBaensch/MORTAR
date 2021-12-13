@@ -93,7 +93,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.nameColumn.setMinWidth(100);
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
-        this.nameColumn.setSortable(false);
+        this.nameColumn.setSortable(true);
         this.nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
@@ -168,7 +168,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      *
      * @param aSettingsContainer
      */
-    public void addTableViewWidthListener(SettingsContainer aSettingsContainer){
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
             GuiUtil.setImageStructureHeight(this, newValue.doubleValue(),aSettingsContainer);
             this.refresh();

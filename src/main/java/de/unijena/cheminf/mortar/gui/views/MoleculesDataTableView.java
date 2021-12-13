@@ -194,7 +194,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      *
      * @param aSettingsContainer
      */
-    public void addTableViewWidthListener(SettingsContainer aSettingsContainer){
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
             GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer);
             this.refresh();

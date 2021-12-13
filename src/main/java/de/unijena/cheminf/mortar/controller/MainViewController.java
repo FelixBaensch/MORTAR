@@ -571,18 +571,12 @@ public class MainViewController {
         this.cancelFragmentationButton.setOnAction(event ->{
             this.interruptFragmentation();
         });
-        this.moleculesDataTableView.addTableViewWidthListener(this.settingsContainer);
+        this.moleculesDataTableView.addTableViewHeightListener(this.settingsContainer);
         this.moleculesDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView));
         this.moleculesDataTableView.setOnKeyPressed(event -> {
             if(GuiDefinitions.KEY_CODE_COPY.match(event)){
                 GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView);
             }
-        });
-        this.moleculesDataTableView.getStructureColumn().widthProperty().addListener((observableValue, number, t1) -> {
-            for(MoleculeDataModel tmpMol : this.moleculesDataTableView.getItemsList()){
-                tmpMol.setStructureImageWidth((double)observableValue.getValue() - GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
-            }
-            this.moleculesDataTableView.refresh();
         });
     }
     //
@@ -722,19 +716,13 @@ public class MainViewController {
             event.getSource().getItems().clear();
             event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
         });
-        tmpFragmentsDataTableView.addTableViewWidthListener(this.settingsContainer);
+        tmpFragmentsDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
         tmpFragmentsDataTableView.setOnKeyPressed(event -> {
             if(GuiDefinitions.KEY_CODE_COPY.match(event)){
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
             }
         });
-//        tmpFragmentsDataTableView.getStructureColumn().widthProperty().addListener((observableValue, number, t1) -> {
-//            for(MoleculeDataModel tmpMol : tmpFragmentsDataTableView.getItemsList()){
-//                tmpMol.setStructureImageWidth((double)observableValue.getValue() - GuiDefinitions.GUI_BUTTON_SPACING_VALUE);
-//            }
-//            tmpFragmentsDataTableView.refresh();
-//        });
         //itemization tab
         int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
         for(int i= 0; i < this.moleculeDataModelList.size(); i++){
@@ -786,7 +774,7 @@ public class MainViewController {
                     TabNames.Itemization
             );
         });
-        tmpItemizationDataTableView.addTableViewWidthListener(this.settingsContainer);
+        tmpItemizationDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
         tmpItemizationDataTableView.setOnKeyPressed(event -> {
             if(GuiDefinitions.KEY_CODE_COPY.match(event)){
