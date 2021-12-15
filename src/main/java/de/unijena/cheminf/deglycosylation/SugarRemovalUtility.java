@@ -28,7 +28,7 @@ package de.unijena.cheminf.deglycosylation;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/JonasSchaub/SugarRemoval/blob/master/src/main/java/de/unijena/cheminf/deglycosylation/SugarRemovalUtility.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on April 15th 2021
+ * Last copied on December 15th 2021
  */
 
 import org.openscience.cdk.AtomContainer;
@@ -74,7 +74,7 @@ import java.util.logging.Logger;
  * It offers various functions to detect and remove sugar moieties with different options.
  *
  * @author Jonas Schaub, Maria Sorokina
- * @version 1.2.1.3
+ * @version 1.3.0.0
  */
 public class SugarRemovalUtility {
     //<editor-fold desc="Enum PreservationModeOption">
@@ -4100,4 +4100,3 @@ public class SugarRemovalUtility {
     //</editor-fold>
     //</editor-fold>
 }
-
