@@ -20,12 +20,15 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.controller.MainViewController;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.control.Button;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
@@ -35,6 +38,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -42,6 +47,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+
+import java.io.InputStream;
 
 public class AboutView extends AnchorPane {
 
@@ -101,18 +108,21 @@ public class AboutView extends AnchorPane {
         HBox.setHgrow(hBoxRightSideButtons, Priority.ALWAYS);
         hBoxButtonsHBox.getChildren().add(hBoxRightSideButtons);
         //borderPane center -> splitPane
-        SplitPane splitPane = new SplitPane();
-        splitPane.setOrientation(Orientation.VERTICAL);
-        //-splitPane top -> gridPane for text
-        borderPane.setCenter(splitPane);
+        SplitPane tmpSplitPane = new SplitPane();
+        tmpSplitPane.setOrientation(Orientation.VERTICAL);
+        //-splitPane top -> gridPane for text and logo
+        borderPane.setCenter(tmpSplitPane);
         GridPane tmpGridPane = new GridPane();
-        splitPane.getItems().add(0, tmpGridPane);
+        VBox.setVgrow(tmpGridPane, Priority.ALWAYS);
+        HBox.setHgrow(tmpGridPane, Priority.ALWAYS);
+        tmpSplitPane.getItems().add(0, tmpGridPane);
         HBox.setHgrow(tmpGridPane, Priority.ALWAYS);
         VBox.setVgrow(tmpGridPane, Priority.ALWAYS);
         tmpGridPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         tmpGridPane.setVgap(GuiDefinitions.GUI_SPACING_VALUE);
         tmpGridPane.setHgap(GuiDefinitions.GUI_SPACING_VALUE);
         tmpGridPane.setAlignment(Pos.TOP_LEFT);
+        tmpGridPane.setGridLinesVisible(true);
         //text
         //-title
         Text tmpAppTitle = new Text(Message.get("AboutView.appTitle.text"));
@@ -137,10 +147,17 @@ public class AboutView extends AnchorPane {
         //-acknowledgement
         Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text"));
         tmpGridPane.add(tmpAcknowledgment,0,5);
+        //-image
+        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
+        Image tmpLogo = new Image(tmpImageInputStream,450,450,true,true );
+        ImageView tmpLogoImageView = new ImageView(tmpLogo);
+        tmpGridPane.add(tmpLogoImageView, 2,0, 1, 6);
+        GridPane.setHalignment(tmpLogoImageView, HPos.CENTER);
+        GridPane.setValignment(tmpLogoImageView, VPos.CENTER);
         //-splitPane bottom -> tabPane for tools etc.
         TabPane tabPane = new TabPane();
         tabPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-        splitPane.getItems().add(1, tabPane);
+        tmpSplitPane.getItems().add(1, tabPane);
         Tab tmpToolsTab = new Tab(Message.get("AboutView.toolsTab.title.text"));
         tmpToolsTab.setClosable(false);
         tabPane.getTabs().add(tmpToolsTab);
