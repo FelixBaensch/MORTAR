@@ -747,8 +747,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
-            tmpMoleculeClone = ErtlFunctionalGroupsFinderUtility.perceiveAtomTypesAndConfigureAtoms(tmpMoleculeClone);
-            tmpMoleculeClone = ErtlFunctionalGroupsFinderUtility.applyAromaticityDetection(tmpMoleculeClone, this.aromaticityModelInstance);
+            ErtlFunctionalGroupsFinderUtility.perceiveAtomTypesAndConfigureAtoms(tmpMoleculeClone);
+            ErtlFunctionalGroupsFinderUtility.applyAromaticityDetection(tmpMoleculeClone, this.aromaticityModelInstance);
         } catch (CDKException anException) {
             this.logger.log(Level.WARNING, anException.toString(), anException);
             throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
@@ -906,7 +906,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         }
         if (ErtlFunctionalGroupsFinderUtility.isMoleculeCharged(tmpPreprocessedMolecule)) {
             try {
-                tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpPreprocessedMolecule);
+                ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpPreprocessedMolecule);
             } catch (CDKException anException) {
                 this.logger.log(Level.WARNING, anException.toString(), anException);
                 throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
