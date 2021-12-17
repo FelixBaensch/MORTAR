@@ -71,7 +71,7 @@ import java.util.logging.Logger;
  * Different trees or networks can also be merged together.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.2.1
+ * @version 1.0.3.0
  */
 public class ScaffoldGenerator {
 
@@ -1247,7 +1247,7 @@ public class ScaffoldGenerator {
      * Removes the given ring from the total molecule and returns it.
      * Preserves the sp2 hybridisation of a border atom when an aromatic ring is removed.
      * Preserves the hybridisation of all molecules if {@link ScaffoldGenerator#retainOnlyHybridisationsAtAromaticBondsSetting} == true
-     * With the removal of heterocycles of size 3 a double bond is inserted if it is directly adjacent to another ring.
+     * With the removal of a heteroatom of heterocycles of size 3 a double bond is inserted if it is directly adjacent to another ring.
      * Important: Property (ScaffoldGenerator.SCAFFOLD_ATOM_COUNTER_PROPERTY) must be set for aMolecule/aRing and match.
      * @param aMolecule Molecule whose ring is to be removed.
      * @param anAddImplicitHydrogens Specifies whether implicit hydrogens are to be added at the end.
@@ -1338,9 +1338,9 @@ public class ScaffoldGenerator {
             if(tmpRingClone.getAtomCount() == 3) {
                 int tmpNonCCounter = 0;
                 IAtom tmpNonCAtom = null;
-                /*Count the heteroatoms*/
+                /*Count the DoNotRemove heteroatoms*/
                 for(IAtom tmpRingAtom : tmpRingClone.atoms()) {
-                    if(!tmpRingAtom.getSymbol().equals("C")) {
+                    if(!tmpRingAtom.getSymbol().equals("C") && !tmpDoNotRemove.contains(tmpRingAtom.getProperty(SCAFFOLD_ATOM_COUNTER_PROPERTY))) {
                         tmpNonCCounter++;
                         tmpNonCAtom = tmpRingAtom;
                     }
@@ -1356,15 +1356,13 @@ public class ScaffoldGenerator {
                         Integer tmpRingCloneProperty1 = tmpRingClone.getAtom(1).getProperty(SCAFFOLD_ATOM_COUNTER_PROPERTY);
                         /* Find the second atom to which the heteroatom was bonded if it was sp3 hybridised*/
                         if((tmpMolAtomProperty.equals(tmpRingCloneProperty0) ||
-                                tmpMolAtomProperty.equals(tmpRingCloneProperty1)) && tmpBondAtom1 != null
-                                && tmpMolAtom.getHybridization().equals(IAtomType.Hybridization.SP3)) {
+                                tmpMolAtomProperty.equals(tmpRingCloneProperty1)) && tmpBondAtom1 != null) {
                             //insert a double bond between the two atoms
                             tmpMoleculeClone.getBond(tmpBondAtom1 , tmpMolAtom).setOrder(IBond.Order.DOUBLE);
                         }
                         /*Find the first atom to which the heteroatom was bonded if it was sp3 hybridised*/
                         if((tmpMolAtomProperty.equals(tmpRingCloneProperty0) ||
-                                tmpMolAtomProperty.equals(tmpRingCloneProperty1)) && tmpBondAtom1 == null
-                                && tmpMolAtom.getHybridization().equals(IAtomType.Hybridization.SP3)) {
+                                tmpMolAtomProperty.equals(tmpRingCloneProperty1)) && tmpBondAtom1 == null) {
                             //Save this atom
                             tmpBondAtom1 = tmpMolAtom;
                         }
