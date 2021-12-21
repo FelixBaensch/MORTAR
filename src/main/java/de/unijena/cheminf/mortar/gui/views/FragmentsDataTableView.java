@@ -108,7 +108,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
-        this.structureColumn.setSortable(true);
+        this.structureColumn.setSortable(false);
         this.structureColumn.setCellValueFactory(new PropertyValueFactory("structure"));
         this.structureColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.structureColumn);
@@ -145,7 +145,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         );
         this.parentMolColumn.setResizable(true);
         this.parentMolColumn.setEditable(false);
-        this.parentMolColumn.setSortable(true);
+        this.parentMolColumn.setSortable(false);
         this.parentMolColumn.setCellValueFactory(new PropertyValueFactory("parentMoleculeStructure"));
         this.parentMolColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.parentMolColumn);

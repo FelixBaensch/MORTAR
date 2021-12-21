@@ -107,7 +107,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         );
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
-        this.nameColumn.setSortable(false);
+        this.nameColumn.setSortable(true);
         this.nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");

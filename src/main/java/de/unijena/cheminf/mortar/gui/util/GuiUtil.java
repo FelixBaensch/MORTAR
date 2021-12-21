@@ -26,14 +26,19 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.SortEvent;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -144,6 +149,25 @@ public class GuiUtil {
             guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), aNewThrownException.toString());
             LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
         }
+    }
+    //
+    /**
+     * Sorts the items of the TableView over all pages of the pagination and adds
+     *
+     * @param anEvent SortEvent<TableView>
+     * @param tmpPagination Pagination
+     * @param tmpRowsPerPage int
+     */
+    public static void sortTableViewGlobally(SortEvent<TableView> anEvent, Pagination tmpPagination, int tmpRowsPerPage){
+        if(anEvent == null || anEvent.getSource().getSortOrder().size() == 0)
+            return;
+        String tmpSortProp = ((PropertyValueFactory)((TableColumn) anEvent.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
+        TableColumn.SortType tmpSortType = ((TableColumn) anEvent.getSource().getSortOrder().get(0)).getSortType();
+        ListUtil.sortGivenFragmentListByPropertyAndSortType(((IDataTableView)anEvent.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
+        int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
+        int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((IDataTableView)anEvent.getSource()).getItemsList().size());
+        anEvent.getSource().getItems().clear();
+        anEvent.getSource().getItems().addAll(((IDataTableView)anEvent.getSource()).getItemsList().subList(fromIndex,toIndex));
     }
     //
     /**

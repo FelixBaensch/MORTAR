@@ -41,7 +41,6 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -59,11 +58,9 @@ import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.Tab;
-import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -582,6 +579,10 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView);
             }
         });
+        this.moleculesDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
+            GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
+        });
+
     }
     //
     private void interruptFragmentation(){
@@ -710,15 +711,7 @@ public class MainViewController {
             );
         });
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
-            if(event.getSource().getSortOrder().size() == 0)
-                return;
-            String tmpSortProp = ((PropertyValueFactory)((TableColumn) event.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
-            TableColumn.SortType tmpSortType = ((TableColumn) event.getSource().getSortOrder().get(0)).getSortType();
-            ListUtil.sortGivenFragmentListByPropertyAndSortType(((FragmentsDataTableView)event.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
-            int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
-            int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((FragmentsDataTableView)event.getSource()).getItemsList().size());
-            event.getSource().getItems().clear();
-            event.getSource().getItems().addAll(((FragmentsDataTableView)event.getSource()).getItemsList().subList(fromIndex,toIndex));
+            GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
         tmpFragmentsDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
@@ -777,6 +770,9 @@ public class MainViewController {
                     aFragmentationName,
                     TabNames.Itemization
             );
+        });
+        tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
+            GuiUtil.sortTableViewGlobally(event, tmpPaginationItems, tmpRowsPerPage);
         });
         tmpItemizationDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
