@@ -20,7 +20,6 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
-import de.unijena.cheminf.mortar.controller.MainViewController;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
@@ -42,6 +41,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -69,6 +69,11 @@ public class AboutView extends AnchorPane {
      * Button to close this view
      */
     private Button closeButton;
+    /**
+     * ImageView for application logo
+     */
+    private ImageView logoImageView;
+    private GridPane gridPane;
     //</editor-fold>
     //
     /**
@@ -110,50 +115,63 @@ public class AboutView extends AnchorPane {
         //borderPane center -> splitPane
         SplitPane tmpSplitPane = new SplitPane();
         tmpSplitPane.setOrientation(Orientation.VERTICAL);
-        //-splitPane top -> gridPane for text and logo
         borderPane.setCenter(tmpSplitPane);
-        GridPane tmpGridPane = new GridPane();
-        VBox.setVgrow(tmpGridPane, Priority.ALWAYS);
-        HBox.setHgrow(tmpGridPane, Priority.ALWAYS);
-        tmpSplitPane.getItems().add(0, tmpGridPane);
-        HBox.setHgrow(tmpGridPane, Priority.ALWAYS);
-        VBox.setVgrow(tmpGridPane, Priority.ALWAYS);
-        tmpGridPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-        tmpGridPane.setVgap(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpGridPane.setHgap(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpGridPane.setAlignment(Pos.TOP_LEFT);
-        tmpGridPane.setGridLinesVisible(true);
+        //-splitPane top -> gridPane for text and logo
+        this.gridPane = new GridPane();
+        VBox.setVgrow(this.gridPane, Priority.ALWAYS);
+        HBox.setHgrow(this.gridPane, Priority.ALWAYS);
+
+        ColumnConstraints tmpTextCol = new ColumnConstraints();
+        tmpTextCol.prefWidthProperty().bind(
+                this.gridPane.widthProperty().multiply(0.4975)
+        );
+        this.gridPane.getColumnConstraints().add(0, tmpTextCol);
+
+        ColumnConstraints tmpLogoCol = new ColumnConstraints();
+        tmpLogoCol.prefWidthProperty().bind(
+                this.gridPane.widthProperty().multiply(0.5)
+        );
+        tmpLogoCol.setHalignment(HPos.CENTER);
+        this.gridPane.getColumnConstraints().add(1, tmpLogoCol);
+        this.gridPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        this.gridPane.setVgap(GuiDefinitions.GUI_SPACING_VALUE);
+        this.gridPane.setHgap(GuiDefinitions.GUI_SPACING_VALUE);
+        this.gridPane.setAlignment(Pos.TOP_LEFT);
+        tmpSplitPane.getItems().add(0, this.gridPane);
         //text
         //-title
         Text tmpAppTitle = new Text(Message.get("AboutView.appTitle.text"));
         tmpAppTitle.setStyle("-fx-font-weight: bold");
         tmpAppTitle.setStyle("-fx-font-size: 24");
-        tmpGridPane.add(tmpAppTitle,0,0);
+        this.gridPane.add(tmpAppTitle,0,0);
+        HBox.setHgrow(tmpAppTitle, Priority.ALWAYS);
+        VBox.setVgrow(tmpAppTitle, Priority.ALWAYS);
         //-version
         Text tmpVersion = new Text("Version " + Message.get("Version.text")); //TODO: find better place for version number then properties
         tmpVersion.setStyle("-fx-font-weight: bold");
-        tmpGridPane.add(tmpVersion, 0,1);
+        this.gridPane.add(tmpVersion, 0,1);
         //-copyright
         Text tmpCopyright = new Text(Message.get("AboutView.copyright.text"));
-        tmpGridPane.add(tmpCopyright, 0,2);
+        this.gridPane.add(tmpCopyright, 0,2);
         //-license
         Text tmpLicense = new Text(Message.get("AboutView.license.text"));
         TitledPane tmpTitledPane = new TitledPane(Message.get("AboutView.license.title"), tmpLicense);
         tmpTitledPane.setExpanded(true);
-        tmpGridPane.add(tmpTitledPane,0,3);
+        this.gridPane.add(tmpTitledPane,0,3);
         //-contact
         Text tmpContact = new Text(Message.get("AboutView.contact.text"));
-        tmpGridPane.add(tmpContact, 0,4);
+        this.gridPane.add(tmpContact, 0,4);
         //-acknowledgement
         Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text"));
-        tmpGridPane.add(tmpAcknowledgment,0,5);
+        this.gridPane.add(tmpAcknowledgment,0,5);
         //-image
-        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
-        Image tmpLogo = new Image(tmpImageInputStream,450,450,true,true );
-        ImageView tmpLogoImageView = new ImageView(tmpLogo);
-        tmpGridPane.add(tmpLogoImageView, 2,0, 1, 6);
-        GridPane.setHalignment(tmpLogoImageView, HPos.CENTER);
-        GridPane.setValignment(tmpLogoImageView, VPos.CENTER);
+        InputStream tmpImageInputStream = AboutView.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
+        Double tmpImageSize = 495.3125; // magic number, do not touch
+        Image tmpLogo = new Image(tmpImageInputStream,tmpImageSize,tmpImageSize, true,true );
+        this.logoImageView = new ImageView(tmpLogo);
+        this.gridPane.add(this.logoImageView, 1,0, 1, 6);
+        GridPane.setHalignment(this.logoImageView, HPos.CENTER);
+        GridPane.setValignment(this.logoImageView, VPos.CENTER);
         //-splitPane bottom -> tabPane for tools etc.
         TabPane tabPane = new TabPane();
         tabPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -232,10 +250,35 @@ public class AboutView extends AnchorPane {
     //
     /**
      * Returns the TableView which shows ExternalTool properties
-     * @return
+     * @return TableView<ExternalTool>
      */
     public TableView<ExternalTool> getTableView(){
         return this.tableView;
+    }
+    //
+    /**
+     * Returns grid pane to hold application information and logo
+     *
+     * @return GridPane
+     */
+    public GridPane getGridPane() {
+        return this.gridPane;
+    }
+    //
+    /**
+     * Returns the ImageView for the logo image
+     *
+     * @return ImageView
+     */
+    public ImageView getLogoImageView() {
+        return this.logoImageView;
+    }
+    //
+    /**
+     * Sets given image to image vie
+     */
+    public void setLogoImageView(Image anImage){
+        this.logoImageView.setImage(anImage);
     }
     //</editor-fold>
 }

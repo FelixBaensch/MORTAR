@@ -45,10 +45,10 @@ public class PipelineSettingsView extends AnchorPane {
         super();
         //borderPane
         this.borderPane = new BorderPane();
-        SettingsView.setTopAnchor(this.borderPane, 0.0);
-        SettingsView.setRightAnchor(this.borderPane, 0.0);
-        SettingsView.setLeftAnchor(this.borderPane, 0.0);
-        SettingsView.setBottomAnchor(this.borderPane, 0.0);
+        PipelineSettingsView.setTopAnchor(this.borderPane, 0.0);
+        PipelineSettingsView.setRightAnchor(this.borderPane, 0.0);
+        PipelineSettingsView.setLeftAnchor(this.borderPane, 0.0);
+        PipelineSettingsView.setBottomAnchor(this.borderPane, 0.0);
         //buttons
         HBox tmpHBoxButtonsHBox = new HBox();
         tmpHBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
