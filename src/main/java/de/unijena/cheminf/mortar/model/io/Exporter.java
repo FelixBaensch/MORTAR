@@ -443,7 +443,13 @@ public class Exporter {
                     //creates an image of the fragment
                     PdfPCell tmpImageFragmentCell = new PdfPCell();
                     tmpImageFragmentCell.setFixedHeight(85f);
-                    IAtomContainer tmpStructureOfFragment = tmpFragmentDataModel.getAtomContainer();
+                    IAtomContainer tmpStructureOfFragment;
+                    try{
+                        tmpStructureOfFragment = tmpFragmentDataModel.getAtomContainer();
+                    } catch(CDKException anException){
+                        Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDataModel.getName(), anException);
+                        continue;
+                    }
                     javafx.scene.image.Image tmpImageStructureOfFragment = DepictionUtil.depictImageWithZoom(tmpStructureOfFragment,
                             4.0);
                     BufferedImage tmpBufferedImageFragment = SwingFXUtils.fromFXImage(tmpImageStructureOfFragment, null);
@@ -474,7 +480,7 @@ public class Exporter {
             } else {
                 return;
             }
-        } catch (DocumentException | CDKException | FileNotFoundException anException) {
+        } catch (DocumentException | FileNotFoundException anException) {
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(), anException);
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -520,7 +526,13 @@ public class Exporter {
                     tmpTable.addCell(tmpName);
                     tmpTable.addCell(tmpStructureCell);
                     // Image of molecule
-                    IAtomContainer tmpMoleculeStructure = tmpMoleculeDataModel.getAtomContainer();
+                    IAtomContainer tmpMoleculeStructure;
+                    try{
+                        tmpMoleculeStructure = tmpMoleculeDataModel.getAtomContainer();
+                    } catch(CDKException anException){
+                        Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMoleculeDataModel.getName(), anException);
+                        continue;
+                    }
                     PdfPCell tmpMoleculeStructureCell = new PdfPCell();
                     tmpMoleculeStructureCell.setFixedHeight(120f);
                     javafx.scene.image.Image tmpMoleculeImage = DepictionUtil.depictImageWithZoom(tmpMoleculeStructure,
@@ -544,7 +556,13 @@ public class Exporter {
                                 break;
                             }
                             FragmentDataModel tmpFragmentDatModel = tmpFragmentList.get(tmpFragmentNumber);
-                            IAtomContainer tmpFragmentStructure = tmpFragmentDatModel.getAtomContainer();
+                            IAtomContainer tmpFragmentStructure;
+                            try{
+                                tmpFragmentStructure = tmpFragmentDatModel.getAtomContainer();
+                            } catch(CDKException anException){
+                                Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDatModel.getName(), anException);
+                                continue;
+                            }
                             String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
                             javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithText(tmpFragmentStructure, 3.0, DepictionUtil.IMAGE_WIDTH_DEFAULT, DepictionUtil.IMAGE_HEIGHT_DEFAULT, tmpFrequency);
                             BufferedImage tmpBufferedImageOfFragment = SwingFXUtils.fromFXImage(tmpFragmentImage, null);
@@ -569,7 +587,7 @@ public class Exporter {
             } else {
                 return;
             }
-        } catch (DocumentException | CDKException | FileNotFoundException anException) {
+        } catch (DocumentException | FileNotFoundException anException) {
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
                     anException.toString(), anException);
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);

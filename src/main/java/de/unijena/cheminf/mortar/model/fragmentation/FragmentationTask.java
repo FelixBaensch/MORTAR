@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
@@ -78,7 +79,15 @@ public class FragmentationTask implements Callable<Integer> {
             HashMap<String, List<FragmentDataModel>> tmpFragmentsMapOfMolecule = null;
             HashMap<String, HashMap<String, Integer>> tmpFragmentFrequenciesMapOfMolecule = null;
             try{
-                IAtomContainer tmpAtomContainer = tmpMolecule.getAtomContainer();
+                IAtomContainer tmpAtomContainer;
+                try{
+                    tmpAtomContainer = tmpMolecule.getAtomContainer();
+                } catch(CDKException anException){
+                    tmpExceptionsCounter++;
+                    FragmentationTask.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMolecule.getName(), anException);
+                    tmpExceptionsCounter++;
+                    continue;
+                }
                 tmpFragmentsMapOfMolecule = tmpMolecule.getAllFragments();
                 tmpFragmentFrequenciesMapOfMolecule = tmpMolecule.getFragmentFrequencies();
                 if(this.fragmenter.shouldBeFiltered(tmpAtomContainer)){
