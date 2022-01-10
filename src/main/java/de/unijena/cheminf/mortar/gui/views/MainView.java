@@ -22,7 +22,12 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.panes.MainMenuBar;
 import de.unijena.cheminf.mortar.gui.panes.StatusBar;
-import javafx.scene.layout.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 
 /**
  * MainView Class of MORTAR
@@ -58,6 +63,7 @@ public class MainView extends AnchorPane {
         //mainCenterPane
         this.mainCenterPane = new Pane();
         this.mainCenterPane.setStyle("-fx-background-color: LIGHTGREY");
+        this.mainCenterPane.setStyle("-fx-background-image: url('/de/unijena/cheminf/mortar/images/Mortar_Logo1_alpha50.png'); -fx-background-repeat: no-repeat; -fx-background-size: 521 362; -fx-background-position: center center;");
         this.mainBorderPane.setCenter(this.mainCenterPane);
         //menuBar
         this.mainMenuBar = new MainMenuBar();
