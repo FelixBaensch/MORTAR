@@ -1,6 +1,6 @@
 /**
  * ErtlFunctionalGroupsFinder for CDK
- * Copyright (C) 2019 Sebastian Fritsch
+ * Copyright (C) 2022 Sebastian Fritsch
  * 
  * Source code is available at <https://github.com/zielesny/ErtlFunctionalGroupsFinder>
  * 
@@ -23,22 +23,29 @@ package org.openscience.cdk.tools;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/zielesny/ErtlFunctionalGroupsFinder/blob/master/Basic/ErtlFunctionalGroupsFinder.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on November 17th 2020
+ * Last copied on January 12th 2022
  */
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.openscience.cdk.graph.ConnectedComponents;
 import org.openscience.cdk.graph.GraphUtil;
 import org.openscience.cdk.graph.GraphUtil.EdgeToBondMap;
-import org.openscience.cdk.interfaces.*;
+import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
-import org.openscience.cdk.tools.LoggingToolFactory;
-import org.openscience.cdk.tools.ILoggingTool;
+import org.openscience.cdk.interfaces.ILonePair;
+import org.openscience.cdk.interfaces.IPseudoAtom;
+import org.openscience.cdk.interfaces.ISingleElectron;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * Finds and extracts a molecules's functional groups in a purely rule-based manner.
@@ -47,8 +54,8 @@ import java.util.*;
  * of functional groups in organic molecules
  * [Ertl P. An algorithm to identify functional groups in organic molecules. J Cheminform. 2017; 9:36.].
  *
- * @author Sebastian Fritsch
- * @version 1.0.0.0
+ * @author Sebastian Fritsch, Jonas Schaub
+ * @version 1.0.0.1
  */
 public class ErtlFunctionalGroupsFinder {
 	
@@ -134,7 +141,7 @@ public class ErtlFunctionalGroupsFinder {
     	this.mode = mode;
     	
     	// init non-metal and non-metalloid atom numbers
-		nonmetalAtomicNumbers = ImmutableSet.of(1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 86);
+		nonmetalAtomicNumbers = Set.of(1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 86); //ImmutableSet.of(1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 86);
     }
 
 	/**
@@ -219,7 +226,7 @@ public class ErtlFunctionalGroupsFinder {
     	if(isDbg()) log.debug("########## Starting search for atoms to mark ... ##########");
     	
     	// store marked atoms
-    	markedAtoms = Sets.newHashSetWithExpectedSize(molecule.getAtomCount());
+		markedAtoms = new HashSet<Integer>(molecule.getAtomCount()); //Sets.newHashSetWithExpectedSize(molecule.getAtomCount());
     	// store aromatic heteroatoms
     	aromaticHeteroAtoms = new HashMap<>();
     	
@@ -375,7 +382,7 @@ public class ErtlFunctionalGroupsFinder {
     private List<IAtomContainer> extractGroups(IAtomContainer molecule) {
     	if(isDbg()) log.debug("########## Starting identification & extraction of functional groups... ##########");
 
-		environmentsMap = Maps.newHashMapWithExpectedSize(molecule.getAtomCount());
+		environmentsMap = new HashMap<IAtom, List<org.openscience.cdk.tools.ErtlFunctionalGroupsFinder.EnvironmentalC>>(molecule.getAtomCount());//Maps.newHashMapWithExpectedSize(molecule.getAtomCount());
 		int[] atomIdxToFGMap = new int[molecule.getAtomCount()];
 		Arrays.fill(atomIdxToFGMap, -1);
     	int fGroupIdx = -1;
@@ -546,7 +553,8 @@ public class ErtlFunctionalGroupsFinder {
     		}
     			
     		// get atoms to process
-			List<IAtom> fGroupAtoms = Lists.newArrayList(fGroup.atoms());
+			List<IAtom> fGroupAtoms = new ArrayList<IAtom>(fGroup.getAtomCount());//Lists.newArrayList(fGroup.atoms());
+			fGroup.atoms().forEach(fGroupAtoms::add);
     		
     		// process atoms...
     		for(IAtom atom : fGroupAtoms) {
@@ -711,8 +719,8 @@ public class ErtlFunctionalGroupsFinder {
     	for(int i = 0; i < fGroupCount; i++) {
     		groups.add(sourceContainer.getBuilder().newInstance(IAtomContainer.class));
     	}
-    	
-    	Map<IAtom, IAtomContainer> atomtoFGMap = Maps.newHashMapWithExpectedSize(sourceContainer.getAtomCount());
+
+		Map<IAtom, IAtomContainer> atomtoFGMap = new HashMap<IAtom, IAtomContainer>(sourceContainer.getAtomCount());//Maps.newHashMapWithExpectedSize(sourceContainer.getAtomCount());
     	
     	// atoms
     	for(int atomIdx = 0; atomIdx < sourceContainer.getAtomCount(); atomIdx++) {
