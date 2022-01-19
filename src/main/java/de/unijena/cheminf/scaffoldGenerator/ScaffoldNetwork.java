@@ -25,15 +25,14 @@ package de.unijena.cheminf.scaffoldGenerator;
  * Last copied on November 24th 2021
  */
 
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,7 +41,7 @@ import java.util.Objects;
  * A network can have several roots and leaves.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.1.2
+ * @version 1.0.2.0
  */
 public class ScaffoldNetwork extends ScaffoldNodeCollectionBase {
 
@@ -79,15 +78,21 @@ public class ScaffoldNetwork extends ScaffoldNodeCollectionBase {
         IAtomContainer tmpMolecule = (IAtomContainer) aNode.getMolecule();
         String tmpSmiles = this.smilesGenerator.create(tmpMolecule); //Convert molecule to SMILES
         this.smilesMap.put(tmpSmiles, aNode);
-        /*Since the network is built from the leaves to the root,
-         the levels of all nodes in the network must be re-determined for every node added.*/
-        this.levelMap.put(aNode.getLevel(), aNode);
-        ListMultimap<Integer, ScaffoldNodeBase> tmpLevelMap = ArrayListMultimap.create();
+        int tmpLevel = aNode.getLevel();
+        if(this.levelMap.get(tmpLevel) == null) {
+            this.levelMap.put(tmpLevel, new HashSet<>());
+        }
+        this.levelMap.get(tmpLevel).add(aNode);
+        HashMap<Integer, HashSet<ScaffoldNodeBase>> tmpLevelMap = new HashMap<>();
         for(ScaffoldNodeBase tmpNodeBase : this.getAllNodes()) {
             NetworkNode tmpNetworkNode = (NetworkNode) tmpNodeBase;
-            tmpLevelMap.put(tmpNetworkNode.getLevel(), tmpNetworkNode);
+            int tmpLevelInternal = tmpNetworkNode.getLevel();
+            if(tmpLevelMap.get(tmpLevelInternal) == null) {
+                tmpLevelMap.put(tmpLevelInternal, new HashSet<>());
+            }
+            tmpLevelMap.get(tmpLevelInternal).add(tmpNetworkNode);
+            this.levelMap = tmpLevelMap;
         }
-        this.levelMap = tmpLevelMap;
         //Increase nodeCounter
         this.nodeCounter++;
     }

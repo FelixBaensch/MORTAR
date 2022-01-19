@@ -20,13 +20,11 @@ package de.unijena.cheminf.scaffoldGenerator;
 
 /**
  * IMPORTANT NOTE: This is a copy of
- * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldNodeCollectionBase.java
+ * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldNetwork.java
  * Therefore, do not make any changes here but in the original repository!
  * Last copied on November 24th 2021
  */
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesGenerator;
@@ -34,6 +32,7 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,7 +41,7 @@ import java.util.Objects;
  * Top-level class to organise the ScaffoldNodeBase objects.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.0.1
+ * @version 1.0.2.0
  */
 public abstract class ScaffoldNodeCollectionBase {
 
@@ -62,12 +61,12 @@ public abstract class ScaffoldNodeCollectionBase {
     /**
      * Saves all ScaffoldNodes according to their SMILES. Key:SMILES, Value:ScaffoldNodeBase
      */
-    protected ListMultimap<String, ScaffoldNodeBase> smilesMap;
+    protected HashMap<String, ScaffoldNodeBase> smilesMap;
 
     /**
      * Saves all ScaffoldNodes according to their level. Key:Level, Value:ScaffoldNodeBase
      */
-    protected ListMultimap<Integer, ScaffoldNodeBase> levelMap;
+    protected HashMap<Integer, HashSet<ScaffoldNodeBase>> levelMap;
 
     /**
      * Generator for the creation of SMILES
@@ -88,8 +87,8 @@ public abstract class ScaffoldNodeCollectionBase {
     public ScaffoldNodeCollectionBase(SmilesGenerator aSmilesGenerator) {
         this.nodeMap = new HashMap<Integer, ScaffoldNodeBase>();
         this.reverseNodeMap = new HashMap<ScaffoldNodeBase, Integer>();
-        this.smilesMap = ArrayListMultimap.create();
-        this.levelMap = ArrayListMultimap.create();
+        this.smilesMap = new HashMap<String, ScaffoldNodeBase>();
+        this.levelMap = new HashMap<Integer, HashSet<ScaffoldNodeBase>>();
         this.smilesGenerator = aSmilesGenerator;
         this.nodeCounter = 0;
     }
@@ -166,7 +165,7 @@ public abstract class ScaffoldNodeCollectionBase {
         if(!this.containsMolecule(aMolecule)) { //Check if the molecule exists in the ScaffoldCollection
             throw new IllegalArgumentException("Molecule is not in ScaffoldCollection");
         }
-        return this.smilesMap.get(this.smilesGenerator.create(aMolecule)).get(0);
+        return this.smilesMap.get(this.smilesGenerator.create(aMolecule));
     }
 
     /**
@@ -175,7 +174,7 @@ public abstract class ScaffoldNodeCollectionBase {
      */
     public int getMaxLevel() {
         List<Integer> tmpLevelList = new ArrayList<>();
-        tmpLevelList.addAll(this.levelMap.keys());
+        tmpLevelList.addAll(this.levelMap.keySet());
         return Collections.max(tmpLevelList);
     }
 
@@ -187,7 +186,8 @@ public abstract class ScaffoldNodeCollectionBase {
      */
     public List<ScaffoldNodeBase> getAllNodesOnLevel(int aLevel) throws IllegalArgumentException {
         if(this.getMaxLevel() >= aLevel) { //Level must be less than or equal to the maximum level
-            return this.levelMap.get(aLevel);
+            ArrayList<ScaffoldNodeBase> tmpList = new ArrayList<>(this.levelMap.get(aLevel));
+            return  tmpList;
         }
         throw new IllegalArgumentException("Level does not exist: " + aLevel);
     }
@@ -225,7 +225,9 @@ public abstract class ScaffoldNodeCollectionBase {
      */
     public List<ScaffoldNodeBase> getAllNodes() {
         List<ScaffoldNodeBase> tmpList = new ArrayList<>();
-        tmpList.addAll(this.levelMap.values());
+        for(HashSet<ScaffoldNodeBase> tmpValueList : this.levelMap.values()) {
+            tmpList.addAll(tmpValueList);
+        }
         return tmpList;
     }
 
