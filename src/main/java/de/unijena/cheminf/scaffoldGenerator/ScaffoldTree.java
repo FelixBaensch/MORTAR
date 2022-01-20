@@ -22,7 +22,7 @@ package de.unijena.cheminf.scaffoldGenerator;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldTree.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on October 19th 2021
+ * Last copied on January 20th 2022
  */
 
 import org.openscience.cdk.exception.CDKException;
@@ -30,6 +30,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
 
 
@@ -38,7 +39,7 @@ import java.util.Objects;
  * A tree can have one root and several leaves.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.1.0
+ * @version 1.0.2.0
  */
 public class ScaffoldTree extends ScaffoldNodeCollectionBase {
 
@@ -76,8 +77,11 @@ public class ScaffoldTree extends ScaffoldNodeCollectionBase {
         String tmpSmiles = this.smilesGenerator.create(tmpMolecule); //Convert molecule to SMILES
         this.smilesMap.put(tmpSmiles, aNode);
         //Add to levelMap
-        this.levelMap.put(aNode.getLevel(), aNode);
-        /*Add origins from the new node to parent nodes*/
+        int tmpLevel = aNode.getLevel();
+        if(this.levelMap.get(tmpLevel) == null) {
+            this.levelMap.put(tmpLevel, new HashSet<>());
+        }
+        this.levelMap.get(tmpLevel).add(aNode);
         for(int tmpCount = 0; tmpCount < aNode.getLevel(); tmpCount++) {
             TreeNode tmpNextNode = ((TreeNode<?>) aNode).getParent();
             for(Object tmpString : aNode.getOriginSmilesList()) {
