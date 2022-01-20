@@ -41,7 +41,7 @@ import java.util.Objects;
  * A network can have several roots and leaves.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
- * @version 1.0.2.0
+ * @version 1.0.2.1
  */
 public class ScaffoldNetwork extends ScaffoldNodeCollectionBase {
 
@@ -91,8 +91,8 @@ public class ScaffoldNetwork extends ScaffoldNodeCollectionBase {
                 tmpLevelMap.put(tmpLevelInternal, new HashSet<>());
             }
             tmpLevelMap.get(tmpLevelInternal).add(tmpNetworkNode);
-            this.levelMap = tmpLevelMap;
         }
+        this.levelMap = tmpLevelMap;
         //Increase nodeCounter
         this.nodeCounter++;
     }

@@ -25,7 +25,6 @@ package de.unijena.cheminf.scaffoldGenerator;
  * Last copied on October 19th 2021
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
