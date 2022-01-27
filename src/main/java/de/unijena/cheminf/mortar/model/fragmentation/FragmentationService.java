@@ -267,7 +267,7 @@ public class FragmentationService {
      * @param aNumberOfTasks int
      * @throws Exception
      */
-    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
+    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks){
         //<editor-fold desc="checks" defualtstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
         Objects.requireNonNull(this.pipelineFragmenter, "pipelineFragmenter must not be null");
@@ -865,7 +865,7 @@ public class FragmentationService {
      * @param aNumberOfTasks
      * @throws Exception
      */
-    private Hashtable<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, IMoleculeFragmenter aFragmenter, String aFragmentationName) throws Exception {
+    private Hashtable<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, IMoleculeFragmenter aFragmenter, String aFragmentationName) {
         int tmpNumberOfTasks = aNumberOfTasks;
         String tmpFragmentationName = aFragmentationName;
         Hashtable<String, FragmentDataModel> tmpFragmentHashtable = new Hashtable<>(aListOfMolecules.size() * 2);
@@ -902,15 +902,16 @@ public class FragmentationService {
         FragmentationService.LOGGER.info("Fragmentation \"" + tmpFragmentationName
                 + "\" starting. Current memory consumption: " + tmpMemoryConsumption + " MB");
         long tmpStartTime = System.currentTimeMillis();
+        int tmpExceptionsCounter = 0;
         try {
             tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
+            for (Future<Integer> tmpFuture : tmpFuturesList) {
+                tmpExceptionsCounter += tmpFuture.get();
+            }
         }catch (Exception anException){
             FragmentationService.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            throw anException; //TODO ? GUIAlert?
-        }
-        int tmpExceptionsCounter = 0;
-        for (Future<Integer> tmpFuture : tmpFuturesList) {
-            tmpExceptionsCounter += tmpFuture.get();
+//            throw anException; //TODO ? GUIAlert?
+            GuiUtil.guiExceptionAlert("Error", "Error in fragmentation", "During fragmentation an exception occurred, see below", anException);
         }
         int tmpFragmentAmount = 0;
         Set<String> tmpKeySet = tmpFragmentHashtable.keySet();

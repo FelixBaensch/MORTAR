@@ -647,10 +647,18 @@ public class MainViewController {
             tmpTaskVoidTask.setOnCancelled(event -> {
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
                 this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
+                this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                this.fragmentationButton.setDisable(false);
+                this.cancelFragmentationButton.setVisible(false);
+                this.isFragmentationRunning = false;
             });
             tmpTaskVoidTask.setOnFailed(event -> {
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
                 this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
+                this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                this.fragmentationButton.setDisable(false);
+                this.cancelFragmentationButton.setVisible(false);
+                this.isFragmentationRunning = false;
             });
             Thread tmpThread = new Thread(tmpTaskVoidTask);
             tmpThread.start();
