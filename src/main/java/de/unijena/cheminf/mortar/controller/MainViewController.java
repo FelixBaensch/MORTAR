@@ -78,6 +78,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -402,44 +403,74 @@ public class MainViewController {
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
         }
+        this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
+        this.mainView.getStatusBar().getStatusLabel().setText("Loading");
         Importer tmpImporter = new Importer(this.settingsContainer);
-        IAtomContainerSet tmpAtomContainerSet = null;
-        try {
-            tmpAtomContainerSet = tmpImporter.importMoleculeFile(aParentStage);
-        } catch (Exception anException) {
-            MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
-                    Message.get("Importer.FileImportExceptionAlert.Header"),
-                    Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
-                    anException);
-            return;
-        }
-        if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
-            return;
-        }
-        this.clearGuiAndCollections();
-        this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
-        this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
-        int tmpExceptionCount = 0;
-        for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-            //returns null if no SMILES code could be created
-            String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
-            if (tmpSmiles == null) {
-                tmpExceptionCount++;
-                continue;
+        File tmpFile = tmpImporter.loadFile(aParentStage);
+        Task<IAtomContainerSet> tmpTask = new Task<>() {
+            @Override
+            protected IAtomContainerSet call() {
+                IAtomContainerSet tmpSet = tmpImporter.importMoleculeFile(tmpFile);
+                return tmpSet;
             }
-            MoleculeDataModel tmpMoleculeDataModel;
-            if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
-            } else {
-                tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
-            }
-            tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-            this.moleculeDataModelList.add(tmpMoleculeDataModel);
-        }
-        MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName()
-                + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
-        this.openMoleculesTab();
+        };
+        tmpTask.setOnSucceeded(event -> {
+            Platform.runLater(() -> {
+                IAtomContainerSet tmpAtomContainerSet = null;
+                try {
+                    tmpAtomContainerSet = tmpTask.get();
+                } catch (InterruptedException | ExecutionException anException) {
+                    MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                            Message.get("Importer.FileImportExceptionAlert.Header"),
+                            Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
+                            anException);
+                    this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+                    this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.loading"));
+                }
+                if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
+                    return;
+                }
+                this.clearGuiAndCollections();
+                this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
+                int tmpExceptionCount = 0;
+                for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
+                    //returns null if no SMILES code could be created
+                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
+                    if (tmpSmiles == null) {
+                        tmpExceptionCount++;
+                        continue;
+                    }
+                    MoleculeDataModel tmpMoleculeDataModel;
+                    if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
+                        tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
+                    } else {
+                        tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
+                    }
+                    tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                    this.moleculeDataModelList.add(tmpMoleculeDataModel);
+                }
+                MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName()
+                        + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
+
+                this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.loaded"));
+
+                this.openMoleculesTab();
+            });
+        });
+        tmpTask.setOnCancelled(event -> {
+            this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.importFailed"));
+        });
+        tmpTask.setOnFailed(event -> {
+            this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.importFailed"));
+        });
+        Thread tmpThread = new Thread(tmpTask);
+        tmpThread.setDaemon(false);
+        tmpThread.start();
     }
     //
     /**

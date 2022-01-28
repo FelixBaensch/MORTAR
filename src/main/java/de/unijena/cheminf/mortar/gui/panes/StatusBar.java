@@ -21,11 +21,6 @@
 package de.unijena.cheminf.mortar.gui.panes;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
-import de.unijena.cheminf.mortar.message.Message;
-import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
-import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -43,7 +38,6 @@ public class StatusBar extends FlowPane {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     private Label statusLabel;
     private ProgressBar progressBar;
-    private Task task;
     //</editor-fold>
     //
     /**
@@ -64,75 +58,7 @@ public class StatusBar extends FlowPane {
         this.getChildren().addAll(statusLabel, progressBar);
     }
     //
-    //<editor-fold desc="public methods" defaultstate="collapsed">
-//    public void startProgressBar(Thread aThread){
-//        //bind progress property
-//        this.progressBar.visibleProperty().setValue(true);
-//        this.progressBar.progressProperty().unbind();
-//        this.progressBar.progressProperty().bind(aThread.get));
-//        //bind message property
-//        this.statusLabel.textProperty().unbind();
-//        this.statusLabel.textProperty().bind(this.task.messageProperty());
-//    }
-
-
-
-
-    /**
-     * TODO: remove this from here and add to fragementer service class
-     * @param aTask
-     */
-    public void setTaskAndStart(Task aTask){
-        this.task = aTask;
-        //bind progress property
-        this.progressBar.visibleProperty().setValue(true);
-        this.progressBar.progressProperty().unbind();
-        this.progressBar.progressProperty().bind(this.task.progressProperty());
-        //bind message property
-        this.statusLabel.textProperty().unbind();
-        this.statusLabel.textProperty().bind(this.task.messageProperty());
-        //when task completed
-        this.task.addEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, new EventHandler() {
-            @Override
-            public void handle(Event anEvent) {
-                progressBar.progressProperty().unbind();
-                progressBar.visibleProperty().setValue(false);
-                statusLabel.textProperty().unbind();
-                statusLabel.setText(Message.get("Status.Ready"));
-            }
-        });
-        //Start task
-        new Thread(this.task).start();
-    }
-    //
-    /**
-     * Cancels task
-     */
-    public void CancelTask(){
-        this.task.cancel(true);
-        progressBar.progressProperty().unbind();
-        progressBar.visibleProperty().setValue(false);
-        statusLabel.textProperty().unbind();
-        statusLabel.setText(Message.get("Status.Canceled"));
-        try{
-            Thread.sleep(1000);
-        }
-        catch (InterruptedException anException){
-            statusLabel.setText(Message.get("Status.Ready"));
-        }
-        statusLabel.setText(Message.get("Status.Ready"));
-    }
-    //</editor-fold>
-    //
     //<editor-fold desc="properties" defaultstate="collapsed">
-    /**
-     * Returns the task
-     * @return task
-     */
-    public Task getTask(){
-        return this.task;
-    }
-    //
     /**
      * Returns statusLabel
      * @return

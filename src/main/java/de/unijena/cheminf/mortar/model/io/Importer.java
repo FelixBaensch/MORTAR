@@ -57,6 +57,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -117,42 +119,46 @@ public class Importer {
      * with implicit hydrogen atoms. If no molecule name or ID is given in the input file, the file name with an appended
      * counter is used as such and added to the returned atom containers as a property.
      *
-     * @param aParentStage Stage to show the FileChooser
+     * @param aFile
      * @return IAtomContainerSet which contains the imported molecules as AtomContainers or null if the file chooser was
      * closed by the user or a not importable file type was chosen
      * @throws CDKException if the given file cannot be parsed
      * @throws IOException if the given file cannot be found or read
      * @throws NullPointerException if the given stage is null
      */
-    public IAtomContainerSet importMoleculeFile(Stage aParentStage) throws CDKException, IOException, NullPointerException {
-        Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
+    public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException {
+        Objects.requireNonNull(aFile, "aFile is null");
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         }
-        File tmpFile = this.loadFile(aParentStage);
-        if(tmpFile == null)
-            return null;
-        String tmpFilePath = tmpFile.getPath();
+        String tmpFilePath = aFile.getPath();
         String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
-        this.fileName = tmpFile.getName();
-        IAtomContainerSet tmpImportedMoleculesSet;
-        switch (tmpFileExtension) {
-            case ".mol":
-                tmpImportedMoleculesSet = this.importMolFile(tmpFile);
-                break;
-            case ".sdf":
-                tmpImportedMoleculesSet = this.importSDFile(tmpFile);
-                break;
-            case ".pdb":
-                tmpImportedMoleculesSet = this.importPDBFile(tmpFile);
-                break;
-            case ".smi":
-            case ".txt":
-                tmpImportedMoleculesSet = this.importSMILESFile(tmpFile);
-                break;
-            default:
-                return null;
+        this.fileName = aFile.getName();
+        IAtomContainerSet tmpImportedMoleculesSet = null;
+        FutureTask<IAtomContainerSet> tmpFutureTask = new FutureTask<IAtomContainerSet>(
+                () -> {
+                    switch (tmpFileExtension) {
+                        case ".mol":
+                            return importMolFile(aFile);
+                        case ".sdf":
+                            return importSDFile(aFile);
+                        case ".pdb":
+                            return importPDBFile(aFile);
+                        case ".smi":
+                        case ".txt":
+                            return importSMILESFile(aFile);
+                        default:
+                            return null;
+                    }
+                }
+        );
+        Thread thread = new Thread(tmpFutureTask);
+        thread.start();
+        try {
+            tmpImportedMoleculesSet = tmpFutureTask.get();
+        } catch (InterruptedException | ExecutionException anException) {
+            Importer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }
         this.preprocessMoleculeSet(tmpImportedMoleculesSet);
         return tmpImportedMoleculesSet;
@@ -176,7 +182,7 @@ public class Importer {
      * @return File which should contain molecules or null if no file is imported
      * @throws NullPointerException if the given stage is null
      */
-    private File loadFile(Stage aParentStage) throws NullPointerException {
+    public File loadFile(Stage aParentStage) throws NullPointerException {
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
