@@ -339,6 +339,7 @@ public class FragmentationService {
                     if(!tmpFragmentsHash.get(tmpSmiles).getParentMolecules().contains(tmpMol)){
                         tmpFragmentsHash.get(tmpSmiles).getParentMolecules().add(tmpMol);
                     }
+                    tmpFrag.setParentMolecule(tmpMol);
                 }
             }
             tmpMolecules.clear();

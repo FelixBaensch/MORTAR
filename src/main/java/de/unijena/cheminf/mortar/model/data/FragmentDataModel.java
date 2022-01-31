@@ -231,5 +231,13 @@ public class FragmentDataModel extends MoleculeDataModel {
     public void setMoleculePercentage(double aValue){
         this.moleculePercentage = aValue;
     }
+    //
+    /**
+     *Sets the parent molecule of this fragment
+     * @param aParentMolecule parent molecule
+     */
+    public void setParentMolecule(MoleculeDataModel aParentMolecule){
+        this.parentMolecule = aParentMolecule;
+    }
     //</editor-fold>
 }
