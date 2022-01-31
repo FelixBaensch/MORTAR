@@ -405,6 +405,7 @@ public class MainViewController {
         }
         this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
         this.mainView.getStatusBar().getStatusLabel().setText("Loading");
+        this.clearGuiAndCollections();
         Importer tmpImporter = new Importer(this.settingsContainer);
         File tmpFile = tmpImporter.loadFile(aParentStage);
         Task<IAtomContainerSet> tmpTask = new Task<>() {
@@ -431,7 +432,6 @@ public class MainViewController {
                 if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
                     return;
                 }
-                this.clearGuiAndCollections();
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
                 int tmpExceptionCount = 0;
