@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -26,6 +26,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
  *   (including also the electron configuration) there
  */
 
+import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -39,7 +40,35 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Central interface for implementing wrapper classes for fragmentation algorithms.
+ * Central interface for implementing wrapper classes for fragmentation algorithms. To make a new fragmentation algorithm
+ * available in MORTAR, a class implementing this interface and the algorithm logic must be given and added in the
+ * {@link FragmentationService} class (instantiated in the constructor
+ * and added to the <i>fragmenters</i> array).
+ * <br>The algorithm logic must be implemented in the {@link IMoleculeFragmenter#fragmentMolecule(IAtomContainer)} method.
+ * <br>The methods {@link IMoleculeFragmenter#shouldBeFiltered(IAtomContainer)},
+ * {@link IMoleculeFragmenter#shouldBePreprocessed(IAtomContainer)}, and
+ * {@link IMoleculeFragmenter#canBeFragmented(IAtomContainer)} must implement tests for specific requirements of the
+ * molecules to fragment if there are any, e.g. if metal or metalloid atoms cannot be handled or counter-ions should be
+ * removed before the fragmentation. Preprocessing steps like the latter one must be implemented in
+ * {@link IMoleculeFragmenter#applyPreprocessing(IAtomContainer)}.
+ * <br>
+ * <br><b>Settings</b>:
+ * <br>All fragmentation settings that are supposed to be available in the GUI must be implemented as
+ * {@link javafx.beans.property.Property} and returned in a list by the interface method
+ * {@link IMoleculeFragmenter#settingsProperties()}. Boolean settings must be implemented as
+ * {@link javafx.beans.property.SimpleBooleanProperty}, integer settings as
+ * {@link javafx.beans.property.SimpleIntegerProperty} etc. For settings where an option must be chosen from multiple
+ * available ones, a special Property class is implemented in MORTAR, {@link SimpleEnumConstantNameProperty}. The
+ * options to choose from must be implemented as enum constants and the setting property linked to the enum. If changes
+ * to the settings done in the GUI must be tested, it is recommended to override the Property.set() method and implement
+ * the parameter test logic there. Tooltip texts for the settings must be given in a HashMap with setting (property) names
+ * as keys and tooltip text as values (see {@link IMoleculeFragmenter#getSettingNameToTooltipTextMap()}). One setting that
+ * must be available is the fragment saturation setting that is already laid out in this interface, see below.
+ * <br>
+ * <br>More details can be found in the method documentations of this interface.
+ * Examples for how to implement this interface to make a new fragmentation algorithm available, can be found in
+ * the classes {@link ErtlFunctionalGroupsFinderFragmenter}, {@link SugarRemovalUtilityFragmenter}, and
+ * {@link ScaffoldGeneratorFragmenter}.
  *
  * @author Jonas Schaub
  */
@@ -62,7 +91,7 @@ public interface IMoleculeFragmenter {
     //</editor-fold>
     //<editor-fold desc="Public static final constants">
     /**
-     * Property key/name to assign a category to a fragment, represented by an IAtomContainer, e.g. 'aglycon' or
+     * Property key/name to assign a category to a fragment, represented by an IAtomContainer, e.g. 'aglycone' or
      * 'functional group'.
      */
     public static final String FRAGMENT_CATEGORY_PROPERTY_KEY = "IMoleculeFragmenter.Category";
@@ -91,6 +120,7 @@ public interface IMoleculeFragmenter {
 
     /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
+     * The given name must be unique among the available fragmentation algorithms!
      *
      * @return algorithm name
      */
@@ -118,7 +148,7 @@ public interface IMoleculeFragmenter {
     public FragmentSaturationOption getFragmentSaturationSettingConstant();
 
     /**
-     * Set the option for saturating free valences on returned fragment molecules.
+     * Sets the option for saturating free valences on returned fragment molecules.
      *
      * @param anOptionName constant name (use name()) from FragmentSaturationOption enum
      * @throws NullPointerException if the given name is null
@@ -127,7 +157,7 @@ public interface IMoleculeFragmenter {
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException;
 
     /**
-     * Set the option for saturating free valences on returned fragment molecules.
+     * Sets the option for saturating free valences on returned fragment molecules.
      *
      * @param anOption the saturation option to use
      * @throws NullPointerException if the given option is null
@@ -151,7 +181,7 @@ public interface IMoleculeFragmenter {
      * Fragments a clone(!) of the given molecule according to the respective algorithm and returns the resulting fragments.
      *
      * @param aMolecule to fragment
-     * @return a list of fragments (might be empty, but the fragments should not be!)
+     * @return a list of fragments (the list may be empty if no fragments are extracted, but the fragments should not be!)
      * @throws NullPointerException if aMolecule is null
      * @throws IllegalArgumentException if the given molecule cannot be fragmented but should be filtered or preprocessed
      * @throws CloneNotSupportedException if cloning the given molecule fails
@@ -180,7 +210,7 @@ public interface IMoleculeFragmenter {
      * If the molecule is null, true is returned and no exception thrown.
      *
      * @param aMolecule the molecule to check
-     * @return true if the given molecule is not acceptable as input for the fragmentation algorithm, even if it is
+     * @return true if the given molecule is not acceptable as input for the fragmentation algorithm, even if it would be
      * preprocessed
      */
     public boolean shouldBeFiltered(IAtomContainer aMolecule);
