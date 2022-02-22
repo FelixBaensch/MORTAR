@@ -57,6 +57,38 @@ public final class LogUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
+
+    /**
+     * Uncaught exception handler to be used for all threads in MORTAR.
+     */
+    private static final Thread.UncaughtExceptionHandler UNCAUGHT_EXCEPTION_HANDLER = (aThread, aThrowable) -> {
+        Logger.getLogger(aThread.getClass().getName()).log(Level.SEVERE, aThrowable.toString(), aThrowable);
+        boolean tmpIsError = aThrowable instanceof Error;
+        //error means out of memory or stack overflow
+        if (tmpIsError) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.ERROR,
+                    Message.get("Error.Notification.Title"),
+                    Message.get("Error.SevereError"),
+                    aThrowable.toString());
+            System.exit(-1);
+        } else {
+            //the JavaFx GUI thread deals with such exceptions by resetting the binding to a previous value. No need to intervene here
+            if (aThrowable.getMessage().equals("Bidirectional binding failed, setting to the previous value")) {
+                return;
+            }
+            //it is an exception (runtime- or IO-), no error
+            if (aThread.getThreadGroup().getName().equals("main")) {
+                GuiUtil.guiExceptionAlert(
+                        Message.get("Error.Notification.Title"),
+                        Message.get("Error.UnexpectedError.Header"),
+                        Message.get("Error.UnexpectedError.Content"),
+                        (Exception) aThrowable);
+            } else {
+                //logging is enough in this case
+            }
+        }
+    };
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Private static class variables">
@@ -122,37 +154,8 @@ public final class LogUtil {
             LogUtil.fileHandler = new FileHandler(tmpFinalLogFilePathName, true);
             LogUtil.fileHandler.setFormatter(new SimpleFormatter());
             LogUtil.ROOT_LOGGER.addHandler(LogUtil.fileHandler);
-            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(Thread aThread, Throwable aThrowable) {
-                    Logger.getLogger(aThread.getClass().getName()).log(Level.SEVERE, aThrowable.toString(), aThrowable);
-                    boolean tmpIsError = aThrowable instanceof Error;
-                    //error means out of memory or stack overflow
-                    if (tmpIsError) {
-                        GuiUtil.guiMessageAlert(
-                                Alert.AlertType.ERROR,
-                                Message.get("Error.Notification.Title"),
-                                Message.get("Error.SevereError"),
-                                aThrowable.toString());
-                        System.exit(-1);
-                    } else {
-                        //the JavaFx GUI thread deals with such exceptions by resetting the binding to a previous value. No need to intervene here
-                        if (aThrowable.getMessage().equals("Bidirectional binding failed, setting to the previous value")) {
-                            return;
-                        }
-                        //it is an exception (runtime- or IO-), no error
-                        if (aThread.getThreadGroup().getName().equals("main")) {
-                            GuiUtil.guiExceptionAlert(
-                                    Message.get("Error.Notification.Title"),
-                                    Message.get("Error.UnexpectedError.Header"),
-                                    Message.get("Error.UnexpectedError.Content"),
-                                    (Exception) aThrowable);
-                        } else {
-                            //logging is enough in this case
-                        }
-                    }
-                }
-            });
+            //sets the uncaught exception handler configured above as default for this thread (the main/JavaFX thread)
+            Thread.setDefaultUncaughtExceptionHandler(LogUtil.UNCAUGHT_EXCEPTION_HANDLER);
             //exceptions that occurred during managing log files at start up are logged now
             if (LogUtil.storedExceptions != null && !LogUtil.storedExceptions.isEmpty()) {
                 for (Exception tmpException : LogUtil.storedExceptions) {
@@ -261,7 +264,6 @@ public final class LogUtil {
     // </editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
-    //<editor-fold desc="getLogFileDirectoryPath" defaultstate="collapsed">
     /**
      * Returns the path to directory in which log files are stored
      *
@@ -272,6 +274,15 @@ public final class LogUtil {
                 + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator;
 
     }
-    //</editor-fold>
+
+    /**
+     * Returns the specifically configured uncaught exception handler to be used in all MORTAR threads. It logs the
+     * exception, shuts down the application if it is a severe error, or displays a warning dialog to the user if not.
+     *
+     * @return configured uncaught exception handler
+     */
+    public static Thread.UncaughtExceptionHandler getUncaughtExceptionHandler() {
+        return LogUtil.UNCAUGHT_EXCEPTION_HANDLER;
+    }
     //</editor-fold>
 }

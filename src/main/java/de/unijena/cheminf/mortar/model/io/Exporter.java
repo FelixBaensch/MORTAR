@@ -41,6 +41,7 @@ import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
@@ -162,6 +163,7 @@ public class Exporter {
             };
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
+            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
             tmpThread.start();
         } catch(Exception anException){
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -204,6 +206,7 @@ public class Exporter {
             };
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
+            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
             tmpThread.start();
         } catch(Exception anException){
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -311,6 +314,7 @@ public class Exporter {
             );
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
+            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
             tmpThread.start();
         } catch(Exception anException){
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
