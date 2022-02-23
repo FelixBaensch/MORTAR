@@ -160,6 +160,15 @@ public class Exporter {
                     }
                     return null;
                 }
+
+                @Override
+                protected void done() {
+                    try {
+                        this.get();
+                    } catch (Exception e) {
+                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+                    }
+                }
             };
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
@@ -202,6 +211,15 @@ public class Exporter {
                         createItemizationTabPdfFile(tmpFinalCsvFile, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
                     }
                     return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        this.get();
+                    } catch (Exception e) {
+                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+                    }
                 }
             };
             Thread tmpThread = new Thread(tmpTask);
@@ -493,10 +511,15 @@ public class Exporter {
             } else {
                 return;
             }
-        } catch (DocumentException | FileNotFoundException anException) {
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                    anException.toString(), anException);
+        } catch (OutOfMemoryError | DocumentException | FileNotFoundException anException) {
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            if (anException instanceof OutOfMemoryError) {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+                        anException.toString(), new Exception(((OutOfMemoryError) anException).toString(), anException));
+            } else {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+                        anException.toString(), (Exception) anException);
+            }
         }
     }
     //
@@ -600,10 +623,15 @@ public class Exporter {
             } else {
                 return;
             }
-        } catch (DocumentException | FileNotFoundException anException) {
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                    anException.toString(), anException);
+        } catch (OutOfMemoryError | DocumentException | FileNotFoundException anException) {
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            if (anException instanceof OutOfMemoryError) {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+                        anException.toString(), new Exception(((OutOfMemoryError) anException).toString(), anException));
+            } else {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
+                        anException.toString(), (Exception) anException);
+            }
         }
     }
     //
