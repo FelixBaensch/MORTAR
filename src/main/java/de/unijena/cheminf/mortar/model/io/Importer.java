@@ -153,7 +153,16 @@ public class Importer {
                             return null;
                     }
                 }
-        );
+        ) {
+            @Override
+            protected void done() {
+                try {
+                    this.get();
+                } catch (Exception e) {
+                    LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+                }
+            }
+        };
         Thread thread = new Thread(tmpFutureTask);
         thread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         thread.start();

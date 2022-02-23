@@ -274,6 +274,15 @@ public class Exporter {
                     }
                     return null;
                 }
+
+                @Override
+                protected void done() {
+                    try {
+                        this.get();
+                    } catch (Exception e) {
+                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+                    }
+                }
             };
             tmpTask.setOnSucceeded(event -> {
                 List<String> tmpFailedExportFragments = tmpTask.getValue();

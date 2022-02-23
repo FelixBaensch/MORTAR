@@ -64,7 +64,6 @@ public class FragmentationTask implements Callable<Integer> {
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
-        Thread.setDefaultUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
     }
 
     /**

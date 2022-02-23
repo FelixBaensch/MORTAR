@@ -32,6 +32,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.LogUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
 import de.unijena.cheminf.mortar.preference.IPreference;
@@ -60,8 +61,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -882,7 +884,27 @@ public class FragmentationService {
             tmpToIndex++;
             tmpMoleculeModulo--;
         }
-        this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks);
+        //this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks);
+        this.executorService = new ThreadPoolExecutor(tmpNumberOfTasks, tmpNumberOfTasks, 0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>()) {
+            @Override
+            protected void afterExecute(Runnable aRunnable, Throwable aThrowable) {
+                super.afterExecute(aRunnable, aThrowable);
+                if (aThrowable == null && aRunnable instanceof Future<?>) {
+                    try {
+                        Future<?> tmpFuture = (Future<?>) aRunnable;
+                        if (tmpFuture.isDone()) {
+                            tmpFuture.get();
+                        }
+                    } catch (Exception anException) {
+                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), anException);
+                    }
+                }
+                if (aThrowable != null) {
+                    LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), aThrowable);
+                }
+            }
+        };
         List<FragmentationTask> tmpFragmentationTaskList = new LinkedList<>();
         for(int i = 1; i <= tmpNumberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
