@@ -68,9 +68,19 @@ public class MainApp extends Application {
             //</editor-fold>
             MainView tmpMainView = new MainView();
             MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
-        } catch (Exception anException){
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"), anException.getMessage(), anException);
+        } catch (Exception | OutOfMemoryError anException){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);
+            if (anException instanceof OutOfMemoryError) {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Error.ExceptionAlert.Header"),
+                        anException.getMessage(),
+                        new Exception(((OutOfMemoryError) anException).toString()));
+            } else {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Error.ExceptionAlert.Header"),
+                        anException.getMessage(),
+                        (Exception) anException);
+            }
             System.exit(-1);
         }
     }

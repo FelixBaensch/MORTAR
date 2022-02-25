@@ -58,7 +58,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -126,8 +125,9 @@ public class Importer {
      * @throws CDKException if the given file cannot be parsed
      * @throws IOException if the given file cannot be found or read
      * @throws NullPointerException if the given stage is null
+     * @throws Exception if something goes wrong
      */
-    public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException {
+    public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException, Exception {
         Objects.requireNonNull(aFile, "aFile is null");
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
@@ -137,6 +137,7 @@ public class Importer {
         String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
         this.fileName = aFile.getName();
         IAtomContainerSet tmpImportedMoleculesSet = null;
+        //TODO task unnecessary here because it gets called inside a task/thread in main view controller?
         FutureTask<IAtomContainerSet> tmpFutureTask = new FutureTask<IAtomContainerSet>(
                 () -> {
                     switch (tmpFileExtension) {
@@ -153,24 +154,12 @@ public class Importer {
                             return null;
                     }
                 }
-        ) {
-            @Override
-            protected void done() {
-                try {
-                    this.get();
-                } catch (Exception e) {
-                    LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
-                }
-            }
-        };
+        );
         Thread thread = new Thread(tmpFutureTask);
         thread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         thread.start();
-        try {
-            tmpImportedMoleculesSet = tmpFutureTask.get();
-        } catch (InterruptedException | ExecutionException anException) {
-            Importer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-        }
+        //no handling of exceptions here because this gets called inside another task/thread in the main view controller
+        tmpImportedMoleculesSet = tmpFutureTask.get();
         this.preprocessMoleculeSet(tmpImportedMoleculesSet);
         return tmpImportedMoleculesSet;
     }

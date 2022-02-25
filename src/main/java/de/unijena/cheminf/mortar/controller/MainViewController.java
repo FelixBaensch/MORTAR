@@ -41,6 +41,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -410,7 +411,7 @@ public class MainViewController {
         File tmpFile = tmpImporter.loadFile(aParentStage);
         Task<IAtomContainerSet> tmpTask = new Task<>() {
             @Override
-            protected IAtomContainerSet call() {
+            protected IAtomContainerSet call() throws Exception {
                 IAtomContainerSet tmpSet = tmpImporter.importMoleculeFile(tmpFile);
                 return tmpSet;
             }
@@ -467,8 +468,10 @@ public class MainViewController {
         tmpTask.setOnFailed(event -> {
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
             this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.importFailed"));
+            LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
         });
         Thread tmpThread = new Thread(tmpTask);
+        tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         tmpThread.setDaemon(false);
         tmpThread.start();
     }
@@ -626,7 +629,7 @@ public class MainViewController {
         this.startFragmentation(false);
     }
     /**
-     * Starts fragmentation task and opens fragment and itemiztation tabs
+     * Starts fragmentation task and opens fragment and itemization tabs
      */
     private void startFragmentation(boolean isPipelining){
         long tmpStartTime = System.nanoTime();
@@ -641,18 +644,21 @@ public class MainViewController {
             Task<Void> tmpTaskVoidTask = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
-                    isFragmentationRunning = true;
+                    MainViewController.this.isFragmentationRunning = true;
                     if(isPipelining){
-                        fragmentationService.startPipelineFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+                        MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
+                                tmpNumberOfCores);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
                     }
                     else{
-                        fragmentationService.startSingleFragmentation(tmpSelectedMolecules, tmpNumberOfCores);
+                        MainViewController.this.fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
+                                tmpNumberOfCores);
                     }
                     return null;
                 }
             };
             tmpTaskVoidTask.setOnSucceeded(event -> {
+                //TODO: runLater unnecessary?
                 Platform.runLater(()->{
                     try {
                         ObservableList<FragmentDataModel> tmpObservableFragments = FXCollections.observableArrayList();
@@ -685,13 +691,17 @@ public class MainViewController {
             });
             tmpTaskVoidTask.setOnFailed(event -> {
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
+                //TODO introduce Failed
                 this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
+                Thread tmpThread = Thread.currentThread();
+                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread, event.getSource().getException());
             });
             Thread tmpThread = new Thread(tmpTaskVoidTask);
+            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
             tmpThread.start();
         } catch(Exception anException){
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);

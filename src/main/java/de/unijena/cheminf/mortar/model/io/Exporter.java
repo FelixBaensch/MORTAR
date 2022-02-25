@@ -80,7 +80,7 @@ import java.util.logging.Logger;
 /**
  * Exporter
  *
- * @author Betül Sevindik, Samuel Behr
+ * @author Betül Sevindik, Samuel Behr, Felix Bänsch, Jonas Schaub
  */
 public class Exporter {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
@@ -128,8 +128,9 @@ public class Exporter {
     //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
     /**
-     * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file. Opens a file chooser
-     * dialog for the user to determine a directory and file for the exported data.
+     * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or
+     * on the Fragments tab as a CSV file. Opens a file chooser dialog for the user to determine a directory and file
+     * for the exported data.
      *
      * @param aParentStage stage to show the FileChooser
      * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
@@ -154,22 +155,20 @@ public class Exporter {
                 @Override
                 protected Void call() throws Exception {
                     if(aTabName.equals(TabNames.Fragments)){
+                        //can throw FileNotFoundException, gets handled in setOnFailed()
                         createFragmentationTabCsvFile(tmpFinalCsvFile, aMoleculeDataModelList, aSeparator);
                     }else if(aTabName.equals(TabNames.Itemization)){
+                        //can throw FileNotFoundException, gets handled in setOnFailed()
                         createItemizationTabCsvFile(tmpFinalCsvFile, aMoleculeDataModelList, aFragmentationName, aSeparator);
                     }
                     return null;
                 }
-
-                @Override
-                protected void done() {
-                    try {
-                        this.get();
-                    } catch (Exception e) {
-                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
-                    }
-                }
             };
+            tmpTask.setOnFailed(workerStateEvent -> {
+                Thread tmpThread = Thread.currentThread();
+                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread,
+                        workerStateEvent.getSource().getException());
+            });
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
             tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
@@ -206,22 +205,20 @@ public class Exporter {
                 @Override
                 protected Void call() throws Exception {
                     if(aTabName.equals(TabNames.Fragments)){
+                        //throws FileNotFoundException, gets handled in setOnFailed()
                         createFragmentationTabPdfFile(tmpFinalCsvFile, aFragmentDataModelList, aMoleculeDataModelList, aFragmentationName);
                     }else if(aTabName.equals(TabNames.Itemization)){
+                        //throws FileNotFoundException, gets handled in setOnFailed()
                         createItemizationTabPdfFile(tmpFinalCsvFile, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
                     }
                     return null;
                 }
-
-                @Override
-                protected void done() {
-                    try {
-                        this.get();
-                    } catch (Exception e) {
-                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
-                    }
-                }
             };
+            tmpTask.setOnFailed(workerStateEvent -> {
+                Thread tmpThread = Thread.currentThread();
+                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread,
+                        workerStateEvent.getSource().getException());
+            });
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
             tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
@@ -292,15 +289,6 @@ public class Exporter {
                     }
                     return null;
                 }
-
-                @Override
-                protected void done() {
-                    try {
-                        this.get();
-                    } catch (Exception e) {
-                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
-                    }
-                }
             };
             tmpTask.setOnSucceeded(event -> {
                 List<String> tmpFailedExportFragments = tmpTask.getValue();
@@ -324,20 +312,20 @@ public class Exporter {
                     );
                 }
             });
-            tmpTask.setOnFailed(event ->
+            tmpTask.setOnFailed(event -> {
+                Exporter.LOGGER.log(Level.WARNING, event.getSource().getException().toString(), event.getSource().getException());
                 GuiUtil.guiMessageAlert(
                         Alert.AlertType.WARNING,
                         Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                         Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                        null
-                )
-            );
+                        null);
+            });
             tmpTask.setOnCancelled(event ->
-                    GuiUtil.guiMessageAlert(
-                    Alert.AlertType.WARNING,
-                    Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
-                    Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                    null)
+                GuiUtil.guiMessageAlert(
+                        Alert.AlertType.WARNING,
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                        null)
             );
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
@@ -358,32 +346,31 @@ public class Exporter {
      * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
      * @param aFragmentationName fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aSeparator the separator for the csv file
+     * @throws FileNotFoundException
      * @author Betül Sevindik
      */
-    private void createItemizationTabCsvFile(File aCsvFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aSeparator){
-        try{
-            if (aCsvFile != null) {
-                PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
-                StringBuilder tmpCsvHeader = new StringBuilder();
-                tmpCsvHeader.append("MoleculeName" + aSeparator + "SmilesOfStructure" + aSeparator + "SmilesOfFragments and frequency\n");
-                tmpWriter.write(tmpCsvHeader.toString());
-                for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
-                    tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
-                    List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
-                    for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
-                        tmpWriter.append(aSeparator);
-                        tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
-                    }
-                    tmpWriter.append("\n");
+    private void createItemizationTabCsvFile(File aCsvFile,
+                                             List<MoleculeDataModel> aMoleculeDataModelList,
+                                             String aFragmentationName,
+                                             String aSeparator)
+                                             throws FileNotFoundException {
+        if (aCsvFile != null) {
+            PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
+            StringBuilder tmpCsvHeader = new StringBuilder();
+            tmpCsvHeader.append("MoleculeName" + aSeparator + "SmilesOfStructure" + aSeparator + "SmilesOfFragments and frequency\n");
+            tmpWriter.write(tmpCsvHeader.toString());
+            for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+                tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
+                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
+                for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
+                    tmpWriter.append(aSeparator);
+                    tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
                 }
-                tmpWriter.close();
-            } else {
-                return;
+                tmpWriter.append("\n");
             }
-        } catch (FileNotFoundException anException) {
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                    anException.toString(), anException);
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            tmpWriter.close();
+        } else {
+            return;
         }
     }
     //
@@ -394,33 +381,29 @@ public class Exporter {
      *
      * @param aList a list of FragmentDataModel instances to export
      * @param aSeparator the separator for the csv file
+     * @throws FileNotFoundException
      * @author Betül Sevindik
      */
-    private void createFragmentationTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, String aSeparator) {
-        try {
-            if (aCsvFile != null) {
-                PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
-                StringBuilder tmpFragmentationCsvHeader = new StringBuilder();
-                tmpFragmentationCsvHeader.append("SmilesString" + aSeparator + "Frequency" + aSeparator + "Percentage"
-                        + aSeparator + "MolecularFrequency"
-                        + aSeparator + "MolecularPercentage\n");
-                tmpWriter.write(tmpFragmentationCsvHeader.toString());
-                for (MoleculeDataModel tmpDataModel : aList) {
-                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel)tmpDataModel;
-                    tmpWriter.printf("%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f\n",
-                            tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
-                            tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
-                            tmpFragmentDataModel.getMoleculePercentage());
-                }
-                tmpWriter.close();
-
-            } else {
-                return;
+    private void createFragmentationTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, String aSeparator)
+            throws FileNotFoundException{
+        if (aCsvFile != null) {
+            PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
+            StringBuilder tmpFragmentationCsvHeader = new StringBuilder();
+            tmpFragmentationCsvHeader.append("SmilesString" + aSeparator + "Frequency" + aSeparator + "Percentage"
+                    + aSeparator + "MolecularFrequency"
+                    + aSeparator + "MolecularPercentage\n");
+            tmpWriter.write(tmpFragmentationCsvHeader.toString());
+            for (MoleculeDataModel tmpDataModel : aList) {
+                FragmentDataModel tmpFragmentDataModel = (FragmentDataModel)tmpDataModel;
+                tmpWriter.printf("%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f\n",
+                        tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
+                        tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
+                        tmpFragmentDataModel.getMoleculePercentage());
             }
-        } catch (FileNotFoundException | NullPointerException anException) {
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                    anException.toString(), anException);
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            tmpWriter.close();
+
+        } else {
+            return;
         }
     }
     //
@@ -434,92 +417,86 @@ public class Exporter {
      * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName fragmentation name to be displayed in the header of the PDF file
      * @return PDF file which contains the results of the fragmentation
+     * @throws FileNotFoundException
+     * @throws DocumentException
      * @author Betül Sevindik
      */
-    private void createFragmentationTabPdfFile(File aPdfFile, List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName){
-        try{
-            if (aPdfFile != null) {
-                Document tmpDocument = new Document(PageSize.A4);
-                tmpDocument.setPageSize(tmpDocument.getPageSize().rotate());
-                PdfWriter.getInstance(tmpDocument, new FileOutputStream(aPdfFile.getPath()));
-                tmpDocument.open();
-                float tmpCellLength[] = {70f, 120f, 50f, 50f, 55f, 55f}; // relative sizes
-                PdfPTable tmpFragmentationTable = new PdfPTable(tmpCellLength);
-                PdfPCell tmpSmilesStringCell = new PdfPCell(new Paragraph("Smiles String ", fontFactory));
-                PdfPCell tmpFrequencyCell = new PdfPCell(new Paragraph("Frequency", this.fontFactory));
-                PdfPCell tmpPercentageCell = new PdfPCell(new Paragraph("Percentage", this.fontFactory));
-                PdfPCell tmpMolFrequencyCell = new PdfPCell(new Paragraph("Molecule-frequency", this.fontFactory));
-                PdfPCell tmpMolPercentageCell = new PdfPCell(new Paragraph(" Molecule-percentage", this.fontFactory));
-                PdfPCell tmpFragmentCell = new PdfPCell(new Paragraph("Fragment", this.fontFactory));
-                Chunk tmpHeader = new Chunk("Export of the fragmentation tab",
-                        FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
+    private void createFragmentationTabPdfFile(File aPdfFile,
+                                               List<MoleculeDataModel> aFragmentDataModelList,
+                                               ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+                                               String aFragmentationName) throws FileNotFoundException, DocumentException {
+        if (aPdfFile != null) {
+            Document tmpDocument = new Document(PageSize.A4);
+            tmpDocument.setPageSize(tmpDocument.getPageSize().rotate());
+            PdfWriter.getInstance(tmpDocument, new FileOutputStream(aPdfFile.getPath()));
+            tmpDocument.open();
+            float tmpCellLength[] = {70f, 120f, 50f, 50f, 55f, 55f}; // relative sizes
+            PdfPTable tmpFragmentationTable = new PdfPTable(tmpCellLength);
+            PdfPCell tmpSmilesStringCell = new PdfPCell(new Paragraph("Smiles String ", fontFactory));
+            PdfPCell tmpFrequencyCell = new PdfPCell(new Paragraph("Frequency", this.fontFactory));
+            PdfPCell tmpPercentageCell = new PdfPCell(new Paragraph("Percentage", this.fontFactory));
+            PdfPCell tmpMolFrequencyCell = new PdfPCell(new Paragraph("Molecule-frequency", this.fontFactory));
+            PdfPCell tmpMolPercentageCell = new PdfPCell(new Paragraph(" Molecule-percentage", this.fontFactory));
+            PdfPCell tmpFragmentCell = new PdfPCell(new Paragraph("Fragment", this.fontFactory));
+            Chunk tmpHeader = new Chunk("Export of the fragmentation tab",
+                    FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
 
-                Paragraph tmpSpace = new Paragraph(" ");
-                tmpFragmentationTable.addCell(tmpFragmentCell);
-                tmpFragmentationTable.addCell(tmpSmilesStringCell);
-                tmpFragmentationTable.addCell(tmpFrequencyCell);
-                tmpFragmentationTable.addCell(tmpPercentageCell);
-                tmpFragmentationTable.addCell(tmpMolFrequencyCell);
-                tmpFragmentationTable.addCell(tmpMolPercentageCell);
-                for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
-                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
-                    int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
-                    String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
-                    double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
-                    int tmpMoleculeFrequency = tmpFragmentDataModel.getMoleculeFrequency();
-                    String tmpStringMoleculeFrequency = String.format("%d", tmpMoleculeFrequency);
-                    String tmpStringAbsolutePercentage = String.format("%.3f", tmpAbsolutePercentage);
-                    double tmpMoleculePercentage = tmpFragmentDataModel.getMoleculePercentage();
-                    String tmpStringMoleculePercentage = String.format("%.2f", tmpMoleculePercentage);
-                    //creates an image of the fragment
-                    PdfPCell tmpImageFragmentCell = new PdfPCell();
-                    tmpImageFragmentCell.setFixedHeight(85f);
-                    IAtomContainer tmpStructureOfFragment;
-                    try{
-                        tmpStructureOfFragment = tmpFragmentDataModel.getAtomContainer();
-                    } catch(CDKException anException){
-                        Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDataModel.getName(), anException);
-                        continue;
-                    }
-                    javafx.scene.image.Image tmpImageStructureOfFragment = DepictionUtil.depictImageWithZoom(tmpStructureOfFragment,
-                            4.0);
-                    BufferedImage tmpBufferedImageFragment = SwingFXUtils.fromFXImage(tmpImageStructureOfFragment, null);
-                    Image tmpImageFragment = this.getITextImage(tmpBufferedImageFragment);
-                    //inserts the data into the table
-                    PdfPCell tmpCellOfFrequency = new PdfPCell(new Paragraph(tmpStringAbsoluteFrequency));
-                    tmpCellOfFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                    PdfPCell tmpCellOfPercentage = new PdfPCell(new Paragraph(tmpStringAbsolutePercentage));
-                    tmpCellOfPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                    PdfPCell tmpCellOfMolFrequency = new PdfPCell(new Paragraph(tmpStringMoleculeFrequency));
-                    tmpCellOfMolFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                    PdfPCell tmpCellOfMolPercentage = new PdfPCell(new Paragraph(tmpStringMoleculePercentage));
-                    tmpCellOfMolPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                    tmpImageFragmentCell.addElement(tmpImageFragment);
-                    tmpFragmentationTable.addCell(tmpImageFragmentCell);
-                    tmpFragmentationTable.addCell(tmpFragmentDataModel.getUniqueSmiles());
-                    tmpFragmentationTable.addCell(tmpCellOfFrequency);
-                    tmpFragmentationTable.addCell(tmpCellOfPercentage);
-                    tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
-                    tmpFragmentationTable.addCell(tmpCellOfMolPercentage);
+            Paragraph tmpSpace = new Paragraph(" ");
+            tmpFragmentationTable.addCell(tmpFragmentCell);
+            tmpFragmentationTable.addCell(tmpSmilesStringCell);
+            tmpFragmentationTable.addCell(tmpFrequencyCell);
+            tmpFragmentationTable.addCell(tmpPercentageCell);
+            tmpFragmentationTable.addCell(tmpMolFrequencyCell);
+            tmpFragmentationTable.addCell(tmpMolPercentageCell);
+            for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
+                FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
+                int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
+                String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
+                double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
+                int tmpMoleculeFrequency = tmpFragmentDataModel.getMoleculeFrequency();
+                String tmpStringMoleculeFrequency = String.format("%d", tmpMoleculeFrequency);
+                String tmpStringAbsolutePercentage = String.format("%.3f", tmpAbsolutePercentage);
+                double tmpMoleculePercentage = tmpFragmentDataModel.getMoleculePercentage();
+                String tmpStringMoleculePercentage = String.format("%.2f", tmpMoleculePercentage);
+                //creates an image of the fragment
+                PdfPCell tmpImageFragmentCell = new PdfPCell();
+                tmpImageFragmentCell.setFixedHeight(85f);
+                IAtomContainer tmpStructureOfFragment;
+                try{
+                    tmpStructureOfFragment = tmpFragmentDataModel.getAtomContainer();
+                } catch(CDKException anException){
+                    Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDataModel.getName(), anException);
+                    continue;
                 }
-                tmpDocument.add(tmpHeader);
-                tmpDocument.add(tmpSpace);
-                tmpDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelList.size(), aFragmentationName));
-                tmpDocument.add(tmpSpace);
-                tmpDocument.add(tmpFragmentationTable);
-                tmpDocument.close();
-            } else {
-                return;
+                javafx.scene.image.Image tmpImageStructureOfFragment = DepictionUtil.depictImageWithZoom(tmpStructureOfFragment,
+                        4.0);
+                BufferedImage tmpBufferedImageFragment = SwingFXUtils.fromFXImage(tmpImageStructureOfFragment, null);
+                Image tmpImageFragment = this.getITextImage(tmpBufferedImageFragment);
+                //inserts the data into the table
+                PdfPCell tmpCellOfFrequency = new PdfPCell(new Paragraph(tmpStringAbsoluteFrequency));
+                tmpCellOfFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfPercentage = new PdfPCell(new Paragraph(tmpStringAbsolutePercentage));
+                tmpCellOfPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfMolFrequency = new PdfPCell(new Paragraph(tmpStringMoleculeFrequency));
+                tmpCellOfMolFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfMolPercentage = new PdfPCell(new Paragraph(tmpStringMoleculePercentage));
+                tmpCellOfMolPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                tmpImageFragmentCell.addElement(tmpImageFragment);
+                tmpFragmentationTable.addCell(tmpImageFragmentCell);
+                tmpFragmentationTable.addCell(tmpFragmentDataModel.getUniqueSmiles());
+                tmpFragmentationTable.addCell(tmpCellOfFrequency);
+                tmpFragmentationTable.addCell(tmpCellOfPercentage);
+                tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
+                tmpFragmentationTable.addCell(tmpCellOfMolPercentage);
             }
-        } catch (OutOfMemoryError | DocumentException | FileNotFoundException anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            if (anException instanceof OutOfMemoryError) {
-                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                        anException.toString(), new Exception(((OutOfMemoryError) anException).toString(), anException));
-            } else {
-                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                        anException.toString(), (Exception) anException);
-            }
+            tmpDocument.add(tmpHeader);
+            tmpDocument.add(tmpSpace);
+            tmpDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelList.size(), aFragmentationName));
+            tmpDocument.add(tmpSpace);
+            tmpDocument.add(tmpFragmentationTable);
+            tmpDocument.close();
+        } else {
+            return;
         }
     }
     //
@@ -533,105 +510,99 @@ public class Exporter {
      * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @return PDF file with the data that appears on the itemization tab
+     * @throws FileNotFoundException
+     * @throws DocumentException
      * @author Betül Sevindik
      */
-    private void createItemizationTabPdfFile(File aPdfFile, int aFragmentDataModelListSize, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName){
-        try{
-            if (aPdfFile != null) {
-                Document tmpDocument = new Document(PageSize.A4);
-                PdfWriter.getInstance(tmpDocument, new FileOutputStream(aPdfFile.getPath()));
-                tmpDocument.open();
-                // creates the pdf table
-                Chunk tmpItemizationTabHeader = new Chunk("Export of the Itemization tab",
-                        FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
-                Paragraph tmpSpace = new Paragraph(" ");
-                tmpDocument.add(tmpItemizationTabHeader);
-                tmpDocument.add(tmpSpace);
-                tmpDocument.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName));
-                tmpDocument.add(tmpSpace);
-                for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
-                    PdfPTable tmpTable = new PdfPTable(2);
-                    PdfPTable tmpFragmentTable = new PdfPTable(1);
-                    tmpTable.setWidths(new int[]{40, 80});
-                    PdfPCell tmpNameCell = new PdfPCell(new Paragraph("Name", this.fontFactory));
-                    tmpNameCell.setFixedHeight(55f);
-                    PdfPCell tmpStructureCell = new PdfPCell(new Paragraph("Structure", this.fontFactory));
-                    tmpStructureCell.setFixedHeight(120f);
-                    tmpTable.addCell(tmpNameCell);
-                    String tmpName = tmpMoleculeDataModel.getName();
-                    tmpTable.addCell(tmpName);
-                    tmpTable.addCell(tmpStructureCell);
-                    // Image of molecule
-                    IAtomContainer tmpMoleculeStructure;
-                    try{
-                        tmpMoleculeStructure = tmpMoleculeDataModel.getAtomContainer();
-                    } catch(CDKException anException){
-                        Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMoleculeDataModel.getName(), anException);
-                        continue;
-                    }
-                    PdfPCell tmpMoleculeStructureCell = new PdfPCell();
-                    tmpMoleculeStructureCell.setFixedHeight(120f);
-                    javafx.scene.image.Image tmpMoleculeImage = DepictionUtil.depictImageWithZoom(tmpMoleculeStructure,
-                            3.0);
-                    BufferedImage tmpBufferedImageOfMolecule = SwingFXUtils.fromFXImage(tmpMoleculeImage, null);
-                    Image tmpMolecule = this.getITextImage(tmpBufferedImageOfMolecule);
-                    tmpMoleculeStructureCell.addElement(tmpMolecule);
-                    tmpTable.addCell(tmpMoleculeStructureCell);
-                    PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph("Fragments", this.fontFactory));
-                    tmpCellOfFragment.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    tmpFragmentTable.addCell(tmpCellOfFragment);
-                    tmpDocument.add(tmpTable);
-                    tmpDocument.add(tmpFragmentTable);
-                    List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
-                    PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
-                    for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
-                        ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>();
-                        int tmpImagesNumbers = 0;
-                        for (; tmpImagesNumbers < 3; tmpImagesNumbers++) {
-                            if (tmpFragmentNumber >= tmpFragmentList.size()) {
-                                break;
-                            }
-                            FragmentDataModel tmpFragmentDatModel = tmpFragmentList.get(tmpFragmentNumber);
-                            IAtomContainer tmpFragmentStructure;
-                            try{
-                                tmpFragmentStructure = tmpFragmentDatModel.getAtomContainer();
-                            } catch(CDKException anException){
-                                Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDatModel.getName(), anException);
-                                continue;
-                            }
-                            String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
-                            javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithText(tmpFragmentStructure, 3.0, DepictionUtil.IMAGE_WIDTH_DEFAULT, DepictionUtil.IMAGE_HEIGHT_DEFAULT, tmpFrequency);
-                            BufferedImage tmpBufferedImageOfFragment = SwingFXUtils.fromFXImage(tmpFragmentImage, null);
-                            Image tmpFragment = this.getITextImage(tmpBufferedImageOfFragment);
-                            PdfPCell cell = new PdfPCell();
-                            cell.addElement(tmpFragment);
-                            tmpCell.add(cell);
-                            tmpFragmentNumber++;
-                        }
-                        for (int tmpCellIterator = 0; tmpCellIterator < 3; tmpCellIterator++) {
-                            if (tmpCellIterator < tmpImagesNumbers) {
-                                tmpFragmentationTable2.addCell(tmpCell.get(tmpCellIterator));
-                            } else {
-                                tmpFragmentationTable2.addCell(new Paragraph(""));
-                            }
-                        }
-                    }
-                    tmpDocument.add(tmpFragmentationTable2);
-                    tmpDocument.newPage();
+    private void createItemizationTabPdfFile(File aPdfFile,
+                                             int aFragmentDataModelListSize,
+                                             ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+                                             String aFragmentationName) throws FileNotFoundException, DocumentException {
+        if (aPdfFile != null) {
+            Document tmpDocument = new Document(PageSize.A4);
+            PdfWriter.getInstance(tmpDocument, new FileOutputStream(aPdfFile.getPath()));
+            tmpDocument.open();
+            // creates the pdf table
+            Chunk tmpItemizationTabHeader = new Chunk("Export of the Itemization tab",
+                    FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
+            Paragraph tmpSpace = new Paragraph(" ");
+            tmpDocument.add(tmpItemizationTabHeader);
+            tmpDocument.add(tmpSpace);
+            tmpDocument.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName));
+            tmpDocument.add(tmpSpace);
+            for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+                PdfPTable tmpTable = new PdfPTable(2);
+                PdfPTable tmpFragmentTable = new PdfPTable(1);
+                tmpTable.setWidths(new int[]{40, 80});
+                PdfPCell tmpNameCell = new PdfPCell(new Paragraph("Name", this.fontFactory));
+                tmpNameCell.setFixedHeight(55f);
+                PdfPCell tmpStructureCell = new PdfPCell(new Paragraph("Structure", this.fontFactory));
+                tmpStructureCell.setFixedHeight(120f);
+                tmpTable.addCell(tmpNameCell);
+                String tmpName = tmpMoleculeDataModel.getName();
+                tmpTable.addCell(tmpName);
+                tmpTable.addCell(tmpStructureCell);
+                // Image of molecule
+                IAtomContainer tmpMoleculeStructure;
+                try{
+                    tmpMoleculeStructure = tmpMoleculeDataModel.getAtomContainer();
+                } catch(CDKException anException){
+                    Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMoleculeDataModel.getName(), anException);
+                    continue;
                 }
-                tmpDocument.close();
-            } else {
-                return;
+                PdfPCell tmpMoleculeStructureCell = new PdfPCell();
+                tmpMoleculeStructureCell.setFixedHeight(120f);
+                javafx.scene.image.Image tmpMoleculeImage = DepictionUtil.depictImageWithZoom(tmpMoleculeStructure,
+                        3.0);
+                BufferedImage tmpBufferedImageOfMolecule = SwingFXUtils.fromFXImage(tmpMoleculeImage, null);
+                Image tmpMolecule = this.getITextImage(tmpBufferedImageOfMolecule);
+                tmpMoleculeStructureCell.addElement(tmpMolecule);
+                tmpTable.addCell(tmpMoleculeStructureCell);
+                PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph("Fragments", this.fontFactory));
+                tmpCellOfFragment.setHorizontalAlignment(Element.ALIGN_CENTER);
+                tmpFragmentTable.addCell(tmpCellOfFragment);
+                tmpDocument.add(tmpTable);
+                tmpDocument.add(tmpFragmentTable);
+                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
+                PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
+                for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
+                    ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>();
+                    int tmpImagesNumbers = 0;
+                    for (; tmpImagesNumbers < 3; tmpImagesNumbers++) {
+                        if (tmpFragmentNumber >= tmpFragmentList.size()) {
+                            break;
+                        }
+                        FragmentDataModel tmpFragmentDatModel = tmpFragmentList.get(tmpFragmentNumber);
+                        IAtomContainer tmpFragmentStructure;
+                        try{
+                            tmpFragmentStructure = tmpFragmentDatModel.getAtomContainer();
+                        } catch(CDKException anException){
+                            Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDatModel.getName(), anException);
+                            continue;
+                        }
+                        String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
+                        javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithText(tmpFragmentStructure, 3.0, DepictionUtil.IMAGE_WIDTH_DEFAULT, DepictionUtil.IMAGE_HEIGHT_DEFAULT, tmpFrequency);
+                        BufferedImage tmpBufferedImageOfFragment = SwingFXUtils.fromFXImage(tmpFragmentImage, null);
+                        Image tmpFragment = this.getITextImage(tmpBufferedImageOfFragment);
+                        PdfPCell cell = new PdfPCell();
+                        cell.addElement(tmpFragment);
+                        tmpCell.add(cell);
+                        tmpFragmentNumber++;
+                    }
+                    for (int tmpCellIterator = 0; tmpCellIterator < 3; tmpCellIterator++) {
+                        if (tmpCellIterator < tmpImagesNumbers) {
+                            tmpFragmentationTable2.addCell(tmpCell.get(tmpCellIterator));
+                        } else {
+                            tmpFragmentationTable2.addCell(new Paragraph(""));
+                        }
+                    }
+                }
+                tmpDocument.add(tmpFragmentationTable2);
+                tmpDocument.newPage();
             }
-        } catch (OutOfMemoryError | DocumentException | FileNotFoundException anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            if (anException instanceof OutOfMemoryError) {
-                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                        anException.toString(), new Exception(((OutOfMemoryError) anException).toString(), anException));
-            } else {
-                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),Message.get("Error.ExceptionAlert.Header"),
-                        anException.toString(), (Exception) anException);
-            }
+            tmpDocument.close();
+        } else {
+            return;
         }
     }
     //
@@ -652,11 +623,13 @@ public class Exporter {
      * @param generate2DCoordinates boolean value whether to generate 2D coordinates
      * @author Samuel Behr
      */
-    private List<String> createFragmentationTabSingleSDFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, boolean generate2DCoordinates){
+    private List<String> createFragmentationTabSingleSDFile(File aFile,
+                                                            List<MoleculeDataModel> aFragmentDataModelList,
+                                                            boolean generate2DCoordinates){
         if (aFragmentDataModelList == null) {
             return null;
         }
-        try{
+        try {
             if (aFile != null) {
                 List<String> tmpFailedExportFragments = new ArrayList<>(aFragmentDataModelList.size());
                 int tmpExportedFragmentsCounter = 0;
@@ -742,7 +715,9 @@ public class Exporter {
      * @param generate2DCoordinates boolean value whether to generate 2D coordinates
      * @author Samuel Behr
      */
-    private List<String> createFragmentationTabSeparateSDFiles(File aDirectory, List<MoleculeDataModel> aFragmentDataModelList, boolean generate2DCoordinates) {
+    private List<String> createFragmentationTabSeparateSDFiles(File aDirectory,
+                                                               List<MoleculeDataModel> aFragmentDataModelList,
+                                                               boolean generate2DCoordinates) {
         if (aFragmentDataModelList == null) {
             return null;
         }
@@ -837,7 +812,9 @@ public class Exporter {
      *
      * @author Samuel Behr
      */
-    private List<String> createFragmentationTabPDBFiles(File aDirectory, List<MoleculeDataModel> aFragmentDataModelList, boolean generate2DCoordinates) {
+    private List<String> createFragmentationTabPDBFiles(File aDirectory,
+                                                        List<MoleculeDataModel> aFragmentDataModelList,
+                                                        boolean generate2DCoordinates) {
         if (aFragmentDataModelList == null) {
             return null;
         }

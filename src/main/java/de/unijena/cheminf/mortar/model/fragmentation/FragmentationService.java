@@ -32,7 +32,6 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.LogUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
 import de.unijena.cheminf.mortar.preference.IPreference;
@@ -61,9 +60,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -269,7 +267,7 @@ public class FragmentationService {
      * @param aNumberOfTasks int
      * @throws Exception
      */
-    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks){
+    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
         //<editor-fold desc="checks" defualtstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
         Objects.requireNonNull(this.pipelineFragmenter, "pipelineFragmenter must not be null");
@@ -862,13 +860,18 @@ public class FragmentationService {
     }
 
     /**
-     * Manages the fragmentation, creates {@link FragmentationTask} equal to the amount of {@param aNumberOfTasks}, assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation
+     * Manages the fragmentation, creates {@link FragmentationTask} equal to the amount of {@param aNumberOfTasks},
+     * assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation
      *
      * @param aListOfMolecules
      * @param aNumberOfTasks
      * @throws Exception
      */
-    private Hashtable<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, IMoleculeFragmenter aFragmenter, String aFragmentationName) {
+    private Hashtable<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules,
+                                                                    int aNumberOfTasks,
+                                                                    IMoleculeFragmenter aFragmenter,
+                                                                    String aFragmentationName)
+            throws Exception {
         int tmpNumberOfTasks = aNumberOfTasks;
         String tmpFragmentationName = aFragmentationName;
         Hashtable<String, FragmentDataModel> tmpFragmentHashtable = new Hashtable<>(aListOfMolecules.size() * 2);
@@ -884,27 +887,7 @@ public class FragmentationService {
             tmpToIndex++;
             tmpMoleculeModulo--;
         }
-        //this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks);
-        this.executorService = new ThreadPoolExecutor(tmpNumberOfTasks, tmpNumberOfTasks, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>()) {
-            @Override
-            protected void afterExecute(Runnable aRunnable, Throwable aThrowable) {
-                super.afterExecute(aRunnable, aThrowable);
-                if (aThrowable == null && aRunnable instanceof Future<?>) {
-                    try {
-                        Future<?> tmpFuture = (Future<?>) aRunnable;
-                        if (tmpFuture.isDone()) {
-                            tmpFuture.get();
-                        }
-                    } catch (Exception anException) {
-                        LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), anException);
-                    }
-                }
-                if (aThrowable != null) {
-                    LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), aThrowable);
-                }
-            }
-        };
+        this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks);
         List<FragmentationTask> tmpFragmentationTaskList = new LinkedList<>();
         for(int i = 1; i <= tmpNumberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
@@ -926,15 +909,10 @@ public class FragmentationService {
                 + "\" starting. Current memory consumption: " + tmpMemoryConsumption + " MB");
         long tmpStartTime = System.currentTimeMillis();
         int tmpExceptionsCounter = 0;
-        try {
-            tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
-            for (Future<Integer> tmpFuture : tmpFuturesList) {
-                tmpExceptionsCounter += tmpFuture.get();
-            }
-        }catch (Exception anException){
-            FragmentationService.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-//            throw anException; //TODO ? GUIAlert?
-            GuiUtil.guiExceptionAlert("Error", "Error in fragmentation", "During fragmentation an exception occurred, see below", anException);
+        tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
+        for (Future<Integer> tmpFuture : tmpFuturesList) {
+            //exceptions do not get handled here because this is called inside another thread
+            tmpExceptionsCounter += tmpFuture.get();
         }
         int tmpFragmentAmount = 0;
         Set<String> tmpKeySet = tmpFragmentHashtable.keySet();

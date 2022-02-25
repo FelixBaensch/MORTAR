@@ -22,7 +22,6 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
-import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
 import java.io.File;
@@ -60,21 +59,24 @@ public final class LogUtil {
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
 
     /**
-     * Uncaught exception handler to be used for all threads in MORTAR.
+     * Uncaught exception handler to be used in MORTAR. IMPORTANT: Threads running parallel to the JavaFX GUI thread
+     * must be assigned this uncaught exception handler manually. BUT this handler tries to display an exception
+     * alert dialog to the user and it cannot do this outside the JavaFX main GUI thread. Therefore, methods like
+     * setOnFailed() in the Task class that are called in the main thread again must call the uncaught exception handler.
+     * The GUI thread is assigned this handler in initializeLoggingEnvironment().
      */
     private static final Thread.UncaughtExceptionHandler UNCAUGHT_EXCEPTION_HANDLER = (aThread, aThrowable) -> {
         Logger.getLogger(aThread.getClass().getName()).log(Level.SEVERE, aThrowable.toString(), aThrowable);
         boolean tmpIsError = aThrowable instanceof Error;
         //error means out of memory or stack overflow
+        //note: might be obsolete because error gets wrapped in an exception where it occurs, e.g. an ExecutionException for tasks
         if (tmpIsError) {
-            Platform.runLater(() -> {
                 GuiUtil.guiMessageAlert(
                         Alert.AlertType.ERROR,
                         Message.get("Error.Notification.Title"),
                         Message.get("Error.SevereError"),
                         aThrowable.toString());
                 System.exit(-1);
-            });
         } else {
             //the JavaFx GUI thread deals with such exceptions by resetting the binding to a previous value. No need to intervene here
             if (aThrowable.getMessage().equals("Bidirectional binding failed, setting to the previous value")) {
@@ -82,13 +84,11 @@ public final class LogUtil {
             }
             //it is an exception (runtime- or IO-), no error
             if (aThread.getThreadGroup().getName().equals("main")) {
-                Platform.runLater(() -> {
                     GuiUtil.guiExceptionAlert(
                             Message.get("Error.Notification.Title"),
                             Message.get("Error.UnexpectedError.Header"),
                             Message.get("Error.UnexpectedError.Content"),
                             (Exception) aThrowable);
-                });
             } else {
                 //logging is enough in this case
             }
@@ -117,7 +117,7 @@ public final class LogUtil {
     /**
      * Configures the root logger called by all other loggers in the application not to print to console but to write
      * all logs to the log file specified in preferences. Also logs session start and sets as
-     * default uncaught exception handler for all threads an object calling the root logger upon invocation. This method
+     * default uncaught exception handler for the main JavaFX GUI thread an object calling the root logger upon invocation. This method
      * should be invoked once upon starting the application. Then logging can be done by the individual class loggers
      * that will pass their logging messages to the root logger as default.
      * <p>
@@ -283,6 +283,11 @@ public final class LogUtil {
     /**
      * Returns the specifically configured uncaught exception handler to be used in all MORTAR threads. It logs the
      * exception, shuts down the application if it is a severe error, and displays a warning dialog to the user.
+     * IMPORTANT: Threads running parallel to the JavaFX GUI thread
+     * must be assigned this uncaught exception handler manually. BUT this handler tries to display an exception
+     * alert dialog to the user and it cannot do this outside the JavaFX main GUI thread. Therefore, methods like
+     * setOnFailed() in the Task class that are called in the main thread again must call the uncaught exception handler.
+     * The GUI thread is assigned this handler in initializeLoggingEnvironment().
      *
      * @return configured uncaught exception handler
      */
