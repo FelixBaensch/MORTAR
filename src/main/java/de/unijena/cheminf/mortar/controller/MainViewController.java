@@ -107,6 +107,7 @@ public class MainViewController {
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
     private boolean isFragmentationRunning;
     private Label fragmenterNameLabel;
+    private Task parallelFragmentationMainTask;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -401,14 +402,17 @@ public class MainViewController {
                 return;
             }
         }
+        Importer tmpImporter = new Importer(this.settingsContainer);
+        File tmpFile = tmpImporter.loadFile(aParentStage);
+        if (Objects.isNull(tmpFile)) {
+            return;
+        }
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
         }
         this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
         this.mainView.getStatusBar().getStatusLabel().setText("Loading");
         this.clearGuiAndCollections();
-        Importer tmpImporter = new Importer(this.settingsContainer);
-        File tmpFile = tmpImporter.loadFile(aParentStage);
         Task<IAtomContainerSet> tmpTask = new Task<>() {
             @Override
             protected IAtomContainerSet call() throws Exception {
@@ -621,6 +625,7 @@ public class MainViewController {
     //
     private void interruptFragmentation(){
         this.fragmentationService.abortExecutor();
+        this.parallelFragmentationMainTask.cancel(true);
         this.cancelFragmentationButton.setVisible(false);
         this.fragmentationButton.setDisable(false);
     }
@@ -641,7 +646,7 @@ public class MainViewController {
             this.fragmentationButton.setDisable(true);
             this.cancelFragmentationButton.setVisible(true);
             this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Running"));
-            Task<Void> tmpTaskVoidTask = new Task<Void>() {
+            this.parallelFragmentationMainTask = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
                     MainViewController.this.isFragmentationRunning = true;
@@ -657,7 +662,7 @@ public class MainViewController {
                     return null;
                 }
             };
-            tmpTaskVoidTask.setOnSucceeded(event -> {
+            this.parallelFragmentationMainTask.setOnSucceeded(event -> {
                 //TODO: runLater unnecessary?
                 Platform.runLater(()->{
                     try {
@@ -681,7 +686,7 @@ public class MainViewController {
                     }
                 });
             });
-            tmpTaskVoidTask.setOnCancelled(event -> {
+            this.parallelFragmentationMainTask.setOnCancelled(event -> {
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
                 this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
@@ -689,18 +694,18 @@ public class MainViewController {
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
             });
-            tmpTaskVoidTask.setOnFailed(event -> {
+            this.parallelFragmentationMainTask.setOnFailed(event -> {
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-                //TODO introduce Failed
+                //TODO introduce Failed status
                 this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
                 Thread tmpThread = Thread.currentThread();
-                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread, event.getSource().getException());
+                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread, new Exception(event.getSource().toString()));
             });
-            Thread tmpThread = new Thread(tmpTaskVoidTask);
+            Thread tmpThread = new Thread(this.parallelFragmentationMainTask);
             tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
             tmpThread.start();
         } catch(Exception anException){

@@ -124,7 +124,7 @@ public class Importer {
      * closed by the user or a not importable file type was chosen
      * @throws CDKException if the given file cannot be parsed
      * @throws IOException if the given file cannot be found or read
-     * @throws NullPointerException if the given stage is null
+     * @throws NullPointerException if the given file is null
      * @throws Exception if something goes wrong
      */
     public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException, Exception {
