@@ -413,6 +413,7 @@ public class MainViewController {
         this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
         this.mainView.getStatusBar().getStatusLabel().setText("Loading");
         this.clearGuiAndCollections();
+        //yes, the method itself starts another task internally. This was necessary, don't ask us why
         Task<IAtomContainerSet> tmpTask = new Task<>() {
             @Override
             protected IAtomContainerSet call() throws Exception {
@@ -421,6 +422,8 @@ public class MainViewController {
             }
         };
         tmpTask.setOnSucceeded(event -> {
+            //note: setOnSucceeded() takes place in the JavaFX GUI thread again but still runLater() is necessary to wait
+            // for the thread to be free for the update
             Platform.runLater(() -> {
                 IAtomContainerSet tmpAtomContainerSet = null;
                 try {
@@ -467,7 +470,7 @@ public class MainViewController {
         });
         tmpTask.setOnCancelled(event -> {
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.importFailed"));
+            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
         });
         tmpTask.setOnFailed(event -> {
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
@@ -477,6 +480,7 @@ public class MainViewController {
         Thread tmpThread = new Thread(tmpTask);
         tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         tmpThread.setDaemon(false);
+        tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
         tmpThread.start();
     }
     //
@@ -623,8 +627,12 @@ public class MainViewController {
 
     }
     //
+
+    /**
+     * Gets called by the cancel fragmentation button
+     */
     private void interruptFragmentation(){
-        this.fragmentationService.abortExecutor();
+        //cancel() of the task was overridden to shut down the executor service in FragmentationService
         this.parallelFragmentationMainTask.cancel(true);
         this.cancelFragmentationButton.setVisible(false);
         this.fragmentationButton.setDisable(false);
@@ -633,6 +641,7 @@ public class MainViewController {
     private void startFragmentation(){
         this.startFragmentation(false);
     }
+    //
     /**
      * Starts fragmentation task and opens fragment and itemization tabs
      */
@@ -661,9 +670,16 @@ public class MainViewController {
                     }
                     return null;
                 }
+
+                @Override
+                public boolean cancel(boolean anInterruptThread) {
+                    MainViewController.this.fragmentationService.abortExecutor();
+                    return super.cancel(anInterruptThread);
+                }
             };
             this.parallelFragmentationMainTask.setOnSucceeded(event -> {
-                //TODO: runLater unnecessary?
+                //note: setOnSucceeded() takes place in the JavaFX GUI thread again but still runLater() is necessary to wait
+                // for the thread to be free for the update
                 Platform.runLater(()->{
                     try {
                         ObservableList<FragmentDataModel> tmpObservableFragments = FXCollections.observableArrayList();
@@ -696,8 +712,7 @@ public class MainViewController {
             });
             this.parallelFragmentationMainTask.setOnFailed(event -> {
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-                //TODO introduce Failed status
-                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
+                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Failed"));
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
@@ -707,6 +722,7 @@ public class MainViewController {
             });
             Thread tmpThread = new Thread(this.parallelFragmentationMainTask);
             tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number, do not touch
             tmpThread.start();
         } catch(Exception anException){
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
