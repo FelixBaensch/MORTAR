@@ -59,6 +59,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -859,6 +860,7 @@ public class FragmentationService {
         return tmpFragmentationName;
     }
 
+    //TODO ok to return null if executor is aborted?
     /**
      * Manages the fragmentation, creates {@link FragmentationTask} equal to the amount of {@param aNumberOfTasks},
      * assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation
@@ -888,6 +890,14 @@ public class FragmentationService {
             tmpMoleculeModulo--;
         }
         this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks);
+        /* Explicit version that can be used to override methods:
+        this.executorService =  new ThreadPoolExecutor(tmpNumberOfTasks, tmpNumberOfTasks, 0L,
+                TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()) {
+            @Override
+            protected void afterExecute(Runnable r, Throwable t) {
+                super.afterExecute(r, t);
+            }
+        }; */
         List<FragmentationTask> tmpFragmentationTaskList = new LinkedList<>();
         for(int i = 1; i <= tmpNumberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
@@ -910,9 +920,24 @@ public class FragmentationService {
         long tmpStartTime = System.currentTimeMillis();
         int tmpExceptionsCounter = 0;
         tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
+        if (this.executorService.isShutdown() || this.executorService.isTerminated()) {
+            this.LOGGER.log(Level.INFO, "Fragmentation cancelled");
+            return null;
+        }
         for (Future<Integer> tmpFuture : tmpFuturesList) {
-            //exceptions do not get handled here because this is called inside another thread
-            tmpExceptionsCounter += tmpFuture.get();
+            //execution exceptions do not get handled here because this is called inside another thread
+            try {
+                Integer tmpResult = tmpFuture.get();
+                if (!Objects.isNull(tmpResult)) {
+                    tmpExceptionsCounter += tmpFuture.get();
+                } else {
+                    //this can occur when the task has been interrupted or cancelled, nothing to do here
+                    //errors in execution will be thrown by get() and are checked in the calling method/thread
+                }
+            } catch (CancellationException | InterruptedException aCancellationOrInterruptionException) {
+                FragmentationService.LOGGER.log(Level.INFO, aCancellationOrInterruptionException.toString(), aCancellationOrInterruptionException);
+                //continue;
+            }
         }
         int tmpFragmentAmount = 0;
         Set<String> tmpKeySet = tmpFragmentHashtable.keySet();

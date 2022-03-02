@@ -124,7 +124,7 @@ public class Importer {
      * closed by the user or a not importable file type was chosen
      * @throws CDKException if the given file cannot be parsed
      * @throws IOException if the given file cannot be found or read
-     * @throws NullPointerException if the given stage is null
+     * @throws NullPointerException if the given file is null
      * @throws Exception if something goes wrong
      */
     public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException, Exception {
@@ -137,7 +137,8 @@ public class Importer {
         String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
         this.fileName = aFile.getName();
         IAtomContainerSet tmpImportedMoleculesSet = null;
-        //TODO task unnecessary here because it gets called inside a task/thread in main view controller?
+        //yes, the method is called inside a new parallel thread by the main view controller but still starts its own new
+        // parallel thread internally. This was necessary, don't ask us why
         FutureTask<IAtomContainerSet> tmpFutureTask = new FutureTask<IAtomContainerSet>(
                 () -> {
                     switch (tmpFileExtension) {
@@ -155,9 +156,10 @@ public class Importer {
                     }
                 }
         );
-        Thread thread = new Thread(tmpFutureTask);
-        thread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
-        thread.start();
+        Thread tmpThread = new Thread(tmpFutureTask);
+        tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+        tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
+        tmpThread.start();
         //no handling of exceptions here because this gets called inside another task/thread in the main view controller
         tmpImportedMoleculesSet = tmpFutureTask.get();
         this.preprocessMoleculeSet(tmpImportedMoleculesSet);

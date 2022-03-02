@@ -47,6 +47,7 @@ public class FragmentationTask implements Callable<Integer> {
     private final IMoleculeFragmenter fragmenter;
     private final Hashtable<String, FragmentDataModel> fragmentsHashTable;
     private final String fragmentationName;
+    private int exceptionsCounter;
     /**
      * Logger of this class.
      */
@@ -63,6 +64,7 @@ public class FragmentationTask implements Callable<Integer> {
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
+        this.exceptionsCounter = 0;
     }
 
     /**
@@ -74,7 +76,6 @@ public class FragmentationTask implements Callable<Integer> {
      */
     @Override
     public Integer call() throws Exception{
-        int tmpExceptionsCounter = 0;
         for (MoleculeDataModel tmpMolecule : this.moleculesList) {
             HashMap<String, List<FragmentDataModel>> tmpFragmentsMapOfMolecule = null;
             HashMap<String, HashMap<String, Integer>> tmpFragmentFrequenciesMapOfMolecule = null;
@@ -83,9 +84,10 @@ public class FragmentationTask implements Callable<Integer> {
                 try{
                     tmpAtomContainer = tmpMolecule.getAtomContainer();
                 } catch(CDKException anException){
-                    tmpExceptionsCounter++;
+                    this.exceptionsCounter++;
                     FragmentationTask.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMolecule.getName(), anException);
-                    tmpExceptionsCounter++;
+                    //TODO: Why two times this statement?
+                    this.exceptionsCounter++;
                     continue;
                 }
                 tmpFragmentsMapOfMolecule = tmpMolecule.getAllFragments();
@@ -103,7 +105,7 @@ public class FragmentationTask implements Callable<Integer> {
                     tmpFragmentsList = this.fragmenter.fragmentMolecule(tmpAtomContainer);
                 } catch (NullPointerException | IllegalArgumentException | CloneNotSupportedException anException) {
                     FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                    tmpExceptionsCounter++;
+                    this.exceptionsCounter++;
                     tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
                     tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
                     continue;
@@ -113,7 +115,7 @@ public class FragmentationTask implements Callable<Integer> {
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
                     String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
                     if (tmpSmiles == null) {
-                        tmpExceptionsCounter++;
+                        this.exceptionsCounter++;
                         continue;
                     }
                     FragmentDataModel tmpFragmentDataModel;
@@ -140,13 +142,13 @@ public class FragmentationTask implements Callable<Integer> {
                         }
                     } catch (Exception anException) {
                         FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                        tmpExceptionsCounter++;
+                        this.exceptionsCounter++;
                     } finally {
                         LOCK.unlock();
                     }
                 }
             } catch(Exception anException){
-                tmpExceptionsCounter++;
+                this.exceptionsCounter++;
                 FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                 if (tmpFragmentsMapOfMolecule != null && !tmpFragmentsMapOfMolecule.containsKey(this.fragmentationName)) {
                     tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
@@ -160,6 +162,6 @@ public class FragmentationTask implements Callable<Integer> {
                 return null;
             }
         }
-        return tmpExceptionsCounter;
+        return this.exceptionsCounter;
     }
 }

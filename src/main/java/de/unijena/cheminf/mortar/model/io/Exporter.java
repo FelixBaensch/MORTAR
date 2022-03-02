@@ -172,6 +172,7 @@ public class Exporter {
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
             tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
             tmpThread.start();
         } catch(Exception anException){
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -222,6 +223,7 @@ public class Exporter {
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
             tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
             tmpThread.start();
         } catch(Exception anException){
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -330,6 +332,7 @@ public class Exporter {
             Thread tmpThread = new Thread(tmpTask);
             tmpThread.setDaemon(false);
             tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
             tmpThread.start();
         } catch(Exception anException){
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
