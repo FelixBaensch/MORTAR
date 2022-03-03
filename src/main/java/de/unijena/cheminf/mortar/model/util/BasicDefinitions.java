@@ -128,12 +128,12 @@ public final class BasicDefinitions {
     public static final String IMAGE_FILE_NAME_EXTENSION = ".png";
 
     /**
-     *
+     * Name of the folder where all settings (global, fragmenter, pipeline) are persisted.
      */
     public static final String SETTINGS_CONTAINER_FILE_DIRECTORY = "Settings";
 
     /**
-     *
+     * Name of the settings container file that persists the global settings.
      */
     public static final String SETTINGS_CONTAINER_FILE_NAME = "Mortar_Settings";
 

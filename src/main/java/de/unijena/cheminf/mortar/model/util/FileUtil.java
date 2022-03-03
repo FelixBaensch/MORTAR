@@ -234,7 +234,11 @@ public final class FileUtil {
     }
 
     /**
-     * TODO
+     * Returns the path to the folder where all settings (global, fragmenter, pipeline) are persisted.
+     *
+     * @return settings folder path
+     * @throws SecurityException if the OS name is unknown, the AppData directory (Windows) or the user home directory
+     * path cannot be determined or data directory cannot be created
      */
     public static String getSettingsDirPath() throws SecurityException {
         return FileUtil.getAppDirPath() + File.separator + BasicDefinitions.SETTINGS_CONTAINER_FILE_DIRECTORY + File.separator;
