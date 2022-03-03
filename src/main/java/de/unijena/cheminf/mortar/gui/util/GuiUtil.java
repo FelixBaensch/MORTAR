@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -49,6 +49,7 @@ import javafx.util.StringConverter;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -69,9 +70,10 @@ public class GuiUtil {
     //
     //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
-     * Creates and shows an alert with arbitrary alert type
+     * Creates and shows an alert with arbitrary alert type.
      *
-     * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate various properties, chosen of an enumeration containing the available
+     * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate
+     *                    various properties, chosen of an enumeration containing the available
      * @param aTitle Title of the alert message
      * @param aHeaderText Header of the alert message
      * @param aContentText Text that the alert message contains
@@ -100,18 +102,28 @@ public class GuiUtil {
         tmpAlert.setContentText(aContentText);
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
+    //
+    /**
+     * Creates and shows an alert dialog to report an exception that occurred. The stack trace of the exception is also
+     * given.
+     *
+     * @param aTitle title of the alert dialog
+     * @param aHeaderText header of the alert dialog
+     * @param aContentText Text of the alert dialog
+     * @param anException exception to report, may be null
+     */
     public static void guiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException){
-        if(anException == null){
-            //TODO: What happens if anException is null? GuiMessageAlert!
-            return;
+        String tmpExceptionString;
+        if(Objects.isNull(anException)){
+            tmpExceptionString = "Exception is null.";
+        } else {
+            StringWriter tmpStringWriter = new StringWriter();
+            PrintWriter tmpPrintWriter = new PrintWriter(tmpStringWriter);
+            anException.printStackTrace(tmpPrintWriter);
+            tmpExceptionString = tmpStringWriter.toString();
         }
-        StringWriter tmpStringWriter = new StringWriter();
-        PrintWriter tmpPrintWriter = new PrintWriter(tmpStringWriter);
-        anException.printStackTrace(tmpPrintWriter);
-        String tmpExceptionString = tmpStringWriter.toString();
         GuiUtil.guiExpandableAlert(aTitle, aHeaderText, aContentText, Message.get("Error.ExceptionAlert.Label"), tmpExceptionString);
     }
-
     //
     /**
      * Creates and shows an alert explicit for exceptions, which contains the stack trace of the given exception in
@@ -182,25 +194,27 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns an input pattern for integer values. "-" may be the first sign, the first number may not be 0.
+     *
+     * @return GUI input pattern for integer values
      */
     public static Pattern getIntegerPattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?");
-
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns an input pattern for double values. "-" may be the first sign, the first number may not be 0.
+     *
+     * @return GUI input pattern for double values
      */
     public static Pattern GetDoublePattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns an input filter for integer values. "-" may be the first sign, the first number may not be 0.
+     *
+     * @return GUI input filter for integer values
      */
     public static UnaryOperator<TextFormatter.Change> getIntegerFilter(){
         return c ->{
@@ -214,8 +228,9 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns an input filter for double values. "-" may be the first sign, the first number may not be 0.
+     *
+     * @return GUI input filter for double values
      */
     public static UnaryOperator<TextFormatter.Change> getDoubleFilter(){
         return c ->{
@@ -229,8 +244,10 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a String <-> Integer converter that mostly relies on the given toString() and fromString() methods
+     * but additionally turns empty strings, "-", ".", and "-." into 0.
+     *
+     * @return String-Integer converter
      */
     public static StringConverter<Integer> getStringToIntegerConverter(){
         return new StringConverter<Integer>() {
@@ -251,8 +268,10 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a String <-> Double converter that mostly relies on the given toString() and fromString() methods
+     * but additionally turns empty strings, "-", ".", and "-." into 0.0.
+     *
+     * @return String-Double converter
      */
     public static StringConverter<Double> getStringToDoubleConverter(){
         return new StringConverter<Double>() {
@@ -316,7 +335,7 @@ public class GuiUtil {
     }
     //
     /**
-     * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView
+     * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView.
      * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
      *
      * @param aTableView TableView
@@ -348,7 +367,13 @@ public class GuiUtil {
             }
         }
     }
-
+    //
+    /**
+     * TODO: Omit?
+     *
+     * @param aTableView
+     * @param aWidth
+     */
     public static void setImageStructureWidth(TableView aTableView, double aWidth){
         if(aTableView.getClass().equals(ItemizationDataTableView.class)){
             for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
