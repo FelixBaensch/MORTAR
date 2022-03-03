@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -59,7 +59,7 @@ import java.util.logging.Logger;
 /**
  * Container for general settings in MORTAR, capable of managing, preserving, and reloading application settings.
  * Externally, the settings can be accessed via JavaFX properties and internally, they are managed via
- * de.unijena.cheminf.mortar.preference.IPreference objects for persistence.
+ * {@link de.unijena.cheminf.mortar.preference.IPreference} objects for persistence.
  *
  * @author Jonas Schaub
  */
@@ -433,12 +433,11 @@ public class SettingsContainer {
     }
 
     /**
-     * Sets the setting for the separator for the csv export
+     * Sets the setting for the separator for the csv export. For now, only "," and ";" are allowed.
      *
      * @param aSeparator String for separator
      * @throws IllegalArgumentException if the string is null, empty, blank or not valid.
      */
-    //TODO add valid string to doc
     public void setCsvExportSeparatorSetting(String aSeparator) throws IllegalArgumentException {
         if(this.isLegalCsvExportSeparator(aSeparator)){
             this.csvExportSeparatorSetting.set(aSeparator);
@@ -579,7 +578,6 @@ public class SettingsContainer {
     //</editor-fold>
     //
     //<editor-fold desc="private methods">
-    //TODO: Move String literals of GuiExceptionAlerts to message file
     /**
      * Initialises the properties representing the settings in default values. Properties are added
      * to the list of settings for display to the user.
@@ -596,7 +594,10 @@ public class SettingsContainer {
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal rows per page number was given: " + newValue);
                     SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
+                    GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
+                            Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
+                            tmpException.toString(),
+                            tmpException);
                     //re-throws the exception to properly reset the binding
                     throw tmpException;
                 }
@@ -613,7 +614,10 @@ public class SettingsContainer {
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal number of tasks for fragmentation was given: " + newValue);
                     SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
+                    GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
+                            Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
+                            tmpException.toString(),
+                            tmpException);
                     //re-throws the exception to properly reset the binding
                     throw tmpException;
                 }
@@ -682,7 +686,10 @@ public class SettingsContainer {
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal value for the separator for the csv export was given: " + newValue);
                     SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", tmpException.toString(), tmpException);
+                    GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
+                            Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
+                            tmpException.toString(),
+                            tmpException);
                     //re-throws the exception to properly reset the binding
                     throw tmpException;
                 }
@@ -800,7 +807,7 @@ public class SettingsContainer {
 
     /**
      * Tests whether a string is an allowed separator for csv export. For this, it must be not null, not empty, not blank
-     * and an allowed ASCII char
+     * and an allowed ASCII char. For now, only "," and ";" are allowed.
      *
      * @param aSeparator the separator to test
      * @return true if the given parameter is a legal value for the setting
@@ -818,11 +825,26 @@ public class SettingsContainer {
         if(aSeparator.length()>1){
             return false;
         }
-        //TODO: add more legal separators or remove illegal ones
         switch (aSeparator){
             case ",":
             case ";":
                 return true;
+            //some characters defined in the SMILES syntax
+            case ".":
+            case "=":
+            case "#":
+            case "(":
+            case ")":
+            case "{":
+            case "}":
+            case "[":
+            case "]":
+            case "-":
+            case "+":
+            case "@":
+            case "/":
+            case "\\":
+            case " ":
             default:
                 return false;
         }
