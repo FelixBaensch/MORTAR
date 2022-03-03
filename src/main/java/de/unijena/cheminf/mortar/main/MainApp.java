@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -30,19 +30,24 @@ import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
+
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Main class that extends JavaFX Application to start MORTAR.
+ */
 public class MainApp extends Application {
-
     /**
+     * Calls start(Stage) of Application class.
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args){
         launch(args);
     }
-
+    //
     @Override
     public void start(Stage aPrimaryStage) {
         try{
@@ -50,8 +55,16 @@ public class MainApp extends Application {
             Locale.setDefault(new Locale("en", "GB"));
             Logger.getLogger(Main.class.getName()).info(Locale.getDefault().toString());
             //</editor-fold>
-            //TODO: Check Java version
-            //TODO: Check screen resolution?
+            //<editor-fold defaultstate="collapsed" desc="Check Java version">
+            String tmpJavaVersion = System.getProperty("java.version");
+            System.out.println(tmpJavaVersion);
+            if (tmpJavaVersion.compareTo(BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
+                GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.InvalidJavaVersion.Title"),
+                        null, String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION));
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Java version lower than minimum: " + tmpJavaVersion);
+                System.exit(-1);
+            }
+            //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
             LogUtil.manageLogFilesFolderIfExists();
             boolean tmpWasLoggingInitializationSuccessful = LogUtil.initializeLoggingEnvironment();

@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -26,13 +26,14 @@ package de.unijena.cheminf.mortar.main;
  * possible workaround to make it work, should be adding a new Main class that will be the
  * main class of your project, and that class will be the one that calls your JavaFX
  * Application class.
- * See José Pereda's comment on https://stackoverflow.com/questions/52569724/javafx-11-create-a-jar-file-with-gradle (retrieved December 18, 2019) for more details.
+ * See José Pereda's comment on https://stackoverflow.com/questions/52569724/javafx-11-create-a-jar-file-with-gradle
+ * (retrieved December 18, 2019) for more details.
  *
  * @author Felix Baensch
  */
 public class Main {
     /**
-     * Main class
+     * Main method to start the application
      *
      * @param args the command line arguments
      */
