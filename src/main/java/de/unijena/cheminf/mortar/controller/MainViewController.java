@@ -179,7 +179,6 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.loadMoleculeFile(this.primaryStage)
         );
-        //TODO: Get CSV file separator from settings; Done?
         //<editor-fold desc="export">
         //fragments export to CSV
         this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
@@ -353,14 +352,7 @@ public class MainViewController {
      */
     private void closeApplication(int aStatus) {
         if(moleculeDataModelList.size() > 0){
-            ButtonType tmpConformationResult;
-            //Todo: move text to message resource file and maybe create a separate method for this because it is called again below in loadMoleculeFile()
-            if(this.isFragmentationRunning){
-                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
-            } else {
-                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
-            }
-            if(tmpConformationResult!= ButtonType.OK){
+            if (!this.confirmFragmentationStopAndDataLoss()) {
                 return;
             }
         }
@@ -373,6 +365,27 @@ public class MainViewController {
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
         System.exit(aStatus);
+    }
+    //
+    /**
+     * Opens a dialog to warn the user of possible data loss and stopping a running fragmentation, e.g. when a new
+     * molecule set should be imported or the application shut down. Returns true if "OK" was clicked, "false" for cancel
+     * button. 
+     */
+    private boolean confirmFragmentationStopAndDataLoss() {
+        ButtonType tmpConformationResult;
+        if(this.isFragmentationRunning){
+            tmpConformationResult = GuiUtil.guiConformationAlert(
+                    Message.get("MainViewController.Warning.FragmentationRunning.Title"),
+                    Message.get("MainViewController.Warning.FragmentationRunning.Header"),
+                    Message.get("MainViewController.Warning.FragmentationRunning.Content"));
+        } else {
+            tmpConformationResult = GuiUtil.guiConformationAlert(
+                    Message.get("MainViewController.Warning.DataLoss.Title"),
+                    Message.get("MainViewController.Warning.DataLoss.Header"),
+                    Message.get("MainViewController.Warning.DataLoss.Content"));
+        }
+        return tmpConformationResult == ButtonType.OK;
     }
     //
     /**
@@ -392,13 +405,7 @@ public class MainViewController {
      */
     private void loadMoleculeFile(Stage aParentStage) {
         if(this.moleculeDataModelList.size() > 0){
-            ButtonType tmpConformationResult;
-            if(this.isFragmentationRunning){
-                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Fragmentation will be stopped and data will be lost if you press Ok. Click cancel to return.");
-            } else {
-                tmpConformationResult = GuiUtil.guiConformationAlert("Warning", "Data will be lost.", "Data will be lost if you press Ok. Click cancel to return.");
-            }
-            if(tmpConformationResult!= ButtonType.OK){
+            if (!this.confirmFragmentationStopAndDataLoss()) {
                 return;
             }
         }
