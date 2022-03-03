@@ -370,7 +370,7 @@ public class MainViewController {
     /**
      * Opens a dialog to warn the user of possible data loss and stopping a running fragmentation, e.g. when a new
      * molecule set should be imported or the application shut down. Returns true if "OK" was clicked, "false" for cancel
-     * button. 
+     * button.
      */
     private boolean confirmFragmentationStopAndDataLoss() {
         ButtonType tmpConformationResult;
@@ -733,7 +733,10 @@ public class MainViewController {
             tmpThread.start();
         } catch(Exception anException){
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            //TODO
+            GuiUtil.guiExceptionAlert(Message.get("MainViewController.FragmentationError.Title"),
+                    Message.get("MainViewController.FragmentationError.Header"),
+                    Message.get("MainViewController.FragmentationError.Content"),
+                    anException);
         }
     }
     //
