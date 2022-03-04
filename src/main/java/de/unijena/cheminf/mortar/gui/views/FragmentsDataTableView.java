@@ -104,7 +104,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
         this.structureColumn.setMinWidth(150);
         this.structureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.2) //TODO
+                this.widthProperty().multiply(0.2)
         );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
@@ -116,7 +116,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
         this.smilesColumn.setMinWidth(50);
         this.smilesColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.075)  //TODO
+                this.widthProperty().multiply(0.075)
         );
         this.smilesColumn.setResizable(true);
         this.smilesColumn.setEditable(false);
@@ -141,7 +141,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.parentMolColumn.setGraphic(tmpParentMolLabel);
         this.parentMolColumn.setMinWidth(150);
         this.parentMolColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.2475) //TODO
+                this.widthProperty().multiply(0.2475)
         );
         this.parentMolColumn.setResizable(true);
         this.parentMolColumn.setEditable(false);
@@ -167,7 +167,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
         this.frequencyColumn.setMinWidth(50);
         this.frequencyColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1) //TODO
+                this.widthProperty().multiply(0.1)
         );
         this.frequencyColumn.setResizable(true);
         this.frequencyColumn.setEditable(false);
@@ -179,7 +179,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.percentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.percentageColumn.header"));
         this.percentageColumn.setMinWidth(20);
         this.percentageColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1) //TODO
+                this.widthProperty().multiply(0.1)
         );
         this.percentageColumn.setResizable(true);
         this.percentageColumn.setEditable(false);
@@ -202,7 +202,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculeFrequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.header"));
         this.moleculeFrequencyColumn.setMinWidth(50);
         this.moleculeFrequencyColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1) //TODO
+                this.widthProperty().multiply(0.1)
         );
         this.moleculeFrequencyColumn.setResizable(true);
         this.moleculeFrequencyColumn.setEditable(false);
@@ -214,7 +214,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculePercentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
         this.moleculePercentageColumn.setMinWidth(20);
         this.moleculePercentageColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.0975) //TODO
+                this.widthProperty().multiply(0.0975)
         );
         this.moleculePercentageColumn.setResizable(true);
         this.moleculePercentageColumn.setEditable(false);

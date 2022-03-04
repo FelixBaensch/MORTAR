@@ -188,7 +188,7 @@ public class AboutView extends AnchorPane {
         tmpNameCol.setCellValueFactory(new PropertyValueFactory("name"));
         tmpNameCol.setStyle("-fx-alignment: CENTER");
         tmpNameCol.prefWidthProperty().bind(
-                this.tableView.widthProperty().multiply(0.3) //TODO
+                this.tableView.widthProperty().multiply(0.3)
         );
         this.tableView.getColumns().add(tmpNameCol);
         //-name column
@@ -196,7 +196,7 @@ public class AboutView extends AnchorPane {
         tmpVersionCol.setCellValueFactory(new PropertyValueFactory("version"));
         tmpVersionCol.setStyle("-fx-alignment: CENTER");
         tmpVersionCol.prefWidthProperty().bind(
-                this.tableView.widthProperty().multiply(0.1) //TODO
+                this.tableView.widthProperty().multiply(0.1)
         );
         this.tableView.getColumns().add(tmpVersionCol);
         //-name column
@@ -204,7 +204,7 @@ public class AboutView extends AnchorPane {
         tmpAuthorCol.setCellValueFactory(new PropertyValueFactory("author"));
         tmpAuthorCol.setStyle("-fx-alignment: CENTER");
         tmpAuthorCol.prefWidthProperty().bind(
-                this.tableView.widthProperty().multiply(0.3) //TODO
+                this.tableView.widthProperty().multiply(0.3)
         );
         this.tableView.getColumns().add(tmpAuthorCol);
         //-name column
@@ -212,7 +212,7 @@ public class AboutView extends AnchorPane {
         tmpLicenseCol.setCellValueFactory(new PropertyValueFactory("license"));
         tmpLicenseCol.setStyle("-fx-alignment: CENTER");
         tmpLicenseCol.prefWidthProperty().bind(
-                this.tableView.widthProperty().multiply(0.2975) //TODO
+                this.tableView.widthProperty().multiply(0.2975)
         );
         this.tableView.getColumns().add(tmpLicenseCol);
         tmpToolsTab.setContent(this.tableView);

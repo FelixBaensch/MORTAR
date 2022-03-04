@@ -182,8 +182,9 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a regex pattern for integers
+     *
+     * @return integer regex pattern
      */
     public static Pattern getIntegerPattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?");
@@ -191,16 +192,18 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a regex pattern for doubles
+     *
+     * @return double regex pattern
      */
-    public static Pattern GetDoublePattern(){
+    public static Pattern getDoublePattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a filter for integer input
+     *
+     * @return integer filter
      */
     public static UnaryOperator<TextFormatter.Change> getIntegerFilter(){
         return c ->{
@@ -214,13 +217,14 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a filter for double input
+     *
+     * @return double filter
      */
     public static UnaryOperator<TextFormatter.Change> getDoubleFilter(){
         return c ->{
           String text = c.getControlNewText();
-          if(GetDoublePattern().matcher(text).matches()) {
+          if(getDoublePattern().matcher(text).matches()) {
               return c;
           } else {
               return null;
@@ -229,8 +233,9 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a converter, which converts integers to strings and vice versa
+     *
+     * @return integer to string and vice versa converter
      */
     public static StringConverter<Integer> getStringToIntegerConverter(){
         return new StringConverter<Integer>() {
@@ -251,8 +256,9 @@ public class GuiUtil {
     }
     //
     /**
-     * TODO
-     * @return
+     * Returns a converter, which converts doubles to strings and vice versa
+     *
+     * @return double to string and vice versa converter
      */
     public static StringConverter<Double> getStringToDoubleConverter(){
         return new StringConverter<Double>() {

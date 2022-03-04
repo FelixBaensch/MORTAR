@@ -98,7 +98,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         this.nameColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.15) //TODO
+                this.widthProperty().multiply(0.15)
         );
         //-moleculeStructureColumn
         this.moleculeStructureColumn = new TableColumn<>(Message.get("MainTabPane.itemizationTab.tableView.moleculeStructureColumn.header"));
@@ -109,7 +109,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.moleculeStructureColumn.setCellValueFactory(new PropertyValueFactory("structure"));
         this.moleculeStructureColumn.setStyle("-fx-alignment: CENTER");
         this.moleculeStructureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.3) //TODO
+                this.widthProperty().multiply(0.3)
         );
         //-fragmentStructureColumn
         this.fragmentStructureColumn = new TableColumn<>(Message.get("MainTabPane.itemizationTab.tableView.fragmentsColumn.header"));

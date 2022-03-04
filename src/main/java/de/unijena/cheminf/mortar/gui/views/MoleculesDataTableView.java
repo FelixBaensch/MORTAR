@@ -134,10 +134,11 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     }
     //
     /**
-     * Creates a page for the pagination for the dataTableView //TODO: refine comment
+     * Creates a page for the pagination for the dataTableView based on page index and settings, which shows the imported
+     * molecules
      *
-     * @param aPageIndex
-     * @return Node, page of pagination
+     * @param aPageIndex index
+     * @return Node page of pagination
      */
     public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer){
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
@@ -188,7 +189,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     }
     //
     /**
-     * Adds a changes listener to the height property of table view which sets the height for structure images to
+     * Adds a change listener to the height property of table view which sets the height for structure images to
      * each MoleculeDataModel object of the items list and refreshes the table view
      * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
      *
