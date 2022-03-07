@@ -86,8 +86,6 @@ public class FragmentationTask implements Callable<Integer> {
                 } catch(CDKException anException){
                     this.exceptionsCounter++;
                     FragmentationTask.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMolecule.getName(), anException);
-                    //TODO: Why two times this statement?
-                    this.exceptionsCounter++;
                     continue;
                 }
                 tmpFragmentsMapOfMolecule = tmpMolecule.getAllFragments();
@@ -159,7 +157,7 @@ public class FragmentationTask implements Callable<Integer> {
                 }
             }
             if(Thread.currentThread().isInterrupted()){
-                LOGGER.log(Level.INFO, "Thread interrupted"); //TODO add log message
+                LOGGER.log(Level.INFO, "Thread interrupted");
                 return null;
             }
         }

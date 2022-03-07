@@ -21,10 +21,10 @@
 package de.unijena.cheminf.mortar.model.depict;
 
 /**
- * TODO:
- * - Add doc and code folds
+ * TODO: Add doc and code folds
  */
 
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import javafx.scene.image.Image;
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.exception.CDKException;
@@ -42,16 +42,6 @@ import java.util.logging.Logger;
 
 public class DepictionUtil {
 
-    public static final int IMAGE_TEXT_SPACE = 0;
-    /**
-     *
-     */
-    public static final double IMAGE_WIDTH_DEFAULT = 250.0;
-    /**
-     *
-     */
-    public static final double IMAGE_HEIGHT_DEFAULT = 250.0;
-
     /**
      * Logger of this class.
      */
@@ -63,7 +53,7 @@ public class DepictionUtil {
      * @param anAtomContainer
      * @return
      */
-    public static Image depictImage(IAtomContainer anAtomContainer, double aWidth, double aHeight) { //TODO: add , int aWidth, int aHeight
+    public static Image depictImage(IAtomContainer anAtomContainer, double aWidth, double aHeight) {
         return depictImageWithZoom(anAtomContainer, 1.0, aWidth, aHeight);
     }
     /**
@@ -73,8 +63,8 @@ public class DepictionUtil {
      * @param aHeight
      * @return
      */
-    public static Image depictImageWithHeight(IAtomContainer anAtomContainer, double aHeight) { //TODO: add , int aWidth, int aHeight
-        return depictImageWithZoom(anAtomContainer, 1.0, IMAGE_WIDTH_DEFAULT, aHeight);
+    public static Image depictImageWithHeight(IAtomContainer anAtomContainer, double aHeight) {
+        return depictImageWithZoom(anAtomContainer, 1.0, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, aHeight);
     }
     /**
      * Creates an Image of the AtomContainer with given width and default height (250.0).
@@ -83,8 +73,8 @@ public class DepictionUtil {
      * @param aWidth
      * @return
      */
-    public static Image depictImageWithWidth(IAtomContainer anAtomContainer, double aWidth) { //TODO: add , int aWidth, int aHeight
-        return depictImageWithZoom(anAtomContainer, 1.0, aWidth, IMAGE_HEIGHT_DEFAULT);
+    public static Image depictImageWithWidth(IAtomContainer anAtomContainer, double aWidth) {
+        return depictImageWithZoom(anAtomContainer, 1.0, aWidth, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
     /**
      * Creates an Image of the AtomContainer with any zoom factor and default width (250.0) and height (250.0)
@@ -94,7 +84,7 @@ public class DepictionUtil {
      * @return Image
      */
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom){
-        return depictImageWithZoom(anAtomContainer, aZoom, IMAGE_WIDTH_DEFAULT, IMAGE_HEIGHT_DEFAULT);
+        return depictImageWithZoom(anAtomContainer, aZoom, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
 
     /**
@@ -166,8 +156,8 @@ public class DepictionUtil {
      */
     public static Image depictImageWithText(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, String aString){
         try{
-            BufferedImage tmpMolBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, IMAGE_WIDTH_DEFAULT, aHeight); //TODO
-            BufferedImage tmpBufferedImage = new BufferedImage(tmpMolBufferedImage.getWidth(), tmpMolBufferedImage.getHeight() + IMAGE_TEXT_SPACE, BufferedImage.TRANSLUCENT);
+            BufferedImage tmpMolBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight);
+            BufferedImage tmpBufferedImage = new BufferedImage(tmpMolBufferedImage.getWidth(), tmpMolBufferedImage.getHeight() + BasicDefinitions.DEFAULT_IMAGE_TEXT_DISTANCE, BufferedImage.TRANSLUCENT);
             Graphics2D tmpGraphics2d = tmpBufferedImage.createGraphics();
             tmpGraphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
             tmpGraphics2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

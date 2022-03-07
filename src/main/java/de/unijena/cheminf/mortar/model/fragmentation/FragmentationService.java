@@ -226,7 +226,7 @@ public class FragmentationService {
         }
         this.setSelectedFragmenterNameProperty(this.selectedFragmenter.getFragmentationAlgorithmName());
         try {
-            this.pipelineFragmenter = new IMoleculeFragmenter[] {this.createNewFragmenterObjectByName(this.selectedFragmenter.getFragmentationAlgorithmName())};
+            this.pipelineFragmenter = new IMoleculeFragmenter[] {this.createNewFragmenterObjectByAlgorithmName(this.selectedFragmenter.getFragmentationAlgorithmName())};
         } catch (Exception anException) {
             //settings of this fragmenter instance are still in default at this point
             this.pipelineFragmenter = new IMoleculeFragmenter[] {this.selectedFragmenter.copy()};
@@ -258,15 +258,14 @@ public class FragmentationService {
         this.currentFragmentationName = tmpFragmentationName;
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
     }
-
+    //
     /**
      * Starts fragmentation pipeline for given List of molecules.
      * Fragmentation will be done on fragments of previous step
-     * TODO
      *
      * @param aListOfMolecules List<MoleculeDataModel>
-     * @param aNumberOfTasks int
-     * @throws Exception
+     * @param aNumberOfTasks int value to define onto how many parallel task the molecules should be distributed for framentation
+     * @throws Exception if anything goes critically wrong
      */
     public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
         //<editor-fold desc="checks" defualtstate="collapsed">
@@ -365,7 +364,7 @@ public class FragmentationService {
             this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
      }
-
+    //
     /**
      * Under construction
      * Start fragmentation pipeline
@@ -468,8 +467,7 @@ public class FragmentationService {
             this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
     }
-
-    //TODO: rename to createNewFragmenterObjectByALGORITHMName?
+    //
     /**
      * Returns a new instance of the fragmenter class with the given algorithm name.
      *
@@ -483,7 +481,7 @@ public class FragmentationService {
      * @throws InstantiationException if instantiating the class goes wrong
      * @throws IllegalAccessException if instantiating the class goes wrong
      */
-    public IMoleculeFragmenter createNewFragmenterObjectByName(String anAlgorithmName)
+    public IMoleculeFragmenter createNewFragmenterObjectByAlgorithmName(String anAlgorithmName)
             throws IllegalArgumentException,
             ClassNotFoundException,
             NoSuchMethodException,
@@ -502,7 +500,7 @@ public class FragmentationService {
         Constructor tmpCtor = tmpClazz.getConstructor();
         return (IMoleculeFragmenter) tmpCtor.newInstance();
     }
-
+    //
     /**
      * Persists settings of the fragmenters in preference container files in a subfolder of the settings directory. The settings of the
      * fragmenters are translated to matching preference objects. If a single setting or several cannot be persisted, it
@@ -704,7 +702,7 @@ public class FragmentationService {
                     try {
                         PreferenceContainer tmpFragmenterSettingsContainer = new PreferenceContainer(tmpFragmenterFile);
                         String tmpFragmenterClassName = tmpFragmenterSettingsContainer.getPreferences(FragmentationService.PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME)[0].getContentRepresentative();
-                        IMoleculeFragmenter tmpFragmenter = this.createNewFragmenterObjectByName(tmpFragmenterClassName);
+                        IMoleculeFragmenter tmpFragmenter = this.createNewFragmenterObjectByAlgorithmName(tmpFragmenterClassName);
                         this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpFragmenterSettingsContainer);
                         tmpFragmenterArray[i] = tmpFragmenter;
                     } catch (Exception anException) {
@@ -859,8 +857,7 @@ public class FragmentationService {
         }
         return tmpFragmentationName;
     }
-
-    //TODO ok to return null if executor is aborted?
+    //
     /**
      * Manages the fragmentation, creates {@link FragmentationTask} equal to the amount of {@param aNumberOfTasks},
      * assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation
@@ -882,7 +879,6 @@ public class FragmentationService {
         }
         int tmpMoleculesPerTask = aListOfMolecules.size() / tmpNumberOfTasks;
         int tmpMoleculeModulo = aListOfMolecules.size() % tmpNumberOfTasks;
-        //TODO refine this one
         int tmpFromIndex = 0; //low endpoint (inclusive) of the subList
         int tmpToIndex = tmpMoleculesPerTask; //high endpoint (exclusive) of the subList
         if(tmpMoleculeModulo > 0){

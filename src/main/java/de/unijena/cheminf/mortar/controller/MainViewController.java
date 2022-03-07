@@ -499,8 +499,8 @@ public class MainViewController {
     private void openPipelineSettingsView(){
         PipelineSettingsViewController tmpPipelineSettingsViewController =
                 new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, this.moleculeDataModelList.size() > 0);
-        if(tmpPipelineSettingsViewController.isFragmentationButtonClicked()){
-            this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationButtonClicked());
+        if(tmpPipelineSettingsViewController.isFragmentationStarted()){
+            this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationStarted());
         }
     }
     //

@@ -71,7 +71,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
         Objects.requireNonNull(aFragmenter, "aFragmenter must not be null");
         //</editor-fold>
         this.molecules = anArrayOfMolecules;
-        this.numberOfTasks = aNumberOfTasks; //TODO: get from global settings
+        this.numberOfTasks = aNumberOfTasks;
         this.fragmentationName = aFragmentationName;
         this.fragmenter = aFragmenter;
     }
@@ -84,7 +84,6 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
         }
         int tmpMoleculesPerTask = this.molecules.size() / this.numberOfTasks;
         int tmpMoleculeModulo = this.molecules.size() % this.numberOfTasks;
-        //TODO refine this one
         int tmpFromIndex = 0; //low endpoint (inclusive) of the subList
         int tmpToIndex = tmpMoleculesPerTask; //high endpoint (exclusive) of the subList
         if(tmpMoleculeModulo > 0){
@@ -116,7 +115,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
             tmpFuturesList = tmpExecutor.invokeAll(tmpFragmentationTaskList);
         }catch (Exception anException){
             FragmentationThread.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            throw anException; //TODO ? GUIAlert?
+            throw anException;
         }
         int tmpExceptionsCounter = 0;
         for (Future<Integer> tmpFuture : tmpFuturesList) {

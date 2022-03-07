@@ -21,6 +21,7 @@
 package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -70,12 +71,6 @@ public class MoleculeDataModel {
     private IAtomContainer atomContainer;
     //
     /**
-     * Map that contains fragmentation names as keys and boolean values that specify whether the molecule has fragments
-     * resulting from the respective fragmentation process or not.
-     */
-    private HashMap<String, Boolean> hasFragmentsMap; // HashMap<FragmentationAlgorithmName, hasFragments>
-    //
-    /**
      * Fragments map containing names of fragmentations done to the molecule as keys and lists of
      * {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that resulted from these fragmentations
      * as values.
@@ -115,9 +110,8 @@ public class MoleculeDataModel {
         this.properties = aPropertyMap;
         this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
-        this.fragments = new HashMap<>(5);
-        this.fragmentFrequencies = new HashMap<>(5);
-        this.hasFragmentsMap = new HashMap<>(5); //TODO: magic number go to definitions
+        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
+        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
     }
     //
     /**
@@ -182,7 +176,6 @@ public class MoleculeDataModel {
         return this.uniqueSmiles;
     }
     //
-    //TODO: should this not be getSelection(), following the properties naming convention?
     /**
      * Returns boolean telling whether molecule is selected or not
      * @returns true if molecule is selected
@@ -220,7 +213,7 @@ public class MoleculeDataModel {
             return this.fragments.get(aKey);
         }
         else{
-            //TODO
+            //TODO: Maybe better return an empty list to avoid exceptions
             return null;
         }
     }
@@ -247,35 +240,21 @@ public class MoleculeDataModel {
             return this.fragmentFrequencies.get(aKey);
         }
         else{
-            //TODO
+            //TODO: Maybe better return an empty list to avoid exceptions
             return null;
         }
     }
     //
-    //TODO: Is the map written to in the fragmentation tasks?
     /**
-     * Returns a map that contains fragmentation names as keys and boolean values that specify whether the molecule has
-     * fragments resulting from the respective fragmentation process or not.
-     * @return HashMap<fragmentationName, hasFragments>
-     */
-    public HashMap<String, Boolean> getHasFragmentsMap(){
-        return this.hasFragmentsMap;
-    }
-    //
-    /**
-     * Specifies whether the molecule has fragments resulting from the fragmentation process with the given name or not.
+     * Specifies whether the molecule has undergone the fragmentation with the specified name. (NOT whether it has
+     * resulting fragments from this fragmentation)
+     *
      * @param aKey fragmentation name
-     * @return true if the molecule has fragments resulting from the specified fragmentation 
+     * @return true if the molecule has undergone the fragmentation with the specified name
      */
-    public Boolean hasMoleculeFragmentsForSpecificAlgorithm(String aKey){
+    public boolean hasMoleculeUndergoneSpecificFragmentation(String aKey){
         Objects.requireNonNull(aKey, "aKey must not be null");
-        if(this.hasFragmentsMap.containsKey(aKey)){
-            return this.hasFragmentsMap.get(aKey);
-        }
-        else {
-            //TODO
-            return null;
-        }
+        return this.fragments.containsKey(aKey);
     }
     //
     /**
@@ -285,17 +264,23 @@ public class MoleculeDataModel {
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImage(tmpAtomContainer, DepictionUtil.IMAGE_WIDTH_DEFAULT, this.structureImageHeight));
+            return new ImageView(DepictionUtil.depictImage(tmpAtomContainer, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, this.structureImageHeight));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
         }
     }
 
+    /**
+     * Creates and returns an ImageView of this molecule as 2D structure with the given text below the structure
+     *
+     * @param aText to show below structure
+     * @return ImageView with text
+     */
     public ImageView getStructureWithText(String aText){
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, DepictionUtil.IMAGE_WIDTH_DEFAULT, this.structureImageHeight, aText));
+            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, this.structureImageHeight, aText));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));

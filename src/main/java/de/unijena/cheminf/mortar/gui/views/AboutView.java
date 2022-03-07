@@ -92,6 +92,8 @@ public class AboutView extends AnchorPane {
         HBox hBoxButtonsHBox = new HBox();
         hBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
         borderPane.setBottom(hBoxButtonsHBox);
+        hBoxButtonsHBox.prefWidthProperty().bind(this.widthProperty());
+        hBoxButtonsHBox.maxWidthProperty().bind(this.widthProperty());
         //-left side
         this.logFileButton = new Button(Message.get("AboutView.logFileButton.text"));
         this.logFileButton.setTooltip(new Tooltip(Message.get("AboutView.logFileButton.tooltip")));
@@ -183,7 +185,6 @@ public class AboutView extends AnchorPane {
         //-tableView
         this.tableView = new TableView();
         this.tableView.setEditable(false);
-//        this.tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         //-name column
         TableColumn<ExternalTool, String> tmpNameCol = new TableColumn<>(Message.get("AboutView.toolsTable.nameHeader.text"));
         tmpNameCol.setCellValueFactory(new PropertyValueFactory("name"));

@@ -168,4 +168,23 @@ public final class BasicDefinitions {
      */
     public static final String GITHUB_REPOSITORY_URL = "https://github.com/FelixBaensch/MORTAR";
     //</editor-fold>
+    //
+    //<editor-fold desc="Model constants and magic numbers">
+    /**
+     * Default initial capacity for fragment maps
+     */
+    public static final int DEFAULT_INITIAL_MAP_CAPACITY = 25;
+    /**
+     * Default width for images
+     */
+    public static final double DEFAULT_IMAGE_WIDTH_DEFAULT = 250.0;
+    /**
+     * Default height for images
+     */
+    public static final double DEFAULT_IMAGE_HEIGHT_DEFAULT = 250.0;
+    /**
+     * Default distance between image and text
+     */
+    public static final int DEFAULT_IMAGE_TEXT_DISTANCE = 0;
+    //</editor-fold>
 }

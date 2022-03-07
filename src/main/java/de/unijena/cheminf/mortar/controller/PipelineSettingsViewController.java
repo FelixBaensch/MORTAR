@@ -46,23 +46,71 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Controller class for the PipelineSettingsView
+ */
 public class PipelineSettingsViewController {
 
+    //<editor-fold desc="private final class variables" defaultstate="collapsed">
+    /**
+     * Name of the pipeline as configure in the dialog
+     */
     private final StringProperty pipeliningName;
+    /**
+     * Stage of the MainView
+     */
     private final Stage mainStage;
+    //</editor-fold>
+    //
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * PipelineSettingsView
+     */
     private PipelineSettingsView pipelineSettingsView;
+    /**
+     * Stage of the PipelineSettingsView
+     */
     private Stage pipelineSettingsViewStage;
+    /**
+     * Counts the amount of fragmentation algorithms in the pipeline
+     */
     private int algorithmCounter;
+    /**
+     * Service for fragmentation, controls the process of a fragmentation
+     */
     private FragmentationService fragmentationService;
+    /**
+     * Array of the available fragmentation algorithms
+     */
     private IMoleculeFragmenter[] fragmenters;
+    /**
+     * Lists of fragmentation algorithms for the pipeline
+     */
     private List<IMoleculeFragmenter> fragmenterList;
-    private boolean isFragmentationButtonClicked;
+    /**
+     * Boolean to mark if pipeline fragmentation was started from the dialog
+     */
+    private boolean isFragmentationStarted;
+    /**
+     * Boolean value to enable fragment button if molecules are loaded
+     */
     private boolean isMoleculeDataLoaded;
+    //</editor-fold>
+    //
+    //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
      * Logger
      */
     private static final Logger LOGGER = Logger.getLogger(PipelineSettingsViewController.class.getName());
+    //</editor-fold>
 
+    /**
+     * Constructor
+     *
+     * @param aMainStage Stage of the MainView
+     * @param aFragmentationService FragmentationService
+     * @param isMoleculeDataLoaded boolean whether molecule data is loaded
+     */
     public PipelineSettingsViewController(Stage aMainStage, FragmentationService aFragmentationService, boolean isMoleculeDataLoaded){
         this.mainStage = aMainStage;
         this.algorithmCounter = 0;
@@ -71,11 +119,14 @@ public class PipelineSettingsViewController {
         this.pipeliningName = new SimpleStringProperty();
         this.fragmenterList = new LinkedList<>();
         this.resetFragmenterList();
-        this.isFragmentationButtonClicked = false;
+        this.isFragmentationStarted = false;
         this.isMoleculeDataLoaded = isMoleculeDataLoaded;
         this.showPipelineSettingsView();
     }
 
+    /**
+     *
+     */
     private void showPipelineSettingsView(){
         if(this.pipelineSettingsView == null)
             this.pipelineSettingsView = new PipelineSettingsView();
@@ -111,7 +162,7 @@ public class PipelineSettingsViewController {
         });
         //fragment button
         this.pipelineSettingsView.getFragmentButton().setOnAction(event -> {
-            this.isFragmentationButtonClicked = true;
+            this.isFragmentationStarted = true;
             this.fragmentationService.setPipeliningFragmentationName(this.pipeliningName.get());
             this.fragmentationService.setPipelineFragmenter(this.fragmenterList.toArray(new IMoleculeFragmenter[this.fragmenterList.size()]));
             this.pipelineSettingsViewStage.close();
@@ -141,14 +192,14 @@ public class PipelineSettingsViewController {
         tmpComboBox.setOnAction(anActionEvent -> {
             Object tmpSelectedFragmenterString = tmpComboBox.getSelectionModel().getSelectedItem();
             int tmpIndex = GridPane.getRowIndex(tmpComboBox) - 1;
-            for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
+            for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) { // TODO: do not create new algorithm, copy the corresponding one
                 if (tmpSelectedFragmenterString.equals(tmpFragmenter.getFragmentationAlgorithmName())){
                     try{
                         if(this.fragmenterList.size() > tmpIndex){ // will not work cause size of list is set
-                            this.fragmenterList.set(tmpIndex, this.fragmentationService.createNewFragmenterObjectByName((String)tmpSelectedFragmenterString));
+                            this.fragmenterList.set(tmpIndex, this.fragmentationService.createNewFragmenterObjectByAlgorithmName((String)tmpSelectedFragmenterString));
                         }
                         else{
-                            this.fragmenterList.add(this.fragmentationService.createNewFragmenterObjectByName((String)tmpSelectedFragmenterString));
+                            this.fragmenterList.add(this.fragmentationService.createNewFragmenterObjectByAlgorithmName((String)tmpSelectedFragmenterString));
                         }
                         break;
                     }
@@ -236,15 +287,14 @@ public class PipelineSettingsViewController {
     private void resetFragmenterList(){
         if(this.fragmentationService.getPipelineFragmenter() == null || this.fragmentationService.getPipelineFragmenter().length < 1){
             try{
-//                this.fragmenterList.add(this.fragmentationService.createNewFragmenterObjectByName(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())); //TODO: Create new object of algorithm
-                this.fragmenterList.add(this.fragmentationService.getSelectedFragmenter().copy()); //TODO: or copy selected? - copy every algorithm in pipelining, see document
+                this.fragmenterList.add(this.fragmentationService.getSelectedFragmenter().copy());
             } catch (Exception anException) {
                 LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
         }
         else{
-            for(IMoleculeFragmenter tmpFargmenter : this.fragmentationService.getPipelineFragmenter()){
-                this.fragmenterList.add(tmpFargmenter.copy()); //TODO: same question as above
+            for(IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getPipelineFragmenter()){
+                this.fragmenterList.add(tmpFragmenter.copy());
             }
         }
     }
@@ -259,7 +309,7 @@ public class PipelineSettingsViewController {
         this.pipeliningName.set(aName);
     }
 
-    public boolean isFragmentationButtonClicked() {
-        return isFragmentationButtonClicked;
+    public boolean isFragmentationStarted() {
+        return isFragmentationStarted;
     }
 }
