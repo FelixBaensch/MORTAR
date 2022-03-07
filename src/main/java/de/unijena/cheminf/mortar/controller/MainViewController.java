@@ -21,7 +21,6 @@
 package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
-import de.unijena.cheminf.mortar.gui.panes.MainTabPane;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
@@ -59,6 +58,7 @@ import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
@@ -96,7 +96,7 @@ public class MainViewController {
     private MainView mainView;
     private String appDir;
     private Scene scene;
-    private MainTabPane mainTabPane;
+    private TabPane mainTabPane;
     private FragmentationSettingsViewController fragmentationSettingsViewController;
     private ObservableList<MoleculeDataModel> moleculeDataModelList;
     private MoleculesDataTableView moleculesDataTableView;
@@ -148,7 +148,7 @@ public class MainViewController {
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
-        this.mainTabPane = new MainTabPane();
+        this.mainTabPane = new TabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
         GuiUtil.guiBindControlSizeToParentPane(this.mainView.getMainCenterPane(), this.mainTabPane);
         this.scene = new Scene(this.mainView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
@@ -193,7 +193,7 @@ public class MainViewController {
                     new Exporter(this.settingsContainer).exportCsvFile(
                             this.primaryStage,
                             this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                             this.settingsContainer.getCsvExportSeparatorSetting(),
                             TabNames.Fragments
                     );
@@ -211,7 +211,7 @@ public class MainViewController {
                     new Exporter(this.settingsContainer).exportFragmentsAsChemicalFile(
                             this.primaryStage,
                             this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                             ChemFileTypes.PDB
                     );
                 });
@@ -229,7 +229,7 @@ public class MainViewController {
                             this.primaryStage,
                             this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
                             this.moleculeDataModelList,
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                             TabNames.Fragments
                     );
                 });
@@ -246,7 +246,7 @@ public class MainViewController {
                     new Exporter(this.settingsContainer).exportFragmentsAsChemicalFile(
                             this.primaryStage,
                             this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                             ChemFileTypes.SDF,
                             true
                     );
@@ -264,7 +264,7 @@ public class MainViewController {
                     new Exporter(this.settingsContainer).exportFragmentsAsChemicalFile(
                             this.primaryStage,
                             this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                             ChemFileTypes.SDF,
                             false
                     );
@@ -282,7 +282,7 @@ public class MainViewController {
                     new Exporter(this.settingsContainer).exportCsvFile(
                             this.primaryStage,
                             this.moleculeDataModelList,
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                             this.settingsContainer.getCsvExportSeparatorSetting(),
                             TabNames.Itemization
                     );
@@ -301,7 +301,7 @@ public class MainViewController {
                             this.primaryStage,
                             this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization),
                             this.moleculeDataModelList,
-                            this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                            ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                             TabNames.Itemization
                     );
                 });
@@ -321,7 +321,7 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
 //            GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
-            GridTabForTableView tmpGrid = this.mainTabPane.getSelectedTab();
+            GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
             if(tmpGrid == null){
                 keyEvent.consume();
                 return;
@@ -785,7 +785,7 @@ public class MainViewController {
             new Exporter(this.settingsContainer).exportCsvFile(
                     this.primaryStage,
                     ((IDataTableView)tmpFragmentsTab.getTableView()).getItemsList(),
-                    this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                    ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                     this.settingsContainer.getCsvExportSeparatorSetting(),
                     TabNames.Fragments
             );
@@ -837,7 +837,7 @@ public class MainViewController {
             new Exporter(this.settingsContainer).exportCsvFile(
                     this.primaryStage,
                     this.moleculeDataModelList,
-                    this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle(),
+                    ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                     this.settingsContainer.getCsvExportSeparatorSetting(),
                     TabNames.Itemization
             );
@@ -883,7 +883,7 @@ public class MainViewController {
      */
     private List<MoleculeDataModel> getItemsListOfSelectedFragmenterByTabId(TabNames aTabName){
         return ((IDataTableView)((GridTabForTableView)(this.mainTabPane.getTabs().stream().filter(tab ->
-                this.mainTabPane.getSelectedTab().getFragmentationNameOutOfTitle().equals(((GridTabForTableView)tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabName.name())
+                ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle().equals(((GridTabForTableView)tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabName.name())
         ).findFirst().get())).getTableView()).getItemsList();
     }
     //</editor-fold>

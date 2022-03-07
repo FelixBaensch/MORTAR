@@ -207,7 +207,7 @@ public class GuiUtil {
      *
      * @return GUI input pattern for double values
      */
-    public static Pattern GetDoublePattern(){
+    public static Pattern getDoublePattern(){
         return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
     }
     //
@@ -235,7 +235,7 @@ public class GuiUtil {
     public static UnaryOperator<TextFormatter.Change> getDoubleFilter(){
         return c ->{
           String text = c.getControlNewText();
-          if(GetDoublePattern().matcher(text).matches()) {
+          if(getDoublePattern().matcher(text).matches()) {
               return c;
           } else {
               return null;
