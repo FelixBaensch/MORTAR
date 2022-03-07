@@ -105,7 +105,7 @@ public class SettingsView extends AnchorPane {
         //
         this.getChildren().add(this.borderPane);
     }
-
+    //
     /**
      * Adds a tab which contains the properties of the given properties list
      * @param aStage Stage to bind width and height
@@ -148,7 +148,7 @@ public class SettingsView extends AnchorPane {
         this.tabPane.getTabs().add(tmpTab);
         return tmpTab;
     }
-
+    //
     /**
      * Adds a row for each {@link Property} of given List which contains of properties name and a control to change properties value
      * @param aGridPane GridPane to add row
@@ -168,13 +168,12 @@ public class SettingsView extends AnchorPane {
             String tmpPropName = tmpProperty.getName();
             Label tmpNameLabel = new Label(tmpPropName);
             Tooltip tmpTooltip = new Tooltip(aTooltipTextsMap.get(tmpProperty.getName()));
-            //TODO: Move to definitions
-            tmpTooltip.setMaxWidth(500);
+            tmpTooltip.setMaxWidth(GuiDefinitions.GUI_TOOLTIP_MAX_WIDTH);
             tmpTooltip.setWrapText(true);
             tmpNameLabel.setTooltip(tmpTooltip);
             aGridPane.add(tmpNameLabel, 0, tmpRowIndex);
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            Object tmpRecentValue = tmpProperty.getValue(); //TODO: Maybe change this line to getDefault() or something else
+            Object tmpRecentValue = tmpProperty.getValue();
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             if(tmpProperty instanceof SimpleBooleanProperty){
                 ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
@@ -233,20 +232,52 @@ public class SettingsView extends AnchorPane {
             }
         }
     }
-
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns the tab pane, holding tabs for the settings of the different fragmenters
+     *
+     * @return TabPane
+     */
     public TabPane getTabPane(){
         return this.tabPane;
     }
+    //
+    /**
+     * Returns selection model, holding the active tab.
+     * Used to set tab of the selected fragmenter as active tab
+     *
+     * @return SelectionModel<Tab>
+     */
     public SelectionModel<Tab> getSelectionModel(){
         return this.selectionModel;
     }
+    //
+    /**
+     * Returns cancel button, which closes the view without saving changes
+     *
+     * @return CancelButton
+     */
     public Button getCancelButton(){
         return this.cancelButton;
     }
+    //
+    /**
+     * Returns apply button, which applies changes and closes the view
+     *
+     * @return ApplyButton
+     */
     public Button getApplyButton(){
         return this.applyButton;
     }
+    //
+    /**
+     * Returns default button, which sets all options of active tab to default values
+     *
+     * @return DefaultButton
+     */
     public Button getDefaultButton(){
         return this.defaultButton;
     }
+    //</editor-fold>
 }

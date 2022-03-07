@@ -20,15 +20,12 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
-import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
-import javafx.scene.image.ImageView;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -56,12 +53,6 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     private double moleculePercentage;
     //
-    //TODO: omit?
-    /**
-     * Name of the used fragmentation algorithm.
-     */
-    private String algorithmName;
-    //
     /**
      * List of parent molecules, which contains this fragment
      */
@@ -88,21 +79,25 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) throws NullPointerException {
         super(aUniqueSmiles, aName, aPropertyMap);
-        this.absoluteFrequency = 1;
+        this.absoluteFrequency = 0;
+        this.absolutePercentage = 0.;
+        this.moleculeFrequency = 0;
+        this.moleculePercentage = 0.;
         this.parentMolecules = new LinkedList<>();
-        //TODO: Set other frequencies to 0?
     }
     //
     /**
      * Constructor, sets absolute frequency to 1. Retains the given data as atom container.
      *
-     * @param aUniqueSmiles unique SMILES representation of the fragment  TODO: remove after adaptation to FragmentationTask class!
      * @param anAtomContainer AtomContainer of the molecule
      * @throws NullPointerException if given SMILES string is null
      */
-    public FragmentDataModel(String aUniqueSmiles, IAtomContainer anAtomContainer) throws NullPointerException {    //TODO: remove aUniqueSmiles
+    public FragmentDataModel(IAtomContainer anAtomContainer) throws NullPointerException {
         super(anAtomContainer);
-        this.absoluteFrequency = 1;
+        this.absoluteFrequency = 0;
+        this.absolutePercentage = 0.;
+        this.moleculeFrequency = 0;
+        this.moleculePercentage = 0.;
         this.parentMolecules = new LinkedList<>();
     }
     //
@@ -166,21 +161,21 @@ public class FragmentDataModel extends MoleculeDataModel {
      *
      * @return ImageView
      */
-    public ImageView getParentMoleculeStructure() {
-        if(this.parentMolecules.size() < 1){
-            return null;
-        }
-        if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.get(0);
-        }
-        try {
-            IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
-        } catch (CDKException aCDKException) {
-            FragmentDataModel.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString() + "_" + this.parentMolecule.getName(), aCDKException);
-            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
-        }
-    }
+//    public ImageView getParentMoleculeStructure() {
+//        if(this.parentMolecules.size() < 1){
+//            return null;
+//        }
+//        if(this.parentMolecule == null){
+//            this.parentMolecule = this.parentMolecules.get(0);
+//        }
+//        try {
+//            IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
+//            return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
+//        } catch (CDKException aCDKException) {
+//            FragmentDataModel.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString() + "_" + this.parentMolecule.getName(), aCDKException);
+//            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
+//        }
+//    }
     //
     /**
      * Returns the name of first parent molecule of this fragment
@@ -199,44 +194,65 @@ public class FragmentDataModel extends MoleculeDataModel {
     //
     /**
      * Sets the absolute frequency
+     *
      * @param aValue absolute frequency
      */
-    public void setAbsoluteFrequency(int aValue)
-    {
+    public void setAbsoluteFrequency(int aValue) {
+        if(aValue < 0 ){
+            throw new IllegalArgumentException("aValue must be positive or zero.");
+        }
         this.absoluteFrequency = aValue;
     }
     //
     /**
      * Sets the molecule frequency
+     *
      * @param aValue molecule frequency
      */
-    public void setMoleculeFrequency(int aValue)
-    {
+    public void setMoleculeFrequency(int aValue) {
+        if(aValue < 0 ){
+            throw new IllegalArgumentException("aValue must be positive or zero.");
+        }
         this.moleculeFrequency = aValue;
     }
     //
-    //TODO: parameter tests
     /**
      * Sets the absolute frequency percentage
+     *
      * @param aValue absolute frequency percentage
      */
     public void setAbsolutePercentage(double aValue){
+        if(aValue < 0.0 ){
+            throw new IllegalArgumentException("aValue must be positive or zero.");
+        }
+        if(!Double.isFinite(aValue)){
+            throw new IllegalArgumentException("aValue must be finite.");
+        }
         this.absolutePercentage = aValue;
     }
     //
     /**
      * Sets the molecule frequency percentage
+     *
      * @param aValue molecule frequency percentage
      */
     public void setMoleculePercentage(double aValue){
+        if(aValue < 0.0 ){
+            throw new IllegalArgumentException("aValue must be positive or zero.");
+        }
+        if(!Double.isFinite(aValue)){
+            throw new IllegalArgumentException("aValue must be finite.");
+        }
         this.moleculePercentage = aValue;
     }
     //
     /**
-     *Sets the parent molecule of this fragment
+     * Sets the parent molecule of this fragment
+     *
      * @param aParentMolecule parent molecule
      */
     public void setParentMolecule(MoleculeDataModel aParentMolecule){
+        Objects.requireNonNull(aParentMolecule,"aParentMolecule must not be null.");
         this.parentMolecule = aParentMolecule;
     }
     //</editor-fold>

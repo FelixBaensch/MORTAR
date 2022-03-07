@@ -114,7 +114,6 @@ public class PipelineSettingsViewController {
             this.isFragmentationButtonClicked = true;
             this.fragmentationService.setPipeliningFragmentationName(this.pipeliningName.get());
             this.fragmentationService.setPipelineFragmenter(this.fragmenterList.toArray(new IMoleculeFragmenter[this.fragmenterList.size()]));
-            System.out.println(this.getPipeliningName()); //TODO
             this.pipelineSettingsViewStage.close();
         });
         //cancel button
@@ -238,7 +237,7 @@ public class PipelineSettingsViewController {
         if(this.fragmentationService.getPipelineFragmenter() == null || this.fragmentationService.getPipelineFragmenter().length < 1){
             try{
 //                this.fragmenterList.add(this.fragmentationService.createNewFragmenterObjectByName(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())); //TODO: Create new object of algorithm
-                this.fragmenterList.add(this.fragmentationService.getSelectedFragmenter().copy()); //TODO: or copy selected?
+                this.fragmenterList.add(this.fragmentationService.getSelectedFragmenter().copy()); //TODO: or copy selected? - copy every algorithm in pipelining, see document
             } catch (Exception anException) {
                 LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }

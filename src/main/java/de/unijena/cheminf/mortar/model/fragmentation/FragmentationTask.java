@@ -126,8 +126,9 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
                         }
                         else{
-                            tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment);
+                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
                             this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
+                            tmpFragmentDataModel.incrementAbsoluteFrequency();
                         }
                         if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
                             tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);

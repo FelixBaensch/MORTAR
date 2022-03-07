@@ -173,7 +173,7 @@ public class AboutViewController {
                 Runtime.getRuntime().exec("open " + BasicDefinitions.GITHUB_REPOSITORY_URL);
             else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
             {
-                //ToDo: extend browser array
+                //ToDo: extend browser array, if necessary
                 String[] tmpBrowserArray = { "google-chrome", "firefox", "mozilla", "epiphany", "konqueror",
                         "netscape", "opera", "links", "lynx" };
                 StringBuffer tmpCommandString = new StringBuffer();

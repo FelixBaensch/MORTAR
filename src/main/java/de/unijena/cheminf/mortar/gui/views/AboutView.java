@@ -23,6 +23,7 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -147,7 +148,7 @@ public class AboutView extends AnchorPane {
         HBox.setHgrow(tmpAppTitle, Priority.ALWAYS);
         VBox.setVgrow(tmpAppTitle, Priority.ALWAYS);
         //-version
-        Text tmpVersion = new Text("Version " + Message.get("Version.text")); //TODO: find better place for version number then properties
+        Text tmpVersion = new Text("Version " + BasicDefinitions.MORTAR_VERSION);
         tmpVersion.setStyle("-fx-font-weight: bold");
         this.gridPane.add(tmpVersion, 0,1);
         //-copyright

@@ -111,6 +111,7 @@ public class FragmentationSettingsViewController {
 
     /**
      * Adds listeners
+     * TODO: add tooltips for buttons
      */
     private void addListener(){
         //fragmentationSettingsViewStage close request

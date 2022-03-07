@@ -320,7 +320,6 @@ public class MainViewController {
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
-//            GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
             GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
             if(tmpGrid == null){
                 keyEvent.consume();
@@ -343,8 +342,6 @@ public class MainViewController {
 //                keyEvent.consume();
 //            }
         });
-        //TODO: More implementation needed
-        //TODO: Add listener to rows per page setting in settings container //deprecated?
     }
     //
     /**
@@ -526,8 +523,6 @@ public class MainViewController {
                 this.fragmentationService.setSelectedFragmenterNameProperty(((RadioMenuItem) newValue).getText());
             }
         });
-        //TODO remove?
-        //tmpToggleGroup.selectToggle(tmpToggleGroup.getToggles().get(0));
     }
     //
     /**
@@ -540,7 +535,6 @@ public class MainViewController {
                 for(Tab tmpTab : this.mainTabPane.getTabs()){
                     TableView tmpTableView = ((GridTabForTableView) tmpTab).getTableView();
                     int tmpListSize = 0;
-                    //TODO: change this when FragmentDataModel extends MoleculeDataModel via Interface IDataTableView - done?
                     tmpListSize = ((IDataTableView)tmpTableView).getItemsList().size();
                     int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
                     int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
@@ -615,7 +609,6 @@ public class MainViewController {
         tmpButtonBar.getButtons().add(this.cancelFragmentationButton);
         tmpMoleculesTab.addNodeToGridPane(tmpButtonBar, 0,1,1,1);
         this.fragmentationButton.setOnAction(event->{
-            //TODO: add implementation to start fragmentation algorithm
             this.startFragmentation();
         });
         this.cancelFragmentationButton.setOnAction(event ->{

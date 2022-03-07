@@ -48,7 +48,6 @@ public class Message {
      * Locale default
      */
     private static final Locale LOCALE_DEFAULT = Locale.getDefault();
-    //TODO: getBundle() can throw an exception
     /**
      * Resource bundle
      */

@@ -96,6 +96,10 @@ public final class GuiDefinitions {
      */
     public static final double GUI_PAGINATION_CONTROL_PANEL_HEIGHT = 45.0;
     /**
+     * Max width of tooltip
+     */
+    public static final double GUI_TOOLTIP_MAX_WIDTH = 500.0;
+    /**
      * KeyCodeCombination for Control + C
      */
     public static final KeyCodeCombination KEY_CODE_COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);

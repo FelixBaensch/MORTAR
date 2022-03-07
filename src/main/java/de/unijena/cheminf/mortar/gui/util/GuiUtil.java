@@ -293,7 +293,6 @@ public class GuiUtil {
     //
     /**
      * Copies content of selected cell to system clipboard
-     * TODO: Maybe multiply double values by 100 to avoid possible misunderstandings between the internal value and the visualised value.
      *
      * @param aTableView
      */
@@ -303,7 +302,6 @@ public class GuiUtil {
             int tmpColIndex = tmpPos.getColumn();
             int tmpFragmentColIndexItemsTab = 2;
             Object tmpCell;
-
             if(aTableView.getClass() == ItemizationDataTableView.class && tmpColIndex > tmpFragmentColIndexItemsTab -1){
                 tmpCell = aTableView.getColumns().get(tmpFragmentColIndexItemsTab).getColumns().get(tmpColIndex - 2).getCellData(tmpRowIndex);
             }else{
@@ -364,28 +362,6 @@ public class GuiUtil {
         else{
             for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
-            }
-        }
-    }
-    //
-    /**
-     * TODO: Omit?
-     *
-     * @param aTableView
-     * @param aWidth
-     */
-    public static void setImageStructureWidth(TableView aTableView, double aWidth){
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
-                tmpMoleculeDataModel.setStructureImageHeight(aWidth);
-                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(((ItemizationDataTableView) aTableView).getFragmentationName())){
-                    tmpFragmentDataModel.setStructureImageHeight(aWidth);
-                }
-            }
-        }
-        else{
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
-                tmpMoleculeDataModel.setStructureImageHeight(aWidth);
             }
         }
     }
