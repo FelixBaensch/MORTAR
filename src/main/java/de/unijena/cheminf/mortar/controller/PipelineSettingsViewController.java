@@ -41,6 +41,7 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -55,7 +56,7 @@ public class PipelineSettingsViewController {
     /**
      * Name of the pipeline as configure in the dialog
      */
-    private final StringProperty pipeliningName;
+    private final StringProperty pipelineName;
     /**
      * Stage of the MainView
      */
@@ -103,7 +104,7 @@ public class PipelineSettingsViewController {
      */
     private static final Logger LOGGER = Logger.getLogger(PipelineSettingsViewController.class.getName());
     //</editor-fold>
-
+    //
     /**
      * Constructor
      *
@@ -116,16 +117,17 @@ public class PipelineSettingsViewController {
         this.algorithmCounter = 0;
         this.fragmentationService = aFragmentationService;
         this.fragmenters = this.fragmentationService.getFragmenters();
-        this.pipeliningName = new SimpleStringProperty();
+        this.pipelineName = new SimpleStringProperty();
         this.fragmenterList = new LinkedList<>();
-        this.resetFragmenterList();
+        this.cancelChangesInFragmenterList();
         this.isFragmentationStarted = false;
         this.isMoleculeDataLoaded = isMoleculeDataLoaded;
         this.showPipelineSettingsView();
     }
-
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
-     *
+     * Initialises stage and view and opens view in the initialised stage
      */
     private void showPipelineSettingsView(){
         if(this.pipelineSettingsView == null)
@@ -138,48 +140,59 @@ public class PipelineSettingsViewController {
         this.pipelineSettingsViewStage.setTitle(Message.get("PipelineSettingsView.title"));
         this.pipelineSettingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.pipelineSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-
         Platform.runLater(()->{
             this.pipelineSettingsView.addGrid(this.pipelineSettingsViewStage);
             this.addListenerAndBindings();
             for(IMoleculeFragmenter tmpFragmenter : this.fragmenterList){
                 this.addNewChoiceRow(tmpFragmenter.getFragmentationAlgorithmName());
             }
-            this.setPipeliningName(this.fragmentationService.getPipeliningFragmentationName());
+            this.setPipelineName(this.fragmentationService.getPipeliningFragmentationName());
             this.pipelineSettingsView.getFragmentButton().setDisable(!this.isMoleculeDataLoaded);
         });
-
         this.pipelineSettingsViewStage.showAndWait();
     }
-
+    //
+    /**
+     * Add listeners and bindings
+     */
     private void addListenerAndBindings(){
         //text field binding
-        this.pipelineSettingsView.getTextField().textProperty().bindBidirectional(this.pipeliningName);
+        this.pipelineSettingsView.getTextField().textProperty().bindBidirectional(this.pipelineName);
         //stage close request
         this.pipelineSettingsViewStage.setOnCloseRequest(event -> {
-            this.resetFragmenterList();
+            this.cancelChangesInFragmenterList();
             this.pipelineSettingsViewStage.close();
         });
         //fragment button
         this.pipelineSettingsView.getFragmentButton().setOnAction(event -> {
             this.isFragmentationStarted = true;
-            this.fragmentationService.setPipeliningFragmentationName(this.pipeliningName.get());
+            this.fragmentationService.setPipeliningFragmentationName(this.pipelineName.get());
             this.fragmentationService.setPipelineFragmenter(this.fragmenterList.toArray(new IMoleculeFragmenter[this.fragmenterList.size()]));
             this.pipelineSettingsViewStage.close();
         });
         //cancel button
         this.pipelineSettingsView.getCancelButton().setOnAction(event -> {
-            this.resetFragmenterList();
+            this.cancelChangesInFragmenterList();
             this.pipelineSettingsViewStage.close();
         });
         //apply button
         this.pipelineSettingsView.getApplyButton().setOnAction(event -> {
-            this.fragmentationService.setPipeliningFragmentationName(this.pipeliningName.get());
+            this.fragmentationService.setPipeliningFragmentationName(this.pipelineName.get());
             this.fragmentationService.setPipelineFragmenter(this.fragmenterList.toArray(new IMoleculeFragmenter[this.fragmenterList.size()]));
             this.pipelineSettingsViewStage.close();
         });
+        //default button
+        this.pipelineSettingsView.getDefaultButton().setOnAction(event -> {
+            this.reset();
+        });
     }
-
+    //
+    /**
+     * Adds a new row to the pipeline settings view, which allows to add a new fragmentation algorithms. ComboBox is
+     * initially set to fragmentation algorithm corresponding to the given name
+     *
+     * @param aFragmenterName name of Fragmenter to initially set ComboBox
+     */
     private void addNewChoiceRow(String aFragmenterName){
         ComboBox tmpComboBox = new ComboBox();
         for(IMoleculeFragmenter tmpFragmenter : this.fragmenters){
@@ -192,21 +205,20 @@ public class PipelineSettingsViewController {
         tmpComboBox.setOnAction(anActionEvent -> {
             Object tmpSelectedFragmenterString = tmpComboBox.getSelectionModel().getSelectedItem();
             int tmpIndex = GridPane.getRowIndex(tmpComboBox) - 1;
-            for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) { // TODO: do not create new algorithm, copy the corresponding one
+            for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
                 if (tmpSelectedFragmenterString.equals(tmpFragmenter.getFragmentationAlgorithmName())){
-                    try{
-                        if(this.fragmenterList.size() > tmpIndex){ // will not work cause size of list is set
-                            this.fragmenterList.set(tmpIndex, this.fragmentationService.createNewFragmenterObjectByAlgorithmName((String)tmpSelectedFragmenterString));
-                        }
-                        else{
-                            this.fragmenterList.add(this.fragmentationService.createNewFragmenterObjectByAlgorithmName((String)tmpSelectedFragmenterString));
-                        }
-                        break;
+                    if(this.fragmenterList.size() > tmpIndex){ // will not work cause size of list is set - why not, it is in case a fragmenter that has already been set is changed
+                        this.fragmenterList.set(tmpIndex, Arrays.stream(this.fragmenters).filter(x -> x.getFragmentationAlgorithmName().equals(tmpSelectedFragmenterString)).findFirst().orElse(null));
                     }
-                    catch (Exception anException){
-                        LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                    else{
+                        this.fragmenterList.add( Arrays.stream(this.fragmenters).filter(x -> x.getFragmentationAlgorithmName().equals(tmpSelectedFragmenterString)).findFirst().orElse(null));
                     }
+                    break;
                 }
+            }
+            if(this.fragmenterList.contains(null)){
+                PipelineSettingsViewController.LOGGER.log(Level.SEVERE, "Error in pipeline fragmenter list, it contains null");
+                throw new IllegalArgumentException("fragmenter list for pipeline must not contain null");
             }
         });
         Button tmpFragmenterSettingsButton = new Button();
@@ -240,7 +252,12 @@ public class PipelineSettingsViewController {
         //add new add button to next row
         this.addAddRowButton(this.algorithmCounter+1); //+1 cause of next row
     }
-
+    //
+    /**
+     * Adds button to row of given index which adds a new row
+     *
+     * @param aRowNumber int to specify row position
+     */
     private void addAddRowButton(int aRowNumber){
         Button tmpAddButton = new Button();
         tmpAddButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.addNewRowButton.toolTip")));
@@ -256,7 +273,12 @@ public class PipelineSettingsViewController {
         });
         this.pipelineSettingsView.addAddRowButton(tmpAddButton, aRowNumber);
     }
-
+    //
+    /**
+     * Adds button to row of given index which removes its own row
+     *
+     * @param aRowNumber
+     */
     private void addRemoveRowButton(int aRowNumber){
         Button tmpRemoveButton = new Button();
         tmpRemoveButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.removeRowButton.toolTip")));
@@ -283,8 +305,11 @@ public class PipelineSettingsViewController {
         });
         this.pipelineSettingsView.addRemoveRowButton(tmpRemoveButton, aRowNumber);
     }
-
-    private void resetFragmenterList(){
+    //
+    /**
+     * Cancels changes that are made in the fragmenter list
+     */
+    private void cancelChangesInFragmenterList(){
         if(this.fragmentationService.getPipelineFragmenter() == null || this.fragmentationService.getPipelineFragmenter().length < 1){
             try{
                 this.fragmenterList.add(this.fragmentationService.getSelectedFragmenter().copy());
@@ -298,18 +323,63 @@ public class PipelineSettingsViewController {
             }
         }
     }
-
-    public StringProperty pipeliningNameProperty(){
-        return this.pipeliningName;
+    //
+    /**
+     * Resets the complete pipeline and the view, selected fragmenter for single fragmentation will be set as default value
+     */
+    private void reset(){
+        this.setPipelineName("");
+        for(int i = 0; i < this.pipelineSettingsView.getGridPane().getChildren().size(); i++){
+            //remove addButton
+            this.pipelineSettingsView.getGridPane().getChildren().removeIf(node -> GridPane.getRowIndex(node) == 2);
+            //remove complete row content
+            this.pipelineSettingsView.getGridPane().getChildren().removeIf(node -> GridPane.getRowIndex(node) > 1);
+            //add addButton
+            this.addAddRowButton(2);
+        }
+        this.fragmenterList = new LinkedList<>();
+        this.algorithmCounter = 1;
+        ComboBox tmpBox = (ComboBox) this.pipelineSettingsView.getGridPane().getChildren().stream().filter(node -> GridPane.getRowIndex(node) == 1 && (node instanceof ComboBox)).findFirst().orElse(null);
+        if(tmpBox != null)
+            tmpBox.getSelectionModel().select(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
     }
-    public String getPipeliningName(){
-        return this.pipeliningName.get();
+    //</editor-fold>
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns StringProperty for the pipeline name
+     *
+     * @return StringProperty
+     */
+    public StringProperty pipelineNameProperty(){
+        return this.pipelineName;
     }
-    public void setPipeliningName(String aName){
-        this.pipeliningName.set(aName);
+    //
+    /**
+     * Returns pipeline name
+     *
+     * @return String pipeline name
+     */
+    public String getPipelineName(){
+        return this.pipelineName.get();
     }
-
+    //
+    /**
+     * Sets pipeline name
+     *
+     * @param aName
+     */
+    public void setPipelineName(String aName){
+        this.pipelineName.set(aName);
+    }
+    //
+    /**
+     * Return boolean value whether fragmentation is started inside PipelineSettingsView via FragmentButton
+     *
+     * @return true if fragmentation is started
+     */
     public boolean isFragmentationStarted() {
         return isFragmentationStarted;
     }
+    //</editor-fold>
 }

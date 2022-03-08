@@ -30,17 +30,47 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
+/**
+ * View for the pipeline settings
+ *
+ * @authors Felix Baensch, Jonas Schaub
+ */
 public class PipelineSettingsView extends AnchorPane {
 
-    private final BorderPane borderPane;
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * BorderPane to hold and adjust child panes
+     */
+    private BorderPane borderPane;
+    /**
+     * GridPane to structure "algorithm choice rows"
+     */
     private GridPane gridPane;
-    private ChoiceBox firstAlgorithmChoiceBox;
+    /**
+     * Button to cancel changes and close view
+     */
     private Button cancelButton;
+    /**
+     * Button to apply changes and close view
+     */
     private Button applyButton;
+    /**
+     * Button to start pipeline fragmentation and close view
+     */
     private Button fragmentButton;
+    /**
+     * Button to set pipeline and view o default state
+     */
     private Button defaultButton;
+    /**
+     * TextField for the pipeline name
+     */
     private TextField textField;
-
+    //</editor-fold>
+    //
+    /**
+     * Constructor
+     */
     public PipelineSettingsView(){
         super();
         //borderPane
@@ -61,7 +91,7 @@ public class PipelineSettingsView extends AnchorPane {
         tmpHBoxLeftSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxLeftSideButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         HBox.setHgrow(tmpHBoxLeftSideButtons, Priority.ALWAYS);
-//        tmpHBoxButtonsHBox.getChildren().add(tmpHBoxLeftSideButtons); //Do not delete
+        tmpHBoxButtonsHBox.getChildren().add(tmpHBoxLeftSideButtons); //Do not delete
         //-right side
         HBox tmpHBoxRightSideButtons = new HBox();
         this.cancelButton = new Button(Message.get("PipelineSettingsView.cancelButton.text"));
@@ -79,7 +109,13 @@ public class PipelineSettingsView extends AnchorPane {
         //
         this.getChildren().add(this.borderPane);
     }
-
+    //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
+    /**
+     * Adds the GridPane for the "algorithm choice rows" inside of a ScrollPane, Stage is necessary to bind width
+     *
+     * @param aStage Stage to bind width
+     */
     public void addGrid(Stage aStage){
         ScrollPane tmpScrollPane = new ScrollPane();
         HBox.setHgrow(tmpScrollPane,Priority.ALWAYS);
@@ -88,7 +124,47 @@ public class PipelineSettingsView extends AnchorPane {
         this.createGridPane(aStage);
         tmpScrollPane.setContent(this.gridPane);
     }
-
+    //
+    /**
+     * Adds a new "algorithm choice row"
+     *
+     * @param aNumberingLabel Label to show row number
+     * @param aComboBox CombBox to select fragmentation algorithm
+     * @param aSettingsButton Button to open SettingsView for the corresponding algorithm
+     * @param aRowNumber int row number, shown in Label
+     */
+    public void addAlgorithmChoiceRow(Label aNumberingLabel, ComboBox aComboBox, Button aSettingsButton, int aRowNumber){
+        this.gridPane.add(aNumberingLabel, 0, aRowNumber);
+        this.gridPane.add(aComboBox, 1, aRowNumber);
+        this.gridPane.add(aSettingsButton, 2, aRowNumber);
+    }
+    //
+    /**
+     * Adds a new Button which removes last "algorithm choice row" of GridPane
+     *
+     * @param aRemoveButton
+     * @param aRowNumber
+     */
+    public void addRemoveRowButton(Button aRemoveButton, int aRowNumber){
+        this.gridPane.add(aRemoveButton, 3, aRowNumber);
+    }
+    //
+    /**
+     * Adds given button to given row number
+     * @param anAddButton Button
+     * @param aRowNumber int
+     */
+    public void addAddRowButton(Button anAddButton, int aRowNumber){
+        this.gridPane.add(anAddButton, 2, aRowNumber);
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
+    /**
+     * Creates the GridPane to align "algorithm rows", Stage is necessary to bind width
+     *
+     * @param aStage Stage to bind width
+     */
     private void createGridPane(Stage aStage){
         if(this.gridPane != null)
             this.gridPane = null;
@@ -150,53 +226,63 @@ public class PipelineSettingsView extends AnchorPane {
         this.textField.setPromptText(Message.get("PipelineSettingsView.textField.promptText"));
         this.gridPane.add(this.textField, 1, 0 );
     }
-
-    public void addAlgorithmChoiceRow(Label aNumberingLabel, ComboBox aComboBox, Button aSettingsButton, int aRowNumber){
-        this.gridPane.add(aNumberingLabel, 0, aRowNumber);
-        this.gridPane.add(aComboBox, 1, aRowNumber);
-        this.gridPane.add(aSettingsButton, 2, aRowNumber);
-    }
-
-    public void addNumberingLabel(Label aNumberingLabel, int aRowNumber){
-        this.gridPane.add(aNumberingLabel, 0, aRowNumber);
-    }
-    public void addChoiceBox(ComboBox aComboBox, int aRowNumber){
-        this.gridPane.add(aComboBox, 1, aRowNumber);
-    }
-    public void addSettingsButton(Button aSettingsButton, int aRowNumber){
-        this.gridPane.add(aSettingsButton, 2, aRowNumber);
-    }
-    public void addRemoveRowButton(Button aRemoveButton, int aRowNumber){
-        this.gridPane.add(aRemoveButton, 3, aRowNumber);
-    }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Adds given button to given row number
-     * @param anAddButton Button
-     * @param aRowNumber int
+     * Returns GridPane which holds the "algorithm choice rows"
+     *
+     * @return GridPane
      */
-    public void addAddRowButton(Button anAddButton, int aRowNumber){
-        this.gridPane.add(anAddButton, 2, aRowNumber);
-    }
-
     public GridPane getGridPane(){
         return this.gridPane;
     }
+    //
+    /**
+     * Returns cancelButton to cancel changes and close view
+     *
+     * @return Button
+     */
     public Button getCancelButton(){
         return this.cancelButton;
     }
+    //
+    /**
+     * Returns fragmentButton to start pipeline fragmentation and close view
+     *
+     * @return Button
+     */
     public Button getFragmentButton(){
         return this.fragmentButton;
     }
+    //
+    /**
+     * Returns defaultButton to set settings and view to default
+     *
+     * @return Button
+     */
     public Button getDefaultButton(){
         return this.defaultButton;
     }
+    //
+    /**
+     * Returns applyButton to apply changes and close view
+     *
+     * @return
+     */
     public Button getApplyButton()
     {
         return this.applyButton;
     }
+    //
+    /**
+     * Returns textField which shows pipeline name
+     *
+     * @return TextField
+     */
     public TextField getTextField()
     {
         return this.textField;
     }
+    //</editor-fold>
 }
