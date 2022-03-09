@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -37,7 +38,11 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -1136,12 +1141,13 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                         tmpSugarFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
                     }
-                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                        try {
-                            IMoleculeFragmenter.saturateWithHydrogen(tmpSugarFragment);
-                        } catch (CDKException aCDKException) {
-                            Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                    try {
+                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                            ChemUtil.saturateWithHydrogen(tmpSugarFragment);
                         }
+                        ChemUtil.checkAndCorrectElectronConfiguration(tmpSugarFragment);
+                    } catch (CDKException aCDKException) {
+                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
                     }
                 }
             //else: only aglycone is returned, dispose of sugars
@@ -1161,26 +1167,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         }
         return tmpFragments;
     }
-
-    /*@Override
-    public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
-        Objects.requireNonNull(aFragmentList, "Given fragment list is null.");
-        //happens if only sugar moieties are set to be returned but there are no glycosides in the molecule
-        // otherwise, the molecule as a whole (aglycone) is returned
-        if (aFragmentList.size() == 0) {
-            return false;
-        }
-        if (Objects.isNull(aFragmentList.get(0))) {
-            throw new IllegalArgumentException("Object at position 0 is null, should be the deglycosylated molecule or a " +
-                    "sugar moiety.");
-        }
-        String tmpCategory = aFragmentList.get(0).getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY);
-        if (Objects.isNull(tmpCategory) || tmpCategory.isEmpty()) {
-            throw new IllegalArgumentException("Object at position 0 has no or an incorrect fragment category property, " +
-                    "should be the deglycosylated molecule or a sugar moiety.");
-        }
-        return !(aFragmentList.size() == 1);
-    }*/
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {

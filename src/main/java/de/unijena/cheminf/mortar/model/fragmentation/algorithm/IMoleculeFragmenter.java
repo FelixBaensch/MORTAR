@@ -22,22 +22,16 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 /**
  * TODO:
- * - Move saturateWithHydrogen() method to ChemUtil and implement a general-purpose post-removal-processing method
- *   (including also the electron configuration) there
+ * - 
  */
 
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
-import org.openscience.cdk.DefaultChemObjectBuilder;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.tools.CDKHydrogenAdder;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Central interface for implementing wrapper classes for fragmentation algorithms. To make a new fragmentation algorithm
@@ -189,22 +183,6 @@ public interface IMoleculeFragmenter {
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException;
 
-    //TODO: Is this method necessary? The "returned fragments option" makes it very complicated. A check of the returned list should be sufficient
-    /**
-     * Returns true if the fragmented molecule has e.g. functional groups or sugar moieties that are detected by the respective
-     * algorithm. The Ertl functional groups fragmenter, for example, returns the unchanged molecule as an alkane fragment
-     * if no functional groups can be identified. In this case, this method would return false. Other fragmenters might
-     * return no fragment at all in such a case. For harmonising these different behaviours, this method is implemented.
-     * Also, the type of returned fragments may depend on the fragmenter settings.
-     *
-     * @param aFragmentList a list of fragments resulting from one molecule through fragmentation by this fragmenter
-     * @return true if the fragmenter identified its specific type of molecular moieties, e.g. functional groups or
-     * sugar moieties
-     * @throws NullPointerException if fragment list is null
-     * @throws IllegalArgumentException if the given list did not result from a fragmentation done by this class
-     */
-    //public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException;
-
     /**
      * Returns true if the given molecule cannot be fragmented by the respective algorithm, even after preprocessing.
      * If the molecule is null, true is returned and no exception thrown.
@@ -249,23 +227,5 @@ public interface IMoleculeFragmenter {
      */
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException;
-    //</editor-fold>
-    //<editor-fold desc="Static methods">
-    /**
-     * Saturates free valences in the returned fragment molecules with implicit hydrogen atoms.
-     *
-     * @param aFragment to saturate
-     * @throws NullPointerException if the given fragment is null
-     * @throws CDKException if atom types cannot be assigned to all atoms of the fragment molecule
-     */
-    public static void saturateWithHydrogen(IAtomContainer aFragment) throws NullPointerException, CDKException {
-        Objects.requireNonNull(aFragment, "Given molecule fragment is null.");
-        if (aFragment.isEmpty()) {
-            //fragments might be empty on purpose, e.g. when there is no aglycon in a molecule
-            return;
-        }
-        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aFragment);
-        CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance()).addImplicitHydrogens(aFragment);
-    }
     //</editor-fold>
 }

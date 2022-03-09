@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -22,6 +22,8 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
+import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -29,10 +31,13 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.LonePairElectronChecker;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -102,6 +107,12 @@ public final class ChemUtil {
         return tmpMolecularFormulaString;
     }
 
+    /**
+     * Checks whether 3D coordinates are set for all atoms in the given molecule data model.
+     *
+     * @param aMolecule to check for 3D coordinates
+     * @return true if 3D coordinates are set for ALL atoms in the given molecule
+     */
     public static boolean has3DCoordinates(MoleculeDataModel aMolecule){
         IAtomContainer tmpFragment;
         try{
@@ -122,6 +133,12 @@ public final class ChemUtil {
         return tmpHas3DCoords;
     }
 
+    /**
+     * Checks whether 2D coordinates are set for all atoms in the given molecule data model.
+     *
+     * @param aMolecule to check for 2D coordinates
+     * @return true if 2D coordinates are set for ALL atoms in the given molecule
+     */
     public static boolean has2DCoordinates(MoleculeDataModel aMolecule){
         IAtomContainer tmpFragment;
         try{
@@ -142,21 +159,68 @@ public final class ChemUtil {
         return tmpHas2DCoords;
     }
 
+    /**
+     * Checks all atoms in all molecules in the given list for 3D or 2D coordinates. If only one atom has neither,
+     * false is returned.
+     *
+     * @param aListOfMolecules to check for 2D or 3D coordinates
+     * @return true if 2D or 3D coordinates are set for EVERY atom in EVERY molecule in the given list
+     */
     public static boolean checkMoleculeListForCoordinates(List<MoleculeDataModel> aListOfMolecules){
         if(aListOfMolecules == null || aListOfMolecules.size() == 0){
             return false;
         }
         boolean tmpHasCoords = true;
         for(MoleculeDataModel tmpMolecule : aListOfMolecules){
-            if(has3DCoordinates(tmpMolecule)){
-
-            } else if(has2DCoordinates(tmpMolecule)){
-                continue;
-            }else{
+            if(!ChemUtil.has3DCoordinates(tmpMolecule) && !ChemUtil.has2DCoordinates(tmpMolecule)){
                 tmpHasCoords = false;
+                break;
             }
         }
         return tmpHasCoords;
+    }
+
+    /**
+     * Saturates free valences in the given molecule or molecular fragment with implicit hydrogen atoms.
+     *
+     * @param aMolecule to saturate
+     * @throws NullPointerException if the given molecule is null
+     * @throws CDKException if atom types cannot be assigned to all atoms of the molecule
+     */
+    public static void saturateWithHydrogen(IAtomContainer aMolecule) throws NullPointerException, CDKException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            //fragments might be empty on purpose, e.g. when there is no aglycone in a molecule, so throw no exception
+            return;
+        }
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
+        CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance()).addImplicitHydrogens(aMolecule);
+        //just a precaution, you never know what can happen with fragment atom containers
+        for (IAtom tmpAtom : aMolecule.atoms()) {
+            if (tmpAtom.getImplicitHydrogenCount() == CDKConstants.UNSET) {
+                tmpAtom.setImplicitHydrogenCount(0);
+            }
+        }
+    }
+
+    /**
+     * Checks whether atoms in the given molecule have free atom pairs correctly assigned if chemically needed. If not,
+     * they are added.
+     *
+     * @param aMolecule to check for missing free electron pairs
+     * @throws NullPointerException if the given molecule is null
+     * @throws CDKException if atom types cannot be assigned to all atoms of the molecule
+     */
+    public static void checkAndCorrectElectronConfiguration(IAtomContainer aMolecule)
+            throws NullPointerException, CDKException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            //fragments might be empty on purpose, e.g. when there is no aglycon in a molecule, so throw no exception
+            return;
+        }
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
+        LonePairElectronChecker tmpElectronChecker = new LonePairElectronChecker();
+        tmpElectronChecker.saturate(aMolecule);
     }
     //</editor-fold>
 }

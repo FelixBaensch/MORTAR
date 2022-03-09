@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -42,7 +43,11 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinderUtility;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -776,8 +781,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                     tmpFunctionalGroup.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE);
                     if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                        IMoleculeFragmenter.saturateWithHydrogen(tmpFunctionalGroup);
+                        ChemUtil.saturateWithHydrogen(tmpFunctionalGroup);
                     }
+                    ChemUtil.checkAndCorrectElectronConfiguration(tmpFunctionalGroup);
                     //FG fragments are removed from molecule to generate alkane fragments
                     if (this.returnedFragmentsSetting.get().equals(EFGFFragmenterReturnedFragmentsOption.ALL_FRAGMENTS.name())
                             || this.returnedFragmentsSetting.get().equals(EFGFFragmenterReturnedFragmentsOption.ONLY_ALKANE_FRAGMENTS.name())) {
@@ -801,8 +807,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                             tmpContainer.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                                     ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
                             if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                                IMoleculeFragmenter.saturateWithHydrogen(tmpContainer);
+                                ChemUtil.saturateWithHydrogen(tmpContainer);
                             }
+                            ChemUtil.checkAndCorrectElectronConfiguration(tmpContainer);
                             tmpNonFGFragments.add(tmpContainer);
                         }
                     } else {
@@ -840,27 +847,6 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         }
         return tmpFragments;
     }
-
-    /*@Override
-    public boolean hasFragments(List<IAtomContainer> aFragmentList) throws NullPointerException, IllegalArgumentException {
-        Objects.requireNonNull(aFragmentList, "Given fragment list is null.");
-        //happens if only FG fragments are set to be returned but there are no FG in the molecule
-        // otherwise, the molecule as a whole is returned
-        if (aFragmentList.size() == 0) {
-            return false;
-        }
-        //there is at least one object in the list
-        if (Objects.isNull(aFragmentList.get(0))) {
-            throw new IllegalArgumentException("Object at position 0 is null, should be the original molecule or a " +
-                    "functional group fragment.");
-        }
-        String tmpCategory = aFragmentList.get(0).getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY);
-        if (Objects.isNull(tmpCategory) || tmpCategory.isEmpty()) {
-            throw new IllegalArgumentException("Object at position 0 has no or an incorrect fragment category property, " +
-                    "should be the original molecule, an alkane or a functional group fragment.");
-        }
-        return !(aFragmentList.size() == 1);
-    }*/
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
