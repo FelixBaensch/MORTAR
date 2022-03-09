@@ -220,7 +220,14 @@ public final class ChemUtil {
         }
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
         LonePairElectronChecker tmpElectronChecker = new LonePairElectronChecker();
-        tmpElectronChecker.saturate(aMolecule);
+        try {
+            tmpElectronChecker.saturate(aMolecule);
+        } catch (NullPointerException aNullPointerException) {
+            /* Too many fragment molecules cause this exception, the log file would be overflowing
+            ChemUtil.LOGGER.log(Level.WARNING, "Saturation with lone electron pairs not possible, molecule name: "
+                    + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), aNullPointerException);
+             */
+        }
     }
     //</editor-fold>
 }
