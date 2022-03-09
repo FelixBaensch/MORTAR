@@ -26,7 +26,12 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Util class for lists
+ * @author Felix Baensch
+ */
 public final class ListUtil {
+    //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
      * Sorts given list by property and sort type
      *
@@ -34,7 +39,7 @@ public final class ListUtil {
      * @param aProperty String
      * @param aSortType String
      */
-    public static void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType) { //TODO: Move to util class
+    public static void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType) {
         Collections.sort(aList, (m1, m2) -> {
             FragmentDataModel f1;
             FragmentDataModel f2;
@@ -102,4 +107,5 @@ public final class ListUtil {
             return 0;
         });
     }
+    //</editor-fold>
 }

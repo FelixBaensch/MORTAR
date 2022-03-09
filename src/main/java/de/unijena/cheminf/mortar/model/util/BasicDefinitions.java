@@ -86,11 +86,10 @@ public final class BasicDefinitions {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="System and directories">
-    //TODO: Change vendor name?
     /**
      * Vendor name of application to include in data directory path
      */
-    public static final String MORTAR_VENDOR = "UniJena";
+    public static final String MORTAR_VENDOR = "WHS_IBCI";
 
     /**
      * Directory name for MORTAR data
@@ -103,29 +102,14 @@ public final class BasicDefinitions {
     public static final String LOG_FILES_DIRECTORY = "Logs";
 
     /**
-     *  Directory name for storing image files
-     */
-    public static final String IMAGE_FILES_DIRECTORY = "Images";
-
-    /**
      * Name for Log files
      */
     public static final String LOG_FILE_NAME = "Mortar_Log";
 
     /**
-     *  Name for Image files
-     */
-    public static final String IMAGE_FILE_NAME = "Molecule_File";
-
-    /**
      * Name extension (denoting the file type) of log files
      */
     public static final String LOG_FILE_NAME_EXTENSION = ".txt";
-
-    /**
-     *  Name extension of (denoting the file type) of image files
-     */
-    public static final String IMAGE_FILE_NAME_EXTENSION = ".png";
 
     /**
      * Name of the folder where all settings (global, fragmenter, pipeline) are persisted.

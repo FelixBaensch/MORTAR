@@ -21,8 +21,7 @@
 package de.unijena.cheminf.mortar.model.settings;
 
 /**
- * TODO:
- * - Important note for developers: When adding a new setting represented by a string, also consider the
+ * Important note for developers: When adding a new setting represented by a string, also consider the
  * SingleTermPreference class input restrictions when testing whether an input is valid!
  */
 

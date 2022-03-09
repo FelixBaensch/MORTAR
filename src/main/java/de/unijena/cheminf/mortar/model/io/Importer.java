@@ -312,15 +312,15 @@ public class Importer {
     private String findMoleculeName(IAtomContainer anAtomContainer) {
         String tmpName = anAtomContainer.getTitle();
         Set<String> keySet = (Set<String>)(Set<?>)anAtomContainer.getProperties().keySet();
-        if(tmpName == null  && keySet.stream().anyMatch(k -> k.contains("name") || k.contains("Name") || k.contains("NAME"))){
-            String key = keySet.stream().filter(k -> k.contains("name") || k.contains("Name") || k.contains("NAME")).findFirst().get();
+        if(tmpName == null  && keySet.stream().anyMatch(k -> (k.toLowerCase().contains("name")) && !k.equalsIgnoreCase("Database_Name"))){
+            String key = keySet.stream().filter(k -> k.toLowerCase().contains("name")).findFirst().get();
             tmpName = anAtomContainer.getProperty(key);
         }
-        if((tmpName == null || tmpName.equals("None") || tmpName.equals("NONE")) && keySet.stream().anyMatch(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID"))){
-            String key = keySet.stream().filter(k -> k.contains("id") || k.contains("iD") || k.contains("Id") || k.contains("ID")).findFirst().get();
+        if((tmpName == null || tmpName.equalsIgnoreCase("None")) && keySet.stream().anyMatch(k -> k.toLowerCase().contains("id"))){
+            String key = keySet.stream().filter(k -> k.toLowerCase().contains("id")).findFirst().get();
             tmpName = anAtomContainer.getProperty(key);
-        } //TODO: add keys, maybe SMILES
-        if(tmpName != null && (tmpName.equals("None") || tmpName.equals("NONE")))
+        }
+        if(tmpName != null && (tmpName.equalsIgnoreCase("None")))
             tmpName = null;
         return tmpName;
     }

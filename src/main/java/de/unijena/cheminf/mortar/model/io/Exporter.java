@@ -251,7 +251,8 @@ public class Exporter {
      * @param isSingleExport         boolean if fragments should be exported in one file or seperated, one file each fragment
      */
     public void exportFragmentsAsChemicalFile(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isSingleExport) {
-        if (aFragmentDataModelList == null || aFragmentDataModelList.size() == 0) {
+        Objects.requireNonNull(aParentStage, "aParentStage must not be null");
+        if (aFragmentDataModelList == null || aFragmentDataModelList.size() == 0 || aFragmentationName == null) {
             GuiUtil.guiMessageAlert(
                     Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
@@ -345,8 +346,6 @@ public class Exporter {
     //</editor-fold>
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
-    //TODO: Parameter tests necessary?
-    //TODO: Move literals like header texts to properties file or constants?
 
     /**
      * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file.
@@ -362,31 +361,27 @@ public class Exporter {
                                              String aFragmentationName,
                                              String aSeparator)
             throws FileNotFoundException {
-        if (aCsvFile != null) {
-            PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
-            StringBuilder tmpCsvHeader = new StringBuilder();
-            tmpCsvHeader.append(Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
-                    Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
-                    Message.get("Exporter.itemsTab.csvHeader.smilesOfFragmentsAndFrequency") + "\n");
-            tmpWriter.write(tmpCsvHeader.toString());
-            for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
-                tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
-                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
-                for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
-                    tmpWriter.append(aSeparator);
-                    tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
-                }
-                tmpWriter.append("\n");
-            }
-            tmpWriter.close();
-        } else {
+        if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
             return;
         }
+        PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
+        StringBuilder tmpCsvHeader = new StringBuilder();
+        tmpCsvHeader.append(Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
+                Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
+                Message.get("Exporter.itemsTab.csvHeader.smilesOfFragmentsAndFrequency") + "\n");
+        tmpWriter.write(tmpCsvHeader.toString());
+        for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+            tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
+            List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
+            for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
+                tmpWriter.append(aSeparator);
+                tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
+            }
+            tmpWriter.append("\n");
+        }
+        tmpWriter.close();
     }
     //
-    //TODO: Parameter tests necessary?
-    //TODO: Move literals like header texts to properties file or constants?
-
     /**
      * Exports the fragmentation results as they are displayed on the fragments tab as a CSV file.
      *
@@ -397,7 +392,7 @@ public class Exporter {
      */
     private void createFragmentationTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, String aSeparator)
             throws FileNotFoundException {
-        if (aCsvFile != null || aList == null) {
+        if (aCsvFile == null || aList == null) {
             return;
         }
         PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
@@ -419,9 +414,6 @@ public class Exporter {
 
     }
     //
-    //TODO: Improve exception handling so that it does not kill the whole export if one fragment is faulty
-    //TODO: See tasks and issues document for further to dos concerning the PDF export
-
     /**
      * Exports the fragmentation results as they are displayed on the fragments tab as a PDF file. Opens a file chooser
      * dialog for the user to determine a directory and file for the exported data.
@@ -438,10 +430,8 @@ public class Exporter {
                                                List<MoleculeDataModel> aFragmentDataModelList,
                                                ObservableList<MoleculeDataModel> aMoleculeDataModelList,
                                                String aFragmentationName) throws FileNotFoundException, DocumentException {
-        if (aPdfFile == null ||
-                aFragmentDataModelList == null || aFragmentDataModelList.size() == 0 ||
-                aMoleculeDataModelList == null || aMoleculeDataModelList.size() == 0 ||
-                aFragmentationName == null || aFragmentationName.isEmpty()) {
+        if (aPdfFile == null || aFragmentDataModelList == null || aMoleculeDataModelList == null ||
+                aFragmentationName == null) {
             return;
         }
         Document tmpDocument = new Document(PageSize.A4);
@@ -514,9 +504,6 @@ public class Exporter {
         tmpDocument.close();
     }
     //
-    //TODO: Improve exception handling so that it does not kill the whole export if one fragment is faulty
-    //TODO: See tasks and issues document for further to dos concerning the PDF export
-
     /**
      * Exports the fragmentation results as they are displayed on the itemization tab as a PDF file. Opens a file chooser
      * dialog for the user to determine a directory and file for the exported data.
@@ -535,7 +522,7 @@ public class Exporter {
                                              String aFragmentationName) throws FileNotFoundException, DocumentException {
         if (aPdfFile != null || aFragmentDataModelListSize == 0 ||
                 aMoleculeDataModelList == null || aMoleculeDataModelList.size() == 0 ||
-                aFragmentationName.isEmpty()) {
+                aFragmentationName == null || aFragmentationName.isEmpty()) {
             return;
         }
         Document tmpDocument = new Document(PageSize.A4);
@@ -622,7 +609,6 @@ public class Exporter {
         tmpDocument.close();
     }
     //
-
     /**
      * Exports the chemical data of the given fragments as a single MDL SD file to the chosen
      * destination. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format depends
@@ -923,7 +909,7 @@ public class Exporter {
      *
      * @param aFragmentDataModelListSize size of list of fragments
      * @param aMoleculeDataModelListSize size of list of molecules
-     * @param anAlgorithmName            name of the used algorithm
+     * @param anAlgorithmName name of the used algorithm
      * @return fragmentation report table for a PDF file header
      * @author Betül Sevindik
      */

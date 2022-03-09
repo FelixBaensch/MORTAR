@@ -34,6 +34,14 @@ import java.util.logging.Logger;
  * @author Achim Zielesny, Jonas Schaub, Felix Baensch
  */
 public final class FileUtil {
+
+    //<editor-fold desc="Private static class variables" defaultstate="collapsed">
+    /**
+     * Cache String for app dir path
+     */
+    private static String appDirPath = null;
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public static final class constants">
     /**
      * Logger of this class.
@@ -198,8 +206,6 @@ public final class FileUtil {
         }
     }
 
-    //TODO: If we put the path in a static variable not to determine the OS etc. every time, would this create a bottle neck at parallelization?
-    // "AppDirPath" should be set initially once (maybe as a preference), since it does not change during the application and therefore does not have to be queried several times using this method
     /**
      * Returns data path of the application (depending on OS). If the path does not exist yet, it will be created.
      *
@@ -208,6 +214,9 @@ public final class FileUtil {
      * path cannot be determined or data directory cannot be created
      */
     public static String getAppDirPath() throws SecurityException {
+        if(FileUtil.appDirPath != null){
+            return FileUtil.appDirPath;
+        }
         String tmpAppDir;
         String tmpOS = System.getProperty("os.name").toUpperCase();
         if (tmpOS.contains("WIN"))
@@ -230,7 +239,8 @@ public final class FileUtil {
             tmpSuccessful = tmpAppDirFile.mkdirs();
         if (!tmpSuccessful)
             throw new SecurityException("Unable to create application data directory");
-        return tmpAppDir;
+        FileUtil.appDirPath = tmpAppDir;
+        return FileUtil.appDirPath;
     }
 
     /**

@@ -90,7 +90,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.getSelectionModel().setCellSelectionEnabled(true);
         //-nameColumn
         this.nameColumn = new TableColumn<>(Message.get("MainTabPane.itemizationTab.tableView.nameColumn.header"));
-        this.nameColumn.setMinWidth(100);
+        this.nameColumn.setMinWidth(100); //magic number
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(true);
@@ -98,18 +98,18 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         this.nameColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.15)
+                this.widthProperty().multiply(0.15) //magic number
         );
         //-moleculeStructureColumn
         this.moleculeStructureColumn = new TableColumn<>(Message.get("MainTabPane.itemizationTab.tableView.moleculeStructureColumn.header"));
-        this.moleculeStructureColumn.setMinWidth(300);
+        this.moleculeStructureColumn.setMinWidth(300); //magic number
         this.moleculeStructureColumn.setResizable(true);
         this.moleculeStructureColumn.setEditable(false);
         this.moleculeStructureColumn.setSortable(false);
         this.moleculeStructureColumn.setCellValueFactory(new PropertyValueFactory("structure"));
         this.moleculeStructureColumn.setStyle("-fx-alignment: CENTER");
         this.moleculeStructureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.3)
+                this.widthProperty().multiply(0.3) //magic number
         );
         //-fragmentStructureColumn
         this.fragmentStructureColumn = new TableColumn<>(Message.get("MainTabPane.itemizationTab.tableView.fragmentsColumn.header"));
@@ -119,7 +119,6 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.fragmentStructureColumn.setStyle("-fx-alignment: CENTER");
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
-//            TableColumn<MoleculeDataModel, BorderPane> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
             TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
             tmpColumn.setResizable(true);
             tmpColumn.setEditable(false);
@@ -146,6 +145,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.contextMenu.getItems().add(this.copyMenuItem);
     }
     //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      * Creates an itemization tableview page
      *
@@ -174,15 +174,41 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
             this.refresh();
         });
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns name of fragmentation
+     *
+     * @return String
+     */
     public String getFragmentationName(){
         return this.fragmentationName;
     }
+    //
+    /**
+     * Returns list of items shown in TableView
+     *
+     * @return List<MoleculeDataModel>
+     */
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    //
+    /**
+     * Returns MenuItem to copy selected cell
+     *
+     * @return MenuItem
+     */
     public MenuItem getCopyMenuItem(){
         return this.copyMenuItem;
     }
+    //
+    /**
+     * Sets items to list
+     *
+     * @param aListOfFragments List<MoleculeDataModel>
+     */
     public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;
     }
+    //</editor-fold>
 }

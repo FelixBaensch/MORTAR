@@ -132,16 +132,14 @@ public class FragmentationSettingsViewController {
         this.settingsView.getApplyButton().setOnAction(event -> {
             this.fragmentationSettingsViewStage.close();
         });
-        //cancelButton //TODO: cancel all changes?
+        //cancelButton
         this.settingsView.getCancelButton().setOnAction(event -> {
             for(int i = 0; i < this.fragmenters.length; i++){
-                if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
-                    this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
-                }
+                this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
             }
             this.fragmentationSettingsViewStage.close();
         });
-        //defaultButton //TODO: restore all settings?
+        //defaultButton
         this.settingsView.getDefaultButton().setOnAction(event -> {
             for(int i = 0; i < this.fragmenters.length; i++){
                 if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){

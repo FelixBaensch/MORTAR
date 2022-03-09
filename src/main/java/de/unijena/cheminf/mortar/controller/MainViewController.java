@@ -584,7 +584,7 @@ public class MainViewController {
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
         this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.fragmentButton.text"));
-        ButtonBar tmpButtonBar = new ButtonBar(); //TODO: adjust button bar height to pagination control height
+        ButtonBar tmpButtonBar = new ButtonBar();
         tmpButtonBar.setPadding(new Insets(0,0,0,0));
         this.fragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.fragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);

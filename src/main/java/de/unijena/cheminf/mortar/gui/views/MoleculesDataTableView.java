@@ -29,7 +29,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
@@ -92,7 +96,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.selectionColumn.setGraphic(this.selectAllCheckBox);
         this.selectionColumn.setMinWidth(GuiDefinitions.GUI_MOLECULES_TAB_TABLEVIEW_SELECTION_COLUMN_WIDTH);
         this.selectionColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.05)
+                this.widthProperty().multiply(0.05) //magic number
         );
         this.selectionColumn.setResizable(false);
         this.selectionColumn.setEditable(true);
@@ -101,9 +105,9 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.selectionColumn.setCellFactory(tc -> new CheckBoxTableCell<>());
         //-nameColumn
         this.nameColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.nameColumn.header"));
-        this.nameColumn.setMinWidth(150);
+        this.nameColumn.setMinWidth(150); //magic number
         this.nameColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.15)
+                this.widthProperty().multiply(0.15) //magic number
         );
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
@@ -113,9 +117,9 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         //-structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.structureColumn.header"));
-        this.structureColumn.setMinWidth(150);
+        this.structureColumn.setMinWidth(150); //magic number
         this.structureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.7975)
+                this.widthProperty().multiply(0.7975) //magic number
         );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
@@ -133,6 +137,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.contextMenu.getItems().add(this.copyMenuItem);
     }
     //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      * Creates a page for the pagination for the dataTableView based on page index and settings, which shows the imported
      * molecules
@@ -201,6 +206,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
             this.refresh();
         });
     }
+    //</editor-fold>
     //
     //<editor-fold desc="properties" defaulstate="collapsed">
     public TableColumn getSelectionColumn(){
