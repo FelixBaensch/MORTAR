@@ -44,7 +44,7 @@ import java.util.List;
  * Customized table view for molecules data table view
  */
 public class MoleculesDataTableView extends TableView implements IDataTableView {
-    //
+
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * TableColumn for selection state of the molecule

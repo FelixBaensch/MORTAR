@@ -20,10 +20,6 @@
 
 package de.unijena.cheminf.mortar.model.depict;
 
-/**
- * TODO: Add doc and code folds
- */
-
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import javafx.scene.image.Image;
 import org.openscience.cdk.depict.DepictionGenerator;
@@ -40,61 +36,72 @@ import java.awt.image.BufferedImage;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Util class for depiction
+ *
+ * @author Felix Baensch, Jonas Schaub
+ */
 public class DepictionUtil {
 
+    //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(DepictionUtil.class.getName());
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
-     * Creates an Image of the AtomContainer with default width (250.0) and height (250.0).
+     * Creates and returns an Image of the given AtomContainer
      *
-     * @param anAtomContainer
-     * @return
+     * @param anAtomContainer IAtomContainer
+     * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImage(IAtomContainer anAtomContainer, double aWidth, double aHeight) {
         return depictImageWithZoom(anAtomContainer, 1.0, aWidth, aHeight);
     }
+    //
     /**
-     * Creates an Image of the AtomContainer with given height and default width (250.0).
+     * Creates and returns an Image of the AtomContainer with given height and default width (250.0).
      *
-     * @param anAtomContainer
-     * @param aHeight
-     * @return
+     * @param anAtomContainer IAtomContainer
+     * @param aHeight double
+     * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithHeight(IAtomContainer anAtomContainer, double aHeight) {
         return depictImageWithZoom(anAtomContainer, 1.0, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, aHeight);
     }
+    //
     /**
-     * Creates an Image of the AtomContainer with given width and default height (250.0).
+     * Creates and returns an Image of the AtomContainer with given width and default height (250.0).
      *
-     * @param anAtomContainer
-     * @param aWidth
-     * @return
+     * @param anAtomContainer IAtomContainer
+     * @param aWidth double
+     * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithWidth(IAtomContainer anAtomContainer, double aWidth) {
         return depictImageWithZoom(anAtomContainer, 1.0, aWidth, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
+    //
     /**
-     * Creates an Image of the AtomContainer with any zoom factor and default width (250.0) and height (250.0)
+     * Creates and returns an Image of the AtomContainer with any zoom factor and default width (250.0) and height (250.0)
      *
-     * @param anAtomContainer
-     * @param aZoom
-     * @return Image
+     * @param anAtomContainer IAtomContainer
+     * @param aZoom double
+     * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom){
         return depictImageWithZoom(anAtomContainer, aZoom, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
-
+    //
     /**
-     * Creates an Image of the AtomContainer with any zoom factor and given width and height.
+     * Creates and returns an Image of the AtomContainer with any zoom factor and given width and height.
      *
-     * @param anAtomContainer
-     * @param aZoom
-     * @param aWidth
-     * @param aHeight
-     * @return Image
+     * @param anAtomContainer IAtomContainer
+     * @param aZoom double
+     * @param aWidth double
+     * @param aHeight double
+     * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) {
         try {
@@ -107,11 +114,12 @@ public class DepictionUtil {
     }
     //
     /**
-     * Creates an image of the given message.
+     * Creates and returns an image of the given message.
      *
-     * @param aMessage
-     * @param aWidth
-     * @param aHeight
+     * @param aMessage String
+     * @param aWidth int
+     * @param aHeight int
+     * @return Image of given String
      */
     public static Image depictErrorImage(String aMessage, int aWidth, int aHeight) {
         String tmpMessage;
@@ -145,14 +153,14 @@ public class DepictionUtil {
     }
     //
     /**
-     * Depicts an image with the given text below
+     * Depicts and returns an image with the given text below
      *
-     * @param anAtomContainer
-     * @param aZoom
-     * @param aWidth
-     * @param aHeight
-     * @param aString
-     * @return
+     * @param anAtomContainer IAtomContainer
+     * @param aZoom double
+     * @param aWidth double
+     * @param aHeight double
+     * @param aString String
+     * @return Image of 2D structure of IAtomContainer with given String below
      */
     public static Image depictImageWithText(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, String aString){
         try{
@@ -181,14 +189,17 @@ public class DepictionUtil {
             return DepictionUtil.depictErrorImage(anException.getMessage(), 250,250);
         }
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="private static methods" defaultstate="collapsed">
     /**
+     * Creates and returns a BufferedImage of given IAtomContainer
      *
-     * @param anAtomContainer
-     * @param aZoom
-     * @param aWidth
-     * @param aHeight
-     * @return
+     * @param anAtomContainer IAtomContainer
+     * @param aZoom double
+     * @param aWidth double
+     * @param aHeight double
+     * @return BufferedImage of given IAtomContainer
      * @throws CDKException
      */
     private static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) throws CDKException {
@@ -196,4 +207,5 @@ public class DepictionUtil {
         tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
         return tmpGenerator.depict(anAtomContainer).toImg();
     }
+    //</editor-fold>
 }

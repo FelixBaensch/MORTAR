@@ -71,15 +71,21 @@ public class FragmentationSettingsViewController {
     private static final Logger LOGGER = Logger.getLogger(FragmentationSettingsViewController.class.getName());
     //</editor-fold>
 
-
-    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayofFragmenters, String aSelectedFragmenterAlgorithmName){
+    /**
+     * Constructor
+     *
+     * @param aStage Stage
+     * @param anArrayOfFragmenters IMoleculeFragmenter[]
+     * @param aSelectedFragmenterAlgorithmName String
+     */
+    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName){
         this.mainStage = aStage;
-        this.recentProperties = new HashMap<>(anArrayofFragmenters.length);
-        this.fragmenters = anArrayofFragmenters;
+        this.recentProperties = new HashMap<>(anArrayOfFragmenters.length);
+        this.fragmenters = anArrayOfFragmenters;
         this.selectedFragmenterName = aSelectedFragmenterAlgorithmName;
         this.openFragmentationSettingsView();
     }
-
+    //
     /**
      * Initialises and opens a settings view for fragmentationSettings
      */
@@ -108,10 +114,9 @@ public class FragmentationSettingsViewController {
             }
         }
     }
-
+    //
     /**
      * Adds listeners
-     * TODO: add tooltips for buttons
      */
     private void addListener(){
         //fragmentationSettingsViewStage close request
@@ -127,7 +132,7 @@ public class FragmentationSettingsViewController {
         this.settingsView.getApplyButton().setOnAction(event -> {
             this.fragmentationSettingsViewStage.close();
         });
-        //cancelButton
+        //cancelButton //TODO: cancel all changes?
         this.settingsView.getCancelButton().setOnAction(event -> {
             for(int i = 0; i < this.fragmenters.length; i++){
                 if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
@@ -136,7 +141,7 @@ public class FragmentationSettingsViewController {
             }
             this.fragmentationSettingsViewStage.close();
         });
-        //defaultButton
+        //defaultButton //TODO: restore all settings?
         this.settingsView.getDefaultButton().setOnAction(event -> {
             for(int i = 0; i < this.fragmenters.length; i++){
                 if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
