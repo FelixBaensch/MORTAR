@@ -42,10 +42,8 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -203,11 +201,10 @@ public class AboutViewController {
             // process XML securely, avoid attacks like XML External Entities (XXE)
             tmpDocumentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             DocumentBuilder tmpDocBuilder = tmpDocumentBuilderFactory.newDocumentBuilder();
-            Document tmpDoc = tmpDocBuilder.parse(new File(getClass().getClassLoader().getResource(this.toolsXmlFileName).toURI()));
+            Document tmpDoc = tmpDocBuilder.parse(getClass().getClassLoader().getResourceAsStream(this.toolsXmlFileName));
             if(tmpDoc == null){
                 throw new FileNotFoundException("File not found " + this.toolsXmlFileName);
             }
-
             // optional, but recommended
             // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
             tmpDoc.getDocumentElement().normalize();
@@ -224,7 +221,7 @@ public class AboutViewController {
                     this.toolObservableList.add(tmpTool);
                 }
             }
-        } catch (ParserConfigurationException | IOException | URISyntaxException | SAXException anException) {
+        } catch (ParserConfigurationException | IOException | SAXException anException) {
             LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }
     }
