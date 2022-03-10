@@ -49,6 +49,9 @@ import java.util.logging.Logger;
 
 /**
  * Controller class for the PipelineSettingsView
+ *
+ * @author Felix Baensch
+ * @version 1.0
  */
 public class PipelineSettingsViewController {
 
@@ -96,6 +99,10 @@ public class PipelineSettingsViewController {
      * Boolean value to enable fragment button if molecules are loaded
      */
     private boolean isMoleculeDataLoaded;
+    /**
+     * Boolean value whether a fragmentation is running
+     */
+    private boolean isFragmentationRunning;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -112,7 +119,7 @@ public class PipelineSettingsViewController {
      * @param aFragmentationService FragmentationService
      * @param isMoleculeDataLoaded boolean whether molecule data is loaded
      */
-    public PipelineSettingsViewController(Stage aMainStage, FragmentationService aFragmentationService, boolean isMoleculeDataLoaded){
+    public PipelineSettingsViewController(Stage aMainStage, FragmentationService aFragmentationService, boolean isMoleculeDataLoaded, boolean isFragmentationRunning){
         this.mainStage = aMainStage;
         this.algorithmCounter = 0;
         this.fragmentationService = aFragmentationService;
@@ -122,6 +129,7 @@ public class PipelineSettingsViewController {
         this.cancelChangesInFragmenterList();
         this.isFragmentationStarted = false;
         this.isMoleculeDataLoaded = isMoleculeDataLoaded;
+        this.isFragmentationRunning = isFragmentationRunning;
         this.showPipelineSettingsView();
     }
     //
@@ -148,6 +156,7 @@ public class PipelineSettingsViewController {
             }
             this.setPipelineName(this.fragmentationService.getPipeliningFragmentationName());
             this.pipelineSettingsView.getFragmentButton().setDisable(!this.isMoleculeDataLoaded);
+            this.pipelineSettingsView.getFragmentButton().setDisable(this.isFragmentationRunning);
         });
         this.pipelineSettingsViewStage.showAndWait();
     }

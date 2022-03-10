@@ -36,6 +36,8 @@ import java.util.Map;
 /**
  * SettingsViewController
  * controls {@link SettingsView} for {@link SettingsContainer}
+ * @author Felix Baensch
+ * @version 1.0
  */
 public class SettingsViewController {
 
@@ -70,7 +72,7 @@ public class SettingsViewController {
      */
     private boolean hasKeepAtomContainerInDataModelChanged;
     //</editor-fold>
-
+    //
     /**
      * Constructor
      *
@@ -84,7 +86,8 @@ public class SettingsViewController {
         this.recentProperties = new HashMap<>(this.settingsContainer.settingsProperties().size());
         this.showSettingsView();
     }
-
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      * Initialises and opens settingsView
      */
@@ -107,7 +110,7 @@ public class SettingsViewController {
         });
         this.settingsViewStage.showAndWait();
     }
-
+    //
     /**
      * Adds listeners and event handlers to the buttons of the settings view
      */
@@ -135,7 +138,7 @@ public class SettingsViewController {
             this.settingsContainer.restoreDefaultSettings();
         });
     }
-
+    //
     /**
      * Sets the properties to the values of the 'recentPropertiesMap'
      */
@@ -148,7 +151,9 @@ public class SettingsViewController {
             }
         });
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
      * Returns boolean value whether if rowsPerPage property has changed or not
      * @return hasRowsPerPageChanged
@@ -156,7 +161,7 @@ public class SettingsViewController {
     public boolean hasRowsPerPageChanged() {
         return this.hasRowsPerPageChanged;
     }
-
+    //
     /**
      * Returns boolean value whether if keepAtomContainerInDataModel property has changed or not.
      * @return hasKeepAtomContainerInDataModelChanged
@@ -164,5 +169,5 @@ public class SettingsViewController {
     public boolean hasKeepAtomContainerInDataModelChanged() {
         return this.hasKeepAtomContainerInDataModelChanged;
     }
-
+    //</editor-fold>
 }

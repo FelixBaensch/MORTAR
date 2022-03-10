@@ -89,6 +89,7 @@ import java.util.stream.Collectors;
  * controls  {@link MainView}.
  *
  * @author Felix Baensch, Jonas Schaub
+ * @version 1.0
  */
 public class MainViewController {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -411,6 +412,7 @@ public class MainViewController {
         if (Objects.isNull(tmpFile)) {
             return;
         }
+
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
         }
@@ -498,7 +500,7 @@ public class MainViewController {
     //
     private void openPipelineSettingsView(){
         PipelineSettingsViewController tmpPipelineSettingsViewController =
-                new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, this.moleculeDataModelList.size() > 0);
+                new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, this.moleculeDataModelList.size() > 0, this.isFragmentationRunning);
         if(tmpPipelineSettingsViewController.isFragmentationStarted()){
             this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationStarted());
         }

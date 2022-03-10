@@ -48,6 +48,12 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Controller class for AboutView
+ *
+ * @author Felix Baensch
+ * @version 1.0
+ */
 public class AboutViewController {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">

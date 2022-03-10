@@ -119,11 +119,12 @@ public class AboutView extends AnchorPane {
         SplitPane tmpSplitPane = new SplitPane();
         tmpSplitPane.setOrientation(Orientation.VERTICAL);
         borderPane.setCenter(tmpSplitPane);
+        tmpSplitPane.prefWidthProperty().bind(this.widthProperty());
+        tmpSplitPane.maxWidthProperty().bind(this.widthProperty());
         //-splitPane top -> gridPane for text and logo
         this.gridPane = new GridPane();
         VBox.setVgrow(this.gridPane, Priority.ALWAYS);
         HBox.setHgrow(this.gridPane, Priority.ALWAYS);
-
         ColumnConstraints tmpTextCol = new ColumnConstraints();
         tmpTextCol.prefWidthProperty().bind(
                 this.gridPane.widthProperty().multiply(0.4975)
@@ -177,7 +178,6 @@ public class AboutView extends AnchorPane {
         GridPane.setValignment(this.logoImageView, VPos.CENTER);
         //-splitPane bottom -> tabPane for tools etc.
         TabPane tabPane = new TabPane();
-        tabPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         tmpSplitPane.getItems().add(1, tabPane);
         Tab tmpToolsTab = new Tab(Message.get("AboutView.toolsTab.title.text"));
         tmpToolsTab.setClosable(false);
@@ -185,6 +185,7 @@ public class AboutView extends AnchorPane {
         //-tableView
         this.tableView = new TableView();
         this.tableView.setEditable(false);
+        this.tableView.maxWidthProperty().bind(tabPane.widthProperty());
         //-name column
         TableColumn<ExternalTool, String> tmpNameCol = new TableColumn<>(Message.get("AboutView.toolsTable.nameHeader.text"));
         tmpNameCol.setCellValueFactory(new PropertyValueFactory("name"));

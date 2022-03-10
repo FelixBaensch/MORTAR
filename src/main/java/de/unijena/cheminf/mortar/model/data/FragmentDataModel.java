@@ -20,12 +20,16 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import javafx.scene.image.ImageView;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -159,23 +163,24 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Creates and returns an ImageView of first parent molecule as 2D structure of this fragment
      *
+     * NOTE: Do not delete or comment this method, it is used by reflection
      * @return ImageView
      */
-//    public ImageView getParentMoleculeStructure() {
-//        if(this.parentMolecules.size() < 1){
-//            return null;
-//        }
-//        if(this.parentMolecule == null){
-//            this.parentMolecule = this.parentMolecules.get(0);
-//        }
-//        try {
-//            IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
-//            return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
-//        } catch (CDKException aCDKException) {
-//            FragmentDataModel.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString() + "_" + this.parentMolecule.getName(), aCDKException);
-//            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
-//        }
-//    }
+    public ImageView getParentMoleculeStructure() {
+        if(this.parentMolecules.size() < 1){
+            return null;
+        }
+        if(this.parentMolecule == null){
+            this.parentMolecule = this.parentMolecules.get(0);
+        }
+        try {
+            IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
+            return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
+        } catch (CDKException aCDKException) {
+            FragmentDataModel.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString() + "_" + this.parentMolecule.getName(), aCDKException);
+            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
+        }
+    }
     //
     /**
      * Returns the name of first parent molecule of this fragment

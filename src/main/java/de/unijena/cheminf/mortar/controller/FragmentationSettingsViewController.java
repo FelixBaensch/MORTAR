@@ -37,6 +37,9 @@ import java.util.logging.Logger;
 /**
  * SettingsViewController
  * controls {@link SettingsView} for fragmentation settings
+ *
+ * @author Felix Baensch
+ * @version 1.0
  */
 public class FragmentationSettingsViewController {
 
