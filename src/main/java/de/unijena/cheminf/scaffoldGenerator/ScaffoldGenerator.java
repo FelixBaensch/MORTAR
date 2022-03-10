@@ -1743,7 +1743,7 @@ public class ScaffoldGenerator {
      * Sort out the rings according to the second Schuffenhauer rule.
      * Based on the second rule from the  <a href="https://doi.org/10.1021/ci600338x">
      * "The Scaffold Tree"</a> Paper by Schuffenhauer et al. <p>
-     * The rule says: Do not remove rings with >= 12 Atoms if there are still smaller rings to remove.
+     * The rule says: Do not remove rings with {@literal >}= 12 Atoms if there are still smaller rings to remove.
      * Therefore, this method prefers smaller rings when macro rings are present.
      * If no macro rings are present, all rings entered will be returned.
      * @param aRings Removable rings of the molecule to which the rule is applied
@@ -2070,7 +2070,7 @@ public class ScaffoldGenerator {
      * Sort out the rings according to the ninth Schuffenhauer rule.
      * Based on the ninth rule from the  <a href="https://doi.org/10.1021/ci600338x">
      * "The Scaffold Tree"</a> Paper by Schuffenhauer et al. <p>
-     * The rule says: If the Number of Heteroatoms Is Equal, the Priority of Heteroatoms to Retain is N > O > S.
+     * The rule says: If the Number of Heteroatoms Is Equal, the Priority of Heteroatoms to Retain is N {@literal >} O {@literal >} S.
      * Therefore, the number of cyclic N, O and S of each ring is counted
      * The rings that have the lowest value of heteroatoms according to this rule are selected.
      * If two rings have the same number of N, their amount of O is considered.

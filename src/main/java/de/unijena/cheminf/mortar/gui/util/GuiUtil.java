@@ -166,7 +166,7 @@ public class GuiUtil {
     /**
      * Sorts the items of the TableView over all pages of the pagination and adds
      *
-     * @param anEvent SortEvent<TableView>
+     * @param anEvent SortEvent {@literal <}TableView {@literal >}
      * @param tmpPagination Pagination
      * @param tmpRowsPerPage int
      */
@@ -244,7 +244,7 @@ public class GuiUtil {
     }
     //
     /**
-     * Returns a String <-> Integer converter that mostly relies on the given toString() and fromString() methods
+     * Returns a String {@literal <->} Integer converter that mostly relies on the given toString() and fromString() methods
      * but additionally turns empty strings, "-", ".", and "-." into 0.
      *
      * @return String-Integer converter
@@ -268,7 +268,7 @@ public class GuiUtil {
     }
     //
     /**
-     * Returns a String <-> Double converter that mostly relies on the given toString() and fromString() methods
+     * Returns a String {@literal <->} Double converter that mostly relies on the given toString() and fromString() methods
      * but additionally turns empty strings, "-", ".", and "-." into 0.0.
      *
      * @return String-Double converter

@@ -150,6 +150,7 @@ public class MoleculeDataModel {
      * SMILES code.
      *
      * @return IAtomContainer atom container of the molecule
+     * @throws CDKException if SMILES parsing, kekulization, or atom type matching fails
      */
     public IAtomContainer getAtomContainer() throws CDKException {
         SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
@@ -185,7 +186,7 @@ public class MoleculeDataModel {
     //TODO: should this not be getSelection(), following the properties naming convention?
     /**
      * Returns boolean telling whether molecule is selected or not
-     * @returns true if molecule is selected
+     * @return true if molecule is selected
      */
     public boolean isSelected(){
         return this.selection.get();
@@ -203,7 +204,8 @@ public class MoleculeDataModel {
      * Returns the fragments map of this molecule data model. The map contains as keys names of fragmentations done to
      * the molecule and as values lists of {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that
      * resulted from these fragmentations.
-     * @return HashMap<fragmentationName, List<FragmentDataModel>>
+     *
+     * @return HashMap {@literal <}fragmentationName, List {@literal <}FragmentDataModel {@literal >>}
      */
     public HashMap<String, List<FragmentDataModel>> getAllFragments(){
         return this.fragments;
@@ -212,7 +214,7 @@ public class MoleculeDataModel {
     /**
      * Returns a list of unique fragments that resulted from the fragmentation of the molecule with the given name.
      * @param aKey String specifies fragmentation or fragmentation algorithm
-     * @return List<FragmentDataModel>
+     * @return List {@literal <}FragmentDataModel {@literal >}
      */
     public List<FragmentDataModel> getFragmentsOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
@@ -229,7 +231,8 @@ public class MoleculeDataModel {
      * Returns the fragment frequencies map of this molecule data model. The map contains as keys names of fragmentations
      * done to the molecule and as values maps that in turn contain as keys unique SMILES representations of fragments
      * that resulted from the respective fragmentation and as objects the frequencies of the specific fragment in the molecule.
-     * @return HashMap<fragmentationName, HashMap<uniqueSmiles, frequency>>
+     *
+     * @return HashMap {@literal <}fragmentationName, HashMap {@literal <}uniqueSmiles, frequency {@literal >>}
      */
     public HashMap<String, HashMap<String, Integer>> getFragmentFrequencies(){
         return this.fragmentFrequencies;
@@ -238,8 +241,9 @@ public class MoleculeDataModel {
     /**
      * Returns the fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique
      * SMILES representations of the fragments and values are the frequencies of the respective fragments in the molecule.
+     *
      * @param aKey String specifies fragmentation or fragmentation algorithm
-     * @return HashMap<uniqueSmiles, frequency>
+     * @return HashMap {@literal <}uniqueSmiles, frequency {@literal >}
      */
     public HashMap<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
@@ -256,7 +260,8 @@ public class MoleculeDataModel {
     /**
      * Returns a map that contains fragmentation names as keys and boolean values that specify whether the molecule has
      * fragments resulting from the respective fragmentation process or not.
-     * @return HashMap<fragmentationName, hasFragments>
+     *
+     * @return HashMap {@literal <}fragmentationName, hasFragments {@literal >}
      */
     public HashMap<String, Boolean> getHasFragmentsMap(){
         return this.hasFragmentsMap;

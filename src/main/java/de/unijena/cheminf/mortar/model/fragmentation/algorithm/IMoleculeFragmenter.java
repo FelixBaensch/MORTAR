@@ -161,6 +161,8 @@ public interface IMoleculeFragmenter {
     /**
      * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
      * multi-threaded work where every thread needs its own fragmenter instance.
+     *
+     * @return new fragmenter instance with the same settings
      */
     public IMoleculeFragmenter copy();
 

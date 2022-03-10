@@ -684,7 +684,7 @@ public class ErtlFunctionalGroupsFinderUtility {
      * functional group with the carbon IAtom objects from the original molecule object.
      * <br>Important note: This method only works if the atom container has not been cloned for the extraction of
      * functional groups by ErtlFunctionalGroupsFinder. Use the method
-     * "List<IAtomContainer> find(IAtomContainer container, boolean clone)" with clone set to false for this purpose.
+     * "List {@literal <}IAtomContainer {@literal >} find(IAtomContainer container, boolean clone)" with clone set to false for this purpose.
      * <br>Also note that the result differs if the environment has been generalized by the EFGF or not. In the former
      * case, only environmental carbon atoms replaced by R-atoms in the generalized FG are restored.
      *

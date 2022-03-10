@@ -30,8 +30,14 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.List;
+import java.util.Locale;
 
 public class ErtlFunctionalGroupsFinderFragmenterTest {
+
+    public ErtlFunctionalGroupsFinderFragmenterTest() {
+        Locale.setDefault(new Locale("en", "GB"));
+    }
+
     @Test
     public void basicTest() throws Exception {
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();

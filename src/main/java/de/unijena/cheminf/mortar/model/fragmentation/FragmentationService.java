@@ -240,7 +240,7 @@ public class FragmentationService {
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      * Manages the fragmentation, creates a number of {@link FragmentationTask} objects equal to the amount of
-     * {@param aNumberOfTasks}, assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation.
+     * {@code aNumberOfTasks}, assigns the molecules of {@code aListOfMolecules} to them and starts the fragmentation.
      *
      * @param aListOfMolecules list of molecules to fragment
      * @param aNumberOfTasks how many parallel tasks should be used
@@ -264,7 +264,7 @@ public class FragmentationService {
      * Fragmentation will be done on fragments of previous step
      * TODO
      *
-     * @param aListOfMolecules List<MoleculeDataModel>
+     * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
      * @param aNumberOfTasks int
      * @throws Exception
      */
@@ -372,7 +372,7 @@ public class FragmentationService {
      * Fragmentation will be done molecule by molecule
      * TODO: After adapting the data models, this method must be modified so that the resulting fragments are kept separate for each molecule. Note the setting keepLastFragment
      *
-     * @param aListOfMolecules List<MoleculeDataModel>
+     * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
      * @param aNumberOfTasks int
      * @throws Exception
      */
