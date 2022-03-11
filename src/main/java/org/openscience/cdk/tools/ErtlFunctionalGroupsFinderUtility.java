@@ -1,10 +1,8 @@
 /*
- * Utilities for
- * ErtlFunctionalGroupsFinder for CDK
+ * Utilities for ErtlFunctionalGroupsFinder for CDK
  * Copyright (C) 2021 Jonas Schaub
  *
- * Source code is available at <https://github.com/JonasSchaub/Ertl-FG-for-COCONUT>
- * ErtlFunctionalGroupsFinder for CDK is available at <https://github.com/zielesny/ErtlFunctionalGroupsFinder>
+ * Source code is available at <https://github.com/zielesny/ErtlFunctionalGroupsFinder>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -25,7 +23,7 @@ package org.openscience.cdk.tools;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/JonasSchaub/Ertl-FG-for-COCONUT/blob/master/src/main/java/org/openscience/cdk/tools/ErtlFunctionalGroupsFinderUtility.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on December 15th 2021
+ * Last copied on March 10th 2022
  */
 
 import org.openscience.cdk.Atom;
@@ -46,22 +44,16 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IAtomType;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IPseudoAtom;
-import org.openscience.cdk.io.SDFWriter;
-import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -81,7 +73,6 @@ public class ErtlFunctionalGroupsFinderUtility {
     /**
      * Enumeration of custom atom encoders for seeding atomic hash codes.
      *
-     * @author Jonas Schaub
      * @see BasicAtomEncoder
      * @see AtomEncoder
      */
@@ -693,7 +684,7 @@ public class ErtlFunctionalGroupsFinderUtility {
      * functional group with the carbon IAtom objects from the original molecule object.
      * <br>Important note: This method only works if the atom container has not been cloned for the extraction of
      * functional groups by ErtlFunctionalGroupsFinder. Use the method
-     * "List<IAtomContainer> find(IAtomContainer container, boolean clone)" with clone set to false for this purpose.
+     * "List {@literal <}IAtomContainer {@literal >} find(IAtomContainer container, boolean clone)" with clone set to false for this purpose.
      * <br>Also note that the result differs if the environment has been generalized by the EFGF or not. In the former
      * case, only environmental carbon atoms replaced by R-atoms in the generalized FG are restored.
      *
@@ -781,86 +772,6 @@ public class ErtlFunctionalGroupsFinderUtility {
                     continue;
                 }
             }
-        }
-    }
-
-    /**
-     * Aims at doing a deep copy of the given atom container, i.e. all information stored in the object is copied exactly
-     * but original and copy do not share any references. The method used here writes an SDF representation (via CDK's
-     * SDFWriter) of the given atom container as a string and then constructs a new atom container by reading this string
-     * using IteratingSDFReader. Furthermore, all properties that were stored in the original atom container are transferred
-     * to the clone.
-     * <p>
-     *     RESTRICTIONS:
-     *     - All chemical information that an SDF can represent is copied but not all 'object information', e.g. the new
-     *       IAtomContainer object and its internal objects like IAtom or IBond objects will have different hash codes
-     *       because these are calculated based on their memory address.
-     *     - Properties stored on internal objects like IAtom or IBond objects will not be copied
-     *     - Because the atom container's properties are simply transferred, copy and original will still share references
-     *       to objects used as description or property
-     *     - In the instantiation of the new IAtomContainer object things like unsaturated bonds might be lost
-     * </p>
-     *
-     * @param aMolecule the atom container to copy
-     * @return a deep copy of the given atom container (see restrictions)
-     * @throws NullPointerException if the given atom container is 'null'
-     * @throws CDKException if the SDFWriter cannot write the given atom container
-     */
-    public static IAtomContainer copy(IAtomContainer aMolecule) throws NullPointerException, CDKException {
-        Objects.requireNonNull(aMolecule, "Given molecule is 'null'.");
-        StringWriter tmpStringWriter = new StringWriter();
-        SDFWriter tmpSDFWriter = new SDFWriter(tmpStringWriter);
-        boolean tmpAcceptsClass = tmpSDFWriter.accepts(aMolecule.getClass());
-        if (!tmpAcceptsClass) {
-            throw new CDKException("Given IChemObject/IAtomContainer implementing class can not be copied");
-        }
-        //Might throw CDKException
-        tmpSDFWriter.write(aMolecule);
-        tmpStringWriter.flush();
-        try {
-            tmpStringWriter.close();
-            tmpSDFWriter.close();
-        } catch (IOException anIOException) {
-            //Should not happen because nothing is written to file
-            ErtlFunctionalGroupsFinderUtility.LOGGER.log(Level.SEVERE,
-                    anIOException.toString() + " Molecule ID: " + ErtlFunctionalGroupsFinderUtility.getIDForLogging(aMolecule),
-                    anIOException);
-        }
-        String tmpSDFRepresentation = tmpStringWriter.toString();
-        StringReader tmpStringReader = new StringReader(tmpSDFRepresentation);
-        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(tmpStringReader, aMolecule.getBuilder(), true);
-        IAtomContainer tmpCopy = tmpSDFReader.next();
-        //SD representation should contain string-type properties; so for the non-string-type properties, the following is done:
-        Map<Object, Object> tmpProperties = aMolecule.getProperties();
-        for (Object tmpKey : tmpProperties.keySet()) {
-            boolean tmpCloneHasProperty = !Objects.isNull(tmpCopy.getProperty(tmpKey));
-            if (!tmpCloneHasProperty) {
-                tmpCopy.setProperty(tmpKey, tmpProperties.get(tmpKey));
-            }
-        }
-        return tmpCopy;
-    }
-
-    /**
-     * Returns the CDK title or ID of the given molecule.
-     *
-     * @param aMolecule the molecule to determine the title or ID of
-     * @return the CDK title, title or ID of the given molecule (depending on which property is set)
-     * @throws NullPointerException if aMolecule is 'null'
-     */
-    public static String getIDForLogging(IAtomContainer aMolecule) throws NullPointerException {
-        Objects.requireNonNull(aMolecule, "Given molecule is 'null'.");
-        String tmpCdkTitle = aMolecule.getProperty(CDKConstants.TITLE);
-        String tmpTitle = aMolecule.getTitle();
-        String tmpID = aMolecule.getID();
-        if (!Objects.isNull(tmpCdkTitle) && !tmpCdkTitle.equals("")) {
-            return "CDK title: " + tmpCdkTitle;
-        } else if (!Objects.isNull(tmpTitle) && !tmpTitle.equals("")) {
-            return "Title: " + tmpTitle;
-        } else if (!Objects.isNull(tmpID) && !tmpID.equals("")) {
-            return "ID: " + tmpID;
-        } else {
-            return "No title or id could be determined.";
         }
     }
 
@@ -963,103 +874,31 @@ public class ErtlFunctionalGroupsFinderUtility {
         tmpPseudoSmilesCode = tmpStringBuilder.toString();
         return tmpPseudoSmilesCode;
     }
-
-    /**
-     * DEPRECATED: Use getPseudoSmilesCode(aMolecule) instead
-     * <br>Gives the pseudo SMILES code for a given molecule / functional group. In this notation, aromatic atoms are marked
-     * by asterisks (*) and pseudo atoms are indicated by 'R'.
-     * <br>Note: Aromatic atoms in the given atom container are substituted by placeholder atoms (of very rare occurrence
-     * and due to the input restrictions of ErtlFunctionalGroupsFinder, they should not be in the given functional groups anyway),
-     * then the SMILES string is generated and turned into a pseudo SMILES code. Finally, the placeholder atoms are
-     * resubstituted with the original atoms. This workaround is necessary to preserve the aromaticity information.
-     * <br>Note: The given atom container object is altered, so cloning it is advised if it will be used again afterwards
-     *
-     * @param aMolecule the molecule whose pseudo SMILES code to generate
-     * @return the pseudo SMILES representation as a string
-     * @throws NullPointerException if aMolecule is 'null'
-     * @throws IllegalArgumentException if aMolecule contains atoms of invalid atomic numbers
-     * @throws CDKException if the SMILES code of aMolecule cannot be generated
-     * @see ErtlFunctionalGroupsFinderUtility#containsInvalidAtomicNumbers(IAtomContainer)
-     * @deprecated this method of pseudo SMILES generation was used in the ErtlFunctionalGroupsFinder publication (see
-     * class documentation but the new method is preferable to use)
-     */
-    @Deprecated
-    public static String getLegacyPseudoSmilesCode(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CDKException {
-        Objects.requireNonNull(aMolecule, "Given molecule is 'null'.");
-        //Note: This is necessary to ensure that the elements used for substitution are not already present in the given molecule
-        if (ErtlFunctionalGroupsFinderUtility.containsInvalidAtomicNumbers(aMolecule)) {
-            throw new IllegalArgumentException("The given molecule contains metal, metalloid or R atoms.");
-        }
-        Iterable<IAtom> tmpAtoms = aMolecule.atoms();
-        HashMap<IAtom, IAtom> tmpMapForResubstitution = new HashMap(20, 0.8f);
-        HashMap<String, String> aromaticElementToPlaceholderElementMap = new HashMap<>(10, 1);
-        aromaticElementToPlaceholderElementMap.put("C", "Ce");
-        aromaticElementToPlaceholderElementMap.put("N", "Nd");
-        aromaticElementToPlaceholderElementMap.put("S", "Sm");
-        aromaticElementToPlaceholderElementMap.put("O", "Os");
-        aromaticElementToPlaceholderElementMap.put("Se", "Sc");
-        aromaticElementToPlaceholderElementMap.put("P", "Pm");
-        aromaticElementToPlaceholderElementMap.put("R", "Es");
-        HashMap<String, String> placeholderElementToPseudoSmilesSymbolMap = new HashMap<>(10, 1);
-        placeholderElementToPseudoSmilesSymbolMap.put("Es", "R");
-        placeholderElementToPseudoSmilesSymbolMap.put("Pm", "P*");
-        placeholderElementToPseudoSmilesSymbolMap.put("Sc", "Se*");
-        placeholderElementToPseudoSmilesSymbolMap.put("Os", "O*");
-        placeholderElementToPseudoSmilesSymbolMap.put("Sm", "S*");
-        placeholderElementToPseudoSmilesSymbolMap.put("Nd", "N*");
-        placeholderElementToPseudoSmilesSymbolMap.put("Ce", "C*");
-        for (IAtom tmpAtom: tmpAtoms) {
-            boolean tmpIsAromatic = tmpAtom.isAromatic();
-            boolean tmpIsPseudoAtom = (tmpAtom instanceof IPseudoAtom && "R".equals(((IPseudoAtom)tmpAtom).getLabel()));
-            if (tmpIsAromatic && !tmpIsPseudoAtom) {
-                String tmpSymbol = tmpAtom.getSymbol();
-                if (Objects.isNull(tmpSymbol)) {
-                    continue;
-                }
-                boolean tmpContainsKey = aromaticElementToPlaceholderElementMap.containsKey(tmpSymbol);
-                if (tmpContainsKey) {
-                    String tmpReplacementElementSymbol = aromaticElementToPlaceholderElementMap.get(tmpSymbol);
-                    IAtom tmpReplacementAtom = new Atom(tmpReplacementElementSymbol);
-                    Integer tmpImplicitHydrogenCount = tmpAtom.getImplicitHydrogenCount();
-                    //TODO: Get returned boolean and throw exception if replacement could not be made? See also replacements below
-                    AtomContainerManipulator.replaceAtomByAtom(aMolecule, tmpAtom, tmpReplacementAtom);
-                    tmpReplacementAtom.setImplicitHydrogenCount(tmpImplicitHydrogenCount == null ? 0 : tmpImplicitHydrogenCount);
-                    tmpMapForResubstitution.put(tmpReplacementAtom, tmpAtom);
-                }
-            }
-            if (tmpIsPseudoAtom) {
-                String tmpReplacementElementSymbol = aromaticElementToPlaceholderElementMap.get("R");
-                IAtom tmpReplacementAtom = new Atom(tmpReplacementElementSymbol);
-                Integer tmpImplicitHydrogenCount = tmpAtom.getImplicitHydrogenCount();
-                AtomContainerManipulator.replaceAtomByAtom(aMolecule, tmpAtom, tmpReplacementAtom);
-                tmpReplacementAtom.setImplicitHydrogenCount(tmpImplicitHydrogenCount == null ? 0 : tmpImplicitHydrogenCount);
-                tmpMapForResubstitution.put(tmpReplacementAtom, tmpAtom);
-            }
-        }
-        SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique);
-        String tmpPseudoSmilesCode;
-        try {
-            //Might throw CDKException if the SMILES string cannot be created or NullPointerException if an atom has an
-            //  undefined number of implicit hydrogen atoms in the SMILES string
-            tmpPseudoSmilesCode = tmpSmilesGenerator.create(aMolecule);
-        } catch (NullPointerException anException) {
-            throw new CDKException(anException.getMessage(), anException);
-        }
-        for (String tmpPlaceholderElementSymbol : placeholderElementToPseudoSmilesSymbolMap.keySet()) {
-            tmpPseudoSmilesCode = tmpPseudoSmilesCode.replaceAll("(\\[" + tmpPlaceholderElementSymbol + "\\])",
-                            placeholderElementToPseudoSmilesSymbolMap.get(tmpPlaceholderElementSymbol))
-                    .replaceAll("(" + tmpPlaceholderElementSymbol + ")",
-                            placeholderElementToPseudoSmilesSymbolMap.get(tmpPlaceholderElementSymbol));
-        }
-        for (IAtom tmpReplacementAtom: tmpMapForResubstitution.keySet()) {
-            IAtom tmpOriginalAtom = tmpMapForResubstitution.get(tmpReplacementAtom);
-            Integer tmpImplicitHydrogenCount = tmpReplacementAtom.getImplicitHydrogenCount();
-            AtomContainerManipulator.replaceAtomByAtom(aMolecule, tmpReplacementAtom, tmpOriginalAtom);
-            tmpOriginalAtom.setImplicitHydrogenCount(tmpImplicitHydrogenCount == null ? 0 : tmpImplicitHydrogenCount);
-            tmpMapForResubstitution.remove(tmpReplacementAtom, tmpOriginalAtom);
-        }
-        return tmpPseudoSmilesCode;
-    }
     //</editor-fold>
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private methods">
+    /**
+     * Returns the CDK title or ID of the given molecule.
+     *
+     * @param aMolecule the molecule to determine the title or ID of
+     * @return the CDK title, title or ID of the given molecule (depending on which property is set)
+     * @throws NullPointerException if aMolecule is 'null'
+     */
+    private static String getIDForLogging(IAtomContainer aMolecule) throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is 'null'.");
+        String tmpCdkTitle = aMolecule.getProperty(CDKConstants.TITLE);
+        String tmpTitle = aMolecule.getTitle();
+        String tmpID = aMolecule.getID();
+        if (!Objects.isNull(tmpCdkTitle) && !tmpCdkTitle.equals("")) {
+            return "CDK title: " + tmpCdkTitle;
+        } else if (!Objects.isNull(tmpTitle) && !tmpTitle.equals("")) {
+            return "Title: " + tmpTitle;
+        } else if (!Objects.isNull(tmpID) && !tmpID.equals("")) {
+            return "ID: " + tmpID;
+        } else {
+            return "No title or id could be determined.";
+        }
+    }
     //</editor-fold>
 }

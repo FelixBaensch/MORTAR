@@ -253,7 +253,7 @@ public class AboutView extends AnchorPane {
     //
     /**
      * Returns the TableView which shows ExternalTool properties
-     * @return TableView<ExternalTool>
+     * @return TableView {@literal <}ExternalTool {@literal >}
      */
     public TableView<ExternalTool> getTableView(){
         return this.tableView;

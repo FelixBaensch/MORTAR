@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
   ~ MORTAR - MOlecule fRagmenTAtion fRamework
-  ~ Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+  ~ Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
   ~
   ~ Source code is available at <https://github.com/FelixBaensch/MORTAR>
   ~
@@ -27,8 +27,8 @@
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
     <externalTool>
-        <name>Ertl Functional Groups Finder</name>
-        <version>1.0.0.1</version>
+        <name>ErtlFunctionalGroupsFinder</name>
+        <version>1.1.1.0</version>
         <author>Sebastian Fritsch</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
@@ -40,7 +40,7 @@
     </externalTool>
     <externalTool>
         <name>ScaffoldGenerator</name>
-        <version>1.0.3.0</version>
+        <version>1.0.1</version>
         <author>Julian Zander, Jonas Schaub</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>

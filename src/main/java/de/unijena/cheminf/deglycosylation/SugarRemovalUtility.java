@@ -28,7 +28,7 @@ package de.unijena.cheminf.deglycosylation;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/JonasSchaub/SugarRemoval/blob/master/src/main/java/de/unijena/cheminf/deglycosylation/SugarRemovalUtility.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on December 15th 2021
+ * Last copied on March 10th 2022
  */
 
 import org.openscience.cdk.AtomContainer;
@@ -3549,7 +3549,7 @@ public class SugarRemovalUtility {
     /**
      * Alternative method to combining overlapping substructures after the initial detection: Splitting them pseudo-randomly.
      * The method iterates the given substructures and notes the indices of atoms already visited. If an already visited
-     * atom appears again in another substructure (-> overlap), it is removed from the respective candidate. In the end,
+     * atom appears again in another substructure (- {@literal >} overlap), it is removed from the respective candidate. In the end,
      * all candidates that got disconnected by this, are separated into distinct atom container objects. The result
      * are distinct, non-overlapping, connected substructures. Note: The returned substructures can be very small, even
      * single-atom candidates can result. Another problem is that this method is practically an unpredictable black-box

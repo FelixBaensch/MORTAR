@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import javafx.scene.control.Alert;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -265,6 +266,27 @@ public final class LogUtil {
             //calling the method again to check whether the limits are still exceeded
             LogUtil.manageLogFilesFolderIfExists();
         }
+    }
+    //
+    /**
+     * Checks the log file directory for .lck files. They indicate that another MORTAR instance is already running or
+     * are leftovers from an application crash.
+     *
+     * @return true if .lck file(s) are found in the logging directory
+     * @author Jonas Schaub
+     */
+    public static boolean checkForLCKFileInLogDir() {
+        String tmpLoggingDirPath = LogUtil.getLogFileDirectoryPath();
+        File tmpLoggingDirFile = new File(tmpLoggingDirPath);
+        if (!tmpLoggingDirFile.exists() || !tmpLoggingDirFile.isDirectory()) {
+            return false;
+        }
+        return tmpLoggingDirFile.listFiles(new FilenameFilter() {
+           @Override
+           public boolean accept(File dir, String name) {
+               return FileUtil.getFileExtension(dir + File.separator + name).equals(".lck");
+           }
+        }).length > 0;
     }
     // </editor-fold>
     //

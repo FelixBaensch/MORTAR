@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
 import java.util.Locale;
@@ -57,13 +58,24 @@ public class MainApp extends Application {
             //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Check Java version">
             String tmpJavaVersion = System.getProperty("java.version");
-            System.out.println(tmpJavaVersion);
             if (tmpJavaVersion.compareTo(BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
                 GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.InvalidJavaVersion.Title"),
                         null, String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION));
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Java version lower than minimum: " + tmpJavaVersion);
                 System.exit(-1);
             }
+            //</editor-fold>
+            //<editor-fold desc="Check single instance" defaultstate="collapsed">
+            boolean tmpLCKFilePresent = LogUtil.checkForLCKFileInLogDir();
+            if (tmpLCKFilePresent) {
+                if (GuiUtil.guiConformationAlert(
+                        Message.get("Error.SecondInstance.Title"),
+                        Message.get("Error.SecondInstance.Header"),
+                        Message.get("Error.SecondInstance.Content")) == ButtonType.CANCEL) {
+                    System.exit(0);
+                } //else: user wants to continue despite the possible second instance;
+                // this means that all existing .lck files will be removed below with LogUtil.manageLogFilesFolderIfExists()
+            } //else: single MORTAR instance running
             //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
             LogUtil.manageLogFilesFolderIfExists();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Julian Zander, Jonas Schaub, Achim Zielesny, Christoph Steinbeck
+ * Copyright (c) 2022 Julian Zander, Jonas Schaub, Achim Zielesny, Christoph Steinbeck
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -22,7 +22,7 @@ package de.unijena.cheminf.scaffoldGenerator;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldNetwork.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on January 20th 2022
+ * Last copied on March 10th 2022
  */
 
 import org.openscience.cdk.exception.CDKException;
