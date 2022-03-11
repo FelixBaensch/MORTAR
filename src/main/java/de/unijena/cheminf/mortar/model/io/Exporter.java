@@ -146,9 +146,9 @@ public class Exporter {
             File tmpCsvFile = null;
             String tmpFileName = "";
             if (aTabName.name().equals(TabNames.Fragments.name())) {
-                tmpFileName = "Fragments " + aFragmentationName;
+                tmpFileName = "Fragments_" + aFragmentationName;
             } else if (aTabName.name().equals(TabNames.Itemization.name())) {
-                tmpFileName = "Items  " + aFragmentationName;
+                tmpFileName = "Items_" + aFragmentationName;
             }
             tmpCsvFile = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
             if (tmpCsvFile == null)
@@ -198,9 +198,9 @@ public class Exporter {
             File tmpCsvFile = null;
             String tmpFileName = "";
             if (aTabName.name().equals(TabNames.Fragments.name())) {
-                tmpFileName = "Fragments " + aFragmentationName;
+                tmpFileName = "Fragments_" + aFragmentationName;
             } else if (aTabName.name().equals(TabNames.Itemization.name())) {
-                tmpFileName = "Items  " + aFragmentationName;
+                tmpFileName = "Items_" + aFragmentationName;
             }
             tmpCsvFile = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
             if (tmpCsvFile == null)
@@ -263,7 +263,7 @@ public class Exporter {
         }
         try {
             File tmpFile = null;
-            String tmpFileName = "Fragments Export " + aFragmentationName;
+            String tmpFileName = "Fragments_Export_" + aFragmentationName;
             if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
                 tmpFile = this.saveFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
             } else if (aChemFileType == ChemFileTypes.SDF || aChemFileType == ChemFileTypes.PDB) {
@@ -271,18 +271,19 @@ public class Exporter {
             }
             if (tmpFile == null)
                 return;
+            //effectively final variable needs to be introduced for task
             File tmpFileFinal = tmpFile;
             boolean tmpGenerate2dAtomCoordinates = false;
-            if (!ChemUtil.checkMoleculeListForCoordinates(aFragmentDataModelList)) {
-                ButtonType tmpConformationResult = GuiUtil.guiConformationAlert(
+            boolean tmpAreCoordsDefinedOnEveryAtom = ChemUtil.checkMoleculeListForCoordinates(aFragmentDataModelList);
+            if (!tmpAreCoordsDefinedOnEveryAtom) {
+                // if ok is chosen, 2D coords should be generated; if cancel, missing coords should be set to (0,0,0)
+                tmpGenerate2dAtomCoordinates = GuiUtil.guiConformationAlert(
                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
                         Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
-                );
-                if (tmpConformationResult == ButtonType.OK) {
-                    tmpGenerate2dAtomCoordinates = true;
-                }
+                ) == ButtonType.OK;
             }
+            //effectively final variable needs to be introduced for task
             boolean tmpGenerate2dAtomCoordinatesFinal = tmpGenerate2dAtomCoordinates;
             Task<List<String>> tmpTask = new Task<>() {
                 @Override
@@ -617,9 +618,9 @@ public class Exporter {
      * could not be exported in the first place, a second attempt with a kekulized clone of the fragment's atom container
      * is made.
      * In case no 3D information are being held in a fragment atom container, the specific fragments are exported
-     * using 2D information equally setting each z coordinate to 0. If no 2D information are available, the user can
-     * choose via a confirmation alert to either generate (pseudo-) 2D atom coordinates (originally intended for layout
-     * purposes) or to export without specifying the atom coordinates (x, y, z = 0).
+     * using 2D information equally setting each z coordinate to 0. If no 2D information are available, it can be
+     * chosen to either generate (pseudo-) 2D atom coordinates (originally intended for layout
+     * purposes) or to export without specifying the atom coordinates (x, y, z = 0) via the last parameter.
      *
      * @param aFile                  File to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
@@ -643,8 +644,10 @@ public class Exporter {
                         SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
                 ) {
                     //specifying format of export
-                    tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());   //setting whether to always use MDL V3000 format
-                    tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");   //accessing the WriteAromaticBondType setting
+                    //setting whether to always use MDL V3000 format
+                    tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+                    //accessing the WriteAromaticBondType setting
+                    tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
                     //iterating through the fragments held by the list of fragments
                     for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                         IAtomContainer tmpFragment;
@@ -661,8 +664,8 @@ public class Exporter {
                         boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
                         if (!tmpPoint3dAvailable) {
                             tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
-                                    tmpPoint2dAvailable, generate2DCoordinates, false);
-                        }
+                                    tmpPoint2dAvailable, generate2DCoordinates);
+                        } //else: given 3D info is used
                         //writing to file
                         try {
                             if (tmpPoint3dAvailable) {
@@ -710,9 +713,9 @@ public class Exporter {
      * a fragment could not be exported in the first place, a second attempt with a kekulized clone of the fragment's atom
      * container is made.
      * In case no 3D information are being held in a fragment atom container, the specific fragments are exported
-     * using 2D information equally setting each z coordinate to 0. If no 2D information are available, the user can
-     * choose via a confirmation alert to either generate (pseudo-) 2D atom coordinates (originally intended for layout
-     * purposes) or to export without specifying the atom coordinates (x, y, z = 0).
+     * using 2D information equally setting each z coordinate to 0. If no 2D information are available, it can be
+     * chosen to either generate (pseudo-) 2D atom coordinates (originally intended for layout
+     * purposes) or to export without specifying the atom coordinates (x, y, z = 0) via the last parameter.
      *
      * @param aDirectory             directory to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
@@ -751,7 +754,7 @@ public class Exporter {
                     boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
                     if (!tmpPoint3dAvailable) {
                         tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
-                                tmpPoint2dAvailable, generate2DCoordinates, false);
+                                tmpPoint2dAvailable, generate2DCoordinates);
                     }
                     //generating file
                     String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
@@ -808,12 +811,13 @@ public class Exporter {
      * Opens a directory chooser and exports the chemical data of the given fragments as PDB files to an empty folder
      * generated at the chosen path. The molecular formula of each fragment is used as name for the associated file. In
      * case no 3D information are being held in a fragment atom container, the respective PDB files are created using 2D
-     * information equally setting each z coordinate to 0. If no 2D information are available, the user can choose via a
-     * confirmation alert to either generate (pseudo-) 2D atom coordinates (originally intended for layout
-     * purposes) or to export without specifying the atom coordinates (x, y, z = 0).
+     * information equally setting each z coordinate to 0. If no 2D information are available, it can be chosen to
+     * either generate (pseudo-) 2D atom coordinates (originally intended for layout
+     * purposes) or to export without specifying the atom coordinates (x, y, z = 0) via the last parameter.
      *
      * @param aDirectory             directory to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
+     * @param generate2DCoordinates  boolean value whether to generate 2D coordinates
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabPDBFiles(File aDirectory,
@@ -849,7 +853,7 @@ public class Exporter {
                     //checking whether 3D information are available
                     if (!tmpPoint3dAvailable) {
                         tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
-                                tmpPoint2dAvailable, generate2DCoordinates, true);
+                                tmpPoint2dAvailable, generate2DCoordinates);
                     }
                     //generating file
                     String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
@@ -990,26 +994,24 @@ public class Exporter {
         return tmpDirectory;
     }
     //
-    //TODO: Split this up or at least introduce input restrictions for  irreconcilable parameter combinations
-
     /**
      * Optionally completes 2D coordinates of a given fragment by setting all z-coordinates to 0 or generates new
      * pseudo-3D-coordinates for it using a structure diagram generator. As a third option, all coordinates of the given
-     * atoms can be set to 0. Which option is applied depends on the given parameters. Initially, the given fragment is
-     * cloned but if this fails, the original, given atom container is processed and the exception logged.
+     * atoms can be set to 0 (or if an exception occurs at coordinate generation. Which option is applied depends on the
+     * given parameters. Initially, the given fragment is cloned but if this fails, the original, given atom container
+     * is processed and the exception logged.
      *
      * @param aFragment                  atom container of a fragment to handle
-     * @param aPoint2dAvailable          whether 2D atom coordinates are available; this is not checked by this method
-     * @param aGenerate2dAtomCoordinates whether 2D atom coordinates should be generated
-     * @param aSetCoordinatesToZero      whether all coordinates need to be set to 0
+     * @param aPoint2dAvailable          whether 2D atom coordinates are available; this is not checked by this method!
+     * @param aGenerate2dAtomCoordinates whether 2D atom coordinates should be generated (if the first parameter is true,
+     *                                   this parameter does not matter
      * @return a clone of the given fragment with 3D atom coordinates created according to the given parameters
      * @author Samuel Behr
      */
     private IAtomContainer handleFragmentWithNo3dInformationAvailable(
             IAtomContainer aFragment,
             boolean aPoint2dAvailable,
-            boolean aGenerate2dAtomCoordinates,
-            boolean aSetCoordinatesToZero) {
+            boolean aGenerate2dAtomCoordinates) {
         //generating a clone of the fragment
         IAtomContainer tmpFragmentClone;
         try {
@@ -1021,25 +1023,22 @@ public class Exporter {
         //generating 2D atom coordinates if needed
         boolean tmpErrorAtGenerating2dAtomCoordinates = false;
         if (!aPoint2dAvailable && aGenerate2dAtomCoordinates) {
+            //2D coords are not available but they should be generated
             try {
-                StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
-                tmpStructureDiagramGenerator.generateCoordinates(tmpFragmentClone);
+                ChemUtil.generate2DCoordinates(tmpFragmentClone);
             } catch (CDKException anException) {
                 Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                 tmpErrorAtGenerating2dAtomCoordinates = true;
             }
         }
         if (aPoint2dAvailable || (aGenerate2dAtomCoordinates && !tmpErrorAtGenerating2dAtomCoordinates)) {
+            //2D coords are available or were successfully generated
             //transfer of 2D coordinates to 3D coordinates with z = 0
-            for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
-                Point3d tmpPoint3d = new Point3d(tmpAtom.getPoint2d().x, tmpAtom.getPoint2d().y, 0.0);
-                tmpAtom.setPoint3d(tmpPoint3d);
-            }
-        } else if (aSetCoordinatesToZero) {
+            ChemUtil.generatePseudo3Dfrom2DCoordinates(tmpFragmentClone);
+        } else {
+            //2D coords are not available and should not be generated or there was an error doing this
             //setting all atom coordinates to 0
-            for (IAtom tmpAtom : tmpFragmentClone.atoms()) {
-                tmpAtom.setPoint3d(new Point3d(0.0, 0.0, 0.0));
-            }
+            ChemUtil.generateZero3DCoordinates(tmpFragmentClone);
         }
         return tmpFragmentClone;
     }

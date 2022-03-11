@@ -29,6 +29,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
@@ -36,6 +37,8 @@ import org.openscience.cdk.tools.LonePairElectronChecker;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
+import javax.vecmath.Point2d;
+import javax.vecmath.Point3d;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -178,6 +181,65 @@ public final class ChemUtil {
             }
         }
         return tmpHasCoords;
+    }
+
+    /**
+     * Generates 2D coordinates for the atoms of the given molecule using the CDK StructureDiagramGenerator. Therefore,
+     * these coordinates are originally intended for layout! Note that the given atm container is directly manipulated,
+     * not cloned. And note that the z coordinate is not set to 0 but left undefined.
+     *
+     * @param aMolecule the molecule to generate coordinates for
+     * @throws NullPointerException if given molecule is null
+     * @throws CDKException if coordinates generation fails
+     */
+    public static void generate2DCoordinates(IAtomContainer aMolecule) throws NullPointerException, CDKException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return;
+        }
+        StructureDiagramGenerator tmpStructureDiagramGenerator = new StructureDiagramGenerator();
+        tmpStructureDiagramGenerator.generateCoordinates(aMolecule);
+    }
+
+    /**
+     * Generates pseudo-3D coordinates for the atoms of the given molecule by retrieving their 2D coordinates and
+     * setting z=0. Note that the given atm container is directly manipulated, not cloned.
+     *
+     * @param aMolecule the molecule to generate coordinates for
+     * @throws NullPointerException if given molecule is null
+     * @throws IllegalArgumentException if at least one atom of the molecule has no 2D coordinates defined
+     */
+    public static void generatePseudo3Dfrom2DCoordinates(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return;
+        }
+        for (IAtom tmpAtom : aMolecule.atoms()) {
+            Point2d tmpAtom2Dcoords = tmpAtom.getPoint2d();
+            if (Objects.isNull(tmpAtom2Dcoords)) {
+                throw new IllegalArgumentException("At least one atom has no 2D coordinates.");
+            }
+            Point3d tmpPoint3d = new Point3d(tmpAtom2Dcoords.x, tmpAtom2Dcoords.y, 0.0);
+            tmpAtom.setPoint3d(tmpPoint3d);
+        }
+    }
+
+    /**
+     * Sets the 3D coordinates of all atoms in the given molecule to (0,0,0).
+     * Note that the given atm container is directly manipulated, not cloned.
+     * Use this with caution, if a molecular simulation with these molecules is attempted, it might crash!
+     *
+     * @param aMolecule the molecule to set (0,0,0) coordinates for
+     * @throws NullPointerException if given molecule is null
+     */
+    public static void generateZero3DCoordinates(IAtomContainer aMolecule) throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return;
+        }
+        for (IAtom tmpAtom : aMolecule.atoms()) {
+            tmpAtom.setPoint3d(new Point3d(0.0, 0.0, 0.0));
+        }
     }
 
     /**
