@@ -189,7 +189,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     /**
      * Returns list of items shown in TableView
      *
-     * @return List<MoleculeDataModel>
+     * @return List {@literal <}MoleculeDataModel {@literal >}
      */
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
     //
@@ -205,7 +205,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     /**
      * Sets items to list
      *
-     * @param aListOfFragments List<MoleculeDataModel>
+     * @param aListOfFragments List {@literal <}MoleculeDataModel {@literal >}
      */
     public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;

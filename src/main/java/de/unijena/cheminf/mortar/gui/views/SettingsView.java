@@ -250,7 +250,7 @@ public class SettingsView extends AnchorPane {
      * Returns selection model, holding the active tab.
      * Used to set tab of the selected fragmenter as active tab
      *
-     * @return SelectionModel<Tab>
+     * @return SelectionModel {@literal <} Tab {@literal >}
      */
     public SelectionModel<Tab> getSelectionModel(){
         return this.selectionModel;
