@@ -66,24 +66,19 @@ public class MainApp extends Application {
             }
             //</editor-fold>
             //<editor-fold desc="Check single instance" defaultstate="collapsed">
-            boolean tmpLCKFilePresent = FileUtil.checkForLCKFileInLogDir();
-            boolean tmpCleanUpLogFileDir = true;
+            boolean tmpLCKFilePresent = LogUtil.checkForLCKFileInLogDir();
             if (tmpLCKFilePresent) {
                 if (GuiUtil.guiConformationAlert(
                         Message.get("Error.SecondInstance.Title"),
                         Message.get("Error.SecondInstance.Header"),
                         Message.get("Error.SecondInstance.Content")) == ButtonType.CANCEL) {
                     System.exit(0);
-                } else {
-                    //else: user wants to continue despite the possible second instance
-                    tmpCleanUpLogFileDir = false;
-                }
+                } //else: user wants to continue despite the possible second instance;
+                // this means that all existing .lck files will be removed below with LogUtil.manageLogFilesFolderIfExists()
             } //else: single MORTAR instance running
             //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
-            if (tmpCleanUpLogFileDir) {
-                LogUtil.manageLogFilesFolderIfExists();
-            }
+            LogUtil.manageLogFilesFolderIfExists();
             boolean tmpWasLoggingInitializationSuccessful = LogUtil.initializeLoggingEnvironment();
             if (!tmpWasLoggingInitializationSuccessful) {
                 GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Error.LoggingInitialization.Title"),

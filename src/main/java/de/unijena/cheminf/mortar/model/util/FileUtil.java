@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -21,7 +21,6 @@
 package de.unijena.cheminf.mortar.model.util;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -299,24 +298,6 @@ public final class FileUtil {
         } else {
             return tmpFilePath + tmpFileExtension;
         }
-    }
-    //
-    /**
-     * Checks the log file directory for .lck files. They indicate that another MORTAR instance is already running or
-     * are leftovers from an application crash.
-     *
-     * @return true if .lck file(s) are found in the logging directory
-     */
-    public static boolean checkForLCKFileInLogDir() {
-        String tmpLoggingDirPath = LogUtil.getLogFileDirectoryPath();
-        File tmpLoggingDirFile = new File(tmpLoggingDirPath);
-        return tmpLoggingDirFile.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return FileUtil.getFileExtension(dir + File.separator + name).equals(".lck");
-            }
-        }
-        ).length > 0;
     }
     // </editor-fold>
 }
