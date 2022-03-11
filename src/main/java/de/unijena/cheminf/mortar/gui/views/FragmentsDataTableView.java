@@ -251,10 +251,11 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     * Creates a fragments tableview page
+     * Creates and returns a fragments tableview page inside a BorderPane
      *
-     * @param aPageIndex
-     * @return
+     * @param aPageIndex int page index
+     * @param aSettingsContainer SettingsContainer
+     * @return Node BorderPane which holds TableView page
      */
     public Node createFragmentsTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer) {
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
@@ -270,7 +271,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      * each MoleculeDataModel object of the items list and refreshes the table view
      * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
      *
-     * @param aSettingsContainer
+     * @param aSettingsContainer SettingsContainer
      */
     public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
         this.heightProperty().addListener((observable, oldValue, newValue) -> {

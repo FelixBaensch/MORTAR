@@ -143,6 +143,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      * molecules
      *
      * @param aPageIndex index
+     * @param aSettingsContainer SettingsContainer
      * @return Node page of pagination
      */
     public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer){
@@ -198,7 +199,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      * each MoleculeDataModel object of the items list and refreshes the table view
      * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
      *
-     * @param aSettingsContainer
+     * @param aSettingsContainer SettingsContainer
      */
     public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
         this.heightProperty().addListener((observable, oldValue, newValue) -> {

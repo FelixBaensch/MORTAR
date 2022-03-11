@@ -125,9 +125,9 @@ public class MainViewController {
     /**
      * Constructor
      *
-     * @param aStage
-     * @param aMainView
-     * @param anAppDir
+     * @param aStage Stage
+     * @param aMainView MainView
+     * @param anAppDir String path to app dir
      */
     public MainViewController(Stage aStage, MainView aMainView, String anAppDir){
         //<editor-fold desc="checks" defaultstate="collapsed">

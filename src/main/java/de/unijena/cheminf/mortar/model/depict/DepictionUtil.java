@@ -55,6 +55,8 @@ public class DepictionUtil {
      * Creates and returns an Image of the given AtomContainer
      *
      * @param anAtomContainer IAtomContainer
+     * @param aWidth double for image width
+     * @param aHeight  double for image height
      * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImage(IAtomContainer anAtomContainer, double aWidth, double aHeight) {

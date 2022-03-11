@@ -279,6 +279,8 @@ public class AboutView extends AnchorPane {
     //
     /**
      * Sets given image to image vie
+     *
+     * @param anImage Image to set as logo
      */
     public void setLogoImageView(Image anImage){
         this.logoImageView.setImage(anImage);

@@ -239,6 +239,7 @@ public class Exporter {
      * @param aParentStage           stage to show the FileChooser
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aFragmentationName     name of fragmentation
+     * @param aChemFileType ChemFileTypes specifies which file type should be exported
      */
     public void exportFragmentsAsChemicalFile(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType) {
         this.exportFragmentsAsChemicalFile(aParentStage, aFragmentDataModelList, aFragmentationName, aChemFileType, false);
@@ -248,6 +249,7 @@ public class Exporter {
      * @param aParentStage           stage to show the FileChooser
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aFragmentationName     name of fragmentation
+     * @param aChemFileType ChemFileTypes specifies which file type should be exported
      * @param isSingleExport         boolean if fragments should be exported in one file or seperated, one file each fragment
      */
     public void exportFragmentsAsChemicalFile(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isSingleExport) {

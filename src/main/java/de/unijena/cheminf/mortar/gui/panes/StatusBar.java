@@ -61,7 +61,7 @@ public class StatusBar extends FlowPane {
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
      * Returns statusLabel
-     * @return
+     * @return Label
      */
     public Label getStatusLabel() {
         return statusLabel;
@@ -69,7 +69,7 @@ public class StatusBar extends FlowPane {
     //
     /**
      * Returns the progressBar
-     * @return
+     * @return ProgressBar
      */
     public ProgressBar getProgressBar() {
         return progressBar;

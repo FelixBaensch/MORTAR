@@ -82,6 +82,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      * Constructor
      *
      * @param anItemAmount max amount of fragments to be displayed in fragment
+     * @param aFragmentationName String of fragmentation name used as title
      */
     public ItemizationDataTableView(int anItemAmount, String aFragmentationName){
         super();
@@ -147,10 +148,11 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     * Creates an itemization tableview page
+     * Creates and returns an itemization tableview page
      *
-     * @param pageIndex
-     * @return
+     * @param pageIndex int
+     * @param aSettingsContainer SettingsContainer
+     * @return Node BorderPane which holds TableView as page for Pagination
      */
     public Node createItemizationTableViewPage(int pageIndex, SettingsContainer aSettingsContainer){
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
@@ -162,11 +164,11 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     }
     //
     /**
-     * Adds a changes listener to the height property of table view which sets the height for structure images to
+     * Adds a change listener to the height property of table view which sets the height for structure images to
      * each MoleculeDataModel object of the items list and refreshes the table view
      * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
      *
-     * @param aSettingsContainer
+     * @param aSettingsContainer SettingsContainer
      */
     public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
         this.heightProperty().addListener((observable, oldValue, newValue) -> {

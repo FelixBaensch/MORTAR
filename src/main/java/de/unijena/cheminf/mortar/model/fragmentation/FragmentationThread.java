@@ -58,10 +58,10 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
     /**
      * Constructor
      *
-     * @param anArrayOfMolecules
-     * @param aNumberOfTasks
-     * @param aFragmentationName
-     * @param aFragmenter
+     * @param anArrayOfMolecules List of molecules to fragment
+     * @param aNumberOfTasks int specifies number of tasks
+     * @param aFragmentationName String
+     * @param aFragmenter IMoleculeFragmenter to use
      */
     public FragmentationThread(List<MoleculeDataModel> anArrayOfMolecules, int aNumberOfTasks, String aFragmentationName, IMoleculeFragmenter aFragmenter){
         //<editor-fold desc="checks" defaultstate="collapsed">

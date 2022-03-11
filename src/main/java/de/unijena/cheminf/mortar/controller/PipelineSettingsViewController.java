@@ -118,6 +118,7 @@ public class PipelineSettingsViewController {
      * @param aMainStage Stage of the MainView
      * @param aFragmentationService FragmentationService
      * @param isMoleculeDataLoaded boolean whether molecule data is loaded
+     * @param isFragmentationRunning boolean whether fragmentation is running
      */
     public PipelineSettingsViewController(Stage aMainStage, FragmentationService aFragmentationService, boolean isMoleculeDataLoaded, boolean isFragmentationRunning){
         this.mainStage = aMainStage;
@@ -376,7 +377,7 @@ public class PipelineSettingsViewController {
     /**
      * Sets pipeline name
      *
-     * @param aName
+     * @param aName String
      */
     public void setPipelineName(String aName){
         this.pipelineName.set(aName);

@@ -186,8 +186,8 @@ public class GuiUtil {
     /**
      * Binds height and width property of the child control to the parent pane properties
      *
-     * @param aParentPane
-     * @param aChildControl
+     * @param aParentPane Pane
+     * @param aChildControl Control
      */
     public static void guiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl){
         aChildControl.prefHeightProperty().bind(aParentPane.heightProperty());
@@ -295,7 +295,7 @@ public class GuiUtil {
     /**
      * Copies content of selected cell to system clipboard
      *
-     * @param aTableView
+     * @param aTableView TableView to copy from
      */
     public static void copySelectedTableViewCellsToClipboard(TableView<?> aTableView){
         for(TablePosition tmpPos :aTableView.getSelectionModel().getSelectedCells()){
@@ -339,6 +339,7 @@ public class GuiUtil {
      *
      * @param aTableView TableView
      * @param aHeight double
+     * @param aSettingsContainer SettingsContainer
      */
     public static void setImageStructureHeight(TableView aTableView, double aHeight, SettingsContainer aSettingsContainer){
         double tmpHeight =

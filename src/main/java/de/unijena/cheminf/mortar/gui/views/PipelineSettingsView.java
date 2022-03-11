@@ -142,8 +142,8 @@ public class PipelineSettingsView extends AnchorPane {
     /**
      * Adds a new Button which removes last "algorithm choice row" of GridPane
      *
-     * @param aRemoveButton
-     * @param aRowNumber
+     * @param aRemoveButton Button to remove a row
+     * @param aRowNumber int specifies which row should be removed
      */
     public void addRemoveRowButton(Button aRemoveButton, int aRowNumber){
         this.gridPane.add(aRemoveButton, 3, aRowNumber);
@@ -151,8 +151,8 @@ public class PipelineSettingsView extends AnchorPane {
     //
     /**
      * Adds given button to given row number
-     * @param anAddButton Button
-     * @param aRowNumber int
+     * @param anAddButton Button ad a row
+     * @param aRowNumber int specifies to which row the button should be added
      */
     public void addAddRowButton(Button anAddButton, int aRowNumber){
         this.gridPane.add(anAddButton, 2, aRowNumber);
@@ -268,7 +268,7 @@ public class PipelineSettingsView extends AnchorPane {
     /**
      * Returns applyButton to apply changes and close view
      *
-     * @return
+     * @return Button
      */
     public Button getApplyButton()
     {

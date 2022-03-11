@@ -55,7 +55,7 @@ public class GridTabForTableView extends Tab {
      *
      * Creates a 'No Title' grid tab
      *
-     * @param aTableView
+     * @param aTableView TableView to add
      */
     public GridTabForTableView(TableView aTableView){
         this("No Title", "", aTableView);
@@ -63,9 +63,9 @@ public class GridTabForTableView extends Tab {
     //
     /**
      * Constructor
-     * @param aTitle
-     * @param anIdString
-     * @param aTableView
+     * @param aTitle String title of Tab
+     * @param anIdString String ID of Tab
+     * @param aTableView TableView to add
      */
     public GridTabForTableView(String aTitle, String anIdString, TableView aTableView){
         super();
@@ -105,8 +105,8 @@ public class GridTabForTableView extends Tab {
      * @param aNode Node to add
      * @param aColIndex index in which col the node should be added, only be 1 or 2
      * @param aRowIndex index in which row the node should be added, only be 1 or 2
-     * @param aColSpan
-     * @param aRowSpan
+     * @param aColSpan index how many cols should this node span
+     * @param aRowSpan index how many rows should this node span
      */
     public void addNodeToGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.gridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
@@ -119,8 +119,8 @@ public class GridTabForTableView extends Tab {
      * @param aPagination Pagination to add
      * @param aColIndex index in which col the node should be added, only be 1 or 2
      * @param aRowIndex index in which row the node should be added, only be 1 or 2
-     * @param aColSpan
-     * @param aRowSpan
+     * @param aColSpan index how many cols should this node span
+     * @param aRowSpan index how many rows should this node span
      */
     public void addPaginationToGridPane(Pagination aPagination, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan) {
         this.pagination = aPagination;

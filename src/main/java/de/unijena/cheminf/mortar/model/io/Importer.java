@@ -119,7 +119,7 @@ public class Importer {
      * with implicit hydrogen atoms. If no molecule name or ID is given in the input file, the file name with an appended
      * counter is used as such and added to the returned atom containers as a property.
      *
-     * @param aFile
+     * @param aFile File to import
      * @return IAtomContainerSet which contains the imported molecules as AtomContainers or null if the file chooser was
      * closed by the user or a not importable file type was chosen
      * @throws CDKException if the given file cannot be parsed

@@ -36,28 +36,57 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Callable class to fragment a list of molecules
+ *
+ * @author Felix Baensch, Jonas Schaub
+ * @version 1.0
+ */
 public class FragmentationTask implements Callable<Integer> {
 
+    //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
      * Lock to be used when updating the shared fragmentsHashTable. Needs to be static to be shared between all task
      * objects.
      */
     private static final ReentrantLock LOCK = new ReentrantLock(true);
-    private final List<MoleculeDataModel> moleculesList;
-    private final IMoleculeFragmenter fragmenter;
-    private final Hashtable<String, FragmentDataModel> fragmentsHashTable;
-    private final String fragmentationName;
-    private int exceptionsCounter;
     /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentationTask.class.getName());
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="private class variables" defaultstate="collapsed>
+    /**
+     * List of molecules to fragment
+     */
+    private final List<MoleculeDataModel> moleculesList;
+    /**
+     * Fragmenter instance to use
+     */
+    private final IMoleculeFragmenter fragmenter;
+    /**
+     * HashTable to hold fragments
+     */
+    private final Hashtable<String, FragmentDataModel> fragmentsHashTable;
+    /**
+     * Name of fragmentation
+     */
+    private final String fragmentationName;
+    /**
+     * Integer to count possible exceptions which could occur during fragmentation
+     */
+    private int exceptionsCounter;
+    //</editor-fold>
+    //
     /**
      * Instantiates the thread.
      *
      * @param aListOfMolecules atom containers should meet the ErtlFunctionalGroupsFinder's input specifications but
-     * any occurring exception will be caught
+     *                         any occurring exception will be caught
+     * @param aFragmenter Fragmenter to use
+     * @param aHashtableOfFragments HashTable to store fragments
+     * @param aFragmentationName String
      */
     public FragmentationTask(List<MoleculeDataModel> aListOfMolecules, IMoleculeFragmenter aFragmenter, Hashtable<String, FragmentDataModel> aHashtableOfFragments, String aFragmentationName) {
         this.moleculesList = aListOfMolecules;
@@ -66,7 +95,7 @@ public class FragmentationTask implements Callable<Integer> {
         this.fragmentationName = aFragmentationName;
         this.exceptionsCounter = 0;
     }
-
+    //
     /**
      * Applies the IMoleculeFragmenter.fragment(IAtomContainer container) method on all given
      * molecules and counts the occurring exceptions.

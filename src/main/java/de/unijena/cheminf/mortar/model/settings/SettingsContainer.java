@@ -344,7 +344,7 @@ public class SettingsContainer {
     /**
      * Return the property wrapping the keep last fragment setting.
      *
-     * @return
+     * @return keep last fragment setting property
      */
     public Property keepLastFragmentSettingProperty(){
         return this.keepLastFragmentSetting;

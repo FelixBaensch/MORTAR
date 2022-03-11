@@ -190,6 +190,8 @@ public class FragmentationService {
     //<editor-fold desc="Constructors">
     /**
      * Constructor, instantiates the fragmenters and sets the selected fragmenter and the pipeline to their defaults.
+     *
+     * @param aSettingsContainer SettingsContainer which holds the settings
      */
     public FragmentationService(SettingsContainer aSettingsContainer){
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
@@ -213,9 +215,7 @@ public class FragmentationService {
                     Message.get("FragmentationService.Error.invalidSettingFormat"),
                     anException);
         }
-
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-//            if(tmpFragmenter.getFragmentationAlgorithmName().equals(this.settingsContainer.))
             if (tmpFragmenter.getFragmentationAlgorithmName().equals(FragmentationService.DEFAULT_SELECTED_FRAGMENTER_ALGORITHM_NAME)) {
                 this.selectedFragmenter = tmpFragmenter;
             }
@@ -373,7 +373,7 @@ public class FragmentationService {
      *
      * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
      * @param aNumberOfTasks int
-     * @throws Exception
+     * @throws Exception if anything unexpected happen
      */
     public void startPipelineFragmentationMolByMol(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
         //<editor-fold desc="checks" defualtstate="collapsed">
@@ -834,7 +834,7 @@ public class FragmentationService {
     /**
      * Sets the name of the selected fragmenter
      *
-     * @param aFragmenterName
+     * @param aFragmenterName String for the name of the fragmenter
      */
     public void setSelectedFragmenterNameProperty(String aFragmenterName) {
         this.selectedFragmenterNameProperty.set(aFragmenterName);
