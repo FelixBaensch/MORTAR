@@ -25,7 +25,6 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.openscience.cdk.AtomContainer;
@@ -58,7 +57,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -137,31 +135,23 @@ public class Importer {
         String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
         this.fileName = aFile.getName();
         IAtomContainerSet tmpImportedMoleculesSet = null;
-        //yes, the method is called inside a new parallel thread by the main view controller but still starts its own new
-        // parallel thread internally. This was necessary, don't ask us why
-        FutureTask<IAtomContainerSet> tmpFutureTask = new FutureTask<IAtomContainerSet>(
-                () -> {
-                    switch (tmpFileExtension) {
-                        case ".mol":
-                            return importMolFile(aFile);
-                        case ".sdf":
-                            return importSDFile(aFile);
-                        case ".pdb":
-                            return importPDBFile(aFile);
-                        case ".smi":
-                        case ".txt":
-                            return importSMILESFile(aFile);
-                        default:
-                            return null;
-                    }
-                }
-        );
-        Thread tmpThread = new Thread(tmpFutureTask);
-        tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
-        tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
-        tmpThread.start();
-        //no handling of exceptions here because this gets called inside another task/thread in the main view controller
-        tmpImportedMoleculesSet = tmpFutureTask.get();
+        switch (tmpFileExtension) {
+            case ".mol":
+                tmpImportedMoleculesSet = this.importMolFile(aFile);
+                break;
+            case ".sdf":
+                tmpImportedMoleculesSet = this.importSDFile(aFile);
+                break;
+            case ".pdb":
+                tmpImportedMoleculesSet = this.importPDBFile(aFile);
+                break;
+            case ".smi":
+            case ".txt":
+                tmpImportedMoleculesSet = this.importSMILESFile(aFile);
+                break;
+            default:
+                tmpImportedMoleculesSet = null;
+        }
         this.preprocessMoleculeSet(tmpImportedMoleculesSet);
         return tmpImportedMoleculesSet;
     }
@@ -268,7 +258,7 @@ public class Importer {
         IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile),
                 DefaultChemObjectBuilder.getInstance());
         int tmpCounter = 0;
-        while(tmpSDFReader.hasNext()){
+        while(!Thread.currentThread().isInterrupted() && tmpSDFReader.hasNext()){
             IAtomContainer tmpAtomContainer = tmpSDFReader.next();
             String tmpName = this.findMoleculeName(tmpAtomContainer);
             if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
@@ -405,7 +395,7 @@ public class Importer {
              */
             int tmpFilesLine = 2;
             findSeparatorLoop:
-            while (tmpFilesLine <= 3) {
+            while (!Thread.currentThread().isInterrupted() && tmpFilesLine <= 3) {
                 if ((tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) == null) {
                     //if the file's end is reached at this point, the first line is used to determine the separator
                     if (tmpSmilesFileFirstLine != null || !tmpSmilesFileFirstLine.isEmpty()) {
@@ -456,7 +446,7 @@ public class Importer {
             /*  second block
                 Reading the file line by line and adding an AtomContainer to the AtomContainerSet for each line with parsable SMILES code
              */
-            while ((tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
+            while (!Thread.currentThread().isInterrupted() && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
                 //trying to parse as SMILES code
                 try {
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 2);

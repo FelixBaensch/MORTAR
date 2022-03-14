@@ -43,6 +43,8 @@ import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -93,22 +95,70 @@ import java.util.stream.Collectors;
  */
 public class MainViewController {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * Primary Stage
+     */
     private Stage primaryStage;
+    /**
+     * MainView
+     */
     private MainView mainView;
-    private String appDir;
+    /**
+     * Scene
+     */
     private Scene scene;
+    /**
+     * TabPane which holds the different tabs
+     */
     private TabPane mainTabPane;
-    private FragmentationSettingsViewController fragmentationSettingsViewController;
+    /**
+     * ObservableList to hold MoleculeDataModels for visualisation in MoleculesDataTableView
+     */
     private ObservableList<MoleculeDataModel> moleculeDataModelList;
+    /**
+     * MoleculesDataTableView to show imported molecules
+     */
     private MoleculesDataTableView moleculesDataTableView;
+    /**
+     * SettingsContainer
+     */
     private SettingsContainer settingsContainer;
+    /**
+     * FragmentationService
+     */
     private FragmentationService fragmentationService;
+    /**
+     * Button to start single algorithm fragmentation
+     */
     private Button fragmentationButton;
+    /**
+     * Button to cancel running fragmentation
+     */
     private Button cancelFragmentationButton;
+    /**
+     * HashMap to hold Lists of FragmentDataModels for each fragmentation
+     */
     private HashMap<String, ObservableList<FragmentDataModel>> mapOfFragmentDataModelLists;
+    /**
+     * Boolean value whether fragmentation is running
+     */
     private boolean isFragmentationRunning;
-    private Label fragmenterNameLabel;
-    private Task parallelFragmentationMainTask;
+    /**
+     * Task for parallel fragmentation
+     */
+    private Task<Void> parallelFragmentationMainTask;
+    /**
+     * Thread for molecule imports, so GUI thread is always responsive
+     */
+    private Thread importerThread;
+    /**
+     * Task for molecule file import
+     */
+    private Task<IAtomContainerSet> importTask;
+    /**
+     * BooleanProperty whether import is running
+     */
+    private BooleanProperty isImportRunning = new SimpleBooleanProperty(false);
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -142,7 +192,6 @@ public class MainViewController {
         this.moleculeDataModelList = FXCollections.observableArrayList(param -> new Observable[]{param.selectionProperty()});
         this.primaryStage = aStage;
         this.mainView = aMainView;
-        this.appDir = anAppDir;
         this.settingsContainer = new SettingsContainer();
         this.settingsContainer.reloadGlobalSettings();
         this.fragmentationService = new FragmentationService(this.settingsContainer);
@@ -180,6 +229,11 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.loadMoleculeFile(this.primaryStage)
         );
+        this.mainView.getMainMenuBar().getCancelImportMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.interruptImport()
+        );
+        this.mainView.getMainMenuBar().getCancelImportMenuItem().visibleProperty().bind(this.isImportRunning);
         //<editor-fold desc="export">
         //fragments export to CSV
         this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
@@ -343,6 +397,7 @@ public class MainViewController {
 //                keyEvent.consume();
 //            }
         });
+
     }
     //
     /**
@@ -412,28 +467,30 @@ public class MainViewController {
         if (Objects.isNull(tmpFile)) {
             return;
         }
-
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
+        }
+        if(this.isImportRunning.get()){
+            this.interruptImport();
         }
         this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
         this.mainView.getStatusBar().getStatusLabel().setText("Loading");
         this.clearGuiAndCollections();
         //yes, the method itself starts another task internally. This was necessary, don't ask us why
-        Task<IAtomContainerSet> tmpTask = new Task<>() {
+        importTask = new Task<>() {
             @Override
             protected IAtomContainerSet call() throws Exception {
                 IAtomContainerSet tmpSet = tmpImporter.importMoleculeFile(tmpFile);
                 return tmpSet;
             }
         };
-        tmpTask.setOnSucceeded(event -> {
+        importTask.setOnSucceeded(event -> {
             //note: setOnSucceeded() takes place in the JavaFX GUI thread again but still runLater() is necessary to wait
             // for the thread to be free for the update
             Platform.runLater(() -> {
                 IAtomContainerSet tmpAtomContainerSet = null;
                 try {
-                    tmpAtomContainerSet = tmpTask.get();
+                    tmpAtomContainerSet = importTask.get();
                 } catch (InterruptedException | ExecutionException anException) {
                     MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -470,24 +527,28 @@ public class MainViewController {
 
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
                 this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.loaded"));
-
+                this.isImportRunning.setValue(false);
                 this.openMoleculesTab();
             });
         });
-        tmpTask.setOnCancelled(event -> {
+        importTask.setOnCancelled(event -> {
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
             this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
+            this.isImportRunning.setValue(false);
         });
-        tmpTask.setOnFailed(event -> {
+        importTask.setOnFailed(event -> {
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
             this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.importFailed"));
+            this.isImportRunning.setValue(false);
             LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
         });
-        Thread tmpThread = new Thread(tmpTask);
-        tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
-        tmpThread.setDaemon(false);
-        tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
-        tmpThread.start();
+        this.importerThread = new Thread(importTask);
+        this.importerThread.setName("Importer thread");
+        this.importerThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+        this.importerThread.setDaemon(false);
+        this.importerThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
+        this.isImportRunning.setValue(true);
+        this.importerThread.start();
     }
     //
     /**
@@ -629,7 +690,14 @@ public class MainViewController {
 
     }
     //
-
+    /**
+     * Cancels import task and interrupts the corresponding thread
+     */
+    private void interruptImport(){
+        this.importTask.cancel();
+        this.importerThread.interrupt();
+    }
+    //
     /**
      * Gets called by the cancel fragmentation button
      */

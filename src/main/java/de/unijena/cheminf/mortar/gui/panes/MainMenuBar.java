@@ -36,31 +36,98 @@ import javafx.scene.control.SeparatorMenuItem;
 public class MainMenuBar extends MenuBar {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private MenuBar menuBar;
+    /**
+     * FileMenu
+     */
     private Menu fileMenu;
+    /**
+     * MenuItem to import molecules
+     */
     private MenuItem loadMenuItem;
+    /**
+     * MenuItem for export
+     */
     private Menu exportMenu;
+    /**
+     * Menu for fragments export
+     */
     private Menu fragmentsExportMenu;
+    /**
+     * MenuItem to export fragments as csv file
+     */
     private MenuItem fragmentsExportToCSVMenuItem;
+    /**
+     * MenuItem to export fragments as pdb file
+     */
     private MenuItem fragmentsExportToPDBMenuItem;
+    /**
+     * MenuItem to export fragments as pdf file
+     */
     private MenuItem fragmentsExportToPDFMenuItem;
+    /**
+     * Menu for fragments export as sdf
+     */
     private Menu fragmentsExportToSDFMenu;
+    /**
+     * MenuItem to export fragments as sd file
+     */
     private MenuItem fragmentsExportToSingleSDFMenuItem;
+    /**
+     * MenuItem to export fragments as sd file separately
+     */
     private MenuItem fragmentsExportToSeparateSDFsMenuItem;
+    /**
+     * Menu for items export
+     */
     private Menu itemsExportMenu;
+    /**
+     * MenuItem to export items as csv file
+     */
     private MenuItem itemsExportToCSVMenuItem;
+    /**
+     * MenuItem to export fragments as pdf file
+     */
     private MenuItem itemsExportToPDFMenuItem;
+    /**
+     * MenuItem to exit app
+     */
     private MenuItem exitMenuItem;
+    /**
+     * Menu for settings
+     */
     private Menu settingsMenu;
+    /**
+     * Menu for pipeline
+     */
     private Menu pipelineMenu;
+    /**
+     * Menu for help
+     */
     private Menu helpMenu;
-    private MenuItem logFilesMenuItem;
-    private MenuItem gitHubRepoMenuItem;
+    /**
+     * MenuItem to open fragmentation settings
+     */
     private MenuItem fragmentationSettingsMenuItem;
+    /**
+     * MenuItem to open global settings
+     */
     private MenuItem globalSettingsMenuItem;
+    /**
+     * MenuItem to open pipeline settings
+     */
     private MenuItem pipelineSettingsMenuItem;
+    /**
+     * MenuItem to open AboutView
+     */
     private MenuItem aboutViewMenuItem;
+    /**
+     * Menu to choose fragmentation algorithm
+     */
     private Menu fragmentationAlgorithmMenu;
+    /**
+     * MenuItem to cancel molecule import, only visible if import is running
+     */
+    private MenuItem cancelImportMenuItem;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -75,6 +142,7 @@ public class MainMenuBar extends MenuBar {
         //fileMenu
         this.fileMenu = new Menu(Message.get("MainView.menuBar.fileMenu.text"));
         this.loadMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.loadMenuItem.text"));
+        this.cancelImportMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.loadMenuItem.cancel"));
         this.exportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.text"));
         //<editor-fold desc="exportMenu components" defaultstate="collapsed">
         //fragmentsExportMenu
@@ -121,6 +189,8 @@ public class MainMenuBar extends MenuBar {
         this.getMenus().add(this.fileMenu);
         //loadMenuItem
         this.fileMenu.getItems().add(this.loadMenuItem);
+        this.fileMenu.getItems().add(this.cancelImportMenuItem);
+        this.cancelImportMenuItem.setVisible(false);
         //exportMenu
         this.fileMenu.getItems().add(this.exportMenu);
         this.addComponentsToExportMenu();
@@ -349,26 +419,6 @@ public class MainMenuBar extends MenuBar {
         return this.pipelineSettingsMenuItem;
     }
     //</editor-fold>
-    //<editor-fold desc="getLogFilesMenuItem" defaultstate="collapsed">
-    /**
-     * Returns the menu item that is supposed to open the log files directory in explorer
-     *
-     * @return the menu item that should open the log files directory
-     */
-    public MenuItem getLogFilesMenuItem() {
-        return this.logFilesMenuItem;
-    }
-    //</editor-fold>
-    //<editor-fold desc="getGitHubRepoMenuItem" defaultstate="collapsed">
-    /**
-     * Returns the menu item that is supposed to open the GitHub repository in browser
-     *
-     * @return the menu item that should open the GitHub repository
-     */
-    public MenuItem getGitHubRepoMenuItem() {
-        return this.gitHubRepoMenuItem;
-    }
-    //</editor-fold>
     //<editor-fold desc="getAboutViewMenuItem" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to open the AboutView
@@ -379,5 +429,14 @@ public class MainMenuBar extends MenuBar {
         return this.aboutViewMenuItem;
     }
     //</editor-fold>
+    //
+    /**
+     * Returns MenuItem to cancel running import, only visible if import is running
+     *
+     * @return MenuItem to cancel import
+     */
+    public MenuItem getCancelImportMenuItem(){
+        return this.cancelImportMenuItem;
+    }
     //</editor-fold>
 }
