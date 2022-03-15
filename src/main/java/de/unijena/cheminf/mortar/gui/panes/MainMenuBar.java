@@ -128,6 +128,10 @@ public class MainMenuBar extends MenuBar {
      * MenuItem to cancel molecule import, only visible if import is running
      */
     private MenuItem cancelImportMenuItem;
+    /**
+     * MenuItem to cancel export, only visible if import is running
+     */
+    private MenuItem cancelExportMenuItem;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -144,6 +148,7 @@ public class MainMenuBar extends MenuBar {
         this.loadMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.loadMenuItem.text"));
         this.cancelImportMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.loadMenuItem.cancel"));
         this.exportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.text"));
+        this.cancelExportMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.cancel"));
         //<editor-fold desc="exportMenu components" defaultstate="collapsed">
         //fragmentsExportMenu
         this.fragmentsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.fragmentsExportMenu.text"));
@@ -193,6 +198,8 @@ public class MainMenuBar extends MenuBar {
         this.cancelImportMenuItem.setVisible(false);
         //exportMenu
         this.fileMenu.getItems().add(this.exportMenu);
+        this.fileMenu.getItems().add(this.cancelExportMenuItem);
+        this.cancelExportMenuItem.setVisible(false);
         this.addComponentsToExportMenu();
         this.exportMenu.setDisable(true);
         //separator
@@ -437,6 +444,15 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getCancelImportMenuItem(){
         return this.cancelImportMenuItem;
+    }
+    //
+    /**
+     * Returns MenuItem to cancel running export, only visible if import is running
+     *
+     * @return MenuItem to cancel export
+     */
+    public MenuItem getCancelExportMenuItem(){
+        return this.cancelExportMenuItem;
     }
     //</editor-fold>
 }
