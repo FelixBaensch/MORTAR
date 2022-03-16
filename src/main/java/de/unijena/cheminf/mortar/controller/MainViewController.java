@@ -487,7 +487,40 @@ public class MainViewController {
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
             return;
         }
-
+        switch (anExportType) {
+            case FRAGMENT_CSV_FILE:
+            case PDB_FILE:
+            case FRAGMENT_PDF_FILE:
+            case SINGLE_SD_FILE:
+            case SD_FILE:
+                if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments) == null ||
+                        this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments).size() == 0 ||
+                        ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
+                    GuiUtil.guiMessageAlert(
+                            Alert.AlertType.INFORMATION,
+                            Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                            Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                            null
+                    );
+                    return;
+                }
+                break;
+            case ITEM_CSV_FILE:
+            case ITEM_PDF_FILE:
+                if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization) == null ||
+                        this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).size() == 0 ||
+                        this.moleculeDataModelList == null || this.moleculeDataModelList.size() == 0 ||
+                        ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
+                    GuiUtil.guiMessageAlert(
+                            Alert.AlertType.INFORMATION,
+                            Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                            Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                            null
+                    );
+                    return;
+                }
+                break;
+        }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
         if(this.isExportRunning.get()){
             this.interruptExport();

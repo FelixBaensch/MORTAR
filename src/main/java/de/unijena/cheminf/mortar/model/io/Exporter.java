@@ -33,7 +33,6 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import de.unijena.cheminf.mortar.controller.TabNames;
-import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -44,7 +43,6 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.control.Alert;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -143,9 +141,10 @@ public class Exporter {
         Objects.requireNonNull(aParentStage, "aParentStage must not be null");
         this.file = null;
         String tmpFileName = "";
+        String tmpFragmentationName = aFragmentationName.replaceAll("\\s+", "_");
         switch (anExportType) {
             case FRAGMENT_CSV_FILE:
-                tmpFileName = "Fragments_" + aFragmentationName;
+                tmpFileName = "Fragments_" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
                 break;
             case PDB_FILE:
@@ -153,19 +152,19 @@ public class Exporter {
                 this.file = this.chooseDirectory(aParentStage);
                 break;
             case FRAGMENT_PDF_FILE:
-                tmpFileName = "Fragments_" + aFragmentationName;
+                tmpFileName = "Fragments_" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
                 break;
             case SINGLE_SD_FILE:
-                tmpFileName = "Fragments_Export_" + aFragmentationName;
+                tmpFileName = "Fragments_Export_" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
                 break;
             case ITEM_CSV_FILE:
-                tmpFileName = "Items_" + aFragmentationName;
+                tmpFileName = "Items_" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
                 break;
             case ITEM_PDF_FILE:
-                tmpFileName = "Items_" + aFragmentationName;
+                tmpFileName = "Items_" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
                 break;
         }
@@ -240,15 +239,6 @@ public class Exporter {
      * @param isSingleExport         boolean if fragments should be exported in one file or seperated, one file each fragment
      */
     public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isGenerate2dAtomCoordinates, boolean isSingleExport) {
-        if (aFragmentDataModelList == null || aFragmentDataModelList.size() == 0 || aFragmentationName == null) {
-            GuiUtil.guiMessageAlert(
-                    Alert.AlertType.INFORMATION,
-                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
-                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
-                    null
-            );
-            return null;
-        }
         try {
             if (this.file == null)
                 return null;
