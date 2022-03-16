@@ -42,26 +42,20 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.MDLV2000Writer;
 import org.openscience.cdk.io.PDBWriter;
 import org.openscience.cdk.io.SDFWriter;
-import org.openscience.cdk.layout.StructureDiagramGenerator;
 
 import javax.imageio.ImageIO;
-import javax.vecmath.Point3d;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -106,10 +100,19 @@ public class Exporter {
      * Container for general settings for managing, preserving, and reloading application settings
      */
     private SettingsContainer settingsContainer;
+    //
+    /**
+     * PDF Document for export
+     */
+    private Document document;
+    //
+    /**
+     * Destination file for export
+     */
+    private File file;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors">
-
     /**
      * Constructor. Should the recent directory path provided by the container be faulty, it is set to its default
      * value as defined by the respective constant in the SettingsContainer class.
@@ -121,7 +124,7 @@ public class Exporter {
     public Exporter(SettingsContainer aSettingsContainer) throws NullPointerException {
         Objects.requireNonNull(aSettingsContainer, "Given settings container is null.");
         this.settingsContainer = aSettingsContainer;
-        String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
+        String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting(); // TODO: why here and not in the get method?
         if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         }
@@ -129,54 +132,66 @@ public class Exporter {
     //</editor-fold>
     //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
-
+    /**
+     * Opens FileChooser for export destination file
+     *
+     * @param aParentStage Stage
+     * @param anExportType enum ExportType specifies file type
+     * @param aFragmentationName String for name of fragmentation
+     */
+    public void saveFile(Stage aParentStage, ExportTypes anExportType, String aFragmentationName){
+        Objects.requireNonNull(aParentStage, "aParentStage must not be null");
+        this.file = null;
+        String tmpFileName = "";
+        switch (anExportType) {
+            case FRAGMENT_CSV_FILE:
+                tmpFileName = "Fragments_" + aFragmentationName;
+                this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                break;
+            case PDB_FILE:
+            case SD_FILE:
+                this.file = this.chooseDirectory(aParentStage);
+                break;
+            case FRAGMENT_PDF_FILE:
+                tmpFileName = "Fragments_" + aFragmentationName;
+                this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
+                break;
+            case SINGLE_SD_FILE:
+                tmpFileName = "Fragments_Export_" + aFragmentationName;
+                this.file = this.saveFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
+                break;
+            case ITEM_CSV_FILE:
+                tmpFileName = "Items_" + aFragmentationName;
+                this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                break;
+            case ITEM_PDF_FILE:
+                tmpFileName = "Items_" + aFragmentationName;
+                this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
+                break;
+        }
+    }
+    //
     /**
      * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or
      * on the Fragments tab as a CSV file. Opens a file chooser dialog for the user to determine a directory and file
      * for the exported data.
      *
-     * @param aParentStage           stage to show the FileChooser
      * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
      * @param aFragmentationName     fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aSeparator             the separator for the csv file
      * @param aTabName               TabName to identify type of tab
      */
-    public void exportCsvFile(Stage aParentStage, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aSeparator, TabNames aTabName) {
+    public void exportCsvFile(List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aSeparator, TabNames aTabName) {
         try {
-            File tmpCsvFile = null;
-            String tmpFileName = "";
-            if (aTabName.name().equals(TabNames.Fragments.name())) {
-                tmpFileName = "Fragments_" + aFragmentationName;
-            } else if (aTabName.name().equals(TabNames.Itemization.name())) {
-                tmpFileName = "Items_" + aFragmentationName;
-            }
-            tmpCsvFile = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
-            if (tmpCsvFile == null)
+            if (this.file == null)
                 return;
-            File tmpFinalCsvFile = tmpCsvFile;
-            Task<Void> tmpTask = new Task<Void>() {
-                @Override
-                protected Void call() throws Exception {
-                    if (aTabName.equals(TabNames.Fragments)) {
-                        //can throw FileNotFoundException, gets handled in setOnFailed()
-                        createFragmentationTabCsvFile(tmpFinalCsvFile, aMoleculeDataModelList, aSeparator);
-                    } else if (aTabName.equals(TabNames.Itemization)) {
-                        //can throw FileNotFoundException, gets handled in setOnFailed()
-                        createItemizationTabCsvFile(tmpFinalCsvFile, aMoleculeDataModelList, aFragmentationName, aSeparator);
-                    }
-                    return null;
-                }
-            };
-            tmpTask.setOnFailed(workerStateEvent -> {
-                Thread tmpThread = Thread.currentThread();
-                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread,
-                        workerStateEvent.getSource().getException());
-            });
-            Thread tmpThread = new Thread(tmpTask);
-            tmpThread.setDaemon(false);
-            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
-            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
-            tmpThread.start();
+            if (aTabName.equals(TabNames.Fragments)) {
+                //can throw FileNotFoundException, gets handled in setOnFailed()
+                this.createFragmentationTabCsvFile(this.file, aMoleculeDataModelList, aSeparator);
+            } else if (aTabName.equals(TabNames.Itemization)) {
+                //can throw FileNotFoundException, gets handled in setOnFailed()
+                this.createItemizationTabCsvFile(this.file, aMoleculeDataModelList, aFragmentationName, aSeparator);
+            }
         } catch (Exception anException) {
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }
@@ -187,48 +202,22 @@ public class Exporter {
      * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file. Opens a file chooser
      * dialog for the user to determine a directory and file for the exported data.
      *
-     * @param aParentStage           stage to show the FileChooser
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
      * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName     fragmentation name to be displayed in the header of the PDF file
      * @param aTabName               TabName to identify type of tab
      */
-    public void exportPdfFile(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, TabNames aTabName) {
+    public void exportPdfFile(List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, TabNames aTabName) {
         try {
-            File tmpCsvFile = null;
-            String tmpFileName = "";
-            if (aTabName.name().equals(TabNames.Fragments.name())) {
-                tmpFileName = "Fragments_" + aFragmentationName;
-            } else if (aTabName.name().equals(TabNames.Itemization.name())) {
-                tmpFileName = "Items_" + aFragmentationName;
-            }
-            tmpCsvFile = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
-            if (tmpCsvFile == null)
+            if (this.file == null)
                 return;
-            File tmpFinalCsvFile = tmpCsvFile;
-            Task<Void> tmpTask = new Task<Void>() {
-                @Override
-                protected Void call() throws Exception {
-                    if (aTabName.equals(TabNames.Fragments)) {
-                        //throws FileNotFoundException, gets handled in setOnFailed()
-                        createFragmentationTabPdfFile(tmpFinalCsvFile, aFragmentDataModelList, aMoleculeDataModelList, aFragmentationName);
-                    } else if (aTabName.equals(TabNames.Itemization)) {
-                        //throws FileNotFoundException, gets handled in setOnFailed()
-                        createItemizationTabPdfFile(tmpFinalCsvFile, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
-                    }
-                    return null;
-                }
-            };
-            tmpTask.setOnFailed(workerStateEvent -> {
-                Thread tmpThread = Thread.currentThread();
-                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread,
-                        workerStateEvent.getSource().getException());
-            });
-            Thread tmpThread = new Thread(tmpTask);
-            tmpThread.setDaemon(false);
-            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
-            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
-            tmpThread.start();
+            if (aTabName.equals(TabNames.Fragments)) {
+                //throws FileNotFoundException, gets handled in setOnFailed()
+                this.createFragmentationTabPdfFile(this.file, aFragmentDataModelList, aMoleculeDataModelList, aFragmentationName);
+            } else if (aTabName.equals(TabNames.Itemization)) {
+                //throws FileNotFoundException, gets handled in setOnFailed()
+                this.createItemizationTabPdfFile(this.file, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
+            }
         } catch (Exception anException) {
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }
@@ -236,24 +225,21 @@ public class Exporter {
     //
 
     /**
-     * @param aParentStage           stage to show the FileChooser
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aFragmentationName     name of fragmentation
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
      */
-    public void exportFragmentsAsChemicalFile(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType) {
-        this.exportFragmentsAsChemicalFile(aParentStage, aFragmentDataModelList, aFragmentationName, aChemFileType, false);
+    public void exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isGenerate2dAtomCoordinates) {
+        this.exportFragmentsAsChemicalFile(aFragmentDataModelList, aFragmentationName, aChemFileType, isGenerate2dAtomCoordinates, false);
     }
 
     /**
-     * @param aParentStage           stage to show the FileChooser
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aFragmentationName     name of fragmentation
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
      * @param isSingleExport         boolean if fragments should be exported in one file or seperated, one file each fragment
      */
-    public void exportFragmentsAsChemicalFile(Stage aParentStage, List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isSingleExport) {
-        Objects.requireNonNull(aParentStage, "aParentStage must not be null");
+    public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isGenerate2dAtomCoordinates, boolean isSingleExport) {
         if (aFragmentDataModelList == null || aFragmentDataModelList.size() == 0 || aFragmentationName == null) {
             GuiUtil.guiMessageAlert(
                     Alert.AlertType.INFORMATION,
@@ -261,95 +247,26 @@ public class Exporter {
                     Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
                     null
             );
-            return;
+            return null;
         }
         try {
-            File tmpFile = null;
-            String tmpFileName = "Fragments_Export_" + aFragmentationName;
+            if (this.file == null)
+                return null;
             if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
-                tmpFile = this.saveFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
-            } else if (aChemFileType == ChemFileTypes.SDF || aChemFileType == ChemFileTypes.PDB) {
-                tmpFile = this.chooseDirectory(aParentStage);
+                return createFragmentationTabSingleSDFile(this.file, aFragmentDataModelList, isGenerate2dAtomCoordinates);
+            } else if (aChemFileType == ChemFileTypes.SDF) {
+                return createFragmentationTabSeparateSDFiles(this.file, aFragmentDataModelList, isGenerate2dAtomCoordinates);
+            } else if (aChemFileType == ChemFileTypes.PDB) {
+                return createFragmentationTabPDBFiles(this.file, aFragmentDataModelList, isGenerate2dAtomCoordinates);
             }
-            if (tmpFile == null)
-                return;
-            //effectively final variable needs to be introduced for task
-            File tmpFileFinal = tmpFile;
-            boolean tmpGenerate2dAtomCoordinates = false;
-            boolean tmpAreCoordsDefinedOnEveryAtom = ChemUtil.checkMoleculeListForCoordinates(aFragmentDataModelList);
-            if (!tmpAreCoordsDefinedOnEveryAtom) {
-                // if ok is chosen, 2D coords should be generated; if cancel, missing coords should be set to (0,0,0)
-                tmpGenerate2dAtomCoordinates = GuiUtil.guiConformationAlert(
-                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
-                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
-                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
-                ) == ButtonType.OK;
-            }
-            //effectively final variable needs to be introduced for task
-            boolean tmpGenerate2dAtomCoordinatesFinal = tmpGenerate2dAtomCoordinates;
-            Task<List<String>> tmpTask = new Task<>() {
-                @Override
-                protected List<String> call() throws Exception {
-                    if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
-                        return createFragmentationTabSingleSDFile(tmpFileFinal, aFragmentDataModelList, tmpGenerate2dAtomCoordinatesFinal);
-                    } else if (aChemFileType == ChemFileTypes.SDF) {
-                        return createFragmentationTabSeparateSDFiles(tmpFileFinal, aFragmentDataModelList, tmpGenerate2dAtomCoordinatesFinal);
-                    } else if (aChemFileType == ChemFileTypes.PDB) {
-                        return createFragmentationTabPDBFiles(tmpFileFinal, aFragmentDataModelList, tmpGenerate2dAtomCoordinatesFinal);
-                    }
-                    return null;
-                }
-            };
-            tmpTask.setOnSucceeded(event -> {
-                List<String> tmpFailedExportFragments = tmpTask.getValue();
-                if (tmpFailedExportFragments == null) {
-                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
-                            Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
-                            Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                            null);
-                }
-                if (tmpFailedExportFragments.size() > 0) {
-                    StringBuilder tmpStringBuilder = new StringBuilder();
-                    for (String tmpFragmentName : tmpFailedExportFragments) {
-                        tmpStringBuilder.append(tmpFragmentName + "\n");
-                    }
-                    GuiUtil.guiExpandableAlert(
-                            Alert.AlertType.WARNING.toString(),
-                            Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
-                            Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                            tmpFailedExportFragments.size() + " " + Message.get("Exporter.FragmentsTab.ExportNotPossible.label"),
-                            tmpStringBuilder.toString()
-                    );
-                }
-            });
-            tmpTask.setOnFailed(event -> {
-                Exporter.LOGGER.log(Level.WARNING, event.getSource().getException().toString(), event.getSource().getException());
-                GuiUtil.guiMessageAlert(
-                        Alert.AlertType.WARNING,
-                        Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
-                        Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                        null);
-            });
-            tmpTask.setOnCancelled(event ->
-                    GuiUtil.guiMessageAlert(
-                            Alert.AlertType.WARNING,
-                            Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
-                            Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                            null)
-            );
-            Thread tmpThread = new Thread(tmpTask);
-            tmpThread.setDaemon(false);
-            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
-            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
-            tmpThread.start();
         } catch (Exception anException) {
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }
+        return null;
     }
     //</editor-fold>
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
-
     /**
      * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file.
      *
@@ -437,10 +354,10 @@ public class Exporter {
                 aFragmentationName == null) {
             return;
         }
-        Document tmpDocument = new Document(PageSize.A4);
-        tmpDocument.setPageSize(tmpDocument.getPageSize().rotate());
-        PdfWriter.getInstance(tmpDocument, new FileOutputStream(aPdfFile.getPath()));
-        tmpDocument.open();
+        this.document = new Document(PageSize.A4);
+        this.document.setPageSize(this.document.getPageSize().rotate());
+        PdfWriter.getInstance(this.document, new FileOutputStream(aPdfFile.getPath()));
+        this.document.open();
         float tmpCellLength[] = {70f, 120f, 50f, 50f, 55f, 55f}; // relative sizes
         PdfPTable tmpFragmentationTable = new PdfPTable(tmpCellLength);
         PdfPCell tmpSmilesStringCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.smiles"), fontFactory));
@@ -499,12 +416,12 @@ public class Exporter {
             tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
             tmpFragmentationTable.addCell(tmpCellOfMolPercentage);
         }
-        tmpDocument.add(tmpHeader);
-        tmpDocument.add(tmpSpace);
-        tmpDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelList.size(), aFragmentationName));
-        tmpDocument.add(tmpSpace);
-        tmpDocument.add(tmpFragmentationTable);
-        tmpDocument.close();
+        this.document.add(tmpHeader);
+        this.document.add(tmpSpace);
+        this.document.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelList.size(), aFragmentationName));
+        this.document.add(tmpSpace);
+        this.document.add(tmpFragmentationTable);
+        this.document.close();
     }
     //
     /**
@@ -523,22 +440,22 @@ public class Exporter {
                                              int aFragmentDataModelListSize,
                                              ObservableList<MoleculeDataModel> aMoleculeDataModelList,
                                              String aFragmentationName) throws FileNotFoundException, DocumentException {
-        if (aPdfFile != null || aFragmentDataModelListSize == 0 ||
-                aMoleculeDataModelList == null || aMoleculeDataModelList.size() == 0 ||
+        if (aPdfFile == null || aFragmentDataModelListSize == 0 ||
+//                aMoleculeDataModelList == null || aMoleculeDataModelList.size() == 0 ||
                 aFragmentationName == null || aFragmentationName.isEmpty()) {
             return;
         }
-        Document tmpDocument = new Document(PageSize.A4);
-        PdfWriter.getInstance(tmpDocument, new FileOutputStream(aPdfFile.getPath()));
-        tmpDocument.open();
+        this.document = new Document(PageSize.A4);
+        PdfWriter.getInstance(this.document, new FileOutputStream(aPdfFile.getPath()));
+        this.document.open();
         // creates the pdf table
         Chunk tmpItemizationTabHeader = new Chunk(Message.get("Exporter.itemsTab.pdfCellHeader.header"),
                 FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
         Paragraph tmpSpace = new Paragraph(" ");
-        tmpDocument.add(tmpItemizationTabHeader);
-        tmpDocument.add(tmpSpace);
-        tmpDocument.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName));
-        tmpDocument.add(tmpSpace);
+        this.document.add(tmpItemizationTabHeader);
+        this.document.add(tmpSpace);
+        this.document.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName));
+        this.document.add(tmpSpace);
         for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
             PdfPTable tmpTable = new PdfPTable(2);
             PdfPTable tmpFragmentTable = new PdfPTable(1);
@@ -570,8 +487,8 @@ public class Exporter {
             PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph(Message.get("Exporter.itemsTab.pdfCellHeader.fragments"), this.fontFactory));
             tmpCellOfFragment.setHorizontalAlignment(Element.ALIGN_CENTER);
             tmpFragmentTable.addCell(tmpCellOfFragment);
-            tmpDocument.add(tmpTable);
-            tmpDocument.add(tmpFragmentTable);
+            this.document.add(tmpTable);
+            this.document.add(tmpFragmentTable);
             List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
             PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
             for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
@@ -606,10 +523,10 @@ public class Exporter {
                     }
                 }
             }
-            tmpDocument.add(tmpFragmentationTable2);
-            tmpDocument.newPage();
+            this.document.add(tmpFragmentationTable2);
+            this.document.newPage();
         }
-        tmpDocument.close();
+        this.document.close();
     }
     //
     /**
@@ -970,7 +887,6 @@ public class Exporter {
         return tmpFile;
     }
     //
-
     /**
      * Opens a DirectoryChooser to choose a directory. Returns null if no directory has been selected.
      *
@@ -1043,6 +959,35 @@ public class Exporter {
             ChemUtil.generateZero3DCoordinates(tmpFragmentClone);
         }
         return tmpFragmentClone;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns Document for pdf export
+     *
+     * @return Document
+     */
+    public Document getDocument(){
+        return this.document;
+    }
+    //
+    /**
+     * Returns export destination file
+     *
+     * @return destination File
+     */
+    public File getFile() {
+        return this.file;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="enum" defaultstate="collapsed">
+    /**
+     * Enum for different file types to export
+     */
+    public enum ExportTypes {
+        ITEM_CSV_FILE, ITEM_PDF_FILE, FRAGMENT_CSV_FILE, FRAGMENT_PDF_FILE, SINGLE_SD_FILE, SD_FILE, PDB_FILE
     }
     //</editor-fold>
 }
