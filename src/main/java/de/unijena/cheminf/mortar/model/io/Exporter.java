@@ -65,6 +65,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -482,7 +483,7 @@ public class Exporter {
             List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
             PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
             for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
-                ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>();
+                ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>(3); //magic number, see line 487 (loop below): "for (; tmpImagesNumbers < 3; tmpImagesNumbers++){" 
                 int tmpImagesNumbers = 0;
                 for (; tmpImagesNumbers < 3; tmpImagesNumbers++) {
                     if (tmpFragmentNumber >= tmpFragmentList.size()) {
@@ -544,7 +545,7 @@ public class Exporter {
         }
         try {
             if (aFile != null) {
-                List<String> tmpFailedExportFragments = new ArrayList<>(aFragmentDataModelList.size());
+                List<String> tmpFailedExportFragments = new LinkedList<>();
                 int tmpExportedFragmentsCounter = 0;
                 int tmpFailedFragmentExportCounter = 0;
                 try (
@@ -639,7 +640,7 @@ public class Exporter {
         }
         try {
             if (aDirectory != null && aDirectory.isDirectory()) {
-                List<String> tmpFailedExportFragments = new ArrayList<>(aFragmentDataModelList.size());
+                List<String> tmpFailedExportFragments = new LinkedList<>();
                 String tmpSDFFilesDirectoryPathName = aDirectory
                         + File.separator
                         + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
@@ -737,7 +738,7 @@ public class Exporter {
         }
         try {
             if (aDirectory != null && aDirectory.isDirectory()) {
-                List<String> tmpFailedExportFragments = new ArrayList<>(aFragmentDataModelList.size());
+                List<String> tmpFailedExportFragments = new LinkedList<>();
                 String tmpPDBFilesDirectoryPathName = aDirectory
                         + File.separator
                         + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();

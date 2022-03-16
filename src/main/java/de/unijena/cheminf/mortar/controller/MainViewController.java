@@ -168,11 +168,11 @@ public class MainViewController {
     /**
      * BooleanProperty whether import is running
      */
-    private BooleanProperty isImportRunning;
+    private BooleanProperty isImportRunningProperty;
     /**
      * BooleanProperty whether export is running
      */
-    private BooleanProperty isExportRunning;
+    private BooleanProperty isExportRunningProperty;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -225,8 +225,8 @@ public class MainViewController {
         InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.primaryStage.getIcons().add(new Image(tmpImageInputStream));
         //</editor-fold>
-        this.isImportRunning = new SimpleBooleanProperty(false);
-        this.isExportRunning = new SimpleBooleanProperty(false);
+        this.isImportRunningProperty = new SimpleBooleanProperty(false);
+        this.isExportRunningProperty = new SimpleBooleanProperty(false);
         this.mapOfFragmentDataModelLists = new HashMap<>(5);
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
@@ -249,12 +249,12 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.interruptImport()
         );
-        this.mainView.getMainMenuBar().getCancelImportMenuItem().visibleProperty().bind(this.isImportRunning);
+        this.mainView.getMainMenuBar().getCancelImportMenuItem().visibleProperty().bind(this.isImportRunningProperty);
         this.mainView.getMainMenuBar().getCancelExportMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.interruptExport()
         );
-        this.mainView.getMainMenuBar().getCancelExportMenuItem().visibleProperty().bind(this.isExportRunning);
+        this.mainView.getMainMenuBar().getCancelExportMenuItem().visibleProperty().bind(this.isExportRunningProperty);
         //<editor-fold desc="export">
         //fragments export to CSV
         this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
@@ -395,8 +395,11 @@ public class MainViewController {
         if(this.isFragmentationRunning){
             this.interruptFragmentation();
         }
-        if(this.isImportRunning.get()){
+        if(this.isImportRunningProperty.get()){
             this.interruptImport();
+        }
+        if(this.isExportRunningProperty.get()){
+            this.interruptExport();
         }
         this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
         this.mainView.getStatusBar().getStatusLabel().setText("Loading");
@@ -451,19 +454,19 @@ public class MainViewController {
 
                 this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
                 this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.loaded"));
-                this.isImportRunning.setValue(false);
+                this.isImportRunningProperty.setValue(false);
                 this.openMoleculesTab();
             });
         });
         this.importTask.setOnCancelled(event -> {
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
             this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
-            this.isImportRunning.setValue(false);
+            this.isImportRunningProperty.setValue(false);
         });
         this.importTask.setOnFailed(event -> {
             this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
             this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.importFailed"));
-            this.isImportRunning.setValue(false);
+            this.isImportRunningProperty.setValue(false);
             LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
         });
         this.importerThread = new Thread(importTask);
@@ -471,7 +474,7 @@ public class MainViewController {
         this.importerThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         this.importerThread.setDaemon(false);
         this.importerThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
-        this.isImportRunning.setValue(true);
+        this.isImportRunningProperty.setValue(true);
         this.importerThread.start();
     }
     //
@@ -522,7 +525,7 @@ public class MainViewController {
                 break;
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
-        if(this.isExportRunning.get()){
+        if(this.isExportRunningProperty.get()){
             this.interruptExport();
         }
         tmpExporter.saveFile(this.primaryStage, anExportType, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
@@ -608,14 +611,14 @@ public class MainViewController {
             }
         };
         this.exportTask.setOnSucceeded(event ->{
-            this.isExportRunning.setValue(false);
+            this.isExportRunningProperty.setValue(false);
         });
         this.exportTask.setOnCancelled(event -> {
-            this.isExportRunning.setValue(false);
+            this.isExportRunningProperty.setValue(false);
             MainViewController.LOGGER.log(Level.SEVERE, "Export cancelled");
         });
         this.exportTask.setOnFailed(event -> {
-            this.isExportRunning.setValue(false);
+            this.isExportRunningProperty.setValue(false);
             MainViewController.LOGGER.log(Level.WARNING, event.getSource().getException().toString(), event.getSource().getException());
             GuiUtil.guiMessageAlert(
                         Alert.AlertType.WARNING,
@@ -629,7 +632,7 @@ public class MainViewController {
         this.exporterThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         this.exporterThread.setDaemon(false);
         this.exporterThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
-        this.isExportRunning.setValue(true);
+        this.isExportRunningProperty.setValue(true);
         this.exporterThread.start();
     }
     //
@@ -922,17 +925,25 @@ public class MainViewController {
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addPaginationToGridPane(tmpPagination, 0,0,2,2);
         Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
+        tmpExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCSV.tooltip")));
         Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
+        tmpExportPdfButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonPDF.tooltip")));
+        Button tmpCancelExportButton =  new Button(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
+        tmpCancelExportButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
+        tmpCancelExportButton.visibleProperty().bind(this.isExportRunningProperty);
         ButtonBar tmpButtonBarFragments = new ButtonBar();
         tmpButtonBarFragments.setPadding(new Insets(0,0,0,0));
         tmpExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpExportPdfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton);
+        tmpCancelExportButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpCancelExportButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton, tmpCancelExportButton);
         tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0,1,1,1);
         tmpExportPdfButton.setOnAction(event-> this.exportFile(Exporter.ExportTypes.FRAGMENT_PDF_FILE));
         tmpExportCsvButton.setOnAction(event-> this.exportFile(Exporter.ExportTypes.FRAGMENT_CSV_FILE));
+        tmpCancelExportButton.setOnAction(event -> this.interruptExport());
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
@@ -967,14 +978,16 @@ public class MainViewController {
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
         tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems, 0,0,2,2);
         Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
+        tmpItemizationTabExportPDfButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.pdfButton.tooltip")));
         Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
+        tmpItemizationExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.csvButton.tooltip")));
         ButtonBar tmpButtonBarItemization = new ButtonBar();
         tmpButtonBarItemization.setPadding(new Insets(0,0,0,0));
         tmpItemizationExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpItemizationExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpItemizationTabExportPDfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpItemizationTabExportPDfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpButtonBarItemization.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton);
+        tmpButtonBarItemization.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton, tmpCancelExportButton);
         tmpItemizationTab.addNodeToGridPane(tmpButtonBarItemization, 0, 1,1,1);
         tmpItemizationExportCsvButton.setOnAction(event-> this.exportFile(Exporter.ExportTypes.ITEM_CSV_FILE));
         tmpItemizationTabExportPDfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_PDF_FILE));
