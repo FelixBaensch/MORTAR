@@ -483,7 +483,7 @@ public class Exporter {
             List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
             PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
             for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
-                ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>(3); //magic number, see line 487 (loop below): "for (; tmpImagesNumbers < 3; tmpImagesNumbers++){" 
+                ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>(3); //magic number, see line 487 (loop below): "for (; tmpImagesNumbers < 3; tmpImagesNumbers++){"
                 int tmpImagesNumbers = 0;
                 for (; tmpImagesNumbers < 3; tmpImagesNumbers++) {
                     if (tmpFragmentNumber >= tmpFragmentList.size()) {

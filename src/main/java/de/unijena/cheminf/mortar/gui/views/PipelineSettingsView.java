@@ -85,6 +85,7 @@ public class PipelineSettingsView extends AnchorPane {
         this.borderPane.setBottom(tmpHBoxButtonsHBox);
         //-left side
         this.defaultButton = new Button(Message.get("PipelineSettingsView.defaultButton.text"));
+        this.defaultButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.defaultButton.tooltip")));
         HBox tmpHBoxLeftSideButtons = new HBox();
         tmpHBoxLeftSideButtons.getChildren().add(this.defaultButton);
         tmpHBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);
