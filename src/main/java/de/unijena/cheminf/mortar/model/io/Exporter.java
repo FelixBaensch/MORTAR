@@ -282,9 +282,15 @@ public class Exporter {
                 Message.get("Exporter.itemsTab.csvHeader.smilesOfFragmentsAndFrequency") + "\n");
         tmpWriter.write(tmpCsvHeader.toString());
         for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+            if(Thread.currentThread().isInterrupted()){
+                return;
+            }
             tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
             List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
             for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
+                if(Thread.currentThread().isInterrupted()){
+                    return;
+                }
                 tmpWriter.append(aSeparator);
                 tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
             }
@@ -315,6 +321,9 @@ public class Exporter {
                 Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage") + ("\n"));
         tmpWriter.write(tmpFragmentationCsvHeader.toString());
         for (MoleculeDataModel tmpDataModel : aList) {
+            if(Thread.currentThread().isInterrupted()){
+                return;
+            }
             FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
             tmpWriter.printf("%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f\n",
                     tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
@@ -367,6 +376,9 @@ public class Exporter {
         tmpFragmentationTable.addCell(tmpMolFrequencyCell);
         tmpFragmentationTable.addCell(tmpMolPercentageCell);
         for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
+            if(Thread.currentThread().isInterrupted()){
+                return;
+            }
             FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
             int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
             String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
@@ -448,6 +460,9 @@ public class Exporter {
         this.document.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName));
         this.document.add(tmpSpace);
         for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+            if(Thread.currentThread().isInterrupted()){
+                return;
+            }
             PdfPTable tmpTable = new PdfPTable(2);
             PdfPTable tmpFragmentTable = new PdfPTable(1);
             tmpTable.setWidths(new int[]{40, 80});
@@ -483,9 +498,15 @@ public class Exporter {
             List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
             PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
             for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
+                if(Thread.currentThread().isInterrupted()){
+                    return;
+                }
                 ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>(3); //magic number, see line 487 (loop below): "for (; tmpImagesNumbers < 3; tmpImagesNumbers++){"
                 int tmpImagesNumbers = 0;
                 for (; tmpImagesNumbers < 3; tmpImagesNumbers++) {
+                    if(Thread.currentThread().isInterrupted()){
+                        return;
+                    }
                     if (tmpFragmentNumber >= tmpFragmentList.size()) {
                         break;
                     }
@@ -507,6 +528,9 @@ public class Exporter {
                     tmpFragmentNumber++;
                 }
                 for (int tmpCellIterator = 0; tmpCellIterator < 3; tmpCellIterator++) {
+                    if(Thread.currentThread().isInterrupted()){
+                        return;
+                    }
                     if (tmpCellIterator < tmpImagesNumbers) {
                         tmpFragmentationTable2.addCell(tmpCell.get(tmpCellIterator));
                     } else {
@@ -560,6 +584,9 @@ public class Exporter {
                     tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
                     //iterating through the fragments held by the list of fragments
                     for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                        if(Thread.currentThread().isInterrupted()){
+                            return null;
+                        }
                         IAtomContainer tmpFragment;
                         try {
                             tmpFragment = tmpFragmentDataModel.getAtomContainer();
@@ -650,6 +677,9 @@ public class Exporter {
                 int tmpFailedFragmentExportCounter = 0;
                 //iterating through the fragments held by the list of fragments
                 for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                    if(Thread.currentThread().isInterrupted()){
+                        return null;
+                    }
                     IAtomContainer tmpFragment;
                     try {
                         tmpFragment = tmpFragmentDataModel.getAtomContainer();
@@ -748,6 +778,9 @@ public class Exporter {
                 int tmpFailedFragmentExportCounter = 0;
                 //iterating through the fragments held by the list of fragments
                 for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                    if(Thread.currentThread().isInterrupted()){
+                        return null;
+                    }
                     IAtomContainer tmpFragment;
                     try {
                         tmpFragment = tmpFragmentDataModel.getAtomContainer();

@@ -83,6 +83,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -150,6 +151,10 @@ public class MainViewController {
      */
     private Task<Void> parallelFragmentationMainTask;
     /**
+     * Thread for task for parallel fragmentation
+     */
+    private Thread fragmentationThread;
+    /**
      * Thread for molecule imports, so GUI thread is always responsive
      */
     private Thread importerThread;
@@ -173,6 +178,10 @@ public class MainViewController {
      * BooleanProperty whether export is running
      */
     private BooleanProperty isExportRunningProperty;
+    /**
+     *
+     */
+    private CopyOnWriteArrayList<Thread> taskList;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -228,6 +237,7 @@ public class MainViewController {
         this.isImportRunningProperty = new SimpleBooleanProperty(false);
         this.isExportRunningProperty = new SimpleBooleanProperty(false);
         this.mapOfFragmentDataModelLists = new HashMap<>(5);
+        this.taskList = new CopyOnWriteArrayList();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
     }
@@ -401,8 +411,6 @@ public class MainViewController {
         if(this.isExportRunningProperty.get()){
             this.interruptExport();
         }
-        this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
-        this.mainView.getStatusBar().getStatusLabel().setText("Loading");
         this.clearGuiAndCollections();
         this.importTask = new Task<>() {
             @Override
@@ -424,8 +432,7 @@ public class MainViewController {
                             Message.get("Importer.FileImportExceptionAlert.Header"),
                             Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
                             anException);
-                    this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-                    this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.loading"));
+                    this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                 }
                 if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
                     return;
@@ -451,30 +458,27 @@ public class MainViewController {
                 }
                 MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName()
                         + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
-
-                this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.loaded"));
+                this.updateStatusBar(this.importerThread, Message.get("Status.loaded"));
                 this.isImportRunningProperty.setValue(false);
                 this.openMoleculesTab();
             });
         });
         this.importTask.setOnCancelled(event -> {
-            this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
+            this.updateStatusBar(this.importerThread, Message.get("Status.canceled"));
             this.isImportRunningProperty.setValue(false);
         });
         this.importTask.setOnFailed(event -> {
-            this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.importFailed"));
+            this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
             this.isImportRunningProperty.setValue(false);
             LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
         });
         this.importerThread = new Thread(importTask);
-        this.importerThread.setName("Importer thread");
+        this.importerThread.setName(ThreadType.IMPORT_THREAD.getThreadName());
         this.importerThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         this.importerThread.setDaemon(false);
         this.importerThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
         this.isImportRunningProperty.setValue(true);
+        this.updateStatusBar(this.importerThread, Message.get("Status.loading"));
         this.importerThread.start();
     }
     //
@@ -612,14 +616,17 @@ public class MainViewController {
         };
         this.exportTask.setOnSucceeded(event ->{
             this.isExportRunningProperty.setValue(false);
+            this.updateStatusBar(this.exporterThread, Message.get("Status.finished"));
         });
         this.exportTask.setOnCancelled(event -> {
             this.isExportRunningProperty.setValue(false);
-            MainViewController.LOGGER.log(Level.SEVERE, "Export cancelled");
+            MainViewController.LOGGER.log(Level.SEVERE, "Export canceled");
+            this.updateStatusBar(this.exporterThread, Message.get("Status.canceled"));
         });
         this.exportTask.setOnFailed(event -> {
             this.isExportRunningProperty.setValue(false);
             MainViewController.LOGGER.log(Level.WARNING, event.getSource().getException().toString(), event.getSource().getException());
+            this.updateStatusBar(this.exporterThread, Message.get("Status.failed"));
             GuiUtil.guiMessageAlert(
                         Alert.AlertType.WARNING,
                         Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
@@ -628,11 +635,12 @@ public class MainViewController {
 
         });
         this.exporterThread = new Thread(this.exportTask);
-        this.exporterThread.setName("Exporter thread");
+        this.exporterThread.setName(ThreadType.EXPORT_THREAD.getThreadName());
         this.exporterThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
         this.exporterThread.setDaemon(false);
         this.exporterThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
         this.isExportRunningProperty.setValue(true);
+        this.updateStatusBar(this.exporterThread, Message.get("Status.exporting"));
         this.exporterThread.start();
     }
     //
@@ -820,14 +828,11 @@ public class MainViewController {
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).collect(Collectors.toList());
         int tmpNumberOfCores = this.settingsContainer.getNumberOfTasksForFragmentationSetting();
         try{
-            this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(true);
             this.fragmentationButton.setDisable(true);
             this.cancelFragmentationButton.setVisible(true);
-            this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Running"));
             this.parallelFragmentationMainTask = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
-                    MainViewController.this.isFragmentationRunning = true;
                     if(isPipelining){
                         MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
                                 tmpNumberOfCores);
@@ -858,8 +863,7 @@ public class MainViewController {
                         }
                         this.mapOfFragmentDataModelLists.put(this.fragmentationService.getCurrentFragmentationName(), tmpObservableFragments);
                         this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
-                        this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-                        this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Finished"));
+                        this.updateStatusBar(this.fragmentationThread, Message.get("Status.finished"));
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         this.cancelFragmentationButton.setVisible(false);
@@ -872,27 +876,27 @@ public class MainViewController {
                 });
             });
             this.parallelFragmentationMainTask.setOnCancelled(event -> {
-                this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Canceled"));
+                this.updateStatusBar(this.fragmentationThread, Message.get("Status.canceled"));
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
             });
             this.parallelFragmentationMainTask.setOnFailed(event -> {
-                this.mainView.getStatusBar().getProgressBar().visibleProperty().setValue(false);
-                this.mainView.getStatusBar().getStatusLabel().setText(Message.get("Status.Failed"));
+                this.updateStatusBar(this.fragmentationThread, Message.get("Status.failed"));
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
-                Thread tmpThread = Thread.currentThread();
-                LogUtil.getUncaughtExceptionHandler().uncaughtException(tmpThread, new Exception(event.getSource().toString()));
+                LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), new Exception(event.getSource().toString()));
             });
-            Thread tmpThread = new Thread(this.parallelFragmentationMainTask);
-            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
-            tmpThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number, do not touch
-            tmpThread.start();
+            this.fragmentationThread = new Thread(this.parallelFragmentationMainTask);
+            this.fragmentationThread.setName(ThreadType.FRAGMENTATION_THREAD.getThreadName());
+            this.fragmentationThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            this.fragmentationThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number, do not touch
+            this.updateStatusBar(this.fragmentationThread, Message.get("Status.running"));
+            this.isFragmentationRunning = true;
+            this.fragmentationThread.start();
         } catch(Exception anException){
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiExceptionAlert(Message.get("MainViewController.FragmentationError.Title"),
@@ -1025,6 +1029,89 @@ public class MainViewController {
         return ((IDataTableView)((GridTabForTableView)(this.mainTabPane.getTabs().stream().filter(tab ->
                 ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle().equals(((GridTabForTableView)tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabName.name())
         ).findFirst().get())).getTableView()).getItemsList();
+    }
+    //
+    /**
+     * Updates StatusBar
+     *
+     * @param aThread Thread which was started or end
+     * @param aMessage String message to display in StatusBar
+     */
+    private void updateStatusBar(Thread aThread, String aMessage){
+        if(!this.taskList.contains(aThread)){
+            this.taskList.add(aThread);
+            this.mainView.getStatusBar().getStatusLabel().setText(aMessage);
+            this.mainView.getStatusBar().getStatusLabel().setVisible(true);
+            this.mainView.getStatusBar().getProgressBar().setVisible(true);
+            return;
+        }
+        if(this.taskList.contains(aThread)){
+            this.taskList.remove(aThread);
+            if(this.taskList.isEmpty()){
+                this.mainView.getStatusBar().getProgressBar().setVisible(false);
+                this.mainView.getStatusBar().getStatusLabel().setText(aMessage);
+                return;
+            }
+            this.mainView.getStatusBar().getStatusLabel().setText(
+                    this.getStatusMessageByThreadType(
+                            Objects.requireNonNull(ThreadType.get(
+                                    this.taskList.get(this.taskList.size() - 1).getName()
+                            ))
+                    )
+            );
+        }
+    }
+    //
+    /**
+     * Returns status message as string by given ThreadType
+     *
+     * @param aThreadType ThreadType
+     * @return String status message
+     */
+    private String getStatusMessageByThreadType(ThreadType aThreadType){
+        switch(aThreadType){
+            case FRAGMENTATION_THREAD:
+                return Message.get("Status.running");
+            case IMPORT_THREAD:
+                return Message.get("Status.loading");
+            case EXPORT_THREAD:
+                return Message.get("Status.exporting");
+            default:
+                return "Could not find message";
+        }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="public enum" defaultstate="collapsed">
+    /**
+     * Enum for different thread types
+     */
+    public enum ThreadType {
+        FRAGMENTATION_THREAD("Fragmentation_Thread"),
+        IMPORT_THREAD("Import_Thread"),
+        EXPORT_THREAD("Export_Thread");
+
+        private String threadName;
+
+        ThreadType(String aThreadName){
+            this.threadName = aThreadName;
+        }
+
+        public String getThreadName(){
+            return this.threadName;
+        }
+
+        /**
+         * Reverse lookup
+         */
+        public static ThreadType get(String aThreadName){
+            for(ThreadType aType : values()){
+                if(aType.threadName.equals(aThreadName)){
+                    return aType;
+                }
+            }
+            return null;
+        }
     }
     //</editor-fold>
 }

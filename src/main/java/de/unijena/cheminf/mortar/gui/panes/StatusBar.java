@@ -36,7 +36,13 @@ import static de.unijena.cheminf.mortar.gui.util.GuiDefinitions.GUI_STATUSBAR_HE
 public class StatusBar extends FlowPane {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * Label to show status message
+     */
     private Label statusLabel;
+    /**
+     * ProgressBar
+     */
     private ProgressBar progressBar;
     //</editor-fold>
     //
@@ -64,7 +70,7 @@ public class StatusBar extends FlowPane {
      * @return Label
      */
     public Label getStatusLabel() {
-        return statusLabel;
+        return this.statusLabel;
     }
     //
     /**
@@ -72,7 +78,7 @@ public class StatusBar extends FlowPane {
      * @return ProgressBar
      */
     public ProgressBar getProgressBar() {
-        return progressBar;
+        return this.progressBar;
     }
     //</editor-fold>
 }

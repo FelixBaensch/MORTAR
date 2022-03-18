@@ -156,8 +156,7 @@ public class PipelineSettingsViewController {
                 this.addNewChoiceRow(tmpFragmenter.getFragmentationAlgorithmName());
             }
             this.setPipelineName(this.fragmentationService.getPipeliningFragmentationName());
-            this.pipelineSettingsView.getFragmentButton().setDisable(!this.isMoleculeDataLoaded);
-            this.pipelineSettingsView.getFragmentButton().setDisable(this.isFragmentationRunning);
+            this.pipelineSettingsView.getFragmentButton().setDisable(!this.isMoleculeDataLoaded || this.isFragmentationRunning);
         });
         this.pipelineSettingsViewStage.showAndWait();
     }
