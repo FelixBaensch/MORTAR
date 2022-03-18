@@ -356,7 +356,11 @@ public class GuiUtil {
         if(aTableView.getClass().equals(ItemizationDataTableView.class)){
             for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
-                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(((ItemizationDataTableView) aTableView).getFragmentationName())){
+                String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
+                if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
+                    continue;
+                }
+                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
                     tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
                 }
             }

@@ -987,8 +987,11 @@ public class MainViewController {
         //itemization tab
         int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
         for (int i = 0; i < this.moleculeDataModelList.size(); i++) {
+            if(!this.moleculeDataModelList.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+                continue;
+            }
             HashMap<String, Integer> tmpCurrentFragmentsMap = this.moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
-            if (tmpCurrentFragmentsMap == null) {
+            if (tmpCurrentFragmentsMap == null) { //redundant, see if clause above
                 continue;
             }
             int tmpNrOfFragmentsOfCurrentMolecule = tmpCurrentFragmentsMap.size();

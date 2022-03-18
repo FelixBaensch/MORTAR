@@ -291,9 +291,15 @@ public class FragmentationService {
             tmpFragmentHashtable = this.startFragmentation(tmpMolecules, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName);
             for (MoleculeDataModel tmpParentMol : aListOfMolecules) {
                 LinkedList<MoleculeDataModel> tmpNewFragments = new LinkedList<>();
+                if(!tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)) {
+                    continue;
+                }
                 HashMap<String, Integer> tmpNewFrequencies = new HashMap<>(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size() * 2);
                 for (MoleculeDataModel tmpChildMol : tmpMolecules) {
                     if (tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(tmpChildMol)) {
+                        if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
+                            continue;
+                        }
                         if (tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName).size() <= 1) {
                             if(this.settingsContainer.isKeepLastFragmentSetting()){
                                 tmpNewFragments.add(tmpChildMol);
@@ -304,6 +310,9 @@ public class FragmentationService {
                                     FragmentationService.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpChildMol.getName(), anException);
                                     continue;
                                 }
+                                if(!tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+                                    continue;
+                                }
                                 tmpNewFrequencies.put(tmpKey, tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
                             }
                         } else {
@@ -312,6 +321,9 @@ public class FragmentationService {
                                 String tmpKey;
                                 try{
                                     tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                                    if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
+                                        continue;
+                                    }
                                     tmpNewFrequencies.put(tmpKey, tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) * tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer())));
                                 } catch (CDKException anException){
                                     FragmentationService.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpChildMol.getName(), anException);
@@ -325,6 +337,9 @@ public class FragmentationService {
             }
             Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(tmpFragmentHashtable.size());
             for(MoleculeDataModel tmpMol : aListOfMolecules){
+                if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+                    continue;
+                }
                 for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName)){
                     String tmpSmiles;
                     try{
@@ -354,7 +369,7 @@ public class FragmentationService {
             tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
             this.fragments.get(tmpKey).setMoleculeFrequency(0);
             for(MoleculeDataModel tmpParentMol : aListOfMolecules){
-                if(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(this.fragments.get(tmpKey))){
+                if(tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName) && tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).contains(this.fragments.get(tmpKey))){
                     this.fragments.get(tmpKey).incrementMoleculeFrequency();
                 }
             }
@@ -398,6 +413,9 @@ public class FragmentationService {
             String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmName());
 
             for(MoleculeDataModel tmpParentMol : aListOfMolecules){
+                if(!tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+                    continue;
+                }
                 List<MoleculeDataModel> tmpChildMols = (List<MoleculeDataModel>)(List<?>) tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName);
                 tmpFragmentHashtable = this.startFragmentation(tmpChildMols, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName);
                 Set<String> tmpKeySet = tmpFragmentHashtable.keySet();
@@ -407,10 +425,17 @@ public class FragmentationService {
                 }
                 HashMap<String, Integer> tmpNewFrequencies = new HashMap<>(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size()*2);
                 for(MoleculeDataModel tmpChildMol : tmpChildMols){
+                    if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
+                        continue;
+                    }
                     for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
                         String tmpKey;
                         try{
                             tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                            if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName) ||
+                                    !tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+                                continue;
+                            }
                             if(tmpNewFrequencies.containsKey(tmpKey)){
                                 tmpNewFrequencies.replace(
                                         tmpKey,
@@ -436,6 +461,9 @@ public class FragmentationService {
         }
         Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(this.fragments.size() * this.pipelineFragmenter.length);
         for(MoleculeDataModel tmpMol : aListOfMolecules){
+            if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+                continue;
+            }
             for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName))
             {
                 String tmpKey;
@@ -443,6 +471,9 @@ public class FragmentationService {
                     tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
                 } catch (CDKException anException){
                     FragmentationService.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFrag.getName(), anException);
+                    continue;
+                }
+                if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
                     continue;
                 }
                 if(!tmpFragmentsHash.containsKey(tmpKey)){

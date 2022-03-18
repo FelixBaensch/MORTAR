@@ -126,9 +126,15 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
             tmpColumn.setSortable(false);
             tmpColumn.setStyle( "-fx-alignment: CENTER;");
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
+                if(!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)){
+                    return null;
+                }
                 if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size())
                     return null;
                 FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).get(tmpIndex);
+                if(!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)){
+                    return null;
+                }
                 String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
                 return tmpFragment.getStructureWithText(tmpFrequency);
             }));

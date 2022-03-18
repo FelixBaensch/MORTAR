@@ -284,9 +284,14 @@ public class Exporter {
                 return;
             }
             tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
+            if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+                continue;
+            }
             List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
             for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
-                if(Thread.currentThread().isInterrupted()){
+                if(Thread.currentThread().isInterrupted() ||
+                        !tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)
+                ){
                     return;
                 }
                 tmpWriter.append(aSeparator);
@@ -496,6 +501,9 @@ public class Exporter {
             tmpFragmentTable.addCell(tmpCellOfFragment);
             this.document.add(tmpTable);
             this.document.add(tmpFragmentTable);
+            if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+                continue;
+            }
             List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
             PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
             for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
@@ -518,6 +526,9 @@ public class Exporter {
                     } catch (CDKException anException) {
                         Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDatModel.getName(), anException);
                         tmpFailedExportFragments.add(tmpFragmentDatModel.getUniqueSmiles());
+                        continue;
+                    }
+                    if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
                         continue;
                     }
                     String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
