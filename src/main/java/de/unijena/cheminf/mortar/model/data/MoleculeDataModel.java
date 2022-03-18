@@ -211,13 +211,8 @@ public class MoleculeDataModel {
      */
     public List<FragmentDataModel> getFragmentsOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
-        if(this.fragments.containsKey(aKey)){
-            return this.fragments.get(aKey);
-        }
-        else{
-            //TODO: Maybe better return an empty list to avoid exceptions
-            return null;
-        }
+        return this.fragments.get(aKey);
+        //TODO: Maybe better return an empty list to avoid exceptions
     }
     //
     /**
@@ -240,17 +235,13 @@ public class MoleculeDataModel {
      */
     public HashMap<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
-        if(this.fragmentFrequencies.containsKey(aKey)){
-            return this.fragmentFrequencies.get(aKey);
-        }
-        else{
-            //TODO: Maybe better return an empty list to avoid exceptions
-            return null;
-        }
+        return this.fragmentFrequencies.get(aKey);
+        //TODO: Maybe better return an empty list to avoid exceptions
     }
     //
     /**
      * Specifies whether the molecule has fragments resulting from the fragmentation process with the given name or not.
+     * 
      * @param aKey fragmentation name
      * @return true if the molecule has undergone the fragmentation with the specified name
      */

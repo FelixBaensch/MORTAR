@@ -79,7 +79,6 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -169,7 +168,7 @@ public class MainViewController {
     /**
      * Task for molecule file export
      */
-    private Task<Void> exportTask;
+    private Task<List<String>> exportTask;
     /**
      * BooleanProperty whether import is running
      */
@@ -179,9 +178,9 @@ public class MainViewController {
      */
     private BooleanProperty isExportRunningProperty;
     /**
-     *
+     * Thread safe list to hold running threads to update StatusBar
      */
-    private CopyOnWriteArrayList<Thread> taskList;
+    private CopyOnWriteArrayList<Thread> threadList;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -195,14 +194,15 @@ public class MainViewController {
     private static final String STYLE_SHEET_PATH = "/de/unijena/cheminf/mortar/style/StyleSheet.css";
     //</editor-fold>
     //
+
     /**
      * Constructor
      *
-     * @param aStage Stage
+     * @param aStage    Stage
      * @param aMainView MainView
-     * @param anAppDir String path to app dir
+     * @param anAppDir  String path to app dir
      */
-    public MainViewController(Stage aStage, MainView aMainView, String anAppDir){
+    public MainViewController(Stage aStage, MainView aMainView, String anAppDir) {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
         Objects.requireNonNull(aMainView, "aMainView (instance of MainView) is null");
@@ -237,7 +237,7 @@ public class MainViewController {
         this.isImportRunningProperty = new SimpleBooleanProperty(false);
         this.isExportRunningProperty = new SimpleBooleanProperty(false);
         this.mapOfFragmentDataModelLists = new HashMap<>(5);
-        this.taskList = new CopyOnWriteArrayList();
+        this.threadList = new CopyOnWriteArrayList();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
     }
@@ -298,27 +298,26 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openFragmentationSettingsView()
-            );
+        );
         this.mainView.getMainMenuBar().getGlobalSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openGlobalSettingsView()
-            );
+        );
         this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openPipelineSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
-            GridTabForTableView tmpGrid = ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem());
-            if(tmpGrid == null){
+            GridTabForTableView tmpGrid = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem());
+            if (tmpGrid == null) {
                 keyEvent.consume();
                 return;
             }
-            if(keyEvent.getCode() == KeyCode.RIGHT){
+            if (keyEvent.getCode() == KeyCode.RIGHT) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() + 1);
                 keyEvent.consume();
-            }
-            else if(keyEvent.getCode() == KeyCode.LEFT){
+            } else if (keyEvent.getCode() == KeyCode.LEFT) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() - 1);
                 keyEvent.consume();
             }
@@ -333,11 +332,12 @@ public class MainViewController {
         });
     }
     //
+
     /**
      * Closes application
      */
     private void closeApplication(int aStatus) {
-        if(moleculeDataModelList.size() > 0){
+        if (moleculeDataModelList.size() > 0) {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
             }
@@ -345,7 +345,7 @@ public class MainViewController {
         this.settingsContainer.preserveSettings();
         this.fragmentationService.persistFragmenterSettings();
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
-        if(this.isFragmentationRunning){
+        if (this.isFragmentationRunning) {
             this.interruptFragmentation();
         }
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
@@ -353,6 +353,7 @@ public class MainViewController {
         System.exit(aStatus);
     }
     //
+
     /**
      * Opens a dialog to warn the user of possible data loss and stopping a running fragmentation, e.g. when a new
      * molecule set should be imported or the application shut down. Returns true if "OK" was clicked, "false" for cancel
@@ -362,7 +363,7 @@ public class MainViewController {
      */
     private boolean isFragmentationStopAndDataLossConfirmed() {
         ButtonType tmpConformationResult;
-        if(this.isFragmentationRunning){
+        if (this.isFragmentationRunning) {
             tmpConformationResult = GuiUtil.guiConformationAlert(
                     Message.get("MainViewController.Warning.FragmentationRunning.Title"),
                     Message.get("MainViewController.Warning.FragmentationRunning.Header"),
@@ -376,23 +377,25 @@ public class MainViewController {
         return tmpConformationResult == ButtonType.OK;
     }
     //
+
     /**
      * Closes the application via closeApplication method when close window event was fired
      *
      * @param anEvent WindowEvent
      */
-    private void closeWindowEvent(WindowEvent anEvent){
+    private void closeWindowEvent(WindowEvent anEvent) {
         this.closeApplication(0);
         anEvent.consume();
     }
     //
+
     /**
      * Loads molecule file and opens molecules tab
      *
      * @param aParentStage Stage
      */
     private void importMoleculeFile(Stage aParentStage) {
-        if(this.moleculeDataModelList.size() > 0){
+        if (this.moleculeDataModelList.size() > 0) {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
             }
@@ -402,13 +405,13 @@ public class MainViewController {
         if (Objects.isNull(tmpFile)) {
             return;
         }
-        if(this.isFragmentationRunning){
+        if (this.isFragmentationRunning) {
             this.interruptFragmentation();
         }
-        if(this.isImportRunningProperty.get()){
+        if (this.isImportRunningProperty.get()) {
             this.interruptImport();
         }
-        if(this.isExportRunningProperty.get()){
+        if (this.isExportRunningProperty.get()) {
             this.interruptExport();
         }
         this.clearGuiAndCollections();
@@ -438,7 +441,7 @@ public class MainViewController {
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
-                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules" );
+                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
                 int tmpExceptionCount = 0;
                 for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
                     //returns null if no SMILES code could be created
@@ -482,13 +485,14 @@ public class MainViewController {
         this.importerThread.start();
     }
     //
+
     /**
      * Exports the given type of file
      *
      * @param anExportType Enum to specify what type of file to export
      */
-    private void exportFile(Exporter.ExportTypes anExportType){
-        if((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Molecules.toString()){
+    private void exportFile(Exporter.ExportTypes anExportType) {
+        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Molecules.toString()) {
             GuiUtil.guiConformationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
@@ -529,94 +533,106 @@ public class MainViewController {
                 break;
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
-        if(this.isExportRunningProperty.get()){
+        if (this.isExportRunningProperty.get()) {
             this.interruptExport();
         }
         tmpExporter.saveFile(this.primaryStage, anExportType, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
-        List<String> tmpFailedExportFragments = new LinkedList<>();
         boolean tmpGenerate2dAtomCoordinates = false;
-        switch(anExportType){
+        switch (anExportType) {
             case PDB_FILE:
             case SINGLE_SD_FILE:
                 if (!ChemUtil.checkMoleculeListForCoordinates(getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments))) {
-                ButtonType tmpConformationResult = GuiUtil.guiConformationAlert(
-                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
-                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
-                        Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
-                );
-                tmpGenerate2dAtomCoordinates = tmpConformationResult == ButtonType.OK;
+                    ButtonType tmpConformationResult = GuiUtil.guiConformationAlert(
+                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
+                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
+                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                    );
+                    tmpGenerate2dAtomCoordinates = tmpConformationResult == ButtonType.OK;
                 }
                 break;
         }
         boolean tmpGenerate2dAtomCoordinatesFinal = tmpGenerate2dAtomCoordinates;
         this.exportTask = new Task<>() {
             @Override
-            protected Void call() throws Exception{
+            protected List<String> call() throws Exception {
                 switch (anExportType) {
                     case FRAGMENT_CSV_FILE:
-                        tmpExporter.exportCsvFile(
+                        return tmpExporter.exportCsvFile(
                                 getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 settingsContainer.getCsvExportSeparatorSetting(),
                                 TabNames.Fragments
                         );
-                        break;
                     case PDB_FILE:
-                        tmpExporter.exportFragmentsAsChemicalFile(
+                        return tmpExporter.exportFragmentsAsChemicalFile(
                                 getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 ChemFileTypes.PDB,
                                 tmpGenerate2dAtomCoordinatesFinal
                         );
-                        break;
                     case FRAGMENT_PDF_FILE:
-                        tmpExporter.exportPdfFile(
+                        return tmpExporter.exportPdfFile(
                                 getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
                                 moleculeDataModelList,
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.Fragments
                         );
-                        break;
                     case SINGLE_SD_FILE:
-                        tmpExporter.exportFragmentsAsChemicalFile(
+                        return tmpExporter.exportFragmentsAsChemicalFile(
                                 getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 ChemFileTypes.SDF,
                                 tmpGenerate2dAtomCoordinatesFinal,
                                 true
                         );
-                        break;
                     case SD_FILE:
-                        tmpExporter.exportFragmentsAsChemicalFile(
+                        return tmpExporter.exportFragmentsAsChemicalFile(
                                 getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 ChemFileTypes.SDF,
                                 false
                         );
-                        break;
                     case ITEM_CSV_FILE:
-                        tmpExporter.exportCsvFile(
+                        return tmpExporter.exportCsvFile(
                                 moleculeDataModelList,
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 settingsContainer.getCsvExportSeparatorSetting(),
                                 TabNames.Itemization
                         );
-                        break;
                     case ITEM_PDF_FILE:
-                        tmpExporter.exportPdfFile(
+                        return tmpExporter.exportPdfFile(
                                 getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization),
                                 moleculeDataModelList,
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.Itemization
                         );
-                        break;
                 }
                 return null;
             }
         };
-        this.exportTask.setOnSucceeded(event ->{
+        this.exportTask.setOnSucceeded(event -> {
             this.isExportRunningProperty.setValue(false);
             this.updateStatusBar(this.exporterThread, Message.get("Status.finished"));
+            List<String> tmpFailedExportFragments = this.exportTask.getValue();
+            if (tmpFailedExportFragments == null) {
+                GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                        null);
+            }
+            if (tmpFailedExportFragments.size() > 0) {
+                StringBuilder tmpStringBuilder = new StringBuilder();
+                for (String tmpFragmentName : tmpFailedExportFragments) {
+                    tmpStringBuilder.append(tmpFragmentName + "\n");
+                }
+                GuiUtil.guiExpandableAlert(
+                        Alert.AlertType.WARNING.toString(),
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                        tmpFailedExportFragments.size() + " " + Message.get("Exporter.FragmentsTab.ExportNotPossible.label"),
+                        tmpStringBuilder.toString()
+                );
+            }
         });
         this.exportTask.setOnCancelled(event -> {
             this.isExportRunningProperty.setValue(false);
@@ -628,10 +644,10 @@ public class MainViewController {
             MainViewController.LOGGER.log(Level.WARNING, event.getSource().getException().toString(), event.getSource().getException());
             this.updateStatusBar(this.exporterThread, Message.get("Status.failed"));
             GuiUtil.guiMessageAlert(
-                        Alert.AlertType.WARNING,
-                        Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
-                        Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                        null);
+                    Alert.AlertType.WARNING,
+                    Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                    Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                    null);
 
         });
         this.exporterThread = new Thread(this.exportTask);
@@ -644,31 +660,34 @@ public class MainViewController {
         this.exporterThread.start();
     }
     //
+
     /**
      * Opens settings view for fragmentationSettings
      */
-    private void openFragmentationSettingsView(){
+    private void openFragmentationSettingsView() {
         FragmentationSettingsViewController tmpFragmentationSettingsViewController =
                 new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
     }
     //
+
     /**
      * Opens PipelineSettingsView
      */
-    private void openPipelineSettingsView(){
+    private void openPipelineSettingsView() {
         PipelineSettingsViewController tmpPipelineSettingsViewController =
                 new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, this.moleculeDataModelList.size() > 0, this.isFragmentationRunning);
-        if(tmpPipelineSettingsViewController.isFragmentationStarted()){
+        if (tmpPipelineSettingsViewController.isFragmentationStarted()) {
             this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationStarted());
         }
     }
     //
+
     /**
      * Adds CheckMenuItems for fragmentation algorithms to MainMenuBar
      */
-    private void addFragmentationAlgorithmCheckMenuItems(){
+    private void addFragmentationAlgorithmCheckMenuItems() {
         ToggleGroup tmpToggleGroup = new ToggleGroup();
-        for(IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()){
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()) {
             RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmName());
             tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
             this.mainView.getMainMenuBar().getFragmentationAlgorithmMenu().getItems().add(tmpRadioMenuItem);
@@ -677,31 +696,32 @@ public class MainViewController {
             }
         }
         tmpToggleGroup.selectedToggleProperty().addListener((observableValue, oldValue, newValue) -> {
-            if(tmpToggleGroup.getSelectedToggle() != null){
+            if (tmpToggleGroup.getSelectedToggle() != null) {
                 this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
                 this.fragmentationService.setSelectedFragmenterNameProperty(((RadioMenuItem) newValue).getText());
             }
         });
     }
     //
+
     /**
      * Opens settings view for global settings
      */
-    private void openGlobalSettingsView(){
-        SettingsViewController tmpSettingsViewController =  new SettingsViewController(this.primaryStage, this.settingsContainer);
-        Platform.runLater(()->{
-            if(tmpSettingsViewController.hasRowsPerPageChanged()){
-                for(Tab tmpTab : this.mainTabPane.getTabs()){
+    private void openGlobalSettingsView() {
+        SettingsViewController tmpSettingsViewController = new SettingsViewController(this.primaryStage, this.settingsContainer);
+        Platform.runLater(() -> {
+            if (tmpSettingsViewController.hasRowsPerPageChanged()) {
+                for (Tab tmpTab : this.mainTabPane.getTabs()) {
                     TableView tmpTableView = ((GridTabForTableView) tmpTab).getTableView();
                     int tmpListSize = 0;
-                    tmpListSize = ((IDataTableView)tmpTableView).getItemsList().size();
+                    tmpListSize = ((IDataTableView) tmpTableView).getItemsList().size();
                     int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
                     int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
                     int tmpPageCount = tmpListSize / tmpRowsPerPage;
-                    if(tmpListSize % tmpRowsPerPage > 0){
+                    if (tmpListSize % tmpRowsPerPage > 0) {
                         tmpPageCount++;
                     }
-                    if(tmpPageIndex > tmpPageCount){
+                    if (tmpPageIndex > tmpPageCount) {
                         tmpPageIndex = tmpPageCount;
                     }
                     ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
@@ -711,12 +731,12 @@ public class MainViewController {
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
                 }
             }
-            if(tmpSettingsViewController.hasKeepAtomContainerInDataModelChanged()){
-                for(MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList){
+            if (tmpSettingsViewController.hasKeepAtomContainerInDataModelChanged()) {
+                for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
                     tmpMoleculeDataModel.setKeepAtomContainer(this.settingsContainer.getKeepAtomContainerInDataModelSetting());
                 }
-                for(ObservableList<FragmentDataModel> tmpFragmentDataModelList : this.mapOfFragmentDataModelLists.values()){
-                    for(FragmentDataModel tmpFragmentDataModel : tmpFragmentDataModelList){
+                for (ObservableList<FragmentDataModel> tmpFragmentDataModelList : this.mapOfFragmentDataModelLists.values()) {
+                    for (FragmentDataModel tmpFragmentDataModel : tmpFragmentDataModelList) {
                         tmpFragmentDataModel.setKeepAtomContainer(this.settingsContainer.getKeepAtomContainerInDataModelSetting());
                     }
                 }
@@ -724,6 +744,7 @@ public class MainViewController {
         });
     }
     //
+
     /**
      * Opens molecules tab
      */
@@ -734,17 +755,17 @@ public class MainViewController {
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
-        if(this.moleculeDataModelList.size() % tmpRowsPerPage > 0){
+        if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpMoleculesTab.addPaginationToGridPane(tmpPagination,0,0,2,2);
+        tmpMoleculesTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
         this.fragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.fragmentButton.text"));
         ButtonBar tmpButtonBar = new ButtonBar();
-        tmpButtonBar.setPadding(new Insets(0,0,0,0));
+        tmpButtonBar.setPadding(new Insets(0, 0, 0, 0));
         this.fragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.fragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.fragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -766,17 +787,17 @@ public class MainViewController {
         this.cancelFragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.cancelFragmentationButton.setVisible(false);
         tmpButtonBar.getButtons().add(this.cancelFragmentationButton);
-        tmpMoleculesTab.addNodeToGridPane(tmpButtonBar, 0,1,1,1);
-        this.fragmentationButton.setOnAction(event->{
+        tmpMoleculesTab.addNodeToGridPane(tmpButtonBar, 0, 1, 1, 1);
+        this.fragmentationButton.setOnAction(event -> {
             this.startFragmentation();
         });
-        this.cancelFragmentationButton.setOnAction(event ->{
+        this.cancelFragmentationButton.setOnAction(event -> {
             this.interruptFragmentation();
         });
         this.moleculesDataTableView.addTableViewHeightListener(this.settingsContainer);
         this.moleculesDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView));
         this.moleculesDataTableView.setOnKeyPressed(event -> {
-            if(GuiDefinitions.KEY_CODE_COPY.match(event)){
+            if (GuiDefinitions.KEY_CODE_COPY.match(event)) {
                 GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView);
             }
         });
@@ -786,59 +807,63 @@ public class MainViewController {
 
     }
     //
+
     /**
      * Cancels import task and interrupts the corresponding thread
      */
-    private void interruptImport(){
+    private void interruptImport() {
         this.importTask.cancel();
         this.importerThread.interrupt();
     }
     //
+
     /**
      * Cancels export task and interrupts the corresponding thread
      */
-    private void interruptExport(){
+    private void interruptExport() {
         this.exportTask.cancel();
         this.exporterThread.interrupt();
     }
     //
+
     /**
      * Gets called by the cancel fragmentation button
      */
-    private void interruptFragmentation(){
+    private void interruptFragmentation() {
         //cancel() of the task was overridden to shut down the executor service in FragmentationService
         this.parallelFragmentationMainTask.cancel(true);
         this.cancelFragmentationButton.setVisible(false);
         this.fragmentationButton.setDisable(false);
     }
     //
+
     /**
      * Starts fragmentation for only one algorithm
      */
-    private void startFragmentation(){
+    private void startFragmentation() {
         this.startFragmentation(false);
     }
     //
+
     /**
      * Starts fragmentation task and opens fragment and itemization tabs
      */
-    private void startFragmentation(boolean isPipelining){
+    private void startFragmentation(boolean isPipelining) {
         long tmpStartTime = System.nanoTime();
         LOGGER.info("Start of method startFragmentation");
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).collect(Collectors.toList());
         int tmpNumberOfCores = this.settingsContainer.getNumberOfTasksForFragmentationSetting();
-        try{
+        try {
             this.fragmentationButton.setDisable(true);
             this.cancelFragmentationButton.setVisible(true);
             this.parallelFragmentationMainTask = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
-                    if(isPipelining){
+                    if (isPipelining) {
                         MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
                                 tmpNumberOfCores);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
-                    }
-                    else{
+                    } else {
                         MainViewController.this.fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
                                 tmpNumberOfCores);
                     }
@@ -854,11 +879,11 @@ public class MainViewController {
             this.parallelFragmentationMainTask.setOnSucceeded(event -> {
                 //note: setOnSucceeded() takes place in the JavaFX GUI thread again but still runLater() is necessary to wait
                 // for the thread to be free for the update
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     try {
                         ObservableList<FragmentDataModel> tmpObservableFragments = FXCollections.observableArrayList();
                         Set<String> tmpKeys = this.fragmentationService.getFragments().keySet();
-                        for(String tmpKey : tmpKeys){
+                        for (String tmpKey : tmpKeys) {
                             tmpObservableFragments.add(this.fragmentationService.getFragments().get(tmpKey));
                         }
                         this.mapOfFragmentDataModelLists.put(this.fragmentationService.getCurrentFragmentationName(), tmpObservableFragments);
@@ -897,7 +922,7 @@ public class MainViewController {
             this.updateStatusBar(this.fragmentationThread, Message.get("Status.running"));
             this.isFragmentationRunning = true;
             this.fragmentationThread.start();
-        } catch(Exception anException){
+        } catch (Exception anException) {
             MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiExceptionAlert(Message.get("MainViewController.FragmentationError.Title"),
                     Message.get("MainViewController.FragmentationError.Header"),
@@ -906,12 +931,13 @@ public class MainViewController {
         }
     }
     //
+
     /**
      * Adds a tab for fragments and a tab for items (results of fragmentation)
      *
      * @param aFragmentationName
      */
-    private void addFragmentationResultTabs(String aFragmentationName){
+    private void addFragmentationResultTabs(String aFragmentationName) {
         //fragments tab
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name(), tmpFragmentsDataTableView);
@@ -920,23 +946,23 @@ public class MainViewController {
         tmpFragmentsDataTableView.setItemsList(tmpList);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = tmpList.size() / tmpRowsPerPage;
-        if(tmpList.size() % tmpRowsPerPage > 0){
+        if (tmpList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setPageFactory((pageIndex) -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpFragmentsTab.addPaginationToGridPane(tmpPagination, 0,0,2,2);
+        tmpFragmentsTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
         Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
         tmpExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCSV.tooltip")));
         Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
         tmpExportPdfButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonPDF.tooltip")));
-        Button tmpCancelExportButton =  new Button(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
+        Button tmpCancelExportButton = new Button(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
         tmpCancelExportButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
         tmpCancelExportButton.visibleProperty().bind(this.isExportRunningProperty);
         ButtonBar tmpButtonBarFragments = new ButtonBar();
-        tmpButtonBarFragments.setPadding(new Insets(0,0,0,0));
+        tmpButtonBarFragments.setPadding(new Insets(0, 0, 0, 0));
         tmpExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -944,9 +970,9 @@ public class MainViewController {
         tmpCancelExportButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpCancelExportButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton, tmpCancelExportButton);
-        tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0,1,1,1);
-        tmpExportPdfButton.setOnAction(event-> this.exportFile(Exporter.ExportTypes.FRAGMENT_PDF_FILE));
-        tmpExportCsvButton.setOnAction(event-> this.exportFile(Exporter.ExportTypes.FRAGMENT_CSV_FILE));
+        tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0, 1, 1, 1);
+        tmpExportPdfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.FRAGMENT_PDF_FILE));
+        tmpExportCsvButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.FRAGMENT_CSV_FILE));
         tmpCancelExportButton.setOnAction(event -> this.interruptExport());
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
@@ -954,13 +980,13 @@ public class MainViewController {
         tmpFragmentsDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
         tmpFragmentsDataTableView.setOnKeyPressed(event -> {
-            if(GuiDefinitions.KEY_CODE_COPY.match(event)){
+            if (GuiDefinitions.KEY_CODE_COPY.match(event)) {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
             }
         });
         //itemization tab
         int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
-        for(int i= 0; i < this.moleculeDataModelList.size(); i++){
+        for (int i = 0; i < this.moleculeDataModelList.size(); i++) {
             HashMap<String, Integer> tmpCurrentFragmentsMap = this.moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
             if (tmpCurrentFragmentsMap == null) {
                 continue;
@@ -973,27 +999,27 @@ public class MainViewController {
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
         tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
-        if(this.moleculeDataModelList.size() % tmpRowsPerPage > 0){
+        if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
         Pagination tmpPaginationItems = new Pagination(tmpPageCount, 0);
         tmpPaginationItems.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
-        tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems, 0,0,2,2);
+        tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems, 0, 0, 2, 2);
         Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
         tmpItemizationTabExportPDfButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.pdfButton.tooltip")));
         Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
         tmpItemizationExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.csvButton.tooltip")));
         ButtonBar tmpButtonBarItemization = new ButtonBar();
-        tmpButtonBarItemization.setPadding(new Insets(0,0,0,0));
+        tmpButtonBarItemization.setPadding(new Insets(0, 0, 0, 0));
         tmpItemizationExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpItemizationExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpItemizationTabExportPDfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpItemizationTabExportPDfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBarItemization.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton, tmpCancelExportButton);
-        tmpItemizationTab.addNodeToGridPane(tmpButtonBarItemization, 0, 1,1,1);
-        tmpItemizationExportCsvButton.setOnAction(event-> this.exportFile(Exporter.ExportTypes.ITEM_CSV_FILE));
+        tmpItemizationTab.addNodeToGridPane(tmpButtonBarItemization, 0, 1, 1, 1);
+        tmpItemizationExportCsvButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_CSV_FILE));
         tmpItemizationTabExportPDfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_PDF_FILE));
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPaginationItems, tmpRowsPerPage);
@@ -1001,7 +1027,7 @@ public class MainViewController {
         tmpItemizationDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
         tmpItemizationDataTableView.setOnKeyPressed(event -> {
-            if(GuiDefinitions.KEY_CODE_COPY.match(event)){
+            if (GuiDefinitions.KEY_CODE_COPY.match(event)) {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView);
             }
         });
@@ -1009,45 +1035,48 @@ public class MainViewController {
         this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
     }
     //
+
     /**
      * Clears the gui and all collections
      */
-    private void clearGuiAndCollections(){
+    private void clearGuiAndCollections() {
         this.moleculeDataModelList.clear();
         this.mapOfFragmentDataModelLists.clear();
         this.moleculesDataTableView = null;
         this.mainTabPane.getTabs().clear();
     }
     //
+
     /**
      * Returns the items list of the table view of the selected tab
      *
      * @param aTabName Enum which specifies which kind of tab
      * @return List<MoleculeDataModel>
      */
-    private List<MoleculeDataModel> getItemsListOfSelectedFragmenterByTabId(TabNames aTabName){
-        return ((IDataTableView)((GridTabForTableView)(this.mainTabPane.getTabs().stream().filter(tab ->
-                ((GridTabForTableView)this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle().equals(((GridTabForTableView)tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabName.name())
+    private List<MoleculeDataModel> getItemsListOfSelectedFragmenterByTabId(TabNames aTabName) {
+        return ((IDataTableView) ((GridTabForTableView) (this.mainTabPane.getTabs().stream().filter(tab ->
+                ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle().equals(((GridTabForTableView) tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabName.name())
         ).findFirst().get())).getTableView()).getItemsList();
     }
     //
+
     /**
      * Updates StatusBar
      *
-     * @param aThread Thread which was started or end
+     * @param aThread  Thread which was started or end
      * @param aMessage String message to display in StatusBar
      */
-    private void updateStatusBar(Thread aThread, String aMessage){
-        if(!this.taskList.contains(aThread)){
-            this.taskList.add(aThread);
+    private void updateStatusBar(Thread aThread, String aMessage) {
+        if (!this.threadList.contains(aThread)) {
+            this.threadList.add(aThread);
             this.mainView.getStatusBar().getStatusLabel().setText(aMessage);
             this.mainView.getStatusBar().getStatusLabel().setVisible(true);
             this.mainView.getStatusBar().getProgressBar().setVisible(true);
             return;
         }
-        if(this.taskList.contains(aThread)){
-            this.taskList.remove(aThread);
-            if(this.taskList.isEmpty()){
+        if (this.threadList.contains(aThread)) {
+            this.threadList.remove(aThread);
+            if (this.threadList.isEmpty()) {
                 this.mainView.getStatusBar().getProgressBar().setVisible(false);
                 this.mainView.getStatusBar().getStatusLabel().setText(aMessage);
                 return;
@@ -1055,21 +1084,22 @@ public class MainViewController {
             this.mainView.getStatusBar().getStatusLabel().setText(
                     this.getStatusMessageByThreadType(
                             Objects.requireNonNull(ThreadType.get(
-                                    this.taskList.get(this.taskList.size() - 1).getName()
+                                    this.threadList.get(this.threadList.size() - 1).getName()
                             ))
                     )
             );
         }
     }
     //
+
     /**
      * Returns status message as string by given ThreadType
      *
      * @param aThreadType ThreadType
      * @return String status message
      */
-    private String getStatusMessageByThreadType(ThreadType aThreadType){
-        switch(aThreadType){
+    private String getStatusMessageByThreadType(ThreadType aThreadType) {
+        switch (aThreadType) {
             case FRAGMENTATION_THREAD:
                 return Message.get("Status.running");
             case IMPORT_THREAD:
@@ -1083,8 +1113,9 @@ public class MainViewController {
     //</editor-fold>
     //
     //<editor-fold desc="public enum" defaultstate="collapsed">
+
     /**
-     * Enum for different thread types
+     * Enum for different thread types, set as thread name
      */
     public enum ThreadType {
         FRAGMENTATION_THREAD("Fragmentation_Thread"),
@@ -1093,20 +1124,20 @@ public class MainViewController {
 
         private String threadName;
 
-        ThreadType(String aThreadName){
+        ThreadType(String aThreadName) {
             this.threadName = aThreadName;
         }
 
-        public String getThreadName(){
+        public String getThreadName() {
             return this.threadName;
         }
 
         /**
          * Reverse lookup
          */
-        public static ThreadType get(String aThreadName){
-            for(ThreadType aType : values()){
-                if(aType.threadName.equals(aThreadName)){
+        public static ThreadType get(String aThreadName) {
+            for (ThreadType aType : values()) {
+                if (aType.threadName.equals(aThreadName)) {
                     return aType;
                 }
             }
