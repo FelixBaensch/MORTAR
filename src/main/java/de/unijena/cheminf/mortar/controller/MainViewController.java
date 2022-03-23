@@ -1137,6 +1137,11 @@ public class MainViewController {
 
         /**
          * Reverse lookup
+         * Returns ThreadType by given thread name;
+         * returns null if thread name does not correspond to any ThreadType
+         *
+         * @param aThreadName String
+         * @return ThreadType
          */
         public static ThreadType get(String aThreadName) {
             for (ThreadType aType : values()) {

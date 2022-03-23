@@ -169,13 +169,14 @@ public class Exporter {
     //
     /**
      * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or
-     * on the Fragments tab as a CSV file. Opens a file chooser dialog for the user to determine a directory and file
-     * for the exported data.
+     * on the Fragments tab as a CSV file.
+     * Returns a list containing SMILES of the molecules that cause an error when exported
      *
      * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
      * @param aFragmentationName     fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aSeparator             the separator for the csv file
      * @param aTabName               TabName to identify type of tab
+     * @return List {@literal <}String {@literal >}
      */
     public List<String> exportCsvFile(List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aSeparator, TabNames aTabName) {
         try {
@@ -196,13 +197,14 @@ public class Exporter {
     //
 
     /**
-     * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file. Opens a file chooser
-     * dialog for the user to determine a directory and file for the exported data.
+     * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file.
+     * Returns a list containing SMILES of the molecules that cause an error when exported
      *
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
      * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName     fragmentation name to be displayed in the header of the PDF file
      * @param aTabName               TabName to identify type of tab
+     * @return List {@literal <}String {@literal >}
      */
     public List<String> exportPdfFile(List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, TabNames aTabName) {
         try {
@@ -221,32 +223,41 @@ public class Exporter {
         return null;
     }
     //
-
     /**
+     * Exports in a new thread depending on aFragmentationName the results as displayed on the Itemisation tab or on the Fragments tab as a chemical file.
+     * Returns a list containing SMILES of the molecules that cause an error when exported
+     *
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aFragmentationName     name of fragmentation
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
+     * @param generate2dAtomCoordinates boolean value whether to generate 2D coordinates
+     * @return List {@literal <}String {@literal >}
      */
-    public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isGenerate2dAtomCoordinates) {
-        return this.exportFragmentsAsChemicalFile(aFragmentDataModelList, aFragmentationName, aChemFileType, isGenerate2dAtomCoordinates, false);
+    public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates) {
+        return this.exportFragmentsAsChemicalFile(aFragmentDataModelList, aFragmentationName, aChemFileType, generate2dAtomCoordinates, false);
     }
-
+    //
     /**
+     * Exports in a new thread depending on aFragmentationName the results as displayed on the Itemisation tab or on the Fragments tab as a chemical file.
+     * Returns a list containing SMILES of the molecules that cause an error when exported
+     *
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aFragmentationName     name of fragmentation
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
+     * @param generate2dAtomCoordinates boolean value whether to generate 2D coordinates
      * @param isSingleExport         boolean if fragments should be exported in one file or seperated, one file each fragment
+     * @return List {@literal <}String {@literal >}
      */
-    public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean isGenerate2dAtomCoordinates, boolean isSingleExport) {
+    public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates, boolean isSingleExport) {
         try {
             if (this.file == null)
                 return null;
             if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
-                return createFragmentationTabSingleSDFile(this.file, aFragmentDataModelList, isGenerate2dAtomCoordinates);
+                return this.createFragmentationTabSingleSDFile(this.file, aFragmentDataModelList, generate2dAtomCoordinates);
             } else if (aChemFileType == ChemFileTypes.SDF) {
-                return createFragmentationTabSeparateSDFiles(this.file, aFragmentDataModelList, isGenerate2dAtomCoordinates);
+                return this.createFragmentationTabSeparateSDFiles(this.file, aFragmentDataModelList, generate2dAtomCoordinates);
             } else if (aChemFileType == ChemFileTypes.PDB) {
-                return createFragmentationTabPDBFiles(this.file, aFragmentDataModelList, isGenerate2dAtomCoordinates);
+                return this.createFragmentationTabPDBFiles(this.file, aFragmentDataModelList, generate2dAtomCoordinates);
             }
         } catch (Exception anException) {
             Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
