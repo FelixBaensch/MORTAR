@@ -58,6 +58,7 @@ import java.util.logging.Logger;
  * CDK implementation of the algorithm.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="Enum FGEnvOption">

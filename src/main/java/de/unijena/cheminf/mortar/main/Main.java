@@ -30,6 +30,7 @@ package de.unijena.cheminf.mortar.main;
  * (retrieved December 18, 2019) for more details.
  *
  * @author Felix Baensch
+ * @version 1.0.0.0
  */
 public class Main {
     /**

@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -25,6 +25,7 @@ package de.unijena.cheminf.mortar.preference;
  * NOTE: All newly added enum constants must also be added in the PreferenceFactory.reinitializePreference() method.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public enum PreferenceType {
     /**

@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -44,8 +44,10 @@ import javafx.scene.layout.BorderPane;
 import java.util.List;
 
 /**
- * MoleculesDataTableView extends TableView
- * Customized table view for molecules data table view
+ * Customized table view for molecules data table view.
+ *
+ * @author Felix Baensch
+ * @version 1.0.0.0
  */
 public class MoleculesDataTableView extends TableView implements IDataTableView {
 

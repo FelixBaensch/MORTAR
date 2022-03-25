@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -30,6 +30,7 @@ import java.util.Objects;
  * (Enum.name()) from this specific enum class.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
     //<editor-fold desc="Private final variables">

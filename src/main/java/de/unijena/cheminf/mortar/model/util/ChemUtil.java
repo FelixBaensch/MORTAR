@@ -45,9 +45,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Chemistry utility
+ * Chemistry utility.
  *
- * @author Samuel Behr
+ * @author Samuel Behr, Jonas Schaub
+ * @version 1.0.0.0
  */
 public final class ChemUtil {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">

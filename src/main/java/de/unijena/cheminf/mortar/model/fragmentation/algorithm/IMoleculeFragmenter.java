@@ -65,6 +65,7 @@ import java.util.Map;
  * {@link ScaffoldGeneratorFragmenter}.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public interface IMoleculeFragmenter {
     //<editor-fold desc="FragmentSaturationOption enum">

@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -32,6 +32,7 @@ import javafx.scene.control.SeparatorMenuItem;
  * It contains menus for file handling (I/O), shutting down the application, settings and help menu entries
  *
  * @author Felix Baensch, Jonas Schaub, Samuel Behr
+ * @version 1.0.0.0
  */
 public class MainMenuBar extends MenuBar {
 

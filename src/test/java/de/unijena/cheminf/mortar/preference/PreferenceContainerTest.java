@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -27,16 +27,15 @@ import de.unijena.cheminf.mortar.model.util.FileUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.util.Locale;
-
-import static org.junit.Assert.*;
 
 /**
  * Test class for class PreferenceContainer.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public class PreferenceContainerTest {
     /**

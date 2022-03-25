@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -41,7 +41,10 @@ import javafx.scene.layout.BorderPane;
 import java.util.List;
 
 /**
- * Custom table view for the itemization table view
+ * Custom table view for the itemization table view.
+ *
+ * @author Felix Baensch
+ * @version 1.0.0.0
  *
  */
 public class ItemizationDataTableView extends TableView implements IDataTableView{

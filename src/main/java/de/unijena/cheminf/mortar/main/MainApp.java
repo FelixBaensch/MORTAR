@@ -39,6 +39,9 @@ import java.util.logging.Logger;
 
 /**
  * Main class that extends JavaFX Application to start MORTAR.
+ *
+ * @author Jonas Schaub, Felix Baensch
+ * @version 1.0.0.0
  */
 public class MainApp extends Application {
     /**

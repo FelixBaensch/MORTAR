@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -36,9 +36,10 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
- * A preference for string values
+ * A preference for string values.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public class SingleTermPreference extends BasePreference {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">

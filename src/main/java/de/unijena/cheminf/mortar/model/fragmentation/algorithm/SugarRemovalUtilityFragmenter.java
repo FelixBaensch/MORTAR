@@ -53,6 +53,7 @@ import java.util.logging.Logger;
  * SugarRemovalUtility class.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="Enum SugarTypeToRemoveOption">

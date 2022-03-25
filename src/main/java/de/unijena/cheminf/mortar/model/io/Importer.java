@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2021  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -61,9 +61,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Importer
+ * Importer.
  *
- * @author Felix Bänsch, Samuel Behr, Jonas Schaub
+ * @author Felix Baensch, Samuel Behr, Jonas Schaub
+ * @version 1.0.0.0
  */
 public class Importer {
     //<editor-fold desc="public static final class constants">

@@ -59,6 +59,7 @@ import java.util.regex.Pattern;
  * GUI utility
  *
  * @author Jonas Schaub, Felix Baensch
+ * @version 1.0.0.0
  */
 public class GuiUtil {
     //<editor-fold defaultstate="collapsed" desc="Public static final class constants">

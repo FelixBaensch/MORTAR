@@ -61,6 +61,7 @@ import java.util.logging.Logger;
  * {@link de.unijena.cheminf.mortar.preference.IPreference} objects for persistence.
  *
  * @author Jonas Schaub
+ * @version 1.0.0.0
  */
 public class SettingsContainer {
     //<editor-fold desc="private static final constants" defaultstate="collapsed">
