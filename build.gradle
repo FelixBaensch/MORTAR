@@ -17,8 +17,8 @@ java {
 }
 
 //The supplied Adopt Open JDK is used for compilation and running
-//TODO: Omit?
 compileJava.options.fork = true
+//TODO: Comment in for deployment build
 //compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.5_10' +  File.separator + 'bin' + File.separator + 'javac'
 
 repositories {
