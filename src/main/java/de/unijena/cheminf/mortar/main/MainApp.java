@@ -27,6 +27,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
+import de.unijena.cheminf.mortar.model.util.MiscUtil;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -58,7 +59,7 @@ public class MainApp extends Application {
             //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Check Java version">
             String tmpJavaVersion = System.getProperty("java.version");
-            if (tmpJavaVersion.compareTo(BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
+            if (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
                 GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.InvalidJavaVersion.Title"),
                         null, String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION));
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Java version lower than minimum: " + tmpJavaVersion);

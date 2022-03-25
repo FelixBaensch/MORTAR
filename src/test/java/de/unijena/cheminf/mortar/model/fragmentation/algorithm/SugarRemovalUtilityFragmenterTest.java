@@ -30,8 +30,14 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.List;
+import java.util.Locale;
 
 public class SugarRemovalUtilityFragmenterTest {
+
+    public SugarRemovalUtilityFragmenterTest() {
+        Locale.setDefault(new Locale("en", "GB"));
+    }
+
     @Test
     public void basicTest() throws Exception {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();

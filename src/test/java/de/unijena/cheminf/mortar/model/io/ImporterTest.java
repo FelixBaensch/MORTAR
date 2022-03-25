@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 /**
  * Test class for the ImportSMILESFile() method of the Importer class.
@@ -32,6 +33,9 @@ import java.nio.file.Paths;
  * @author Samuel Behr
  */
 public class ImporterTest extends Importer {
+    static {
+        Locale.setDefault(new Locale("en", "GB"));
+    }
     /**
      *
      */
