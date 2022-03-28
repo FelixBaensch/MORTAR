@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import java.awt.Color;
 import java.io.File;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -38,13 +39,14 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class PreferenceContainerTest {
+
     /**
      * Constructor (empty).
      */
     public PreferenceContainerTest() {
 
     }
-
+    //
     /**
      * Tests basic functionalities of PreferenceContainer class/objects, like preference management, management of
      * public properties and persistence.
@@ -106,7 +108,14 @@ public class PreferenceContainerTest {
         Assert.assertEquals(tmpContainer, tmpReloadedContainer);
         System.out.println();
     }
-
+    //
+    /**
+     * Tests the conversion of MORTAR preferences to JavaFx properties via the
+     * {@link PreferenceUtil#translateJavaFxPropertiesToPreferences(List, String)} method.
+     * Correct persistence of the preferences is also tested.
+     *
+     * @throws Exception if anything goes wrong
+     */
     @Test
     public void testPropertyToPreferenceConversion() throws Exception {
         Locale.setDefault(new Locale("en", "GB"));

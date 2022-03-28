@@ -43,12 +43,13 @@ import org.junit.Test;
  * @version 1.0.0.0
  */
 public class PreferenceTest {
+
     /**
      * Constructor (empty)
      */
     public PreferenceTest() {
     }
-
+    //
     /**
      * Tests basic functionalities of class BooleanPreference.
      *
@@ -61,7 +62,7 @@ public class PreferenceTest {
         Assert.assertTrue(tmpPreference.getContent());
         this.testPreferenceBasics(tmpPreference);
     }
-
+    //
     /**
      * Tests basic functionalities of class RGBColorPreference.
      *
@@ -83,7 +84,7 @@ public class PreferenceTest {
         this.testPreferenceBasics(tmpPreference2);
         Assert.assertArrayEquals(tmpPreference.getComponents(), tmpPreference2.getComponents(), 0);
     }
-
+    //
     /**
      * Tests basic functionalities of class SingleIntegerPreference.
      *
@@ -94,7 +95,7 @@ public class PreferenceTest {
         SingleIntegerPreference tmpPreference = new SingleIntegerPreference("Number of simultaneous MORTAR instances", 1);
         this.testPreferenceBasics(tmpPreference);
     }
-
+    //
     /**
      * Tests basic functionalities of class SingleNumberPreference.
      *
@@ -105,7 +106,7 @@ public class PreferenceTest {
         SingleNumberPreference tmpPreference = new SingleNumberPreference("Layout parameter xy", 2.0);
         this.testPreferenceBasics(tmpPreference);
     }
-
+    //
     /**
      * Tests basic functionalities of class SingleTermPreference.
      *
@@ -116,7 +117,7 @@ public class PreferenceTest {
         SingleTermPreference tmpPreference = new SingleTermPreference("Welcoming message", "Welcome to MORTAR");
         this.testPreferenceBasics(tmpPreference);
     }
-
+    //
     /**
      * Tests basic functionalities of given preference object, like management of public properties and persistence.
      */

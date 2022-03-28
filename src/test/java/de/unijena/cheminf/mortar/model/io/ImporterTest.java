@@ -34,11 +34,17 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class ImporterTest extends Importer {
+
+    /**
+     * Static initializer to set default locale to british english which is important for the correct functioning of
+     * the settings container because tooltips for its settings are imported from the message.properties file.
+     */
     static {
         Locale.setDefault(new Locale("en", "GB"));
     }
+    //
     /**
-     *
+     * Constructor, calls super() with a new SettingsContainer instance.
      */
     public ImporterTest() {
         super(new SettingsContainer());
@@ -53,6 +59,9 @@ public class ImporterTest extends Importer {
      * line till the last line, ignoring blank lines as well as lines with invalid SMILES code
      * or invalid structure. If the second or third line is found to be null, the first line is
      * not skipped at the first part.
+     * <br>NOTE: The importer logs on the console and the results have to be manually checked against what is
+     * given here in the code comments!
+     *
      * @throws Exception if anything goes wrong
      * @author Samuel Behr
      */

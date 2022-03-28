@@ -24,13 +24,20 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragment
 import org.junit.Test;
 
 /**
- * TODO
+ * Test class for the custom-made {@link de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty} JavaFx
+ * property wrapping an enum constant name.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class SimpleEnumConstantNamePropertyTest {
 
+    /**
+     * Basic test for retrieval of associated enum, currently set option, and available options. All are printed to
+     * console.
+     *
+     * @throws Exception if anything goes wrong
+     */
     @Test
     public void test() throws Exception {
         SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(this, "testProp",
