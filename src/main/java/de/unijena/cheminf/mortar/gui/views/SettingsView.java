@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TODO
+ * View class for the settings windows, both global and fragmenter settings.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
@@ -76,7 +76,7 @@ public class SettingsView extends AnchorPane {
     private HBox hBoxButtonsHBox;
     private SelectionModel<Tab> selectionModel;
     //</editor-fold>
-
+    //
     /**
      * Constructor
      */
@@ -88,7 +88,6 @@ public class SettingsView extends AnchorPane {
         SettingsView.setRightAnchor(this.borderPane, 0.0);
         SettingsView.setLeftAnchor(this.borderPane, 0.0);
         SettingsView.setBottomAnchor(this.borderPane, 0.0);
-
         //tabPane
         this.tabPane =  new TabPane();
         this.selectionModel = this.tabPane.getSelectionModel();
@@ -124,6 +123,7 @@ public class SettingsView extends AnchorPane {
         this.getChildren().add(this.borderPane);
     }
     //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      * Adds a tab which contains the properties of the given properties list
      * @param aStage Stage to bind width and height
@@ -250,6 +250,7 @@ public class SettingsView extends AnchorPane {
             }
         }
     }
+    //</editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**

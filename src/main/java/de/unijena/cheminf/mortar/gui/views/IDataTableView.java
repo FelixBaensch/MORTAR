@@ -26,14 +26,32 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import java.util.List;
 
 /**
- * TODO
+ * Interface for implementing TableViews for molecule data. It is necessary for the sorting method
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public interface IDataTableView {
 
+    /**
+     * Returns a list of MoleculeDataModel
+     *
+     * @return List of MoleculeDataModel
+     */
     public List<MoleculeDataModel> getItemsList();
+    //
+    /**
+     * Sets given list
+     *
+     * @param aListOfFragments List
+     */
     public void setItemsList(List<MoleculeDataModel> aListOfFragments);
+    //
+    /**
+     * Adds a change listener to the height property of table view which sets the height for structure images to
+     * each MoleculeDataModel/FragmentDataModel object of the items list and refreshes the table view
+     *
+     * @param aSettingsContainer SettingsContainer
+     */
     public void addTableViewHeightListener(SettingsContainer aSettingsContainer);
 }
