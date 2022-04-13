@@ -19,7 +19,7 @@ java {
 //The supplied Adopt Open JDK is used for compilation and running
 compileJava.options.fork = true
 //TODO: Comment in for deployment build
-compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.14.1_1' +  File.separator + 'bin' + File.separator + 'javac'
+//compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.14.1_1' +  File.separator + 'bin' + File.separator + 'javac'
 
 repositories {
     mavenCentral()
