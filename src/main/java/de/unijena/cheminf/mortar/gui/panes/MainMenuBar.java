@@ -133,6 +133,10 @@ public class MainMenuBar extends MenuBar {
      * MenuItem to cancel export, only visible if import is running
      */
     private MenuItem cancelExportMenuItem;
+    /**
+     * Menu to open tools 
+     */
+    private Menu toolsMenu;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -180,6 +184,8 @@ public class MainMenuBar extends MenuBar {
         this.aboutViewMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.aboutViewMenuItem.text"));
 //        this.logFilesMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.logFilesMenuItem.text"));
 //        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
+        //
+        this.toolsMenu = new Menu(Message.get("MainView.menuBar.toolsMenu.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -223,6 +229,9 @@ public class MainMenuBar extends MenuBar {
         this.getMenus().add(this.pipelineMenu);
         //pipelineSettingsMenuItem
         this.pipelineMenu.getItems().add(this.pipelineSettingsMenuItem);
+        //</editor-fold>
+        //<editor-fold desc="toolsMenu" defaultstate="collapsed">
+        this.getMenus().add(this.toolsMenu);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
 //        this.helpMenu.getItems().add(this.logFilesMenuItem);
