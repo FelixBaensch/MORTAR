@@ -160,20 +160,21 @@ public class AboutView extends AnchorPane {
         Text tmpVersion = new Text("Version " + BasicDefinitions.MORTAR_VERSION);
         tmpVersion.setStyle("-fx-font-weight: bold");
         this.gridPane.add(tmpVersion, 0,1);
-        //-copyright
-        Text tmpCopyright = new Text(Message.get("AboutView.copyright.text"));
-        this.gridPane.add(tmpCopyright, 0,2);
-        //-license
-        Text tmpLicense = new Text(Message.get("AboutView.license.text"));
-        TitledPane tmpTitledPane = new TitledPane(Message.get("AboutView.license.title"), tmpLicense);
-        tmpTitledPane.setExpanded(true);
-        this.gridPane.add(tmpTitledPane,0,3);
         //-contact
         Text tmpContact = new Text(Message.get("AboutView.contact.text"));
-        this.gridPane.add(tmpContact, 0,4);
+        this.gridPane.add(tmpContact, 0,2);
+        //-copyright
+        Text tmpCopyright = new Text(Message.get("AboutView.copyright.text"));
+        this.gridPane.add(tmpCopyright, 0,3);
+        //-license
+        Text tmpLicense = new Text(Message.get("AboutView.license.text"));
+        TitledPane tmpTitledPaneLicense = new TitledPane(Message.get("AboutView.license.title"), tmpLicense); //TODO: adjust width
+        tmpTitledPaneLicense.setExpanded(true);
+        this.gridPane.add(tmpTitledPaneLicense,0,4);
         //-acknowledgement
-        Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text"));
-        this.gridPane.add(tmpAcknowledgment,0,5);
+        Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text")); //TODO: adjust width
+        TitledPane tmpTitledPaneAcknowledgement = new TitledPane(Message.get("AboutView.acknowledgement.title"), tmpAcknowledgment);
+        this.gridPane.add(tmpTitledPaneAcknowledgement,0,5);
         //-image
         InputStream tmpImageInputStream = AboutView.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
         Double tmpImageSize = 495.3125; // magic number, do not touch

@@ -90,7 +90,7 @@ public final class BasicDefinitions {
     /**
      * Vendor name of application to include in data directory path
      */
-    public static final String MORTAR_VENDOR = "WHS_IBCI";
+    public static final String MORTAR_VENDOR = "UniJena";
 
     /**
      * Directory name for MORTAR data
