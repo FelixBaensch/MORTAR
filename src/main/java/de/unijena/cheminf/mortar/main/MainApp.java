@@ -64,7 +64,7 @@ public class MainApp extends Application {
             String tmpJavaVersion = System.getProperty("java.version");
             if (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
                 GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.InvalidJavaVersion.Title"),
-                        null, String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION));
+                        null, String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION) + " your version: " + tmpJavaVersion);
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Java version lower than minimum: " + tmpJavaVersion);
                 System.exit(-1);
             }
