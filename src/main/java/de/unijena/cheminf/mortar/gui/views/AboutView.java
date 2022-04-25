@@ -48,6 +48,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 
 import java.io.InputStream;
 
@@ -174,6 +175,7 @@ public class AboutView extends AnchorPane {
         //-acknowledgement
         Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text")); //TODO: adjust width
         TitledPane tmpTitledPaneAcknowledgement = new TitledPane(Message.get("AboutView.acknowledgement.title"), tmpAcknowledgment);
+        tmpTitledPaneAcknowledgement.setExpanded(false);
         this.gridPane.add(tmpTitledPaneAcknowledgement,0,5);
         //-image
         InputStream tmpImageInputStream = AboutView.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
