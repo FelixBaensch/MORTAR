@@ -184,7 +184,7 @@ public class AboutView extends AnchorPane {
         //-image
         InputStream tmpImageInputStream = AboutView.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
         Double tmpImageSize = 495.3125; // magic number, do not touch
-        Image tmpLogo = new Image(tmpImageInputStream,tmpImageSize,tmpImageSize, true,true );
+        Image tmpLogo = new Image(tmpImageInputStream,tmpImageSize,tmpImageSize/1.414, true,true );
         this.logoImageView = new ImageView(tmpLogo);
         this.gridPane.add(this.logoImageView, 1,0, 1, 6);
         GridPane.setHalignment(this.logoImageView, HPos.CENTER);
