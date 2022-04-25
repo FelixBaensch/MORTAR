@@ -30,6 +30,7 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -48,7 +49,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 
 import java.io.InputStream;
 
@@ -169,12 +169,16 @@ public class AboutView extends AnchorPane {
         this.gridPane.add(tmpCopyright, 0,3);
         //-license
         Text tmpLicense = new Text(Message.get("AboutView.license.text"));
-        TitledPane tmpTitledPaneLicense = new TitledPane(Message.get("AboutView.license.title"), tmpLicense); //TODO: adjust width
+        ScrollPane tmpLicenseScrollPane = new ScrollPane(tmpLicense);
+        TitledPane tmpTitledPaneLicense = new TitledPane(Message.get("AboutView.license.title"), tmpLicenseScrollPane);
         tmpTitledPaneLicense.setExpanded(true);
+        tmpTitledPaneLicense.setAlignment(Pos.TOP_LEFT);
         this.gridPane.add(tmpTitledPaneLicense,0,4);
         //-acknowledgement
-        Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text")); //TODO: adjust width
-        TitledPane tmpTitledPaneAcknowledgement = new TitledPane(Message.get("AboutView.acknowledgement.title"), tmpAcknowledgment);
+        Text tmpAcknowledgment = new Text(Message.get("AboutView.acknowledgement.text"));
+        ScrollPane tmoAcknowledgmentScrollPane = new ScrollPane(tmpAcknowledgment);
+        TitledPane tmpTitledPaneAcknowledgement = new TitledPane(Message.get("AboutView.acknowledgement.title"), tmoAcknowledgmentScrollPane);
+        tmpTitledPaneAcknowledgement.setAlignment(Pos.TOP_LEFT);
         tmpTitledPaneAcknowledgement.setExpanded(false);
         this.gridPane.add(tmpTitledPaneAcknowledgement,0,5);
         //-image
@@ -230,6 +234,21 @@ public class AboutView extends AnchorPane {
         tmpToolsTab.setContent(this.tableView);
         //
         this.getChildren().add(borderPane);
+        //listener
+        this.gridPane.widthProperty().addListener(((observable, oldValue, newValue) -> {
+            tmpTitledPaneLicense.setPrefWidth(newValue.doubleValue() * 0.5);
+            tmpTitledPaneLicense.setMinWidth(newValue.doubleValue() * 0.5);
+            tmpTitledPaneLicense.setMaxWidth(newValue.doubleValue() * 0.5);
+            tmpTitledPaneAcknowledgement.setPrefWidth(newValue.doubleValue() * 0.5);
+            tmpTitledPaneAcknowledgement.setMinWidth(newValue.doubleValue() * 0.5);
+            tmpTitledPaneAcknowledgement.setMaxWidth(newValue.doubleValue() * 0.5);
+        }));
+        tmpTitledPaneLicense.expandedProperty().addListener((obs, oldValue, newValue) ->{
+            tmpTitledPaneAcknowledgement.setExpanded(!newValue);
+        });
+        tmpTitledPaneAcknowledgement.expandedProperty().addListener((obs, oldValue, newValue) ->{
+            tmpTitledPaneLicense.setExpanded(!newValue);
+        });
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
