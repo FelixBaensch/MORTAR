@@ -306,6 +306,10 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openPipelineSettingsView());
+        this.mainView.getMainMenuBar().getOverviewMenuItem().addEventHandler( //TODO
+                EventType.ROOT,
+                anEvent -> this.openOverviewView()
+        );
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -441,6 +445,7 @@ public class MainViewController {
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+                this.mainView.getMainMenuBar().getOverviewMenuItem().setDisable(false);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
                 int tmpExceptionCount = 0;
                 for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
@@ -742,6 +747,15 @@ public class MainViewController {
                 }
             }
         });
+    }
+    //
+
+    /**
+     * Opens OverviewView
+     */
+    private void openOverviewView() {
+        //OverviewViewController tmpOverviewViewController =
+        //        new OverviewViewController(this.primaryStage, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
     }
     //
 

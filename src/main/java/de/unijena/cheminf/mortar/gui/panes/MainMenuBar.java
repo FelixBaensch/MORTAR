@@ -137,6 +137,10 @@ public class MainMenuBar extends MenuBar {
      * Menu to open tools 
      */
     private Menu toolsMenu;
+    /**
+     * MenuItem to open the OverviewView
+     */
+    private MenuItem overviewMenuItem;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -184,8 +188,9 @@ public class MainMenuBar extends MenuBar {
         this.aboutViewMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.aboutViewMenuItem.text"));
 //        this.logFilesMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.logFilesMenuItem.text"));
 //        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
-        //
+        //toolsMenu
         this.toolsMenu = new Menu(Message.get("MainView.menuBar.toolsMenu.text"));
+        this.overviewMenuItem = new MenuItem(Message.get("MainView.menuBar.toolsMenu.overviewMenuItem.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -232,6 +237,9 @@ public class MainMenuBar extends MenuBar {
         //</editor-fold>
         //<editor-fold desc="toolsMenu" defaultstate="collapsed">
         this.getMenus().add(this.toolsMenu);
+        //overviewMenuItem
+        this.toolsMenu.getItems().add(this.overviewMenuItem);
+        this.overviewMenuItem.setDisable(true);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
 //        this.helpMenu.getItems().add(this.logFilesMenuItem);
@@ -434,6 +442,16 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getPipelineSettingsMenuItem() {
         return this.pipelineSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getOverviewMenuItem defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the OverviewView
+     *
+     * @return the menu item that should open the OverviewView
+     */
+    public MenuItem getOverviewMenuItem() {
+        return this.overviewMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getAboutViewMenuItem" defaultstate="collapsed">
