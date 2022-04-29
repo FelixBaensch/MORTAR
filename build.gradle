@@ -16,12 +16,6 @@ java {
     withSourcesJar()
 }
 
-//The supplied Adopt Open JDK is used for compilation and running
-//compileJava.options.fork = true
-//TODO: Comment in for deployment build
-//TOOD: I think we can drop it since we are distributing a jre
-//compileJava.options.forkOptions.executable = System.getProperty("user.dir") + File.separator + 'AdoptOpenJDK' + File.separator + 'jdk-11.0.14.1_1' +  File.separator + 'bin' + File.separator + 'javac'
-
 repositories {
     mavenCentral()
 }
@@ -39,6 +33,9 @@ javafx {
 }
 
 mainClassName = 'de.unijena.cheminf.mortar.main.Main'
+applicationName = 'MORTAR'
+
+applicationDefaultJvmArgs = ["-Xms512m", "-Xmx4g"]
 
 /*
 * Merges the exact enumeration of all library jars into one single path giving all the files and subfolders in 'lib'.
@@ -48,10 +45,37 @@ mainClassName = 'de.unijena.cheminf.mortar.main.Main'
 startScripts {
     doLast {
         windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
-        unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
         windowsScript.text = windowsScript.text.replace("set JAVA_HOME=%JAVA_HOME:\"=%",
                 "set JAVA_HOME=%APP_HOME%\\jdk-11.0.15_10_jre\\")
+        windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
+        unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
+        unixScript.text = unixScript.text.replaceAll("java.exe", "javaw.exe")
     }
+}
+
+task updateHeapSpace20GbExtraRunApp(type: CreateStartScripts) {
+    mainClassName = 'de.unijena.cheminf.mortar.main.Main'
+    classpath = startScripts.classpath
+    outputDir = file('build/scripts')
+    applicationName = 'MORTAR_20GB'
+    defaultJvmOpts = ["-Xms512m", "-Xmx20g"]
+
+    updateHeapSpace20GbExtraRunApp {
+        doLast {
+            windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
+            windowsScript.text = windowsScript.text.replace("set JAVA_HOME=%JAVA_HOME:\"=%",
+                    "set JAVA_HOME=%APP_HOME%\\jdk-11.0.15_10_jre\\")
+            windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
+            unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
+            unixScript.text = unixScript.text.replaceAll("java.exe", "javaw.exe")
+        }
+    }
+}
+
+applicationDistribution.into("bin") {
+    duplicatesStrategy= DuplicatesStrategy.EXCLUDE
+    from(updateHeapSpace20GbExtraRunApp)
+    fileMode = 0755
 }
 
 //Needed to make the created jar archives executable
