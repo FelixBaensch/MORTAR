@@ -308,6 +308,10 @@ public class MainViewController {
                 anEvent -> this.openPipelineSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
+        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openHistogramView());
+        this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             GridTabForTableView tmpGrid = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem());
             if (tmpGrid == null) {
@@ -680,6 +684,9 @@ public class MainViewController {
             this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationStarted());
         }
     }
+    private void openHistogramView() {
+        HistogramViewController test = new HistogramViewController(this.primaryStage, getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
+    }
     //
 
     /**
@@ -803,7 +810,8 @@ public class MainViewController {
         });
         this.moleculesDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
-        });
+         });
+
 
     }
     //

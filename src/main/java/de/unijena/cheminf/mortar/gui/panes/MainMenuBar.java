@@ -137,6 +137,8 @@ public class MainMenuBar extends MenuBar {
      * Menu to open tools 
      */
     private Menu toolsMenu;
+
+    private MenuItem histogramViewerMenuItem;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -186,6 +188,7 @@ public class MainMenuBar extends MenuBar {
 //        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
         //
         this.toolsMenu = new Menu(Message.get("MainView.menuBar.toolsMenu.text"));
+        this.histogramViewerMenuItem = new MenuItem("Histogram");
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -232,6 +235,7 @@ public class MainMenuBar extends MenuBar {
         //</editor-fold>
         //<editor-fold desc="toolsMenu" defaultstate="collapsed">
         this.getMenus().add(this.toolsMenu);
+        this.toolsMenu.getItems().add((this.histogramViewerMenuItem));
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
 //        this.helpMenu.getItems().add(this.logFilesMenuItem);
@@ -463,6 +467,10 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getCancelExportMenuItem(){
         return this.cancelExportMenuItem;
+    }
+
+    public MenuItem getHistogramViewerMenuItem(){
+        return this.histogramViewerMenuItem;
     }
     //</editor-fold>
 }
