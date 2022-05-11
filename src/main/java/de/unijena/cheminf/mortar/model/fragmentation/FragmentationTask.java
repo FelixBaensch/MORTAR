@@ -153,7 +153,8 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
                         }
                         else{
-                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
+                            tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
+//                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
                             this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
                         }

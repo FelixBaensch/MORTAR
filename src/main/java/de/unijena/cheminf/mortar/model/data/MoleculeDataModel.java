@@ -26,10 +26,10 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
@@ -150,24 +150,25 @@ public class MoleculeDataModel {
      * @throws CDKException if SMILES parsing, kekulization, or atom type matching fails
      */
     public IAtomContainer getAtomContainer() throws CDKException {
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        if(this.keepAtomContainer){
-            if(this.atomContainer == null){
-                tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-                tmpSmiPar.kekulise(false);
-                this.atomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
-                this.atomContainer.addProperties(this.properties);
-                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainer);
-                Kekulization.kekulize(this.atomContainer);
-            }
+        if(this.atomContainer != null){
             return this.atomContainer;
         }
-        //kekulization done separately below
+        IAtomContainer tmpAtomContainer;
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         tmpSmiPar.kekulise(false);
-        IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
+        try{
+            tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
+            Kekulization.kekulize(tmpAtomContainer);
+        } catch (CDKException aCdkException){
+            SmilesParser tmpSmiPar2 = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            tmpSmiPar2.kekulise(false);
+            tmpAtomContainer = tmpSmiPar2.parseSmiles(this.uniqueSmiles);
+        }
         tmpAtomContainer.addProperties(this.properties);
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
-        Kekulization.kekulize(tmpAtomContainer);
+        if(this.keepAtomContainer){
+            this.atomContainer = tmpAtomContainer;
+        }
         return tmpAtomContainer;
     }
     //
