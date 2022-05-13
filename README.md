@@ -1,4 +1,4 @@
-![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1.png)
+![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_.png)
 # MORTAR
 ##### MOlecule fRagmenTAtion fRamework
 
@@ -14,33 +14,67 @@
 * [Acknowledgements](#Acknowledgements)
 
 ## Description
-TODO
+MORTAR ('MOlecule fRagmenTation fRamework') is an open software project that supports workflows of
+molecular fragmentation and substructure analysis. The Java/JavaFX rich-client application offers extensive graphical 
+functions for visualising the fragmentation results of individual compounds or entire compound sets. With several 
+views and analysis functions, MORTAR supports the interpretation of fragmentation results. In addition to three 
+currently integrated methods for fragmentation and substructure analysis - ErtlFunctionalGroupsFinder, 
+Sugar Removal Utility, and Scaffold Generator - MORTAR allows straightforward integration of additional fragmentation 
+algorithms with automatic generation of settings menus. All cheminformatics functionalities are implemented based on 
+the Chemistry Development Kit (CDK).
 
 ## Contents of this repository
 ### Sources
+The "src" subfolder contains all source code packages including JUnit tests.
+
+### Tutorial
 TODO
 
 ## Installation
 ### Application
-TODO
+<p>TODO: Adjust if necessary</p>
+Pre-compiled and executable MORTAR distributions can be found in the "distribution" folder of this repository. They are 
+also attached to the marked releases.<br>
+<p><b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available. Download the installer 
+executable, start and follow the instructions to install MORTAR. Note that the installation includes a full 
+Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
+Windows desktop (e.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
+located in the MORTAR program folder C:\Program Files\MORTAR\MORTARv1.0.0.0\bin). To start MORTAR double click the 
+created shortcut. MORTAR can be uninstalled by the provided Uninstall.exe executable in the MORTAR program folder or 
+standard Windows functions.</p>
+<p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
+which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with 4 GB of RAM available), execute the JAR from the 
+command-line using 
+<br><code>java -jar -Xms4g -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code> 
+</p>
+
 
 ### Source code
-TODO
+This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
+clone the repository and open it in a Gradle-supporting IDE (e.g. IntelliJ) as a Gradle project and execute the 
+build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 11 
+or higher must also be pre-installed.
 
 ## Dependencies
 **Needs to be pre-installed:**
-* Java Development Kit (JDK) version 11 TODO
-    * [AdoptOpenJDK](https://adoptopenjdk.net) (as one possible source of the JDK)
-* Gradle version TODO
-    * []()
+* Java Development Kit (JDK) version 11.0.14 or higher
+    * [Adoptium Open JDK](https://adoptium.net) (as one possible source of the JDK)
+* Gradle version 6.9.1
+    * [Gradle Build Tool](https://gradle.org)
 
 **Managed by Gradle:** TODO
+* JavaFX version 11.0.2
+  * [Open JavaFX](https://openjfx.io)
+  * GNU General Public License (GPL) Version 2
 * Chemistry Development Kit (CDK) version 2.7.1
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
-* JUnit version 4.13.2
+* JUnit version 4.13
     * [JUnit 4](https://junit.org/junit4/)
     * License: Eclipse Public License 1.0
+* LibrePDF OpenPDF version 1.3.26
+  * [OpenPDF GitHub repository](https://github.com/LibrePDF/OpenPDF)
+  * License: GNU Lesser General Public License 2.1
 
 ## References and useful links
 **Ertl algorithm**
@@ -86,6 +120,22 @@ TODO
 
 **Initialization, conceptualization, and supervision:**
 * Christoph Steinbeck and Achim Zielesny
+
+**MORTAR was developed at:**
+<br>
+<br>Zielesny Research Group
+<br>Institute for Bioinformatics and Chemoinformatics
+<br>Westphalian University of Applied Sciences
+<br>August-Schmidt-Ring 10
+<br>D-45665 Recklinghausen Germany
+<br>
+<br>and
+<br>
+<br>Steinbeck Research Group
+<br>Institute for Inorganic and Analytical Chemistry
+<br>Friedrich-Schiller-University Jena
+<br>Lessingstraße 8
+<br>D-07743 Jena
 
 **The MORTAR project team would like to thank the communities behind the open software libraries the application employs 
 for their amazing work.**
