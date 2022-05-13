@@ -46,6 +46,7 @@ standard Windows functions.</p>
 which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with 4 GB of RAM available), execute the JAR from the 
 command-line using 
 <br><code>java -jar -Xms4g -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code> 
+<br>A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command.
 </p>
 
 
