@@ -38,15 +38,21 @@ also attached to the marked releases.<br>
 <p><b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available. Download the installer 
 executable, start and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
-Windows desktop (e.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder C:\Program Files\MORTAR\MORTARv1.0.0.0\bin). To start MORTAR double click the 
+Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
+located in the MORTAR program folder C:\Program Files\MORTAR\MORTARv1.0.0.0\bin. To start MORTAR, double click the 
 created shortcut. MORTAR can be uninstalled by the provided Uninstall.exe executable in the MORTAR program folder or 
-standard Windows functions.</p>
+standard Windows functions.
+<br>As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
+20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
+and adjust the line 
+<br><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code> 
+<br>with your chosen minimum and maximum values accordingly.</p>
 <p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
-which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with 4 GB of RAM available), execute the JAR from the 
-command-line using 
-<br><code>java -jar -Xms4g -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code> 
-<br>A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command.
+which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available), 
+execute the JAR from the command-line using 
+<br><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code> 
+<br>A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command. 
+Otherwise, replace "java" with the path to the java command of your JDK or JRE. 
 </p>
 
 
@@ -63,7 +69,7 @@ or higher must also be pre-installed.
 * Gradle version 6.9.1
     * [Gradle Build Tool](https://gradle.org)
 
-**Managed by Gradle:** TODO
+**Managed by Gradle:**
 * JavaFX version 11.0.2
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
