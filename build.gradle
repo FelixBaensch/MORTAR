@@ -111,9 +111,6 @@ distributions {
     main {
         contents {
             from 'AdoptOpenJDK'
-            into('images'){
-                from 'Images'
-            }
         }
     }
 }
