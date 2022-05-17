@@ -50,7 +50,6 @@ startScripts {
         windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
         windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
         unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
-        unixScript.text = unixScript.text.replaceAll("java.exe", "javaw.exe")
     }
 }
 
@@ -69,7 +68,6 @@ task updateHeapSpace20GbExtraRunApp(type: CreateStartScripts) {
             windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
             windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
             unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
-            unixScript.text = unixScript.text.replaceAll("java.exe", "javaw.exe")
         }
     }
 }
