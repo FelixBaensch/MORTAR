@@ -46,9 +46,9 @@ standard Windows functions.
 20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
 and adjust the line 
 <br><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code> 
-<br>with your chosen minimum and maximum values accordingly.</p>
+<br>with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.</p>
 <p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
-which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available), 
+which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using 
 <br><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code> 
 <br>A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command. 
