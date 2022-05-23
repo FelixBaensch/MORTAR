@@ -20,7 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
+import de.unijena.cheminf.mortar.gui.panes.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
