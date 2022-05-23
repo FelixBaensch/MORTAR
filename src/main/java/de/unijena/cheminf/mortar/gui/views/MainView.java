@@ -20,8 +20,8 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
-import de.unijena.cheminf.mortar.gui.panes.MainMenuBar;
-import de.unijena.cheminf.mortar.gui.panes.StatusBar;
+import de.unijena.cheminf.mortar.gui.controls.MainMenuBar;
+import de.unijena.cheminf.mortar.gui.controls.StatusBar;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
