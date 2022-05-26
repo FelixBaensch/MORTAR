@@ -1,26 +1,38 @@
 package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.Bounds;
-import javafx.scene.Group;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.chart.*;
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.util.ListUtil;
+import javafx.event.EventHandler;
+import javafx.geometry.Pos;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.text.Text;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.Cursor;
+
+import org.openscience.cdk.exception.CDKException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller class for the HistogramView
@@ -34,6 +46,10 @@ public class HistogramViewController {
      * Stage for the MainView
      */
     private final Stage mainStage;
+    /**
+     * Logger of this class
+     */
+    private static final Logger LOGGER = Logger.getLogger(HistogramViewController.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -46,20 +62,25 @@ public class HistogramViewController {
      */
     private Stage histogramStage;
     /**
-     * a list of FragmentDataModel instances
+     * A list of FragmentDataModel instances
      */
     private List<MoleculeDataModel> list;
+    /**
+     * Copy of list
+     */
+    private List<MoleculeDataModel> copyList;
     //</editor-fold>
     //
     /**
      * Constructor
      *
-     * @param aMainStage Stage ot the MainView
+     * @param aMainStage        Stage ot the MainView
      * @param aMoleculeDataList
      */
-    public HistogramViewController(Stage aMainStage, List<MoleculeDataModel> aMoleculeDataList) {
+    public HistogramViewController(Stage aMainStage, List<MoleculeDataModel> aMoleculeDataList)  {
         this.mainStage = aMainStage;
         this.list = aMoleculeDataList;
+        this.copyList = new ArrayList<>(this.list);
         this.openHistogramView();
     }
     //
@@ -67,119 +88,174 @@ public class HistogramViewController {
     /**
      * Initialises stage and view and opens view in the initialised stage
      */
-    private void openHistogramView() {
+    private void openHistogramView()  {
         this.histogramStage = new Stage();
         this.histogramStage.initModality(Modality.WINDOW_MODAL);
         this.histogramStage.initOwner(this.mainStage);
         this.histogramStage.setTitle(Message.get("HistogramView.title"));
         this.histogramStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        this.createHistogram();
-        this.addListener(this.list);
+        this.createHistogram(0);
+        this.addListener();  // TODO  is the listener on the right position?
         this.histogramStage.showAndWait();
     }
-    private void createHistogram() {
-        XYChart.Series tmpSeries = new XYChart.Series();
-        CategoryAxis tmpXAxis = new CategoryAxis();
-        NumberAxis tmpYAxis = new NumberAxis();
-        BarChart<Number, String> tmpHistogramBarChart = new BarChart<>(tmpYAxis, tmpXAxis);
-        tmpHistogramBarChart.setBarGap(-0.5);
-        tmpYAxis.setAutoRanging(false);
-        tmpYAxis.setTickUnit(1);
-        tmpYAxis.setForceZeroInRange(true);
-        tmpXAxis.setLabel(Message.get("Histogram.XAxisLabel.text"));
-        tmpYAxis.setLabel(Message.get("Histogram.YAxisLabel.text"));
-        tmpXAxis.setTickLabelsVisible(true);
-        //tmpHistogramBarChart.setPrefWidth(2000.0);
-       //tmpHistogramBarChart.setMinWidth(2000.0);
-       tmpHistogramBarChart.setPrefHeight(1000.0);
-       tmpHistogramBarChart.setMinHeight(1000.0);
-       String tmpNewSmiles;
-       ArrayList<Double> tmpArrayFrequency = new ArrayList<Double>();
-       int tmpIterrator = 0;
-        for (MoleculeDataModel tmpMoleculeData : this.list) {
-            FragmentDataModel tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
-            if (tmpFragmentData.getUniqueSmiles().length() > 13){
-                tmpNewSmiles = tmpFragmentData.getUniqueSmiles().substring(0, 12) + "...";
-                //i++;
-            }
-            else{
-                tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
-                //  tmpNewSmiles = Integer.toString(i);
-                // i++;
-            }
-            int tmpAbsolutFragmentFrequency = tmpFragmentData.getAbsoluteFrequency();
-            ImageView image = tmpFragmentData.getStructure();
-            double tmpAbsolutFrequencyInDouble = tmpAbsolutFragmentFrequency;
-            tmpArrayFrequency.add(tmpAbsolutFrequencyInDouble);
-            Double tmpMaxofFrequency = Collections.max(tmpArrayFrequency);
-            tmpYAxis.setUpperBound(tmpMaxofFrequency +1);
-            tmpIterrator++;
-            this.sortHistogram(this.list);
-            //XYChart.Data<String, Number> tmpStringNumberData = new XYChart.Data(tmpNewSmiles,tmpFragmentData.getAbsoluteFrequency());
-
-           XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpFragmentData.getAbsoluteFrequency(), tmpNewSmiles);
-            //XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpFragmentData.getAbsoluteFrequency(),image);
-            tmpStringNumberData.nodeProperty().addListener(new ChangeListener<Node>() {
-                @Override
-                public void changed(ObservableValue<? extends Node> tmpObservableValue, Node tmpOldNode, Node tmpNode) {
-                    //displayLabelForData(tmpStringNumberData);
-                    tmpNode.setStyle("-fx-bar-fill: blue;");
-                    // displayLabelForData(tmpStringNumberData);
+    //
+    /**
+     * create a configurable histogram
+     *
+     * @param aFirstNumber
+     */
+    private void createHistogram(Integer aFirstNumber) {
+            XYChart.Series tmpSeries = new XYChart.Series();
+            CategoryAxis tmpXAxis = new CategoryAxis();
+            final NumberAxis tmpYAxis = new NumberAxis();
+            BarChart<Number, String> tmpHistogramBarChart = new BarChart<>(tmpYAxis, tmpXAxis);
+            tmpHistogramBarChart.setBarGap(0);
+            tmpYAxis.setAutoRanging(false);
+            tmpYAxis.setTickUnit(1);
+            tmpYAxis.setForceZeroInRange(true);
+            tmpXAxis.setLabel(Message.get("Histogram.XAxisLabel.text"));
+            tmpYAxis.setLabel(Message.get("Histogram.YAxisLabel.text"));
+            tmpXAxis.setTickLabelsVisible(true);
+            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "absoluteFrequency", "ASCENDING");
+            //tmpHistogramBarChart.setPrefWidth(2000.0);
+            //tmpHistogramBarChart.setMinWidth(2000.0);
+            tmpHistogramBarChart.setPrefHeight(1000.0);
+            tmpHistogramBarChart.setMinHeight(1000.0);
+            String tmpNewSmiles;
+            ArrayList<Double> tmpArrayFrequency = new ArrayList<Double>();
+            ArrayList<String> tmpSmilesList = new ArrayList<>();
+            ArrayList<Integer> tmpFrequencyList = new ArrayList<>();
+            ArrayList<Image> tmpFragmentImage = new ArrayList<>();
+            int tmpIterator = 1;
+            for (MoleculeDataModel tmpMoleculeData : this.copyList) {
+                FragmentDataModel tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
+                if (tmpFragmentData.getUniqueSmiles().length() > 25) { // TODO make adjustable but where?
+                    tmpNewSmiles = tmpIterator + ".Structure with to long Smiles";
+                    tmpSmilesList.add(tmpNewSmiles);
+                } else {
+                    tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
+                    tmpSmilesList.add(tmpNewSmiles);
                 }
-            });
-            tmpSeries.getData().add(tmpStringNumberData);
-        }
-        this.histogramView = new HistogramView(tmpHistogramBarChart);
-        Scene tmpScene = new Scene(this.histogramView,GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
-        this.histogramStage.setScene(tmpScene);
-        tmpHistogramBarChart.getData().add(tmpSeries);
-        tmpHistogramBarChart.setLegendVisible(false);
-    }
-    private void displayLabelForData(XYChart.Data<Number, String> aData) {
-        Node tmpNode = aData.getNode();
-        Text tmpDataText = new Text(aData.getYValue() + "");
-        tmpNode.parentProperty().addListener(new ChangeListener<Parent>() {
-            @Override public void changed(ObservableValue<? extends Parent> ov, Parent oldParent, Parent parent) {
-                Group parentGroup = (Group) parent;
-                parentGroup.getChildren().add(tmpDataText);
+                tmpIterator++;
+                try {
+                    Image tmpImageOfStructure = DepictionUtil.depictImageWithZoom(tmpFragmentData.getAtomContainer(), 2.5, 250, 150);
+                    tmpFragmentImage.add(tmpImageOfStructure);
+                } catch (CDKException anException) {
+                    HistogramViewController.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentData.getName(), anException);
+                    // TODO
+                }
+                tmpFrequencyList.add(tmpFragmentData.getAbsoluteFrequency());
+                int tmpAbsolutFragmentFrequency = tmpFragmentData.getAbsoluteFrequency();
+                double tmpAbsolutFrequencyInDouble = tmpAbsolutFragmentFrequency;
+                tmpArrayFrequency.add(tmpAbsolutFrequencyInDouble);
+                Double tmpMaxofFrequency = Collections.max(tmpArrayFrequency);
+                tmpYAxis.setUpperBound(tmpMaxofFrequency + 1);
             }
-        });
-        tmpNode.boundsInParentProperty().addListener(new ChangeListener<Bounds>() {
-            @Override public void changed(ObservableValue<? extends Bounds> ov, Bounds oldBounds, Bounds bounds) {
-
-                tmpDataText.setLayoutX(
-                        Math.round(bounds.getMinX() + bounds.getWidth() / 2 - tmpDataText.prefWidth(-1) /2) // /2
-                );
-
-
-                tmpDataText.setLayoutY(Math.round(bounds.getMinY() - tmpDataText.prefHeight(-1)*0.5)
-                );
+            this.histogramView = new HistogramView(tmpHistogramBarChart, tmpSmilesList);
+            ImageView tmpViewforStructure = this.histogramView.getImageStructure();
+            List<String> tmpSublistFornewChart = null;
+            List<Integer> tmpSublistofFrequency = null;
+            List<Image> tmpImage = null;
+            if (aFirstNumber == 0) {
+                tmpSublistFornewChart = tmpSmilesList.subList(aFirstNumber, tmpSmilesList.size());
+                tmpSublistofFrequency = tmpFrequencyList.subList(aFirstNumber, tmpFrequencyList.size());
+                tmpImage = tmpFragmentImage.subList(aFirstNumber, tmpFragmentImage.size());
             }
-        });
+            /**else if (aFirstNumber> tmpListofFrequency.size() || aFirstNumber> tmpListofSmiles.size() || aFirstNumber> tmpFragmentImage.size()) {
+             Exception tmpToLongInteger = new IllegalArgumentException("Falsch");
+             HistogramViewController.LOGGER.log(Level.SEVERE, tmpToLongInteger.toString(), tmpToLongInteger);
+             // TODO catch exception if afirstNumber over the lists sizes
+             }*/
+            else {
+                tmpSublistFornewChart = tmpSmilesList.subList(tmpSmilesList.size() - aFirstNumber, tmpSmilesList.size());
+                tmpSublistofFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aFirstNumber, tmpFrequencyList.size());
+                tmpImage = tmpFragmentImage.subList(tmpFragmentImage.size() - aFirstNumber, tmpFragmentImage.size());
+            }
+            List<Object> tmpNewList = new ArrayList<>();
+            for (Iterator tmpStringIterator = tmpSublistFornewChart.iterator(), tmpIntegerIterator = tmpSublistofFrequency.iterator(), tmpImageIterator = tmpImage.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpImageIterator.hasNext(); ) {
+                Integer tmpCurrentFrequency = (Integer) tmpIntegerIterator.next();
+                String tmpCurrentSmiles = (String) tmpStringIterator.next();
+                Image tmpCurrentStructure = (Image) tmpImageIterator.next();
+                tmpNewList.add(tmpCurrentSmiles);
+                tmpNewList.add(tmpCurrentFrequency);
+                XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentSmiles);
+                Node tmpNode = this.histogramHover(tmpCurrentStructure, tmpViewforStructure, tmpCurrentFrequency);
+                tmpStringNumberData.setNode(tmpNode);
+                tmpNode.setStyle("-fx-bar-fill: #0000FF");
+                tmpSeries.getData().add(tmpStringNumberData);
+            }
+            tmpHistogramBarChart.getData().add(tmpSeries);
+            tmpHistogramBarChart.setLegendVisible(false);
+            tmpHistogramBarChart.getData().clear();
+            tmpHistogramBarChart.layout();
+            tmpHistogramBarChart.getData().add(tmpSeries);
+            tmpHistogramBarChart.setLegendVisible(false);
+            tmpHistogramBarChart.setAnimated(false);
+            Scene tmpScene = new Scene(this.histogramView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
+            this.histogramStage.setScene(tmpScene);
     }
-    private void sortHistogram(List<MoleculeDataModel> aList) {
-        Collections.sort(aList, (m1, m2) -> {
-                FragmentDataModel f1;
-                FragmentDataModel f2;
-                f1 = (FragmentDataModel) m1;
-                f2 = (FragmentDataModel) m2;
-                return (Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency()));
-            //return (f1.getAbsoluteFrequency() > f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
-        });
-    }
-    private void addListener(List<MoleculeDataModel> aList) {
+    //
+    /**
+     * Add listeners
+     *
+     */
+    private void addListener() {
         this.histogramView.getCancelButton().setOnAction(event -> {
             this.histogramStage.close();
         });
-        this.histogramView.getSortButton().setOnAction(event -> {
-
+        this.histogramView.getRefreshButton().setOnAction(event -> {
+            try {
+            String tmpStringNumbersofFragments = this.histogramView.getTextField();
+            int tmpIntegerNumberofFragments = Integer.parseInt(tmpStringNumbersofFragments);
+            this.createHistogram(tmpIntegerNumberofFragments);
+            } catch(NumberFormatException anException) {
+                HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                GuiUtil.guiExceptionAlert(Message.get("HistogramViewController.HistogramRefreshError.Title"), Message.get
+                        ("HistogramViewController.HistogramRefreshError.Header"),
+                        Message.get("HistogramViewController.HistogramRefreshError.Content") , anException);
+            }
         });
-
-
     }
-
+    //
+    /**
+     * Method to make histogram hoverable
+     *
+     * @param anImage
+     * @param anImageView
+     * @param aValue
+     * @return
+     */
+    private Node histogramHover(Image anImage, ImageView anImageView, int aValue) {
+        StackPane tmpNodePane = new StackPane();
+        tmpNodePane.setPrefHeight(15);
+        tmpNodePane.setPrefWidth(15);
+        tmpNodePane.setAlignment(Pos.CENTER_RIGHT); // TODO better position
+        Label tmpValueLabel = new Label(aValue +"");
+        //tmpNodePane.getChildren().setAll(tmpValueLabel);  // set the values after create a better positions for the labels
+        tmpNodePane.setOnMouseEntered(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+              // pane.getChildren().setAll(label);
+                tmpNodePane.setStyle("-fx-bar-fill: #87CEFA");
+                anImageView.setImage(anImage);
+                tmpNodePane.setCursor(Cursor.HAND);
+                }
+        });
+        tmpNodePane.setOnMouseExited(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+               // pane.getChildren().clear();
+                tmpNodePane.setStyle("-fx-bar-fill: #0000FF");
+                tmpNodePane.setCursor(Cursor.HAND);
+            }
+        });
+        return tmpNodePane;
+    }
+    //<editor-fold>
 }
+
+
 
 
 

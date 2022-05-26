@@ -73,6 +73,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
@@ -303,15 +304,16 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.openGlobalSettingsView()
         );
+        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openHistogramView()
+                );
         this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openPipelineSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
-        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().addEventHandler(
-                EventType.ROOT,
-                anEvent -> this.openHistogramView());
-        this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
+      //  this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             GridTabForTableView tmpGrid = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem());
             if (tmpGrid == null) {
@@ -445,6 +447,7 @@ public class MainViewController {
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+                this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
                 int tmpExceptionCount = 0;
                 for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
@@ -684,8 +687,13 @@ public class MainViewController {
             this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationStarted());
         }
     }
-    private void openHistogramView() {
-        HistogramViewController test = new HistogramViewController(this.primaryStage, getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
+    //
+
+    /**
+     * Opens HistogramView
+     */
+    private void openHistogramView()  {
+        HistogramViewController tmpHistogramViewController = new HistogramViewController(this.primaryStage, getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
     }
     //
 
@@ -898,6 +906,7 @@ public class MainViewController {
                         this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
                         this.updateStatusBar(this.fragmentationThread, Message.get("Status.finished"));
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;

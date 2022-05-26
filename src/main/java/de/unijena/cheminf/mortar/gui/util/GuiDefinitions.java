@@ -20,9 +20,18 @@
 
 package de.unijena.cheminf.mortar.gui.util;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Insets;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 /**
  * GUI definitions
@@ -112,4 +121,16 @@ public final class GuiDefinitions {
      * KeyCodeCombination to navigate to first page of pagination
      */
     public static final KeyCodeCombination KEY_CODE_FIRST_PAGE = new KeyCodeCombination(KeyCode.LEFT, KeyCombination.CONTROL_DOWN);
+    /**
+     * Value for the width of the StackPane which should display the structure of fragments
+     */
+    public static final double GUI_IMAGE_PANE_WIDTH = 250.0;
+    /**
+     * Value for the height of the StackPane which should display the structure of fragments
+     */
+    public static final double GUI_IMAGE_PANE_HEIGHT = 150.0;
+    /**
+     * Value for the width of the textfield
+     */
+    public static final double GUI_TEXTFIELD_WIDTH = 80.0;
 }

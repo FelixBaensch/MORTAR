@@ -137,7 +137,9 @@ public class MainMenuBar extends MenuBar {
      * Menu to open tools 
      */
     private Menu toolsMenu;
-
+    /**
+     * MenuItem to open the histogram
+     */
     private MenuItem histogramViewerMenuItem;
     //</editor-fold>
     //
@@ -186,9 +188,9 @@ public class MainMenuBar extends MenuBar {
         this.aboutViewMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.aboutViewMenuItem.text"));
 //        this.logFilesMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.logFilesMenuItem.text"));
 //        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
-        //
+        //toolsMenu
         this.toolsMenu = new Menu(Message.get("MainView.menuBar.toolsMenu.text"));
-        this.histogramViewerMenuItem = new MenuItem("Histogram");
+        this.histogramViewerMenuItem = new MenuItem(Message.get("MainView.menuBar.toolsMenu.HistogramMenuItem.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -236,6 +238,7 @@ public class MainMenuBar extends MenuBar {
         //<editor-fold desc="toolsMenu" defaultstate="collapsed">
         this.getMenus().add(this.toolsMenu);
         this.toolsMenu.getItems().add((this.histogramViewerMenuItem));
+        this.histogramViewerMenuItem.setDisable(true);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
 //        this.helpMenu.getItems().add(this.logFilesMenuItem);
@@ -450,6 +453,16 @@ public class MainMenuBar extends MenuBar {
         return this.aboutViewMenuItem;
     }
     //</editor-fold>
+    //<editor-fold desc="getHistogramViewerMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open histogram window
+     *
+     * @return
+     */
+    public MenuItem getHistogramViewerMenuItem(){
+        return this.histogramViewerMenuItem;
+    }
+    //</editor-fold>
     //
     /**
      * Returns MenuItem to cancel running import, only visible if import is running
@@ -468,9 +481,4 @@ public class MainMenuBar extends MenuBar {
     public MenuItem getCancelExportMenuItem(){
         return this.cancelExportMenuItem;
     }
-
-    public MenuItem getHistogramViewerMenuItem(){
-        return this.histogramViewerMenuItem;
-    }
-    //</editor-fold>
 }
