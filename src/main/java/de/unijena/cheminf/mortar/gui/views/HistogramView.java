@@ -78,7 +78,7 @@ public class HistogramView extends AnchorPane {
      * Constructor
      * @param aHistogramChart
      */
-    public HistogramView(BarChart aHistogramChart, List<String> aDefaultText){
+    public HistogramView(BarChart aHistogramChart){
         super();
         //add a ScrollPane to make the histogram scrollable
         ScrollPane tmpScrollPane = new ScrollPane();
@@ -131,8 +131,8 @@ public class HistogramView extends AnchorPane {
         //this.sortButton = new Button(Message.get("HistogramView.sortButton.text"));
         //this.sortButton.setTooltip(new Tooltip(Message.get("Histogram.sortButton.toolTip")));
         this.textField = new TextField();
-        this.textField.setPrefWidth(GuiDefinitions.GUI_TEXTFIELD_WIDTH);
-        this.textField.setText(String.valueOf(aDefaultText.size() + " max. Fragments"));
+        this.textField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
+       // this.textField.setText(String.valueOf(aDefaultText.size() + " max. Fragments"));
         this.textField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip")));
         this.refreshButton = new Button(Message.get("HistogramView.refreshButton.text"));
         this.refreshButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
@@ -172,5 +172,6 @@ public class HistogramView extends AnchorPane {
     public ImageView getImageStructure() {
         return this.ImageStructure;
     }
+    public TextField getText() {return this.textField;}
     //</editor-fold>
 }

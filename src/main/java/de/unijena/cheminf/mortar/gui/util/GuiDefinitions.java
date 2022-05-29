@@ -132,5 +132,5 @@ public final class GuiDefinitions {
     /**
      * Value for the width of the textfield
      */
-    public static final double GUI_TEXTFIELD_WIDTH = 80.0;
+    public static final double GUI_TEXT_FIELD_WIDTH = 80.0;
 }
