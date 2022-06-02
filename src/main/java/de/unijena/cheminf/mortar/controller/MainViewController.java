@@ -754,8 +754,27 @@ public class MainViewController {
      * Opens OverviewView
      */
     private void openOverviewView() {
-        //OverviewViewController tmpOverviewViewController =
-        //        new OverviewViewController(this.primaryStage, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+        OverviewViewController tmpOverviewViewController;
+        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Molecules.toString()) {
+            tmpOverviewViewController = new OverviewViewController(
+                    this.primaryStage,
+                    ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
+                    getItemsListOfSelectedFragmenterByTabId(TabNames.Molecules)
+            );
+        } else if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Fragments.toString()) {
+            tmpOverviewViewController = new OverviewViewController(
+                    this.primaryStage,
+                    ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
+                    getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
+            );
+        } else {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    "Information",
+                    "No overview available for the currently selected tab.",
+                    null
+            );
+        }
     }
     //
 
