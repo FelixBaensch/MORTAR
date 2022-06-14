@@ -20,18 +20,9 @@
 
 package de.unijena.cheminf.mortar.gui.util;
 
-import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Insets;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
 
 /**
  * GUI definitions

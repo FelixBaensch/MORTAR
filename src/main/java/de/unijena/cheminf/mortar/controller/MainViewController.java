@@ -313,7 +313,6 @@ public class MainViewController {
                 anEvent -> this.openPipelineSettingsView());
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
-      //  this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             GridTabForTableView tmpGrid = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem());
             if (tmpGrid == null) {
@@ -693,7 +692,7 @@ public class MainViewController {
      * Opens HistogramView
      */
     private void openHistogramView()  {
-        HistogramViewController tmpHistogramViewController = new HistogramViewController(this.primaryStage, getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
+        HistogramViewController tmpHistogramViewController = new HistogramViewController(this.primaryStage, this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
     }
     //
 
