@@ -202,7 +202,8 @@ public class PipelineSettingsView extends AnchorPane {
         tmpColCon1.setHalignment(HPos.LEFT);
         tmpColCon1.setHgrow(Priority.ALWAYS);
         tmpColCon1.prefWidthProperty().bind(
-                aStage.widthProperty().multiply(0.8)
+//                aStage.widthProperty().multiply(0.8)
+                aStage.widthProperty().subtract(200) //magic number
         );
         this.gridPane.getColumnConstraints().add(tmpColCon1);
         //2nd column (settings button or add new algorithm button)
@@ -237,6 +238,7 @@ public class PipelineSettingsView extends AnchorPane {
         tmpRowCon1.setMinHeight(50);
         //name textfield
         this.textField = new TextField();
+        this.textField.setMaxWidth(250);
         this.textField.setPromptText(Message.get("PipelineSettingsView.textField.promptText"));
         this.gridPane.add(this.textField, 1, 0 );
     }
