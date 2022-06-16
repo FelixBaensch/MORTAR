@@ -113,15 +113,15 @@ public final class GuiDefinitions {
      */
     public static final KeyCodeCombination KEY_CODE_FIRST_PAGE = new KeyCodeCombination(KeyCode.LEFT, KeyCombination.CONTROL_DOWN);
     /**
-     * Value for the width of the StackPane which should display the structure of fragments
+     * Value for the width of the image corresponding to the structure of the fragments
      */
-    public static final double GUI_IMAGE_PANE_WIDTH = 250.0;
+    public static final double GUI_IMAGE_WIDTH = 250.0;
     /**
-     * Value for the height of the StackPane which should display the structure of fragments
+     * Value for the height of the image corresponding to the structure of the fragments
      */
-    public static final double GUI_IMAGE_PANE_HEIGHT = 150.0;
+    public static final double GUI_IMAGE_HEIGHT = 150.0;
     /**
-     * Value for the width of the textfield
+     * Value for the width of the textField
      */
-    public static final double GUI_TEXT_FIELD_WIDTH = 80.0;
+    public static final double GUI_TEXT_FIELD_WIDTH = 50.0;
 }

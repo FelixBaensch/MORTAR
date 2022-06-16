@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -38,8 +39,10 @@ import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -47,9 +50,17 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -84,6 +95,8 @@ public class HistogramViewController {
      * Copy of list
      */
     private List<MoleculeDataModel> copyList;
+    private boolean keepAtomContainer = false;
+    private IAtomContainer atomContainer;
     //</editor-fold>
     //
     /**
@@ -138,27 +151,21 @@ public class HistogramViewController {
         ArrayList<String> tmpSmilesList = new ArrayList<>();
         ArrayList<Integer> tmpFrequencyList = new ArrayList<>();
         ArrayList<Image> tmpFragmentImage = new ArrayList<>();
-        int tmpIterator = 1;
+        int tmpIterator = this.copyList.size();
         FragmentDataModel tmpFragmentData = null;
         double tmpMaxOfFrequency;
         ImageView tmpStructureViewer = aHistogramView.getImageStructure();
         ArrayList<String> tmpFullSmilesLength = new ArrayList<>();
         for (MoleculeDataModel tmpMoleculeData : this.copyList) {
              tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
-            if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) { // TODO make adjustable but where?
+            if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) {
                 tmpNewSmiles ="SMILES too long ("+tmpIterator+")";
                 tmpSmilesList.add(tmpNewSmiles);
             } else {
                 tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
                 tmpSmilesList.add(tmpNewSmiles);
             }
-            try {
-                Image tmpStructureImage = DepictionUtil.depictImageWithZoom(tmpFragmentData.getAtomContainer(), 2.5, 250, 150);
-                tmpFragmentImage.add(tmpStructureImage);
-            } catch (CDKException anException) {
-                HistogramViewController.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentData.getName(), anException);
-            }
-            tmpIterator++;
+            tmpIterator--;
             tmpFullSmilesLength.add(tmpFragmentData.getUniqueSmiles());
             tmpFrequencyList.add(tmpFragmentData.getAbsoluteFrequency());
             int tmpAbsolutFragmentFrequency = tmpFragmentData.getAbsoluteFrequency();
@@ -166,7 +173,7 @@ public class HistogramViewController {
             tmpArrayFrequency.add(tmpAbsolutFrequencyInDouble);
         }
         tmpMaxOfFrequency = Collections.max(tmpArrayFrequency);
-        // set the number axis dynamically with magic numbers //TODO TEST
+        // set the number axis dynamically with magic numbers //TODO TEST !!!
         NumberAxis tmpReadableAxis = aHistogramView.getNumberAxis();
         if (tmpMaxOfFrequency <= 35) {
             tmpReadableAxis.setTickUnit(1);
@@ -198,15 +205,13 @@ public class HistogramViewController {
         }
         List<String> tmpSublistSmiles = null;
         List<Integer> tmpSublistOfFrequency = null;
-        List<Image> tmpImage = null;
         List<String> tmpSmilesToDepict = null;
         if (aNumber == 0) {
             tmpSublistSmiles = tmpSmilesList.subList(aNumber, tmpSmilesList.size());
             tmpSublistOfFrequency = tmpFrequencyList.subList(aNumber, tmpFrequencyList.size());
-            tmpImage = tmpFragmentImage.subList(aNumber,tmpFragmentImage.size());
             tmpSmilesToDepict = tmpFullSmilesLength.subList(aNumber, tmpFullSmilesLength.size());
             Label tmpDisplayMaxFrequency = aHistogramView.getDefaultLabel();
-            tmpDisplayMaxFrequency.setText("Set fragment frequency. Max. frequency:" +this.copyList.size());
+            tmpDisplayMaxFrequency.setText("Fragment frequency (Max"+this.copyList.size()+"):");
         }
         else {
             try {
@@ -214,7 +219,6 @@ public class HistogramViewController {
                     tmpSublistSmiles = tmpSmilesList.subList(tmpSmilesList.size() - aNumber, tmpSmilesList.size());
                     tmpSublistOfFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aNumber, tmpFrequencyList.size());
                     tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aNumber, tmpFullSmilesLength.size());
-                    tmpImage = tmpFragmentImage.subList(tmpFragmentImage.size() - aNumber, tmpFragmentImage.size());
                 } else {
                     throw new IllegalArgumentException("the given number exceeds the maximum number of fragments");
                 }
@@ -225,29 +229,12 @@ public class HistogramViewController {
             }
         }
         CheckBox tmpBoxLabelHistogram = aHistogramView.getCheckbox();
-        Image tmpStructureImage = null;
-        for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistOfFrequency.iterator(), tmpImageIterator = tmpImage.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpImageIterator.hasNext();) {
+        for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistOfFrequency.iterator(), tmpFullSmiles = tmpFullSmilesLength.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpFullSmiles.hasNext();) {
             Integer tmpCurrentFrequency = (Integer) tmpIntegerIterator.next();
             String tmpCurrentSmiles = (String) tmpStringIterator.next();
-            tmpStructureImage = (Image) tmpImageIterator.next();
-            // TODO does not work why???
-           // String tmpSmiles = (String) tmpImageIterator.next();
-            /**
-            try {
-                SmilesParser sp = new SmilesParser(SilentChemObjectBuilder.getInstance());
-                IAtomContainer atom = sp.parseSmiles(tmpSmiles);
-                //Image image = DepictionUtil.depictImageWithZoom(atom, 2.5, 250,150); // magic numbers
-                XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentSmiles);
-                Node tmpNode = this.histogramHover(image, tmpStructureViewer, tmpCurrentFrequency, b);
-                tmpStringNumberData.setNode(tmpNode);
-                tmpNode.setStyle("-fx-bar-fill: #0000FF");
-                tmpSeries.getData().add(tmpStringNumberData);
-            } catch (InvalidSmilesException e) {
-                System.err.println(e.getMessage());
-            }
-             */
+            String tmpSmiles = (String) tmpFullSmiles.next();
             XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentSmiles);
-            StackPane tmpNode = this.histogramHover(tmpStructureImage, tmpStructureViewer);
+            StackPane tmpNode = this.histogramHover(tmpStructureViewer,tmpSmiles);
             tmpStringNumberData.setNode(tmpNode);
             tmpNode.setStyle("-fx-bar-fill: #0000FF");
             this.getBar(tmpBoxLabelHistogram, tmpNode, tmpCurrentFrequency, tmpMaxOfFrequency);
@@ -262,8 +249,8 @@ public class HistogramViewController {
         tmpHistogramBarChart.getData().add(tmpSeries);
         tmpHistogramBarChart.setLegendVisible(false);
         tmpHistogramBarChart.setAnimated(false);
-        //tmpHistogramBarChart.setVerticalGridLinesVisible(false);
-        //tmpHistogramBarChart.setHorizontalGridLinesVisible(false);
+        tmpHistogramBarChart.setVerticalGridLinesVisible(false);
+        tmpHistogramBarChart.setHorizontalGridLinesVisible(false);
         return tmpHistogramBarChart;
     }
     //
@@ -275,28 +262,53 @@ public class HistogramViewController {
         this.histogramView.getCancelButton().setOnAction(event -> {
             this.histogramStage.close();
         });
+        TextField tmpFrequencyTextField = this.histogramView.getFrequencyTextField();
+        TextField tmpSmilesTextField = this.histogramView.getSmilesTextField();
+            this.histogramView.getRefreshButton().disableProperty().bind(
+                    Bindings.isEmpty(tmpFrequencyTextField.textProperty()).and(Bindings.isEmpty(tmpSmilesTextField.textProperty()))
+            );
         this.histogramView.getRefreshButton().setOnAction(event -> {
             try {
                 BarChart tmpRefreshBarChart;
                 CategoryAxis tmpCategoryAxis = this.histogramView.getCategoryAxis();
                 String tmpStringMaxFrequency = this.histogramView.getTextField();
                 String tmpMaxSmilesLength = this.histogramView.getSmilesField();
-                if (tmpMaxSmilesLength.isEmpty()) {
-                    int tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
+                int tmpFragmentNumber;
+                int tmpSmilesLengthInField;
+                 if (tmpMaxSmilesLength.isEmpty()) {
+                     tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
+                    if(tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber < 0) {
+                        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
+                                Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
+                                Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
+                        return;
+                    }
                     tmpRefreshBarChart = this.createHistogram(tmpFragmentNumber, this.histogramView, 25);
                     Platform.runLater(() -> {
                         this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
                     });
                 } else if (tmpStringMaxFrequency.isEmpty()) {
-                    int r = Integer.parseInt(tmpMaxSmilesLength);
-                    tmpRefreshBarChart = this.createHistogram(0, this.histogramView, r);
+                    tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
+                    if(tmpSmilesLengthInField < 0) {
+                        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
+                                Message.get("HistogramViewController.HistogramSmilesRefreshWarning.Header"),
+                                Message.get("HistogramViewController.HistogramSmilesRefreshWarning.Content"));
+                        return;
+                    }
+                    tmpRefreshBarChart = this.createHistogram(0, this.histogramView, tmpSmilesLengthInField);
                     Platform.runLater(() -> {
                         this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
                     });
                 } else {
-                    int number = Integer.parseInt(tmpStringMaxFrequency);
-                    int r = Integer.parseInt(tmpMaxSmilesLength);
-                    tmpRefreshBarChart = this.createHistogram(number, this.histogramView, r);
+                    tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
+                    tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
+                    if(tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber < 0 || tmpSmilesLengthInField < 0) {
+                        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
+                                Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Header"),
+                                Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Content"));
+                        return;
+                    }
+                    tmpRefreshBarChart = this.createHistogram(tmpFragmentNumber, this.histogramView, tmpSmilesLengthInField);
                     Platform.runLater(() -> {
                         this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
                     });
@@ -312,20 +324,46 @@ public class HistogramViewController {
     //
     /**
      * Make the histogram hoverable
-     *
-     * @param anImage
      * @param anImageView
      * @return
      */
-    private StackPane histogramHover(Image anImage, ImageView anImageView) {
+    private StackPane histogramHover(ImageView anImageView, String aSmiles) {
         StackPane tmpNodePane = new StackPane();
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT); // TODO better position
+        boolean keepAtomContainer = true;
         tmpNodePane.setOnMouseEntered(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                tmpNodePane.setStyle("-fx-bar-fill: #87CEFA");  // create the images in this method
-                anImageView.setImage(anImage);
-                tmpNodePane.setCursor(Cursor.HAND);
+                tmpNodePane.setStyle("-fx-bar-fill: #87CEFA");
+                SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+                IAtomContainer atom = null;
+                if (keepAtomContainer) {
+                    if (atom == null) {
+                        try {
+                            tmpSmiPar.kekulise(false);
+                            atom = tmpSmiPar.parseSmiles(aSmiles);
+                            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(atom);
+                            Kekulization.kekulize(atom);
+                        } catch (CDKException anException) {
+                            HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                        }
+                    }
+                    Image image = DepictionUtil.depictImageWithZoom(atom, 2.5, GuiDefinitions.GUI_IMAGE_WIDTH, GuiDefinitions.GUI_IMAGE_HEIGHT);
+                    anImageView.setImage(image);
+                    tmpNodePane.setCursor(Cursor.HAND);
+                }
+                //kekulization done separately below
+                try {
+                    tmpSmiPar.kekulise(false);
+                    IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(aSmiles);
+                    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+                    Kekulization.kekulize(tmpAtomContainer);
+                    Image image = DepictionUtil.depictImageWithZoom(tmpAtomContainer, 2.5, GuiDefinitions.GUI_IMAGE_WIDTH, GuiDefinitions.GUI_IMAGE_HEIGHT);
+                    anImageView.setImage(image);
+                    tmpNodePane.setCursor(Cursor.HAND);
+                } catch (CDKException anException) {
+                   HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                }
             }
         });
         tmpNodePane.setOnMouseExited(new EventHandler<MouseEvent>() {
@@ -348,7 +386,7 @@ public class HistogramViewController {
      * @author José Pereda, Betuel Sevindik
      * @source https://stackoverflow.com/questions/27302875/set-bar-chart-column-width-size
      */
-    private void setMaxBarWidth(double aMaxBarWidth, CategoryAxis aXAxis, BarChart aBarChart) {  // add source stackoverflow
+    private void setMaxBarWidth(double aMaxBarWidth, CategoryAxis aXAxis, BarChart aBarChart) {
         double tmpBarWidth = 0;
         do {
             double tmpCategorySpacing = aXAxis.getCategorySpacing();
@@ -385,6 +423,9 @@ public class HistogramViewController {
            tmpLabel.setTranslateX(50);
         }
         tmpLabel.setText(String.valueOf(aFrequency));
+        if(aCheckBox.isSelected()) {
+            aStackPane.getChildren().add(tmpLabel);
+        }
         aCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (aCheckBox.isSelected()) {
                 aStackPane.getChildren().add(tmpLabel);

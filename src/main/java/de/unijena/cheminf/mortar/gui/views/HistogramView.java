@@ -22,21 +22,29 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
-import javafx.geometry.*;
+import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
-import javafx.scene.control.*;
+import javafx.scene.control.Tooltip;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 
-import java.awt.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.ImageView;
+
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.RowConstraints;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 
 /**
  * View for the frequency histogram
@@ -61,7 +69,7 @@ public class HistogramView extends AnchorPane {
     /**
      * ImageView to display the structures
      */
-    private ImageView ImageStructure;
+    private ImageView imageStructure;
     /**
      * vertical frequency SMILES barchart
      */
@@ -132,21 +140,17 @@ public class HistogramView extends AnchorPane {
         tmpCol1.setHgrow(Priority.ALWAYS);
         tmpGrid.getColumnConstraints().add(tmpCol1);
         ColumnConstraints tmpCol2 = new ColumnConstraints();
-        // tmpCol2.setFillWidth(true);
-        // tmpCol2.setHgrow(Priority.ALWAYS);
         tmpGrid.getColumnConstraints().add(tmpCol2);
         RowConstraints tmpRow2 = new RowConstraints();
-        // tmpRow2.setFillHeight(true);
-       // tmpRow2.setVgrow(Priority.ALWAYS);
         tmpGrid.getRowConstraints().add(tmpRow2);
-        ColumnConstraints tmpCol3 = new ColumnConstraints(250);
-        //tmpCol3.setFillWidth(true);
-        // tmpCol3.setHgrow(Priority.ALWAYS);
+        ColumnConstraints tmpCol3 = new ColumnConstraints();
         tmpGrid.getColumnConstraints().add(tmpCol3);
-        RowConstraints tmpRow3 = new RowConstraints(150);
-       // tmpRow3.setFillHeight(true);
-        //tmpRow3.setVgrow(Priority.ALWAYS);
+        RowConstraints tmpRow3 = new RowConstraints();
         tmpGrid.getRowConstraints().add(tmpRow3);
+        RowConstraints tmpRow4 = new RowConstraints(20); // magic number
+        tmpGrid.getRowConstraints().add(tmpRow4);
+        ColumnConstraints tmpCol4 = new ColumnConstraints(20); // magic number
+        tmpGrid.getColumnConstraints().add(tmpCol4);
         tmpGrid.setGridLinesVisible(true);
         //buttons
         HBox tmpHBoxButtonsHBox = new HBox();
@@ -159,6 +163,8 @@ public class HistogramView extends AnchorPane {
         this.textField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip")));
         this.refreshButton = new Button(Message.get("HistogramView.refreshButton.text"));
         this.refreshButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
+        this.refreshButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.refreshButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.smilesField = new TextField();
         this.smilesField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         Label tmpSmilesLabel = new Label(Message.get("HistogramView.smilesField.text"));
@@ -169,9 +175,13 @@ public class HistogramView extends AnchorPane {
         tmpHBoxLeftSideButton.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         HBox.setHgrow(tmpHBoxLeftSideButton, Priority.ALWAYS);
         tmpHBoxButtonsHBox.getChildren().add(tmpHBoxLeftSideButton);
-        this.ImageStructure = new ImageView();
+        this.imageStructure = new ImageView();
+       // this.imageStructure.setStyle("-fx-effect: drapshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0");
+        this.imageStructure.setEffect(new DropShadow(10, Color.BLACK));
         this.cancelButton = new Button(Message.get("HistogramView.cancelButton.text"));
         this.cancelButton.setTooltip(new Tooltip(Message.get("HistogramView.cancelButton.toolTip")));
+        this.cancelButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.cancelButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.checkbox = new CheckBox(Message.get("HistogramView.checkbox.text"));
         this.checkbox.setTooltip(new Tooltip(Message.get("HistogramView.checkbox.toolTip")));
         HBox tmpHBoxRightSideButtons = new HBox();
@@ -182,9 +192,8 @@ public class HistogramView extends AnchorPane {
         HBox.setHgrow(tmpHBoxRightSideButtons, Priority.ALWAYS);
         tmpHBoxButtonsHBox.getChildren().add(tmpHBoxRightSideButtons);
         //test
-        tmpGrid.add(tmpScrollPane,0,0,3,3);
-      //  GridPane.setHalignment(this.ImageStructure,HPos.CENTER);
-        tmpGrid.add(this.ImageStructure,2,2);  // TODO
+        tmpGrid.add(tmpScrollPane,0,0,4,4);
+        tmpGrid.add(this.imageStructure,2,2);  // TODO
         this.getChildren().add(tmpBorderPane);
     }
     //
@@ -208,14 +217,32 @@ public class HistogramView extends AnchorPane {
     }
     //
     /**
-     * Returns a TextField to get the fragment count
+     * Returns a String to get the fragment count
      *
-     * @return TextField
+     * @return String
      */
     public String getTextField() {return this.textField.getText(); }
     //
     /**
-     * Returns a TextField to get the SMILES length
+     * Returns a TextField
+     *
+     * @return TextField
+     */
+    public TextField getSmilesTextField() {
+        return this.smilesField;
+    }
+    //
+    /**
+     * Returns a TextField
+     *
+     * @return TextField
+     */
+    public TextField getFrequencyTextField() {
+        return this.textField;
+    }
+    //
+    /**
+     * Returns a String to get the SMILES length
      *
      * @return
      */
@@ -227,7 +254,7 @@ public class HistogramView extends AnchorPane {
      * @return ImageView
      */
     public ImageView getImageStructure() {
-        return this.ImageStructure;
+        return this.imageStructure;
     }
     //
     /**
