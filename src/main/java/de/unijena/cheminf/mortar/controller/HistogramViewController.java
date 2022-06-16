@@ -95,8 +95,6 @@ public class HistogramViewController {
      * Copy of list
      */
     private List<MoleculeDataModel> copyList;
-    private boolean keepAtomContainer = false;
-    private IAtomContainer atomContainer;
     //</editor-fold>
     //
     /**
@@ -150,7 +148,6 @@ public class HistogramViewController {
         ArrayList<Double> tmpArrayFrequency = new ArrayList<>();
         ArrayList<String> tmpSmilesList = new ArrayList<>();
         ArrayList<Integer> tmpFrequencyList = new ArrayList<>();
-        ArrayList<Image> tmpFragmentImage = new ArrayList<>();
         int tmpIterator = this.copyList.size();
         FragmentDataModel tmpFragmentData = null;
         double tmpMaxOfFrequency;
@@ -164,6 +161,10 @@ public class HistogramViewController {
             } else {
                 tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
                 tmpSmilesList.add(tmpNewSmiles);
+            }
+            try {
+              Image image = DepictionUtil.depictImageWithZoom(tmpFragmentData.getAtomContainer(),2.5,250,150);
+            } catch (CDKException anException) {
             }
             tmpIterator--;
             tmpFullSmilesLength.add(tmpFragmentData.getUniqueSmiles());
@@ -215,7 +216,7 @@ public class HistogramViewController {
         }
         else {
             try {
-                if (aNumber < tmpSmilesList.size()) {
+                if (aNumber <= tmpSmilesList.size()) {
                     tmpSublistSmiles = tmpSmilesList.subList(tmpSmilesList.size() - aNumber, tmpSmilesList.size());
                     tmpSublistOfFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aNumber, tmpFrequencyList.size());
                     tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aNumber, tmpFullSmilesLength.size());
@@ -229,12 +230,12 @@ public class HistogramViewController {
             }
         }
         CheckBox tmpBoxLabelHistogram = aHistogramView.getCheckbox();
-        for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistOfFrequency.iterator(), tmpFullSmiles = tmpFullSmilesLength.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpFullSmiles.hasNext();) {
+        for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistOfFrequency.iterator(), tmpSmilesIterator = tmpSmilesToDepict.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpSmilesIterator.hasNext();) {
             Integer tmpCurrentFrequency = (Integer) tmpIntegerIterator.next();
             String tmpCurrentSmiles = (String) tmpStringIterator.next();
-            String tmpSmiles = (String) tmpFullSmiles.next();
+            String tmpSmiles = (String) tmpSmilesIterator.next();
             XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentSmiles);
-            StackPane tmpNode = this.histogramHover(tmpStructureViewer,tmpSmiles);
+            StackPane tmpNode = this.histogramHover(tmpStructureViewer, tmpSmiles);
             tmpStringNumberData.setNode(tmpNode);
             tmpNode.setStyle("-fx-bar-fill: #0000FF");
             this.getBar(tmpBoxLabelHistogram, tmpNode, tmpCurrentFrequency, tmpMaxOfFrequency);
@@ -275,9 +276,9 @@ public class HistogramViewController {
                 String tmpMaxSmilesLength = this.histogramView.getSmilesField();
                 int tmpFragmentNumber;
                 int tmpSmilesLengthInField;
-                 if (tmpMaxSmilesLength.isEmpty()) {
-                     tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
-                    if(tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber < 0) {
+                if (tmpMaxSmilesLength.isEmpty()) {
+                    tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
+                    if (tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber < 0) {
                         GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                                 Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
                                 Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
@@ -289,7 +290,7 @@ public class HistogramViewController {
                     });
                 } else if (tmpStringMaxFrequency.isEmpty()) {
                     tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
-                    if(tmpSmilesLengthInField < 0) {
+                    if (tmpSmilesLengthInField < 0) {
                         GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                                 Message.get("HistogramViewController.HistogramSmilesRefreshWarning.Header"),
                                 Message.get("HistogramViewController.HistogramSmilesRefreshWarning.Content"));
@@ -302,7 +303,7 @@ public class HistogramViewController {
                 } else {
                     tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
                     tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
-                    if(tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber < 0 || tmpSmilesLengthInField < 0) {
+                    if (tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber < 0 || tmpSmilesLengthInField < 0) {
                         GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                                 Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Header"),
                                 Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Content"));
@@ -330,30 +331,30 @@ public class HistogramViewController {
     private StackPane histogramHover(ImageView anImageView, String aSmiles) {
         StackPane tmpNodePane = new StackPane();
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT); // TODO better position
-        boolean keepAtomContainer = true;
+        boolean tmpKeepAtomContainer = true;
         tmpNodePane.setOnMouseEntered(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 tmpNodePane.setStyle("-fx-bar-fill: #87CEFA");
                 SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-                IAtomContainer atom = null;
-                if (keepAtomContainer) {
-                    if (atom == null) {
+                IAtomContainer tmpAtomCon = null;
+                if (tmpKeepAtomContainer) {
+                    if (tmpAtomCon == null) {
                         try {
                             tmpSmiPar.kekulise(false);
-                            atom = tmpSmiPar.parseSmiles(aSmiles);
-                            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(atom);
-                            Kekulization.kekulize(atom);
+                            tmpAtomCon = tmpSmiPar.parseSmiles(aSmiles);
+                            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomCon);
+                            Kekulization.kekulize(tmpAtomCon);
                         } catch (CDKException anException) {
                             HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                         }
                     }
-                    Image image = DepictionUtil.depictImageWithZoom(atom, 2.5, GuiDefinitions.GUI_IMAGE_WIDTH, GuiDefinitions.GUI_IMAGE_HEIGHT);
-                    anImageView.setImage(image);
+                    Image tmpStructureImage = DepictionUtil.depictImageWithZoom(tmpAtomCon, 2.5, GuiDefinitions.GUI_IMAGE_WIDTH, GuiDefinitions.GUI_IMAGE_HEIGHT);
+                    anImageView.setImage(tmpStructureImage);
                     tmpNodePane.setCursor(Cursor.HAND);
                 }
-                //kekulization done separately below
                 try {
+                //kekulization done separately below
                     tmpSmiPar.kekulise(false);
                     IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(aSmiles);
                     AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
