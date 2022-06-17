@@ -30,6 +30,7 @@ import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -95,6 +96,18 @@ public class HistogramViewController {
      * Copy of list
      */
     private List<MoleculeDataModel> copyList;
+    /**
+     * Width of the images
+     */
+    private double imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
+    /**
+     * Height of the images
+     */
+    private double imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
+    /**
+     * Zoom factor of the images
+     */
+    private double imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
     //</editor-fold>
     //
     /**
@@ -129,13 +142,30 @@ public class HistogramViewController {
         this.addListener();
         Scene tmpScene = new Scene(this.histogramView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setScene(tmpScene);
+        tmpScene.widthProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number tmpOldNumber, Number tmpNewNumber) {
+                if(tmpScene.getWidth() !=GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE){
+                   imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH_FOR_FULL_SCREEN;
+                   imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT_FOR_FULL_SCREEN;
+                   imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR_FOR_FULL_SCREEN;
+                } else {
+                   imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
+                   imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
+                   imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
+                }
+            }
+        });
         this.histogramStage.show();
     }
     //
     /**
      * Create a configurable histogram
      *
-     *
+     * @param aNumber to set the fragment number
+     * @param aHistogramView to display the images of the fragments
+     * @param aSmilesLength to set the SMILES length
+     * @return a BarChart to show
      */
     private BarChart createHistogram(int aNumber, HistogramView aHistogramView, int aSmilesLength)  {
         XYChart.Series tmpSeries = new XYChart.Series();
@@ -181,16 +211,16 @@ public class HistogramViewController {
             tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +1);
         } else if (tmpMaxOfFrequency <= 99) {
             tmpReadableAxis.setTickUnit(2);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +1);
+            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +10);
         } else if (tmpMaxOfFrequency <=200) {
             tmpReadableAxis.setTickUnit(5);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +13);
+            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +15);
         } else if (tmpMaxOfFrequency <=500) {
             tmpReadableAxis.setTickUnit(14);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +13);
+            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +15);
         } else if (tmpMaxOfFrequency <=999) {
             tmpReadableAxis.setTickUnit(25);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +13);
+            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +15);
         } else if (tmpMaxOfFrequency <= 3000) {
             tmpReadableAxis.setTickUnit(100);
             tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +150);
@@ -202,7 +232,7 @@ public class HistogramViewController {
             tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +250);
         } else if (tmpMaxOfFrequency <= 70000) {
             tmpReadableAxis.setTickUnit(1800);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +250);
+            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +350);
         }
         List<String> tmpSublistSmiles = null;
         List<Integer> tmpSublistOfFrequency = null;
@@ -212,7 +242,7 @@ public class HistogramViewController {
             tmpSublistOfFrequency = tmpFrequencyList.subList(aNumber, tmpFrequencyList.size());
             tmpSmilesToDepict = tmpFullSmilesLength.subList(aNumber, tmpFullSmilesLength.size());
             Label tmpDisplayMaxFrequency = aHistogramView.getDefaultLabel();
-            tmpDisplayMaxFrequency.setText("Fragment frequency (Max"+this.copyList.size()+"):");
+            tmpDisplayMaxFrequency.setText("Fragment frequency (max."+this.copyList.size()+"):");
         }
         else {
             try {
@@ -325,8 +355,9 @@ public class HistogramViewController {
     //
     /**
      * Make the histogram hoverable
-     * @param anImageView
-     * @return
+     *
+     * @param anImageView to display the structures
+     * @return a StackPane that is used as a node
      */
     private StackPane histogramHover(ImageView anImageView, String aSmiles) {
         StackPane tmpNodePane = new StackPane();
@@ -349,7 +380,7 @@ public class HistogramViewController {
                             HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                         }
                     }
-                    Image tmpStructureImage = DepictionUtil.depictImageWithZoom(tmpAtomCon, 2.5, GuiDefinitions.GUI_IMAGE_WIDTH, GuiDefinitions.GUI_IMAGE_HEIGHT);
+                    Image tmpStructureImage = DepictionUtil.depictImageWithZoom(tmpAtomCon, imageZoomFactor, imageWidth, imageHeight);
                     anImageView.setImage(tmpStructureImage);
                     tmpNodePane.setCursor(Cursor.HAND);
                 }
@@ -359,7 +390,7 @@ public class HistogramViewController {
                     IAtomContainer tmpAtomContainer = tmpSmiPar.parseSmiles(aSmiles);
                     AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
                     Kekulization.kekulize(tmpAtomContainer);
-                    Image image = DepictionUtil.depictImageWithZoom(tmpAtomContainer, 2.5, GuiDefinitions.GUI_IMAGE_WIDTH, GuiDefinitions.GUI_IMAGE_HEIGHT);
+                    Image image = DepictionUtil.depictImageWithZoom(tmpAtomContainer, imageZoomFactor,imageWidth, imageHeight);
                     anImageView.setImage(image);
                     tmpNodePane.setCursor(Cursor.HAND);
                 } catch (CDKException anException) {
@@ -403,10 +434,11 @@ public class HistogramViewController {
     /**
      * Enables the labelling of the histogram
      *
-     * @param aCheckBox
+     * @param aCheckBox to make the display of the fragment labels adjustable
      * @param aStackPane
-     * @param aFrequency
-     * @return
+     * @param aFrequency values of the frequencies
+     * @param aDigitNumber
+     * @return StackPane
      */
     private StackPane getBar(CheckBox aCheckBox, StackPane aStackPane, int aFrequency, double aDigitNumber) {
         Label tmpLabel = new Label();

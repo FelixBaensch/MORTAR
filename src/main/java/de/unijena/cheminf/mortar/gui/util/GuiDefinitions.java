@@ -121,6 +121,22 @@ public final class GuiDefinitions {
      */
     public static final double GUI_IMAGE_HEIGHT = 150.0;
     /**
+     * Image zoom factor value
+     */
+    public static final double GUI_IMAGE_ZOOM_FACTOR = 2.5;
+    /**
+     * Value for the width of the image corresponding to the structure of the fragments for full screen
+     */
+    public static final double GUI_IMAGE_WIDTH_FOR_FULL_SCREEN = 350.0;
+    /**
+     * Value for the height of the image corresponding to the structure of the fragments for full screen
+     */
+    public static final double GUI_IMAGE_HEIGHT_FOR_FULL_SCREEN = 250.0;
+    /**
+     * Image zoom factor value for full screen
+     */
+    public static final double GUI_IMAGE_ZOOM_FACTOR_FOR_FULL_SCREEN = 4.0;
+    /**
      * Value for the width of the textField
      */
     public static final double GUI_TEXT_FIELD_WIDTH = 50.0;

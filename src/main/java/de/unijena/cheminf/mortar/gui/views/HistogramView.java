@@ -33,10 +33,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
-
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -151,7 +149,7 @@ public class HistogramView extends AnchorPane {
         tmpGrid.getRowConstraints().add(tmpRow4);
         ColumnConstraints tmpCol4 = new ColumnConstraints(20); // magic number
         tmpGrid.getColumnConstraints().add(tmpCol4);
-        tmpGrid.setGridLinesVisible(true);
+        //tmpGrid.setGridLinesVisible(true);
         //buttons
         HBox tmpHBoxButtonsHBox = new HBox();
         tmpHBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
@@ -176,7 +174,6 @@ public class HistogramView extends AnchorPane {
         HBox.setHgrow(tmpHBoxLeftSideButton, Priority.ALWAYS);
         tmpHBoxButtonsHBox.getChildren().add(tmpHBoxLeftSideButton);
         this.imageStructure = new ImageView();
-       // this.imageStructure.setStyle("-fx-effect: drapshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0");
         this.imageStructure.setEffect(new DropShadow(10, Color.BLACK));
         this.cancelButton = new Button(Message.get("HistogramView.cancelButton.text"));
         this.cancelButton.setTooltip(new Tooltip(Message.get("HistogramView.cancelButton.toolTip")));
