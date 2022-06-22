@@ -21,17 +21,24 @@
 package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.OverviewView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import javafx.geometry.Insets;
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.openscience.cdk.exception.CDKException;
 
 import java.util.List;
 
@@ -54,13 +61,13 @@ public class OverviewViewController {
 
     private String overviewViewTitle;
 
-    private Button applyButton;
-
     private List<MoleculeDataModel> moleculeDataModelList;
 
     private int rowsPerPage;
 
     private int columnsPerPage;
+
+    private boolean showImages;
     //</editor-fold>
 
     //<editor-fold desc="Constructors" defaultstate="collapsed">
@@ -74,6 +81,7 @@ public class OverviewViewController {
         this.moleculeDataModelList = aMoleculeDataModelList;
         this.rowsPerPage = 5;
         this.columnsPerPage = 4;
+        this.showImages = false;
         for (MoleculeDataModel tmpMolecule : aMoleculeDataModelList) {
             System.out.println(tmpMolecule.getUniqueSmiles());
         }
@@ -97,21 +105,49 @@ public class OverviewViewController {
         this.overviewViewStage.setTitle(this.overviewViewTitle);
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
+        //this.overviewViewStage.show();
 
         int tmpPageCount = this.moleculeDataModelList.size() / (this.rowsPerPage * this.columnsPerPage);
         if (this.moleculeDataModelList.size() % (this.rowsPerPage * this.columnsPerPage) > 0) {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setPageFactory((pageIndex) -> this.overviewView.createOverviewViewPage(pageIndex, this.rowsPerPage, this.columnsPerPage));
+        tmpPagination.setPageFactory((pageIndex) -> this.createOverviewViewPage(pageIndex, this.rowsPerPage, this.columnsPerPage));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         this.overviewView.addPaginationToGridPane(tmpPagination);
+        //this.overviewView.getLeftButtonBar().setStyle("-fx-background-color: RED");
+        //this.overviewView.getRightButtonBar().setStyle("-fx-background-color: RED");
+        //this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(), 0, 1, 1, 1);
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftButtonBar(), 0, 1, 1, 1);
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getRightButtonBar(), 2, 1, 1, 1);
 
         this.overviewView.getApplyButton().setOnAction(actionEvent -> {
-            this.applyChangeOfGridConfiguration();
+            try {
+                this.applyChangeOfGridConfiguration();
+            } catch (IllegalArgumentException anIllegalArgumentException) {     //TODO: Add Logger and create own header and title
+                //SettingsContainer.this.LOGGER.log(Level.WARNING, anIllegalArgumentException.toString(), anIllegalArgumentException);
+                GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
+                        Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
+                        anIllegalArgumentException.toString(),
+                        anIllegalArgumentException);
+            }
         });
 
+        this.overviewView.getCloseButton().setOnAction(actionEvent -> {
+            this.overviewViewStage.close();
+        });
+
+        /*this.overviewViewStage.heightProperty().addListener((observableValue, number, t1) -> {
+            this.createOverviewViewPage(tmpPagination.getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
+            System.out.println("This line is being executed too");
+        });*/
+
+        this.overviewViewStage.setOnShown(windowEvent -> {
+            //tmpPagination.setCurrentPageIndex(tmpPagination.getCurrentPageIndex());
+            this.createOverviewViewPage(tmpPagination.getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
+            System.out.println("This line is being executed");
+        });
 
         /*
         this.applyButton = new Button(Message.get("MainTabPane.moleculesTab.fragmentButton.text"));
@@ -134,12 +170,72 @@ public class OverviewViewController {
         this.overviewView.addNodeToGridPane(tmpButtonBar, 0, 1, 1, 1);
          */
 
+        //this.overviewViewStage.wait();
         this.overviewViewStage.showAndWait();
     }
 
-    private void applyChangeOfGridConfiguration() {
-        this.rowsPerPage = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
-        this.columnsPerPage = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
+    /**
+     *
+     * @param aColumnsPerPage
+     * @param aRowsPerPage
+     * @return
+     */
+    private Node createOverviewViewPage(int aPageIndex, int aRowsPerPage, int aColumnsPerPage) {
+        //Node tmpGridLines = this.structureGridPane.getChildren().get(0);
+        this.overviewView.getStructureGridPane().getChildren().clear();
+        //this.structureGridPane.getChildren().add(tmpGridLines);
+
+        if (this.showImages) {
+            System.out.println("CurrentPageIndex: " + aPageIndex);
+            int tmpFromIndex = aPageIndex * aRowsPerPage * aColumnsPerPage;
+            int tmpToIndex = Math.min(tmpFromIndex + (aRowsPerPage * aColumnsPerPage), this.moleculeDataModelList.size());
+            int tmpCurrentIndex = tmpFromIndex;
+            double tmpImageHeight = (this.overviewView.getStructureGridPane().getHeight() - 10) / aRowsPerPage - 10;
+            double tmpImageWidth = (this.overviewView.getStructureGridPane().getWidth() - 20) / aColumnsPerPage - 10;
+            xloop:
+            for (int i = 0; i < aRowsPerPage; i++) {
+                for (int j = 0; j < aColumnsPerPage; j++) {
+                    if (tmpCurrentIndex >= tmpToIndex) {
+                        break xloop;
+                    }
+                    StackPane tmpStackPane = new StackPane();
+                    try {
+                        ImageView tmpImageView = new ImageView(
+                                DepictionUtil.depictImageWithZoom(this.moleculeDataModelList.get(tmpCurrentIndex)
+                                        .getAtomContainer(), 1.0, tmpImageWidth, tmpImageHeight)
+                        );
+                        //tmpImageView.setPreserveRatio(true);
+                        tmpStackPane.getChildren().add(tmpImageView);
+                    } catch (CDKException anException) {
+                        Label tmpLabel = new Label("[Error]");
+                        tmpStackPane.getChildren().add(tmpLabel);
+                    }
+                    this.overviewView.getStructureGridPane().add(tmpStackPane, j, i);
+                    tmpCurrentIndex++;
+                }
+            }
+        }
+        this.showImages = true;
+        return this.overviewView.getStructureGridPane();
+    }
+
+    /**
+     *
+     * @throws IllegalArgumentException
+     */
+    private void applyChangeOfGridConfiguration() throws IllegalArgumentException {
+        int tmpRowsPerPageEntry = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
+        if (!(tmpRowsPerPageEntry <= 0)) {
+            this.rowsPerPage = tmpRowsPerPageEntry;
+        } else {
+            throw new IllegalArgumentException("An illegal rows per page number was given: " + tmpRowsPerPageEntry);
+        }
+        int tmpColumnsPerPageEntry = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
+        if (!(tmpColumnsPerPageEntry <= 0)) {
+            this.columnsPerPage = tmpColumnsPerPageEntry;
+        } else {
+            throw new IllegalArgumentException("An illegal columns per page number was given: " + tmpColumnsPerPageEntry);
+        }
         this.overviewView.configureStructureGridPane(this.rowsPerPage, this.columnsPerPage);
         int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPage * this.columnsPerPage);
         if (this.moleculeDataModelList.size() % (this.rowsPerPage * this.columnsPerPage) > 0) {
@@ -151,7 +247,7 @@ public class OverviewViewController {
                 this.overviewView.getPagination().setCurrentPageIndex(tmpNewPageCount);
             }
         }
-        this.overviewView.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
+        this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
     }
     //</editor-fold>
 

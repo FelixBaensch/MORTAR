@@ -768,7 +768,7 @@ public class MainViewController {
                     getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
             );
         } else {
-            GuiUtil.guiMessageAlert(
+            GuiUtil.guiMessageAlert(        //TODO
                     Alert.AlertType.INFORMATION,
                     "Information",
                     "No overview available for the currently selected tab.",
