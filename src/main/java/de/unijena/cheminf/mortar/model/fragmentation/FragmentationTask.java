@@ -146,11 +146,12 @@ public class FragmentationTask implements Callable<Integer> {
                         continue;
                     }
                     FragmentDataModel tmpFragmentDataModel;
-                    LOCK.lock();
                     try{
                         if(this.fragmentsHashTable.containsKey(tmpSmiles)){
                             tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
+                            LOCK.lock();
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
+                            LOCK.unlock();
                         }
                         else{
                             tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
@@ -165,15 +166,15 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
                         }
                         else{
+                            LOCK.lock();
                             tmpFragmentDataModel.incrementMoleculeFrequency();
+                            LOCK.unlock();
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
                             tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
                         }
                     } catch (Exception anException) {
                         FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                         this.exceptionsCounter++;
-                    } finally {
-                        LOCK.unlock();
                     }
                 }
             } catch(Exception anException){
