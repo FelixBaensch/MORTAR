@@ -108,6 +108,8 @@ public class HistogramViewController {
      * Zoom factor of the images
      */
     private double imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
+
+    Scene mainScene;
     //</editor-fold>
     //
     /**
@@ -135,11 +137,10 @@ public class HistogramViewController {
         this.histogramStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         this.histogramView = new HistogramView();
         CategoryAxis tmpMainCategoryAxis = this.histogramView.getCategoryAxis();
-        BarChart tmpMainBarChart =  this.createHistogram(0, this.histogramView, 25);
-        Platform.runLater(()->{
-           this.setMaxBarWidth(30, tmpMainCategoryAxis, tmpMainBarChart);
-        });
+        this.mainScene = new Scene(this.histogramView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
+        this.createHistogram(0, this.histogramView, 25,this.mainScene, this.histogramStage );
         this.addListener();
+        /**
         Scene tmpScene = new Scene(this.histogramView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setScene(tmpScene);
         tmpScene.widthProperty().addListener(new ChangeListener<Number>() {
@@ -157,6 +158,7 @@ public class HistogramViewController {
             }
         });
         this.histogramStage.show();
+         */
     }
     //
     /**
@@ -167,12 +169,13 @@ public class HistogramViewController {
      * @param aSmilesLength to set the SMILES length
      * @return a BarChart to show
      */
-    private BarChart createHistogram(int aNumber, HistogramView aHistogramView, int aSmilesLength)  {
+    private void createHistogram(int aNumber, HistogramView aHistogramView, int aSmilesLength, Scene aScene, Stage aStage)  {
         XYChart.Series tmpSeries = new XYChart.Series();
         BarChart tmpHistogramBarChart = aHistogramView.getBar();
         tmpHistogramBarChart.setCategoryGap(0);
         tmpHistogramBarChart.setBarGap(0);
         NumberAxis tmpNumberAxis = aHistogramView.getNumberAxis();
+        CategoryAxis axis = aHistogramView.getCategoryAxis();
         ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "absoluteFrequency", "ASCENDING");
         String tmpNewSmiles;
         ArrayList<Double> tmpArrayFrequency = new ArrayList<>();
@@ -192,10 +195,12 @@ public class HistogramViewController {
                 tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
                 tmpSmilesList.add(tmpNewSmiles);
             }
+            /**
             try {
               Image image = DepictionUtil.depictImageWithZoom(tmpFragmentData.getAtomContainer(),2.5,250,150);
             } catch (CDKException anException) {
             }
+             */
             tmpIterator--;
             tmpFullSmilesLength.add(tmpFragmentData.getUniqueSmiles());
             tmpFrequencyList.add(tmpFragmentData.getAbsoluteFrequency());
@@ -271,18 +276,19 @@ public class HistogramViewController {
             this.getBar(tmpBoxLabelHistogram, tmpNode, tmpCurrentFrequency, tmpMaxOfFrequency);
             tmpSeries.getData().add(tmpStringNumberData);
         }
-        double tmpHistogramSize1 = 50.0 * tmpSublistOfFrequency.size(); //magic number
-        tmpHistogramBarChart.setPrefHeight(tmpHistogramSize1);
-        tmpHistogramBarChart.setMinHeight(tmpHistogramSize1);
+        double tmpHistogramSize = 50.0 * tmpSublistOfFrequency.size(); //magic number
+        tmpHistogramBarChart.setPrefHeight(tmpHistogramSize);
+        tmpHistogramBarChart.setMinHeight(tmpHistogramSize);
         tmpHistogramBarChart.setLegendVisible(false);
         tmpHistogramBarChart.getData().clear();
         tmpHistogramBarChart.layout();
         tmpHistogramBarChart.getData().add(tmpSeries);
         tmpHistogramBarChart.setLegendVisible(false);
         tmpHistogramBarChart.setAnimated(false);
-        tmpHistogramBarChart.setVerticalGridLinesVisible(false);
-        tmpHistogramBarChart.setHorizontalGridLinesVisible(false);
-        return tmpHistogramBarChart;
+        aStage.setScene(aScene);
+        aStage.show();
+        this.setMaxBarWidth(10, axis, tmpHistogramBarChart);
+      // return tmpHistogramBarChart;
     }
     //
     /**
@@ -314,10 +320,8 @@ public class HistogramViewController {
                                 Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
                         return;
                     }
-                    tmpRefreshBarChart = this.createHistogram(tmpFragmentNumber, this.histogramView, 25);
-                    Platform.runLater(() -> {
-                        this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
-                    });
+                    this.createHistogram(tmpFragmentNumber, this.histogramView, 25,this.mainScene,this.histogramStage);
+                 //  this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
                 } else if (tmpStringMaxFrequency.isEmpty()) {
                     tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
                     if (tmpSmilesLengthInField < 0) {
@@ -326,10 +330,12 @@ public class HistogramViewController {
                                 Message.get("HistogramViewController.HistogramSmilesRefreshWarning.Content"));
                         return;
                     }
-                    tmpRefreshBarChart = this.createHistogram(0, this.histogramView, tmpSmilesLengthInField);
+                   this.createHistogram(0, this.histogramView, tmpSmilesLengthInField,this.mainScene, this.histogramStage);
+                    /**
                     Platform.runLater(() -> {
                         this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
                     });
+                     */
                 } else {
                     tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
                     tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
@@ -339,10 +345,12 @@ public class HistogramViewController {
                                 Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Content"));
                         return;
                     }
-                    tmpRefreshBarChart = this.createHistogram(tmpFragmentNumber, this.histogramView, tmpSmilesLengthInField);
+                    this.createHistogram(tmpFragmentNumber, this.histogramView, tmpSmilesLengthInField, this.mainScene, this.histogramStage);
+                    /**
                     Platform.runLater(() -> {
                         this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
                     });
+                     */
                 }
             } catch (NumberFormatException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -429,6 +437,13 @@ public class HistogramViewController {
                 aBarChart.setCategoryGap(tmpCategorySpacing - tmpAvailableBarSpace - aBarChart.getBarGap());
             }
         } while (tmpBarWidth > aMaxBarWidth);
+        do{
+            double catSpace = aXAxis.getCategorySpacing();
+            double avilableBarSpace = catSpace - (0 + aBarChart.getBarGap());
+            tmpBarWidth = Math.min(aMaxBarWidth, (avilableBarSpace / aBarChart.getData().size()) - aBarChart.getBarGap());
+            avilableBarSpace=(tmpBarWidth + aBarChart.getBarGap())* aBarChart.getData().size();
+            aBarChart.setCategoryGap(catSpace-avilableBarSpace-aBarChart.getBarGap());
+        } while(tmpBarWidth< aMaxBarWidth && aBarChart.getCategoryGap()>0);
     }
     //
     /**
@@ -444,6 +459,9 @@ public class HistogramViewController {
         Label tmpLabel = new Label();
         tmpLabel.setTranslateY(0);
         tmpLabel.setAlignment(Pos.CENTER_RIGHT);
+        tmpLabel.setPrefWidth(100);
+        tmpLabel.setMinWidth(100);
+        tmpLabel.setMaxWidth(100);
         // TODO TEST
         // magic numbers
         if (aDigitNumber <= 99) {
