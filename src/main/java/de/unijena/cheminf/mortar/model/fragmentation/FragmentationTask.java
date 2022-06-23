@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,17 +45,12 @@ public class FragmentationTask implements Callable<Integer> {
 
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
-     * Lock to be used when updating the shared fragmentsHashTable. Needs to be static to be shared between all task
-     * objects.
-     */
-    private static final ReentrantLock LOCK = new ReentrantLock(true);
-    /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentationTask.class.getName());
     //</editor-fold>
     //
-    //<editor-fold desc="private class variables" defaultstate="collapsed>
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * List of molecules to fragment
      */
@@ -149,9 +143,7 @@ public class FragmentationTask implements Callable<Integer> {
                     try{
                         if(this.fragmentsHashTable.containsKey(tmpSmiles)){
                             tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
-                            LOCK.lock();
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
-                            LOCK.unlock();
                         }
                         else{
                             tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
@@ -166,9 +158,7 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
                         }
                         else{
-                            LOCK.lock();
                             tmpFragmentDataModel.incrementMoleculeFrequency();
-                            LOCK.unlock();
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
                             tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
                         }
