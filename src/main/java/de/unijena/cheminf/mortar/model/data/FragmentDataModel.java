@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,7 +43,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Absolute frequency of the fragment.
      */
-    private AtomicInteger absoluteFrequency;
+    private int absoluteFrequency;
     //
     /**
      * Absolute frequency of the fragment as a percentage.
@@ -54,7 +53,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Molecule frequency of the fragment.
      */
-    private AtomicInteger moleculeFrequency;
+    private int moleculeFrequency;
     //
     /**
      * Molecule frequency of the fragment as a percentage.
@@ -87,9 +86,9 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) throws NullPointerException {
         super(aUniqueSmiles, aName, aPropertyMap);
-        this.absoluteFrequency = new AtomicInteger(0);
+        this.absoluteFrequency = 0;
         this.absolutePercentage = 0.;
-        this.moleculeFrequency = new AtomicInteger(0);
+        this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
         this.parentMolecules = new LinkedList<>();
     }
@@ -102,9 +101,9 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public FragmentDataModel(IAtomContainer anAtomContainer) throws NullPointerException {
         super(anAtomContainer);
-        this.absoluteFrequency = new AtomicInteger(0);
+        this.absoluteFrequency = 0;
         this.absolutePercentage = 0.;
-        this.moleculeFrequency = new AtomicInteger(0);
+        this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
         this.parentMolecules = new LinkedList<>();
     }
@@ -113,14 +112,14 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Increases the absolute frequency by one.
      */
     public void incrementAbsoluteFrequency(){
-        this.absoluteFrequency.incrementAndGet();
+        this.absoluteFrequency += 1;
     }
     //
     /**
      * Increases the molecule frequency by one.
      */
     public void incrementMoleculeFrequency(){
-        this.moleculeFrequency.incrementAndGet();
+        this.moleculeFrequency += 1;
     }
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
@@ -129,7 +128,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * @return int absoluteFrequency
      */
     public int getAbsoluteFrequency() {
-        return this.absoluteFrequency.get();
+        return this.absoluteFrequency;
     }
     //
     /**
@@ -145,7 +144,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * @return int moleculeFrequency
      */
     public int getMoleculeFrequency() {
-        return this.moleculeFrequency.get();
+        return this.moleculeFrequency;
     }
     //
     /**
@@ -210,7 +209,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         if(aValue < 0 ){
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
-        this.absoluteFrequency = new AtomicInteger(aValue);
+        this.absoluteFrequency = aValue;
     }
     //
     /**
@@ -222,7 +221,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         if(aValue < 0 ){
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
-        this.moleculeFrequency = new AtomicInteger(aValue);
+        this.moleculeFrequency = aValue;
     }
     //
     /**
