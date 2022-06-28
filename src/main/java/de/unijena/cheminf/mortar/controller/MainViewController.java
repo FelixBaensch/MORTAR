@@ -438,6 +438,8 @@ public class MainViewController {
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                 }
                 if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
+                    this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
+                    this.isImportRunningProperty.setValue(false);
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
@@ -860,8 +862,8 @@ public class MainViewController {
                 @Override
                 protected Void call() throws Exception {
                     if (isPipelining) {
-                        MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
-                                tmpNumberOfCores);
+                            MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
+                                    tmpNumberOfCores);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
                     } else {
                         MainViewController.this.fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
@@ -939,6 +941,21 @@ public class MainViewController {
      */
     private void addFragmentationResultTabs(String aFragmentationName) {
         //fragments tab
+        Tab tmpFragmentsTab = this.createFragmentsTab(aFragmentationName);
+        //itemization tab
+        Tab tmpItemsTab = this.createItemsTab(aFragmentationName);
+        //
+        this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
+    }
+    //
+
+    /**
+     * Creates and returns a tab, which visualizes the resulting fragments of the fragmentation with given name
+     *
+     * @param aFragmentationName String, unique name for fragmentation job
+     * @return Tab
+     */
+    private Tab createFragmentsTab(String aFragmentationName){
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name(), tmpFragmentsDataTableView);
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
@@ -984,7 +1001,16 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
             }
         });
-        //itemization tab
+        return tmpFragmentsTab;
+    }
+    //
+    /**
+     * Creates and returns a tab which visualizes the resulting fragments of each molecule that has undergone the fragmentation with the given name
+     *
+     * @param aFragmentationName String, unique name for the fragmentation job
+     * @return Tab
+     */
+    private Tab createItemsTab(String aFragmentationName){
         int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
         for (int i = 0; i < this.moleculeDataModelList.size(); i++) {
             if(!this.moleculeDataModelList.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
@@ -998,10 +1024,12 @@ public class MainViewController {
             tmpAmount = Math.max(tmpAmount, tmpNrOfFragmentsOfCurrentMolecule);
         }
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
-        tmpItemizationDataTableView.setItemsList(this.moleculeDataModelList);
+        tmpItemizationDataTableView.setItemsList(
+                this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
-        tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+        int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
         if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
@@ -1020,10 +1048,16 @@ public class MainViewController {
         tmpItemizationExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpItemizationTabExportPDfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpItemizationTabExportPDfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        Button tmpCancelExportButton = new Button(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
+        tmpCancelExportButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
+        tmpCancelExportButton.visibleProperty().bind(this.isExportRunningProperty);
+        tmpCancelExportButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpCancelExportButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpButtonBarItemization.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton, tmpCancelExportButton);
         tmpItemizationTab.addNodeToGridPane(tmpButtonBarItemization, 0, 1, 1, 1);
         tmpItemizationExportCsvButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_CSV_FILE));
         tmpItemizationTabExportPDfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_PDF_FILE));
+        tmpCancelExportButton.setOnAction(event -> this.interruptExport());
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPaginationItems, tmpRowsPerPage);
         });
@@ -1034,11 +1068,9 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView);
             }
         });
-        //
-        this.mainTabPane.getSelectionModel().select(tmpFragmentsTab);
+        return tmpItemizationTab;
     }
     //
-
     /**
      * Clears the gui and all collections
      */

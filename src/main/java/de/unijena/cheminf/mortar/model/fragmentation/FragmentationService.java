@@ -249,7 +249,7 @@ public class FragmentationService {
      * @throws Exception if anything goes wrong
      */
     public void startSingleFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
-        //<editor-fold desc="checks" defualtstate="collapsed">
+        //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
         if(aNumberOfTasks == 0){
             aNumberOfTasks = 1;
@@ -262,11 +262,34 @@ public class FragmentationService {
     }
     //
     /**
+     * Starts fragmentation pipeline for given List of molecules for the single fragmenter set in pipeline
+     *
+     * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
+     * @param aNumberOfTasks int value to define onto how many parallel task the molecules should be distributed for fragmentation
+     * @throws Exception if anything goes wrong
+     */
+//    public void startPipelineFragmentationWithSingleFragmenter(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
+//        //<editor-fold desc="checks" defaultstate="collapsed">
+//        Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
+//        if(aNumberOfTasks == 0){
+//            aNumberOfTasks = 1;
+//        }
+//        if(this.pipelineFragmenter.length > 1) {
+//            return;
+//        }
+//        //</editor-fold>
+//        String tmpFragmentationName = this.createAndCheckFragmentationName(this.pipeliningFragmentationName);
+//        this.existingFragmentations.add(tmpFragmentationName);
+//        this.currentFragmentationName = tmpFragmentationName;
+//        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpFragmentationName);
+//    }
+    //
+    /**
      * Starts fragmentation pipeline for given List of molecules.
      * Fragmentation will be done on fragments of previous step
      *
      * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
-     * @param aNumberOfTasks int value to define onto how many parallel task the molecules should be distributed for framentation
+     * @param aNumberOfTasks int value to define onto how many parallel task the molecules should be distributed for fragmentation
      * @throws Exception if anything goes critically wrong
      */
     public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
@@ -285,91 +308,121 @@ public class FragmentationService {
         String tmpPipelineFragmentationName = this.createAndCheckFragmentationName(this.pipeliningFragmentationName);
         this.existingFragmentations.add(tmpPipelineFragmentationName);
         this.currentFragmentationName = tmpPipelineFragmentationName;
-        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName);
 
-        List<MoleculeDataModel> tmpFragmentsAsMols = new LinkedList<>();
-        tmpFragmentsAsMols.addAll(this.fragments.values());
-        this.fragments.clear();
-        Hashtable<String, FragmentDataModel> tmpNewFragments = null;
+        List<MoleculeDataModel> tmpMolsToFragment = new ArrayList<>(aListOfMolecules);
 
-        for(int i = 1; i < this.fragmenters.length; i++) {
-            tmpNewFragments = this.startFragmentation(tmpFragmentsAsMols, aNumberOfTasks, this.pipelineFragmenter[i], tmpPipelineFragmentationName);
-            tmpFragmentsAsMols.clear();
-            for(int j = 0; j < aListOfMolecules.size(); j++) {
-                MoleculeDataModel tmpMolecule = aListOfMolecules.get(j);
-                //check if molecule has undergone fragmentation, else continue with next molecule
+//        Hashtable<String, FragmentDataModel> tmpResultingFragmentsHashTable = new Hashtable<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
+
+        for(int i = 0; i < this.pipelineFragmenter.length; i++){
+            this.fragments.clear();
+            tmpFragmentHashtable = this.startFragmentation(tmpMolsToFragment, aNumberOfTasks, this.pipelineFragmenter[i], tmpPipelineFragmentationName);
+            tmpMolsToFragment.clear();
+
+            //iterate through all initial molecules
+            for(MoleculeDataModel tmpMolecule : aListOfMolecules) {
+
+                List<FragmentDataModel> tmpNewFragmentsOfMol = new LinkedList<>();
+                HashMap<String, Integer> tmpNewFragmentFrequenciesOfMol = new HashMap<>(tmpMolecule.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size() * 2);
+
+                //check if molecule has undergone fragmentation (redundant)
                 if(!tmpMolecule.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)) {
                     continue;
                 }
-                List<FragmentDataModel> tmpParentFragments = new ArrayList<>(tmpMolecule.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName));
 
-                List<FragmentDataModel> tmpNewFragmentsOfMolecule = new LinkedList<>();
-
-                HashMap<String, Integer> tmpNewFragmentFrequenciesOfMolecule = new HashMap<>(tmpNewFragments.size());
-
-
-                for(int k = 0; k < tmpParentFragments.size(); k++) {
-                    FragmentDataModel tmpParentFragment = tmpParentFragments.get(k);
-                    MoleculeDataModel tmpParentFragmentAsMol = (MoleculeDataModel) tmpParentFragments.get(k);
-                    //check if parent fragment has undergone fragmentation, else continue with next fragment
-                    if(!tmpParentFragmentAsMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)) {
-                        continue;
-                    }
-
-                    List<FragmentDataModel> tmpChildFragments = tmpParentFragmentAsMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName);
-                    //if parent fragment was fragmented but has no fragments, check settings for keepLastFragment, add it to the list for next fragmentation step and continue with next parent fragment
-                    if(tmpChildFragments.size() == 0 && this.settingsContainer.isKeepLastFragmentSetting()) {
-                        //check if list for next fragmentation step contains fragment by unique SMILES
-                        // if it contains fragment update frequencies
-                        if(tmpFragmentsAsMols.stream().anyMatch(x -> x.getUniqueSmiles().equals(tmpParentFragmentAsMol.getUniqueSmiles()))){
-                            FragmentDataModel tmp = (FragmentDataModel)(tmpFragmentsAsMols.stream().filter(x -> x.getUniqueSmiles().equals(tmpParentFragmentAsMol.getUniqueSmiles())).findFirst().get());
-                            tmp.setAbsoluteFrequency(tmp.getAbsoluteFrequency() + tmpParentFragment.getAbsoluteFrequency());
-                            tmp.setMoleculeFrequency(tmp.getMoleculeFrequency() + tmpParentFragment.getMoleculeFrequency());
-                        }
-                        // else just add
-                        else {
-                            tmpFragmentsAsMols.add(tmpParentFragmentAsMol);
-                            ((FragmentDataModel)tmpParentFragmentAsMol).setParentMolecule(tmpMolecule);
-                        }
-                        tmpNewFragmentsOfMolecule.add(tmpParentFragment);
-                        tmpNewFragmentFrequenciesOfMolecule.put(tmpParentFragment.getUniqueSmiles(), tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
-                        continue;
-                    }
-                    for(FragmentDataModel tmpChildFragment : tmpChildFragments){
-                        if(tmpFragmentsAsMols.stream().anyMatch(x -> x.getUniqueSmiles().equals(tmpChildFragment.getUniqueSmiles()))){
-                            FragmentDataModel tmp = (FragmentDataModel)(tmpFragmentsAsMols.stream().filter(x -> x.getUniqueSmiles().equals(tmpChildFragment.getUniqueSmiles())).findFirst().get());
-                            tmp.setAbsoluteFrequency(tmp.getAbsoluteFrequency() + tmpChildFragment.getAbsoluteFrequency());
-                            tmp.setMoleculeFrequency(tmp.getMoleculeFrequency() + tmpChildFragment.getMoleculeFrequency());
-                        }
-                        // else just add
-                        else {
-                            tmpFragmentsAsMols.add(tmpChildFragment);
-                            tmpChildFragment.setParentMolecule(tmpMolecule);
-                        }
-                        tmpNewFragmentsOfMolecule.add(tmpChildFragment);
-                        tmpNewFragmentFrequenciesOfMolecule.put(
-                                tmpChildFragment.getUniqueSmiles(),
-                                tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()) *
-                                        tmpParentFragmentAsMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles())
-                                );
-                    }
-                }
-
-                // set new fragments and frequencies to molecule
+                // get fragments of molecules in a new list
+                List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpMolecule.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName));
+                //clear fragments in molecule, child fragments will be added later
                 tmpMolecule.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).clear();
-                tmpMolecule.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).addAll(tmpNewFragmentsOfMolecule);
-                tmpMolecule.getFragmentFrequencies().replace(tmpPipelineFragmentationName, tmpNewFragmentFrequenciesOfMolecule);
-            }
-
-
-
-            if(i == this.fragmenters.length-1){
-//                this.fragments = tmpNewFragments;
-                for(MoleculeDataModel tmpFragAsMol : tmpFragmentsAsMols){
-                    this.fragments.put(tmpFragAsMol.getUniqueSmiles(), (FragmentDataModel) tmpFragAsMol);
+                //iterate through fragments on mol list
+                for(FragmentDataModel tmpParentFragment : tmpFragmentsOfMolList) {
+                    //check if parent fragment has undergone, but not after first fragmentation
+                    if(i > 0 && !tmpParentFragment.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)) {
+                        continue;
+                    }
+                    //get child fragments of parent fragment
+                    List<FragmentDataModel> tmpChildFragmentsList = tmpParentFragment.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName);
+                    //if parent fragment has no children, parent fragment is child fragment
+                    if(tmpChildFragmentsList == null || tmpChildFragmentsList.size() < 1) {
+                        //if settingsContainer.isKeepLastFragmentSetting == true the last fragment will be set as new fragment if no new fragment is found
+                        if(this.settingsContainer.isKeepLastFragmentSetting() || this.pipelineFragmenter.length == 1 || i == 0){
+//                            if(!tmpNewFragmentsOfMol.contains(tmpParentFragment)){
+                            if(tmpNewFragmentsOfMol.stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpParentFragment.getUniqueSmiles()))) {
+                                tmpNewFragmentsOfMol.add(tmpFragmentHashtable.get(tmpParentFragment.getUniqueSmiles()));
+                                tmpNewFragmentFrequenciesOfMol.put(tmpParentFragment.getUniqueSmiles(), tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
+                            }
+                        }
+                        //if HashTable for resulting fragments contains fragment, update frequencies = add molecules fragment frequency of fragment to absolute frequency of fragment and increment molecule frequency
+                        if(this.fragments.containsKey(tmpParentFragment.getUniqueSmiles())) {
+                            tmpParentFragment.getParentMolecules().add(tmpMolecule);
+                            this.fragments.get(tmpParentFragment.getUniqueSmiles()).setAbsoluteFrequency(
+                                    this.fragments.get(tmpParentFragment.getUniqueSmiles()).getAbsoluteFrequency() + tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles())
+                            );
+                            this.fragments.get(tmpParentFragment.getUniqueSmiles()).incrementMoleculeFrequency();
+                        }
+                        //if not add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
+                        else {
+                            tmpParentFragment.getParentMolecules().clear();
+                            tmpParentFragment.getParentMolecules().add(tmpMolecule);
+                            this.fragments.put(tmpParentFragment.getUniqueSmiles(), tmpParentFragment);
+                            tmpParentFragment.setAbsoluteFrequency(tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
+                            tmpParentFragment.setMoleculeFrequency(1);
+                        }
+                    }
+                    //else (parent fragment has children) iterate through children fragment list
+                    else {
+                        for(FragmentDataModel tmpChildFragment : tmpChildFragmentsList){
+//                            if(tmpNewFragmentsOfMol.contains(tmpChildFragment)){
+                            if(tmpNewFragmentsOfMol.stream().anyMatch(x -> x.getUniqueSmiles().equals(tmpChildFragment.getUniqueSmiles()))) {
+                                tmpChildFragment.getParentMolecules().add(tmpMolecule);
+                                tmpNewFragmentFrequenciesOfMol.replace(
+                                        tmpChildFragment.getUniqueSmiles(),
+                                        tmpNewFragmentFrequenciesOfMol.get(tmpChildFragment.getUniqueSmiles()) + tmpParentFragment.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles())
+                                );
+                            } else {
+                                tmpChildFragment.getParentMolecules().clear();
+                                tmpChildFragment.getParentMolecules().add(tmpMolecule);
+                                tmpNewFragmentsOfMol.add(tmpFragmentHashtable.get(tmpChildFragment.getUniqueSmiles()));
+                                tmpNewFragmentFrequenciesOfMol.put(tmpChildFragment.getUniqueSmiles(), tmpParentFragment.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles()));
+                            }
+                            //if HashTable for resulting fragments contains fragment, update frequencies = add molecules fragment frequency of fragment to absolute frequency of fragment and increment molecule frequency
+                            if(this.fragments.containsKey(tmpChildFragment.getUniqueSmiles())) {
+                                this.fragments.get(tmpChildFragment.getUniqueSmiles()).setAbsoluteFrequency(
+                                        this.fragments.get(tmpChildFragment.getUniqueSmiles()).getAbsoluteFrequency() +
+                                                (tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()) *
+                                                tmpParentFragment.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles())
+                                                )
+                                );
+                                this.fragments.get(tmpChildFragment.getUniqueSmiles()).incrementMoleculeFrequency();
+                            }
+                            //if not add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
+                            else {
+                                this.fragments.put(tmpChildFragment.getUniqueSmiles(), tmpChildFragment);
+                                tmpChildFragment.setAbsoluteFrequency(
+                                        tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()) *
+                                                tmpParentFragment.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles())
+                                );
+                                tmpChildFragment.setMoleculeFrequency(1);
+                            }
+                        }
+                    }
                 }
+                tmpMolecule.getAllFragments().replace(tmpPipelineFragmentationName, tmpNewFragmentsOfMol);
+                tmpMolecule.getFragmentFrequencies().replace(tmpPipelineFragmentationName, tmpNewFragmentFrequenciesOfMol);
 
             }
+
+            tmpMolsToFragment = new ArrayList<>(this.fragments.values());
+
+        }
+
+        int tmpFragmentAmount = 0;
+        Set<String> tmpKeySet = this.fragments.keySet();
+        for(String tmpKey : tmpKeySet){
+            tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
+        }
+        for(String tmpKey : tmpKeySet){
+            this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+            this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
      }
     //
