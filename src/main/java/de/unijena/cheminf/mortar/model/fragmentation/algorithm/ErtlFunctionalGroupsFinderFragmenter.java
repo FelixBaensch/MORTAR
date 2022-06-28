@@ -31,6 +31,7 @@ import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
@@ -241,6 +242,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public static final CycleFinderOption CYCLE_FINDER_OPTION_DEFAULT = CycleFinderOption.CDK_AROMATIC_SET;
 
     /**
+     * Default option for whether to filter single-atom molecules from inputs.
+     */
+    public static final boolean FILTER_SINGLE_ATOMS_OPTION_DEFAULT = true;
+
+    /**
      * Cycle finder algorithm that is used should the set option cause an IntractableException.
      */
     public static final CycleFinder AUXILIARY_CYCLE_FINDER = Cycles.cdkAromaticSet();
@@ -305,6 +311,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * A property that has a constant name from the CycleFinderOption enum as value.
      */
     private final SimpleEnumConstantNameProperty cycleFinderSetting;
+
+    /**
+     * A property that has a boolean as value saying whether single-atom molecules should be filtered from inputs.
+     */
+    private final SimpleBooleanProperty filterSingleAtomsSetting;
 
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
@@ -436,12 +447,17 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderFragmenter.this.electronDonationInstance,
                 ErtlFunctionalGroupsFinderFragmenter.this.cycleFinderInstance
         );
+        this.filterSingleAtomsSetting = new SimpleBooleanProperty(this, "Filter single atoms setting",
+                ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.filterSingleAtomsSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.filterSingleAtomsSetting.tooltip"));
         this.settings = new ArrayList<Property>(5);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.electronDonationModelSetting);
         this.settings.add(this.cycleFinderSetting);
         this.settings.add(this.environmentModeSetting);
         this.settings.add(this.returnedFragmentsSetting);
+        this.settings.add(this.filterSingleAtomsSetting);
     }
     //</editor-fold>
     //
@@ -555,6 +571,24 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public CycleFinderOption getCycleFinderSettingConstant() {
         return CycleFinderOption.valueOf(this.cycleFinderSetting.get());
     }
+
+    /**
+     * Returns the boolean value of the filter single atoms setting.
+     *
+     * @return true if single atoms are currently filtered from input molecules
+     */
+    public boolean getFilterSingleAtomsSetting() {
+        return this.filterSingleAtomsSetting.get();
+    }
+
+    /**
+     * Returns the property object of the filter single atoms setting that can be used to configure this setting.
+     *
+     * @return property object of the filter single atoms setting
+     */
+    public SimpleBooleanProperty filterSingleAtomsSettingProperty() {
+        return this.filterSingleAtomsSetting;
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public properties set">
@@ -667,6 +701,15 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         Objects.requireNonNull(anOption, "Given option is null.");
         this.cycleFinderSetting.set(anOption.name());
     }
+
+    /**
+     * Sets the filter single atoms setting. If true, molecules consisting of only one atom are filtered from the input
+     * molecules and no functional groups determined for them.
+     *
+     */
+    public void setFilterSingleAtomsSetting(boolean aBoolean) {
+        this.filterSingleAtomsSetting.set(aBoolean);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
@@ -724,6 +767,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         tmpCopy.setElectronDonationModelSetting(this.electronDonationModelSetting.get());
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
         tmpCopy.setReturnedFragmentsSetting(this.returnedFragmentsSetting.get());
+        tmpCopy.setFilterSingleAtomsSetting(this.filterSingleAtomsSetting.get());
         return tmpCopy;
     }
 
@@ -739,6 +783,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.setAromaticityInstance(this.electronDonationInstance, this.cycleFinderInstance);
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
         this.returnedFragmentsSetting.set(ErtlFunctionalGroupsFinderFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name());
+        this.filterSingleAtomsSetting.set(ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT);
     }
 
     @Override
@@ -855,7 +900,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             return true;
         }
         //throws NullpointerException if molecule is null
-        return ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(aMolecule);
+        return ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(aMolecule, this.filterSingleAtomsSetting.get());
     }
 
     @Override
@@ -874,7 +919,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             return false;
         }
         //throws NullpointerException if molecule is null
-        return ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule);
+        return ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule, this.filterSingleAtomsSetting.get());
     }
 
     @Override
