@@ -301,7 +301,7 @@ public class FragmentationService {
         }
         //</editor-fold>
         this.fragments = new Hashtable<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
-        Hashtable<String, FragmentDataModel> tmpFragmentHashtable = null;
+        Hashtable<String, FragmentDataModel> tmpFragmentHashtable;
         if(this.pipeliningFragmentationName == null || this.pipeliningFragmentationName.isEmpty()){
             this.pipeliningFragmentationName = "Pipeline";
         }
@@ -334,30 +334,29 @@ public class FragmentationService {
                     //get child fragments of parent fragment
                     List<FragmentDataModel> tmpChildFragmentsList = tmpParentFragment.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName);
                     //if parent fragment has no children, parent fragment is child fragment
-                    if(tmpChildFragmentsList == null || tmpChildFragmentsList.size() < 1) {
-                        //if settingsContainer.isKeepLastFragmentSetting == true the last fragment will be set as new fragment if no new fragment is found
-                        if(this.settingsContainer.isKeepLastFragmentSetting() || this.pipelineFragmenter.length == 1 || i == 0){
-//                            if(!tmpNewFragmentsOfMol.contains(tmpParentFragment)){
-                            if(tmpNewFragmentsOfMol.stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpParentFragment.getUniqueSmiles()))) {
+                    if(tmpChildFragmentsList == null || tmpChildFragmentsList.size() <  1) {
+                        //if settingsContainer.isKeepLastFragmentSetting == true or parent fragment is part of the results of fragmentation the parent fragment will be set as new fragment if no new fragment is found
+                        if(this.settingsContainer.isKeepLastFragmentSetting() || (tmpFragmentHashtable != null && tmpFragmentHashtable.containsKey(tmpParentFragment.getUniqueSmiles()))) {
+                            if (tmpNewFragmentsOfMol.stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpParentFragment.getUniqueSmiles())) && tmpFragmentHashtable != null) {
                                 tmpNewFragmentsOfMol.add(tmpFragmentHashtable.get(tmpParentFragment.getUniqueSmiles()));
                                 tmpNewFragmentFrequenciesOfMol.put(tmpParentFragment.getUniqueSmiles(), tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
                             }
-                        }
-                        //if HashTable for resulting fragments contains fragment, update frequencies = add molecules fragment frequency of fragment to absolute frequency of fragment and increment molecule frequency
-                        if(this.fragments.containsKey(tmpParentFragment.getUniqueSmiles())) {
-                            tmpParentFragment.getParentMolecules().add(tmpMolecule);
-                            this.fragments.get(tmpParentFragment.getUniqueSmiles()).setAbsoluteFrequency(
-                                    this.fragments.get(tmpParentFragment.getUniqueSmiles()).getAbsoluteFrequency() + tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles())
-                            );
-                            this.fragments.get(tmpParentFragment.getUniqueSmiles()).incrementMoleculeFrequency();
-                        }
-                        //if not add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
-                        else {
-                            tmpParentFragment.getParentMolecules().clear();
-                            tmpParentFragment.getParentMolecules().add(tmpMolecule);
-                            this.fragments.put(tmpParentFragment.getUniqueSmiles(), tmpParentFragment);
-                            tmpParentFragment.setAbsoluteFrequency(tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
-                            tmpParentFragment.setMoleculeFrequency(1);
+                            //if HashTable for resulting fragments contains fragment, update frequencies = add molecules fragment frequency of fragment to absolute frequency of fragment and increment molecule frequency
+                            if (this.fragments.containsKey(tmpParentFragment.getUniqueSmiles())) {
+                                tmpParentFragment.getParentMolecules().add(tmpMolecule);
+                                this.fragments.get(tmpParentFragment.getUniqueSmiles()).setAbsoluteFrequency(
+                                        this.fragments.get(tmpParentFragment.getUniqueSmiles()).getAbsoluteFrequency() + tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles())
+                                );
+                                this.fragments.get(tmpParentFragment.getUniqueSmiles()).incrementMoleculeFrequency();
+                            }
+                            //else add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
+                            else {
+                                tmpParentFragment.getParentMolecules().clear();
+                                tmpParentFragment.getParentMolecules().add(tmpMolecule);
+                                this.fragments.put(tmpParentFragment.getUniqueSmiles(), tmpParentFragment);
+                                tmpParentFragment.setAbsoluteFrequency(tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
+                                tmpParentFragment.setMoleculeFrequency(1);
+                            }
                         }
                     }
                     //else (parent fragment has children) iterate through children fragment list
@@ -369,7 +368,6 @@ public class FragmentationService {
                             } else {
                                 tmpChildFragment = tmpChild;
                             }
-//                            if(tmpNewFragmentsOfMol.contains(tmpChildFragment)){
                             if(tmpNewFragmentsOfMol.stream().anyMatch(x -> x.getUniqueSmiles().equals(tmpChildFragment.getUniqueSmiles()))) {
                                 tmpChildFragment.getParentMolecules().add(tmpMolecule);
                                 tmpNewFragmentFrequenciesOfMol.replace(
@@ -397,7 +395,7 @@ public class FragmentationService {
                                 );
                                 this.fragments.get(tmpChildFragment.getUniqueSmiles()).incrementMoleculeFrequency();
                             }
-                            //if not add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
+                            //else add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
                             else {
                                 this.fragments.put(tmpChildFragment.getUniqueSmiles(), tmpChildFragment);
                                 tmpChildFragment.setAbsoluteFrequency(
