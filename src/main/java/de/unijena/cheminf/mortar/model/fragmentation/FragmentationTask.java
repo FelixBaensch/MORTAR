@@ -161,12 +161,10 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
                             LOCK.unlock();
                         }
-//                        if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
-                        if(tmpFragmentDataModel.getParentMolecules().stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpMolecule.getUniqueSmiles()))) {
+                        if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
                             tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                         }
-//                        if(tmpFragmentsMapOfMolecule.get(this.fragmentationName).contains(tmpFragmentDataModel)){
-                        if(tmpFragmentsMapOfMolecule.get(this.fragmentationName).stream().anyMatch(x -> x.getUniqueSmiles().equals(tmpFragmentDataModel.getUniqueSmiles()))) {
+                        if(tmpFragmentsMapOfMolecule.get(this.fragmentationName).contains(tmpFragmentDataModel)){
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
                         }
                         else{
