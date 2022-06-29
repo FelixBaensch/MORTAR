@@ -1011,18 +1011,7 @@ public class MainViewController {
      * @return Tab
      */
     private Tab createItemsTab(String aFragmentationName){
-        int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
-        for (int i = 0; i < this.moleculeDataModelList.size(); i++) {
-            if(!this.moleculeDataModelList.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
-                continue;
-            }
-            HashMap<String, Integer> tmpCurrentFragmentsMap = this.moleculeDataModelList.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
-            if (tmpCurrentFragmentsMap == null) { //redundant, see if clause above
-                continue;
-            }
-            int tmpNrOfFragmentsOfCurrentMolecule = tmpCurrentFragmentsMap.size();
-            tmpAmount = Math.max(tmpAmount, tmpNrOfFragmentsOfCurrentMolecule);
-        }
+       int tmpAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.moleculeDataModelList, aFragmentationName);
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
         tmpItemizationDataTableView.setItemsList(
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
@@ -1034,7 +1023,7 @@ public class MainViewController {
             tmpPageCount++;
         }
         Pagination tmpPaginationItems = new Pagination(tmpPageCount, 0);
-        tmpPaginationItems.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, this.settingsContainer));
+        tmpPaginationItems.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
         VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
         HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
         tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems, 0, 0, 2, 2);

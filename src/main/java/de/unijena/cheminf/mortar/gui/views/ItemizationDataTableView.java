@@ -121,6 +121,59 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.fragmentStructureColumn.setEditable(false);
         this.fragmentStructureColumn.setSortable(false);
         this.fragmentStructureColumn.setStyle("-fx-alignment: CENTER");
+        //
+        this.getColumns().addAll(this.nameColumn, this.moleculeStructureColumn, this.fragmentStructureColumn);
+        //context menu
+        this.contextMenu = new ContextMenu();
+        this.setContextMenu(this.contextMenu);
+        //-copyMenuItem
+        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
+        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        this.contextMenu.getItems().add(this.copyMenuItem);
+    }
+    //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
+    /**
+     * Creates and returns an itemization tableview page
+     *
+     * @param pageIndex int
+     * @param aSettingsContainer SettingsContainer
+     * @return Node BorderPane which holds TableView as page for Pagination
+     */
+    public Node createItemizationTableViewPage(int pageIndex, String aFragmentationName, SettingsContainer aSettingsContainer){
+        int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
+        int fromIndex = pageIndex * tmpRowsPerPage;
+        int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
+        int tmpItemAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.itemsList.subList(fromIndex, toIndex), aFragmentationName);
+        this.resetFragmentStructureColumns(tmpItemAmount);
+        this.setItems(FXCollections.observableArrayList(this.itemsList.subList(fromIndex, toIndex)));
+        this.scrollTo(0);
+        return new BorderPane(this);
+    }
+    //
+    /**
+     * Adds a change listener to the height property of table view which sets the height for structure images to
+     * each MoleculeDataModel object of the items list and refreshes the table view
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     *
+     * @param aSettingsContainer SettingsContainer
+     */
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
+        this.heightProperty().addListener((observable, oldValue, newValue) -> {
+            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(),aSettingsContainer);
+            this.refresh();
+        });
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
+    /**
+     * Deletes the old columns of the fragment structures and adds new ones for the given number.
+     *
+     * @param anItemAmount int value for the number of columns to add
+     */
+    private void resetFragmentStructureColumns(int anItemAmount) {
+        this.fragmentStructureColumn.getColumns().clear();
         for(int i = 0; i < anItemAmount; i++){
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
@@ -144,46 +197,6 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);
         }
-        //
-        this.getColumns().addAll(this.nameColumn, this.moleculeStructureColumn, this.fragmentStructureColumn);
-        //context menu
-        this.contextMenu = new ContextMenu();
-        this.setContextMenu(this.contextMenu);
-        //-copyMenuItem
-        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-        this.contextMenu.getItems().add(this.copyMenuItem);
-    }
-    //
-    //<editor-fold desc="public methods" defaultstate="collapsed">
-    /**
-     * Creates and returns an itemization tableview page
-     *
-     * @param pageIndex int
-     * @param aSettingsContainer SettingsContainer
-     * @return Node BorderPane which holds TableView as page for Pagination
-     */
-    public Node createItemizationTableViewPage(int pageIndex, SettingsContainer aSettingsContainer){
-        int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
-        int fromIndex = pageIndex * tmpRowsPerPage;
-        int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
-        this.setItems(FXCollections.observableArrayList(this.itemsList.subList(fromIndex, toIndex)));
-        this.scrollTo(0);
-        return new BorderPane(this);
-    }
-    //
-    /**
-     * Adds a change listener to the height property of table view which sets the height for structure images to
-     * each MoleculeDataModel object of the items list and refreshes the table view
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
-     *
-     * @param aSettingsContainer SettingsContainer
-     */
-    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
-        this.heightProperty().addListener((observable, oldValue, newValue) -> {
-            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(),aSettingsContainer);
-            this.refresh();
-        });
     }
     //</editor-fold>
     //

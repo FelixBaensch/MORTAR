@@ -49,6 +49,8 @@ import javafx.util.StringConverter;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
@@ -371,6 +373,29 @@ public class GuiUtil {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
             }
         }
+    }
+    //
+    /**
+     * Returns the largest number of fragments of one molecule found in the given list for the given fragmentation name
+     *
+     * @param aListOfMolecules List of MoleculeDataModels
+     * @param aFragmentationName String for the fragmentation name
+     * @return largest number of fragments of one molecule
+     */
+    public static int getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(List<MoleculeDataModel> aListOfMolecules, String aFragmentationName){
+        int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
+        for (int i = 0; i < aListOfMolecules.size(); i++) {
+            if(!aListOfMolecules.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+                continue;
+            }
+            HashMap<String, Integer> tmpCurrentFragmentsMap = aListOfMolecules.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
+            if (tmpCurrentFragmentsMap == null) { //redundant, see if clause above
+                continue;
+            }
+            int tmpNrOfFragmentsOfCurrentMolecule = tmpCurrentFragmentsMap.size();
+            tmpAmount = Math.max(tmpAmount, tmpNrOfFragmentsOfCurrentMolecule);
+        }
+        return tmpAmount;
     }
     //</editor-fold>
 }

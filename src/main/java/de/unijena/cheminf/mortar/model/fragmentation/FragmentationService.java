@@ -224,7 +224,6 @@ public class FragmentationService {
         }
         if (Objects.isNull(this.selectedFragmenter)) {
             this.selectedFragmenter = this.ertlFGF;
-
         }
         this.setSelectedFragmenterNameProperty(this.selectedFragmenter.getFragmentationAlgorithmName());
         try {
@@ -259,30 +258,8 @@ public class FragmentationService {
         this.existingFragmentations.add(tmpFragmentationName);
         this.currentFragmentationName = tmpFragmentationName;
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
+        LOGGER.info("Number of different fragments extracted: " +  this.fragments.size());
     }
-    //
-    /**
-     * Starts fragmentation pipeline for given List of molecules for the single fragmenter set in pipeline
-     *
-     * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
-     * @param aNumberOfTasks int value to define onto how many parallel task the molecules should be distributed for fragmentation
-     * @throws Exception if anything goes wrong
-     */
-//    public void startPipelineFragmentationWithSingleFragmenter(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
-//        //<editor-fold desc="checks" defaultstate="collapsed">
-//        Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
-//        if(aNumberOfTasks == 0){
-//            aNumberOfTasks = 1;
-//        }
-//        if(this.pipelineFragmenter.length > 1) {
-//            return;
-//        }
-//        //</editor-fold>
-//        String tmpFragmentationName = this.createAndCheckFragmentationName(this.pipeliningFragmentationName);
-//        this.existingFragmentations.add(tmpFragmentationName);
-//        this.currentFragmentationName = tmpFragmentationName;
-//        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpFragmentationName);
-//    }
     //
     /**
      * Starts fragmentation pipeline for given List of molecules.
@@ -421,6 +398,7 @@ public class FragmentationService {
             this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
             this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
+        LOGGER.info("Number of different fragments extracted: " +  this.fragments.size());
      }
     //
     /**
