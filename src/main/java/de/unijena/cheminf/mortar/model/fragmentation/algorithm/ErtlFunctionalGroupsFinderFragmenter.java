@@ -451,7 +451,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT);
         this.settingNameTooltipTextMap.put(this.filterSingleAtomsSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.filterSingleAtomsSetting.tooltip"));
-        this.settings = new ArrayList<Property>(5);
+        this.settings = new ArrayList<Property>(6);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.electronDonationModelSetting);
         this.settings.add(this.cycleFinderSetting);
