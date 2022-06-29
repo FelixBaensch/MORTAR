@@ -136,13 +136,14 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     /**
      * Creates and returns an itemization tableview page
      *
-     * @param pageIndex int
+     * @param aPageIndex int
+     * @param aFragmentationName String for the fragmentation name
      * @param aSettingsContainer SettingsContainer
      * @return Node BorderPane which holds TableView as page for Pagination
      */
-    public Node createItemizationTableViewPage(int pageIndex, String aFragmentationName, SettingsContainer aSettingsContainer){
+    public Node createItemizationTableViewPage(int aPageIndex, String aFragmentationName, SettingsContainer aSettingsContainer){
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
-        int fromIndex = pageIndex * tmpRowsPerPage;
+        int fromIndex = aPageIndex * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
         int tmpItemAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.itemsList.subList(fromIndex, toIndex), aFragmentationName);
         this.resetFragmentStructureColumns(tmpItemAmount);

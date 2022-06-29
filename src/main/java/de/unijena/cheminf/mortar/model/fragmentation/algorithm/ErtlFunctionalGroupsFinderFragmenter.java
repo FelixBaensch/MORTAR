@@ -706,6 +706,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * Sets the filter single atoms setting. If true, molecules consisting of only one atom are filtered from the input
      * molecules and no functional groups determined for them.
      *
+     * @param aBoolean true if single-atom molecules should not be fragmented; false otherwise
      */
     public void setFilterSingleAtomsSetting(boolean aBoolean) {
         this.filterSingleAtomsSetting.set(aBoolean);
