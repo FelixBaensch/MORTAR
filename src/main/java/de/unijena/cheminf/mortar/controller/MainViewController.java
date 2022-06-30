@@ -465,6 +465,7 @@ public class MainViewController {
                         + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
                 this.updateStatusBar(this.importerThread, Message.get("Status.loaded"));
                 this.isImportRunningProperty.setValue(false);
+                MainViewController.LOGGER.log(Level.INFO, "Keep atom container: " + this.moleculeDataModelList.get(0).isKeepAtomContainer());
                 this.openMoleculesTab();
             });
         });
@@ -897,6 +898,7 @@ public class MainViewController {
                         this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
+                        LOGGER.info("Keep atom container: " + this.mapOfFragmentDataModelLists.get(this.fragmentationService.getCurrentFragmentationName()).get(0).isKeepAtomContainer());
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }

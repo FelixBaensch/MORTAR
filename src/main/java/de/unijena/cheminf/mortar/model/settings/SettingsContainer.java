@@ -284,8 +284,8 @@ public class SettingsContainer {
      */
     public boolean getKeepAtomContainerInDataModelSetting() {
         //DEPRECATED
-        //return this.keepAtomContainerInDataModelSetting.get();
-        return false;
+        return this.keepAtomContainerInDataModelSetting.get();
+        //return false;
     }
 
     /**
@@ -416,9 +416,9 @@ public class SettingsContainer {
      * @param aBoolean whether to keep the atom container in the molecule/fragment data model
      */
     //DEPRECATED
-    /*public void setKeepAtomContainerInDataModelSetting(boolean aBoolean) {
+    public void setKeepAtomContainerInDataModelSetting(boolean aBoolean) {
         this.keepAtomContainerInDataModelSetting.set(aBoolean);
-    }*/
+    }
 
     /**
      * Sets the setting for whether to always use MDL V3000 format for file export. Per default, this is set to false and
@@ -465,7 +465,7 @@ public class SettingsContainer {
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         //DEPRECATED
-        //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
+        this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
         this.keepLastFragmentSetting.set(SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
@@ -664,7 +664,7 @@ public class SettingsContainer {
                 "Keep AtomContainers in the DataModels setting", false) {
             @Override
             public void set(boolean newValue) {
-                //do nothing, the value should remain false!
+                super.set(newValue);
             }
         };
         this.alwaysMDLV3000FormatAtExportSetting = new SimpleBooleanProperty(this,
@@ -710,7 +710,7 @@ public class SettingsContainer {
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
         //DEPRECATED
-        //this.settings.add(this.keepAtomContainerInDataModelSetting);
+        this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
         this.settings.add(this.csvExportSeparatorSetting);
         this.settings.add(this.keepLastFragmentSetting);

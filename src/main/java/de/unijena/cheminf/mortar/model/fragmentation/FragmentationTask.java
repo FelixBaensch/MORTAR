@@ -154,8 +154,11 @@ public class FragmentationTask implements Callable<Integer> {
                             LOCK.unlock();
                         }
                         else{
-                            tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
-//                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
+                            if (tmpMolecule.isKeepAtomContainer()) {
+                                tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
+                            } else {
+                                tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
+                            }
                             this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
                             LOCK.lock();
                             tmpFragmentDataModel.incrementAbsoluteFrequency();
