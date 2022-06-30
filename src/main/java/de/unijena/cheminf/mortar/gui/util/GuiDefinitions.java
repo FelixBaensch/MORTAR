@@ -101,6 +101,14 @@ public final class GuiDefinitions {
      */
     public static final double GUI_TOOLTIP_MAX_WIDTH = 500.0;
     /**
+     * Width of grid lines of the structure grid pane in overview view
+     */
+    public static final double OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH = 8.0;
+    /**
+     * Ratio of the left and right border width to the grid lines width of the structure grid pane in overview view
+     */
+    public static final double OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO = 2.0;
+    /**
      * KeyCodeCombination for Control + C
      */
     public static final KeyCodeCombination KEY_CODE_COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);

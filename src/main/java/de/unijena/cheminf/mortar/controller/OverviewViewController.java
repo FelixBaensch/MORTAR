@@ -26,21 +26,27 @@ import de.unijena.cheminf.mortar.gui.views.OverviewView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller class for OverviewView
@@ -52,21 +58,46 @@ import java.util.List;
  */
 public class OverviewViewController {
 
+    //<editor-fold desc="private static final class constants" defaultstate="collapsed">
+    /**
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(OverviewViewController.class.getName());
+    //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * Main stage object of the application
+     */
     private final Stage mainStage;
-
+    /**
+     * Stage for the OverviewView
+     */
     private Stage overviewViewStage;
-
+    /**
+     * OvervieView
+     */
     private OverviewView overviewView;
-
+    /**
+     * Title of the overviewViewStage
+     */
     private String overviewViewTitle;
-
+    /**
+     * List of MoleculeDataModels for visualization in OverviewView
+     */
     private List<MoleculeDataModel> moleculeDataModelList;
-
+    /**
+     * Number of rows for the structureGridPane of the OverviewView
+     */
     private int rowsPerPage;
-
+    /**
+     * Number of columns for the structureGridPane of the OverviewView
+     */
     private int columnsPerPage;
-
+    /**
+     * Boolean value that defines, whether the structure images should be generated and shown when a new OverviewView
+     * page gets created
+     */
     private boolean showImages;
     //</editor-fold>
 
@@ -77,10 +108,11 @@ public class OverviewViewController {
     public OverviewViewController(Stage aStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList) {
         //TODO
         this.mainStage = aStage;
-        this.overviewViewTitle = aTabName + " - Overview";
+        this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
         this.moleculeDataModelList = aMoleculeDataModelList;
         this.rowsPerPage = 5;
         this.columnsPerPage = 4;
+        //set showImages to false to create an empty structureGridPane at first
         this.showImages = false;
         for (MoleculeDataModel tmpMolecule : aMoleculeDataModelList) {
             System.out.println(tmpMolecule.getUniqueSmiles());
@@ -111,24 +143,38 @@ public class OverviewViewController {
         if (this.moleculeDataModelList.size() % (this.rowsPerPage * this.columnsPerPage) > 0) {
             tmpPageCount++;
         }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);     //TODO: make tmpPagination class var ?!
         tmpPagination.setPageFactory((pageIndex) -> this.createOverviewViewPage(pageIndex, this.rowsPerPage, this.columnsPerPage));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         this.overviewView.addPaginationToGridPane(tmpPagination);
         //this.overviewView.getLeftButtonBar().setStyle("-fx-background-color: RED");
         //this.overviewView.getRightButtonBar().setStyle("-fx-background-color: RED");
-        //this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(), 0, 1, 1, 1);
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftButtonBar(), 0, 1, 1, 1);
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getRightButtonBar(), 2, 1, 1, 1);
+        //this.overviewView.getLeftHBox().setStyle("-fx-background-color: RED");
+        //this.overviewView.getRightHBox().setStyle("-fx-background-color: RED");
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(), 0, 1, 1, 1);
+        //this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftButtonBar(), 0, 1, 1, 1);
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getRightHBox(), 2, 1, 1, 1);
+        //this.overviewView.addNodeToMainGridPane(this.overviewView.getRightButtonBar(), 2, 1, 1, 1);
 
+        this.addListener(tmpPagination);
+
+        this.overviewViewStage.showAndWait();
+    }
+
+    /**
+     * Adds listeners and event handlers to control elements etc.
+     *
+     * @param aPagination
+     */
+    private void addListener(Pagination aPagination) {
         this.overviewView.getApplyButton().setOnAction(actionEvent -> {
             try {
                 this.applyChangeOfGridConfiguration();
-            } catch (IllegalArgumentException anIllegalArgumentException) {     //TODO: Add Logger and create own header and title
-                //SettingsContainer.this.LOGGER.log(Level.WARNING, anIllegalArgumentException.toString(), anIllegalArgumentException);
-                GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
-                        Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
+            } catch (IllegalArgumentException anIllegalArgumentException) {
+                OverviewViewController.LOGGER.log(Level.WARNING, anIllegalArgumentException.toString(), anIllegalArgumentException);
+                GuiUtil.guiExceptionAlert(Message.get("OverviewView.Error.invalidTextFieldInput.title"),
+                        Message.get("OverviewView.Error.invalidTextFieldInput.header"),
                         anIllegalArgumentException.toString(),
                         anIllegalArgumentException);
             }
@@ -138,6 +184,13 @@ public class OverviewViewController {
             this.overviewViewStage.close();
         });
 
+        ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
+            //System.out.println("Height: " + this.overviewViewStage.getHeight() + " Width: " + this.overviewViewStage.getWidth());
+        };
+
+        this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
+        this.overviewViewStage.widthProperty().addListener(tmpStageSizeListener);
+
         /*this.overviewViewStage.heightProperty().addListener((observableValue, number, t1) -> {
             this.createOverviewViewPage(tmpPagination.getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
             System.out.println("This line is being executed too");
@@ -145,33 +198,9 @@ public class OverviewViewController {
 
         this.overviewViewStage.setOnShown(windowEvent -> {
             //tmpPagination.setCurrentPageIndex(tmpPagination.getCurrentPageIndex());
-            this.createOverviewViewPage(tmpPagination.getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
+            this.createOverviewViewPage(aPagination.getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
             System.out.println("This line is being executed");
         });
-
-        /*
-        this.applyButton = new Button(Message.get("MainTabPane.moleculesTab.fragmentButton.text"));
-        ButtonBar tmpButtonBar = new ButtonBar();
-        tmpButtonBar.setPadding(new Insets(0, 0, 0, 0));
-        this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpButtonBar.getButtons().add(this.applyButton);
-        tmpButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        Label tmpLabel = new Label();
-        //tmpLabel.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
-        Tooltip tmpTooltip = new Tooltip();
-        //tmpTooltip.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
-        tmpLabel.setTooltip(tmpTooltip);
-        HBox.setHgrow(tmpLabel, Priority.ALWAYS);
-        tmpButtonBar.getButtons().add(tmpLabel);
-
-        this.overviewView.addNodeToGridPane(tmpButtonBar, 0, 1, 1, 1);
-         */
-
-        //this.overviewViewStage.wait();
-        this.overviewViewStage.showAndWait();
     }
 
     /**
@@ -190,8 +219,13 @@ public class OverviewViewController {
             int tmpFromIndex = aPageIndex * aRowsPerPage * aColumnsPerPage;
             int tmpToIndex = Math.min(tmpFromIndex + (aRowsPerPage * aColumnsPerPage), this.moleculeDataModelList.size());
             int tmpCurrentIndex = tmpFromIndex;
-            double tmpImageHeight = (this.overviewView.getStructureGridPane().getHeight() - 10) / aRowsPerPage - 10;
-            double tmpImageWidth = (this.overviewView.getStructureGridPane().getWidth() - 20) / aColumnsPerPage - 10;
+            double tmpImageHeight = ((this.overviewView.getStructureGridPane().getHeight() -
+                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH) / aRowsPerPage) -
+                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH;
+            double tmpImageWidth = ((this.overviewView.getStructureGridPane().getWidth() -
+                    (2 * (GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) *
+                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
+                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH;
             xloop:
             for (int i = 0; i < aRowsPerPage; i++) {
                 for (int j = 0; j < aColumnsPerPage; j++) {
@@ -199,17 +233,33 @@ public class OverviewViewController {
                         break xloop;
                     }
                     StackPane tmpStackPane = new StackPane();
+                    Node tmpContentNode;
                     try {
-                        ImageView tmpImageView = new ImageView(
+                        tmpContentNode = new ImageView(
                                 DepictionUtil.depictImageWithZoom(this.moleculeDataModelList.get(tmpCurrentIndex)
                                         .getAtomContainer(), 1.0, tmpImageWidth, tmpImageHeight)
                         );
-                        //tmpImageView.setPreserveRatio(true);
-                        tmpStackPane.getChildren().add(tmpImageView);
                     } catch (CDKException anException) {
-                        Label tmpLabel = new Label("[Error]");
-                        tmpStackPane.getChildren().add(tmpLabel);
+                        OverviewViewController.LOGGER.log(Level.INFO, anException.toString(), anException);
+                        //Error label instead of image
+                        Label tmpErrorLabel = new Label(Message.get("OverviewView.ErrorLabel.text"));
+                        tmpErrorLabel.setMinWidth(tmpImageWidth);
+                        tmpErrorLabel.setMaxWidth(tmpImageWidth);
+                        tmpErrorLabel.setMinHeight(tmpImageHeight);
+                        tmpErrorLabel.setMaxHeight(tmpImageHeight);
+                        tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
+                        Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
+                        tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
+                        tmpContentNode = tmpErrorLabel;
                     }
+                    //TODO: add listeners
+                    //tmpContentNode.setEffect(new DropShadow(2, Color.BLACK));
+                    //tmpContentNode.setStyle("-fx-effect: innershadow(three-pass-box, rgba(100, 100, 100, 1), " + GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2 + ", 0, 0, 0)");
+                    tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                            GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                            GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 4 + ", " +
+                            GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 4 + ")");
+                    tmpStackPane.getChildren().add(tmpContentNode);
                     this.overviewView.getStructureGridPane().add(tmpStackPane, j, i);
                     tmpCurrentIndex++;
                 }
@@ -228,13 +278,15 @@ public class OverviewViewController {
         if (!(tmpRowsPerPageEntry <= 0)) {
             this.rowsPerPage = tmpRowsPerPageEntry;
         } else {
-            throw new IllegalArgumentException("An illegal rows per page number was given: " + tmpRowsPerPageEntry);
+            throw new IllegalArgumentException(Message.get("OverviewView.Error.RowsPerPageTextField.illegalArgument")
+                    + tmpRowsPerPageEntry);
         }
         int tmpColumnsPerPageEntry = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
         if (!(tmpColumnsPerPageEntry <= 0)) {
             this.columnsPerPage = tmpColumnsPerPageEntry;
         } else {
-            throw new IllegalArgumentException("An illegal columns per page number was given: " + tmpColumnsPerPageEntry);
+            throw new IllegalArgumentException(Message.get("OverviewView.Error.ColumnsPerPageTextField.illegalArgument")
+                    + tmpColumnsPerPageEntry);
         }
         this.overviewView.configureStructureGridPane(this.rowsPerPage, this.columnsPerPage);
         int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPage * this.columnsPerPage);

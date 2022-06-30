@@ -22,12 +22,16 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.InnerShadow;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 
 import java.util.List;
 
@@ -97,12 +101,6 @@ public class OverviewView extends AnchorPane {
     public OverviewView(List<MoleculeDataModel> aMoleculeDataModelList, int aRowsPerPage, int aColumnsPerPage) {
         super();
         this.moleculeDataModelList = aMoleculeDataModelList;
-        //borderPane
-        /*this.borderPane = new BorderPane();
-        OverviewView.setTopAnchor(this.borderPane, 0.0);
-        OverviewView.setRightAnchor(this.borderPane, 0.0);
-        OverviewView.setLeftAnchor(this.borderPane, 0.0);
-        OverviewView.setBottomAnchor(this.borderPane, 0.0);*/
         //gridPane
         this.mainGridPane = new GridPane();
         //this.mainGridPane.setPadding(new Insets(0.0, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
@@ -142,7 +140,15 @@ public class OverviewView extends AnchorPane {
 
         this.structureGridPane = new GridPane();
         this.structureGridPane.setAlignment(Pos.CENTER);
-        this.structureGridPane.setStyle("-fx-background-color: LIGHTGREY; -fx-border-color: LIGHTGREY; -fx-border-width: 5px 10px 5px 10px");    //TODO: set border size / width
+        //upper and lower border: extending the image frame to grid line width
+        //right and left border: extending the image frame to grid line width and adding a spacing
+        //spacing depends on grid line width
+        this.structureGridPane.setStyle("-fx-background-color: LIGHTGREY; -fx-border-color: LIGHTGREY; -fx-border-width: " +
+                + (GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2) + "px " +
+                + ((GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH) + "px " +
+                + (GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2) + "px " +
+                + ((GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH) + "px; " +
+                "-fx-effect: innershadow(three-pass-box, rgba(100, 100, 100, 0.9), " + GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2 + ", 0, 0, 1)");
         //this.structureGridPane.setPadding(new Insets(10, 10, 10, 10));    TODO
         //this.structureGridPane.setGridLinesVisible(true);
         //this.structureGridPane.setStyle("");
@@ -152,9 +158,11 @@ public class OverviewView extends AnchorPane {
 
 
         this.leftHBox = new HBox();
+        this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.leftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
 
         //this.rightHBox = new HBox();
-        this.leftButtonBar = new ButtonBar();
+        //this.leftButtonBar = new ButtonBar();
         //this.leftButtonBar.setPadding(new Insets(0, 0, 0, 0));
 
         this.rowsPerPageTextField = new TextField();
@@ -164,14 +172,14 @@ public class OverviewView extends AnchorPane {
         this.rowsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         TextFormatter<Integer> tmpFormatter1 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), aRowsPerPage, GuiUtil.getIntegerFilter());
         this.rowsPerPageTextField.setTextFormatter(tmpFormatter1);
-        Label tmpRowsPerPageLabel = new Label("x:");
+        Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
         //HBox.setHgrow(tmpRowsPerPageLabel, Priority.ALWAYS);
-        tmpRowsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 2);
-        tmpRowsPerPageLabel.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 2);
+        tmpRowsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
+        tmpRowsPerPageLabel.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
         tmpRowsPerPageLabel.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE / 2);
         tmpRowsPerPageLabel.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
         //tmpRowsPerPageLabel.setStyle("-fx-background-color: RED");
-        Tooltip tmpRowsPerPageTooltip = new Tooltip("Rows per page");
+        Tooltip tmpRowsPerPageTooltip = new Tooltip(Message.get("OverviewView.rowsPerPageLabel.tooltip"));
         tmpRowsPerPageLabel.setTooltip(tmpRowsPerPageTooltip);
         this.rowsPerPageTextField.setTooltip(tmpRowsPerPageTooltip);
         this.columnsPerPageTextField = new TextField();
@@ -181,29 +189,26 @@ public class OverviewView extends AnchorPane {
         this.columnsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         TextFormatter<Integer> tmpFormatter2 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), aColumnsPerPage, GuiUtil.getIntegerFilter());
         this.columnsPerPageTextField.setTextFormatter(tmpFormatter2);
-        Label tmpColumnsPerPageLabel = new Label("y:");
+        Label tmpColumnsPerPageLabel = new Label(Message.get("OverviewView.columnsPerPageLabel.text"));
         //HBox.setHgrow(tmpColumnsPerPageLabel, Priority.ALWAYS);
-        tmpColumnsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 2);
-        tmpColumnsPerPageLabel.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 2);
+        tmpColumnsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
+        tmpColumnsPerPageLabel.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
         tmpColumnsPerPageLabel.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE / 2);
         tmpColumnsPerPageLabel.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
         //tmpColumnsPerPageLabel.setStyle("-fx-background-color: RED");
-        Tooltip tmpColumnsPerPageTooltip = new Tooltip("Columns per page");
+        Tooltip tmpColumnsPerPageTooltip = new Tooltip(Message.get("OverviewView.columnsPerPageLabel.tooltip"));
         tmpColumnsPerPageLabel.setTooltip(tmpColumnsPerPageTooltip);
         this.columnsPerPageTextField.setTooltip(tmpColumnsPerPageTooltip);
 
-        this.applyButton = new Button("Apply");
+        this.applyButton = new Button(Message.get("OverviewView.applyButton.text"));
         this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.applyButton.setTooltip(new Tooltip("Apply changes to grid"));
+        this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
 
-        this.spacingHBox = new HBox();
-        HBox.setHgrow(this.spacingHBox, Priority.ALWAYS);
-
-        this.leftButtonBar.getButtons().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
-        //this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
+        //this.leftButtonBar.getButtons().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
+        this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
         //this.leftButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         //this.rightHBox.getChildren().addAll(this.rowsPerPageTextField, this.columnsPerPageTextField, this.applyButton);
 
@@ -212,15 +217,19 @@ public class OverviewView extends AnchorPane {
 
         //this.addNodeToMainGridPane(this.bottomHBox, 0, 1, 2, 1);
 
-        this.rightButtonBar = new ButtonBar();
-        this.rightButtonBar.setPadding(new Insets(0, 0, 0, 0));
-        this.closeButton = new Button("Close");
+        //this.rightButtonBar = new ButtonBar();
+        //this.rightButtonBar.setPadding(new Insets(0, GuiDefinitions.GUI_INSETS_VALUE, 0, 0));
+        this.rightHBox = new HBox();
+        this.rightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.rightButtonBar.getButtons().add(this.closeButton);
-        this.rightButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.closeButton.setTooltip(new Tooltip(Message.get("OverviewView.closeButton.tooltip")));
+        //this.rightButtonBar.getButtons().add(this.closeButton);
+        //this.rightButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.rightHBox.getChildren().add(this.closeButton);
 
         //this.borderPane.setCenter(this.structureGridPane);
         //
@@ -284,6 +293,10 @@ public class OverviewView extends AnchorPane {
     //<editor-fold desc="public properties" defaultstate="collapsed">
     public HBox getLeftHBox() {
         return this.leftHBox;
+    }
+
+    public HBox getRightHBox() {
+        return this.rightHBox;
     }
 
     public ButtonBar getLeftButtonBar() {
