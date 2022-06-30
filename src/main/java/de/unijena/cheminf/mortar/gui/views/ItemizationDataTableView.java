@@ -136,8 +136,8 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     /**
      * Creates and returns an itemization tableview page
      *
-     * @param aPageIndex int
-     * @param aFragmentationName String for the fragmentation name
+     * @param aPageIndex integer value for the page index
+     * @param aFragmentationName String for unique name of fragmentation job
      * @param aSettingsContainer SettingsContainer
      * @return Node BorderPane which holds TableView as page for Pagination
      */
