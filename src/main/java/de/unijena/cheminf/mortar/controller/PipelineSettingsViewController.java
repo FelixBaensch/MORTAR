@@ -146,7 +146,7 @@ public class PipelineSettingsViewController {
         this.pipelineSettingsViewStage.setScene(tmpScene);
         this.pipelineSettingsViewStage.initModality(Modality.WINDOW_MODAL);
         this.pipelineSettingsViewStage.initOwner(this.mainStage);
-        this.pipelineSettingsViewStage.setTitle(Message.get("PipelineSettingsView.title"));
+        this.pipelineSettingsViewStage.setTitle(Message.get("PipelineSettingsView.title.text"));
         this.pipelineSettingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.pipelineSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         Platform.runLater(()->{

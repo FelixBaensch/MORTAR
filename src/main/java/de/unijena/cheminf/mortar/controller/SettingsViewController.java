@@ -100,12 +100,12 @@ public class SettingsViewController {
         this.settingsViewStage.setScene(tmpScene);
         this.settingsViewStage.initModality(Modality.WINDOW_MODAL);
         this.settingsViewStage.initOwner(this.mainStage);
-        this.settingsViewStage.setTitle(Message.get("FragmentationSettingsView.title"));
+        this.settingsViewStage.setTitle(Message.get("SettingsView.title.default.text"));
         this.settingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.settingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         Platform.runLater(()->{
             this.addListeners();
-            this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title"),
+            this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title.text"),
                     this.settingsContainer.settingsProperties(), this.settingsContainer.getSettingNameToTooltipTextMap(),
                     this.recentProperties);
         });
