@@ -28,7 +28,6 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -40,14 +39,21 @@ import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -108,8 +114,10 @@ public class HistogramViewController {
      * Zoom factor of the images
      */
     private double imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
-
-    Scene mainScene;
+    /**
+     * Y axis of the histogram
+     */
+    private CategoryAxis categoryAxis;
     //</editor-fold>
     //
     /**
@@ -136,29 +144,45 @@ public class HistogramViewController {
         this.histogramStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         this.histogramView = new HistogramView();
-        CategoryAxis tmpMainCategoryAxis = this.histogramView.getCategoryAxis();
-        this.mainScene = new Scene(this.histogramView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
-        this.createHistogram(0, this.histogramView, 25,this.mainScene, this.histogramStage );
+        CheckBox tmpBarLabelCheckBox = this.histogramView.getCheckbox();
+        CheckBox tmpGridlineCheckBox = this.histogramView.getGridLinesCheckBox();
+        this.categoryAxis = new CategoryAxis();
+        BarChart tmpHistogramBarChart =  this.createHistogram(GuiDefinitions.HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY,
+                this.histogramView, GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH, tmpBarLabelCheckBox, tmpGridlineCheckBox);
         this.addListener();
-        /**
         Scene tmpScene = new Scene(this.histogramView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setScene(tmpScene);
         tmpScene.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number tmpOldNumber, Number tmpNewNumber) {
-                if(tmpScene.getWidth() !=GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE){
-                   imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH_FOR_FULL_SCREEN;
-                   imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT_FOR_FULL_SCREEN;
-                   imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR_FOR_FULL_SCREEN;
+                double tmpWidthChange =((tmpScene.getWidth()-GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE)/GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE)*100;
+                double tmpImageWidthChange = (GuiDefinitions.GUI_IMAGE_WIDTH/100)*tmpWidthChange;
+                imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH+ tmpImageWidthChange;
+                imageHeight = imageWidth-100;
+                imageZoomFactor = (GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR/GuiDefinitions.GUI_IMAGE_WIDTH)*imageWidth;
+            }
+        });
+        tmpScene.heightProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
+                double tmpHeightChange =((tmpScene.getHeight()-GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE)/GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE)*100;
+                double tmpImageHeightChange = (GuiDefinitions.GUI_IMAGE_HEIGHT/100)*tmpHeightChange;
+                if (tmpScene.getWidth() == GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) {
+                    imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT + tmpImageHeightChange;
+                    imageWidth = 100+imageHeight; // TODO ???
+                    imageZoomFactor = (GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR/ GuiDefinitions.GUI_IMAGE_WIDTH) * imageWidth;
                 } else {
-                   imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
-                   imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
-                   imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
+                    double tmpHeight = imageWidth-100; //
+                    double tmpIntermediateImageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT+tmpImageHeightChange;
+                    double tmpImageHeight = tmpHeight-tmpIntermediateImageHeight;
+                    imageHeight = tmpIntermediateImageHeight+tmpImageHeight;
+                    imageWidth = 100+imageHeight;
+                    imageZoomFactor = (GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR/GuiDefinitions.GUI_IMAGE_WIDTH)*imageWidth;
                 }
             }
         });
         this.histogramStage.show();
-         */
+        this.setMaxBarWidth(GuiDefinitions.GUI_BAR_WIDTH, this.categoryAxis, tmpHistogramBarChart);
     }
     //
     /**
@@ -169,13 +193,20 @@ public class HistogramViewController {
      * @param aSmilesLength to set the SMILES length
      * @return a BarChart to show
      */
-    private void createHistogram(int aNumber, HistogramView aHistogramView, int aSmilesLength, Scene aScene, Stage aStage)  {
+    private BarChart createHistogram(int aNumber, HistogramView aHistogramView, int aSmilesLength, CheckBox aBarLabelCheckBox, CheckBox aGridlineCheckBox)  {
         XYChart.Series tmpSeries = new XYChart.Series();
-        BarChart tmpHistogramBarChart = aHistogramView.getBar();
+        NumberAxis tmpNumberAxis = new NumberAxis();
+        BarChart tmpHistogramBarChart = new BarChart(tmpNumberAxis, this.categoryAxis);
+        this.categoryAxis.setTickLabelFill(Color.BLACK);
+        this.categoryAxis.setTickMarkVisible(true);
+        this.categoryAxis.setTickLength(GuiDefinitions.HISTOGRAM_TICK_LABEL_LENGTH);
+        this.categoryAxis.setTickLabelFill(Color.BLACK);
+        this.categoryAxis.setTickLabelGap(GuiDefinitions.HISTOGRAM_TICK_LABEL_GAP);
+        this.categoryAxis.setLabel(Message.get("HistogramViewController.YAxisLabel.text"));
         tmpHistogramBarChart.setCategoryGap(0);
         tmpHistogramBarChart.setBarGap(0);
-        NumberAxis tmpNumberAxis = aHistogramView.getNumberAxis();
-        CategoryAxis axis = aHistogramView.getCategoryAxis();
+        ScrollPane tmpScrollPane = aHistogramView.getScrollPane();
+        tmpScrollPane.setContent(tmpHistogramBarChart);
         ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "absoluteFrequency", "ASCENDING");
         String tmpNewSmiles;
         ArrayList<Double> tmpArrayFrequency = new ArrayList<>();
@@ -195,12 +226,6 @@ public class HistogramViewController {
                 tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
                 tmpSmilesList.add(tmpNewSmiles);
             }
-            /**
-            try {
-              Image image = DepictionUtil.depictImageWithZoom(tmpFragmentData.getAtomContainer(),2.5,250,150);
-            } catch (CDKException anException) {
-            }
-             */
             tmpIterator--;
             tmpFullSmilesLength.add(tmpFragmentData.getUniqueSmiles());
             tmpFrequencyList.add(tmpFragmentData.getAbsoluteFrequency());
@@ -209,36 +234,27 @@ public class HistogramViewController {
             tmpArrayFrequency.add(tmpAbsolutFrequencyInDouble);
         }
         tmpMaxOfFrequency = Collections.max(tmpArrayFrequency);
-        // set the number axis dynamically with magic numbers //TODO TEST !!!
-        NumberAxis tmpReadableAxis = aHistogramView.getNumberAxis();
-        if (tmpMaxOfFrequency <= 35) {
-            tmpReadableAxis.setTickUnit(1);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +1);
-        } else if (tmpMaxOfFrequency <= 99) {
-            tmpReadableAxis.setTickUnit(2);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +10);
-        } else if (tmpMaxOfFrequency <=200) {
-            tmpReadableAxis.setTickUnit(5);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +15);
-        } else if (tmpMaxOfFrequency <=500) {
-            tmpReadableAxis.setTickUnit(14);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +15);
-        } else if (tmpMaxOfFrequency <=999) {
-            tmpReadableAxis.setTickUnit(25);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +15);
-        } else if (tmpMaxOfFrequency <= 3000) {
-            tmpReadableAxis.setTickUnit(100);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +150);
-        } else if (tmpMaxOfFrequency <= 7000) {
-            tmpReadableAxis.setTickUnit(200);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +150);
-        } else if (tmpMaxOfFrequency <= 10000) {
-            tmpReadableAxis.setTickUnit(300);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +250);
-        } else if (tmpMaxOfFrequency <= 70000) {
-            tmpReadableAxis.setTickUnit(1800);
-            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency +350);
-        }
+        // set the number axis dynamically  //TODO TEST !!!
+        tmpNumberAxis.setAutoRanging(false);
+        tmpNumberAxis.setMinorTickCount(1);
+        tmpNumberAxis.setForceZeroInRange(true);
+        tmpNumberAxis.setTickLabelFill(Color.BLACK);
+        tmpNumberAxis.setLabel(Message.get("HistogramViewController.XAxisLabel.text"));
+        double tmpXAxisTicks = 5.0/100.0*tmpMaxOfFrequency; // magic number
+        double tmpXAxisExtension = 15.0/100.0*tmpMaxOfFrequency; // magic number
+        int tmpIntTmpXAxisTicks = (int) tmpXAxisTicks;
+        int tmpIntXAxisExtension = (int) tmpXAxisExtension;
+        if(tmpIntTmpXAxisTicks == 0 || tmpIntXAxisExtension == 0) {
+           tmpNumberAxis.setTickUnit(1);
+           tmpNumberAxis.setUpperBound(tmpMaxOfFrequency+1);
+       }
+       else {
+           tmpNumberAxis.setTickUnit(tmpIntTmpXAxisTicks);
+           int tmpAdjustedAxis;
+           for(tmpAdjustedAxis = (int) (tmpIntXAxisExtension+tmpMaxOfFrequency); tmpAdjustedAxis % 5 != 0; tmpAdjustedAxis++) {
+           }
+           tmpNumberAxis.setUpperBound(tmpAdjustedAxis);
+       }
         List<String> tmpSublistSmiles = null;
         List<Integer> tmpSublistOfFrequency = null;
         List<String> tmpSmilesToDepict = null;
@@ -264,7 +280,7 @@ public class HistogramViewController {
                         Message.get("HistogramViewController.HistogramError.Content"), anException);
             }
         }
-        CheckBox tmpBoxLabelHistogram = aHistogramView.getCheckbox();
+        int tmpDigitMaxFrequency = (int) tmpMaxOfFrequency;
         for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistOfFrequency.iterator(), tmpSmilesIterator = tmpSmilesToDepict.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpSmilesIterator.hasNext();) {
             Integer tmpCurrentFrequency = (Integer) tmpIntegerIterator.next();
             String tmpCurrentSmiles = (String) tmpStringIterator.next();
@@ -272,23 +288,33 @@ public class HistogramViewController {
             XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentSmiles);
             StackPane tmpNode = this.histogramHover(tmpStructureViewer, tmpSmiles);
             tmpStringNumberData.setNode(tmpNode);
-            tmpNode.setStyle("-fx-bar-fill: #0000FF");
-            this.getBar(tmpBoxLabelHistogram, tmpNode, tmpCurrentFrequency, tmpMaxOfFrequency);
+            tmpNode.setStyle("-fx-bar-fill: #0000ff");
+            this.getFrequencyDigit(tmpDigitMaxFrequency);
+            this.getBar(aBarLabelCheckBox, tmpNode, tmpCurrentFrequency, this.getFrequencyDigit(tmpDigitMaxFrequency));
             tmpSeries.getData().add(tmpStringNumberData);
         }
-        double tmpHistogramSize = 50.0 * tmpSublistOfFrequency.size(); //magic number
+        double tmpHistogramSize = GuiDefinitions.GUI_HISTOGRAM_GROWTH_VALUE*tmpSublistOfFrequency.size();
         tmpHistogramBarChart.setPrefHeight(tmpHistogramSize);
         tmpHistogramBarChart.setMinHeight(tmpHistogramSize);
-        tmpHistogramBarChart.setLegendVisible(false);
-        tmpHistogramBarChart.getData().clear();
-        tmpHistogramBarChart.layout();
         tmpHistogramBarChart.getData().add(tmpSeries);
         tmpHistogramBarChart.setLegendVisible(false);
         tmpHistogramBarChart.setAnimated(false);
-        aStage.setScene(aScene);
-        aStage.show();
-        this.setMaxBarWidth(10, axis, tmpHistogramBarChart);
-      // return tmpHistogramBarChart;
+        tmpHistogramBarChart.setHorizontalGridLinesVisible(false);
+        tmpHistogramBarChart.setVerticalGridLinesVisible(false);
+        if(aGridlineCheckBox.isSelected()) {
+            tmpHistogramBarChart.setVerticalGridLinesVisible(true);
+            tmpHistogramBarChart.setHorizontalGridLinesVisible(true);
+        }
+        aGridlineCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+            if (aGridlineCheckBox.isSelected()) {
+                tmpHistogramBarChart.setVerticalGridLinesVisible(true);
+                tmpHistogramBarChart.setHorizontalGridLinesVisible(true);
+            } else {
+                tmpHistogramBarChart.setVerticalGridLinesVisible(false);
+                tmpHistogramBarChart.setHorizontalGridLinesVisible(false);
+            }
+        });
+       return tmpHistogramBarChart;
     }
     //
     /**
@@ -307,21 +333,21 @@ public class HistogramViewController {
         this.histogramView.getRefreshButton().setOnAction(event -> {
             try {
                 BarChart tmpRefreshBarChart;
-                CategoryAxis tmpCategoryAxis = this.histogramView.getCategoryAxis();
                 String tmpStringMaxFrequency = this.histogramView.getTextField();
                 String tmpMaxSmilesLength = this.histogramView.getSmilesField();
+                CheckBox tmpBarLabelCheckBox = this.histogramView.getCheckbox();
+                CheckBox tmpGridlinesCheckBox = this.histogramView.getGridLinesCheckBox();
                 int tmpFragmentNumber;
                 int tmpSmilesLengthInField;
                 if (tmpMaxSmilesLength.isEmpty()) {
                     tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
-                    if (tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber < 0) {
+                    if (tmpFragmentNumber > this.copyList.size() || tmpFragmentNumber <= 0 ) {
                         GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                                 Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
                                 Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
                         return;
                     }
-                    this.createHistogram(tmpFragmentNumber, this.histogramView, 25,this.mainScene,this.histogramStage);
-                 //  this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
+                    tmpSmilesLengthInField = GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH;
                 } else if (tmpStringMaxFrequency.isEmpty()) {
                     tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
                     if (tmpSmilesLengthInField < 0) {
@@ -330,12 +356,8 @@ public class HistogramViewController {
                                 Message.get("HistogramViewController.HistogramSmilesRefreshWarning.Content"));
                         return;
                     }
-                   this.createHistogram(0, this.histogramView, tmpSmilesLengthInField,this.mainScene, this.histogramStage);
-                    /**
-                    Platform.runLater(() -> {
-                        this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
-                    });
-                     */
+                    tmpFragmentNumber = GuiDefinitions.HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY;
+
                 } else {
                     tmpFragmentNumber = Integer.parseInt(tmpStringMaxFrequency);
                     tmpSmilesLengthInField = Integer.parseInt(tmpMaxSmilesLength);
@@ -345,13 +367,9 @@ public class HistogramViewController {
                                 Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Content"));
                         return;
                     }
-                    this.createHistogram(tmpFragmentNumber, this.histogramView, tmpSmilesLengthInField, this.mainScene, this.histogramStage);
-                    /**
-                    Platform.runLater(() -> {
-                        this.setMaxBarWidth(30, tmpCategoryAxis, tmpRefreshBarChart); // magic number
-                    });
-                     */
                 }
+                tmpRefreshBarChart=  this.createHistogram(tmpFragmentNumber, this.histogramView, tmpSmilesLengthInField, tmpBarLabelCheckBox, tmpGridlinesCheckBox);
+                tmpRefreshBarChart.setCategoryGap(this.getBarSpacing(tmpFragmentNumber));
             } catch (NumberFormatException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                 GuiUtil.guiExceptionAlert(Message.get("HistogramViewController.HistogramRefreshError.Title"), Message.get
@@ -370,11 +388,21 @@ public class HistogramViewController {
     private StackPane histogramHover(ImageView anImageView, String aSmiles) {
         StackPane tmpNodePane = new StackPane();
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT); // TODO better position
+        MenuItem tmpContextMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItem.text"));
+        ContextMenu tmpContextMenu = new ContextMenu();
+        tmpContextMenu.getItems().add(tmpContextMenuItem);
+        Label tmpContextMenuLabel = new Label();
+        tmpContextMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        tmpContextMenuLabel.setContextMenu(tmpContextMenu);
+        tmpNodePane.getChildren().add(tmpContextMenuLabel);
         boolean tmpKeepAtomContainer = true;
         tmpNodePane.setOnMouseEntered(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                tmpNodePane.setStyle("-fx-bar-fill: #87CEFA");
+                tmpNodePane.setStyle("-fx-bar-fill: #00008b");
+                tmpContextMenuLabel.setPrefWidth(tmpNodePane.getWidth());
+                tmpContextMenuLabel.setMaxWidth(tmpNodePane.getWidth());
+                tmpContextMenuLabel.setMinWidth(tmpNodePane.getWidth());
                 SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
                 IAtomContainer tmpAtomCon = null;
                 if (tmpKeepAtomContainer) {
@@ -406,12 +434,29 @@ public class HistogramViewController {
                 }
             }
         });
+        // Listener ContextMenuItem
+        tmpContextMenuItem.setOnAction(event -> {
+            ClipboardContent tmpClipboardContent = new ClipboardContent();
+            tmpClipboardContent.putString(aSmiles);
+            Clipboard.getSystemClipboard().setContent(tmpClipboardContent);
+                });
         tmpNodePane.setOnMouseExited(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                tmpNodePane.setStyle("-fx-bar-fill: #0000FF");
+                tmpNodePane.setStyle("-fx-bar-fill: #0000ff");
                 anImageView.setImage(null);
                 tmpNodePane.setCursor(Cursor.HAND);
+            }
+        });
+        tmpContextMenuLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                if (MouseButton.SECONDARY.equals(mouseEvent.getButton())) {
+                    tmpContextMenuLabel.setStyle("-fx-bar-fill: #00008b");
+                    tmpContextMenu.show(tmpContextMenuLabel, tmpNodePane.getWidth() / 2, tmpNodePane.getHeight());
+                } else {
+                    return;
+                }
             }
         });
         return tmpNodePane;
@@ -426,7 +471,7 @@ public class HistogramViewController {
      * @author José Pereda, Betuel Sevindik
      * @source https://stackoverflow.com/questions/27302875/set-bar-chart-column-width-size
      */
-    private void setMaxBarWidth(double aMaxBarWidth, CategoryAxis aXAxis, BarChart aBarChart) {
+    private double setMaxBarWidth(double aMaxBarWidth, CategoryAxis aXAxis, BarChart aBarChart) {
         double tmpBarWidth = 0;
         do {
             double tmpCategorySpacing = aXAxis.getCategorySpacing();
@@ -438,12 +483,13 @@ public class HistogramViewController {
             }
         } while (tmpBarWidth > aMaxBarWidth);
         do{
-            double catSpace = aXAxis.getCategorySpacing();
-            double avilableBarSpace = catSpace - (0 + aBarChart.getBarGap());
-            tmpBarWidth = Math.min(aMaxBarWidth, (avilableBarSpace / aBarChart.getData().size()) - aBarChart.getBarGap());
-            avilableBarSpace=(tmpBarWidth + aBarChart.getBarGap())* aBarChart.getData().size();
-            aBarChart.setCategoryGap(catSpace-avilableBarSpace-aBarChart.getBarGap());
+            double  tmpCategorySpacing = aXAxis.getCategorySpacing();
+            double tmpAvailableBarSpace  = tmpCategorySpacing - (0 + aBarChart.getBarGap());
+            tmpBarWidth = Math.min(aMaxBarWidth, (tmpAvailableBarSpace / aBarChart.getData().size()) - aBarChart.getBarGap());
+            tmpAvailableBarSpace=(tmpBarWidth + aBarChart.getBarGap())* aBarChart.getData().size();
+            aBarChart.setCategoryGap(tmpCategorySpacing-tmpAvailableBarSpace-aBarChart.getBarGap());
         } while(tmpBarWidth< aMaxBarWidth && aBarChart.getCategoryGap()>0);
+        return tmpBarWidth;
     }
     //
     /**
@@ -456,37 +502,73 @@ public class HistogramViewController {
      * @return StackPane
      */
     private StackPane getBar(CheckBox aCheckBox, StackPane aStackPane, int aFrequency, double aDigitNumber) {
-        Label tmpLabel = new Label();
-        tmpLabel.setTranslateY(0);
-        tmpLabel.setAlignment(Pos.CENTER_RIGHT);
-        tmpLabel.setPrefWidth(100);
-        tmpLabel.setMinWidth(100);
-        tmpLabel.setMaxWidth(100);
+        Label tmpBarLabel = new Label();
+        tmpBarLabel.setTranslateY(0);
+        tmpBarLabel.setAlignment(Pos.CENTER_RIGHT);
+        tmpBarLabel.setPrefWidth(GuiDefinitions.GUI_BAR_LABEL_SIZE*aDigitNumber);
+        tmpBarLabel.setMinWidth(GuiDefinitions.GUI_BAR_LABEL_SIZE*aDigitNumber);
+        tmpBarLabel.setMaxWidth(GuiDefinitions.GUI_BAR_LABEL_SIZE*aDigitNumber);
         // TODO TEST
-        // magic numbers
-        if (aDigitNumber <= 99) {
-            tmpLabel.setTranslateX(20);
-        } else if (aDigitNumber <=999) {
-            tmpLabel.setTranslateX(30);
-        } else if (aDigitNumber <= 9999) {
-            tmpLabel.setTranslateX(40);
-        } else if (aDigitNumber <= 99999) {
-           tmpLabel.setTranslateX(50);
-        }
-        tmpLabel.setText(String.valueOf(aFrequency));
+        tmpBarLabel.setTranslateX(aDigitNumber*GuiDefinitions.GUI_BAR_LABEL_SIZE);
+        tmpBarLabel.setText(String.valueOf(aFrequency));
         if(aCheckBox.isSelected()) {
-            aStackPane.getChildren().add(tmpLabel);
+            aStackPane.getChildren().add(tmpBarLabel);
         }
         aCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (aCheckBox.isSelected()) {
-                aStackPane.getChildren().add(tmpLabel);
+                aStackPane.getChildren().add(tmpBarLabel);
             } else {
                 aStackPane.getChildren().clear();
             }
         });
         return aStackPane;
     }
-    //<editor-fold>
+    //
+    /**
+     * Sets a fixed bar width
+     *
+     * @param aNumber of fragments displayed
+     * @return the gap between the bars
+     */
+    private double getBarSpacing(int aNumber) {
+        double tmpHistogramHeight;
+        double tmpGapDeviation;
+        double tmpGapSpacing;
+        double tmpCategoryGap;
+        if (aNumber <= 10) {
+            tmpHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT/aNumber;
+            tmpGapDeviation = (tmpHistogramHeight/GuiDefinitions.GUI_HISTOGRAM_CALCULATED_BAR_GAP)*GuiDefinitions.GUI_HISTOGRAM_HEIGHT_DEVIATION;
+            tmpGapSpacing = tmpHistogramHeight-tmpGapDeviation;
+            tmpCategoryGap = tmpGapSpacing-GuiDefinitions.GUI_BAR_WIDTH;
+        } else if (aNumber <= 14) {
+            tmpHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT/aNumber;
+            tmpGapDeviation = GuiDefinitions.GUI_HISTOGRAM_HEIGHT_DEVIATION/(GuiDefinitions.GUI_HISTOGRAM_CALCULATED_BAR_GAP/tmpHistogramHeight);
+            tmpGapSpacing = tmpHistogramHeight-tmpGapDeviation;
+            tmpCategoryGap = tmpGapSpacing-GuiDefinitions.GUI_BAR_WIDTH;
+        } else {
+            tmpHistogramHeight = GuiDefinitions.GUI_HISTOGRAM_GROWTH_VALUE*aNumber-84;
+            tmpGapSpacing = tmpHistogramHeight/aNumber;
+            tmpCategoryGap = tmpGapSpacing-GuiDefinitions.GUI_BAR_WIDTH;
+        }
+        return tmpCategoryGap;
+    }
+    //
+    /**
+     * Method to find out the number of digits displayed in the BarLabel
+     *
+     * @param aDigit max. value of the frequency
+     * @return number of digits
+     */
+    private int getFrequencyDigit(int aDigit) {
+        int tmpCountDigits = 0;
+        while (aDigit!= 0) {
+            aDigit = aDigit/10;
+            ++tmpCountDigits;
+        }
+        return tmpCountDigits;
+    }
+    //</editor-fold>
+    //
 }
 
 

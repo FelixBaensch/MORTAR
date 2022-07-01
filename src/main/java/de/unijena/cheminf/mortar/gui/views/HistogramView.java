@@ -69,29 +69,25 @@ public class HistogramView extends AnchorPane {
      */
     private ImageView imageStructure;
     /**
-     * vertical frequency SMILES barchart
-     */
-    private BarChart bar;
-    /**
-     * Y axis of the chart which shows the SMILES
-     */
-    private CategoryAxis categoryAxis;
-    /**
-     * X axis of the chart which shows the frequencies
-     */
-    private NumberAxis numberAxis;
-    /**
      * Text field for creating a new histogram
      */
     private TextField smilesField;
     /**
-     *  Checkbox to make bar labels adjustable
+     * Checkbox to make bar labels adjustable
      */
     private CheckBox checkbox;
     /**
-     *  Label to show the highest number of fragments
+     * CheckBox to display histogram gridlines
+     */
+    private CheckBox gridLinesCheckBox;
+    /**
+     * Label to show the highest number of fragments
      */
     private Label defaultLabel;
+    /**
+     * ScrollPane to make histogram scrollable
+     */
+    private ScrollPane scrollPane;
     //</editor-fold>
     //
     /**
@@ -100,27 +96,11 @@ public class HistogramView extends AnchorPane {
      */
     public HistogramView(){
         super();
-        //add a ScrollPane to make the histogram scrollable
-        this.numberAxis = new NumberAxis();
-        this.numberAxis.setAutoRanging(false);
-        this.numberAxis.setMinorTickCount(1);
-        this.numberAxis.setForceZeroInRange(true);
-        this.numberAxis.setTickLabelFill(Color.BLACK);
-        this.numberAxis.setLabel(Message.get("Histogram.XAxisLabel.text"));
-        this.categoryAxis = new CategoryAxis();
-        this.categoryAxis.setTickMarkVisible(true);
-        this.categoryAxis.setAutoRanging(true);
-        this.categoryAxis.setTickLength(15.0); // magic number
-        this.categoryAxis.setTickLabelFill(Color.BLACK);
-        this.categoryAxis.setTickLabelGap(10.0); // magic number
-        this.categoryAxis.setLabel(Message.get("Histogram.YAxisLabel.text"));
-        this.bar = new BarChart<>(this.numberAxis, this.categoryAxis);
-        ScrollPane tmpScrollPane = new ScrollPane();
-        tmpScrollPane.setFitToHeight(true);
-        tmpScrollPane.setFitToWidth(true);
-        tmpScrollPane.setContent(this.bar);
-        tmpScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        tmpScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        this.scrollPane = new ScrollPane();
+        this.scrollPane.setFitToHeight(true);
+        this.scrollPane.setFitToWidth(true);
+        this.scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        this.scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         //borderPane
         BorderPane tmpBorderPane = new BorderPane();
         HistogramView.setTopAnchor(tmpBorderPane, 0.0);
@@ -149,7 +129,6 @@ public class HistogramView extends AnchorPane {
         tmpGrid.getRowConstraints().add(tmpRow4);
         ColumnConstraints tmpCol4 = new ColumnConstraints(20); // magic number
         tmpGrid.getColumnConstraints().add(tmpCol4);
-        //tmpGrid.setGridLinesVisible(true);
         //buttons
         HBox tmpHBoxButtonsHBox = new HBox();
         tmpHBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
@@ -163,8 +142,9 @@ public class HistogramView extends AnchorPane {
         this.refreshButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.refreshButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.refreshButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.smilesField = new TextField();
+        this.smilesField = new TextField(); // TODO tooltip smilesText
         this.smilesField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
+        this.smilesField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
         Label tmpSmilesLabel = new Label(Message.get("HistogramView.smilesField.text"));
         this.defaultLabel = new Label();
         tmpHBoxLeftSideButton.getChildren().addAll(tmpSmilesLabel,this.smilesField,this.defaultLabel, this.textField, this.refreshButton);
@@ -174,23 +154,24 @@ public class HistogramView extends AnchorPane {
         HBox.setHgrow(tmpHBoxLeftSideButton, Priority.ALWAYS);
         tmpHBoxButtonsHBox.getChildren().add(tmpHBoxLeftSideButton);
         this.imageStructure = new ImageView();
-        this.imageStructure.setEffect(new DropShadow(10, Color.BLACK));
+        this.imageStructure.setEffect(new DropShadow(10,2,3, Color.BLACK));
         this.cancelButton = new Button(Message.get("HistogramView.cancelButton.text"));
         this.cancelButton.setTooltip(new Tooltip(Message.get("HistogramView.cancelButton.toolTip")));
         this.cancelButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.cancelButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.checkbox = new CheckBox(Message.get("HistogramView.checkbox.text"));
-        this.checkbox.setTooltip(new Tooltip(Message.get("HistogramView.checkbox.toolTip")));
+        this.checkbox = new CheckBox(Message.get("HistogramView.checkBox.text"));
+        this.checkbox.setTooltip(new Tooltip(Message.get("HistogramView.checkBox.toolTip")));
+        this.gridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));
+        this.gridLinesCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxGridlines.toolTip")));
         HBox tmpHBoxRightSideButtons = new HBox();
-        tmpHBoxRightSideButtons.getChildren().addAll(this.checkbox, this.cancelButton);
+        tmpHBoxRightSideButtons.getChildren().addAll(this.gridLinesCheckBox,this.checkbox, this.cancelButton);
         tmpHBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
         tmpHBoxRightSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxRightSideButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         HBox.setHgrow(tmpHBoxRightSideButtons, Priority.ALWAYS);
         tmpHBoxButtonsHBox.getChildren().add(tmpHBoxRightSideButtons);
-        //test
-        tmpGrid.add(tmpScrollPane,0,0,4,4);
-        tmpGrid.add(this.imageStructure,2,2);  // TODO
+        tmpGrid.add(this.scrollPane,0,0,4,4);
+        tmpGrid.add(this.imageStructure,2,2);
         this.getChildren().add(tmpBorderPane);
     }
     //
@@ -255,33 +236,6 @@ public class HistogramView extends AnchorPane {
     }
     //
     /**
-     * Returns the barchart
-     *
-     * @return BarChart
-     */
-    public BarChart getBar() {
-        return this.bar;
-    }
-    //
-    /**
-     * Returns the y axis
-     *
-     * @return
-     */
-    public CategoryAxis getCategoryAxis() {
-        return this.categoryAxis;
-    }
-    //
-    /**
-     * Returns the x axis
-     *
-     * @return
-     */
-    public NumberAxis getNumberAxis() {
-        return this.numberAxis;
-    }
-    //
-    /**
      * Returns a CheckBox to label the histogram
      *
      * @return CheckBox
@@ -291,12 +245,24 @@ public class HistogramView extends AnchorPane {
     }
     //
     /**
+     * Returns a CheckBox to display the histogram gridlines
+     *
+     * @return CheckBox
+     */
+    public CheckBox getGridLinesCheckBox() {
+        return this.gridLinesCheckBox;
+    }
+    //
+    /**
      * Returns a Label to show the maximum number of fragments
      *
      * @return Label
      */
     public Label getDefaultLabel() {
         return this.defaultLabel;
+    }
+    public ScrollPane getScrollPane() {
+        return this.scrollPane;
     }
     //</editor-fold>
 }

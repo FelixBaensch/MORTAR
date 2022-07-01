@@ -123,21 +123,49 @@ public final class GuiDefinitions {
     /**
      * Image zoom factor value
      */
-    public static final double GUI_IMAGE_ZOOM_FACTOR = 2.5;
+    public static final double GUI_IMAGE_ZOOM_FACTOR = 3.0;
     /**
-     * Value for the width of the image corresponding to the structure of the fragments for full screen
+     * Value for the not scrollable histogram
      */
-    public static final double GUI_IMAGE_WIDTH_FOR_FULL_SCREEN = 350.0;
+    public static final double GUI_NOT_SCROLLABLE_HEIGHT = 706.4;
     /**
-     * Value for the height of the image corresponding to the structure of the fragments for full screen
+     * Value for the height deviation
      */
-    public static final double GUI_IMAGE_HEIGHT_FOR_FULL_SCREEN = 250.0;
+    public static final double GUI_HISTOGRAM_HEIGHT_DEVIATION = 8.44;
     /**
-     * Image zoom factor value for full screen
+     * Value for the bar widths
      */
-    public static final double GUI_IMAGE_ZOOM_FACTOR_FOR_FULL_SCREEN = 4.0;
+    public static final double GUI_BAR_WIDTH = 30.0;
     /**
      * Value for the width of the textField
      */
     public static final double GUI_TEXT_FIELD_WIDTH = 50.0;
+    /**
+     * Value for histogram growth factor
+     */
+    public static final double GUI_HISTOGRAM_GROWTH_VALUE = 50.0;
+    /**
+     * Calculated bar spacing for 10 fragments shown
+     */
+    public static final  double GUI_HISTOGRAM_CALCULATED_BAR_GAP = 70.64;
+    /**
+     * Value of the bar label sizes
+     */
+    public static final double GUI_BAR_LABEL_SIZE = 10.0;
+    /**
+     * Default SMILES length
+     */
+    public static final int HISTOGRAM_DEFAULT_SMILES_LENGTH = 25;
+    /**
+     * Default fragment frequency
+     */
+    public static  final int HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY = 0;
+    /**
+     * Value of tickLabel length
+     */
+    public static  final double HISTOGRAM_TICK_LABEL_LENGTH = 15.0;
+    /**
+     * Value of tickLabel gap
+     */
+    public static final double HISTOGRAM_TICK_LABEL_GAP = 10.0;
 }
