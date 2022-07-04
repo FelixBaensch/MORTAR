@@ -18,21 +18,22 @@ MORTAR ('MOlecule fRagmenTation fRamework') is an open software project that sup
 molecular fragmentation and substructure analysis. The Java/JavaFX rich-client application offers extensive graphical 
 functions for visualising the fragmentation results of individual compounds or entire compound sets. With several 
 views and analysis functions, MORTAR supports the interpretation of fragmentation results. In addition to three 
-currently integrated methods for fragmentation and substructure analysis - ErtlFunctionalGroupsFinder, 
-Sugar Removal Utility, and Scaffold Generator - MORTAR allows straightforward integration of additional fragmentation 
-algorithms with automatic generation of settings menus. All cheminformatics functionalities are implemented based on 
-the Chemistry Development Kit (CDK).
+currently integrated methods for fragmentation and substructure analysis - [ErtlFunctionalGroupsFinder](https://github.com/zielesny/ErtlFunctionalGroupsFinder), 
+[Sugar Removal Utility](https://github.com/JonasSchaub/SugarRemoval), 
+and [Scaffold Generator](https://github.com/Julian-Z98/ScaffoldGenerator) - MORTAR allows straightforward integration of 
+additional fragmentation algorithms with automatic generation of settings 
+menus. All cheminformatics functionalities are implemented based on the [Chemistry Development Kit (CDK)](https://github.com/cdk/cdk).
 
 ## Contents of this repository
 ### Sources
 The "src" subfolder contains all source code packages including JUnit tests.
 
 ### Tutorial
-TODO
+The "Tutorial" folder contains a PDF document with a detailed tutorial on how to install and use MORTAR, together with
+a test data set. 
 
 ## Installation
 ### Application
-<p>TODO: Adjust if necessary</p>
 Pre-compiled and executable MORTAR distributions can be found in the "distribution" folder of this repository. They are 
 also attached to the marked releases.<br>
 <p><b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available. Download the installer 
@@ -45,21 +46,20 @@ standard Windows functions.
 <br>As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
 20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
 and adjust the line 
-<br><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code> 
-<br>with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.</p>
+<p><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code></p>
+with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.</p>
 <p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
 which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using 
-<br><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code> 
-<br>A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command. 
-Otherwise, replace "java" with the path to the java command of your JDK or JRE. 
-</p>
+<p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code></p>
+A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command. 
+Otherwise, replace "java" with the path to the java command of your JDK or JRE.
 
 
 ### Source code
 This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
 clone the repository and open it in a Gradle-supporting IDE (e.g. IntelliJ) as a Gradle project and execute the 
-build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 11 
+build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 11.0.14 
 or higher must also be pre-installed.
 
 ## Dependencies
