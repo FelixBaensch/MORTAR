@@ -260,6 +260,8 @@ public class SettingsContainer {
     /**
      * Returns the default value for the number of tasks for fragmentation setting that is determined in the class
      * constructor based on the number of maximum available threads on the specific machine.
+     *
+     * @return default value of number of tasks for fragmentation setting
      */
     public int getNumberOfTasksForFragmentationSettingDefault() {
         return this.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT;
