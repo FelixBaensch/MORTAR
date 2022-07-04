@@ -73,14 +73,14 @@ public class SettingsContainer {
     //
     //<editor-fold desc="public static final constants" defaultstate="collapsed">
     /**
+     * Maximum available threads on the given machine.
+     */
+    public static final int MAX_AVAILABLE_THREADS = Runtime.getRuntime().availableProcessors();
+
+    /**
      * Default value of the number of rows per page.
      */
     public static final int ROWS_PER_PAGE_SETTING_DEFAULT = 5;
-
-    /**
-     * Default value of the number of parallel tasks to use for fragmentation.
-     */
-    public static final int NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT = Runtime.getRuntime().availableProcessors();
 
     /**
      * Default value of the recent directory to use when there is no last directory used by the user.
@@ -111,6 +111,14 @@ public class SettingsContainer {
      * Default value of whether to keep last fragment.
      */
     public static final boolean KEEP_LAST_FRAGMENT_SETTING_DEFAULT = false;
+    //</editor-fold>
+    //
+    //<editor-fold desc="private final variables">
+    /**
+     * Default value of the number of parallel tasks to use for fragmentation, determined based on the maximum available
+     * threads on this machine in the constructor.
+     */
+    private final int NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT;
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
@@ -171,6 +179,14 @@ public class SettingsContainer {
      * Constructor that sets all settings to their default values.
      */
     public SettingsContainer() {
+        if (SettingsContainer.MAX_AVAILABLE_THREADS == 1) {
+            this.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT = 1;
+        } else if (SettingsContainer.MAX_AVAILABLE_THREADS < 4) {
+            this.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT = 2;
+        } else {
+            //max available threads equal or higher than 4
+            this.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT = 4;
+        }
         this.initialiseSettings();
         try {
             this.checkSettings();
@@ -239,6 +255,14 @@ public class SettingsContainer {
      */
     public Property numberOfTasksForFragmentationSettingProperty() {
         return this.numberOfTasksForFragmentationSetting;
+    }
+
+    /**
+     * Returns the default value for the number of tasks for fragmentation setting that is determined in the class
+     * constructor based on the number of maximum available threads on the specific machine.
+     */
+    public int getNumberOfTasksForFragmentationSettingDefault() {
+        return this.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT;
     }
 
     /**
@@ -461,7 +485,7 @@ public class SettingsContainer {
      */
     public void restoreDefaultSettings() {
         this.rowsPerPageSetting.set(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT);
-        this.numberOfTasksForFragmentationSetting.set(SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
+        this.numberOfTasksForFragmentationSetting.set(this.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         //DEPRECATED
@@ -606,7 +630,7 @@ public class SettingsContainer {
         this.settingNameTooltipTextMap.put(this.rowsPerPageSetting.getName(), Message.get("SettingsContainer.rowsPerPageSetting.tooltip"));
         this.numberOfTasksForFragmentationSetting = new SimpleIntegerProperty(this,
                 "Nr of tasks for fragmentation setting",
-                SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT) {
+                this.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT) {
             @Override
             public void set(int newValue) throws IllegalArgumentException {
                 if (SettingsContainer.this.isLegalNumberOfTasksForFragmentationSetting(newValue)) {
@@ -623,7 +647,7 @@ public class SettingsContainer {
                 }
             }
         };
-        this.settingNameTooltipTextMap.put(this.numberOfTasksForFragmentationSetting.getName(), Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.tooltip"));
+        this.settingNameTooltipTextMap.put(this.numberOfTasksForFragmentationSetting.getName(), String.format(Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.tooltip"), SettingsContainer.MAX_AVAILABLE_THREADS));
         this.recentDirectoryPathSetting = new SimpleStringProperty(this,
                 "Recent directory path setting",
                 SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT) {
@@ -775,7 +799,7 @@ public class SettingsContainer {
      * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalNumberOfTasksForFragmentationSetting(int anInteger) {
-        return !(anInteger <= 0 || anInteger > SettingsContainer.NR_OF_TASKS_FOR_FRAGMENTATION_SETTING_DEFAULT);
+        return !(anInteger <= 0 || anInteger > SettingsContainer.MAX_AVAILABLE_THREADS);
     }
 
     /**
