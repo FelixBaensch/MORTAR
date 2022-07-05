@@ -29,6 +29,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
@@ -47,6 +48,7 @@ import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -282,12 +284,19 @@ public class Importer {
     private IAtomContainerSet importPDBFile(File aFile) throws FileNotFoundException, CDKException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
         PDBReader tmpPDBReader = new PDBReader(new FileInputStream(aFile));
-        IAtomContainer tmpAtomContainer = tmpPDBReader.read(new AtomContainer());
-        String tmpName = this.findMoleculeName(tmpAtomContainer);
-        if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
-            tmpName = FileUtil.getFileNameWithoutExtension(aFile);
-        tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-        tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
+        ChemFile tmpChemFile = tmpPDBReader.read(new ChemFile());
+        int tmpCounter = 0;
+        for (IAtomContainer tmpAtomContainer : ChemFileManipulator.getAllAtomContainers(tmpChemFile)) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+            String tmpName = this.findMoleculeName(tmpAtomContainer);
+            if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
+                tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
+            tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
+            tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
+            tmpCounter++;
+        }
         return tmpAtomContainerSet;
     }
     //
@@ -338,14 +347,14 @@ public class Importer {
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
             try {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
+                if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
+                    CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
+                }
                 /* note: the doc says: "Suppress any explicit hydrogens in the provided container. Only hydrogens that
                 can be represented as a hydrogen count value on the atom are suppressed." Therefore, there will
                 still be some explicit hydrogen atoms!
                  */
                 AtomContainerManipulator.suppressHydrogens(tmpMolecule);
-                if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
-                    CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
-                }
                 //might throw exceptions if the implicit hydrogen count is unset or kekulization is impossible
                 Kekulization.kekulize(tmpMolecule);
             } catch (Exception anException) {
