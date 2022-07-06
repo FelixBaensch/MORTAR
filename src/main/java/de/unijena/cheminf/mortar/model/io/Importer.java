@@ -45,6 +45,7 @@ import org.openscience.cdk.io.formats.IChemFormat;
 import org.openscience.cdk.io.formats.MDLV2000Format;
 import org.openscience.cdk.io.formats.MDLV3000Format;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
+import org.openscience.cdk.io.setting.IOSetting;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -284,6 +285,21 @@ public class Importer {
     private IAtomContainerSet importPDBFile(File aFile) throws FileNotFoundException, CDKException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
         PDBReader tmpPDBReader = new PDBReader(new FileInputStream(aFile));
+        for (IOSetting setting : tmpPDBReader.getIOSettings()) {
+            if (setting.getName().equals("UseRebondTool")) {
+                //default false
+                //CDK seems unable to read all info in the "CONECT" block, and often it is not there at all; therefore, we
+                // re-bond the whole molecule based on the atom distances with this setting
+                // BUT this is unable to re-create double bonds!
+                setting.setSetting("true");
+            }
+            if (setting.getName().equals("ReadConnectSection")) {
+                //default true
+            }
+            if (setting.getName().equals("UseHetDictionary")) {
+                //default false
+            }
+        }
         ChemFile tmpChemFile = tmpPDBReader.read(new ChemFile());
         int tmpCounter = 0;
         for (IAtomContainer tmpAtomContainer : ChemFileManipulator.getAllAtomContainers(tmpChemFile)) {
