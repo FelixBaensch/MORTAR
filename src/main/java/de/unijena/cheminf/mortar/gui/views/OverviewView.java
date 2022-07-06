@@ -28,10 +28,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.InnerShadow;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 
 import java.util.List;
 
@@ -144,11 +141,11 @@ public class OverviewView extends AnchorPane {
         //right and left border: extending the image frame to grid line width and adding a spacing
         //spacing depends on grid line width
         this.structureGridPane.setStyle("-fx-background-color: LIGHTGREY; -fx-border-color: LIGHTGREY; -fx-border-width: " +
-                + (GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2) + "px " +
-                + ((GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH) + "px " +
-                + (GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2) + "px " +
-                + ((GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH) + "px; " +
-                "-fx-effect: innershadow(three-pass-box, rgba(100, 100, 100, 0.9), " + GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2 + ", 0, 0, 1)");
+                + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                + ((GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) + "px " +
+                + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                + ((GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) + "px; " +
+                "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")");
         //this.structureGridPane.setPadding(new Insets(10, 10, 10, 10));    TODO
         //this.structureGridPane.setGridLinesVisible(true);
         //this.structureGridPane.setStyle("");
@@ -158,6 +155,7 @@ public class OverviewView extends AnchorPane {
 
 
         this.leftHBox = new HBox();
+        //this.leftHBox.setPickOnBounds(false); //TODO: setPickOnBounds() ?!
         this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.leftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
 

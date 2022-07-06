@@ -26,22 +26,17 @@ import de.unijena.cheminf.mortar.gui.views.OverviewView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
+import javafx.scene.input.*;
+import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
 
 import java.util.List;
@@ -98,9 +93,17 @@ public class OverviewViewController {
      * Boolean value that defines, whether the structure images should be generated and shown when a new OverviewView
      * page gets created
      */
-    private boolean showImages;
+    private boolean createStructureImages;
+    /**
+     *
+     */
+    private Stage enlargedStructureViewStage;
+    /**
+     *
+     */
+    private AnchorPane enlargedStructureViewAnchorPane;
     //</editor-fold>
-
+    //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
     /**
      * Constructor
@@ -112,8 +115,10 @@ public class OverviewViewController {
         this.moleculeDataModelList = aMoleculeDataModelList;
         this.rowsPerPage = 5;
         this.columnsPerPage = 4;
-        //set showImages to false to create an empty structureGridPane at first
-        this.showImages = false;
+        this.enlargedStructureViewStage = null;
+        this.enlargedStructureViewAnchorPane = null;
+        //set createStructureImages to false to create an empty structureGridPane at first
+        this.createStructureImages = false;
         for (MoleculeDataModel tmpMolecule : aMoleculeDataModelList) {
             System.out.println(tmpMolecule.getUniqueSmiles());
         }
@@ -127,7 +132,7 @@ public class OverviewViewController {
      */
     private void showOverviewView() {
         //TODO
-        if(this.overviewView == null)
+        if (this.overviewView == null)
             this.overviewView = new OverviewView(this.moleculeDataModelList, this.rowsPerPage, this.columnsPerPage);
         this.overviewViewStage = new Stage();
         Scene tmpScene = new Scene(this.overviewView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
@@ -161,7 +166,7 @@ public class OverviewViewController {
 
         this.overviewViewStage.showAndWait();
     }
-
+    //
     /**
      * Adds listeners and event handlers to control elements etc.
      *
@@ -185,7 +190,7 @@ public class OverviewViewController {
         });
 
         ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
-            //System.out.println("Height: " + this.overviewViewStage.getHeight() + " Width: " + this.overviewViewStage.getWidth());
+            //TODO
         };
 
         this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
@@ -202,7 +207,7 @@ public class OverviewViewController {
             System.out.println("This line is being executed");
         });
     }
-
+    //
     /**
      *
      * @param aColumnsPerPage
@@ -213,19 +218,20 @@ public class OverviewViewController {
         //Node tmpGridLines = this.structureGridPane.getChildren().get(0);
         this.overviewView.getStructureGridPane().getChildren().clear();
         //this.structureGridPane.getChildren().add(tmpGridLines);
-
-        if (this.showImages) {
+        //
+        if (this.createStructureImages) {
             System.out.println("CurrentPageIndex: " + aPageIndex);
             int tmpFromIndex = aPageIndex * aRowsPerPage * aColumnsPerPage;
             int tmpToIndex = Math.min(tmpFromIndex + (aRowsPerPage * aColumnsPerPage), this.moleculeDataModelList.size());
             int tmpCurrentIndex = tmpFromIndex;
             double tmpImageHeight = ((this.overviewView.getStructureGridPane().getHeight() -
-                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH) / aRowsPerPage) -
-                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH;
+                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage) -
+                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             double tmpImageWidth = ((this.overviewView.getStructureGridPane().getWidth() -
-                    (2 * (GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) *
-                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
-                    GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH;
+                    (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) *
+                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
+                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
+            boolean tmpDrawImagesWithShadow = true;    //TODO: settings
             xloop:
             for (int i = 0; i < aRowsPerPage; i++) {
                 for (int j = 0; j < aColumnsPerPage; j++) {
@@ -235,10 +241,59 @@ public class OverviewViewController {
                     StackPane tmpStackPane = new StackPane();
                     Node tmpContentNode;
                     try {
-                        tmpContentNode = new ImageView(
-                                DepictionUtil.depictImageWithZoom(this.moleculeDataModelList.get(tmpCurrentIndex)
-                                        .getAtomContainer(), 1.0, tmpImageWidth, tmpImageHeight)
+                        MoleculeDataModel tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpCurrentIndex);   //TODO: catch indexOutOfBounds?
+                        ImageView tmpImageView = new ImageView(DepictionUtil.depictImageWithZoom(
+                                tmpMoleculeDataModel.getAtomContainer(),
+                                1.0, tmpImageWidth, tmpImageHeight
+                        ));
+                        tmpImageView.setOnMouseEntered((mouseEvent) -> {
+                            if (tmpDrawImagesWithShadow) {
+                                tmpImageView.setStyle("-fx-effect: null");
+                                /*tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(62, 129, 196, 0.6), " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");*/
+                            } else {
+                                tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", 0, 0, 0)");
+                                //tmpStackPane.setStyle("-fx-border-color: rgba(40, 127, 299, 0.4); -fx-border-width: " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4);
+                                /*tmpImageView.setStyle("-fx-effect: innershadow(gaussian, " +
+                                        "rgba(62, 129, 196, 1.0), " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH * 2 + ", " +
+                                        "0, 0, 0)");*/
+                                /*tmpImageView.setStyle("-fx-effect: innershadow(gaussian, " +
+                                        "rgba(100, 100, 100, 0.9), " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", " +
+                                        "0, 0, 0)");*/
+                            }
+                        });
+                        tmpImageView.setOnMouseExited((mouseEvent) -> {
+                            if (tmpDrawImagesWithShadow) {
+                                tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
+                            } else {
+                                tmpImageView.setStyle("-fx-effect: null");
+                                //tmpStackPane.setStyle("-fx-border-color: null");
+                            }
+                        });
+                        Stage tmpOverviewViewStage = this.overviewViewStage;
+                        tmpImageView.setOnMouseClicked((mouseEvent) -> {
+                            if (MouseButton.PRIMARY.equals(mouseEvent.getButton())) {
+                                this.showEnlargedStructureView(tmpOverviewViewStage, tmpMoleculeDataModel);
+                            }
+                        });
+                        //generate context menu
+                        ContextMenu tmpContextMenu = this.generateContextMenuWithListeners(
+                                tmpMoleculeDataModel, this.overviewViewStage
                         );
+                        //Setting context menu to the image view
+                        tmpImageView.setOnContextMenuRequested((event) -> {
+                            tmpContextMenu.show(tmpImageView, event.getScreenX(), event.getScreenY());
+                        });
+                        //
+                        tmpContentNode = tmpImageView;
                     } catch (CDKException anException) {
                         OverviewViewController.LOGGER.log(Level.INFO, anException.toString(), anException);
                         //Error label instead of image
@@ -252,23 +307,23 @@ public class OverviewViewController {
                         tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
                         tmpContentNode = tmpErrorLabel;
                     }
-                    //TODO: add listeners
-                    //tmpContentNode.setEffect(new DropShadow(2, Color.BLACK));
-                    //tmpContentNode.setStyle("-fx-effect: innershadow(three-pass-box, rgba(100, 100, 100, 1), " + GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 2 + ", 0, 0, 0)");
-                    tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                            GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 4 + ", 0, " +
-                            GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 4 + ", " +
-                            GuiDefinitions.OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH / 4 + ")");
+                    //tmpContentNode.setStyle("-fx-effect: innershadow(three-pass-box, rgba(100, 100, 100, 1), " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, 0)");
+                    if (tmpDrawImagesWithShadow) {
+                        tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
+                    }
                     tmpStackPane.getChildren().add(tmpContentNode);
                     this.overviewView.getStructureGridPane().add(tmpStackPane, j, i);
                     tmpCurrentIndex++;
                 }
             }
         }
-        this.showImages = true;
+        this.createStructureImages = true;
         return this.overviewView.getStructureGridPane();
     }
-
+    //
     /**
      *
      * @throws IllegalArgumentException
@@ -300,6 +355,123 @@ public class OverviewViewController {
             }
         }
         this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
+    }
+    //
+    /**
+     * TODO: make this method static?!
+     *
+     * @param aMoleculeDataModel
+     * @param anOverviewViewStage
+     * @return
+     */
+    private ContextMenu generateContextMenuWithListeners(MoleculeDataModel aMoleculeDataModel, Stage anOverviewViewStage) {
+        //context menu
+        ContextMenu tmpContextMenu = new ContextMenu();
+        //copyImageMenuItem
+        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        //copySmilesMenuItem
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        //showStructureMenuItem
+        MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
+        //add Listeners to MenuItems
+        tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
+            try {
+                ClipboardContent tmpContent = new ClipboardContent();
+                tmpContent.putImage(DepictionUtil.depictImageWithZoom(
+                        aMoleculeDataModel.getAtomContainer(),
+                        1.0, 512, 350      //TODO: size of copied image as shown or with defined value?
+                ));
+                Clipboard.getSystemClipboard().setContent(tmpContent);
+                System.out.println("Image has been copied");
+            } catch (CDKException anException) {
+                //TODO: should not occur
+            }
+        });
+        tmpCopySmilesMenuItem.setOnAction((ActionEvent event) -> {
+            ClipboardContent tmpContent = new ClipboardContent();
+            tmpContent.putString(aMoleculeDataModel.getUniqueSmiles());
+            Clipboard.getSystemClipboard().setContent(tmpContent);
+            System.out.println("SMILES has been copied");
+        });
+        tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
+            this.showEnlargedStructureView(anOverviewViewStage, aMoleculeDataModel);
+        });
+        //add MenuItems and return ContextMenu
+        tmpContextMenu.getItems().addAll(
+                tmpCopyImageMenuItem,
+                tmpCopySmilesMenuItem,
+                new SeparatorMenuItem(),
+                tmpShowStructureMenuItem
+        );
+        return tmpContextMenu;
+    }
+    //
+    /**
+     *
+     * @param aPrimaryStage
+     * @param aMoleculeDataModel
+     */
+    private void showEnlargedStructureView(Stage aPrimaryStage, MoleculeDataModel aMoleculeDataModel) {
+        //TODO!!
+        System.out.println("Enlarged structure is being shown!");
+
+        if (this.enlargedStructureViewStage == null) {
+            this.enlargedStructureViewStage = new Stage();
+            this.enlargedStructureViewAnchorPane = new AnchorPane();
+            Scene tmpScene = new Scene(this.enlargedStructureViewAnchorPane, 300, 400);
+            this.enlargedStructureViewStage.setScene(tmpScene);
+            this.enlargedStructureViewStage.initModality(Modality.NONE);
+            this.enlargedStructureViewStage.initOwner(this.overviewViewStage);
+            this.enlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
+            this.enlargedStructureViewStage.setMinHeight(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
+            this.enlargedStructureViewStage.setMinWidth(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
+        }
+        if (!this.enlargedStructureViewStage.isShowing()) {
+            this.enlargedStructureViewStage.show();
+        }
+
+        try {
+            ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
+                    this.enlargedStructureViewAnchorPane.getWidth(), this.enlargedStructureViewAnchorPane.getHeight()));
+            this.enlargedStructureViewAnchorPane.getChildren().add(tmpStructureImage);
+
+            //context menu
+            ContextMenu tmpContextMenu = new ContextMenu();
+            //copyImageMenuItem
+            MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+            tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+            //copySmilesMenuItem
+            MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+            //add Listeners to MenuItems
+            tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
+                try {
+                    ClipboardContent tmpContent = new ClipboardContent();
+                    tmpContent.putImage(DepictionUtil.depictImageWithZoom(
+                            aMoleculeDataModel.getAtomContainer(),
+                            1.0, 512, 350      //TODO: size of copied image as shown or with defined value?
+                    ));
+                    Clipboard.getSystemClipboard().setContent(tmpContent);
+                    System.out.println("Image has been copied");
+                } catch (CDKException anException) {
+                    //TODO: should not occur
+                }
+            });
+            tmpCopySmilesMenuItem.setOnAction((ActionEvent event) -> {
+                ClipboardContent tmpContent = new ClipboardContent();
+                tmpContent.putString(aMoleculeDataModel.getUniqueSmiles());
+                Clipboard.getSystemClipboard().setContent(tmpContent);
+                System.out.println("SMILES has been copied");
+            });
+            //add MenuItems
+            tmpContextMenu.getItems().addAll(tmpCopyImageMenuItem, tmpCopySmilesMenuItem);
+
+            tmpStructureImage.setOnContextMenuRequested((event) -> {
+                tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY());
+            });
+        } catch (CDKException anException) {
+            //TODO?! if an exception is thrown generating an AtomContainer this point is never reached
+        }
     }
     //</editor-fold>
 

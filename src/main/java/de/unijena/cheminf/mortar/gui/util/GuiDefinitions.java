@@ -103,11 +103,19 @@ public final class GuiDefinitions {
     /**
      * Width of grid lines of the structure grid pane in overview view
      */
-    public static final double OVERVIEWVIEW_STRUCTUREGRIDPANE_GRIDLINES_WIDTH = 8.0;
+    public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH = 8.0;
     /**
      * Ratio of the left and right border width to the grid lines width of the structure grid pane in overview view
      */
-    public static final double OVERVIEWVIEW_STRUCTUREGRIDPANE_BORDER_GRIDLINES_WIDTH_RATIO = 2.0;
+    public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO = 2.0;
+    /**
+     * Minimal value for the width of the enlarged structure view
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE = 250.0;
+    /**
+     * Minimal value for the height of the enlarged structure view
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
     /**
      * KeyCodeCombination for Control + C
      */
