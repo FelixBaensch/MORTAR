@@ -101,7 +101,8 @@ public class OverviewView extends AnchorPane {
         //gridPane
         this.mainGridPane = new GridPane();
         //this.mainGridPane.setPadding(new Insets(0.0, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
-        this.mainGridPane.setPadding(new Insets(0.0, 0.0, GuiDefinitions.GUI_INSETS_VALUE, 0.0));
+        //this.mainGridPane.setPadding(new Insets(0.0, 0.0, GuiDefinitions.GUI_INSETS_VALUE, 0.0));
+        this.mainGridPane.setPadding(new Insets(0.0, 0.0, 0.0, 0.0));
         //this.mainGridPane.setStyle("-fx-background-color: LIGHTGREY");
         this.getChildren().add(this.mainGridPane);
         OverviewView.setTopAnchor(this.mainGridPane, 0.0);
@@ -136,7 +137,7 @@ public class OverviewView extends AnchorPane {
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
 
         this.structureGridPane = new GridPane();
-        this.structureGridPane.setAlignment(Pos.CENTER);
+        //this.structureGridPane.setAlignment(Pos.CENTER);
         //upper and lower border: extending the image frame to grid line width
         //right and left border: extending the image frame to grid line width and adding a spacing
         //spacing depends on grid line width

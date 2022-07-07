@@ -39,6 +39,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.openscience.cdk.exception.CDKException;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -140,6 +141,8 @@ public class OverviewViewController {
         this.overviewViewStage.initModality(Modality.WINDOW_MODAL);    //TODO: consider changing this?
         this.overviewViewStage.initOwner(this.mainStage);
         this.overviewViewStage.setTitle(this.overviewViewTitle);
+        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
+        this.overviewViewStage.getIcons().add(new Image(tmpImageInputStream));
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //this.overviewViewStage.show();
@@ -421,9 +424,11 @@ public class OverviewViewController {
             this.enlargedStructureViewAnchorPane = new AnchorPane();
             Scene tmpScene = new Scene(this.enlargedStructureViewAnchorPane, 300, 400);
             this.enlargedStructureViewStage.setScene(tmpScene);
-            this.enlargedStructureViewStage.initModality(Modality.NONE);
+            this.enlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
             this.enlargedStructureViewStage.initOwner(this.overviewViewStage);
             this.enlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
+            InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
+            this.enlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
             this.enlargedStructureViewStage.setMinHeight(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
             this.enlargedStructureViewStage.setMinWidth(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
         }
