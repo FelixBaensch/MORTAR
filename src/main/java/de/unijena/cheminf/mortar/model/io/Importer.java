@@ -146,9 +146,10 @@ public class Importer {
             case ".sdf":
                 tmpImportedMoleculesSet = this.importSDFile(aFile);
                 break;
-            case ".pdb":
+            //Needs more work before it can be made available
+            /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
-                break;
+                break;*/
             case ".smi":
             case ".txt":
                 tmpImportedMoleculesSet = this.importSMILESFile(aFile);
@@ -182,7 +183,8 @@ public class Importer {
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
-        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.pdb", "*.smi", "*.txt"));
+        //to make PDB available, add "*.pdb" here
+        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt"));
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if(!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
@@ -274,6 +276,7 @@ public class Importer {
         return tmpAtomContainerSet;
     }
     //
+    // Currently out of use! Needs more work before it can be made available. See importMoleculeFile() and loadFile()
     /**
      * Imports a PDB file.
      *
