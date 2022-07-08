@@ -24,14 +24,14 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
-import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  * @author Felix Baensch, Jonas Schaub
  * @version 1.0.0.0
  */
-public class FragmentationThread implements Callable<Hashtable<String, FragmentDataModel>> {
+public class FragmentationThread implements Callable<ConcurrentHashMap<String, FragmentDataModel>> {
 
     /**
      * Logger of this class.
@@ -78,8 +78,8 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
     }
 
     @Override
-    public Hashtable<String, FragmentDataModel> call() throws Exception {
-        Hashtable<String, FragmentDataModel> tmpFragmentHashtable = new Hashtable<>(this.molecules.size() * 2);
+    public ConcurrentHashMap<String, FragmentDataModel> call() throws Exception {
+        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentHashtable = new ConcurrentHashMap<>(this.molecules.size() * 2);
         if(this.molecules.size() < this.numberOfTasks){
             this.numberOfTasks = this.molecules.size();
         }

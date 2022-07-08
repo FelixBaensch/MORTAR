@@ -55,12 +55,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -159,7 +159,7 @@ public class FragmentationService {
     /**
      * Hashtable for fragments
      */
-    private Hashtable<String, FragmentDataModel> fragments;
+    private ConcurrentHashMap<String, FragmentDataModel> fragments;
     /**
      * String for the name of the current fragmentation algorithm
      */
@@ -277,8 +277,8 @@ public class FragmentationService {
             aNumberOfTasks = 1;
         }
         //</editor-fold>
-        this.fragments = new Hashtable<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
-        Hashtable<String, FragmentDataModel> tmpFragmentHashtable;
+        this.fragments = new ConcurrentHashMap<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
+        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentHashtable;
         if(this.pipeliningFragmentationName == null || this.pipeliningFragmentationName.isEmpty()){
             this.pipeliningFragmentationName = "Pipeline";
         }
@@ -419,8 +419,8 @@ public class FragmentationService {
             aNumberOfTasks = 1;
         }
         //</editor-fold>
-        this.fragments = new Hashtable<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
-        Hashtable<String, FragmentDataModel> tmpFragmentHashtable = null;
+        this.fragments = new ConcurrentHashMap<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
+        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentHashtable;
         if(this.pipeliningFragmentationName == null || this.pipeliningFragmentationName.isEmpty()){
             this.pipeliningFragmentationName = "Pipeline";
         }
@@ -480,7 +480,7 @@ public class FragmentationService {
                 tmpParentMol.getAllFragments().replace(tmpPipelineFragmentationName, tmpFrags);
             }
         }
-        Hashtable<String, FragmentDataModel> tmpFragmentsHash = new Hashtable<>(this.fragments.size() * this.pipelineFragmenter.length);
+        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentsHash = new ConcurrentHashMap<>(this.fragments.size() * this.pipelineFragmenter.length);
         for(MoleculeDataModel tmpMol : aListOfMolecules){
             if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
                 continue;
@@ -820,7 +820,7 @@ public class FragmentationService {
      *
      * @return fragments (results of fragmentation)
      */
-    public Hashtable<String, FragmentDataModel> getFragments(){
+    public ConcurrentHashMap<String, FragmentDataModel> getFragments(){
         return this.fragments;
     }
     /**
@@ -918,17 +918,17 @@ public class FragmentationService {
      * @param aNumberOfTasks
      * @throws Exception
      */
-    private Hashtable<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules,
+    private ConcurrentHashMap<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules,
                                                                     int aNumberOfTasks,
                                                                     IMoleculeFragmenter aFragmenter,
                                                                     String aFragmentationName)
             throws Exception {
         if(aListOfMolecules.size() == 0 || aNumberOfTasks == 0){
-            return new Hashtable<>(0);
+            return new ConcurrentHashMap<>(0);
         }
         int tmpNumberOfTasks = aNumberOfTasks;
         String tmpFragmentationName = aFragmentationName;
-        Hashtable<String, FragmentDataModel> tmpFragmentHashtable = new Hashtable<>(aListOfMolecules.size() * 2);
+        ConcurrentHashMap<String, FragmentDataModel> tmpConcurrentHashMap = new ConcurrentHashMap<>(aListOfMolecules.size() * 2);
         if(aListOfMolecules.size() < tmpNumberOfTasks){
             tmpNumberOfTasks = aListOfMolecules.size();
         }
@@ -953,7 +953,7 @@ public class FragmentationService {
         for(int i = 1; i <= tmpNumberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
             IMoleculeFragmenter tmpFragmenterForTask = aFragmenter.copy();
-            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, tmpFragmentationName));
+            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpConcurrentHashMap, tmpFragmentationName));
             tmpFromIndex = tmpToIndex;
             tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
             if(tmpMoleculeModulo > 0){
@@ -991,13 +991,13 @@ public class FragmentationService {
             }
         }
         int tmpFragmentAmount = 0;
-        Set<String> tmpKeySet = tmpFragmentHashtable.keySet();
+        Set<String> tmpKeySet = tmpConcurrentHashMap.keySet();
         for(String tmpKey : tmpKeySet){
-            tmpFragmentAmount += tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency();
+            tmpFragmentAmount += tmpConcurrentHashMap.get(tmpKey).getAbsoluteFrequency();
         }
         for(String tmpKey : tmpKeySet){
-            tmpFragmentHashtable.get(tmpKey).setAbsolutePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
-            tmpFragmentHashtable.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+            tmpConcurrentHashMap.get(tmpKey).setAbsolutePercentage(1.0 * tmpConcurrentHashMap.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+            tmpConcurrentHashMap.get(tmpKey).setMoleculePercentage(1.0 * tmpConcurrentHashMap.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
         if(tmpExceptionsCounter > 0){
             FragmentationService.LOGGER.log(Level.SEVERE, "Fragmentation \"" + tmpFragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");
@@ -1008,7 +1008,7 @@ public class FragmentationService {
         FragmentationService.LOGGER.info("Fragmentation \"" + tmpFragmentationName + "\" of " + aListOfMolecules.size()
                 + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "
                 + tmpMemoryConsumption + " MB");
-        return tmpFragmentHashtable;
+        return tmpConcurrentHashMap;
     }
 
     /**
