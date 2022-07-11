@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,11 +44,6 @@ import java.util.logging.Logger;
 public class FragmentationTask implements Callable<Integer> {
 
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
-    /**
-     * Lock to be used when updating the shared fragmentsHashTable. Needs to be static to be shared between all task
-     * objects.
-     */
-    private static final ReentrantLock LOCK = new ReentrantLock(true);
     /**
      * Logger of this class.
      */
@@ -155,9 +149,7 @@ public class FragmentationTask implements Callable<Integer> {
 //                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
                             this.fragmentsMap.put(tmpSmiles, tmpFragmentDataModel);
                         }
-                        LOCK.lock();
                         tmpFragmentDataModel.incrementAbsoluteFrequency();
-                        LOCK.unlock();
                         if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
                             tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                         }
@@ -165,9 +157,7 @@ public class FragmentationTask implements Callable<Integer> {
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
                         }
                         else{
-                            LOCK.lock();
                             tmpFragmentDataModel.incrementMoleculeFrequency();
-                            LOCK.unlock();
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
                             tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
                         }
