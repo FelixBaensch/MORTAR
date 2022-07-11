@@ -539,6 +539,9 @@ public class MainViewController {
             this.interruptExport();
         }
         tmpExporter.saveFile(this.primaryStage, anExportType, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+        if(tmpExporter.getFile() == null){
+            return;
+        }
         boolean tmpGenerate2dAtomCoordinates = false;
         switch (anExportType) {
             case PDB_FILE:
