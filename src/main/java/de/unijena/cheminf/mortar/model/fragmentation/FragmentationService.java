@@ -30,7 +30,6 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGenerator
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
@@ -46,7 +45,6 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Alert;
-import org.openscience.cdk.exception.CDKException;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +55,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -159,7 +158,7 @@ public class FragmentationService {
     /**
      * Hashtable for fragments
      */
-    private ConcurrentHashMap<String, FragmentDataModel> fragments;
+    private Map<String, FragmentDataModel> fragments;
     /**
      * String for the name of the current fragmentation algorithm
      */
@@ -278,7 +277,7 @@ public class FragmentationService {
         }
         //</editor-fold>
         this.fragments = new ConcurrentHashMap<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
-        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentHashtable;
+        Map<String, FragmentDataModel> tmpFragmentsMap; //TODO
         if(this.pipeliningFragmentationName == null || this.pipeliningFragmentationName.isEmpty()){
             this.pipeliningFragmentationName = "Pipeline";
         }
@@ -288,7 +287,7 @@ public class FragmentationService {
         List<MoleculeDataModel> tmpMolsToFragment = new ArrayList<>(aListOfMolecules);
         for(int i = 0; i < this.pipelineFragmenter.length; i++){
             this.fragments.clear();
-            tmpFragmentHashtable = this.startFragmentation(tmpMolsToFragment, aNumberOfTasks, this.pipelineFragmenter[i], tmpPipelineFragmentationName);
+            tmpFragmentsMap = this.startFragmentation(tmpMolsToFragment, aNumberOfTasks, this.pipelineFragmenter[i], tmpPipelineFragmentationName);
             tmpMolsToFragment.clear();
             //iterate through all initial molecules
             for(MoleculeDataModel tmpMolecule : aListOfMolecules) {
@@ -312,25 +311,26 @@ public class FragmentationService {
                     List<FragmentDataModel> tmpChildFragmentsList = tmpParentFragment.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName);
                     //if parent fragment has no children, parent fragment is child fragment
                     if(tmpChildFragmentsList == null || tmpChildFragmentsList.size() <  1) {
+                        String tmpParentSmiles = tmpParentFragment.getUniqueSmiles();
                         //if settingsContainer.isKeepLastFragmentSetting == true or parent fragment is part of the results of fragmentation the parent fragment will be set as new fragment if no new fragment is found
-                        if(this.settingsContainer.isKeepLastFragmentSetting() || (tmpFragmentHashtable != null && tmpFragmentHashtable.containsKey(tmpParentFragment.getUniqueSmiles()))) {
-                            if (tmpNewFragmentsOfMol.stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpParentFragment.getUniqueSmiles())) && tmpFragmentHashtable != null) {
-                                tmpNewFragmentsOfMol.add(tmpFragmentHashtable.get(tmpParentFragment.getUniqueSmiles()));
+                        if(this.settingsContainer.isKeepLastFragmentSetting() || (tmpFragmentsMap != null && tmpFragmentsMap.containsKey(tmpParentSmiles))) {
+                            if (tmpNewFragmentsOfMol.stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpParentFragment.getUniqueSmiles())) && tmpFragmentsMap != null) {
+                                tmpNewFragmentsOfMol.add(tmpFragmentsMap.get(tmpParentSmiles));
                                 tmpNewFragmentFrequenciesOfMol.put(tmpParentFragment.getUniqueSmiles(), tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
                             }
                             //if HashTable for resulting fragments contains fragment, update frequencies = add molecules fragment frequency of fragment to absolute frequency of fragment and increment molecule frequency
-                            if (this.fragments.containsKey(tmpParentFragment.getUniqueSmiles())) {
+                            if (this.fragments.containsKey(tmpParentSmiles)) {
                                 tmpParentFragment.getParentMolecules().add(tmpMolecule);
-                                this.fragments.get(tmpParentFragment.getUniqueSmiles()).setAbsoluteFrequency(
-                                        this.fragments.get(tmpParentFragment.getUniqueSmiles()).getAbsoluteFrequency() + tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles())
+                                this.fragments.get(tmpParentSmiles).setAbsoluteFrequency(
+                                        this.fragments.get(tmpParentSmiles).getAbsoluteFrequency() + tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles())
                                 );
-                                this.fragments.get(tmpParentFragment.getUniqueSmiles()).incrementMoleculeFrequency();
+                                this.fragments.get(tmpParentSmiles).incrementMoleculeFrequency();
                             }
                             //else add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
                             else {
                                 tmpParentFragment.getParentMolecules().clear();
                                 tmpParentFragment.getParentMolecules().add(tmpMolecule);
-                                this.fragments.put(tmpParentFragment.getUniqueSmiles(), tmpParentFragment);
+                                this.fragments.put(tmpParentSmiles, tmpParentFragment);
                                 tmpParentFragment.setAbsoluteFrequency(tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()));
                                 tmpParentFragment.setMoleculeFrequency(1);
                             }
@@ -340,8 +340,9 @@ public class FragmentationService {
                     else {
                         for(FragmentDataModel tmpChild : tmpChildFragmentsList){
                             FragmentDataModel tmpChildFragment;
-                            if(tmpFragmentHashtable != null && tmpFragmentHashtable.containsKey(tmpChild.getUniqueSmiles())) {
-                                tmpChildFragment = tmpFragmentHashtable.get(tmpChild.getUniqueSmiles());
+                            String tmpChildSmiles = tmpChild.getUniqueSmiles();
+                            if(tmpFragmentsMap != null && tmpFragmentsMap.containsKey(tmpChildSmiles)) {
+                                tmpChildFragment = tmpFragmentsMap.get(tmpChildSmiles);
                             } else {
                                 tmpChildFragment = tmpChild;
                             }
@@ -363,18 +364,18 @@ public class FragmentationService {
 
                             }
                             //if HashTable for resulting fragments contains fragment, update frequencies = add molecules fragment frequency of fragment to absolute frequency of fragment and increment molecule frequency
-                            if(this.fragments.containsKey(tmpChildFragment.getUniqueSmiles())) {
-                                this.fragments.get(tmpChildFragment.getUniqueSmiles()).setAbsoluteFrequency(
-                                        this.fragments.get(tmpChildFragment.getUniqueSmiles()).getAbsoluteFrequency() +
+                            if(this.fragments.containsKey(tmpChildSmiles)) {
+                                this.fragments.get(tmpChildSmiles).setAbsoluteFrequency(
+                                        this.fragments.get(tmpChildSmiles).getAbsoluteFrequency() +
                                                 (tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()) *
                                                 tmpParentFragment.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles())
                                                 )
                                 );
-                                this.fragments.get(tmpChildFragment.getUniqueSmiles()).incrementMoleculeFrequency();
+                                this.fragments.get(tmpChildSmiles).incrementMoleculeFrequency();
                             }
                             //else add to HashTable, set molecules fragment frequency of fragment as initial absolute frequency of fragment and set molecule frequency to 1
                             else {
-                                this.fragments.put(tmpChildFragment.getUniqueSmiles(), tmpChildFragment);
+                                this.fragments.put(tmpChildSmiles, tmpChildFragment);
                                 tmpChildFragment.setAbsoluteFrequency(
                                         tmpMolecule.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles()) *
                                                 tmpParentFragment.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles())
@@ -411,114 +412,114 @@ public class FragmentationService {
      * @param aNumberOfTasks int
      * @throws Exception if anything unexpected happen
      */
-    public void startPipelineFragmentationMolByMol(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
-        //<editor-fold desc="checks" defualtstate="collapsed">
-        Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
-        Objects.requireNonNull(this.pipelineFragmenter, "pipelineFragmenter must not be null");
-        if(aNumberOfTasks == 0){
-            aNumberOfTasks = 1;
-        }
-        //</editor-fold>
-        this.fragments = new ConcurrentHashMap<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
-        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentHashtable;
-        if(this.pipeliningFragmentationName == null || this.pipeliningFragmentationName.isEmpty()){
-            this.pipeliningFragmentationName = "Pipeline";
-        }
-        String tmpPipelineFragmentationName = this.createAndCheckFragmentationName(this.pipeliningFragmentationName);
-        this.existingFragmentations.add(tmpPipelineFragmentationName);
-        this.currentFragmentationName = tmpPipelineFragmentationName;
-
-        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName);
-
-        for(int i = 1; i < this.pipelineFragmenter.length; i++){
-            String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmName());
-
-            for(MoleculeDataModel tmpParentMol : aListOfMolecules){
-                if(!tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
-                    continue;
-                }
-                List<MoleculeDataModel> tmpChildMols = (List<MoleculeDataModel>)(List<?>) tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName);
-                tmpFragmentHashtable = this.startFragmentation(tmpChildMols, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName);
-                Set<String> tmpKeySet = tmpFragmentHashtable.keySet();
-                LinkedList<FragmentDataModel> tmpFrags = new LinkedList<>();
-                for(String tmpKey : tmpKeySet){
-                    tmpFrags.add(tmpFragmentHashtable.get(tmpKey));
-                }
-                HashMap<String, Integer> tmpNewFrequencies = new HashMap<>(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size()*2);
-                for(MoleculeDataModel tmpChildMol : tmpChildMols){
-                    if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
-                        continue;
-                    }
-                    for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
-                        String tmpKey;
-                        try{
-                            tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
-                            if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName) ||
-                                    !tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
-                                continue;
-                            }
-                            if(tmpNewFrequencies.containsKey(tmpKey)){
-                                tmpNewFrequencies.replace(
-                                        tmpKey,
-                                        tmpNewFrequencies.get(tmpKey) +
-                                                tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) *
-                                                        tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
-                                );
-                            }else{
-                                tmpNewFrequencies.put(
-                                        tmpKey,
-                                        tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) *
-                                                tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
-                                );
-                            }
-                        } catch(CDKException anException){
-                            FragmentationService.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFrag.getName(), anException);
-                        }
-                    }
-                }
-                tmpParentMol.getFragmentFrequencies().replace(tmpPipelineFragmentationName, tmpNewFrequencies);
-                tmpParentMol.getAllFragments().replace(tmpPipelineFragmentationName, tmpFrags);
-            }
-        }
-        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentsHash = new ConcurrentHashMap<>(this.fragments.size() * this.pipelineFragmenter.length);
-        for(MoleculeDataModel tmpMol : aListOfMolecules){
-            if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
-                continue;
-            }
-            for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName))
-            {
-                String tmpKey;
-                try{
-                    tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
-                } catch (CDKException anException){
-                    FragmentationService.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFrag.getName(), anException);
-                    continue;
-                }
-                if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
-                    continue;
-                }
-                if(!tmpFragmentsHash.containsKey(tmpKey)){
-                    tmpFragmentsHash.put(tmpKey, tmpFrag);
-                    tmpFrag.setAbsoluteFrequency(tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
-                    tmpFrag.setMoleculeFrequency(1);
-                }
-                else{
-                    tmpFragmentsHash.get(tmpKey).setAbsoluteFrequency(tmpFragmentsHash.get(tmpKey).getAbsoluteFrequency() + tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
-                    tmpFragmentsHash.get(tmpKey).incrementMoleculeFrequency();
-                }
-            }
-        }
-        this.fragments = tmpFragmentsHash;
-        int tmpFragmentAmount = 0;
-        Set<String> tmpKeySet = this.fragments.keySet();
-        for(String tmpKey : tmpKeySet){
-            tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
-        }
-        for(String tmpKey : tmpKeySet){
-            this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
-            this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
-        }
-    }
+//    public void startPipelineFragmentationMolByMol(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
+//        //<editor-fold desc="checks" defualtstate="collapsed">
+//        Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
+//        Objects.requireNonNull(this.pipelineFragmenter, "pipelineFragmenter must not be null");
+//        if(aNumberOfTasks == 0){
+//            aNumberOfTasks = 1;
+//        }
+//        //</editor-fold>
+//        this.fragments = new ConcurrentHashMap<>(aListOfMolecules.size() * this.pipelineFragmenter.length);
+//        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentHashtable;
+//        if(this.pipeliningFragmentationName == null || this.pipeliningFragmentationName.isEmpty()){
+//            this.pipeliningFragmentationName = "Pipeline";
+//        }
+//        String tmpPipelineFragmentationName = this.createAndCheckFragmentationName(this.pipeliningFragmentationName);
+//        this.existingFragmentations.add(tmpPipelineFragmentationName);
+//        this.currentFragmentationName = tmpPipelineFragmentationName;
+//
+//        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName);
+//
+//        for(int i = 1; i < this.pipelineFragmenter.length; i++){
+//            String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmName());
+//
+//            for(MoleculeDataModel tmpParentMol : aListOfMolecules){
+//                if(!tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+//                    continue;
+//                }
+//                List<MoleculeDataModel> tmpChildMols = (List<MoleculeDataModel>)(List<?>) tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName);
+//                tmpFragmentHashtable = this.startFragmentation(tmpChildMols, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName);
+//                Set<String> tmpKeySet = tmpFragmentHashtable.keySet();
+//                LinkedList<FragmentDataModel> tmpFrags = new LinkedList<>();
+//                for(String tmpKey : tmpKeySet){
+//                    tmpFrags.add(tmpFragmentHashtable.get(tmpKey));
+//                }
+//                HashMap<String, Integer> tmpNewFrequencies = new HashMap<>(tmpParentMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName).size()*2);
+//                for(MoleculeDataModel tmpChildMol : tmpChildMols){
+//                    if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
+//                        continue;
+//                    }
+//                    for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
+//                        String tmpKey;
+//                        try{
+//                            tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+//                            if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName) ||
+//                                    !tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+//                                continue;
+//                            }
+//                            if(tmpNewFrequencies.containsKey(tmpKey)){
+//                                tmpNewFrequencies.replace(
+//                                        tmpKey,
+//                                        tmpNewFrequencies.get(tmpKey) +
+//                                                tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) *
+//                                                        tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
+//                                );
+//                            }else{
+//                                tmpNewFrequencies.put(
+//                                        tmpKey,
+//                                        tmpChildMol.getFragmentFrequencyOfSpecificAlgorithm(tmpFragmentationName).get(tmpKey) *
+//                                                tmpParentMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
+//                                );
+//                            }
+//                        } catch(CDKException anException){
+//                            FragmentationService.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFrag.getName(), anException);
+//                        }
+//                    }
+//                }
+//                tmpParentMol.getFragmentFrequencies().replace(tmpPipelineFragmentationName, tmpNewFrequencies);
+//                tmpParentMol.getAllFragments().replace(tmpPipelineFragmentationName, tmpFrags);
+//            }
+//        }
+//        ConcurrentHashMap<String, FragmentDataModel> tmpFragmentsHash = new ConcurrentHashMap<>(this.fragments.size() * this.pipelineFragmenter.length);
+//        for(MoleculeDataModel tmpMol : aListOfMolecules){
+//            if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+//                continue;
+//            }
+//            for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificAlgorithm(tmpPipelineFragmentationName))
+//            {
+//                String tmpKey;
+//                try{
+//                    tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+//                } catch (CDKException anException){
+//                    FragmentationService.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFrag.getName(), anException);
+//                    continue;
+//                }
+//                if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
+//                    continue;
+//                }
+//                if(!tmpFragmentsHash.containsKey(tmpKey)){
+//                    tmpFragmentsHash.put(tmpKey, tmpFrag);
+//                    tmpFrag.setAbsoluteFrequency(tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
+//                    tmpFrag.setMoleculeFrequency(1);
+//                }
+//                else{
+//                    tmpFragmentsHash.get(tmpKey).setAbsoluteFrequency(tmpFragmentsHash.get(tmpKey).getAbsoluteFrequency() + tmpMol.getFragmentFrequencyOfSpecificAlgorithm(tmpPipelineFragmentationName).get(tmpKey));
+//                    tmpFragmentsHash.get(tmpKey).incrementMoleculeFrequency();
+//                }
+//            }
+//        }
+//        this.fragments = tmpFragmentsHash;
+//        int tmpFragmentAmount = 0;
+//        Set<String> tmpKeySet = this.fragments.keySet();
+//        for(String tmpKey : tmpKeySet){
+//            tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
+//        }
+//        for(String tmpKey : tmpKeySet){
+//            this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+//            this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+//        }
+//    }
     //
     /**
      * Returns a new instance of the fragmenter class with the given algorithm name.
@@ -820,7 +821,7 @@ public class FragmentationService {
      *
      * @return fragments (results of fragmentation)
      */
-    public ConcurrentHashMap<String, FragmentDataModel> getFragments(){
+    public Map<String, FragmentDataModel> getFragments(){
         return this.fragments;
     }
     /**
@@ -918,17 +919,26 @@ public class FragmentationService {
      * @param aNumberOfTasks
      * @throws Exception
      */
-    private ConcurrentHashMap<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules,
-                                                                    int aNumberOfTasks,
-                                                                    IMoleculeFragmenter aFragmenter,
-                                                                    String aFragmentationName)
+    private Map<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules,
+                                                               int aNumberOfTasks,
+                                                               IMoleculeFragmenter aFragmenter,
+                                                               String aFragmentationName)
             throws Exception {
         if(aListOfMolecules.size() == 0 || aNumberOfTasks == 0){
             return new ConcurrentHashMap<>(0);
         }
         int tmpNumberOfTasks = aNumberOfTasks;
         String tmpFragmentationName = aFragmentationName;
-        ConcurrentHashMap<String, FragmentDataModel> tmpConcurrentHashMap = new ConcurrentHashMap<>(aListOfMolecules.size() * 2);
+//        ConcurrentHashMap<Integer, FragmentDataModel> tmpFragmentsMap = new ConcurrentHashMap<>(aListOfMolecules.size() * 10);
+        Map<String, FragmentDataModel> tmpFragmentsMap;
+        if(aNumberOfTasks > 1){
+            tmpFragmentsMap = new ConcurrentHashMap<>(aListOfMolecules.size() * 2);
+        }
+        else{
+            tmpFragmentsMap = new HashMap<>(aListOfMolecules.size() * 2);
+        }
+
+
         if(aListOfMolecules.size() < tmpNumberOfTasks){
             tmpNumberOfTasks = aListOfMolecules.size();
         }
@@ -953,7 +963,7 @@ public class FragmentationService {
         for(int i = 1; i <= tmpNumberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
             IMoleculeFragmenter tmpFragmenterForTask = aFragmenter.copy();
-            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpConcurrentHashMap, tmpFragmentationName));
+            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentsMap, tmpFragmentationName));
             tmpFromIndex = tmpToIndex;
             tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
             if(tmpMoleculeModulo > 0){
@@ -972,7 +982,7 @@ public class FragmentationService {
         int tmpExceptionsCounter = 0;
         tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
         if (this.executorService.isShutdown() || this.executorService.isTerminated()) {
-            this.LOGGER.log(Level.INFO, "Fragmentation cancelled");
+            FragmentationService.LOGGER.log(Level.INFO, "Fragmentation cancelled");
             return null;
         }
         for (Future<Integer> tmpFuture : tmpFuturesList) {
@@ -991,13 +1001,13 @@ public class FragmentationService {
             }
         }
         int tmpFragmentAmount = 0;
-        Set<String> tmpKeySet = tmpConcurrentHashMap.keySet();
+        Set<String> tmpKeySet = tmpFragmentsMap.keySet();
         for(String tmpKey : tmpKeySet){
-            tmpFragmentAmount += tmpConcurrentHashMap.get(tmpKey).getAbsoluteFrequency();
+            tmpFragmentAmount += tmpFragmentsMap.get(tmpKey).getAbsoluteFrequency();
         }
         for(String tmpKey : tmpKeySet){
-            tmpConcurrentHashMap.get(tmpKey).setAbsolutePercentage(1.0 * tmpConcurrentHashMap.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
-            tmpConcurrentHashMap.get(tmpKey).setMoleculePercentage(1.0 * tmpConcurrentHashMap.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+            tmpFragmentsMap.get(tmpKey).setAbsolutePercentage(1.0 * tmpFragmentsMap.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+            tmpFragmentsMap.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentsMap.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
         }
         if(tmpExceptionsCounter > 0){
             FragmentationService.LOGGER.log(Level.SEVERE, "Fragmentation \"" + tmpFragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");
@@ -1008,7 +1018,7 @@ public class FragmentationService {
         FragmentationService.LOGGER.info("Fragmentation \"" + tmpFragmentationName + "\" of " + aListOfMolecules.size()
                 + " molecules complete. It took " + (tmpEndTime - tmpStartTime) + " ms. Current memory consumption: "
                 + tmpMemoryConsumption + " MB");
-        return tmpConcurrentHashMap;
+        return tmpFragmentsMap;
     }
 
     /**

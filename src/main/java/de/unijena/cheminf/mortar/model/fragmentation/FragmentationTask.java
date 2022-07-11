@@ -30,8 +30,8 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,7 +68,7 @@ public class FragmentationTask implements Callable<Integer> {
     /**
      * HashTable to hold fragments
      */
-    private final ConcurrentHashMap<String, FragmentDataModel> fragmentConcurrentHashMap;
+    private final Map<String, FragmentDataModel> fragmentsMap;
     /**
      * Name of fragmentation
      */
@@ -85,13 +85,13 @@ public class FragmentationTask implements Callable<Integer> {
      * @param aListOfMolecules atom containers should meet the ErtlFunctionalGroupsFinder's input specifications but
      *                         any occurring exception will be caught
      * @param aFragmenter Fragmenter to use
-     * @param aConcurrentHashMapOfFragments ConcurrentHashMap to store fragments
+     * @param aMapOfFragments Map to store fragments, should be a ConcurrentHashMap in case of multiple threads to ensure thread safety
      * @param aFragmentationName String
      */
-    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules, IMoleculeFragmenter aFragmenter, ConcurrentHashMap<String, FragmentDataModel> aConcurrentHashMapOfFragments, String aFragmentationName) {
+    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules, IMoleculeFragmenter aFragmenter, Map<String, FragmentDataModel> aMapOfFragments, String aFragmentationName) {
         this.moleculesList = aListOfMolecules;
         this.fragmenter = aFragmenter;
-        this.fragmentConcurrentHashMap = aConcurrentHashMapOfFragments;
+        this.fragmentsMap = aMapOfFragments;
         this.fragmentationName = aFragmentationName;
         this.exceptionsCounter = 0;
     }
@@ -147,20 +147,17 @@ public class FragmentationTask implements Callable<Integer> {
                     }
                     FragmentDataModel tmpFragmentDataModel;
                     try{
-                        if(this.fragmentConcurrentHashMap.containsKey(tmpSmiles)){
-                            tmpFragmentDataModel = this.fragmentConcurrentHashMap.get(tmpSmiles);
-                            LOCK.lock();
-                            tmpFragmentDataModel.incrementAbsoluteFrequency();
-                            LOCK.unlock();
+                        if(this.fragmentsMap.containsKey(tmpSmiles)){
+                            tmpFragmentDataModel = this.fragmentsMap.get(tmpSmiles);
                         }
                         else{
                             tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
 //                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
-                            this.fragmentConcurrentHashMap.put(tmpSmiles, tmpFragmentDataModel);
-                            LOCK.lock();
-                            tmpFragmentDataModel.incrementAbsoluteFrequency();
-                            LOCK.unlock();
+                            this.fragmentsMap.put(tmpSmiles, tmpFragmentDataModel);
                         }
+                        LOCK.lock();
+                        tmpFragmentDataModel.incrementAbsoluteFrequency();
+                        LOCK.unlock();
                         if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
                             tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                         }
