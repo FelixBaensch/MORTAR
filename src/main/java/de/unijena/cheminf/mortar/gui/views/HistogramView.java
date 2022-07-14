@@ -21,18 +21,11 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.control.Tooltip;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -88,13 +81,19 @@ public class HistogramView extends AnchorPane {
      * ScrollPane to make histogram scrollable
      */
     private ScrollPane scrollPane;
+    /**
+     * ComboBox to make the gap between the bars adjustable
+     */
+    private ComboBox comboBox;
+    private CheckBox logarithmicScale;
+
     //</editor-fold>
     //
     /**
      * Constructor
      * @param
      */
-    public HistogramView(){
+    public HistogramView(int aMaxFragmentNumber){
         super();
         this.scrollPane = new ScrollPane();
         this.scrollPane.setFitToHeight(true);
@@ -107,7 +106,7 @@ public class HistogramView extends AnchorPane {
         HistogramView.setRightAnchor(tmpBorderPane, 0.0);
         HistogramView.setLeftAnchor(tmpBorderPane, 0.0);
         HistogramView.setBottomAnchor(tmpBorderPane, 0.0);
-        //grid  // TODO is just a prototype
+        //grid
         GridPane tmpGrid = new GridPane();
         RowConstraints tmpRow1 = new RowConstraints();
         tmpRow1.setVgrow(Priority.ALWAYS);
@@ -129,7 +128,7 @@ public class HistogramView extends AnchorPane {
         tmpGrid.getRowConstraints().add(tmpRow4);
         ColumnConstraints tmpCol4 = new ColumnConstraints(20); // magic number
         tmpGrid.getColumnConstraints().add(tmpCol4);
-        //buttons
+        //controls
         HBox tmpHBoxButtonsHBox = new HBox();
         tmpHBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
         tmpBorderPane.setBottom(tmpHBoxButtonsHBox);
@@ -137,7 +136,9 @@ public class HistogramView extends AnchorPane {
         HBox tmpHBoxLeftSideButton = new HBox();
         this.textField = new TextField();
         this.textField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
-        this.textField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip")));
+        this.textField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " "+aMaxFragmentNumber));
+        TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
+        this.textField.setTextFormatter(tmpFormatter);
         this.refreshButton = new Button(Message.get("HistogramView.refreshButton.text"));
         this.refreshButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.refreshButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -147,7 +148,13 @@ public class HistogramView extends AnchorPane {
         this.smilesField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
         Label tmpSmilesLabel = new Label(Message.get("HistogramView.smilesField.text"));
         this.defaultLabel = new Label();
-        tmpHBoxLeftSideButton.getChildren().addAll(tmpSmilesLabel,this.smilesField,this.defaultLabel, this.textField, this.refreshButton);
+        this.comboBox = new ComboBox<>();
+        this.comboBox.getItems().add("Low");
+        this.comboBox.getItems().add("Medium");
+        this.comboBox.getItems().add("High");
+        this.comboBox.setValue("High");
+        Label tmpGapSettingsLabel = new Label("Gap setting");
+        tmpHBoxLeftSideButton.getChildren().addAll(tmpGapSettingsLabel,this.comboBox,tmpSmilesLabel,this.smilesField,this.defaultLabel, this.textField, this.refreshButton);
         tmpHBoxLeftSideButton.setAlignment(Pos.CENTER_LEFT);
         tmpHBoxLeftSideButton.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxLeftSideButton.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -163,8 +170,9 @@ public class HistogramView extends AnchorPane {
         this.checkbox.setTooltip(new Tooltip(Message.get("HistogramView.checkBox.toolTip")));
         this.gridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));
         this.gridLinesCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxGridlines.toolTip")));
+        this.logarithmicScale = new CheckBox("logarithmic scale");
         HBox tmpHBoxRightSideButtons = new HBox();
-        tmpHBoxRightSideButtons.getChildren().addAll(this.gridLinesCheckBox,this.checkbox, this.cancelButton);
+        tmpHBoxRightSideButtons.getChildren().addAll(this.logarithmicScale,this.gridLinesCheckBox,this.checkbox, this.cancelButton);
         tmpHBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
         tmpHBoxRightSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxRightSideButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -252,6 +260,9 @@ public class HistogramView extends AnchorPane {
     public CheckBox getGridLinesCheckBox() {
         return this.gridLinesCheckBox;
     }
+    public CheckBox getLogarithmicScale(){
+        return this.logarithmicScale;
+    }
     //
     /**
      * Returns a Label to show the maximum number of fragments
@@ -263,6 +274,9 @@ public class HistogramView extends AnchorPane {
     }
     public ScrollPane getScrollPane() {
         return this.scrollPane;
+    }
+    public ComboBox getComboBox() {
+        return this.comboBox;
     }
     //</editor-fold>
 }

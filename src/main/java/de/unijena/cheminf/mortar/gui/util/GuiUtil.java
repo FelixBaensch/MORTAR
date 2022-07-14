@@ -221,7 +221,7 @@ public class GuiUtil {
     public static UnaryOperator<TextFormatter.Change> getIntegerFilter(){
         return c ->{
             String text = c.getControlNewText();
-            if(getIntegerPattern().matcher(text).matches()) {
+            if(getIntegerPattern().matcher(text).matches() && text.matches("\\d*") ) {
                 return c;
             } else {
                 return null;
@@ -259,10 +259,9 @@ public class GuiUtil {
             }
             @Override
             public Integer fromString(String aString) {
-                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString)){
+                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString) || "0.".equals(aString)){
                     return 0;
-                }
-                else{
+                } else{
                     return Integer.valueOf(aString);
                 }
             }

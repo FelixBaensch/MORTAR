@@ -159,7 +159,7 @@ public final class GuiDefinitions {
     /**
      * Default fragment frequency
      */
-    public static  final int HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY = 0;
+    public static  final int HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY = 30;
     /**
      * Value of tickLabel length
      */
