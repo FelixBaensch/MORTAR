@@ -221,7 +221,7 @@ public class GuiUtil {
     public static UnaryOperator<TextFormatter.Change> getIntegerFilter(){
         return c ->{
             String text = c.getControlNewText();
-            if(getIntegerPattern().matcher(text).matches() && text.matches("\\d*") ) {
+            if(getIntegerPattern().matcher(text).matches()) {
                 return c;
             } else {
                 return null;

@@ -129,10 +129,6 @@ public final class GuiDefinitions {
      */
     public static final double GUI_NOT_SCROLLABLE_HEIGHT = 706.4;
     /**
-     * Value for the height deviation
-     */
-    public static final double GUI_HISTOGRAM_HEIGHT_DEVIATION = 8.44;
-    /**
      * Value for the bar widths
      */
     public static final double GUI_BAR_WIDTH = 30.0;
@@ -141,13 +137,41 @@ public final class GuiDefinitions {
      */
     public static final double GUI_TEXT_FIELD_WIDTH = 50.0;
     /**
-     * Value for histogram growth factor
+     * Value for the small bar gap
      */
-    public static final double GUI_HISTOGRAM_GROWTH_VALUE = 50.0;
+    public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.246;
     /**
-     * Calculated bar spacing for 10 fragments shown
+     * Value fpr the medium bar gap
      */
-    public static final  double GUI_HISTOGRAM_CALCULATED_BAR_GAP = 70.64;
+    public static final double GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST = 4.442;
+    /**
+     * Value for the large bar gap
+     */
+    public static final double GUI_HISTOGRAM_LARGE_BAR_GAP_CONST = 6.028;
+    /**
+     * Value for the small bar width
+     */
+    public static final double GUI_HISTOGRAM_SMALL_BAR_WIDTH = 15;
+    /**
+     * Value for the medium bar width
+     */
+    public static final double GUI_HISTOGRAM_MEDIUM_BAR_WIDTH = 20;
+    /***
+     * Value for the large bar width
+     */
+    public static final double GUI_HISTOGRAM_LARGE_BAR_WIDTH = 30;
+    /**
+     * Value for the small histogram growth factor
+     */
+    public static final double GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE = 27;
+    /**
+     * Value for the medium histogram growth factor
+     */
+    public static final double GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE = 37;
+    /**
+     * Value for the large histogram growth factor
+     */
+    public static final double GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE = 50;
     /**
      * Value of the bar label sizes
      */
@@ -168,4 +192,12 @@ public final class GuiDefinitions {
      * Value of tickLabel gap
      */
     public static final double HISTOGRAM_TICK_LABEL_GAP = 10.0;
+    /**
+     * Value for the width of the Copy SMILES context menu
+     */
+    public static final double HISTOGRAM_CONTEXTMENU_LABEL = 10.0;
+    /**
+     * Renewed width of the context menu
+     */
+    public static final double HISTOGRAM_CONTEXTMENU_LABEL_NEW = 50.0;
 }

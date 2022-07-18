@@ -96,15 +96,6 @@ public class DepictionUtil {
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom){
         return depictImageWithZoom(anAtomContainer, aZoom, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
-    public static Image depictImageWithPadding(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, double padding) {
-        try {
-            BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithPas(anAtomContainer, aZoom, aWidth, aHeight,padding);
-            return SwingFXUtils.toFXImage(tmpBufferedImage, null);
-        } catch (CDKException | NullPointerException anException) {
-            DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return DepictionUtil.depictErrorImage(anException.getMessage(), 250,250);
-        }
-    }
     //
     /**
      * Creates and returns an Image of the AtomContainer with any zoom factor and given width and height.
@@ -219,11 +210,5 @@ public class DepictionUtil {
         tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
         return tmpGenerator.depict(anAtomContainer).toImg();
     }
-    private static BufferedImage depictBufferedImageWithPas(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, double padding) throws CDKException {
-        DepictionGenerator tmpGenerator = new DepictionGenerator();
-        tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth, aHeight).withZoom(aZoom).withPadding(padding);
-        return tmpGenerator.depict(anAtomContainer).toImg();
-    }
-
     //</editor-fold>
 }

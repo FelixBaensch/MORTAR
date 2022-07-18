@@ -85,8 +85,15 @@ public class HistogramView extends AnchorPane {
      * ComboBox to make the gap between the bars adjustable
      */
     private ComboBox comboBox;
+    /**
+     * CheckBox to scale the X-axis logarithmically
+     */
     private CheckBox logarithmicScale;
-
+    /**
+     * CheckBox to make the display of tick labels adjustable
+     *
+     */
+    private CheckBox smilesTickLabel;
     //</editor-fold>
     //
     /**
@@ -137,23 +144,24 @@ public class HistogramView extends AnchorPane {
         this.textField = new TextField();
         this.textField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.textField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " "+aMaxFragmentNumber));
-        TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
+        TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), aMaxFragmentNumber, GuiUtil.getIntegerFilter());
         this.textField.setTextFormatter(tmpFormatter);
         this.refreshButton = new Button(Message.get("HistogramView.refreshButton.text"));
         this.refreshButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.refreshButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.refreshButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.smilesField = new TextField(); // TODO tooltip smilesText
+        this.smilesField = new TextField();
         this.smilesField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.smilesField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
-        Label tmpSmilesLabel = new Label(Message.get("HistogramView.smilesField.text"));
+        Label tmpSmilesLabel = new Label(Message.get("HistogramView.smilesLabel.text"));
         this.defaultLabel = new Label();
         this.comboBox = new ComboBox<>();
-        this.comboBox.getItems().add("Low");
-        this.comboBox.getItems().add("Medium");
-        this.comboBox.getItems().add("High");
-        this.comboBox.setValue("High");
-        Label tmpGapSettingsLabel = new Label("Gap setting");
+        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item1.text"));
+        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item2.text"));
+        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item3.text"));
+        this.comboBox.setValue(Message.get("HistogramView.comboBox.item3.text"));
+        this.comboBox.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
+        Label tmpGapSettingsLabel = new Label(Message.get("HistogramView.gapSettingLabel.text"));
         tmpHBoxLeftSideButton.getChildren().addAll(tmpGapSettingsLabel,this.comboBox,tmpSmilesLabel,this.smilesField,this.defaultLabel, this.textField, this.refreshButton);
         tmpHBoxLeftSideButton.setAlignment(Pos.CENTER_LEFT);
         tmpHBoxLeftSideButton.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
@@ -170,9 +178,12 @@ public class HistogramView extends AnchorPane {
         this.checkbox.setTooltip(new Tooltip(Message.get("HistogramView.checkBox.toolTip")));
         this.gridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));
         this.gridLinesCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxGridlines.toolTip")));
-        this.logarithmicScale = new CheckBox("logarithmic scale");
+        this.logarithmicScale = new CheckBox(Message.get("HistogramView.checkBoxLogarithmicScale.text"));
+        this.logarithmicScale.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxLogarithmicScale.toolTip")));
+        this.smilesTickLabel = new CheckBox(Message.get("HistogramView.checkBoxSmilesTickLabel.text"));
+        this.smilesTickLabel.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxSmilesTickLabel.toolTip")));
         HBox tmpHBoxRightSideButtons = new HBox();
-        tmpHBoxRightSideButtons.getChildren().addAll(this.logarithmicScale,this.gridLinesCheckBox,this.checkbox, this.cancelButton);
+        tmpHBoxRightSideButtons.getChildren().addAll(this.logarithmicScale,this.gridLinesCheckBox,this.checkbox, this.smilesTickLabel, this.cancelButton);
         tmpHBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
         tmpHBoxRightSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxRightSideButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -260,6 +271,12 @@ public class HistogramView extends AnchorPane {
     public CheckBox getGridLinesCheckBox() {
         return this.gridLinesCheckBox;
     }
+    //
+    /**
+     * Returns a CheckBox to make the number axis logarithmically
+     *
+     * @return CheckBox
+     */
     public CheckBox getLogarithmicScale(){
         return this.logarithmicScale;
     }
@@ -272,11 +289,32 @@ public class HistogramView extends AnchorPane {
     public Label getDefaultLabel() {
         return this.defaultLabel;
     }
+    //
+    /**
+     * Returns a ScrollPane in which the histogram is to be displayed
+     *
+     * @return ScrollPane
+     */
     public ScrollPane getScrollPane() {
         return this.scrollPane;
     }
+    //
+    /**
+     * Returns a ComoBox containing 3 options for different gap sizes between the bars
+     *
+     * @return ComboBox
+     */
     public ComboBox getComboBox() {
         return this.comboBox;
+    }
+    //
+    /**
+     * Returns a CheckBox to deactivate the tick labels on the Y-axis
+     *
+     * @return CheckBox
+     */
+    public CheckBox getSmilesTickLabel() {
+        return this.smilesTickLabel;
     }
     //</editor-fold>
 }
