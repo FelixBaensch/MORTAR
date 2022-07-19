@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.scene.control.Alert;
@@ -39,6 +40,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -46,6 +48,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.util.StringConverter;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -326,7 +330,14 @@ public class GuiUtil {
                     tmpClipboardContent.putString(((Double)tmpCell).toString());
                 }
                 else if(tmpCell.getClass() == ImageView.class){
-                    tmpClipboardContent.putImage(((ImageView)tmpCell).getImage());
+                    Image tmpImage;
+                    try {
+                        IAtomContainer tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
+                        tmpImage = DepictionUtil.depictImageWithZoomAndFillToFit(tmpAtomContainer, 1,1500,1000,true);
+                    } catch (CDKException e) {
+                        tmpImage = DepictionUtil.depictErrorImage(e.getMessage(), 150,100);
+                    }
+                    tmpClipboardContent.putImage(tmpImage);
                 }
                 else{
                     return;

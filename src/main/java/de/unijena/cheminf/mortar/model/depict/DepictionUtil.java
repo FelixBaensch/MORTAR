@@ -96,7 +96,6 @@ public class DepictionUtil {
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom){
         return depictImageWithZoom(anAtomContainer, aZoom, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
-    //
     /**
      * Creates and returns an Image of the AtomContainer with any zoom factor and given width and height.
      *
@@ -107,8 +106,22 @@ public class DepictionUtil {
      * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) {
+        return DepictionUtil.depictImageWithZoomAndFillToFit(anAtomContainer, aZoom, aWidth, aHeight, false);
+    }
+    //
+    /**
+     * Creates and returns an Image of the AtomContainer with any zoom factor and given width and height and fill to fit.
+     *
+     * @param anAtomContainer IAtomContainer
+     * @param aZoom double
+     * @param aWidth double
+     * @param aHeight double
+     * @param fillToFit boolean Resize depictions to fill all available space (only if a size is specified)
+     * @return Image of 2D structure of IAtomContainer
+     */
+    public static Image depictImageWithZoomAndFillToFit(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, boolean fillToFit) {
         try {
-            BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight);
+            BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight, fillToFit);
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
         } catch (CDKException | NullPointerException anException) {
             DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -167,7 +180,7 @@ public class DepictionUtil {
      */
     public static Image depictImageWithText(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, String aString){
         try{
-            BufferedImage tmpMolBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight);
+            BufferedImage tmpMolBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight, false);
             BufferedImage tmpBufferedImage = new BufferedImage(tmpMolBufferedImage.getWidth(), tmpMolBufferedImage.getHeight() + BasicDefinitions.DEFAULT_IMAGE_TEXT_DISTANCE, BufferedImage.TRANSLUCENT);
             Graphics2D tmpGraphics2d = tmpBufferedImage.createGraphics();
             tmpGraphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
@@ -205,9 +218,14 @@ public class DepictionUtil {
      * @return BufferedImage of given IAtomContainer
      * @throws CDKException
      */
-    private static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight) throws CDKException {
+    private static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, boolean fillToFit) throws CDKException {
         DepictionGenerator tmpGenerator = new DepictionGenerator();
-        tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+        if(fillToFit){
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withFillToFit();
+        }
+        else {
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+        }
         return tmpGenerator.depict(anAtomContainer).toImg();
     }
     //</editor-fold>
