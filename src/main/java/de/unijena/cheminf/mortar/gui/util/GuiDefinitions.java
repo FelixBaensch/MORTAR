@@ -127,7 +127,7 @@ public final class GuiDefinitions {
     /**
      * Value for the not scrollable histogram
      */
-    public static final double GUI_NOT_SCROLLABLE_HEIGHT = 706.4;
+    public static final double GUI_NOT_SCROLLABLE_HEIGHT = 651.0;
     /**
      * Value for the bar widths
      */
@@ -139,15 +139,15 @@ public final class GuiDefinitions {
     /**
      * Value for the small bar gap
      */
-    public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.246;
+    public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.5416;
     /**
      * Value fpr the medium bar gap
      */
-    public static final double GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST = 4.442;
+    public static final double GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST = 5.0;
     /**
      * Value for the large bar gap
      */
-    public static final double GUI_HISTOGRAM_LARGE_BAR_GAP_CONST = 6.028;
+    public static final double GUI_HISTOGRAM_LARGE_BAR_GAP_CONST = 6.5384;
     /**
      * Value for the small bar width
      */

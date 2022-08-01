@@ -42,13 +42,9 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -77,7 +73,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
@@ -452,19 +447,6 @@ public class MainViewController {
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
-                /**
-                this.mainTabPane.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Tab> observableValue, Tab tab, Tab t1) {
-                        if(mainTabPane.getSelectionModel().getSelectedItem().getId() == TabNames.Molecules.toString()) {
-                            System.out.println("123455566677");
-                            mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
-                        } else {
-                            mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
-                        }
-                    }
-                });
-                 */
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
                 int tmpExceptionCount = 0;
                 for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
@@ -836,17 +818,14 @@ public class MainViewController {
         this.moleculesDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
          });
-        this.mainTabPane.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
-            @Override
-            public void changed(ObservableValue<? extends Tab> observableValue, Tab tab, Tab t1) {
-                Platform.runLater(() -> {
-                    if (mainTabPane.getSelectionModel().getSelectedItem().getId() == TabNames.Molecules.toString()) {
-                        mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
-                    } else {
-                        mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
-                    }
-                });
-            }
+        this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            Platform.runLater(() -> {
+                if (this.mainTabPane.getSelectionModel().getSelectedItem().getId() == TabNames.Molecules.toString()) {
+                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                } else {
+                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                }
+            });
         });
     }
     //
