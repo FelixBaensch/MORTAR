@@ -210,6 +210,7 @@ public class HistogramView extends AnchorPane {
         tmpMainHBoxControls.getChildren().add(tmpHBoxLeftSideControls);
         this.imageStructure = new ImageView();
         this.imageStructure.setEffect(new DropShadow(10,2,3, Color.BLACK));
+        this.imageStructure.setStyle("fx-padding: 50px; fx-margin: 50px");
         // right side controls
         this.closeButton = new Button(Message.get("HistogramView.cancelButton.text"));
         this.closeButton.setTooltip(new Tooltip(Message.get("HistogramView.cancelButton.toolTip")));
@@ -247,7 +248,7 @@ public class HistogramView extends AnchorPane {
         this.getChildren().add(tmpBorderPane);
     }
     //
-    //<editor-fold desc="public methods" defaultstate="collapsed">
+    //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
      * Returns cancelButton to close view
      *

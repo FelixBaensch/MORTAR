@@ -37,6 +37,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
@@ -227,6 +228,26 @@ public class GuiUtil {
                 return null;
             }
         };
+    }
+    //
+    /**
+     *
+     * Method that creates an Integer filter to prevent the entry of unwanted
+     * characters such as Strings or special characters and also 0 for first entry.
+     *
+     * @param aField TextFields with the Integer filter
+     */
+   public static void addPositiveIntegerValueFilter(TextField aField) {
+        aField.setTextFormatter(new TextFormatter<Integer>(c -> {
+            String tmpText = c.getControlNewText();
+            if (tmpText.equals("0")) {
+                return null;
+            }
+            if (tmpText.matches("[0-9]*")) {
+                return c;
+            }
+            return null;
+        }));
     }
     //
     /**

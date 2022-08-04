@@ -45,8 +45,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -109,15 +107,15 @@ public class HistogramViewController {
     /**
      * Width of the images
      */
-    private double imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
+    private double imageWidth;
     /**
      * Height of the images
      */
-    private double imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
+    private double imageHeight;
     /**
      * Zoom factor of the images
      */
-    private double imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
+    private double imageZoomFactor;
     /**
      * Y-axis of the histogram
      */
@@ -141,6 +139,9 @@ public class HistogramViewController {
     public HistogramViewController(Stage aMainStage, List<MoleculeDataModel> aMoleculeDataList)  {
         this.mainStage = aMainStage;
         this.copyList = new ArrayList<>(aMoleculeDataList);
+        this.imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
+        this.imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
+        this.imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
         this.openHistogramView();
     }
     //
@@ -159,6 +160,7 @@ public class HistogramViewController {
         this.categoryAxis = new CategoryAxis();
         InputStream tmpImageInputStream = HistogramViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
+        this.histogramView.getSmilesTextField().setText("25");
         if (this.copyList.size() >= 30) {
             this.histogramView.getFrequencyTextField().setText("30");
             ArrayList<Double> tmpDefaultBarWidth = this.getBarSpacing(30, this.histogramView.getComboBox());
@@ -205,10 +207,11 @@ public class HistogramViewController {
     //
     /**
      * Create a configurable histogram.
-     * All data is stored in corresponding lists.
+     * All data is stored in corresponding lists (the x data are either fragment or molecule frequencies).
      * Depending on how aFragmentNumber is selected, these lists/data are adjusted.
      * After they have been run through, they are displayed accordingly.
-     * The x-axis of the histogram is divided into readable steps depending on the maximum frequency.
+     * The x-axis of the histogram is divided into readable steps depending on the maximum frequency ( manual adjustment of the
+     * x-axis ticks)
      *
      * @param aFragmentNumber to set the fragment number. The number of fragments that are displayed can be set via this parameter.
      * @param aHistogramView to access the view elements
@@ -244,7 +247,7 @@ public class HistogramViewController {
         double tmpMaxOfFrequency;
         ArrayList<String> tmpFullSmilesLength = new ArrayList<>();
         String tmpSelectedData = (String) aHistogramView.getChooseDataComoBox().getValue();
-        if (tmpSelectedData == Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text")) {
+        if (tmpSelectedData.equals(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"))) {
             ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "absoluteFrequency", "ASCENDING");
             for (MoleculeDataModel tmpMoleculeData : this.copyList) {
                 tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
@@ -286,24 +289,33 @@ public class HistogramViewController {
            tmpNumberAxis.setUpperBound(tmpMaxOfFrequency+1);
        }
        else {
-           if (tmpIntTmpXAxisTick >= 10) {
-               int tmpNewXAxisTick;
-               for (tmpNewXAxisTick = tmpIntTmpXAxisTick + 0; tmpNewXAxisTick % 10 != 0 && tmpNewXAxisTick < tmpIntTmpXAxisTick + 5; tmpNewXAxisTick++) {
-               }
-               if (tmpNewXAxisTick % 10 == 0) {
-               } else {
-                   for (tmpNewXAxisTick = tmpIntTmpXAxisTick + 0; tmpNewXAxisTick % 10 != 0 && tmpNewXAxisTick >= tmpIntTmpXAxisTick - 4; tmpNewXAxisTick--) {
-                   }
-               }
-               tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
-           } else {
-               tmpNumberAxis.setTickUnit(tmpIntTmpXAxisTick);
-           }
-           int tmpAdjustedAxis;
-           for (tmpAdjustedAxis = (int) (tmpIntXAxisExtension + tmpMaxOfFrequency); tmpAdjustedAxis % 5 != 0; tmpAdjustedAxis++) {
-           }
-           tmpNumberAxis.setUpperBound(tmpAdjustedAxis);
-       }
+            int tmpNewXAxisTick = 0;
+            if (tmpIntTmpXAxisTick >= 10) {
+                tmpNewXAxisTick = tmpIntTmpXAxisTick;
+                String tmpTickLength = String.valueOf(tmpNewXAxisTick);
+                String tmpFirstValue = String.valueOf(tmpTickLength.charAt(0));
+                int tmpFirstIntValue = Integer.parseInt(tmpFirstValue);
+                if (tmpFirstIntValue > 5) {
+                    tmpNewXAxisTick = (int) Math.pow(10, tmpTickLength.length());
+                    tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
+                } else {
+                    int tmpDigit = tmpTickLength.length() - 1;
+                    int tmpCheckModulo = (int) Math.pow(10, tmpDigit);
+                    if (tmpNewXAxisTick % tmpCheckModulo == 0) {
+                        tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
+                    } else {
+                        do {
+                            tmpNewXAxisTick++;
+                        } while (tmpNewXAxisTick % (tmpCheckModulo) != 0);
+                        tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
+                    }
+                }
+                tmpNumberAxis.setUpperBound(this.calculateXAxisExtension((int) tmpMaxOfFrequency, tmpNewXAxisTick));
+            } else {
+                tmpNumberAxis.setTickUnit(tmpIntTmpXAxisTick);
+                tmpNumberAxis.setUpperBound(this.calculateXAxisExtension((int) tmpMaxOfFrequency, tmpIntTmpXAxisTick));
+            }
+        }
         Label tmpDisplayFrequency = aHistogramView.getDefaultFragmentLabel();
         List<String> tmpSublistSmiles;
         List<Integer> tmpSublistFrequency;
@@ -325,7 +337,8 @@ public class HistogramViewController {
             StackPane tmpNode = this.histogramHover(aHistogramView.getImageStructure(), tmpSmiles);
             tmpStringNumberData.setNode(tmpNode);
             tmpNode.setStyle("-fx-bar-fill: #1E90FF");
-            this.getBarLabel(aBarLabelCheckBox, aStylingCheckBox, tmpNode, tmpCurrentFrequency, this.getFrequencyDoubleDigit(tmpCurrentFrequency));
+            int tmpDigitLength = String.valueOf(tmpCurrentFrequency).length();
+            this.getBarLabel(aBarLabelCheckBox, aStylingCheckBox, tmpNode, tmpCurrentFrequency, tmpDigitLength);
             tmpSeries.getData().add(tmpStringNumberData);
         }
         double tmpHistogramSize = aHistogramDefaultSize *tmpSublistFrequency.size();
@@ -348,8 +361,8 @@ public class HistogramViewController {
         this.histogramView.getCloseButton().setOnAction(event -> {
             this.histogramStage.close();
         });
-         this.getIntegerFilter(this.histogramView.getFrequencyTextField());
-         this.getIntegerFilter(this.histogramView.getSmilesTextField());
+         GuiUtil.addPositiveIntegerValueFilter(this.histogramView.getFrequencyTextField());
+         GuiUtil.addPositiveIntegerValueFilter(this.histogramView.getSmilesTextField());
             this.histogramView.getApplyButton().disableProperty().bind(
                     Bindings.isEmpty(this.histogramView.getFrequencyTextField().textProperty()).
                             and(Bindings.isEmpty(this.histogramView.getSmilesTextField().textProperty()))
@@ -368,7 +381,7 @@ public class HistogramViewController {
                     tmpSmilesLengthInField = GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH;
                 } else if (this.histogramView.getFragmentTextField().isEmpty()) {
                     tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
-                    if(this.copyList.size() >= 30) {
+                    if (this.copyList.size() >= 30) {
                         tmpFragmentNumber = 30;
                     } else {
                         tmpFragmentNumber = this.copyList.size();
@@ -419,7 +432,6 @@ public class HistogramViewController {
     /**
      * Make the histogram hoverable and create the structure images, that are displayed in the histogram
      * For this purpose: Add a StackPane to each bar as a node, and use the StackPanes to call the corresponding listener
-     * In this method, the labels are also added to the StackPanes that will later display the frequencies next to the bars
      * Hovering over the bars displays the corresponding structures.
      * In addition, by right-clicking on the bars, the corresponding structures (1500x1000) can be copied to SMILES anyway (also about adding labels)
      *
@@ -480,7 +492,7 @@ public class HistogramViewController {
                         HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
                 }
-                Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer, this.imageZoomFactor, this.imageWidth, this.imageHeight);
+                Image tmpImage = DepictionUtil.depictImageWithP(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight,3000);
                 anImageView.setImage(tmpImage);
             }
             try {
@@ -489,7 +501,7 @@ public class HistogramViewController {
                 this.atomContainer = tmpSmiPar.parseSmiles(aSmiles);
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainer);
                 Kekulization.kekulize(this.atomContainer);
-                Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor,this.imageWidth, this.imageHeight);
+                Image tmpImage = DepictionUtil.depictImageWithP(this.atomContainer,this.imageZoomFactor ,this.imageWidth, this.imageHeight,3000);
                 anImageView.setImage(tmpImage);
             } catch (CDKException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -517,6 +529,8 @@ public class HistogramViewController {
     /**
      * Enables the labelling of the histogram.
      * Clicking on the CheckBox displays the frequencies next to the bars.
+     * In this method, the labels are also added to the StackPanes that will later display the frequencies next to the bars.
+     * The bar labels are an extension of the StackPanes.
      * The method enables the display of the bars with shadows when the checkbox provided for this purpose is clicked.
      *
      * @param aLabelCheckBox to make the display of the fragment labels adjustable
@@ -532,7 +546,8 @@ public class HistogramViewController {
         tmpBarLabel.setPrefWidth(GuiDefinitions.GUI_BAR_LABEL_SIZE*aDigitNumber);
         tmpBarLabel.setMinWidth(GuiDefinitions.GUI_BAR_LABEL_SIZE*aDigitNumber);
         tmpBarLabel.setMaxWidth(GuiDefinitions.GUI_BAR_LABEL_SIZE*aDigitNumber);
-        tmpBarLabel.setTranslateX(aDigitNumber*GuiDefinitions.GUI_BAR_LABEL_SIZE);
+        tmpBarLabel.setTranslateX(aDigitNumber*GuiDefinitions.GUI_BAR_LABEL_SIZE + 5);
+        tmpBarLabel.setStyle(null);
         tmpBarLabel.setText(String.valueOf(aFrequency));
         if(aLabelCheckBox.isSelected()) {
            aStackPane.getChildren().add(tmpBarLabel);
@@ -623,34 +638,22 @@ public class HistogramViewController {
     }
     //
     /**
-     * Method that creates an Integer filter to prevent the entry of unwanted
-     * characters such as Strings or special characters.
-     * This filter is set on the two TextFields in the HistogramView
+     * Method which calculates an optimal value for the x-axis extension
+     * in order to be able to display the frequencies in the labels without abbreviations.
      *
-     * @param aField TextFields with the Integer filter
+     * @param aMaxValue is the value of the highest frequency that occurs in the data set.
+     * @param aTickValue is the calculated tick
+     * @return tmpXAxisExtensionValue is the upper limit of the X-axis
      */
-    private void getIntegerFilter(TextField aField) {
-        aField.setTextFormatter(new TextFormatter<Integer>(c -> {
-            String tmpText = c.getControlNewText();
-            if (tmpText.equals("0")) {
-                return null;
-            }
-            if (tmpText.matches("[0-9]*")) {
-                return c;
-            }
-            return null;
-        }));
-    }
-    //
-    /**
-     * Returns Digit of a number
-     *
-     * @param aValue fragment frequency
-     * @return Digit of fragment frequency
-     */
-    private int getFrequencyDoubleDigit(int aValue) {
-        int tmpDoubleDigit = String.valueOf(aValue).length();
-        return tmpDoubleDigit;
+    private int calculateXAxisExtension(int aMaxValue, int aTickValue) {
+        int tmpTickNumber = (int) Math.round(aMaxValue/ aTickValue);
+        int tmpXAxisExtensionValue;
+        if ((aTickValue * tmpTickNumber) > aMaxValue) {
+            tmpXAxisExtensionValue = (aTickValue * tmpTickNumber) + aTickValue;
+        } else {
+            tmpXAxisExtensionValue = (aTickValue * tmpTickNumber) + (2 * aTickValue);
+        }
+        return tmpXAxisExtensionValue;
     }
     //</editor-fold>
     //
