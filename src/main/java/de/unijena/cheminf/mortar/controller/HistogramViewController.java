@@ -492,7 +492,7 @@ public class HistogramViewController {
                         HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
                 }
-                Image tmpImage = DepictionUtil.depictImageWithP(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight,3000);
+                Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight);
                 anImageView.setImage(tmpImage);
             }
             try {
@@ -501,7 +501,7 @@ public class HistogramViewController {
                 this.atomContainer = tmpSmiPar.parseSmiles(aSmiles);
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainer);
                 Kekulization.kekulize(this.atomContainer);
-                Image tmpImage = DepictionUtil.depictImageWithP(this.atomContainer,this.imageZoomFactor ,this.imageWidth, this.imageHeight,3000);
+                Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor ,this.imageWidth, this.imageHeight);
                 anImageView.setImage(tmpImage);
             } catch (CDKException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
