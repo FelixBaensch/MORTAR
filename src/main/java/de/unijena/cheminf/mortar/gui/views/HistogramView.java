@@ -50,7 +50,7 @@ import javafx.scene.paint.Color;
  * @version 1.0.0.0
  */
 public class HistogramView extends AnchorPane {
-    //<editor-fold desc="private an private final class variables" defaultstate="collapsed">
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Button to close view
      */
