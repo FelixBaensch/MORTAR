@@ -109,6 +109,9 @@ distributions {
     main {
         contents {
             from 'AdoptOpenJDK'
+            into('tutorial'){
+                from 'Tutorial'
+            }
         }
     }
 }

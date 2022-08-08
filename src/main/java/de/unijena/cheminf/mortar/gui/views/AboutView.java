@@ -78,9 +78,16 @@ public class AboutView extends AnchorPane {
      */
     private Button closeButton;
     /**
+     * Button to open tutorial pdf
+     */
+    private Button tutorialButton;
+    /**
      * ImageView for application logo
      */
     private ImageView logoImageView;
+    /**
+     * GridPane to align information and logo
+     */
     private GridPane gridPane;
     //</editor-fold>
     //
@@ -106,8 +113,10 @@ public class AboutView extends AnchorPane {
         this.logFileButton.setTooltip(new Tooltip(Message.get("AboutView.logFileButton.tooltip")));
         this.gitHubButton = new Button(Message.get("AboutView.gitHubButton.text"));
         this.gitHubButton.setTooltip(new Tooltip(Message.get("AboutView.gitHubButton.tooltip")));
+        this.tutorialButton = new Button(Message.get("AboutView.tutorialButton.text"));
+        this.tutorialButton.setTooltip(new Tooltip(Message.get("AboutView.tutorialButton.tooltip")));
         HBox hBoxLeftSideButtons = new HBox();
-        hBoxLeftSideButtons.getChildren().addAll(this.logFileButton, this.gitHubButton);
+        hBoxLeftSideButtons.getChildren().addAll(this.logFileButton, this.gitHubButton, this.tutorialButton);
         hBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);
         hBoxLeftSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         hBoxLeftSideButtons.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -268,6 +277,15 @@ public class AboutView extends AnchorPane {
      */
     public Button getGitHubButton(){
         return this.gitHubButton;
+    }
+    //
+    /**
+     * Returns button to open tutorial
+     *
+     * @return Button to open the MORTAR tutorial
+     */
+    public Button getTutorialButton() {
+        return this.tutorialButton;
     }
     //
     /**

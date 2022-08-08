@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.AboutView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
@@ -42,8 +43,12 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -137,6 +142,10 @@ public class AboutViewController {
         this.aboutView.getGitHubButton().setOnAction(actionEvent -> {
             this.openGitHubRepositoryInDefaultBrowser();
         });
+        //tutorial button
+        this.aboutView.getTutorialButton().setOnAction(actionEvent -> {
+            this.openTutorialInDefaultPdfViewer();
+        });
     }
     //
     /**
@@ -169,31 +178,23 @@ public class AboutViewController {
      * Note: Does not really fit in FileUtil
      */
     private void openGitHubRepositoryInDefaultBrowser(){
-        String tmpOS = System.getProperty("os.name").toUpperCase();
         try{
-            if (tmpOS.contains("WIN"))
-                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + BasicDefinitions.GITHUB_REPOSITORY_URL);
-            else if (tmpOS.contains("MAC"))
-                Runtime.getRuntime().exec("open " + BasicDefinitions.GITHUB_REPOSITORY_URL);
-            else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
-            {
-                //ToDo: extend browser array, if necessary
-                String[] tmpBrowserArray = { "google-chrome", "firefox", "mozilla", "epiphany", "konqueror",
-                        "netscape", "opera", "links", "lynx" };
-                StringBuffer tmpCommandString = new StringBuffer();
-                for (int i = 0; i < tmpBrowserArray.length; i++){
-                    if(i == 0)
-                        tmpCommandString.append(String.format(    "%s \"%s\"", tmpBrowserArray[i], BasicDefinitions.GITHUB_REPOSITORY_URL));
-                    else
-                        tmpCommandString.append(String.format(" || %s \"%s\"", tmpBrowserArray[i], BasicDefinitions.GITHUB_REPOSITORY_URL));
-                }
-                Runtime.getRuntime().exec(new String[] { "sh", "-c", tmpCommandString.toString() });
-            }
-            else
-                throw new SecurityException("OS name " + tmpOS + " unknown.");
-        } catch (IOException anException) {
+            Desktop.getDesktop().browse(new URI(BasicDefinitions.GITHUB_REPOSITORY_URL));
+        } catch (IOException | URISyntaxException anException) {
             LOGGER.log(Level.SEVERE, anException.toString(), anException);
             throw new SecurityException("Could not open directory path");
+        }
+    }
+    //
+    /**
+     * Opens the MORTAR tutorial in system default browser
+     */
+    private void openTutorialInDefaultPdfViewer() {
+        try {
+            Desktop.getDesktop().open(new File("../tutorial/MORTAR_Tutorial_Draft.pdf"));
+        } catch (IOException anException) {
+            LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), Message.get("Error.ExceptionAlert.Label"), anException);
         }
     }
     //
