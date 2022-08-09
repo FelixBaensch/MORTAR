@@ -38,6 +38,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -211,6 +212,15 @@ public class GuiUtil {
     }
     //
     /**
+     * Returns an input pattern for positive integer values, including 0.
+     *
+     * @return GUI input pattern for positive integer values
+     */
+    public static Pattern getPositiveIntegerInclZeroPattern(){
+        return Pattern.compile("[0-9]*");
+    }
+    //
+    /**
      * Returns an input pattern for double values. "-" may be the first sign, the first number may not be 0.
      *
      * @return GUI input pattern for double values
@@ -226,12 +236,32 @@ public class GuiUtil {
      */
     public static UnaryOperator<TextFormatter.Change> getIntegerFilter(){
         return c ->{
-            String text = c.getControlNewText();
-            if(getIntegerPattern().matcher(text).matches()) {
+            String tmpText = c.getControlNewText();
+            if(GuiUtil.getIntegerPattern().matcher(tmpText).matches()) {
                 return c;
             } else {
                 return null;
             }
+        };
+    }
+    //
+    /**
+     *
+     * Method that creates an Integer filter to prevent the entry of unwanted
+     * characters such as Strings or special characters and also 0 for first entry.
+     *
+     * @return GUI input filter for positive integer values
+     */
+    public static UnaryOperator<TextFormatter.Change> getPositiveIntegerWithoutZeroFilter() {
+        return c -> {
+            String tmpText = c.getControlNewText();
+            if (tmpText.equals("0")) {
+                return null;
+            }
+            if (GuiUtil.getPositiveIntegerInclZeroPattern().matcher(tmpText).matches()) {
+                return c;
+            }
+            return null;
         };
     }
     //
@@ -265,10 +295,9 @@ public class GuiUtil {
             }
             @Override
             public Integer fromString(String aString) {
-                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString)){
+                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString) || "0.".equals(aString)){
                     return 0;
-                }
-                else{
+                } else{
                     return Integer.valueOf(aString);
                 }
             }

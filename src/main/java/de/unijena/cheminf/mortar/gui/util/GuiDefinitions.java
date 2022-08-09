@@ -112,4 +112,92 @@ public final class GuiDefinitions {
      * KeyCodeCombination to navigate to first page of pagination
      */
     public static final KeyCodeCombination KEY_CODE_FIRST_PAGE = new KeyCodeCombination(KeyCode.LEFT, KeyCombination.CONTROL_DOWN);
+    /**
+     * Value for the width of the image corresponding to the structure of the fragments
+     */
+    public static final double GUI_IMAGE_WIDTH = 250.0;
+    /**
+     * Value for the height of the image corresponding to the structure of the fragments
+     */
+    public static final double GUI_IMAGE_HEIGHT = 150.0;
+    /**
+     * Image zoom factor value
+     */
+    public static final double GUI_IMAGE_ZOOM_FACTOR = 3.0;
+    /**
+     * Value for the not scrollable histogram
+     */
+    public static final double GUI_NOT_SCROLLABLE_HEIGHT = 651.0;
+    /**
+     * Value for the bar widths
+     */
+    public static final double GUI_BAR_WIDTH = 30.0;
+    /**
+     * Value for the width of the textField
+     */
+    public static final double GUI_TEXT_FIELD_WIDTH = 50.0;
+    /**
+     * Value for the small bar gap
+     */
+    public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.5416;
+    /**
+     * Value fpr the medium bar gap
+     */
+    public static final double GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST = 5.0;
+    /**
+     * Value for the large bar gap
+     */
+    public static final double GUI_HISTOGRAM_LARGE_BAR_GAP_CONST = 6.5384;
+    /**
+     * Value for the small bar width
+     */
+    public static final double GUI_HISTOGRAM_SMALL_BAR_WIDTH = 15;
+    /**
+     * Value for the medium bar width
+     */
+    public static final double GUI_HISTOGRAM_MEDIUM_BAR_WIDTH = 20;
+    /***
+     * Value for the large bar width
+     */
+    public static final double GUI_HISTOGRAM_LARGE_BAR_WIDTH = 30;
+    /**
+     * Value for the small histogram growth factor
+     */
+    public static final double GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE = 27;
+    /**
+     * Value for the medium histogram growth factor
+     */
+    public static final double GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE = 37;
+    /**
+     * Value for the large histogram growth factor
+     */
+    public static final double GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE = 50;
+    /**
+     * Value of the bar label sizes
+     */
+    public static final double GUI_BAR_LABEL_SIZE = 10.0;
+    /**
+     * Default SMILES length
+     */
+    public static final int HISTOGRAM_DEFAULT_SMILES_LENGTH = 25;
+    /**
+     * Default fragment frequency
+     */
+    public static  final int HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY = 30;
+    /**
+     * Value of tickLabel length
+     */
+    public static  final double HISTOGRAM_TICK_LABEL_LENGTH = 15.0;
+    /**
+     * Value of tickLabel gap
+     */
+    public static final double HISTOGRAM_TICK_LABEL_GAP = 10.0;
+    /**
+     * Value for the width of the Copy SMILES context menu
+     */
+    public static final double HISTOGRAM_CONTEXTMENU_LABEL = 10.0;
+    /**
+     * Renewed width of the context menu
+     */
+    public static final double HISTOGRAM_CONTEXTMENU_LABEL_NEW = 50.0;
 }

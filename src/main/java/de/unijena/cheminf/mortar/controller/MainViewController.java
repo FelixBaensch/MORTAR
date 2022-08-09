@@ -303,6 +303,11 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.openGlobalSettingsView()
         );
+
+        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openHistogramView()
+                );
         this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openPipelineSettingsView());
@@ -443,6 +448,7 @@ public class MainViewController {
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+                this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
                 int tmpExceptionCount = 0;
                 for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
@@ -688,6 +694,14 @@ public class MainViewController {
     //
 
     /**
+     * Opens HistogramView
+     */
+    private void openHistogramView()  {
+       HistogramViewController tmpHistogramViewController = new HistogramViewController(this.primaryStage,this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
+    }
+    //
+
+    /**
      * Adds CheckMenuItems for fragmentation algorithms to MainMenuBar
      */
     private void addFragmentationAlgorithmCheckMenuItems() {
@@ -808,8 +822,16 @@ public class MainViewController {
         });
         this.moleculesDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
+         });
+        this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            Platform.runLater(() -> {
+                if (this.mainTabPane.getSelectionModel().getSelectedItem().getId() == TabNames.Molecules.toString()) {
+                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                } else {
+                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                }
+            });
         });
-
     }
     //
 
@@ -895,6 +917,7 @@ public class MainViewController {
                         this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
                         this.updateStatusBar(this.fragmentationThread, Message.get("Status.finished"));
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
