@@ -481,4 +481,5 @@ public class MainMenuBar extends MenuBar {
     public MenuItem getCancelExportMenuItem(){
         return this.cancelExportMenuItem;
     }
+    //</editor-fold>
 }

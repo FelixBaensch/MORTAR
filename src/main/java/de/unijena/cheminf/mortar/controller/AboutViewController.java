@@ -190,6 +190,7 @@ public class AboutViewController {
      * Opens the MORTAR tutorial in system default browser
      */
     private void openTutorialInDefaultPdfViewer() {
+        //Note: Does not work when started from IDE, only in built version started from JAR
         try {
             Desktop.getDesktop().open(new File("../tutorial/MORTAR_Tutorial_Draft.pdf"));
         } catch (IOException anException) {
