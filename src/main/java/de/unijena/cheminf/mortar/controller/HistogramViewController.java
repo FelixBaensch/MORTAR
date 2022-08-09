@@ -593,6 +593,7 @@ public class HistogramViewController {
         double tmpFinalGapSpacing;
         String tmpValue = (String) aComboBox.getValue();
         switch (tmpValue) {
+            //TODO: Use enums here!
             case "Small":
                 if (aNumber <= 24) {
                     tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumber;

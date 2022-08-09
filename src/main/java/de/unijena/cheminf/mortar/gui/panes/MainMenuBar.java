@@ -457,7 +457,7 @@ public class MainMenuBar extends MenuBar {
     /**
      * Returns the menu item that is supposed to open histogram window
      *
-     * @return
+     * @return MenuItem to open histogram view
      */
     public MenuItem getHistogramViewerMenuItem(){
         return this.histogramViewerMenuItem;
