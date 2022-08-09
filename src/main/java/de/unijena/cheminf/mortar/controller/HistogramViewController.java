@@ -455,7 +455,6 @@ public class HistogramViewController {
         tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
         tmpContextMenuLabel.setContextMenu(tmpContextMenu);
         tmpNodePane.getChildren().addAll(tmpContextMenuLabel);
-        boolean tmpKeepAtomContainer = true;
         tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
             tmpNodePane.setStyle("-fx-bar-fill: #00008b");
             if (tmpNodePane.getWidth() >= 10) {
@@ -481,31 +480,16 @@ public class HistogramViewController {
             // TODO check MoleculeDataModel getAtomContainer
             SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
             this.atomContainer = null;
-            if (tmpKeepAtomContainer) {
-                if (this.atomContainer == null) {
-                    try {
-                        tmpSmiPar.kekulise(false);
-                        this.atomContainer = tmpSmiPar.parseSmiles(aSmiles);
-                        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainer);
-                        Kekulization.kekulize(this.atomContainer);
-                    } catch (CDKException anException) {
-                        HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                    }
-                }
-                Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight);
-                anImageView.setImage(tmpImage);
-            }
             try {
-                //kekulization done separately below
                 tmpSmiPar.kekulise(false);
                 this.atomContainer = tmpSmiPar.parseSmiles(aSmiles);
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainer);
                 Kekulization.kekulize(this.atomContainer);
-                Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor ,this.imageWidth, this.imageHeight);
-                anImageView.setImage(tmpImage);
             } catch (CDKException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
+            Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight);
+            anImageView.setImage(tmpImage);
         });
         // Listener ContextMenuItems
         tmpCopySmilesMenuItem.setOnAction(event -> {
