@@ -235,10 +235,10 @@ public class GuiUtil {
      * Method that creates an Integer filter to prevent the entry of unwanted
      * characters such as Strings or special characters and also 0 for first entry.
      *
-     * @param aField TextFields with the Integer filter
+     * @return GUI input filter for positive integer values
      */
-   public static void addPositiveIntegerValueFilter(TextField aField) {
-        aField.setTextFormatter(new TextFormatter<Integer>(c -> {
+    public static UnaryOperator<TextFormatter.Change> getPositiveIntegerWithoutZeroFilter() {
+        return c -> {
             String tmpText = c.getControlNewText();
             if (tmpText.equals("0")) {
                 return null;
@@ -247,7 +247,7 @@ public class GuiUtil {
                 return c;
             }
             return null;
-        }));
+        };
     }
     //
     /**

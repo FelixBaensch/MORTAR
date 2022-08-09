@@ -45,6 +45,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -80,6 +81,17 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class HistogramViewController {
+    //<editor-fold desc="public static final class variables" defaultstate="collapsed">
+    /**
+     * Default value for the number of initially displayed fragments.
+     */
+    public static final int DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS = 30;
+    /**
+     * Default SMILES length at creation of histogram view.
+     */
+    public static final int DEFAULT_MAX_SMILES_LENGTH = 25;
+    //</editor-fold>
+    //
     //<editor-fold desc="private final class variables" defaultstate="collapsed">
     /**
      * Stage for the MainView
@@ -128,6 +140,10 @@ public class HistogramViewController {
      * AtomContainer to depict structures
      */
    private IAtomContainer atomContainer;
+    /**
+     * Current value for the number of fragments displayed
+     */
+    private int displayedFragmentsNumber;
     //</editor-fold>
     //
     /**
@@ -142,6 +158,7 @@ public class HistogramViewController {
         this.imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
         this.imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
         this.imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
+        this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
         this.openHistogramView();
     }
     //
@@ -160,16 +177,18 @@ public class HistogramViewController {
         this.categoryAxis = new CategoryAxis();
         InputStream tmpImageInputStream = HistogramViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
-        this.histogramView.getSmilesTextField().setText("25");
-        if (this.copyList.size() >= 30) {
-            this.histogramView.getFrequencyTextField().setText("30");
-            ArrayList<Double> tmpDefaultBarWidth = this.getBarSpacing(30, this.histogramView.getComboBox());
+        this.histogramView.getSmilesTextField().setText(Integer.toString(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH));
+        if (this.copyList.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
+            this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
+            this.histogramView.getFrequencyTextField().setText(Integer.toString(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS));
+            ArrayList<Double> tmpDefaultBarWidth = this.getBarSpacing(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS, this.histogramView.getComboBox());
             this.histogramChart = this.createHistogram(GuiDefinitions.HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY,
                     this.histogramView, GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH, this.histogramView.getCheckbox(),this.histogramView.getStylingCheckBox(),
                     tmpDefaultBarWidth.get(0));
             this.histogramChart.setCategoryGap(tmpDefaultBarWidth.get(1));
         } else {
             this.histogramView.getFrequencyTextField().setText(String.valueOf(this.copyList.size()));
+            this.displayedFragmentsNumber = this.copyList.size();
             ArrayList<Double> tmpDefaultBarGap = this.getBarSpacing(this.copyList.size(), this.histogramView.getComboBox());
             this.histogramChart = this.createHistogram(this.copyList.size(),
                     this.histogramView ,GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH, this.histogramView.getCheckbox(), this.histogramView.getStylingCheckBox(),
@@ -361,45 +380,46 @@ public class HistogramViewController {
         this.histogramView.getCloseButton().setOnAction(event -> {
             this.histogramStage.close();
         });
-         GuiUtil.addPositiveIntegerValueFilter(this.histogramView.getFrequencyTextField());
-         GuiUtil.addPositiveIntegerValueFilter(this.histogramView.getSmilesTextField());
-            this.histogramView.getApplyButton().disableProperty().bind(
-                    Bindings.isEmpty(this.histogramView.getFrequencyTextField().textProperty()).
+        this.histogramView.getFrequencyTextField().setTextFormatter(
+                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), this.displayedFragmentsNumber, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+        this.histogramView.getSmilesTextField().setTextFormatter(
+                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), HistogramViewController.DEFAULT_MAX_SMILES_LENGTH, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+        this.histogramView.getApplyButton().disableProperty().bind(
+                Bindings.isEmpty(this.histogramView.getFrequencyTextField().textProperty()).
                             and(Bindings.isEmpty(this.histogramView.getSmilesTextField().textProperty()))
-            );
-            this.histogramView.getApplyButton().setOnAction(event -> {
-                int tmpFragmentNumber;
-                int tmpSmilesLengthInField;
-                if (this.histogramView.getSmilesField().isEmpty()) {
-                    tmpFragmentNumber = Integer.parseInt(this.histogramView.getFragmentTextField());
-                    if (tmpFragmentNumber > this.copyList.size()) {
-                        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
-                                Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
-                                Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
-                        return;
-                    }
-                    tmpSmilesLengthInField = GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH;
-                } else if (this.histogramView.getFragmentTextField().isEmpty()) {
-                    tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
-                    if (this.copyList.size() >= 30) {
-                        tmpFragmentNumber = 30;
-                    } else {
-                        tmpFragmentNumber = this.copyList.size();
-                    }
-                } else {
-                    tmpFragmentNumber = Integer.parseInt(this.histogramView.getFragmentTextField());
-                    tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
-                    if (tmpFragmentNumber > this.copyList.size()) {
-                        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
-                                Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
-                                Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
-                        return;
-                    }
+        );
+        this.histogramView.getApplyButton().setOnAction(event -> {
+            int tmpSmilesLengthInField;
+            if (this.histogramView.getSmilesField().isEmpty()) {
+                this.displayedFragmentsNumber = Integer.parseInt(this.histogramView.getFragmentTextField());
+                if (this.displayedFragmentsNumber > this.copyList.size()) {
+                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
+                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
+                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
+                    return;
                 }
-                ArrayList<Double> tmpHistogramSizeGap = this.getBarSpacing(tmpFragmentNumber,this.histogramView.getComboBox());
-                this.histogramChart=  this.createHistogram(tmpFragmentNumber, this.histogramView, tmpSmilesLengthInField,
-                        this.histogramView.getCheckbox(), this.histogramView.getStylingCheckBox(), tmpHistogramSizeGap.get(0));
-               this.histogramChart.setCategoryGap(tmpHistogramSizeGap.get(1));
+                tmpSmilesLengthInField = GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH;
+            } else if (this.histogramView.getFragmentTextField().isEmpty()) {
+                tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
+                if (this.copyList.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
+                    this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
+                } else {
+                    this.displayedFragmentsNumber = this.copyList.size();
+                }
+            } else {
+                this.displayedFragmentsNumber = Integer.parseInt(this.histogramView.getFragmentTextField());
+                tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
+                if (this.displayedFragmentsNumber > this.copyList.size()) {
+                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
+                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
+                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
+                    return;
+                }
+            }
+            ArrayList<Double> tmpHistogramSizeGap = this.getBarSpacing(this.displayedFragmentsNumber,this.histogramView.getComboBox());
+            this.histogramChart=  this.createHistogram(this.displayedFragmentsNumber, this.histogramView, tmpSmilesLengthInField,
+                    this.histogramView.getCheckbox(), this.histogramView.getStylingCheckBox(), tmpHistogramSizeGap.get(0));
+            this.histogramChart.setCategoryGap(tmpHistogramSizeGap.get(1));
             if(this.histogramView.getGridLinesCheckBox().isSelected()) {
                 this.histogramChart.setVerticalGridLinesVisible(true);
                 this.histogramChart.setHorizontalGridLinesVisible(true);
