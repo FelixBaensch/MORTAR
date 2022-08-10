@@ -1,6 +1,5 @@
 ![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_.png)
-# MORTAR
-##### MOlecule fRagmenTAtion fRamework
+# MOlecule fRagmenTAtion fRamework (MORTAR)
 
 ## Contents of this document
 * [Description](#Description)
@@ -35,10 +34,10 @@ a test data set.
 
 ## Installation
 ### Application
-Pre-compiled and executable MORTAR distributions can be found in the "distribution" folder of this repository. They are 
+Pre-compiled and executable MORTAR distributions can be found in the "Distributions" folder of this repository. They are 
 also attached to the marked releases.<br>
 <p><b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available. Download the installer 
-executable, start and follow the instructions to install MORTAR. Note that the installation includes a full 
+executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
 located in the MORTAR program folder C:\Program Files\MORTAR\MORTARv1.0.0.0\bin. To start MORTAR, double click the 
