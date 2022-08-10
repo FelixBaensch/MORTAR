@@ -192,7 +192,7 @@ public class AboutViewController {
     private void openTutorialInDefaultPdfViewer() {
         //Note: Does not work when started from IDE, only in built version started from JAR
         try {
-            Desktop.getDesktop().open(new File("../tutorial/MORTAR_Tutorial_Draft.pdf"));
+            Desktop.getDesktop().open(new File("../tutorial/MORTAR_Tutorial.pdf"));
         } catch (IOException anException) {
             LOGGER.log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), Message.get("Error.ExceptionAlert.Label"), anException);
