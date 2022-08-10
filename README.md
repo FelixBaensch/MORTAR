@@ -6,6 +6,7 @@
 * [Description](#Description)
 * [Contents of this repository](#Contents-of-this-repository)
   * [Sources](#Sources)
+  * [Tutorial](#Tutorial)
 * [Installation](#Installation)
     * [Application](#Application)
     * [Source code](#Source-code)
