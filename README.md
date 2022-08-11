@@ -6,10 +6,12 @@
 * [Contents of this repository](#Contents-of-this-repository)
   * [Sources](#Sources)
   * [Tutorial](#Tutorial)
+  * [Images](#Images)
 * [Installation](#Installation)
     * [Application](#Application)
     * [Source code](#Source-code)
 * [Dependencies](#Dependencies)
+* [Citation](#Citation)
 * [References and useful links](#References-and-useful-links)
 * [Acknowledgements](#Acknowledgements)
 
@@ -32,6 +34,10 @@ The "src" subfolder contains all source code packages including JUnit tests.
 The "Tutorial" folder contains a PDF document with a detailed tutorial on how to install and use MORTAR, together with
 a test data set. 
 
+### Images
+The "Images" folder contains the MORTAR logo and icon as image files that were created by [Kohulan Rajan](https://github.com/Kohulan).
+If you are using MORTAR for your own projects, feel free to acknowledge it by using the logo in your presentations etc.
+
 ## Installation
 ### Application
 Pre-compiled and executable MORTAR distributions can be found in the "Distributions" folder of this repository. They are 
@@ -47,7 +53,7 @@ standard Windows functions.
 20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
 and adjust the line 
 <p><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code></p>
-with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.</p>
+with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.
 <p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
 which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using 
@@ -82,6 +88,10 @@ or higher must also be pre-installed.
 * LibrePDF OpenPDF version 1.3.26
   * [OpenPDF GitHub repository](https://github.com/LibrePDF/OpenPDF)
   * License: GNU Lesser General Public License 2.1
+
+## Citation
+We are currently working on a publication manuscript to submit for peer review. When we have a preprint, we will give the 
+link and DOI here.
 
 ## References and useful links
 **Ertl algorithm**
