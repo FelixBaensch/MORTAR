@@ -46,9 +46,9 @@ also attached to the marked releases.<br>
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder C:\Program Files\MORTAR\MORTARv1.0.0.0\bin. To start MORTAR, double click the 
-created shortcut. MORTAR can be uninstalled by the provided Uninstall.exe executable in the MORTAR program folder or 
-standard Windows functions.
+located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.0.0.0\bin" or the path specified at 
+installation). To start MORTAR, double click the created shortcut. MORTAR can be uninstalled by the provided 
+Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
 20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
 and adjust the line 
