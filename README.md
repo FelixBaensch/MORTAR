@@ -1,4 +1,4 @@
-![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_.png)
+![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_cut.png)
 # MOlecule fRagmenTAtion fRamework (MORTAR)
 
 ## Contents of this document
