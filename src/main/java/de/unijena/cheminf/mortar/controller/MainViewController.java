@@ -319,21 +319,22 @@ public class MainViewController {
                 keyEvent.consume();
                 return;
             }
-            if (keyEvent.getCode() == KeyCode.RIGHT) {
+            if(GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent)){
+                tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getPageCount() - 1);
+                keyEvent.consume();
+            }
+            else if(GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent)){
+                tmpGrid.getPagination().setCurrentPageIndex(0);
+                keyEvent.consume();
+            }
+            else if (keyEvent.getCode() == KeyCode.RIGHT) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() + 1);
                 keyEvent.consume();
-            } else if (keyEvent.getCode() == KeyCode.LEFT) {
+            }
+            else if (keyEvent.getCode() == KeyCode.LEFT) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() - 1);
                 keyEvent.consume();
             }
-//            else if(GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent)){
-//                tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getPageCount() - 1);
-//                keyEvent.consume();
-//            }
-//            else if(GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent)){
-//                tmpGrid.getPagination().setCurrentPageIndex(0);
-//                keyEvent.consume();
-//            }
         });
     }
     //
