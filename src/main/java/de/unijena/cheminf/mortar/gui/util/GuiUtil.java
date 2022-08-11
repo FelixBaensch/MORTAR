@@ -31,6 +31,7 @@ import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Control;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.SortEvent;
@@ -90,6 +91,23 @@ public class GuiUtil {
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
         tmpAlert.setContentText(aContentText);
+        tmpAlert.showAndWait();
+    }
+    //
+    /**
+     * Creates and shows an alert with arbitrary alert type and the given hyperlink in the content section.
+     *
+     * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate
+     *                    various properties, chosen of an enumeration containing the available
+     * @param aTitle Title of the alert message
+     * @param aHeaderText Header of the alert message
+     * @param aHyperlink Hyperlink that the alert message contains
+     */
+    public static void guiMessageAlertWithHyperlink(Alert.AlertType anAlertType, String aTitle, String aHeaderText, Hyperlink aHyperlink){
+        Alert tmpAlert = new Alert(anAlertType);
+        tmpAlert.setTitle(aTitle);
+        tmpAlert.setHeaderText(aHeaderText);
+        tmpAlert.getDialogPane().setContent(aHyperlink);
         tmpAlert.showAndWait();
     }
     //

@@ -31,6 +31,9 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Tooltip;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.w3c.dom.Document;
@@ -192,10 +195,21 @@ public class AboutViewController {
     private void openTutorialInDefaultPdfViewer() {
         //Note: Does not work when started from IDE, only in built version started from JAR
         try {
-            Desktop.getDesktop().open(new File("../tutorial/MORTAR_Tutorial.pdf"));
-        } catch (IOException anException) {
+            Desktop.getDesktop().open(new File(BasicDefinitions.MORTAR_TUTORIAL_RELATIVE_FILE_PATH));
+        } catch (IOException | IllegalArgumentException anException) {
             LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), Message.get("Error.ExceptionAlert.Label"), anException);
+            Hyperlink tmpLinkToTutorial = new Hyperlink(Message.get("AboutView.tutorialButton.alert.hyperlink.text"));
+            tmpLinkToTutorial.setTooltip(new Tooltip(BasicDefinitions.MORTAR_TUTORIAL_URL));
+            tmpLinkToTutorial.setOnAction(event -> {
+                try {
+                    Desktop.getDesktop().browse(new URI(BasicDefinitions.MORTAR_TUTORIAL_URL));
+                } catch (IOException | URISyntaxException e) {
+                    LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                    throw new SecurityException("Could not open URI");
+                }
+            });
+            GuiUtil.guiMessageAlertWithHyperlink(Alert.AlertType.ERROR, Message.get("AboutView.tutorialButton.alert.title"),
+                    Message.get("AboutView.tutorialButton.alert.header"), tmpLinkToTutorial );
         }
     }
     //
