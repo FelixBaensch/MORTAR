@@ -90,12 +90,12 @@ public final class BasicDefinitions {
     /**
      * Vendor name of application to include in data directory path
      */
-    public static final String MORTAR_VENDOR = "UniJena";
+    public static final String MORTAR_VENDOR = "MORTAR";
 
     /**
      * Directory name for MORTAR data
      */
-    public static final String MORTAR_DATA_DIRECTORY = "MortarData";
+    public static final String MORTAR_DATA_DIRECTORY = "MORTAR_Data";
 
     /**
      * Directory name for storing log files
@@ -105,7 +105,7 @@ public final class BasicDefinitions {
     /**
      * Name for Log files
      */
-    public static final String LOG_FILE_NAME = "Mortar_Log";
+    public static final String LOG_FILE_NAME = "MORTAR_Log";
 
     /**
      * Name extension (denoting the file type) of log files
@@ -120,7 +120,7 @@ public final class BasicDefinitions {
     /**
      * Name of the settings container file that persists the global settings.
      */
-    public static final String SETTINGS_CONTAINER_FILE_NAME = "Mortar_Settings";
+    public static final String SETTINGS_CONTAINER_FILE_NAME = "MORTAR_Settings";
 
     /**
      * Note, the file extension (.txt or .gzip) defines whether the preference container file is compressed or not.
