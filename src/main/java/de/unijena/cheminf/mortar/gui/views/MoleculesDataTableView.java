@@ -146,6 +146,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      *
      * @param aPageIndex index
      * @param aSettingsContainer SettingsContainer
+     * @param aStructureColumn StructureColumn to get width for structure image
      * @return Node page of pagination
      */
     public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer, TableColumn aStructureColumn){
