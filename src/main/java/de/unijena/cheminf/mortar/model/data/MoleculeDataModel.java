@@ -95,6 +95,11 @@ public class MoleculeDataModel {
      * Height value for image of structure
      */
     private double structureImageHeight;
+    //
+    /**
+     * Width value for image of structure
+     */
+    private double structureImageWidth;
     //</editor-fold>
     //
     /**
@@ -259,7 +264,7 @@ public class MoleculeDataModel {
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImage(tmpAtomContainer, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, this.structureImageHeight));
+            return new ImageView(DepictionUtil.depictImageWithZoomAndFillToFit(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), true));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
@@ -275,7 +280,7 @@ public class MoleculeDataModel {
     public ImageView getStructureWithText(String aText){
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, this.structureImageHeight, aText));
+            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), aText));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
@@ -325,12 +330,31 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Returns the height of the image of the molecular structure
+     * Returns the height of the image of the molecular structure.
+     * Returns {@link BasicDefinitions#DEFAULT_IMAGE_HEIGHT_DEFAULT} if value equals 0.0.
      *
      * @return height of image
      */
     public double getStructureImageHeight() {
-        return structureImageHeight;
+        if(this.structureImageHeight == 0.0) {
+            return BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT;
+        } else {
+            return this.structureImageHeight;
+        }
+    }
+    //
+    /**
+     * Returns the width of the image of the molecular structure.
+     * Returns {@link BasicDefinitions#DEFAULT_IMAGE_WIDTH_DEFAULT} if value equals 0.0.
+     *
+     * @return width of image
+     */
+    public double getStructureImageWidth() {
+        if(this.structureImageWidth == 0.0) {
+            return BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT;
+        } else {
+            return this.structureImageWidth;
+        }
     }
     //
     /**
@@ -340,6 +364,15 @@ public class MoleculeDataModel {
      */
     public void setStructureImageHeight(double aStructureImageHeight) {
         this.structureImageHeight = aStructureImageHeight;
+    }
+    //
+    /**
+     * Sets the width of the image of the molecular structure
+     *
+     * @param aStructureImageWidth double
+     */
+    public void setStructureImageWidth(double aStructureImageWidth) {
+        this.structureImageWidth = aStructureImageWidth;
     }
     //</editor-fold>
 }

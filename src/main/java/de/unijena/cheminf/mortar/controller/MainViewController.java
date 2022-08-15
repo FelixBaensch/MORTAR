@@ -779,7 +779,7 @@ public class MainViewController {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer));
+        tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer, this.moleculesDataTableView.getStructureColumn()));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
@@ -987,6 +987,9 @@ public class MainViewController {
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name(), tmpFragmentsDataTableView);
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         ObservableList<MoleculeDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
+        for(MoleculeDataModel tmpMoleculeDataModel : tmpList){
+            tmpMoleculeDataModel.setStructureImageWidth(tmpFragmentsDataTableView.getStructureColumn().getWidth());
+        }
         tmpFragmentsDataTableView.setItemsList(tmpList);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = tmpList.size() / tmpRowsPerPage;
