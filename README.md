@@ -54,7 +54,7 @@ Uninstall.exe executable in the MORTAR program folder or standard Windows functi
 and adjust the line 
 <p><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code></p>
 with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.
-<br><p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
+<p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
 which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using 
 <p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code></p>
