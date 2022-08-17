@@ -217,25 +217,66 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     //</editor-fold>
     //
     //<editor-fold desc="properties" defaulstate="collapsed">
-    public TableColumn getSelectionColumn(){
+    /**
+     * Returns the column which holds the checkbox to select the corresponding item
+     *
+     * @return TableColumn
+     */
+    public TableColumn<MoleculeDataModel, Boolean> getSelectionColumn(){
         return this.selectionColumn;
     }
-    public TableColumn getNameColumn(){
+    //
+    /**
+     * Returns the column that holds the name of the molecule
+     *
+     * @return TableColumn
+     */
+    public TableColumn<MoleculeDataModel, String> getNameColumn(){
         return this.nameColumn;
     }
-    public TableColumn getStructureColumn() {
+    //
+    /**
+     * Returns the column which shows the 2d structure of the molecule
+     *
+     * @return TableColumn
+     */
+    public TableColumn<MoleculeDataModel, Image> getStructureColumn() {
         return this.structureColumn;
     }
+    //
+    /**
+     * Returns menu item to copy
+     *
+     * @return MenuItem
+     */
     public MenuItem getCopyMenuItem(){
         return this.copyMenuItem;
     }
+    //
+    /**
+     * Returns checkbox to de/select all molecules
+     *
+     * @return CheckBox
+     */
     public CheckBox getSelectAllCheckBox() { return this.selectAllCheckBox; }
+    //
+    /**
+     * Returns the items of this tableview as a list of {@link MoleculeDataModel} objects
+     *
+     * @return List items
+     */
     public List<MoleculeDataModel> getItemsList()
     {
         return this.itemsObservableList;
     }
-    public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
-        this.itemsObservableList = FXCollections.observableList(aListOfFragments);
+    //
+    /**
+     * Sets the given list of {@link MoleculeDataModel} objects as items of this table view
+     *
+     * @param aListOfMolecules List
+     */
+    public void setItemsList(List<MoleculeDataModel> aListOfMolecules) {
+        this.itemsObservableList = FXCollections.observableList(aListOfMolecules);
     }
     //</editor-fold>
 }

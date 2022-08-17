@@ -1172,8 +1172,17 @@ public class MainViewController {
      * Enum for different thread types, set as thread name
      */
     public enum ThreadType {
+        /**
+         * enum value for fragmentation thread
+         */
         FRAGMENTATION_THREAD("Fragmentation_Thread"),
+        /**
+         * enum value for import thread
+         */
         IMPORT_THREAD("Import_Thread"),
+        /**
+         * enum value for export thread
+         */
         EXPORT_THREAD("Export_Thread");
 
         private String threadName;
@@ -1182,6 +1191,11 @@ public class MainViewController {
             this.threadName = aThreadName;
         }
 
+        /**
+         * Returns the name of this thread type
+         *
+         * @return String
+         */
         public String getThreadName() {
             return this.threadName;
         }

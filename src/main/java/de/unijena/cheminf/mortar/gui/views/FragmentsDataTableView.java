@@ -284,18 +284,83 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     //</editor-fold>
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
+    /**
+     * Returns the column that shows the 2d structure
+     *
+     * @return TableColumn for 2d structure
+     */
     public TableColumn<FragmentDataModel, ImageView> getStructureColumn() { return this.structureColumn; }
+    //
+    /**
+     * Returns the column that hold the SMILES
+     *
+     * @return TableColumn for SMILES
+     */
     public TableColumn<FragmentDataModel, String> getSmilesColumn() { return this.smilesColumn; }
+    //
+    /**
+     * Returns the column that shows the 2d structure for a parent molecule
+     *
+     * @return TableColumn for 2d structure
+     */
     public TableColumn<FragmentDataModel, Image> getParentMolColumn(){ return this.parentMolColumn; }
+    //
+    /**
+     * Returns the column that holds the name for a parent molecule
+     *
+     * @return TableColumn
+     */
     public TableColumn<FragmentDataModel, String> getParentMolNameColumn() { return this.parentMolNameColumn; }
+    //
+    /**
+     * Returns the column that holds the frequency how this fragment occurs
+     *
+     * @return TableColumn
+     */
     public TableColumn<FragmentDataModel, Integer> getFrequencyColumn() { return this.frequencyColumn; }
+    //
+    /**
+     * Returns the column that holds the percentage frequency  how this fragment occurs
+     *
+     * @return TableColumn
+     */
     public TableColumn<FragmentDataModel, Double> getPercentageColumn() { return this.percentageColumn; }
+    //
+    /**
+     * Returns the column that holds the frequency in how many molecules this fragment occurs
+     *
+     * @return TableColumn
+     */
     public TableColumn<FragmentDataModel, Integer> getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
+    //
+    /**
+     * Returns the column that holds the percentage frequency in how many molecules this fragment occurs
+     *
+     * @return TableColumn
+     */
     public TableColumn<FragmentDataModel, Double> getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
+    //
+    /**
+     * Returns the MenuItem to copy
+     *
+     * @return MenuItem
+     */
     public MenuItem getCopyMenuItem(){
         return this.copyMenuItem;
     }
+    //
+    /**
+     * Returns the items as a list of {@link MoleculeDataModel} objects
+     *
+     * @return List
+     */
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    //
+    /**
+     * Sets the given list of {@link MoleculeDataModel} objects as items
+     *
+     * @param aListOfFragments  list of fragments to set as items
+     */
     public void setItemsList(List<MoleculeDataModel> aListOfFragments) {
         this.itemsList = aListOfFragments;
     }
