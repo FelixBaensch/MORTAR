@@ -70,13 +70,13 @@ or higher must also be pre-installed.
 
 ## Dependencies
 **Needs to be pre-installed:**
-* Java Development Kit (JDK) version 11.0.14 or higher
+* Java Development Kit (JDK) version 17.0.4 or higher
     * [Adoptium Open JDK](https://adoptium.net) (as one possible source of the JDK)
-* Gradle version 6.9.1
+* Gradle version 7.3
     * [Gradle Build Tool](https://gradle.org)
 
 **Managed by Gradle:**
-* JavaFX version 14
+* JavaFX version 17.0.2
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
 * Chemistry Development Kit (CDK) version 2.7.1

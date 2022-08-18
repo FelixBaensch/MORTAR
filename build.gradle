@@ -20,23 +20,25 @@ repositories {
     mavenCentral()
 }
 
+def javaFxVersion = '17.0.2'
+
 dependencies {
     implementation 'org.jetbrains:annotations:19.0.0'
     testImplementation group: 'junit', name: 'junit', version: '4.13'
     implementation group: 'org.openscience.cdk', name: 'cdk-bundle', version: '2.7.1'
     implementation group: 'com.github.librepdf', name: 'openpdf', version: '1.3.26'
-    implementation group: 'org.openjfx', name: 'javafx-controls', version: '17.0.2', classifier: 'win'
-    implementation group: 'org.openjfx', name: 'javafx-controls', version: '17.0.2', classifier: 'linux'
-    implementation group: 'org.openjfx', name: 'javafx-controls', version: '17.0.2', classifier: 'mac'
-    implementation group: 'org.openjfx', name: 'javafx-swing', version: '17.0.2', classifier: 'win'
-    implementation group: 'org.openjfx', name: 'javafx-swing', version: '17.0.2', classifier: 'linux'
-    implementation group: 'org.openjfx', name: 'javafx-swing', version: '17.0.2', classifier: 'mac'
-    implementation group: 'org.openjfx', name: 'javafx-graphics', version: '17.0.2', classifier: 'win'
-    implementation group: 'org.openjfx', name: 'javafx-graphics', version: '17.0.2', classifier: 'linux'
-    implementation group: 'org.openjfx', name: 'javafx-graphics', version: '17.0.2', classifier: 'mac'
-    implementation group: 'org.openjfx', name: 'javafx-base', version: '17.0.2', classifier: 'win'
-    implementation group: 'org.openjfx', name: 'javafx-base', version: '17.0.2', classifier: 'linux'
-    implementation group: 'org.openjfx', name: 'javafx-base', version: '17.0.2', classifier: 'mac'
+    implementation group: 'org.openjfx', name: 'javafx-controls', version: javaFxVersion, classifier: 'win'
+    implementation group: 'org.openjfx', name: 'javafx-controls', version: javaFxVersion, classifier: 'linux'
+    implementation group: 'org.openjfx', name: 'javafx-controls', version: javaFxVersion, classifier: 'mac'
+    implementation group: 'org.openjfx', name: 'javafx-swing', version: javaFxVersion, classifier: 'win'
+    implementation group: 'org.openjfx', name: 'javafx-swing', version: javaFxVersion, classifier: 'linux'
+    implementation group: 'org.openjfx', name: 'javafx-swing', version: javaFxVersion, classifier: 'mac'
+    implementation group: 'org.openjfx', name: 'javafx-graphics', version: javaFxVersion, classifier: 'win'
+    implementation group: 'org.openjfx', name: 'javafx-graphics', version: javaFxVersion, classifier: 'linux'
+    implementation group: 'org.openjfx', name: 'javafx-graphics', version: javaFxVersion, classifier: 'mac'
+    implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'win'
+    implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'linux'
+    implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'mac'
 }
 
 mainClassName = 'de.unijena.cheminf.mortar.main.Main'
@@ -94,7 +96,6 @@ jar {
 
 //Creates a jar archive that includes all dependencies of the project, i.e. that  MORTAR can be started by executing this jar
 task fatJar(type: Jar) {
-
     manifest {
         attributes 'Implementation-Title': 'MORTAR Fat Jar File',
         'Implementation-Version': archiveVersion,
@@ -102,7 +103,6 @@ task fatJar(type: Jar) {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
     archiveAppendix = 'fat'
-//    dependsOn configurations.runtimeClasspath
     from {
 //        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
         configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
