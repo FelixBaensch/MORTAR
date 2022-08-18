@@ -63,7 +63,6 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         for (Property tmpSetting : tmpFragmenter.settingsProperties()) {
             System.out.println(tmpSetting.getName());
         }
-        tmpFragmenter.settingsProperties().get(3).setValue(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.FULL_ENVIRONMENT.name());
     }
     //
     /**

@@ -58,15 +58,18 @@ with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) acco
 which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using 
 <p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.1.0.jar</code></p>
-A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command. 
+A JDK or JRE of version 17.0.4 or higher needs to be installed on your system and linked to the "java" command. 
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.
 
 
 ### Source code
 This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
 clone the repository and open it in a Gradle-supporting IDE (e.g. IntelliJ) as a Gradle project and execute the 
-build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 11.0.14 
-or higher must also be pre-installed.
+build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 17.0.4 
+or higher must also be pre-installed and set as project JDK / project compiler.
+The Gradle build process is configured to include a specific Java Runtime Environment (JRE) in the "install" folder.
+For this to work, you need to create an "AdoptOpenJDK\jdk-17.0.4_8_jre\" folder and put the JRE with the specified version 
+into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", "conf", "legal", "lib", etc.).
 
 ## Dependencies
 **Needs to be pre-installed:**
