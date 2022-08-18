@@ -156,7 +156,7 @@ public class BooleanPreference extends BasePreference {
 
     @Override
     public BooleanPreference copy() {
-        BooleanPreference tmpCopy = new BooleanPreference(new String(this.name), new Boolean(this.content));
+        BooleanPreference tmpCopy = new BooleanPreference(new String(this.name), Boolean.valueOf(this.content));
         tmpCopy.guid = new String(this.guid);
         return tmpCopy;
     }

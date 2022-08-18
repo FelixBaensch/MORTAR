@@ -203,7 +203,7 @@ public class SingleNumberPreference extends BasePreference {
 
     @Override
     public SingleNumberPreference copy() {
-        SingleNumberPreference tmpCopy = new SingleNumberPreference(new String(this.name), new Double(this.content));
+        SingleNumberPreference tmpCopy = new SingleNumberPreference(new String(this.name), Double.valueOf(this.content));
         tmpCopy.guid = new String(this.guid);
         return tmpCopy;
     }
