@@ -1037,7 +1037,34 @@ public class Exporter {
      * Enum for different file types to export
      */
     public enum ExportTypes {
-        ITEM_CSV_FILE, ITEM_PDF_FILE, FRAGMENT_CSV_FILE, FRAGMENT_PDF_FILE, SINGLE_SD_FILE, SD_FILE, PDB_FILE
+        /**
+         * enum value for item csv file
+         */
+        ITEM_CSV_FILE,
+        /**
+         * enum value for item pdf file
+         */
+        ITEM_PDF_FILE,
+        /**
+         * enum value for fragments csv file
+         */
+        FRAGMENT_CSV_FILE,
+        /**
+         * enum value for fragments pdf file
+         */
+        FRAGMENT_PDF_FILE,
+        /**
+         * enum value for single sd file
+         */
+        SINGLE_SD_FILE,
+        /**
+         * enum value for sd file
+         */
+        SD_FILE,
+        /**
+         * enum value for pdb file
+         */
+        PDB_FILE
     }
     //</editor-fold>
 }

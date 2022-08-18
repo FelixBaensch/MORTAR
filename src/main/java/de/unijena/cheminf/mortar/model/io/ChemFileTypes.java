@@ -26,5 +26,12 @@ package de.unijena.cheminf.mortar.model.io;
  * @author Felix Baensch
  */
 public enum ChemFileTypes {
-    SDF, PDB
+    /**
+     * enum value for SDF
+     */
+    SDF,
+    /**
+     * enum value for PDB
+     */
+    PDB
 }

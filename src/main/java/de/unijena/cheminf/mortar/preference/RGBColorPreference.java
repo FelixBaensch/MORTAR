@@ -293,10 +293,10 @@ public class RGBColorPreference extends BasePreference {
     @Override
     public RGBColorPreference copy() {
         RGBColorPreference tmpCopy = new RGBColorPreference(new String(this.name),
-                new Double(this.red),
-                new Double(this.green),
-                new Double(this.blue),
-                new Double(alpha));
+                Double.valueOf(this.red),
+                Double.valueOf(this.green),
+                Double.valueOf(this.blue),
+                Double.valueOf(alpha));
         tmpCopy.guid = new String(this.guid);
         return tmpCopy;
     }
