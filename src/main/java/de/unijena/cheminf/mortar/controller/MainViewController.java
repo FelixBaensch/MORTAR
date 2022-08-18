@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -779,6 +780,7 @@ public class MainViewController {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer, this.moleculesDataTableView.getStructureColumn()));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
@@ -997,6 +999,7 @@ public class MainViewController {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory((pageIndex) -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
@@ -1052,11 +1055,12 @@ public class MainViewController {
         if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
-        Pagination tmpPaginationItems = new Pagination(tmpPageCount, 0);
-        tmpPaginationItems.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
-        VBox.setVgrow(tmpPaginationItems, Priority.ALWAYS);
-        HBox.setHgrow(tmpPaginationItems, Priority.ALWAYS);
-        tmpItemizationTab.addPaginationToGridPane(tmpPaginationItems, 0, 0, 2, 2);
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
+        tmpPagination.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
+        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
+        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
+        tmpItemizationTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
         Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
         tmpItemizationTabExportPDfButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.pdfButton.tooltip")));
         Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
@@ -1078,7 +1082,7 @@ public class MainViewController {
         tmpItemizationTabExportPDfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_PDF_FILE));
         tmpCancelExportButton.setOnAction(event -> this.interruptExport());
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
-            GuiUtil.sortTableViewGlobally(event, tmpPaginationItems, tmpRowsPerPage);
+            GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
         tmpItemizationDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
