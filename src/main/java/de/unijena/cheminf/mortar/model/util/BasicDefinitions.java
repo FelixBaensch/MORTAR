@@ -33,7 +33,7 @@ public final class BasicDefinitions {
     /**
      * Minimum java version to run MORTAR
      */
-    public static final String MINIMUM_JAVA_VERSION = "11.0.14";
+    public static final String MINIMUM_JAVA_VERSION = "11.0.2";
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Basic patterns and formats">
@@ -144,7 +144,7 @@ public final class BasicDefinitions {
     /**
      * Version of application
      */
-    public static final String MORTAR_VERSION = "1.0.0.0";
+    public static final String MORTAR_VERSION = "1.0.1.0";
     //</editor-fold>
     //
     //<editor-fold desc="GitHub repository url">

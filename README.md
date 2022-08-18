@@ -46,7 +46,7 @@ also attached to the marked releases.<br>
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.0.0.0\bin" or the path specified at 
+located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.0.1.0\bin" or the path specified at 
 installation). To start MORTAR, double click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
@@ -54,10 +54,10 @@ Uninstall.exe executable in the MORTAR program folder or standard Windows functi
 and adjust the line 
 <p><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code></p>
 with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.
-<p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.0.0.jar"
+<p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.1.0.jar"
 which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using 
-<p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.0.0.jar</code></p>
+<p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.1.0.jar</code></p>
 A JDK or JRE of version 11.0.14 or higher needs to be installed on your system and linked to the "java" command. 
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.
 
@@ -76,7 +76,7 @@ or higher must also be pre-installed.
     * [Gradle Build Tool](https://gradle.org)
 
 **Managed by Gradle:**
-* JavaFX version 11.0.2
+* JavaFX version 14
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
 * Chemistry Development Kit (CDK) version 2.7.1
@@ -128,7 +128,7 @@ link and DOI here.
 **Developers:**
 * Felix Baensch
 * Jonas Schaub
-* Betül Sevindik
+* Betuel Sevindik
 * Samuel Behr
 * Julian Zander
 
@@ -141,7 +141,6 @@ link and DOI here.
 **MORTAR was developed at:**
 <br>
 <br>Zielesny Research Group
-<br>Institute for Bioinformatics and Chemoinformatics
 <br>Westphalian University of Applied Sciences
 <br>August-Schmidt-Ring 10
 <br>D-45665 Recklinghausen Germany

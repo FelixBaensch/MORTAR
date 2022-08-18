@@ -223,9 +223,9 @@ public final class FileUtil {
         if (tmpOS.contains("WIN"))
             tmpAppDir = System.getenv("AppData");
         else if (tmpOS.contains("MAC"))
-            tmpAppDir = System.getenv("user.home");
+            tmpAppDir = System.getProperty("user.home");
         else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
-            tmpAppDir = System.getenv("user.home");
+            tmpAppDir = System.getProperty("user.home");
         else
             throw new SecurityException("OS name " + tmpOS + " unknown.");
         File tmpAppDirFile = new File(tmpAppDir);

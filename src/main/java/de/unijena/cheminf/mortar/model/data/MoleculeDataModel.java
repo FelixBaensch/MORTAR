@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  * Model class for molecule data.
  *
  * @author Felix Baensch, Samuel Behr
- * @version 1.0.0.0
+ * @version 1.0.1.0
  */
 public class MoleculeDataModel {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
