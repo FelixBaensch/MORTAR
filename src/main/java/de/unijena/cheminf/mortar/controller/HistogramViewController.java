@@ -178,6 +178,8 @@ public class HistogramViewController {
         InputStream tmpImageInputStream = HistogramViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
         this.histogramView.getSmilesTextField().setText(Integer.toString(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH));
+        this.histogramView.getCheckbox().setSelected(true);
+        this.histogramView.getStylingCheckBox().setSelected(true);
         if (this.copyList.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
             this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
             this.histogramView.getFrequencyTextField().setText(Integer.toString(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS));
