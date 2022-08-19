@@ -781,7 +781,7 @@ public class MainViewController {
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
-        tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer, this.moleculesDataTableView.getStructureColumn()));
+        tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
@@ -826,6 +826,11 @@ public class MainViewController {
         this.moleculesDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
          });
+        this.moleculesDataTableView.widthProperty().addListener((observable, oldValue, newValue) -> {
+            for(Object tmpObject : this.moleculesDataTableView.getItems()) {
+                ((MoleculeDataModel) tmpObject).setStructureImageWidth(this.moleculesDataTableView.getStructureColumn().getWidth());
+            }
+        });
         this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             Platform.runLater(() -> {
                 if (this.mainTabPane.getSelectionModel().getSelectedItem().getId() == TabNames.Molecules.toString()) {
@@ -1027,6 +1032,12 @@ public class MainViewController {
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
+        tmpFragmentsDataTableView.widthProperty().addListener((observable, oldValue, newValue) -> {
+            for(Object tmpObject : tmpFragmentsDataTableView.getItems()) {
+                ((MoleculeDataModel) tmpObject).setStructureImageWidth(tmpFragmentsDataTableView.getStructureColumn().getWidth());
+                ((FragmentDataModel) tmpObject).getFirstParentMolecule().setStructureImageWidth(tmpFragmentsDataTableView.getParentMolColumn().getWidth());
+            }
+        });
         tmpFragmentsDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
         tmpFragmentsDataTableView.setOnKeyPressed(event -> {
@@ -1083,6 +1094,11 @@ public class MainViewController {
         tmpCancelExportButton.setOnAction(event -> this.interruptExport());
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
+        });
+        tmpItemizationDataTableView.widthProperty().addListener((observable, oldValue, newValue) -> {
+            for(Object tmpObject : tmpItemizationDataTableView.getItems()) {
+                ((MoleculeDataModel) tmpObject).setStructureImageWidth(tmpItemizationDataTableView.getMoleculeStructureColumn().getWidth());
+            }
         });
         tmpItemizationDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));

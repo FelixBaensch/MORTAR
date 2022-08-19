@@ -146,10 +146,9 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      *
      * @param aPageIndex index
      * @param aSettingsContainer SettingsContainer
-     * @param aStructureColumn StructureColumn to get width for structure image
      * @return Node page of pagination
      */
-    public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer, TableColumn aStructureColumn){
+    public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer){
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
         int tmpFromIndex = aPageIndex * tmpRowsPerPage;
         int tmpToIndex = Math.min(tmpFromIndex + tmpRowsPerPage, this.itemsObservableList.size());
@@ -194,7 +193,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         });
         List<MoleculeDataModel> tmpItems = this.itemsObservableList.subList(tmpFromIndex, tmpToIndex);
         for(MoleculeDataModel tmpMoleculeDataModel : tmpItems){
-            tmpMoleculeDataModel.setStructureImageWidth(aStructureColumn.getWidth());
+            tmpMoleculeDataModel.setStructureImageWidth(this.structureColumn.getWidth());
         }
         this.setItems(FXCollections.observableArrayList(this.itemsObservableList.subList(tmpFromIndex, tmpToIndex)));
         this.scrollTo(0);

@@ -164,6 +164,21 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
+     * Returns the MoleculeDataModel that occurs at first pos in the list of parent molecules
+     *
+     * @return MoleculeDataModel first molecule of list of parent molecules
+     */
+    public MoleculeDataModel getFirstParentMolecule() {
+        if(this.parentMolecules.size() < 1){
+            return null;
+        }
+        if(this.parentMolecule == null){
+            this.parentMolecule = this.parentMolecules.get(0);
+        }
+        return this.parentMolecule;
+    }
+    //
+    /**
      * Creates and returns an ImageView of first parent molecule as 2D structure of this fragment
      *
      * NOTE: Do not delete or comment this method, it is used by reflection

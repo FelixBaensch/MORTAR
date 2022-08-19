@@ -147,6 +147,10 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
         int tmpItemAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.itemsList.subList(fromIndex, toIndex), aFragmentationName);
         this.resetFragmentStructureColumns(tmpItemAmount);
+        List<MoleculeDataModel> tmpList = this.itemsList.subList(fromIndex, toIndex);
+        for(MoleculeDataModel tmpMoleculeDataModel : tmpList){
+            tmpMoleculeDataModel.setStructureImageWidth(this.moleculeStructureColumn.getWidth());
+        }
         this.setItems(FXCollections.observableArrayList(this.itemsList.subList(fromIndex, toIndex)));
         this.scrollTo(0);
         return new BorderPane(this);
@@ -202,6 +206,15 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     //</editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns TableColumn for the 2D structure of the molecule
+     *
+     * @return TableColumn for 2D structure
+     */
+    public TableColumn<MoleculeDataModel, Image> getMoleculeStructureColumn() {
+        return this.moleculeStructureColumn;
+    }
+    //
     /**
      * Returns name of fragmentation
      *
