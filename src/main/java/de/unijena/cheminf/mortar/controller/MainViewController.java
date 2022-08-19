@@ -252,7 +252,7 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.closeApplication(0)
         );
-        this.mainView.getMainMenuBar().getLoadMenuItem().addEventHandler(
+        this.mainView.getMainMenuBar().getOpenMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.importMoleculeFile(this.primaryStage)
         );
@@ -408,7 +408,7 @@ public class MainViewController {
             }
         }
         Importer tmpImporter = new Importer(this.settingsContainer);
-        File tmpFile = tmpImporter.loadFile(aParentStage);
+        File tmpFile = tmpImporter.openFile(aParentStage);
         if (Objects.isNull(tmpFile)) {
             return;
         }
@@ -471,7 +471,7 @@ public class MainViewController {
                 }
                 MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName()
                         + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
-                this.updateStatusBar(this.importerThread, Message.get("Status.loaded"));
+                this.updateStatusBar(this.importerThread, Message.get("Status.imported"));
                 this.isImportRunningProperty.setValue(false);
                 this.openMoleculesTab();
             });
@@ -491,7 +491,7 @@ public class MainViewController {
         this.importerThread.setDaemon(false);
         this.importerThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
         this.isImportRunningProperty.setValue(true);
-        this.updateStatusBar(this.importerThread, Message.get("Status.loading"));
+        this.updateStatusBar(this.importerThread, Message.get("Status.importing"));
         this.importerThread.start();
     }
     //
@@ -1177,7 +1177,7 @@ public class MainViewController {
             case FRAGMENTATION_THREAD:
                 return Message.get("Status.running");
             case IMPORT_THREAD:
-                return Message.get("Status.loading");
+                return Message.get("Status.importing");
             case EXPORT_THREAD:
                 return Message.get("Status.exporting");
             default:

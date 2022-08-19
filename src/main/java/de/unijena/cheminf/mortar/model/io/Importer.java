@@ -179,7 +179,7 @@ public class Importer {
      * @return File which should contain molecules or null if no file is imported
      * @throws NullPointerException if the given stage is null
      */
-    public File loadFile(Stage aParentStage) throws NullPointerException {
+    public File openFile(Stage aParentStage) throws NullPointerException {
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));

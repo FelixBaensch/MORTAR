@@ -44,7 +44,7 @@ public class MainMenuBar extends MenuBar {
     /**
      * MenuItem to import molecules
      */
-    private MenuItem loadMenuItem;
+    private MenuItem openMenuItem;
     /**
      * MenuItem for export
      */
@@ -154,8 +154,8 @@ public class MainMenuBar extends MenuBar {
         //<editor-fold desc="initialisation" defaultstate="collapsed">
         //fileMenu
         this.fileMenu = new Menu(Message.get("MainView.menuBar.fileMenu.text"));
-        this.loadMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.loadMenuItem.text"));
-        this.cancelImportMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.loadMenuItem.cancel"));
+        this.openMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.openMenuItem.text"));
+        this.cancelImportMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.openMenuItem.cancel"));
         this.exportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.text"));
         this.cancelExportMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.cancel"));
         //<editor-fold desc="exportMenu components" defaultstate="collapsed">
@@ -204,8 +204,8 @@ public class MainMenuBar extends MenuBar {
     private void addComponentsToMenuBar(){
         //<editor-fold desc="fileMenu" defaultstate="collapsed">
         this.getMenus().add(this.fileMenu);
-        //loadMenuItem
-        this.fileMenu.getItems().add(this.loadMenuItem);
+        //openMenuItem
+        this.fileMenu.getItems().add(this.openMenuItem);
         this.fileMenu.getItems().add(this.cancelImportMenuItem);
         this.cancelImportMenuItem.setVisible(false);
         //exportMenu
@@ -273,14 +273,14 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
-    //<editor-fold desc="getLoadMenuItem" defaultstate="collapsed">
+    //<editor-fold desc="getOpenMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to load a molecule set
+     * Returns the menu item that is supposed to open a molecule set
      *
-     * @return the menu item that should load a molecule set
+     * @return the menu item that should open a molecule set
      */
-    public MenuItem getLoadMenuItem() {
-        return this.loadMenuItem;
+    public MenuItem getOpenMenuItem() {
+        return this.openMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getExportMenu" defaultstate="collapsed">
