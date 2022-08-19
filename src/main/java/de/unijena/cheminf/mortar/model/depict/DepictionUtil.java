@@ -121,7 +121,29 @@ public class DepictionUtil {
      */
     public static Image depictImageWithZoomAndFillToFit(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, boolean fillToFit) {
         try {
-            BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight, fillToFit);
+            BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight, fillToFit, false);
+            return SwingFXUtils.toFXImage(tmpBufferedImage, null);
+        } catch (CDKException | NullPointerException anException) {
+            DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            return DepictionUtil.depictErrorImage(anException.getMessage(), 250,250);
+        }
+    }
+    //
+    /**
+     * Creates and returns an Image of the AtomContainer with any zoom factor and given width and height and fill to fit
+     * and a white background.
+     *
+     * @param anAtomContainer IAtomContainer
+     * @param aZoom double
+     * @param aWidth double
+     * @param aHeight double
+     * @param fillToFit boolean Resize depictions to fill all available space (only if a size is specified)
+     * @param isBackgroundWhite boolean if image has white background
+     * @return Image of 2D structure of IAtomContainer
+     */
+    public static Image depictImageWithZoomAndFillToFitAndWhiteBackground(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, boolean fillToFit, boolean isBackgroundWhite) {
+        try {
+            BufferedImage tmpBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight, fillToFit, isBackgroundWhite);
             return SwingFXUtils.toFXImage(tmpBufferedImage, null);
         } catch (CDKException | NullPointerException anException) {
             DepictionUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -180,7 +202,7 @@ public class DepictionUtil {
      */
     public static Image depictImageWithText(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, String aString){
         try{
-            BufferedImage tmpMolBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight, false);
+            BufferedImage tmpMolBufferedImage = DepictionUtil.depictBufferedImageWithZoom(anAtomContainer, aZoom, aWidth, aHeight, false, false);
             BufferedImage tmpBufferedImage = new BufferedImage(tmpMolBufferedImage.getWidth(), tmpMolBufferedImage.getHeight() + BasicDefinitions.DEFAULT_IMAGE_TEXT_DISTANCE, BufferedImage.TRANSLUCENT);
             Graphics2D tmpGraphics2d = tmpBufferedImage.createGraphics();
             tmpGraphics2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
@@ -215,16 +237,28 @@ public class DepictionUtil {
      * @param aZoom double
      * @param aWidth double
      * @param aHeight double
+     * @param fillToFit boolean
+     * @param isBackgroundWhite boolean
      * @return BufferedImage of given IAtomContainer
      * @throws CDKException
      */
-    private static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, boolean fillToFit) throws CDKException {
+    private static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, boolean fillToFit, boolean isBackgroundWhite) throws CDKException {
         DepictionGenerator tmpGenerator = new DepictionGenerator();
         if(fillToFit){
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withFillToFit().withBackgroundColor(new Color(1f,0f,0f,.0f ));
+            if(isBackgroundWhite){
+                tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom).withFillToFit();
+            }
+            else {
+                tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom).withFillToFit().withBackgroundColor(new Color(1f,0f,0f,.0f ));
+            }
         }
         else {
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom).withBackgroundColor(new Color(1f,0f,0f,.0f ));
+            if(isBackgroundWhite){
+                tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+            }
+            else {
+                tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom).withBackgroundColor(new Color(1f,0f,0f,.0f ));
+            }
         }
         return tmpGenerator.depict(anAtomContainer).toImg();
     }
