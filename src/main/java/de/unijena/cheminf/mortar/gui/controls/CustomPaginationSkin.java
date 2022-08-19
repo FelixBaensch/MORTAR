@@ -116,11 +116,14 @@ public class CustomPaginationSkin extends PaginationSkin {
         this.jumpToTextField.setOnKeyPressed(key -> {
             if(key.getCode().equals(KeyCode.ENTER)){
                 int tmpPageNumber = Integer.parseInt(jumpToTextField.getText()) - 1;
+                if(tmpPageNumber > tmpPagination.getPageCount()){
+                    tmpPageNumber = tmpPagination.getPageCount();
+                }
                 tmpPagination.setCurrentPageIndex(tmpPageNumber);
             }
         });
         tmpPagination.currentPageIndexProperty().addListener((observable, oldValue, newValue) -> {
-            if((newValue.intValue() + 1) != Integer.parseInt(jumpToTextField.getText())) {
+            if((newValue.intValue() + 1) != Integer.parseInt(this.jumpToTextField.getText())) {
                 jumpToTextField.setText(Integer.toString(newValue.intValue() + 1));
             }
         });

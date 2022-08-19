@@ -320,19 +320,19 @@ public class MainViewController {
                 keyEvent.consume();
                 return;
             }
-            if(GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent)){
+            if(GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.END){
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getPageCount() - 1);
                 keyEvent.consume();
             }
-            else if(GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent)){
+            else if(GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.HOME){
                 tmpGrid.getPagination().setCurrentPageIndex(0);
                 keyEvent.consume();
             }
-            else if (keyEvent.getCode() == KeyCode.RIGHT) {
+            else if (keyEvent.getCode() == KeyCode.RIGHT || keyEvent.getCode() == KeyCode.PAGE_UP) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() + 1);
                 keyEvent.consume();
             }
-            else if (keyEvent.getCode() == KeyCode.LEFT) {
+            else if (keyEvent.getCode() == KeyCode.LEFT || keyEvent.getCode() == KeyCode.PAGE_DOWN) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getCurrentPageIndex() - 1);
                 keyEvent.consume();
             }
