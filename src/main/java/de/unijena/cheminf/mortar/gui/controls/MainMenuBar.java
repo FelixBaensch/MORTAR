@@ -134,9 +134,9 @@ public class MainMenuBar extends MenuBar {
      */
     private MenuItem cancelExportMenuItem;
     /**
-     * Menu to open tools 
+     * Menu to open views
      */
-    private Menu toolsMenu;
+    private Menu viewsMenu;
     /**
      * MenuItem to open the histogram
      */
@@ -188,9 +188,9 @@ public class MainMenuBar extends MenuBar {
         this.aboutViewMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.aboutViewMenuItem.text"));
 //        this.logFilesMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.logFilesMenuItem.text"));
 //        this.gitHubRepoMenuItem = new MenuItem(Message.get("MainView.menuBar.helpMenu.gitHubRepoMenuItem.text"));
-        //toolsMenu
-        this.toolsMenu = new Menu(Message.get("MainView.menuBar.toolsMenu.text"));
-        this.histogramViewerMenuItem = new MenuItem(Message.get("MainView.menuBar.toolsMenu.HistogramMenuItem.text"));
+        //viewsMenu
+        this.viewsMenu = new Menu(Message.get("MainView.menuBar.viewsMenu.text"));
+        this.histogramViewerMenuItem = new MenuItem(Message.get("MainView.menuBar.viewsMenu.HistogramMenuItem.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -235,9 +235,9 @@ public class MainMenuBar extends MenuBar {
         //pipelineSettingsMenuItem
         this.pipelineMenu.getItems().add(this.pipelineSettingsMenuItem);
         //</editor-fold>
-        //<editor-fold desc="toolsMenu" defaultstate="collapsed">
-        this.getMenus().add(this.toolsMenu);
-        this.toolsMenu.getItems().add((this.histogramViewerMenuItem));
+        //<editor-fold desc="viewsMenu" defaultstate="collapsed">
+        this.getMenus().add(this.viewsMenu);
+        this.viewsMenu.getItems().add((this.histogramViewerMenuItem));
         this.histogramViewerMenuItem.setDisable(true);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
