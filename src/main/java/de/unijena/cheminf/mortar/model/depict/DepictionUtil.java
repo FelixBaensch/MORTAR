@@ -221,10 +221,10 @@ public class DepictionUtil {
     private static BufferedImage depictBufferedImageWithZoom(IAtomContainer anAtomContainer, double aZoom, double aWidth, double aHeight, boolean fillToFit) throws CDKException {
         DepictionGenerator tmpGenerator = new DepictionGenerator();
         if(fillToFit){
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withFillToFit();
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withFillToFit().withBackgroundColor(new Color(1f,0f,0f,.0f ));
         }
         else {
-            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom);
+            tmpGenerator = tmpGenerator.withAtomColors().withAromaticDisplay().withSize(aWidth,aHeight).withZoom(aZoom).withBackgroundColor(new Color(1f,0f,0f,.0f ));
         }
         return tmpGenerator.depict(anAtomContainer).toImg();
     }
