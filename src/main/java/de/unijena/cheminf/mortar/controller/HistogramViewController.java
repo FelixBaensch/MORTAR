@@ -178,6 +178,8 @@ public class HistogramViewController {
         InputStream tmpImageInputStream = HistogramViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
         this.histogramView.getSmilesTextField().setText(Integer.toString(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH));
+        this.histogramView.getCheckbox().setSelected(true);
+        this.histogramView.getStylingCheckBox().setSelected(true);
         if (this.copyList.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
             this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
             this.histogramView.getFrequencyTextField().setText(Integer.toString(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS));
@@ -508,7 +510,7 @@ public class HistogramViewController {
             } catch (CDKException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
-            Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight);
+            Image tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight, true, true);
             anImageView.setImage(tmpImage);
         });
         // Listener ContextMenuItems
@@ -519,7 +521,7 @@ public class HistogramViewController {
         });
         tmpCopyStructureMenuItem.setOnAction(event -> {
             ClipboardContent tmpStructureClipboardContent = new ClipboardContent();
-            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoom(this.atomContainer,12.0,1500, 1000);
+            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(this.atomContainer,12.0,1500, 1000, true, true);
             tmpStructureClipboardContent.putImage(tmpCopyImageOnBar);
             Clipboard.getSystemClipboard().setContent(tmpStructureClipboardContent);
         });

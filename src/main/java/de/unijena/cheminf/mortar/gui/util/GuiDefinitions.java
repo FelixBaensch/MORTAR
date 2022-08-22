@@ -200,4 +200,8 @@ public final class GuiDefinitions {
      * Renewed width of the context menu
      */
     public static final double HISTOGRAM_CONTEXTMENU_LABEL_NEW = 50.0;
+    /**
+     * Width for the text field in the pagination control box
+     */
+    public static final double PAGINATION_TEXT_FIELD_WIDTH = 40.0;
 }

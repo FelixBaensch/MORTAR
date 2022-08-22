@@ -379,7 +379,7 @@ public class GuiUtil {
                     Image tmpImage;
                     try {
                         IAtomContainer tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
-                        tmpImage = DepictionUtil.depictImageWithZoomAndFillToFit(tmpAtomContainer, 1,1500,1000,true);
+                        tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1,1500,1000,true, true);
                     } catch (CDKException e) {
                         tmpImage = DepictionUtil.depictErrorImage(e.getMessage(), 150,100);
                     }
