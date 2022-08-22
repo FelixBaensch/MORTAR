@@ -44,6 +44,7 @@ import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -792,7 +793,7 @@ public class MainViewController {
         this.fragmentationButton = new Button();
         this.fragmentationButton.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
         Tooltip tmpTooltip = new Tooltip();
-        tmpTooltip.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
+        tmpTooltip.textProperty().bind(Bindings.format(Message.get("MainTabPane.moleculesTab.fragmentButton.text"), this.fragmentationService.selectedFragmenterNamePropertyProperty()));
         this.fragmentationButton.setTooltip(tmpTooltip);
         this.moleculesTabButtonBar = new ButtonBar();
         this.moleculesTabButtonBar.setPadding(new Insets(0, 0, 0, 0));
