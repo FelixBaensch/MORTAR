@@ -182,6 +182,10 @@ public class MainViewController {
      * Thread safe list to hold running threads to update StatusBar
      */
     private CopyOnWriteArrayList<Thread> threadList;
+    /**
+     * ButtonBar for the molecules tab, holds action buttons to start and cancel fragmentation
+     */
+    private ButtonBar moleculesTabButtonBar;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -790,22 +794,22 @@ public class MainViewController {
         Tooltip tmpTooltip = new Tooltip();
         tmpTooltip.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
         this.fragmentationButton.setTooltip(tmpTooltip);
-        ButtonBar tmpButtonBar = new ButtonBar();
-        tmpButtonBar.setPadding(new Insets(0, 0, 0, 0));
+        this.moleculesTabButtonBar = new ButtonBar();
+        this.moleculesTabButtonBar.setPadding(new Insets(0, 0, 0, 0));
         double tmpTextWidth = new Text(this.fragmentationService.getSelectedFragmenterNameProperty()).getLayoutBounds().getWidth() + 20;
         this.fragmentationButton.setPrefWidth(tmpTextWidth);
         this.fragmentationButton.setMinWidth(tmpTextWidth);
         this.fragmentationButton.setMaxWidth(tmpTextWidth);
-        tmpButtonBar.setButtonMinWidth(tmpTextWidth);
+        this.moleculesTabButtonBar.setButtonMinWidth(tmpTextWidth);
         this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.fragmentationService.selectedFragmenterNamePropertyProperty().addListener((observable, oldValue, newValue) -> {
             double tmpTextWidthChange = new Text(this.fragmentationService.getSelectedFragmenterNameProperty()).getLayoutBounds().getWidth() + 20;
             this.fragmentationButton.setPrefWidth(tmpTextWidthChange);
             this.fragmentationButton.setMinWidth(tmpTextWidthChange);
             this.fragmentationButton.setMaxWidth(tmpTextWidthChange);
-            tmpButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+            this.moleculesTabButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         });
-        tmpButtonBar.getButtons().add(this.fragmentationButton);
+        this.moleculesTabButtonBar.getButtons().add(this.fragmentationButton);
         this.cancelFragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.text"));
         this.cancelFragmentationButton.setTooltip(new Tooltip(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")));
         this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -813,13 +817,9 @@ public class MainViewController {
         this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.cancelFragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.cancelFragmentationButton.setVisible(false);;
-        tmpButtonBar.getButtons().add(this.cancelFragmentationButton);
-        tmpMoleculesTab.addNodeToGridPane(tmpButtonBar, 0, 1, 1, 1);
+        this.moleculesTabButtonBar.getButtons().add(this.cancelFragmentationButton);
+        tmpMoleculesTab.addNodeToGridPane(this.moleculesTabButtonBar, 0, 1, 1, 1);
         this.fragmentationButton.setOnAction(event -> {
-            tmpButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-            this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-            this.cancelFragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-            this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
             this.startFragmentation();
         });
         this.cancelFragmentationButton.setOnAction(event -> {
@@ -894,6 +894,10 @@ public class MainViewController {
      */
     private void startFragmentation(boolean isPipelining) {
         long tmpStartTime = System.nanoTime();
+        this.moleculesTabButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.cancelFragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         LOGGER.info("Start of method startFragmentation");
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(mol -> mol.isSelected()).collect(Collectors.toList());
         int tmpNumberOfCores = this.settingsContainer.getNumberOfTasksForFragmentationSetting();
