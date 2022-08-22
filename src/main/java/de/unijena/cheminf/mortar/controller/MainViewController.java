@@ -803,7 +803,7 @@ public class MainViewController {
             this.fragmentationButton.setPrefWidth(tmpTextWidthChange);
             this.fragmentationButton.setMinWidth(tmpTextWidthChange);
             this.fragmentationButton.setMaxWidth(tmpTextWidthChange);
-            tmpButtonBar.setButtonMinWidth(tmpTextWidthChange);
+            tmpButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         });
         tmpButtonBar.getButtons().add(this.fragmentationButton);
         this.cancelFragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.text"));
@@ -812,10 +812,14 @@ public class MainViewController {
         this.cancelFragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.cancelFragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.cancelFragmentationButton.setVisible(false);
+        this.cancelFragmentationButton.setVisible(false);;
         tmpButtonBar.getButtons().add(this.cancelFragmentationButton);
         tmpMoleculesTab.addNodeToGridPane(tmpButtonBar, 0, 1, 1, 1);
         this.fragmentationButton.setOnAction(event -> {
+            tmpButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+            this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+            this.cancelFragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+            this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
             this.startFragmentation();
         });
         this.cancelFragmentationButton.setOnAction(event -> {

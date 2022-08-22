@@ -510,7 +510,7 @@ public class HistogramViewController {
             } catch (CDKException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             }
-            Image tmpImage = DepictionUtil.depictImageWithZoom(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight);
+            Image tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(this.atomContainer,this.imageZoomFactor, this.imageWidth, this.imageHeight, true, true);
             anImageView.setImage(tmpImage);
         });
         // Listener ContextMenuItems
@@ -521,7 +521,7 @@ public class HistogramViewController {
         });
         tmpCopyStructureMenuItem.setOnAction(event -> {
             ClipboardContent tmpStructureClipboardContent = new ClipboardContent();
-            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoom(this.atomContainer,12.0,1500, 1000);
+            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(this.atomContainer,12.0,1500, 1000, true, true);
             tmpStructureClipboardContent.putImage(tmpCopyImageOnBar);
             Clipboard.getSystemClipboard().setContent(tmpStructureClipboardContent);
         });
