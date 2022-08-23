@@ -149,22 +149,19 @@ public class FragmentationTask implements Callable<Integer> {
                     try{
                         if(this.fragmentsHashTable.containsKey(tmpSmiles)){
                             tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
-                            LOCK.lock();
-                            tmpFragmentDataModel.incrementAbsoluteFrequency();
-                            LOCK.unlock();
                         }
                         else{
                             tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
 //                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
                             this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
-                            LOCK.lock();
-                            tmpFragmentDataModel.incrementAbsoluteFrequency();
-                            LOCK.unlock();
                         }
+                        LOCK.lock();
+                        tmpFragmentDataModel.incrementAbsoluteFrequency();
+                        LOCK.unlock();
                         if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
                             tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                         }
-                        if(tmpFragmentsMapOfMolecule.get(this.fragmentationName).contains(tmpFragmentDataModel)){
+                        if(tmpMolecule.getFragmentsOfSpecificAlgorithm(this.fragmentationName).stream().anyMatch(f -> f.getUniqueSmiles().equals(tmpSmiles))){
                             tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
                         }
                         else{

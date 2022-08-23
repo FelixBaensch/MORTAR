@@ -892,6 +892,7 @@ public class FragmentationService {
         this.selectedFragmenterNameProperty.set(aFragmenterName);
     }
     //</editor-fold>
+    //
     //<editor-fold desc="private methods">
     /**
      * Checks whether the name exists, if so, a consecutive number is appended, if not, the name is returned unchanged
