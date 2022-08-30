@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'de.unijena.cheminf'
-version '1.0.2.0'
+version '1.0.3.0'
 
 sourceCompatibility = 1.17
 
@@ -113,7 +113,22 @@ task fatJar(type: Jar) {
     archiveAppendix = 'fat'
     from {
 //        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') && !it.name.endsWith('aarch64.jar') }.collect { zipTree(it) }
+    }
+    with jar
+}
+
+task fatJarAarch64(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'MORTAR Fat Jar File for AArch64',
+                'Implementation-Version': archiveVersion,
+                'Main-Class': mainClassName
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    archiveAppendix = 'fat-aarch64'
+    from {
+//        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.findAll {it.name.endsWith('jar') && !it.name.endsWith('linux.jar') && !it.name.endsWith('mac.jar') }.collect { zipTree(it) }
     }
     with jar
 }
@@ -121,6 +136,7 @@ task fatJar(type: Jar) {
 //Archives artifacts executed with build
 artifacts {
     archives fatJar
+    archives fatJarAarch64
 }
 
 //Includes the Adopt Open JDK folder in the project's root directory in the created archives for distribution
