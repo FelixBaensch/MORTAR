@@ -42,6 +42,7 @@ If you are using MORTAR for your own projects, feel free to acknowledge it by us
 ### Application
 Pre-compiled and executable MORTAR distributions can be found in the "Distributions" folder of this repository. They are 
 also attached to the marked releases.<br>
+
 <p><b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available. Download the installer 
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
@@ -51,18 +52,29 @@ installation). To start MORTAR, double click the created shortcut. MORTAR can be
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
 20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
-and adjust the line 
+and adjust the line</p>
+
 <p><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code></p>
-with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.
+
+with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.<br>
+
+<p>Should this installation or the execution of the batch files not work for you, try the guidelines for Linux and MaxOS 
+described below. As an alternative way, they should also work on Windows.
+</p>
+
 <p><b>Linux and MacOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.3.0.jar"
 which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
-execute the JAR from the command-line using 
+execute the JAR from the command-line using</p>
+
 <p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.3.0.jar</code></p>
+
 A JDK or JRE of version 17.0.4 or higher needs to be installed on your system and linked to the "java" command. 
-Otherwise, replace "java" with the path to the java command of your JDK or JRE.
+Otherwise, replace "java" with the path to the java command of your JDK or JRE.<br>
+
 <p>Please note that MORTAR only supports x64 (on all three platforms) and AArch64 (on MacOS and Linux) architectures in general. 
 For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.0.3.0.jar" is available from the distributions and must be used.</p>
-
+Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
+have to be made there to run Java GUI applications.
 
 ### Source code
 This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
