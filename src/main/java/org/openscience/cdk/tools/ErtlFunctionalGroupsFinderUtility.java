@@ -21,9 +21,9 @@ package org.openscience.cdk.tools;
 
 /**
  * IMPORTANT NOTE: This is a copy of
- * https://github.com/JonasSchaub/Ertl-FG-for-COCONUT/blob/master/src/main/java/org/openscience/cdk/tools/ErtlFunctionalGroupsFinderUtility.java
+ * https://github.com/zielesny/ErtlFunctionalGroupsFinder/blob/master/Utility/ErtlFunctionalGroupsFinderUtility.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on June 28th 2022
+ * Last copied on September 26th 2022
  */
 
 import org.openscience.cdk.CDKConstants;
