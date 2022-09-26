@@ -30,7 +30,6 @@ import javafx.stage.Stage;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.ChemFile;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -46,6 +45,7 @@ import org.openscience.cdk.io.formats.MDLV2000Format;
 import org.openscience.cdk.io.formats.MDLV3000Format;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.io.setting.IOSetting;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -262,7 +262,7 @@ public class Importer {
     private IAtomContainerSet importSDFile(File aFile) throws FileNotFoundException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
         IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile),
-                DefaultChemObjectBuilder.getInstance());
+                SilentChemObjectBuilder.getInstance());
         int tmpCounter = 0;
         while(!Thread.currentThread().isInterrupted() && tmpSDFReader.hasNext()){
             IAtomContainer tmpAtomContainer = tmpSDFReader.next();
@@ -405,7 +405,7 @@ public class Importer {
             IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
             //AtomContainer to save the parsed SMILES in
             IAtomContainer tmpMolecule = new AtomContainer();
-            SmilesParser tmpSmilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+            SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             String tmpSmilesFileNextLine = "";
             String tmpSmilesFileDeterminedSeparator = "";
             String[] tmpProcessedLineArray;

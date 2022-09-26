@@ -36,7 +36,6 @@ import org.junit.Test;
 import org.openscience.cdk.Atom;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.Bond;
-import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -52,8 +51,6 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.awt.Color;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,7 +74,7 @@ import java.util.Objects;
 public class SugarRemovalUtilityTest extends SugarRemovalUtility {
     //<editor-fold desc="Constructors">
     /**
-     * Constructor that uses DefaultChemObjectBuilder as parameter for the SugarRemovalUtility constructor.
+     * Constructor that uses SilentChemObjectBuilder as parameter for the SugarRemovalUtility constructor.
      */
     public SugarRemovalUtilityTest() {
         super(SilentChemObjectBuilder.getInstance());
