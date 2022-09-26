@@ -40,7 +40,7 @@
     </externalTool>
     <externalTool>
         <name>ScaffoldGenerator</name>
-        <version>1.0.1</version>
+        <version>1.0.3</version>
         <author>Julian Zander, Jonas Schaub</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
