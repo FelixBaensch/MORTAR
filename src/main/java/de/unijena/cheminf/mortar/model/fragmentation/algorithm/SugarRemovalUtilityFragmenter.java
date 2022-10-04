@@ -37,6 +37,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ import java.util.logging.Logger;
  * SugarRemovalUtility class.
  *
  * @author Jonas Schaub
- * @version 1.0.0.0
+ * @version 1.0.0.1
  */
 public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="Enum SugarTypeToRemoveOption">
@@ -232,7 +233,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public SugarRemovalUtilityFragmenter() {
-        this.sugarRUInstance = new SugarRemovalUtility();
+        this.sugarRUInstance = new SugarRemovalUtility(SilentChemObjectBuilder.getInstance());
         this.settings = new ArrayList<>(15);
         this.settingNameTooltipTextMap = new HashMap<>(20, 0.9f);
         this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",

@@ -22,25 +22,25 @@
 <tools>
     <externalTool>
         <name>CDK</name>
-        <version>2.7.1</version>
+        <version>2.8</version>
         <author>Steinbeck et al</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
     <externalTool>
         <name>ErtlFunctionalGroupsFinder</name>
-        <version>1.1.1.0</version>
+        <version>1.1.2</version>
         <author>Sebastian Fritsch</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
     <externalTool>
         <name>Sugar Removal Utility (SRU)</name>
-        <version>1.3.0.0</version>
+        <version>1.3.2</version>
         <author>Jonas Schaub, Maria Sorokina</author>
         <license>MIT License</license>
     </externalTool>
     <externalTool>
         <name>ScaffoldGenerator</name>
-        <version>1.0.1</version>
+        <version>1.0.3</version>
         <author>Julian Zander, Jonas Schaub</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>

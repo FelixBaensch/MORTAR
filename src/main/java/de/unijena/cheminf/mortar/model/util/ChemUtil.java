@@ -23,13 +23,13 @@ package de.unijena.cheminf.mortar.model.util;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import org.openscience.cdk.CDKConstants;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
@@ -257,7 +257,7 @@ public final class ChemUtil {
             return;
         }
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
-        CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance()).addImplicitHydrogens(aMolecule);
+        CDKHydrogenAdder.getInstance(SilentChemObjectBuilder.getInstance()).addImplicitHydrogens(aMolecule);
         //just a precaution, you never know what can happen with fragment atom containers
         for (IAtom tmpAtom : aMolecule.atoms()) {
             if (tmpAtom.getImplicitHydrogenCount() == CDKConstants.UNSET) {

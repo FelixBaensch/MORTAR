@@ -59,10 +59,10 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
@@ -500,7 +500,7 @@ public class HistogramViewController {
                 });
             }
             // TODO check MoleculeDataModel getAtomContainer
-            SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+            SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
             this.atomContainer = null;
             try {
                 tmpSmiPar.kekulise(false);

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021 Jonas Schaub, Achim Zielesny, Christoph Steinbeck, Maria Sorokina
+ * Copyright (c) 2022 Jonas Schaub, Achim Zielesny, Christoph Steinbeck, Maria Sorokina
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,11 +28,9 @@ package de.unijena.cheminf.deglycosylation;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/JonasSchaub/SugarRemoval/blob/master/src/main/java/de/unijena/cheminf/deglycosylation/SugarRemovalUtility.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on March 10th 2022
+ * Last copied on September 26th 2022
  */
 
-import org.openscience.cdk.AtomContainer;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -41,6 +39,7 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.isomorphism.DfPattern;
 import org.openscience.cdk.isomorphism.Mappings;
 import org.openscience.cdk.isomorphism.UniversalIsomorphismTester;
@@ -74,7 +73,7 @@ import java.util.logging.Logger;
  * It offers various functions to detect and remove sugar moieties with different options.
  *
  * @author Jonas Schaub, Maria Sorokina
- * @version 1.3.0.0
+ * @version 1.3.2.0
  */
 public class SugarRemovalUtility {
     //<editor-fold desc="Enum PreservationModeOption">
@@ -353,6 +352,11 @@ public class SugarRemovalUtility {
     //
     //<editor-fold desc="Private variables">
     /**
+     * Chem object builder for parsing SMILES strings etc.
+     */
+    private final IChemObjectBuilder builder;
+
+    /**
      * Linear sugar structures parsed into atom containers. Not used for detection but parsed into patterns after sorting.
      */
     private List<IAtomContainer> linearSugarStructuresList;
@@ -444,8 +448,12 @@ public class SugarRemovalUtility {
     /**
      * Sole constructor of this class. All settings are set to their default values (see public static constants or
      * enquire via get/is methods). To change these settings, use the respective 'setXY()' methods.
+     *
+     * @param aBuilder IChemObjectBuilder for i.a. parsing SMILES strings into atom containers
      */
-    public SugarRemovalUtility() {
+    public SugarRemovalUtility(IChemObjectBuilder aBuilder) throws NullPointerException {
+        Objects.requireNonNull(aBuilder, "Given chem object builder is null.");
+        this.builder = aBuilder;
         /*method setDetectLinearAcidicSugarsSetting() called in restoreDefaultSettings() checks whether the setting has
         changed, so an initial value must be provided; If the default is true, the initial value must be false in order
         to add the linear acidic sugar patterns to the linear sugar patterns. If the default is false, nothing must be done.*/
@@ -824,7 +832,7 @@ public class SugarRemovalUtility {
         if (aSmilesCode.isEmpty()) {
             throw new IllegalArgumentException("Given SMILES code is empty");
         }
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        SmilesParser tmpSmiPar = new SmilesParser(this.builder);
         IAtomContainer tmpRingSugar = null;
         try {
             tmpRingSugar = tmpSmiPar.parseSmiles(aSmilesCode);
@@ -922,7 +930,7 @@ public class SugarRemovalUtility {
         if (aSmilesCode.isEmpty()) {
             throw new IllegalArgumentException("Given SMILES code is empty");
         }
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        SmilesParser tmpSmiPar = new SmilesParser(this.builder);
         IAtomContainer tmpLinearSugar = null;
         try {
             tmpLinearSugar = tmpSmiPar.parseSmiles(aSmilesCode);
@@ -951,7 +959,7 @@ public class SugarRemovalUtility {
         if (aSmilesCode.isEmpty()) {
             throw new IllegalArgumentException("Given SMILES code is empty");
         }
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        SmilesParser tmpSmiPar = new SmilesParser(this.builder);
         IAtomContainer tmpCircularSugar = null;
         try {
             tmpCircularSugar = tmpSmiPar.parseSmiles(aSmilesCode);
@@ -1033,7 +1041,7 @@ public class SugarRemovalUtility {
         if (aSmilesCode.isEmpty()) {
             throw new IllegalArgumentException("Given SMILES code is empty");
         }
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        SmilesParser tmpSmiPar = new SmilesParser(this.builder);
         IAtomContainer tmpLinearSugar = null;
         try {
             tmpLinearSugar = tmpSmiPar.parseSmiles(aSmilesCode);
@@ -1377,7 +1385,7 @@ public class SugarRemovalUtility {
         this.circularSugarStructuresList = new ArrayList<>(SugarRemovalUtility.CIRCULAR_SUGARS_SMILES.length);
         this.linearAcidicSugarStructuresList = new ArrayList<>(SugarRemovalUtility.LINEAR_ACIDIC_SUGARS_SMILES.length);
         this.linearSugarPatternsList = new ArrayList<>(SugarRemovalUtility.LINEAR_SUGARS_SMILES.length);
-        SmilesParser tmpSmilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        SmilesParser tmpSmilesParser = new SmilesParser(this.builder);
         //adding linear sugars to list
         for (String tmpSmiles : SugarRemovalUtility.LINEAR_SUGARS_SMILES) {
             try {
@@ -2494,8 +2502,8 @@ public class SugarRemovalUtility {
      * @throws CloneNotSupportedException if one of the atom containers cannot be cloned
      */
     public boolean isTerminal(IAtomContainer aSubstructure,
-                              IAtomContainer aParentMolecule,
-                              List<IAtomContainer> aCandidateList)
+                               IAtomContainer aParentMolecule,
+                               List<IAtomContainer> aCandidateList)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         //<editor-fold desc="Checks">
         Objects.requireNonNull(aSubstructure, "Given substructure is 'null'.");
@@ -2535,7 +2543,7 @@ public class SugarRemovalUtility {
         IAtomContainer tmpSubstructureClone = aSubstructure.clone();
         HashMap<Integer, IAtom> tmpIndexToAtomMap = new HashMap<>(tmpMoleculeClone.getAtomCount() + 1, 1);
         for (IAtom tmpAtom : tmpMoleculeClone.atoms()) {
-            tmpIndexToAtomMap.put(tmpAtom.getProperty(SugarRemovalUtility.INDEX_PROPERTY_KEY), tmpAtom);
+            tmpIndexToAtomMap.put((Integer)tmpAtom.getProperty(SugarRemovalUtility.INDEX_PROPERTY_KEY), tmpAtom);
         }
         for (IAtom tmpAtom : tmpSubstructureClone.atoms()) {
             tmpMoleculeClone.removeAtom(tmpIndexToAtomMap.get(tmpAtom.getProperty(SugarRemovalUtility.INDEX_PROPERTY_KEY)));
@@ -2754,7 +2762,7 @@ public class SugarRemovalUtility {
         if (!aMolecule.isEmpty()) {
             try {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
-                CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance()).addImplicitHydrogens(aMolecule);
+                CDKHydrogenAdder.getInstance(this.builder).addImplicitHydrogens(aMolecule);
             } catch (CDKException aCDKException) {
                 SugarRemovalUtility.LOGGER.log(Level.WARNING, aCDKException.toString(), aCDKException);
             }
@@ -3104,7 +3112,7 @@ public class SugarRemovalUtility {
                     HashSet<String> tmpRingIDSet = new HashSet<>(5, 0.9f);
                     tmpRingIDSet.add(tmpRingID);
                     tmpAtomIDToRingIDMap.put(tmpAtomID, tmpRingIDSet);
-                    //case 2: atom was already visited, so it is part of at least one other ring
+                //case 2: atom was already visited, so it is part of at least one other ring
                 } else {
                     //current ring is marked as fused or spiro
                     tmpRingIdentifierToIsFusedOrSpiroMap.put(tmpRingID, true);
@@ -3363,7 +3371,7 @@ public class SugarRemovalUtility {
         IAtomContainer tmpSubstructureClone = aRing.clone();
         HashMap<Integer, IAtom> tmpIndexToAtomMap = new HashMap<>(tmpMoleculeClone.getAtomCount() + 1, 1.0f);
         for (IAtom tmpAtom : tmpMoleculeClone.atoms()) {
-            tmpIndexToAtomMap.put(tmpAtom.getProperty(SugarRemovalUtility.INDEX_PROPERTY_KEY), tmpAtom);
+            tmpIndexToAtomMap.put((Integer)tmpAtom.getProperty(SugarRemovalUtility.INDEX_PROPERTY_KEY), tmpAtom);
         }
         for (IAtom tmpAtom : tmpSubstructureClone.atoms()) {
             tmpMoleculeClone.removeAtom(tmpIndexToAtomMap.get(tmpAtom.getProperty(SugarRemovalUtility.INDEX_PROPERTY_KEY)));
@@ -3399,7 +3407,7 @@ public class SugarRemovalUtility {
      * @throws NullPointerException if a parameter is 'null'
      */
     protected int getExocyclicOxygenAtomCount(IAtomContainer aRingToTest, IAtomContainer anOriginalMolecule)
-            throws NullPointerException {
+           throws NullPointerException {
         Objects.requireNonNull(aRingToTest, "Given ring atom container is 'null'");
         Objects.requireNonNull(anOriginalMolecule, "Given atom container representing the original molecule " +
                 "is 'null'");
@@ -3527,7 +3535,7 @@ public class SugarRemovalUtility {
         }
         int tmpListSize = aCandidateList.size();
         List<IAtomContainer> tmpNonOverlappingSugarCandidates = new ArrayList<>(tmpListSize);
-        IAtomContainer tmpMatchesContainer = new AtomContainer();
+        IAtomContainer tmpMatchesContainer = aCandidateList.get(0).getBuilder().newInstance(IAtomContainer.class);
         for (int i = 0; i < tmpListSize; i++) {
             IAtomContainer tmpCandidate = aCandidateList.get(i);
             Objects.requireNonNull(tmpCandidate, "A substructure in the list is 'null'.");

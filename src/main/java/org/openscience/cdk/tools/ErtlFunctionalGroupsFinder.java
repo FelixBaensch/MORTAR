@@ -23,7 +23,7 @@ package org.openscience.cdk.tools;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/zielesny/ErtlFunctionalGroupsFinder/blob/master/Basic/ErtlFunctionalGroupsFinder.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on March 10th 2022
+ * Last copied on September 26th 2022
  */
 
 import org.openscience.cdk.graph.ConnectedComponents;
