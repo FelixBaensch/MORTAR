@@ -342,6 +342,18 @@ public class MainViewController {
                 keyEvent.consume();
             }
         });
+        this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            Platform.runLater(() -> {
+                if(newValue == null){
+                    return;
+                }
+                if (newValue.getId() == TabNames.Molecules.toString()) {
+                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                } else {
+                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                }
+            });
+        });
     }
     //
 
@@ -840,15 +852,6 @@ public class MainViewController {
             for(Object tmpObject : this.moleculesDataTableView.getItems()) {
                 ((MoleculeDataModel) tmpObject).setStructureImageWidth(this.moleculesDataTableView.getStructureColumn().getWidth());
             }
-        });
-        this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            Platform.runLater(() -> {
-                if (this.mainTabPane.getSelectionModel().getSelectedItem().getId() == TabNames.Molecules.toString()) {
-                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
-                } else {
-                    this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
-                }
-            });
         });
     }
     //
