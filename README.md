@@ -20,39 +20,48 @@ MORTAR ('MOlecule fRagmenTation fRamework') is an open software project that sup
 molecular fragmentation and substructure analysis. The Java/JavaFX rich-client application offers extensive graphical 
 functions for visualising the fragmentation results of individual compounds or entire compound sets. With several 
 views and analysis functions, MORTAR supports the interpretation of fragmentation results. In addition to three 
-currently integrated methods for fragmentation and substructure analysis - [ErtlFunctionalGroupsFinder](https://github.com/zielesny/ErtlFunctionalGroupsFinder), 
-[Sugar Removal Utility](https://github.com/JonasSchaub/SugarRemoval), 
-and [Scaffold Generator](https://github.com/Julian-Z98/ScaffoldGenerator) - MORTAR allows straightforward integration of 
+currently integrated methods for fragmentation and substructure analysis - 
+<a href="https://github.com/zielesny/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
+<a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a>, 
+and <a href="https://github.com/Julian-Z98/ScaffoldGenerator">Scaffold Generator</a> - MORTAR allows straightforward integration of 
 additional fragmentation algorithms with automatic generation of settings 
-menus. All cheminformatics functionalities are implemented based on the [Chemistry Development Kit (CDK)](https://github.com/cdk/cdk).
+menus. All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
+The preprint of a scientific article describing MORTAR can be found here: 
+<a href="https://doi.org/10.26434/chemrxiv-2022-zgg8s"> https://doi.org/10.26434/chemrxiv-2022-zgg8s </a>
 
 ## Contents of this repository
 ### Sources
-The "src" subfolder contains all source code packages including JUnit tests.
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/src">"src"</a> subfolder contains all source code packages including JUnit tests.
 
 ### Tutorial
-The "Tutorial" folder contains a PDF document with a detailed tutorial on how to install and use MORTAR, together with
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/Tutorial">"Tutorial" folder</a> contains a PDF document with a detailed tutorial on how to install and use MORTAR, together with
 a test data set. 
 
 ### Images
-The "Images" folder contains the MORTAR logo and icon as image files that were created by [Kohulan Rajan](https://github.com/Kohulan).
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/Images">"Images" folder</a> contains the MORTAR logo and 
+icon as image files that were created by <a href="https://github.com/Kohulan">Kohulan Rajan</a>.
 If you are using MORTAR for your own projects, feel free to acknowledge it by using the logo in your presentations etc.
 
 ## Installation
 ### Application
-Pre-compiled and executable MORTAR distributions can be found in the "Distributions" folder of this repository. They are 
-also attached to the marked releases.<br>
+Pre-compiled and executable MORTAR distributions can be found attached to the 
+<a href="https://github.com/FelixBaensch/MORTAR/releases">marked releases</a>.
 
-<p><b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available. Download the installer 
+<p>
+<b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.0.5.0/MORTAR_v1.0.5.0.exe">here</a> to 
+automatically download the installer .exe of the latest version). Download the installer 
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
 located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.0.5.0\bin" or the path specified at 
 installation). To start MORTAR, double click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
-<br>As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
+<br>
+As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
 20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
-and adjust the line</p>
+and adjust the line
+</p>
 
 <p><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code></p>
 
@@ -62,8 +71,11 @@ with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) acco
 described below. As an alternative way, they should also work on Windows.
 </p>
 
-<p><b>Linux and macOS:</b> The "distribution" folder contains the executable Java ARchive (JAR) "MORTAR-fat-1.0.5.0.jar"
-which contains the packaged MORTAR code together with all dependencies. To run MORTAR (with up to 4 GB of RAM available, e.g.), 
+<p><b>Linux and macOS:</b> Every release has the executable Java ARchive (JAR) "MORTAR-fat-1.0.5.0.jar"
+attached, which contains the packaged MORTAR code together with all dependencies 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.0.5.0/MORTAR-fat-1.0.5.0.jar">here</a> to 
+automatically download the JAR of the latest version). 
+To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 <p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.0.5.0.jar</code></p>
@@ -72,7 +84,9 @@ A JDK or JRE of version 17.0.4 or higher needs to be installed on your system an
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.<br>
 
 <p>Please note that MORTAR only supports x64 (on all three platforms) and AArch64 (on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.0.5.0.jar" is available from the distributions and must be used.</p>
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.0.5.0.jar" is available from the distributions attached to the releases and must be used 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.0.5.0/MORTAR-fat-aarch64-1.0.5.0.jar">here</a> to 
+automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
 
@@ -96,7 +110,7 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", 
 * JavaFX version 17.0.2
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
-* Chemistry Development Kit (CDK) version 2.7.1
+* Chemistry Development Kit (CDK) version 2.8
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
 * JUnit version 4.13
@@ -107,8 +121,8 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", 
   * License: GNU Lesser General Public License 2.1
 
 ## Citation
-We are currently working on a publication manuscript to submit for peer review. When we have a preprint, we will give the 
-link and DOI here.
+You can cite this software or this repository as it is defined in the CITATION.cff file. Also, the preprint of our submitted
+software article can be cited (<a href="https://doi.org/10.26434/chemrxiv-2022-zgg8s"> https://doi.org/10.26434/chemrxiv-2022-zgg8s </a>).
 
 ## References and useful links
 **Ertl algorithm**
