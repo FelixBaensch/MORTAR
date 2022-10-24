@@ -96,6 +96,10 @@ public class OverviewViewController {
      */
     private boolean createStructureImages;
     /**
+     * TODO
+     */
+    private ContextMenu structureContextMenu;
+    /**
      *
      */
     private Stage enlargedStructureViewStage;
@@ -118,11 +122,8 @@ public class OverviewViewController {
         this.columnsPerPage = 4;
         this.enlargedStructureViewStage = null;
         this.enlargedStructureViewAnchorPane = null;
-        //set createStructureImages to false to create an empty structureGridPane at first
+        //creating an empty structureGridPane at first by setting createStructureImages to false
         this.createStructureImages = false;
-        for (MoleculeDataModel tmpMolecule : aMoleculeDataModelList) {
-            System.out.println(tmpMolecule.getUniqueSmiles());
-        }
         this.showOverviewView();
     }
     //</editor-fold>
@@ -165,17 +166,17 @@ public class OverviewViewController {
         this.overviewView.addNodeToMainGridPane(this.overviewView.getRightHBox(), 2, 1, 1, 1);
         //this.overviewView.addNodeToMainGridPane(this.overviewView.getRightButtonBar(), 2, 1, 1, 1);
 
-        this.addListener(tmpPagination);
+        this.addListener();
+        //TODO:
+        this.structureContextMenu = this.generateContextMenuWithListeners(this.moleculeDataModelList.get(0), this.overviewViewStage);
 
         this.overviewViewStage.showAndWait();
     }
     //
     /**
      * Adds listeners and event handlers to control elements etc.
-     *
-     * @param aPagination
      */
-    private void addListener(Pagination aPagination) {
+    private void addListener() {
         this.overviewView.getApplyButton().setOnAction(actionEvent -> {
             try {
                 this.applyChangeOfGridConfiguration();
@@ -187,27 +188,33 @@ public class OverviewViewController {
                         anIllegalArgumentException);
             }
         });
-
+        //
         this.overviewView.getCloseButton().setOnAction(actionEvent -> {
             this.overviewViewStage.close();
         });
-
+        //
         ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
             //TODO
+            System.out.println("Window resize event: " + this.overviewViewStage.getWidth() + " - "
+                    + this.overviewViewStage.getHeight());
+            this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
+                    this.rowsPerPage, this.columnsPerPage);
         };
-
+        //
         this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
         this.overviewViewStage.widthProperty().addListener(tmpStageSizeListener);
-
+        //
         /*this.overviewViewStage.heightProperty().addListener((observableValue, number, t1) -> {
             this.createOverviewViewPage(tmpPagination.getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
             System.out.println("This line is being executed too");
         });*/
-
+        //
         this.overviewViewStage.setOnShown(windowEvent -> {
+            System.out.println("setOnShown event");
             //tmpPagination.setCurrentPageIndex(tmpPagination.getCurrentPageIndex());
-            this.createOverviewViewPage(aPagination.getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
-            System.out.println("This line is being executed");
+            this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
+                    this.rowsPerPage, this.columnsPerPage);
+            System.out.println("setOnShown event end");
         });
     }
     //
@@ -218,6 +225,7 @@ public class OverviewViewController {
      * @return
      */
     private Node createOverviewViewPage(int aPageIndex, int aRowsPerPage, int aColumnsPerPage) {
+        System.out.println("Call of createOverviewViewPage");
         //Node tmpGridLines = this.structureGridPane.getChildren().get(0);
         this.overviewView.getStructureGridPane().getChildren().clear();
         //this.structureGridPane.getChildren().add(tmpGridLines);
@@ -287,13 +295,9 @@ public class OverviewViewController {
                                 this.showEnlargedStructureView(tmpOverviewViewStage, tmpMoleculeDataModel);
                             }
                         });
-                        //generate context menu
-                        ContextMenu tmpContextMenu = this.generateContextMenuWithListeners(
-                                tmpMoleculeDataModel, this.overviewViewStage
-                        );
                         //Setting context menu to the image view
                         tmpImageView.setOnContextMenuRequested((event) -> {
-                            tmpContextMenu.show(tmpImageView, event.getScreenX(), event.getScreenY());
+                            this.structureContextMenu.show(tmpImageView, event.getScreenX(), event.getScreenY());
                         });
                         //
                         tmpContentNode = tmpImageView;
@@ -357,7 +361,8 @@ public class OverviewViewController {
                 this.overviewView.getPagination().setCurrentPageIndex(tmpNewPageCount);
             }
         }
-        this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(), this.rowsPerPage, this.columnsPerPage);
+        this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
+                this.rowsPerPage, this.columnsPerPage);
     }
     //
     /**
