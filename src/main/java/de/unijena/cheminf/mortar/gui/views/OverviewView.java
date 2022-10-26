@@ -57,14 +57,10 @@ public class OverviewView extends AnchorPane {
      *
      */
     private HBox leftHBox;
-
-
-    private HBox spacingHBox;
+    /**
+     *
+     */
     private HBox rightHBox;
-    private ButtonBar leftButtonBar;
-    private ButtonBar rightButtonBar;
-
-
     /**
      *
      */
@@ -85,10 +81,6 @@ public class OverviewView extends AnchorPane {
      *
      */
     private Pagination pagination;
-    /**
-     *
-     */
-    private List<MoleculeDataModel> moleculeDataModelList;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
@@ -97,7 +89,6 @@ public class OverviewView extends AnchorPane {
      */
     public OverviewView(List<MoleculeDataModel> aMoleculeDataModelList, int aRowsPerPage, int aColumnsPerPage) {
         super();
-        this.moleculeDataModelList = aMoleculeDataModelList;
         //gridPane
         this.mainGridPane = new GridPane();
         //this.mainGridPane.setPadding(new Insets(0.0, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
@@ -140,13 +131,21 @@ public class OverviewView extends AnchorPane {
         //this.structureGridPane.setAlignment(Pos.CENTER);
         //upper and lower border: extending the image frame to grid line width
         //right and left border: extending the image frame to grid line width and adding a spacing
-        //spacing depends on grid line width
-        this.structureGridPane.setStyle("-fx-background-color: LIGHTGREY; -fx-border-color: LIGHTGREY; -fx-border-width: " +
-                + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
-                + ((GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) + "px " +
-                + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
-                + ((GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) + "px; " +
-                "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")");
+        //the spacing depends on grid line width
+        this.structureGridPane.setStyle(
+                "-fx-background-color: LIGHTGREY; " +
+                "-fx-border-color: LIGHTGREY; " +
+                "-fx-border-width: " +
+                        + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                        + ((GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5)
+                                * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) + "px " +
+                        + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                        + ((GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5)
+                                * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) + "px; " +
+                "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " +
+                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
+                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
+        );
         //this.structureGridPane.setPadding(new Insets(10, 10, 10, 10));    TODO
         //this.structureGridPane.setGridLinesVisible(true);
         //this.structureGridPane.setStyle("");
@@ -159,10 +158,6 @@ public class OverviewView extends AnchorPane {
         //this.leftHBox.setPickOnBounds(false); //TODO: setPickOnBounds() ?!
         this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.leftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-
-        //this.rightHBox = new HBox();
-        //this.leftButtonBar = new ButtonBar();
-        //this.leftButtonBar.setPadding(new Insets(0, 0, 0, 0));
 
         this.rowsPerPageTextField = new TextField();
         this.rowsPerPageTextField.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
@@ -206,8 +201,8 @@ public class OverviewView extends AnchorPane {
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
 
-        //this.leftButtonBar.getButtons().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
         this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
+        //this.leftButtonBar.getButtons().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
         //this.leftButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         //this.rightHBox.getChildren().addAll(this.rowsPerPageTextField, this.columnsPerPageTextField, this.applyButton);
 
@@ -235,7 +230,7 @@ public class OverviewView extends AnchorPane {
         //this.getChildren().add(this.borderPane);
     }
     //</editor-fold>
-
+    //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      *
@@ -266,7 +261,7 @@ public class OverviewView extends AnchorPane {
         }
         this.structureGridPane.setAlignment(Pos.CENTER);
     }
-
+    //
     /**
      *
      * @param aNode
@@ -278,7 +273,7 @@ public class OverviewView extends AnchorPane {
     public void addNodeToMainGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.mainGridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
-
+    //
     /**
      *
      * @param aPagination
@@ -288,44 +283,36 @@ public class OverviewView extends AnchorPane {
         this.addNodeToMainGridPane(this.pagination, 0, 0, 3, 2);
     }
     //</editor-fold>
-
+    //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     public HBox getLeftHBox() {
         return this.leftHBox;
     }
-
+    //
     public HBox getRightHBox() {
         return this.rightHBox;
     }
-
-    public ButtonBar getLeftButtonBar() {
-        return this.leftButtonBar;
-    }
-
-    public ButtonBar getRightButtonBar() {
-        return this.rightButtonBar;
-    }
-
+    //
     public Button getApplyButton() {
         return this.applyButton;
     }
-
+    //
     public Button getCloseButton() {
         return this.closeButton;
     }
-
+    //
     public TextField getRowsPerPageTextField() {
         return this.rowsPerPageTextField;
     }
-
+    //
     public TextField getColumnsPerPageTextField() {
         return this.columnsPerPageTextField;
     }
-
+    //
     public Pagination getPagination() {
         return this.pagination;
     }
-
+    //
     public GridPane getStructureGridPane() {
         return this.structureGridPane;
     }
