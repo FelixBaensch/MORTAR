@@ -104,17 +104,10 @@ public class OverviewViewController {
      */
     private boolean createStructureImages;
     /**
-     * TODO
+     * Context menu that allows to copy the SMILES String or image of a structure or to open a window that displays an
+     * enlarged representation of the structure's image
      */
     private ContextMenu structureContextMenu;
-    /**
-     *
-     */
-    private Stage enlargedStructureViewStage;
-    /**
-     *
-     */
-    private AnchorPane enlargedStructureViewAnchorPane;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
@@ -128,8 +121,6 @@ public class OverviewViewController {
         this.moleculeDataModelList = aMoleculeDataModelList;
         this.rowsPerPage = 5;
         this.columnsPerPage = 4;
-        this.enlargedStructureViewStage = null;
-        this.enlargedStructureViewAnchorPane = null;
         //creating an empty structureGridPane at first by setting createStructureImages to false
         this.createStructureImages = false;
         this.showOverviewView();
@@ -143,14 +134,17 @@ public class OverviewViewController {
     private void showOverviewView() {
         //TODO
         if (this.overviewView == null)
-            this.overviewView = new OverviewView(this.moleculeDataModelList, this.rowsPerPage, this.columnsPerPage);
+            this.overviewView = new OverviewView(this.rowsPerPage, this.columnsPerPage);
         this.overviewViewStage = new Stage();
-        Scene tmpScene = new Scene(this.overviewView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
+        Scene tmpScene = new Scene(this.overviewView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
+                GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setScene(tmpScene);
         this.overviewViewStage.initModality(Modality.WINDOW_MODAL);    //TODO: consider changing this?
         this.overviewViewStage.initOwner(this.mainStage);
         this.overviewViewStage.setTitle(this.overviewViewTitle);
-        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
+        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
+                "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
+        );
         this.overviewViewStage.getIcons().add(new Image(tmpImageInputStream));
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
@@ -166,7 +160,7 @@ public class OverviewViewController {
         this.overviewView.addPaginationToGridPane(tmpPagination);
         //this.overviewView.getLeftHBox().setStyle("-fx-background-color: RED");
         //this.overviewView.getRightHBox().setStyle("-fx-background-color: RED");
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(), 0, 1, 1, 1);
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(),0, 1, 1, 1);
         //this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftButtonBar(), 0, 1, 1, 1);
         this.overviewView.addNodeToMainGridPane(this.overviewView.getRightHBox(), 2, 1, 1, 1);
         //this.overviewView.addNodeToMainGridPane(this.overviewView.getRightButtonBar(), 2, 1, 1, 1);
@@ -216,6 +210,8 @@ public class OverviewViewController {
             this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
                     this.rowsPerPage, this.columnsPerPage);
             System.out.println("setOnShown event end");
+            System.out.println("StructureGridPane height: " + this.overviewView.getStructureGridPane().getHeight() +
+                    "; StructureGridPane width: " + this.overviewView.getStructureGridPane().getWidth());
         });
     }
     //
@@ -234,10 +230,20 @@ public class OverviewViewController {
             int tmpFromIndex = aPageIndex * aRowsPerPage * aColumnsPerPage;
             int tmpToIndex = Math.min(tmpFromIndex + (aRowsPerPage * aColumnsPerPage), this.moleculeDataModelList.size());
             int tmpCurrentIndex = tmpFromIndex;
-            double tmpImageHeight = ((this.overviewView.getStructureGridPane().getHeight() -
+            //
+            double tmpPaginationCellsHeight
+                    = this.overviewView.getMainGridPane().getCellBounds(0, 0).getHeight()
+                            + this.overviewView.getMainGridPane().getCellBounds(0, 1).getHeight();
+            double tmpPaginationCellsWidth = 0;
+            for (int i = 0; i < 3; i++) {
+                tmpPaginationCellsWidth += this.overviewView.getMainGridPane().getCellBounds(i, 0).getWidth();
+            }
+            System.out.println("Cells height:" + tmpPaginationCellsHeight + "; Cells width: " + tmpPaginationCellsWidth);
+            //
+            double tmpImageHeight = ((tmpPaginationCellsHeight - 45.0 -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
-            double tmpImageWidth = ((this.overviewView.getStructureGridPane().getWidth() -
+            double tmpImageWidth = ((tmpPaginationCellsWidth -
                     (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) *
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
@@ -293,7 +299,7 @@ public class OverviewViewController {
                         Stage tmpOverviewViewStage = this.overviewViewStage;
                         tmpImageView.setOnMouseClicked((aMouseEvent) -> {
                             if (MouseButton.PRIMARY.equals(aMouseEvent.getButton())) {
-                                this.showEnlargedStructureView(tmpOverviewViewStage, tmpMoleculeDataModel);
+                                this.showEnlargedStructureView(tmpMoleculeDataModel);
                             }
                         });
                         //Setting context menu to the image view
@@ -394,7 +400,7 @@ public class OverviewViewController {
             //showStructureMenuItem
             MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
             tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
-                this.showEnlargedStructureView(this.overviewViewStage, this.cachedMoleculeDataModel);
+                this.showEnlargedStructureView(this.cachedMoleculeDataModel);
             });
             tmpContextMenu.getItems().addAll(
                     new SeparatorMenuItem(),
@@ -441,59 +447,61 @@ public class OverviewViewController {
     //
     /**
      *
-     * @param aPrimaryStage
      * @param aMoleculeDataModel
      */
-    private void showEnlargedStructureView(Stage aPrimaryStage, MoleculeDataModel aMoleculeDataModel) {
+    private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel) {
         //TODO!!
         System.out.println("Enlarged structure is being shown!");
 
-        if (this.enlargedStructureViewStage == null) {
-            this.enlargedStructureViewStage = new Stage();
-            this.enlargedStructureViewAnchorPane = new AnchorPane();
-            Scene tmpScene = new Scene(this.enlargedStructureViewAnchorPane, 500, 400);
-            this.enlargedStructureViewStage.setScene(tmpScene);
-            this.enlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
-            this.enlargedStructureViewStage.initOwner(this.overviewViewStage);
-            this.enlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
-            InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
-                    "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
-            );
-            this.enlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
-            this.enlargedStructureViewStage.setMinHeight(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
-            this.enlargedStructureViewStage.setMinWidth(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
-        }
-        if (!this.enlargedStructureViewStage.isShowing()) {
+        Stage tmpEnlargedStructureViewStage = new Stage();
+        AnchorPane tmpEnlargedStructureViewAnchorPane = new AnchorPane();
+        Scene tmpScene = new Scene(tmpEnlargedStructureViewAnchorPane, 500, 400);
+        tmpEnlargedStructureViewStage.setScene(tmpScene);
+        tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
+        tmpEnlargedStructureViewStage.initOwner(this.overviewViewStage);
+        tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
+        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
+                "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
+        );
+        tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
+        tmpEnlargedStructureViewStage.setMinHeight(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
+        tmpEnlargedStructureViewStage.setMinWidth(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
+
+        tmpEnlargedStructureViewStage.show();
+
+        /*if (!this.enlargedStructureViewStage.isShowing()) {
             this.enlargedStructureViewStage.show();
-        }
+        }*/
 
         ContextMenu tmpContextMenu = this.generateContextMenuWithListeners(true);
 
         try {
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
-                    this.enlargedStructureViewAnchorPane.getWidth(), this.enlargedStructureViewAnchorPane.getHeight()));
-            this.enlargedStructureViewAnchorPane.getChildren().add(tmpStructureImage);
+                    tmpEnlargedStructureViewAnchorPane.getWidth(), tmpEnlargedStructureViewAnchorPane.getHeight()));
+            tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpStructureImage);
             tmpStructureImage.setOnContextMenuRequested((event) -> {
                 tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY());
             });
 
             ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
-                System.out.println("EnlargedStructureView resize event: " + this.enlargedStructureViewStage.getWidth()
-                        + " - " + this.enlargedStructureViewStage.getHeight());
-                this.enlargedStructureViewAnchorPane.getChildren().clear();
-                try {
-                    ImageView tmpUpdatedStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
-                            this.enlargedStructureViewAnchorPane.getWidth(), this.enlargedStructureViewAnchorPane.getHeight()));
-                    this.enlargedStructureViewAnchorPane.getChildren().add(tmpUpdatedStructureImage);
-                    tmpUpdatedStructureImage.setOnContextMenuRequested((event) -> {
-                        tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY());
-                    });
-                } catch (CDKException anException) {
-                    //TODO ?!
-                }
+                Platform.runLater(() -> {
+                    System.out.println("EnlargedStructureView resize event: " + tmpEnlargedStructureViewStage.getWidth()
+                            + " - " + tmpEnlargedStructureViewStage.getHeight());
+                    tmpEnlargedStructureViewAnchorPane.getChildren().clear();
+                    try {
+                        ImageView tmpUpdatedStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
+                                tmpEnlargedStructureViewAnchorPane.getWidth(), tmpEnlargedStructureViewAnchorPane.getHeight()));
+                        tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpUpdatedStructureImage);
+                        tmpUpdatedStructureImage.setOnContextMenuRequested((event) -> {
+                            tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY());
+                        });
+                    } catch (CDKException anException) {
+                        //TODO ?!
+                    }
+                });
             };
-            this.enlargedStructureViewStage.heightProperty().addListener(tmpStageSizeListener);
-            this.enlargedStructureViewStage.widthProperty().addListener(tmpStageSizeListener);
+            tmpEnlargedStructureViewStage.heightProperty().addListener(tmpStageSizeListener);
+            tmpEnlargedStructureViewStage.widthProperty().addListener(tmpStageSizeListener);
         } catch (CDKException anException) {
             //TODO?! if an exception is thrown generating an AtomContainer this point is never reached
         }

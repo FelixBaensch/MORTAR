@@ -44,10 +44,6 @@ public class OverviewView extends AnchorPane {
     /**
      *
      */
-    private BorderPane borderPane;
-    /**
-     *
-     */
     private GridPane mainGridPane;
     /**
      *
@@ -87,7 +83,7 @@ public class OverviewView extends AnchorPane {
     /**
      * Constructor
      */
-    public OverviewView(List<MoleculeDataModel> aMoleculeDataModelList, int aRowsPerPage, int aColumnsPerPage) {
+    public OverviewView(int aRowsPerPage, int aColumnsPerPage) {
         super();
         //gridPane
         this.mainGridPane = new GridPane();
@@ -126,7 +122,7 @@ public class OverviewView extends AnchorPane {
         tmpColCon1.setMinWidth(GuiDefinitions.GUI_SPACING_VALUE);
         tmpColCon1.setPrefWidth(GuiDefinitions.GUI_SPACING_VALUE);
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
-
+        //
         this.structureGridPane = new GridPane();
         //this.structureGridPane.setAlignment(Pos.CENTER);
         //upper and lower border: extending the image frame to grid line width
@@ -146,7 +142,7 @@ public class OverviewView extends AnchorPane {
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
         );
-        //this.structureGridPane.setPadding(new Insets(10, 10, 10, 10));    TODO
+        //this.structureGridPane.setPadding(new Insets(10, 10, 10, 10));
         //this.structureGridPane.setGridLinesVisible(true);
         //this.structureGridPane.setStyle("");
         //this.addNodeToMainGridPane(this.structureGridPane,0, 0, 2, 1);
@@ -156,7 +152,8 @@ public class OverviewView extends AnchorPane {
 
         this.leftHBox = new HBox();
         //this.leftHBox.setPickOnBounds(false); //TODO: setPickOnBounds() ?!
-        this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
+                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.leftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
 
         this.rowsPerPageTextField = new TextField();
@@ -164,7 +161,8 @@ public class OverviewView extends AnchorPane {
         this.rowsPerPageTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
         this.rowsPerPageTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
         this.rowsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
-        TextFormatter<Integer> tmpFormatter1 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), aRowsPerPage, GuiUtil.getIntegerFilter());
+        TextFormatter<Integer> tmpFormatter1 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                aRowsPerPage, GuiUtil.getIntegerFilter());
         this.rowsPerPageTextField.setTextFormatter(tmpFormatter1);
         Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
         //HBox.setHgrow(tmpRowsPerPageLabel, Priority.ALWAYS);
@@ -181,7 +179,8 @@ public class OverviewView extends AnchorPane {
         this.columnsPerPageTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
         this.columnsPerPageTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
         this.columnsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
-        TextFormatter<Integer> tmpFormatter2 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), aColumnsPerPage, GuiUtil.getIntegerFilter());
+        TextFormatter<Integer> tmpFormatter2 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                aColumnsPerPage, GuiUtil.getIntegerFilter());
         this.columnsPerPageTextField.setTextFormatter(tmpFormatter2);
         Label tmpColumnsPerPageLabel = new Label(Message.get("OverviewView.columnsPerPageLabel.text"));
         //HBox.setHgrow(tmpColumnsPerPageLabel, Priority.ALWAYS);
@@ -201,9 +200,8 @@ public class OverviewView extends AnchorPane {
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
 
-        this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
-        //this.leftButtonBar.getButtons().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel, this.columnsPerPageTextField, this.applyButton);
-        //this.leftButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel,
+                this.columnsPerPageTextField, this.applyButton);
         //this.rightHBox.getChildren().addAll(this.rowsPerPageTextField, this.columnsPerPageTextField, this.applyButton);
 
         //this.bottomHBox.getChildren().addAll(this.spacingHBox, this.rightHBox);
@@ -214,7 +212,8 @@ public class OverviewView extends AnchorPane {
         //this.rightButtonBar = new ButtonBar();
         //this.rightButtonBar.setPadding(new Insets(0, GuiDefinitions.GUI_INSETS_VALUE, 0, 0));
         this.rightHBox = new HBox();
-        this.rightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.rightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,
+                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -224,10 +223,6 @@ public class OverviewView extends AnchorPane {
         //this.rightButtonBar.getButtons().add(this.closeButton);
         //this.rightButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.rightHBox.getChildren().add(this.closeButton);
-
-        //this.borderPane.setCenter(this.structureGridPane);
-        //
-        //this.getChildren().add(this.borderPane);
     }
     //</editor-fold>
     //
@@ -311,6 +306,10 @@ public class OverviewView extends AnchorPane {
     //
     public Pagination getPagination() {
         return this.pagination;
+    }
+    //
+    public GridPane getMainGridPane() {
+        return this.mainGridPane;
     }
     //
     public GridPane getStructureGridPane() {
