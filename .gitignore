@@ -43,3 +43,6 @@ gradle-app.setting
 # JDK added for distribution
 /AdoptOpenJDK
 AdoptOpenJDK.zip
+
+# Scaffold Generator test output
+/scaffoldTestOutput

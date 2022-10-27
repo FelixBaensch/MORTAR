@@ -22,7 +22,7 @@ package de.unijena.cheminf.scaffoldGenerator;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/NetworkNode.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on September 26th 2022
+ * Last copied on October 27th 2022
  */
 
 import java.util.ArrayList;

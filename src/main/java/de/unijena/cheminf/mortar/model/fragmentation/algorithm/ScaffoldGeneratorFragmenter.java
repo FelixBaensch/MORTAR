@@ -223,7 +223,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Default fragmentation type.
      */
-    public static final FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = FragmentationTypeOption.ENUMERATIVE_FRAGMENTATION;
+    public static final FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = FragmentationTypeOption.SCHUFFENHAUER_FRAGMENTATION;
 
     /**
      * Default sidechain option.
