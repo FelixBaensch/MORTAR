@@ -23,14 +23,21 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-
-import java.util.List;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
 
 /**
  * View class for the overview window
@@ -42,39 +49,40 @@ public class OverviewView extends AnchorPane {
 
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     *
+     * Grid pane used to style the view.
      */
     private GridPane mainGridPane;
     /**
-     *
+     * Grid pane that holds the displayed structure images and can be reconfigured by the user.
      */
     private GridPane structureGridPane;
     /**
-     *
+     * Horizontal box that holds the nodes placed in the bottom-left corner of the view being the text fields and
+     * apply button for the reconfiguration of the structure grid pane.
      */
     private HBox leftHBox;
     /**
-     *
+     * Horizontal box that holds the nodes placed in the bottom-right corner of the view.
      */
     private HBox rightHBox;
     /**
-     *
+     * Text field for columns per page input.
      */
     private TextField columnsPerPageTextField;
     /**
-     *
+     * Text field for rows per page input.
      */
     private TextField rowsPerPageTextField;
     /**
-     *
+     * Button to apply changes to the structure grid pane configuration.
      */
     private Button applyButton;
     /**
-     *
+     * Button to close the view.
      */
     private Button closeButton;
     /**
-     *
+     * The pagination holding the structure grid pane and enabling the user to switch pages.
      */
     private Pagination pagination;
     //</editor-fold>
@@ -85,12 +93,9 @@ public class OverviewView extends AnchorPane {
      */
     public OverviewView(int aRowsPerPage, int aColumnsPerPage) {
         super();
-        //gridPane
+        //mainGridPane to style the view and specifically place its components
         this.mainGridPane = new GridPane();
-        //this.mainGridPane.setPadding(new Insets(0.0, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
-        //this.mainGridPane.setPadding(new Insets(0.0, 0.0, GuiDefinitions.GUI_INSETS_VALUE, 0.0));
         this.mainGridPane.setPadding(new Insets(0.0, 0.0, 0.0, 0.0));
-        //this.mainGridPane.setStyle("-fx-background-color: LIGHTGREY");
         this.getChildren().add(this.mainGridPane);
         OverviewView.setTopAnchor(this.mainGridPane, 0.0);
         OverviewView.setRightAnchor(this.mainGridPane, 0.0);
@@ -123,11 +128,11 @@ public class OverviewView extends AnchorPane {
         tmpColCon1.setPrefWidth(GuiDefinitions.GUI_SPACING_VALUE);
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
         //
+        //initialisation and styling and initial configuration of the structureGridPane
         this.structureGridPane = new GridPane();
-        //this.structureGridPane.setAlignment(Pos.CENTER);
-        //upper and lower border: extending the image frame to grid line width
-        //right and left border: extending the image frame to grid line width and adding a spacing
-        //the spacing depends on grid line width
+        //upper and lower border: extend the image frame to grid line width;
+        //right and left border: extend the image frame to grid line width and add a spacing;
+        //the spacing was made depend on the grid line width
         this.structureGridPane.setStyle(
                 "-fx-background-color: LIGHTGREY; " +
                 "-fx-border-color: LIGHTGREY; " +
@@ -142,20 +147,15 @@ public class OverviewView extends AnchorPane {
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
         );
-        //this.structureGridPane.setPadding(new Insets(10, 10, 10, 10));
-        //this.structureGridPane.setGridLinesVisible(true);
-        //this.structureGridPane.setStyle("");
-        //this.addNodeToMainGridPane(this.structureGridPane,0, 0, 2, 1);
         this.configureStructureGridPane(aRowsPerPage, aColumnsPerPage);
-        //this.structureGridPane.setStyle("-fx-border-color: black");
-
-
+        //
+        //initialisation of the leftHBox and its components; the components are the text fields for rows and columns
+        //per page input, their labels, tooltips and the apply button to reconfigure the structure grid pane
         this.leftHBox = new HBox();
-        //this.leftHBox.setPickOnBounds(false); //TODO: setPickOnBounds() ?!
         this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.leftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-
+        //
         this.rowsPerPageTextField = new TextField();
         this.rowsPerPageTextField.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
         this.rowsPerPageTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
@@ -165,12 +165,10 @@ public class OverviewView extends AnchorPane {
                 aRowsPerPage, GuiUtil.getIntegerFilter());
         this.rowsPerPageTextField.setTextFormatter(tmpFormatter1);
         Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
-        //HBox.setHgrow(tmpRowsPerPageLabel, Priority.ALWAYS);
         tmpRowsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
         tmpRowsPerPageLabel.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
         tmpRowsPerPageLabel.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE / 2);
         tmpRowsPerPageLabel.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
-        //tmpRowsPerPageLabel.setStyle("-fx-background-color: RED");
         Tooltip tmpRowsPerPageTooltip = new Tooltip(Message.get("OverviewView.rowsPerPageLabel.tooltip"));
         tmpRowsPerPageLabel.setTooltip(tmpRowsPerPageTooltip);
         this.rowsPerPageTextField.setTooltip(tmpRowsPerPageTooltip);
@@ -183,34 +181,25 @@ public class OverviewView extends AnchorPane {
                 aColumnsPerPage, GuiUtil.getIntegerFilter());
         this.columnsPerPageTextField.setTextFormatter(tmpFormatter2);
         Label tmpColumnsPerPageLabel = new Label(Message.get("OverviewView.columnsPerPageLabel.text"));
-        //HBox.setHgrow(tmpColumnsPerPageLabel, Priority.ALWAYS);
         tmpColumnsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
         tmpColumnsPerPageLabel.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
         tmpColumnsPerPageLabel.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE / 2);
         tmpColumnsPerPageLabel.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
-        //tmpColumnsPerPageLabel.setStyle("-fx-background-color: RED");
         Tooltip tmpColumnsPerPageTooltip = new Tooltip(Message.get("OverviewView.columnsPerPageLabel.tooltip"));
         tmpColumnsPerPageLabel.setTooltip(tmpColumnsPerPageTooltip);
         this.columnsPerPageTextField.setTooltip(tmpColumnsPerPageTooltip);
-
+        //
         this.applyButton = new Button(Message.get("OverviewView.applyButton.text"));
         this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
-
+        //
         this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel,
                 this.columnsPerPageTextField, this.applyButton);
-        //this.rightHBox.getChildren().addAll(this.rowsPerPageTextField, this.columnsPerPageTextField, this.applyButton);
-
-        //this.bottomHBox.getChildren().addAll(this.spacingHBox, this.rightHBox);
-        //this.bottomHBox.getChildren().addAll(this.leftButtonBar, this.spacingHBox);
-
-        //this.addNodeToMainGridPane(this.bottomHBox, 0, 1, 2, 1);
-
-        //this.rightButtonBar = new ButtonBar();
-        //this.rightButtonBar.setPadding(new Insets(0, GuiDefinitions.GUI_INSETS_VALUE, 0, 0));
+        //
+        //initialisation of the rightHBox and its component, the close button
         this.rightHBox = new HBox();
         this.rightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
@@ -220,17 +209,18 @@ public class OverviewView extends AnchorPane {
         this.closeButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.closeButton.setTooltip(new Tooltip(Message.get("OverviewView.closeButton.tooltip")));
-        //this.rightButtonBar.getButtons().add(this.closeButton);
-        //this.rightButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        //
         this.rightHBox.getChildren().add(this.closeButton);
     }
     //</editor-fold>
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
+     * Configures the structure grid pane depending on the chosen numbers for rows and columns of structure images to
+     * be displayed per page.
      *
-     * @param aRowsPerPage
-     * @param aColumnsPerPage
+     * @param aRowsPerPage Rows of structure images to be displayed per page
+     * @param aColumnsPerPage Columns of structure images to be displayed per page
      */
     public void configureStructureGridPane(int aRowsPerPage, int aColumnsPerPage) {
         if (this.structureGridPane == null) {
@@ -258,23 +248,24 @@ public class OverviewView extends AnchorPane {
     }
     //
     /**
+     * Adds a node to the main grid pane of the overview view with a specified positioning.
      *
-     * @param aNode
-     * @param aColIndex
-     * @param aRowIndex
-     * @param aColSpan
-     * @param aRowSpan
+     * @param aNode Node to be added
+     * @param aColIndex Index of the column the node should be added to
+     * @param aRowIndex Index of the row the node should be added to
+     * @param aColSpan Number of columns the node should span
+     * @param aRowSpan Number of rows the node should span
      */
     public void addNodeToMainGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.mainGridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
     //
     /**
-     *
-     * @param aPagination
+     * Adds a pagination to the overview view at a fixed position in the main grid pane.
+     * @param aPagination Pagination to be added to the overview view
      */
     public void addPaginationToGridPane(Pagination aPagination) {
-        this.pagination = aPagination;
+        this.pagination = aPagination;  //TODO: does this need to be mentioned in the method description?
         this.addNodeToMainGridPane(this.pagination, 0, 0, 3, 2);
     }
     //</editor-fold>

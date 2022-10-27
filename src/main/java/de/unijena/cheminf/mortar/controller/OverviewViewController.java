@@ -33,11 +33,23 @@ import javafx.event.Event;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.*;
-import javafx.scene.layout.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.openscience.cdk.exception.CDKException;
@@ -98,6 +110,10 @@ public class OverviewViewController {
      * Number of columns for the structureGridPane of the OverviewView
      */
     private int columnsPerPage;
+    /**
+     *
+     */
+    private double paginationSpecificElementsHeight;
     /**
      * Boolean value that defines, whether the structure images should be generated and shown when a new OverviewView
      * page gets created
@@ -210,6 +226,9 @@ public class OverviewViewController {
             this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
                     this.rowsPerPage, this.columnsPerPage);
             System.out.println("setOnShown event end");
+            //calculation of the pagination specific elements height to buffer future javafx intern changes
+            this.paginationSpecificElementsHeight = this.overviewView.getPagination().getHeight() - this.overviewView.getStructureGridPane().getHeight();
+            System.out.println("tmpTest: " + this.paginationSpecificElementsHeight);
             System.out.println("StructureGridPane height: " + this.overviewView.getStructureGridPane().getHeight() +
                     "; StructureGridPane width: " + this.overviewView.getStructureGridPane().getWidth());
         });
@@ -240,7 +259,11 @@ public class OverviewViewController {
             }
             System.out.println("Cells height:" + tmpPaginationCellsHeight + "; Cells width: " + tmpPaginationCellsWidth);
             //
-            double tmpImageHeight = ((tmpPaginationCellsHeight - 45.0 -
+            //calculation of the structure images height and width using height and width of the mainGridPane cells
+            // that hold the pagination; the usage of the structureGridPane and pagination dimensions caused issues at
+            // resizing of the window; correction of the caused height deviation using the height of the pagination
+            // specific elements; the further calculations create the space between the images creating the grid lines
+            double tmpImageHeight = ((tmpPaginationCellsHeight - this.paginationSpecificElementsHeight -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             double tmpImageWidth = ((tmpPaginationCellsWidth -
