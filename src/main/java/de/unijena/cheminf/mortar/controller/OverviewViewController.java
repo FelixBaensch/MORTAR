@@ -30,7 +30,6 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
@@ -271,92 +270,94 @@ public class OverviewViewController {
                     (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) *
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
-            boolean tmpDrawImagesWithShadow = true;    //TODO: settings
-            xloop:
-            for (int i = 0; i < aRowsPerPage; i++) {
-                for (int j = 0; j < aColumnsPerPage; j++) {
-                    if (tmpCurrentIndex >= tmpToIndex) {
-                        break xloop;
+            //
+            if ((tmpImageHeight >= 20.0) && (tmpImageWidth >= 30.0)) {  //TODO: values to settings?! values needs to be > 0 but images only start to make sense at values about 20 x 30 px
+                boolean tmpDrawImagesWithShadow = true;    //TODO: settings
+                xloop:
+                for (int i = 0; i < aRowsPerPage; i++) {
+                    for (int j = 0; j < aColumnsPerPage; j++) {
+                        if (tmpCurrentIndex >= tmpToIndex) {
+                            break xloop;
+                        }
+                        StackPane tmpStackPane = new StackPane();
+                        Node tmpContentNode;
+                        try {
+                            MoleculeDataModel tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpCurrentIndex);   //TODO: catch indexOutOfBounds?
+                            ImageView tmpImageView = new ImageView(DepictionUtil.depictImageWithZoom(
+                                    tmpMoleculeDataModel.getAtomContainer(),
+                                    1.0, tmpImageWidth, tmpImageHeight
+                            ));
+                            //
+                            tmpImageView.setOnMouseEntered((mouseEvent) -> {
+                                if (tmpDrawImagesWithShadow) {
+                                    tmpImageView.setStyle("-fx-effect: null");
+                                } else {
+                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", 0, 0, 0)");
+                                }
+                            });
+                            //
+                            tmpImageView.setOnMouseExited((mouseEvent) -> {
+                                if (tmpDrawImagesWithShadow) {
+                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
+                                } else {
+                                    tmpImageView.setStyle("-fx-effect: null");
+                                }
+                            });
+                            //
+                            tmpImageView.setOnMouseClicked((aMouseEvent) -> {
+                                if (MouseButton.PRIMARY.equals(aMouseEvent.getButton())) {
+                                    this.cacheMoleculeDataModelCorrespondingToEvent(aMouseEvent);
+                                    this.showEnlargedStructureView(tmpMoleculeDataModel);
+                                }
+                            });
+                            //Setting context menu to the image view
+                            tmpImageView.setOnContextMenuRequested((aContextMenuRequest) -> {
+                                System.out.println("ContextMenuRequest");
+                                this.cacheMoleculeDataModelCorrespondingToEvent(aContextMenuRequest);
+                                this.structureContextMenu.show(tmpImageView, aContextMenuRequest.getScreenX(),
+                                        aContextMenuRequest.getScreenY());
+                            });
+                            //
+                            tmpContentNode = tmpImageView;
+                        } catch (CDKException anException) {
+                            OverviewViewController.LOGGER.log(Level.INFO, anException.toString(), anException);
+                            //Error label to be shown instead of structure image
+                            Label tmpErrorLabel = new Label(Message.get("OverviewView.ErrorLabel.text"));
+                            tmpErrorLabel.setMinWidth(tmpImageWidth);
+                            tmpErrorLabel.setMaxWidth(tmpImageWidth);
+                            tmpErrorLabel.setMinHeight(tmpImageHeight);
+                            tmpErrorLabel.setMaxHeight(tmpImageHeight);
+                            tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
+                            Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
+                            tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
+                            tmpContentNode = tmpErrorLabel;
+                        }
+                        if (tmpDrawImagesWithShadow) {
+                            tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
+                        }
+                        tmpStackPane.getChildren().add(tmpContentNode);
+                        this.overviewView.getStructureGridPane().add(tmpStackPane, j, i);
+                        tmpCurrentIndex++;
                     }
-                    StackPane tmpStackPane = new StackPane();
-                    Node tmpContentNode;
-                    try {
-                        MoleculeDataModel tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpCurrentIndex);   //TODO: catch indexOutOfBounds?
-                        ImageView tmpImageView = new ImageView(DepictionUtil.depictImageWithZoom(
-                                tmpMoleculeDataModel.getAtomContainer(),
-                                1.0, tmpImageWidth, tmpImageHeight
-                        ));
-                        tmpImageView.setOnMouseEntered((mouseEvent) -> {
-                            if (tmpDrawImagesWithShadow) {
-                                tmpImageView.setStyle("-fx-effect: null");
-                                /*tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(62, 129, 196, 0.6), " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");*/
-                            } else {
-                                tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", 0, 0, 0)");
-                                //tmpStackPane.setStyle("-fx-border-color: rgba(40, 127, 299, 0.4); -fx-border-width: " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4);
-                                /*tmpImageView.setStyle("-fx-effect: innershadow(gaussian, " +
-                                        "rgba(62, 129, 196, 1.0), " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH * 2 + ", " +
-                                        "0, 0, 0)");*/
-                                /*tmpImageView.setStyle("-fx-effect: innershadow(gaussian, " +
-                                        "rgba(100, 100, 100, 0.9), " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", " +
-                                        "0, 0, 0)");*/
-                            }
-                            this.overviewViewStage.getScene().setCursor(Cursor.HAND);
-                        });
-                        tmpImageView.setOnMouseExited((mouseEvent) -> {
-                            if (tmpDrawImagesWithShadow) {
-                                tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
-                                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
-                            } else {
-                                tmpImageView.setStyle("-fx-effect: null");
-                            }
-                            this.overviewViewStage.getScene().setCursor(Cursor.DEFAULT);
-                        });
-                        tmpImageView.setOnMouseClicked((aMouseEvent) -> {
-                            if (MouseButton.PRIMARY.equals(aMouseEvent.getButton())) {
-                                this.showEnlargedStructureView(tmpMoleculeDataModel);
-                            }
-                        });
-                        //Setting context menu to the image view
-                        tmpImageView.setOnContextMenuRequested((aContextMenuRequest) -> {
-                            System.out.println("ContextMenuRequest");
-                            this.getMoleculeDataModelCorrespondingToEvent(aContextMenuRequest);
-                            this.structureContextMenu.show(tmpImageView, aContextMenuRequest.getScreenX(),
-                                    aContextMenuRequest.getScreenY());
-                        });
-                        //
-                        tmpContentNode = tmpImageView;
-                    } catch (CDKException anException) {
-                        OverviewViewController.LOGGER.log(Level.INFO, anException.toString(), anException);
-                        //Error label instead of image
-                        Label tmpErrorLabel = new Label(Message.get("OverviewView.ErrorLabel.text"));
-                        tmpErrorLabel.setMinWidth(tmpImageWidth);
-                        tmpErrorLabel.setMaxWidth(tmpImageWidth);
-                        tmpErrorLabel.setMinHeight(tmpImageHeight);
-                        tmpErrorLabel.setMaxHeight(tmpImageHeight);
-                        tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
-                        Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
-                        tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
-                        tmpContentNode = tmpErrorLabel;
-                    }
-                    //tmpContentNode.setStyle("-fx-effect: innershadow(three-pass-box, rgba(100, 100, 100, 1), " + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, 0)");
-                    if (tmpDrawImagesWithShadow) {
-                        tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
-                                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
-                                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
-                    }
-                    tmpStackPane.getChildren().add(tmpContentNode);
-                    this.overviewView.getStructureGridPane().add(tmpStackPane, j, i);
-                    tmpCurrentIndex++;
                 }
+            } else {
+                //GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, "Something", "The image height and width fell below a defined minimum value", null);
+                StackPane tmpStackPane = new StackPane();
+                Label tmpUserInformationLabel = new Label("The image height and width fell below a defined minimum value."); //TODO
+                //tmpUserInformationLabel.setPadding(new Insets(20.0));
+                tmpUserInformationLabel.setStyle("-fx-alignment: CENTER");
+                Tooltip tmpUserInformationLabelTooltip = new Tooltip("Tooltip"); //TODO
+                tmpUserInformationLabel.setTooltip(tmpUserInformationLabelTooltip);
+                tmpStackPane.getChildren().add(tmpUserInformationLabel);
+                //
+                this.overviewView.getStructureGridPane().add(tmpStackPane, 0, 0, this.columnsPerPage, this.rowsPerPage);
             }
         }
         this.createStructureImages = true;
@@ -368,7 +369,7 @@ public class OverviewViewController {
      * @param anEvent
      * @return
      */
-    private MoleculeDataModel getMoleculeDataModelCorrespondingToEvent(Event anEvent) {
+    private MoleculeDataModel cacheMoleculeDataModelCorrespondingToEvent(Event anEvent) {
         int tmpRowIndex = GridPane.getRowIndex(((Node) anEvent.getSource()).getParent());
         int tmpColumnIndex = GridPane.getColumnIndex(((Node) anEvent.getSource()).getParent());
         int tmpIndexOfMolecule = this.overviewView.getPagination().getCurrentPageIndex() * this.rowsPerPage * this.columnsPerPage
