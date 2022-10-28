@@ -40,7 +40,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 
 /**
- * View class for the overview window
+ * View class of the overview view.
  *
  * @author Samuel Behr
  * @version 1.0.0.0
@@ -82,7 +82,7 @@ public class OverviewView extends AnchorPane {
      */
     private Button closeButton;
     /**
-     * The pagination holding the structure grid pane and enabling the user to switch pages.
+     * Pagination that holds the structure grid pane and enables the user to switch pages.
      */
     private Pagination pagination;
     //</editor-fold>
@@ -128,11 +128,10 @@ public class OverviewView extends AnchorPane {
         tmpColCon1.setPrefWidth(GuiDefinitions.GUI_SPACING_VALUE);
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
         //
-        //initialisation and styling and initial configuration of the structureGridPane
+        //initialisation, styling and initial configuration of the structureGridPane
         this.structureGridPane = new GridPane();
         //upper and lower border: extend the image frame to grid line width;
-        //right and left border: extend the image frame to grid line width and add a spacing;
-        //the spacing was made depend on the grid line width
+        // right and left border: extend the image frame to grid line width and add a grid line width dependent spacing
         this.structureGridPane.setStyle(
                 "-fx-background-color: LIGHTGREY; " +
                 "-fx-border-color: LIGHTGREY; " +
@@ -150,7 +149,9 @@ public class OverviewView extends AnchorPane {
         this.configureStructureGridPane(aRowsPerPage, aColumnsPerPage);
         //
         //initialisation of the leftHBox and its components; the components are the text fields for rows and columns
-        //per page input, their labels, tooltips and the apply button to reconfigure the structure grid pane
+        // per page input, their labels, tooltips and the apply button to reconfigure the structure grid pane;
+        // to make sure all components are set up correct and selectable the leftHBox needs to be added to the
+        // mainGridPane in the controller after the pagination has been added
         this.leftHBox = new HBox();
         this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
@@ -199,7 +200,9 @@ public class OverviewView extends AnchorPane {
         this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel,
                 this.columnsPerPageTextField, this.applyButton);
         //
-        //initialisation of the rightHBox and its component, the close button
+        //initialisation of the rightHBox and its component, the close button; to make sure all components are set up
+        // correct and selectable the leftHBox needs to be added to the mainGridPane in the controller after the
+        // pagination has been added
         this.rightHBox = new HBox();
         this.rightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
@@ -225,21 +228,18 @@ public class OverviewView extends AnchorPane {
     public void configureStructureGridPane(int aRowsPerPage, int aColumnsPerPage) {
         if (this.structureGridPane == null) {
             this.structureGridPane = new GridPane();
-            //this.structureGridPane.setGridLinesVisible(true);
         } else {
             this.structureGridPane.getRowConstraints().clear();
             this.structureGridPane.getColumnConstraints().clear();
         }
         for (int i = 0; i < aRowsPerPage; i++) {
             RowConstraints tmpRowCon = new RowConstraints();
-            //tmpRowCon.setFillHeight(true);
             tmpRowCon.setVgrow(Priority.ALWAYS);
             tmpRowCon.setPercentHeight(100.0 / aRowsPerPage);
             this.structureGridPane.getRowConstraints().add(tmpRowCon);
         }
         for (int i = 0; i < aColumnsPerPage; i++) {
             ColumnConstraints tmpColCon = new ColumnConstraints();
-            //tmpColCon.setFillWidth(true);
             tmpColCon.setHgrow(Priority.ALWAYS);
             tmpColCon.setPercentWidth(100.0 / aColumnsPerPage);
             this.structureGridPane.getColumnConstraints().add(tmpColCon);
@@ -250,9 +250,9 @@ public class OverviewView extends AnchorPane {
     /**
      * Adds a node to the main grid pane of the overview view with a specified positioning.
      *
-     * @param aNode Node to be added
-     * @param aColIndex Index of the column the node should be added to
-     * @param aRowIndex Index of the row the node should be added to
+     * @param aNode Node to be added to the main grid pane
+     * @param aColIndex Index of column the node should be added to
+     * @param aRowIndex Index of row the node should be added to
      * @param aColSpan Number of columns the node should span
      * @param aRowSpan Number of rows the node should span
      */
@@ -262,6 +262,7 @@ public class OverviewView extends AnchorPane {
     //
     /**
      * Adds a pagination to the overview view at a fixed position in the main grid pane.
+     *
      * @param aPagination Pagination to be added to the overview view
      */
     public void addPaginationToGridPane(Pagination aPagination) {

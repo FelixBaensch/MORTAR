@@ -60,7 +60,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Controller class for OverviewView
+ * Controller class of the overview view.
  *
  * TODO: Logger!!
  *
@@ -78,50 +78,50 @@ public class OverviewViewController {
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * Main stage object of the application
+     * Main stage object of the application.
      */
     private final Stage mainStage;
     /**
-     * Stage for the OverviewView
+     * Stage of the overview view.
      */
     private Stage overviewViewStage;
     /**
-     * OvervieView
+     * OvervieView instance of the class.
      */
     private OverviewView overviewView;
     /**
-     * Title of the overviewViewStage
+     * Title of the overviewViewStage.
      */
     private String overviewViewTitle;
     /**
-     * List of MoleculeDataModels for visualization in OverviewView
+     * List of MoleculeDataModels to be displayed in the overview view.
      */
     private List<MoleculeDataModel> moleculeDataModelList;
     /**
-     * Slot for the caching of a MoleculeDataModel as reaction to a left or right mouse click on a structure shown in
-     * the overview view
+     * Slot for the caching of a MoleculeDataModel in reaction to a left or right mouse click on a structure shown in
+     * the overview view.
      */
     private MoleculeDataModel cachedMoleculeDataModel;
     /**
-     * Number of rows for the structureGridPane of the OverviewView
+     * Integer value to hold the number of rows of structure images to be displayed per page.
      */
     private int rowsPerPage;
     /**
-     * Number of columns for the structureGridPane of the OverviewView
+     * Integer value to hold the number of columns of structure images to be displayed per page.
      */
     private int columnsPerPage;
     /**
-     *
+     * Double value to hold the height of the space taken up by the navigation bar at the bottom of the pagination node.
      */
     private double paginationSpecificElementsHeight;
     /**
      * Boolean value that defines, whether the structure images should be generated and shown when a new OverviewView
-     * page gets created
+     * page gets created. This variable initially needs to be set to false and gets set to true with the first call of
+     * the method createOverviewViewPage().
      */
     private boolean createStructureImages;
     /**
-     * Context menu that allows to copy the SMILES String or image of a structure or to open a window that displays an
-     * enlarged representation of the structure's image
+     * Context menu for the structure images.
      */
     private ContextMenu structureContextMenu;
     //</editor-fold>
@@ -145,10 +145,9 @@ public class OverviewViewController {
     //
     //<editor-fold desc="private methods" dafaultstate="collapsed">
     /**
-     * Initializes and opens overviewView
+     * Initializes and opens the overview view. This method is only being called by the constructor.
      */
     private void showOverviewView() {
-        //TODO
         if (this.overviewView == null)
             this.overviewView = new OverviewView(this.rowsPerPage, this.columnsPerPage);
         this.overviewViewStage = new Stage();
@@ -169,38 +168,38 @@ public class OverviewViewController {
         if (this.moleculeDataModelList.size() % (this.rowsPerPage * this.columnsPerPage) > 0) {
             tmpPageCount++;
         }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);     //TODO: make tmpPagination class var ?!
-        tmpPagination.setPageFactory((pageIndex) -> this.createOverviewViewPage(pageIndex, this.rowsPerPage, this.columnsPerPage));
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setPageFactory((aPageIndex) -> this.createOverviewViewPage(aPageIndex,
+                this.rowsPerPage, this.columnsPerPage));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         this.overviewView.addPaginationToGridPane(tmpPagination);
-        //this.overviewView.getLeftHBox().setStyle("-fx-background-color: RED");
-        //this.overviewView.getRightHBox().setStyle("-fx-background-color: RED");
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(),0, 1, 1, 1);
-        //this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftButtonBar(), 0, 1, 1, 1);
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(), 0, 1, 1, 1);
         this.overviewView.addNodeToMainGridPane(this.overviewView.getRightHBox(), 2, 1, 1, 1);
-        //this.overviewView.addNodeToMainGridPane(this.overviewView.getRightButtonBar(), 2, 1, 1, 1);
-
-        this.addListeners();
-        //TODO:
+        //
         this.structureContextMenu = this.generateContextMenuWithListeners(false);
-
+        //
+        this.addListeners();
+        //
         this.overviewViewStage.showAndWait();
     }
     //
     /**
-     * Adds listeners and event handlers to control elements etc.
+     * Adds listeners and event handlers to elements of the overview view.
      */
     private void addListeners() {
         this.overviewView.getApplyButton().setOnAction(actionEvent -> {
             try {
                 this.applyChangeOfGridConfiguration();
             } catch (IllegalArgumentException anIllegalArgumentException) {
-                OverviewViewController.LOGGER.log(Level.WARNING, anIllegalArgumentException.toString(), anIllegalArgumentException);
-                GuiUtil.guiExceptionAlert(Message.get("OverviewView.Error.invalidTextFieldInput.title"),
+                OverviewViewController.LOGGER.log(Level.WARNING, anIllegalArgumentException.toString(),
+                        anIllegalArgumentException);
+                GuiUtil.guiExceptionAlert(
+                        Message.get("OverviewView.Error.invalidTextFieldInput.title"),
                         Message.get("OverviewView.Error.invalidTextFieldInput.header"),
                         anIllegalArgumentException.toString(),
-                        anIllegalArgumentException);
+                        anIllegalArgumentException
+                );
             }
         });
         //
@@ -209,7 +208,6 @@ public class OverviewViewController {
         });
         //
         ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
-            //TODO
             Platform.runLater(() -> {
                 System.out.println("Window resize event: " + this.overviewViewStage.getWidth() + " - "
                         + this.overviewViewStage.getHeight());
@@ -222,23 +220,26 @@ public class OverviewViewController {
         //
         this.overviewViewStage.setOnShown(windowEvent -> {
             System.out.println("setOnShown event");
-            //tmpPagination.setCurrentPageIndex(tmpPagination.getCurrentPageIndex());
             this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
                     this.rowsPerPage, this.columnsPerPage);
             System.out.println("setOnShown event end");
             //calculation of the pagination specific elements height to buffer future javafx intern changes
-            this.paginationSpecificElementsHeight = this.overviewView.getPagination().getHeight() - this.overviewView.getStructureGridPane().getHeight();
+            this.paginationSpecificElementsHeight = this.overviewView.getPagination().getHeight()
+                    - this.overviewView.getStructureGridPane().getHeight();
             System.out.println("tmpTest: " + this.paginationSpecificElementsHeight);
-            System.out.println("StructureGridPane height: " + this.overviewView.getStructureGridPane().getHeight() +
-                    "; StructureGridPane width: " + this.overviewView.getStructureGridPane().getWidth());
+            System.out.println("StructureGridPane height: " + this.overviewView.getStructureGridPane().getHeight()
+                    + "; StructureGridPane width: " + this.overviewView.getStructureGridPane().getWidth());
         });
     }
     //
     /**
+     * Creates an overview view page according to the given page index. A GridPane containing structure images is being
+     * returned.
      *
-     * @param aColumnsPerPage
-     * @param aRowsPerPage
-     * @return
+     * @param aPageIndex Index of the page to be created
+     * @param aColumnsPerPage Number of columns per page
+     * @param aRowsPerPage Number of rows per page
+     * @return GridPane containing the structure images to be displayed on the current pagination page
      */
     private Node createOverviewViewPage(int aPageIndex, int aRowsPerPage, int aColumnsPerPage) {
         System.out.println("Call of createOverviewViewPage");
@@ -315,11 +316,9 @@ public class OverviewViewController {
                                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
                             } else {
                                 tmpImageView.setStyle("-fx-effect: null");
-                                //tmpStackPane.setStyle("-fx-border-color: null");
                             }
                             this.overviewViewStage.getScene().setCursor(Cursor.DEFAULT);
                         });
-                        Stage tmpOverviewViewStage = this.overviewViewStage;
                         tmpImageView.setOnMouseClicked((aMouseEvent) -> {
                             if (MouseButton.PRIMARY.equals(aMouseEvent.getButton())) {
                                 this.showEnlargedStructureView(tmpMoleculeDataModel);
