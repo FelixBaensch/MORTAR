@@ -60,11 +60,11 @@ public class OverviewView extends AnchorPane {
      * Horizontal box that holds the nodes placed in the bottom-left corner of the view being the text fields and
      * apply button for the reconfiguration of the structure grid pane.
      */
-    private HBox leftHBox;
+    private HBox bottomLeftHBox;
     /**
      * Horizontal box that holds the nodes placed in the bottom-right corner of the view.
      */
-    private HBox rightHBox;
+    private HBox bottomRightHBox;
     /**
      * Text field for columns per page input.
      */
@@ -89,11 +89,18 @@ public class OverviewView extends AnchorPane {
     //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
     /**
-     * Constructor
+     * Constructor.
+     *
+     * Initializes the main components of the overview view and does the basic styling. The grid pane to display the
+     * structure images that is to be hold by the pagination node of the overview view gets generated, configured and
+     * styled. The horizontal boxes holding the text fields and buttons of the lower side of the view are not being
+     * added to the main grid pane of the view and are advised to be added after the pagination node to ensure the
+     * accessibility of all view components.
+     * No event listeners are added to any components.
      */
     public OverviewView(int aRowsPerPage, int aColumnsPerPage) {
         super();
-        //mainGridPane to style the view and specifically place its components
+        //mainGridPane to style the view and set up its components
         this.mainGridPane = new GridPane();
         this.mainGridPane.setPadding(new Insets(0.0, 0.0, 0.0, 0.0));
         this.getChildren().add(this.mainGridPane);
@@ -128,10 +135,12 @@ public class OverviewView extends AnchorPane {
         tmpColCon1.setPrefWidth(GuiDefinitions.GUI_SPACING_VALUE);
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
         //
-        //initialisation, styling and initial configuration of the structureGridPane
+        //initialization, styling and initial configuration of the structureGridPane
         this.structureGridPane = new GridPane();
-        //upper and lower border: extend the image frame to grid line width;
-        // right and left border: extend the image frame to grid line width and add a grid line width dependent spacing
+        /*
+        upper and lower border: extend the image frame to grid line width;
+        right and left border: extend the image frame to grid line width and add a grid line width dependent spacing
+         */
         this.structureGridPane.setStyle(
                 "-fx-background-color: LIGHTGREY; " +
                 "-fx-border-color: LIGHTGREY; " +
@@ -148,14 +157,16 @@ public class OverviewView extends AnchorPane {
         );
         this.configureStructureGridPane(aRowsPerPage, aColumnsPerPage);
         //
-        //initialisation of the leftHBox and its components; the components are the text fields for rows and columns
-        // per page input, their labels, tooltips and the apply button to reconfigure the structure grid pane;
-        // to make sure all components are set up correct and selectable the leftHBox needs to be added to the
-        // mainGridPane in the controller after the pagination has been added
-        this.leftHBox = new HBox();
-        this.leftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
+        /*
+        initialisation of the bottomLeftHBox and its components; the components are the text fields for rows and columns
+        per page input, their labels, tooltips and the apply button to reconfigure the structure grid pane; the
+        bottomLeftHBox needs to be added in the controller after the pagination has been added to the mainGridPane to
+        make sure all components are set up correct and accessible
+         */
+        this.bottomLeftHBox = new HBox();
+        this.bottomLeftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
-        this.leftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        this.bottomLeftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         //
         this.rowsPerPageTextField = new TextField();
         this.rowsPerPageTextField.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
@@ -197,14 +208,16 @@ public class OverviewView extends AnchorPane {
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
         //
-        this.leftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel,
+        this.bottomLeftHBox.getChildren().addAll(tmpRowsPerPageLabel, this.rowsPerPageTextField, tmpColumnsPerPageLabel,
                 this.columnsPerPageTextField, this.applyButton);
         //
-        //initialisation of the rightHBox and its component, the close button; to make sure all components are set up
-        // correct and selectable the leftHBox needs to be added to the mainGridPane in the controller after the
-        // pagination has been added
-        this.rightHBox = new HBox();
-        this.rightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,
+        /*
+        initialisation of the bottomRightHBox and its component, the close button; the bottomRightHBox needs to be added
+        in the controller after the pagination has been added to the mainGridPane to make sure all components are set up
+        correct and accessible
+         */
+        this.bottomRightHBox = new HBox();
+        this.bottomRightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -213,7 +226,7 @@ public class OverviewView extends AnchorPane {
         this.closeButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.closeButton.setTooltip(new Tooltip(Message.get("OverviewView.closeButton.tooltip")));
         //
-        this.rightHBox.getChildren().add(this.closeButton);
+        this.bottomRightHBox.getChildren().add(this.closeButton);
     }
     //</editor-fold>
     //
@@ -253,31 +266,32 @@ public class OverviewView extends AnchorPane {
      * @param aNode Node to be added to the main grid pane
      * @param aColIndex Index of column the node should be added to
      * @param aRowIndex Index of row the node should be added to
-     * @param aColSpan Number of columns the node should span
-     * @param aRowSpan Number of rows the node should span
+     * @param aColSpan Number of columns for the node to span
+     * @param aRowSpan Number of rows for the node to span
      */
     public void addNodeToMainGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.mainGridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
     //
     /**
-     * Adds a pagination to the overview view at a fixed position in the main grid pane.
+     * Adds the pagination to the overview view at a fixed position in the main grid pane and initializes the
+     * pagination class variable.
      *
      * @param aPagination Pagination to be added to the overview view
      */
     public void addPaginationToGridPane(Pagination aPagination) {
-        this.pagination = aPagination;  //TODO: does this need to be mentioned in the method description?
+        this.pagination = aPagination;
         this.addNodeToMainGridPane(this.pagination, 0, 0, 3, 2);
     }
     //</editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
-    public HBox getLeftHBox() {
-        return this.leftHBox;
+    public HBox getBottomLeftHBox() {
+        return this.bottomLeftHBox;
     }
     //
-    public HBox getRightHBox() {
-        return this.rightHBox;
+    public HBox getBottomRightHBox() {
+        return this.bottomRightHBox;
     }
     //
     public Button getApplyButton() {

@@ -61,14 +61,12 @@ import java.util.logging.Logger;
 /**
  * Controller class of the overview view.
  *
- * TODO: Logger!!
- *
  * @author Samuel Behr
  * @version 1.0.0.0
  */
 public class OverviewViewController {
 
-    //<editor-fold desc="private static final class constants" defaultstate="collapsed">
+    //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
      * Logger of this class.
      */
@@ -102,21 +100,22 @@ public class OverviewViewController {
      */
     private MoleculeDataModel cachedMoleculeDataModel;
     /**
-     * Integer value to hold the number of rows of structure images to be displayed per page.
+     * Integer value that holds the number of rows of structure images to be displayed per page.
      */
     private int rowsPerPage;
     /**
-     * Integer value to hold the number of columns of structure images to be displayed per page.
+     * Integer value that holds the number of columns of structure images to be displayed per page.
      */
     private int columnsPerPage;
     /**
-     * Double value to hold the height of the space taken up by the navigation bar at the bottom of the pagination node.
+     * Double value that holds the height of the space taken up by the navigation bar at the bottom of the pagination
+     * node.
      */
     private double paginationSpecificElementsHeight;
     /**
-     * Boolean value that defines, whether the structure images should be generated and shown when a new OverviewView
-     * page gets created. This variable initially needs to be set to false and gets set to true with the first call of
-     * the method createOverviewViewPage().
+     * Boolean value that defines, whether the structure images should be generated and shown when a new overview view
+     * page gets created. This variable helps to avoid issues with the creation of the initial pagination page and
+     * needs to be set to false at start.
      */
     private boolean createStructureImages;
     /**
@@ -127,15 +126,14 @@ public class OverviewViewController {
     //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
     /**
-     * Constructor
+     * Constructor. Initializes the class variables and creates the overview view.
      */
     public OverviewViewController(Stage aStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList) {
-        //TODO
         this.mainStage = aStage;
         this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
         this.moleculeDataModelList = aMoleculeDataModelList;
-        this.rowsPerPage = 5;
-        this.columnsPerPage = 4;
+        this.rowsPerPage = 5;   //TODO: settings! default values should be customizable
+        this.columnsPerPage = 4;    //TODO: settings! default values should be customizable
         //creating an empty structureGridPane at first by setting createStructureImages to false
         this.createStructureImages = false;
         this.showOverviewView();
@@ -145,6 +143,8 @@ public class OverviewViewController {
     //<editor-fold desc="private methods" dafaultstate="collapsed">
     /**
      * Initializes and opens the overview view. This method is only being called by the constructor.
+     *
+     * @Felix, @Jonas: should I remove the method and include the code into the constructor?!
      */
     private void showOverviewView() {
         if (this.overviewView == null)
@@ -153,7 +153,7 @@ public class OverviewViewController {
         Scene tmpScene = new Scene(this.overviewView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setScene(tmpScene);
-        this.overviewViewStage.initModality(Modality.WINDOW_MODAL);    //TODO: consider changing this?
+        this.overviewViewStage.initModality(Modality.WINDOW_MODAL);
         this.overviewViewStage.initOwner(this.mainStage);
         this.overviewViewStage.setTitle(this.overviewViewTitle);
         InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
@@ -173,8 +173,8 @@ public class OverviewViewController {
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         this.overviewView.addPaginationToGridPane(tmpPagination);
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getLeftHBox(), 0, 1, 1, 1);
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getRightHBox(), 2, 1, 1, 1);
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getBottomLeftHBox(), 0, 1, 1, 1);
+        this.overviewView.addNodeToMainGridPane(this.overviewView.getBottomRightHBox(), 2, 1, 1, 1);
         //
         this.structureContextMenu = this.generateContextMenuWithListeners(false);
         //
@@ -191,6 +191,7 @@ public class OverviewViewController {
             try {
                 this.applyChangeOfGridConfiguration();
             } catch (IllegalArgumentException anIllegalArgumentException) {
+                //@Felix, @Jonas: should I remove the logging since the exception is meant to be thrown?
                 OverviewViewController.LOGGER.log(Level.WARNING, anIllegalArgumentException.toString(),
                         anIllegalArgumentException);
                 GuiUtil.guiExceptionAlert(
@@ -219,26 +220,29 @@ public class OverviewViewController {
         //
         this.overviewViewStage.setOnShown(windowEvent -> {
             System.out.println("setOnShown event");
-            this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
-                    this.rowsPerPage, this.columnsPerPage);
-            System.out.println("setOnShown event end");
             //calculation of the pagination specific elements height to buffer future javafx intern changes
             this.paginationSpecificElementsHeight = this.overviewView.getPagination().getHeight()
                     - this.overviewView.getStructureGridPane().getHeight();
             System.out.println("tmpTest: " + this.paginationSpecificElementsHeight);
             System.out.println("StructureGridPane height: " + this.overviewView.getStructureGridPane().getHeight()
                     + "; StructureGridPane width: " + this.overviewView.getStructureGridPane().getWidth());
+            System.out.println("setOnShown event end");
         });
     }
     //
     /**
-     * Creates an overview view page according to the given page index. A GridPane containing structure images is being
-     * returned.
+     * Creates an overview view page according to the given page index. A GridPane containing structure images gets
+     * returned. The SMILES and image of each structure can be copied and an enlarged version of the image be shown in
+     * a separate view via a context menu. If an exception gets thrown during the depiction of a structure a label will
+     * be placed instead of the structure image (as placeholder and to inform the user).
+     * If the image dimensions fall below a defined minimum instead of the images a label is placed that spans the hole
+     * grid and holds information for the user.
      *
      * @param aPageIndex Index of the page to be created
      * @param aColumnsPerPage Number of columns per page
      * @param aRowsPerPage Number of rows per page
-     * @return GridPane containing the structure images to be displayed on the current pagination page
+     * @return GridPane containing the structure images to be displayed on the current pagination page or a label if the
+     * image dimensions fall below a predefined limit
      */
     private Node createOverviewViewPage(int aPageIndex, int aRowsPerPage, int aColumnsPerPage) {
         System.out.println("Call of createOverviewViewPage");
@@ -250,20 +254,23 @@ public class OverviewViewController {
             int tmpToIndex = Math.min(tmpFromIndex + (aRowsPerPage * aColumnsPerPage), this.moleculeDataModelList.size());
             int tmpCurrentIndex = tmpFromIndex;
             //
-            double tmpPaginationCellsHeight
+            //calculation of height and width of the mainGridPanes cells that hold the pagination node
+            double tmpMainGridPanePaginationCellsHeight
                     = this.overviewView.getMainGridPane().getCellBounds(0, 0).getHeight()
                             + this.overviewView.getMainGridPane().getCellBounds(0, 1).getHeight();
             double tmpPaginationCellsWidth = 0;
             for (int i = 0; i < 3; i++) {
                 tmpPaginationCellsWidth += this.overviewView.getMainGridPane().getCellBounds(i, 0).getWidth();
             }
-            System.out.println("Cells height:" + tmpPaginationCellsHeight + "; Cells width: " + tmpPaginationCellsWidth);
+            System.out.println("Cells height:" + tmpMainGridPanePaginationCellsHeight + "; Cells width: " + tmpPaginationCellsWidth);
             //
-            //calculation of the structure images height and width using height and width of the mainGridPane cells
-            // that hold the pagination; the usage of the structureGridPane and pagination dimensions caused issues at
-            // resizing of the window; correction of the caused height deviation using the height of the pagination
-            // specific elements; the further calculations create the space between the images creating the grid lines
-            double tmpImageHeight = ((tmpPaginationCellsHeight - this.paginationSpecificElementsHeight -
+            /*
+            calculation of the structure images height and width using height and width of the mainGridPane cells that
+            hold the pagination; the usage of the structureGridPane and pagination dimensions caused issues at resizing
+            of the window; correction of the caused height deviation using the height of the pagination specific
+            elements; the further calculations create the space between the images creating the grid lines
+             */
+            double tmpImageHeight = ((tmpMainGridPanePaginationCellsHeight - this.paginationSpecificElementsHeight -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             double tmpImageWidth = ((tmpPaginationCellsWidth -
@@ -271,8 +278,8 @@ public class OverviewViewController {
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             //
-            if ((tmpImageHeight >= 20.0) && (tmpImageWidth >= 30.0)) {  //TODO: values to settings?! values needs to be > 0 but images only start to make sense at values about 20 x 30 px
-                boolean tmpDrawImagesWithShadow = true;    //TODO: settings
+            if ((tmpImageHeight >= 20.0) && (tmpImageWidth >= 30.0)) {  //TODO: values to settings?! values need to be > 0 but images only start to make sense at values about 20 x 30 px
+                boolean tmpDrawImagesWithShadow = true;    //TODO: place in settings
                 xloop:
                 for (int i = 0; i < aRowsPerPage; i++) {
                     for (int j = 0; j < aColumnsPerPage; j++) {
@@ -282,7 +289,7 @@ public class OverviewViewController {
                         StackPane tmpStackPane = new StackPane();
                         Node tmpContentNode;
                         try {
-                            MoleculeDataModel tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpCurrentIndex);   //TODO: catch indexOutOfBounds?
+                            MoleculeDataModel tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpCurrentIndex);
                             ImageView tmpImageView = new ImageView(DepictionUtil.depictImageWithZoom(
                                     tmpMoleculeDataModel.getAtomContainer(),
                                     1.0, tmpImageWidth, tmpImageHeight
@@ -292,15 +299,19 @@ public class OverviewViewController {
                                 if (tmpDrawImagesWithShadow) {
                                     tmpImageView.setStyle("-fx-effect: null");
                                 } else {
-                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", 0, 0, 0)");
+                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, " +
+                                            "rgba(100, 100, 100, 0.6), " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", " +
+                                            "0, 0, 0)");
                                 }
                             });
                             //
                             tmpImageView.setOnMouseExited((mouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
-                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, " +
+                                            "rgba(100, 100, 100, 0.6), " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 +
+                                            ", 0, " +
                                             GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
                                             GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
                                 } else {
@@ -335,6 +346,12 @@ public class OverviewViewController {
                             Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
                             tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
                             tmpContentNode = tmpErrorLabel;
+                        } catch (IndexOutOfBoundsException anIndexOutOfBoundsException) {
+                            //could be thrown when accessing the moleculeDataModelList
+                            OverviewViewController.LOGGER.log(Level.SEVERE, anIndexOutOfBoundsException.toString(),
+                                    anIndexOutOfBoundsException);
+                            //TODO: guiExceptionAlert ?! @Felix, @Jonas
+                            break xloop;
                         }
                         if (tmpDrawImagesWithShadow) {
                             tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
@@ -348,14 +365,16 @@ public class OverviewViewController {
                     }
                 }
             } else {
-                //GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, "Something", "The image height and width fell below a defined minimum value", null);
                 StackPane tmpStackPane = new StackPane();
-                Label tmpUserInformationLabel = new Label("The image height and width fell below a defined minimum value."); //TODO
-                //tmpUserInformationLabel.setPadding(new Insets(20.0));
-                tmpUserInformationLabel.setStyle("-fx-alignment: CENTER");
-                Tooltip tmpUserInformationLabelTooltip = new Tooltip("Tooltip"); //TODO
-                tmpUserInformationLabel.setTooltip(tmpUserInformationLabelTooltip);
-                tmpStackPane.getChildren().add(tmpUserInformationLabel);
+                Label tmpImageDimensionsBelowLimitLabel = new Label(
+                        Message.get("OverviewView.imageDimensionsBelowLimitLabel.text")
+                );
+                tmpImageDimensionsBelowLimitLabel.setStyle("-fx-alignment: CENTER");
+                Tooltip tmpImageDimensionsBelowLimitLabelTooltip = new Tooltip(
+                        Message.get("OverviewView.imageDimensionsBelowLimitLabel.tooltip")  //TODO: adapt tooltip after integration of overview view settings
+                );
+                tmpImageDimensionsBelowLimitLabel.setTooltip(tmpImageDimensionsBelowLimitLabelTooltip);
+                tmpStackPane.getChildren().add(tmpImageDimensionsBelowLimitLabel);
                 //
                 this.overviewView.getStructureGridPane().add(tmpStackPane, 0, 0, this.columnsPerPage, this.rowsPerPage);
             }
@@ -365,26 +384,27 @@ public class OverviewViewController {
     }
     //
     /**
+     * Caches and returns the MoleculeDataModel corresponding to the content of the node the given event occurred on.
+     * The parent of the node needs to be a child of the structureGridPane of the controllers OverviewView instance.
      *
-     * @param anEvent
-     * @return
+     * @param anEvent Event the corresponding MoleculeDataModel should be cached of
+     * @return MoleculeDataModel instance corresponding to the content of the source of the event
      */
     private MoleculeDataModel cacheMoleculeDataModelCorrespondingToEvent(Event anEvent) {
         int tmpRowIndex = GridPane.getRowIndex(((Node) anEvent.getSource()).getParent());
         int tmpColumnIndex = GridPane.getColumnIndex(((Node) anEvent.getSource()).getParent());
-        int tmpIndexOfMolecule = this.overviewView.getPagination().getCurrentPageIndex() * this.rowsPerPage * this.columnsPerPage
+        int tmpIndexOfMolecule = this.overviewView.getPagination().getCurrentPageIndex()
+                * this.rowsPerPage * this.columnsPerPage
                 + tmpRowIndex * this.columnsPerPage + tmpColumnIndex;
-        System.out.println("tmpRowIndex = " + tmpRowIndex);
-        System.out.println("tmpColumnIndex = " + tmpColumnIndex);
-        System.out.println("tmpIndexOfMolecule = " + tmpIndexOfMolecule);
-        System.out.println("SMILES: " + this.moleculeDataModelList.get(tmpIndexOfMolecule).getUniqueSmiles());
         return this.cachedMoleculeDataModel = this.moleculeDataModelList.get(tmpIndexOfMolecule);
     }
     /**
+     * Generates and returns a context menu with listeners for view components. The context menu can be generated
+     * without the option of opening an enlarged structure view. The actions are dependent on the currently cached
+     * MoleculeDataModel instance.
      *
-     *
-     * @param aForEnlargedStructureView
-     * @return
+     * @param aForEnlargedStructureView Boolean whether the context menu gets generated for the enlarged structure view
+     * @return ContextMenu for view components
      */
     private ContextMenu generateContextMenuWithListeners(boolean aForEnlargedStructureView) {
         //context menu
@@ -395,36 +415,47 @@ public class OverviewViewController {
         //copySmilesMenuItem
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
         //add Listeners to MenuItems
+        //copyImageMenuItem listener
         tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
             try {
                 ClipboardContent tmpContent = new ClipboardContent();
                 tmpContent.putImage(DepictionUtil.depictImageWithZoom(
                         this.cachedMoleculeDataModel.getAtomContainer(),
-                        1.0, 512, 350      //TODO: size of copied image as shown or with defined value?
-                ));
+                        1.0, 512, 350      //TODO: size of copied image as shown or with pre defined value? place values in settings? @Felix, @Jonas
+                )); //TODO: use Fill to fit method after merge
                 Clipboard.getSystemClipboard().setContent(tmpContent);
                 System.out.println("Image has been copied");
-            } catch (CDKException anException) {
-                //TODO: should not occur
+            } catch (CDKException aCDKException) {
+                OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+                GuiUtil.guiExceptionAlert(
+                        Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Error.ExceptionAlert.Header"),
+                        aCDKException.toString(),
+                        aCDKException
+                );
             }
         });
+        //copySmilesMenuItem listener
         tmpCopySmilesMenuItem.setOnAction((ActionEvent event) -> {
             ClipboardContent tmpContent = new ClipboardContent();
             tmpContent.putString(this.cachedMoleculeDataModel.getUniqueSmiles());
             Clipboard.getSystemClipboard().setContent(tmpContent);
             System.out.println("SMILES has been copied");
         });
-        //add MenuItems and return ContextMenu
+        //add view-independent MenuItems
         tmpContextMenu.getItems().addAll(
                 tmpCopyImageMenuItem,
                 tmpCopySmilesMenuItem
         );
+        //
+        //add MenuItems that are only needed for overview view items
         if (!aForEnlargedStructureView) {
             //showStructureMenuItem
             MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
             tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
                 this.showEnlargedStructureView(this.cachedMoleculeDataModel);
             });
+            //add view-dependent MenuItems
             tmpContextMenu.getItems().addAll(
                     new SeparatorMenuItem(),
                     tmpShowStructureMenuItem
@@ -434,10 +465,14 @@ public class OverviewViewController {
     }
     //
     /**
+     * Applies changes in rows and columns per page number to the configuration of structureGridPane of the controller's
+     * OverviewView instance.
      *
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException if the rows or columns per page entry is less or equal to zero
      */
     private void applyChangeOfGridConfiguration() throws IllegalArgumentException {
+        //@Felix, @Jonas: should a conformation alert be shown if the user applies row and column inputs that do not fit to the current limits for structure image height and width?
+        //validation of rows per page entry
         int tmpRowsPerPageEntry = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
         if (!(tmpRowsPerPageEntry <= 0)) {
             this.rowsPerPage = tmpRowsPerPageEntry;
@@ -445,6 +480,7 @@ public class OverviewViewController {
             throw new IllegalArgumentException(Message.get("OverviewView.Error.RowsPerPageTextField.illegalArgument")
                     + tmpRowsPerPageEntry);
         }
+        //validation of columns per page entry
         int tmpColumnsPerPageEntry = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
         if (!(tmpColumnsPerPageEntry <= 0)) {
             this.columnsPerPage = tmpColumnsPerPageEntry;
@@ -452,30 +488,31 @@ public class OverviewViewController {
             throw new IllegalArgumentException(Message.get("OverviewView.Error.ColumnsPerPageTextField.illegalArgument")
                     + tmpColumnsPerPageEntry);
         }
+        //reconfiguration of the OverviewView instance's structureGridPane
         this.overviewView.configureStructureGridPane(this.rowsPerPage, this.columnsPerPage);
+        //
+        //adaptions to page count and current page index of the pagination node
         int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPage * this.columnsPerPage);
         if (this.moleculeDataModelList.size() % (this.rowsPerPage * this.columnsPerPage) > 0) {
             tmpNewPageCount++;
         }
         if (this.overviewView.getPagination().getPageCount() != tmpNewPageCount) {
+            int tmpCurrentPageIndex = this.overviewView.getPagination().getCurrentPageIndex();
             this.overviewView.getPagination().setPageCount(tmpNewPageCount);
-            if (this.overviewView.getPagination().getCurrentPageIndex() > tmpNewPageCount) {
-                this.overviewView.getPagination().setCurrentPageIndex(tmpNewPageCount);
+            if (tmpCurrentPageIndex >= tmpNewPageCount) {
+                tmpCurrentPageIndex = tmpNewPageCount - 1;
             }
+            this.overviewView.getPagination().setCurrentPageIndex(tmpCurrentPageIndex);
         }
-        this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
-                this.rowsPerPage, this.columnsPerPage);
     }
     //
-    //
     /**
+     * Opens and shows the enlarged structure view.
      *
-     * @param aMoleculeDataModel
+     * @param aMoleculeDataModel MoleculeDataModel that's structure should be shown enlarged
      */
     private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel) {
-        //TODO!!
-        System.out.println("Enlarged structure is being shown!");
-
+        //initialization of the view
         Stage tmpEnlargedStructureViewStage = new Stage();
         AnchorPane tmpEnlargedStructureViewAnchorPane = new AnchorPane();
         Scene tmpScene = new Scene(tmpEnlargedStructureViewAnchorPane, 500, 400);
@@ -489,44 +526,46 @@ public class OverviewViewController {
         tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
         tmpEnlargedStructureViewStage.setMinHeight(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
-
+        //
         tmpEnlargedStructureViewStage.show();
-
-        /*if (!this.enlargedStructureViewStage.isShowing()) {
-            this.enlargedStructureViewStage.show();
-        }*/
-
+        //
+        //generation of context menu for copying of SMILES String and image to clipboard
         ContextMenu tmpContextMenu = this.generateContextMenuWithListeners(true);
-
+        //
         try {
+            //depiction of the structure
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
                     tmpEnlargedStructureViewAnchorPane.getWidth(), tmpEnlargedStructureViewAnchorPane.getHeight()));
             tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpStructureImage);
             tmpStructureImage.setOnContextMenuRequested((event) -> {
                 tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY());
             });
-
-            ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
+            //
+            //listener for resize events to fit the structure depiction to the view size
+            ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) -> {
                 Platform.runLater(() -> {
-                    System.out.println("EnlargedStructureView resize event: " + tmpEnlargedStructureViewStage.getWidth()
-                            + " - " + tmpEnlargedStructureViewStage.getHeight());
                     tmpEnlargedStructureViewAnchorPane.getChildren().clear();
                     try {
-                        ImageView tmpUpdatedStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
-                                tmpEnlargedStructureViewAnchorPane.getWidth(), tmpEnlargedStructureViewAnchorPane.getHeight()));
+                        ImageView tmpUpdatedStructureImage = new ImageView(DepictionUtil.depictImage(
+                                aMoleculeDataModel.getAtomContainer(),
+                                tmpEnlargedStructureViewAnchorPane.getWidth(),
+                                tmpEnlargedStructureViewAnchorPane.getHeight()
+                        ));
                         tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpUpdatedStructureImage);
                         tmpUpdatedStructureImage.setOnContextMenuRequested((event) -> {
                             tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY());
                         });
-                    } catch (CDKException anException) {
+                    } catch (CDKException aCDKException) {
                         //TODO ?!
+                        OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
                     }
                 });
             };
-            tmpEnlargedStructureViewStage.heightProperty().addListener(tmpStageSizeListener);
-            tmpEnlargedStructureViewStage.widthProperty().addListener(tmpStageSizeListener);
-        } catch (CDKException anException) {
+            tmpEnlargedStructureViewStage.heightProperty().addListener(tmpStageResizeEventListener);
+            tmpEnlargedStructureViewStage.widthProperty().addListener(tmpStageResizeEventListener);
+        } catch (CDKException aCDKException) {
             //TODO?! if an exception is thrown generating an AtomContainer this point is never reached
+            OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
         }
     }
     //</editor-fold>
