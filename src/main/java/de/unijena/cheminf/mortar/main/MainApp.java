@@ -63,16 +63,18 @@ public class MainApp extends Application {
             //<editor-fold defaultstate="collapsed" desc="Check Java version">
             String tmpJavaVersion = System.getProperty("java.version");
             if (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
-                GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.InvalidJavaVersion.Title"),
-                        null, String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION) + " your version: " + tmpJavaVersion);
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Java version lower than minimum: " + tmpJavaVersion);
-                System.exit(-1);
+                Logger.getLogger(Main.class.getName()).log(Level.WARNING, "Java version lower than minimum: " + tmpJavaVersion);
+                String tmpContentText = String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION, tmpJavaVersion);
+                if (GuiUtil.guiMessageAlertWithCancelButton(Alert.AlertType.WARNING, Message.get("Error.InvalidJavaVersion.Title"), null, tmpContentText) == ButtonType.CANCEL) {
+                    System.exit(0);
+                } //else: The user ignores the fact that their Java version is insufficient
             }
             //</editor-fold>
             //<editor-fold desc="Check single instance" defaultstate="collapsed">
             boolean tmpLCKFilePresent = LogUtil.checkForLCKFileInLogDir();
             if (tmpLCKFilePresent) {
-                if (GuiUtil.guiConformationAlert(
+                if (GuiUtil.guiMessageAlertWithCancelButton(
+                        Alert.AlertType.WARNING,
                         Message.get("Error.SecondInstance.Title"),
                         Message.get("Error.SecondInstance.Header"),
                         Message.get("Error.SecondInstance.Content")) == ButtonType.CANCEL) {
