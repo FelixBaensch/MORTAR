@@ -93,10 +93,10 @@ public class OverviewView extends AnchorPane {
      *
      * Initializes the main components of the overview view and does the basic styling. The grid pane to display the
      * structure images that is to be hold by the pagination node of the overview view gets generated, configured and
-     * styled. The horizontal boxes holding the text fields and buttons of the lower side of the view are not being
-     * added to the main grid pane of the view and are advised to be added after the pagination node to ensure the
-     * accessibility of all view components.
-     * No event listeners are added to any components.
+     * styled. The horizontal boxes holding the text fields and buttons of the lower side of the view are not yet being
+     * added to the main grid pane of the view and are advised to be added after adding the pagination node to ensure
+     * the accessibility of all view components.
+     * No event listeners are being added to any components.
      */
     public OverviewView(int aRowsPerPage, int aColumnsPerPage) {
         super();
@@ -138,8 +138,8 @@ public class OverviewView extends AnchorPane {
         //initialization, styling and initial configuration of the structureGridPane
         this.structureGridPane = new GridPane();
         /*
-        upper and lower border: extend the image frame to grid line width;
-        right and left border: extend the image frame to grid line width and add a grid line width dependent spacing
+        upper and lower border: extend the image frame to grid line width; right and left border: extend the image frame
+        to grid line width and add a spacing with a width dependent on the grid line width
          */
         this.structureGridPane.setStyle(
                 "-fx-background-color: LIGHTGREY; " +
@@ -158,14 +158,14 @@ public class OverviewView extends AnchorPane {
         this.configureStructureGridPane(aRowsPerPage, aColumnsPerPage);
         //
         /*
-        initialisation of the bottomLeftHBox and its components; the components are the text fields for rows and columns
+        initialization of the bottomLeftHBox and its components; the components are the text fields for rows and columns
         per page input, their labels, tooltips and the apply button to reconfigure the structure grid pane; the
         bottomLeftHBox needs to be added in the controller after the pagination has been added to the mainGridPane to
         make sure all components are set up correct and accessible
          */
         this.bottomLeftHBox = new HBox();
-        this.bottomLeftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.bottomLeftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,
+                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.bottomLeftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         //
         this.rowsPerPageTextField = new TextField();
@@ -212,7 +212,7 @@ public class OverviewView extends AnchorPane {
                 this.columnsPerPageTextField, this.applyButton);
         //
         /*
-        initialisation of the bottomRightHBox and its component, the close button; the bottomRightHBox needs to be added
+        initialization of the bottomRightHBox and its component, the close button; the bottomRightHBox needs to be added
         in the controller after the pagination has been added to the mainGridPane to make sure all components are set up
         correct and accessible
          */
@@ -235,8 +235,8 @@ public class OverviewView extends AnchorPane {
      * Configures the structure grid pane depending on the chosen numbers for rows and columns of structure images to
      * be displayed per page.
      *
-     * @param aRowsPerPage Rows of structure images to be displayed per page
-     * @param aColumnsPerPage Columns of structure images to be displayed per page
+     * @param aRowsPerPage Integer value for rows of structure images to be displayed per page
+     * @param aColumnsPerPage Integer value for columns of structure images to be displayed per page
      */
     public void configureStructureGridPane(int aRowsPerPage, int aColumnsPerPage) {
         if (this.structureGridPane == null) {
@@ -264,10 +264,10 @@ public class OverviewView extends AnchorPane {
      * Adds a node to the main grid pane of the overview view with a specified positioning.
      *
      * @param aNode Node to be added to the main grid pane
-     * @param aColIndex Index of column the node should be added to
-     * @param aRowIndex Index of row the node should be added to
-     * @param aColSpan Number of columns for the node to span
-     * @param aRowSpan Number of rows for the node to span
+     * @param aColIndex Integer value for index of column the node should be added to
+     * @param aRowIndex Integer value for index of row the node should be added to
+     * @param aColSpan Integer value for number of columns for the node to span
+     * @param aRowSpan Integer value for number of rows for the node to span
      */
     public void addNodeToMainGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
         this.mainGridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
