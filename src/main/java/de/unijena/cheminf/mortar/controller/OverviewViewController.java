@@ -195,8 +195,6 @@ public class OverviewViewController {
         //resize events listener
         ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
             Platform.runLater(() -> {
-                System.out.println("Window resize event: " + this.overviewViewStage.getWidth() + " - "
-                        + this.overviewViewStage.getHeight());
                 this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
                         this.rowsPerPage, this.columnsPerPage);
             });
@@ -342,7 +340,6 @@ public class OverviewViewController {
                             });
                             //setting context menu to the image view
                             tmpImageView.setOnContextMenuRequested((aContextMenuRequest) -> {
-                                System.out.println("ContextMenuRequest");
                                 this.cacheMoleculeDataModelCorrespondingToEvent(aContextMenuRequest);
                                 this.structureContextMenu.show(tmpImageView, aContextMenuRequest.getScreenX(),
                                         aContextMenuRequest.getScreenY());
@@ -445,7 +442,6 @@ public class OverviewViewController {
                         1.0, 512, 350      //TODO: size of copied image as shown or with pre defined values? place values in settings? @Felix, @Jonas
                 )); //TODO: use Fill to fit method after merge
                 Clipboard.getSystemClipboard().setContent(tmpContent);
-                System.out.println("Image has been copied");
             } catch (CDKException aCDKException) {
                 OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
                 GuiUtil.guiExceptionAlert(
@@ -461,7 +457,6 @@ public class OverviewViewController {
             ClipboardContent tmpContent = new ClipboardContent();
             tmpContent.putString(this.cachedMoleculeDataModel.getUniqueSmiles());
             Clipboard.getSystemClipboard().setContent(tmpContent);
-            System.out.println("SMILES has been copied");
         });
         //add view-independent MenuItems
         tmpContextMenu.getItems().addAll(
