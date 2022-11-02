@@ -386,19 +386,19 @@ public class MainViewController {
      * @return true if "OK" was clicked, false for "Cancel"
      */
     private boolean isFragmentationStopAndDataLossConfirmed() {
-        ButtonType tmpConformationResult;
+        ButtonType tmpConfirmationResult;
         if (this.isFragmentationRunning) {
-            tmpConformationResult = GuiUtil.guiConfirmationAlert(
+            tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
                     Message.get("MainViewController.Warning.FragmentationRunning.Title"),
                     Message.get("MainViewController.Warning.FragmentationRunning.Header"),
                     Message.get("MainViewController.Warning.FragmentationRunning.Content"));
         } else {
-            tmpConformationResult = GuiUtil.guiConfirmationAlert(
+            tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
                     Message.get("MainViewController.Warning.DataLoss.Title"),
                     Message.get("MainViewController.Warning.DataLoss.Header"),
                     Message.get("MainViewController.Warning.DataLoss.Content"));
         }
-        return tmpConformationResult == ButtonType.OK;
+        return tmpConfirmationResult == ButtonType.OK;
     }
     //
 
@@ -572,12 +572,12 @@ public class MainViewController {
             case PDB_FILE:
             case SINGLE_SD_FILE:
                 if (!ChemUtil.checkMoleculeListForCoordinates(getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments))) {
-                    ButtonType tmpConformationResult = GuiUtil.guiConfirmationAlert(
-                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
-                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
-                            Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")
+                    ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
+                            Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.title"),
+                            Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.header"),
+                            Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.text")
                     );
-                    tmpGenerate2dAtomCoordinates = tmpConformationResult == ButtonType.OK;
+                    tmpGenerate2dAtomCoordinates = tmpConfirmationResult == ButtonType.OK;
                 }
                 break;
         }
