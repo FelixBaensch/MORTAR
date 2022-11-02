@@ -66,7 +66,10 @@ startScripts {
         windowsScript.text = windowsScript.text.replace("set JAVA_HOME=%JAVA_HOME:\"=%",
                 "set JAVA_HOME=%APP_HOME%\\jdk-17.0.4_8_jre\\")
         windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
-        windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
+        //windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
+        //dirty workaround to suppress command window and pass CMD options to MORTAR to suppress the Java version check
+        windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main %*",
+                "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main \"-skipJavaVersionCheck\"")
         unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
     }
 }
@@ -84,7 +87,10 @@ task updateHeapSpace20GbExtraRunApp(type: CreateStartScripts) {
             windowsScript.text = windowsScript.text.replace("set JAVA_HOME=%JAVA_HOME:\"=%",
                     "set JAVA_HOME=%APP_HOME%\\jdk-17.0.4_8_jre\\")
             windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
-            windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
+            //windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
+            //dirty workaround to suppress command window and pass CMD options to MORTAR to suppress the Java version check
+            windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_20_GB_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main %*",
+                    "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_20_GB_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main \"-skipJavaVersionCheck\"")
             unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
         }
     }

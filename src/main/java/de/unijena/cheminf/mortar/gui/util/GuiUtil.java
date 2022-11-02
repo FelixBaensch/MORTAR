@@ -91,6 +91,7 @@ public class GuiUtil {
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
         tmpAlert.setContentText(aContentText);
+        tmpAlert.setResizable(true);
         tmpAlert.showAndWait();
     }
     //
@@ -107,20 +108,21 @@ public class GuiUtil {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
+        tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setContent(aHyperlink);
         tmpAlert.showAndWait();
     }
     //
     /**
-     * Creates and shows conformation type alert and returns the button selected by user as ButtonType.
+     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
      * Two buttons are possible - ButtonType.OK and ButtonType.CANCEL.
      *
-     * @param aTitle Title of the conformation alert
-     * @param aHeaderText Header of the conformation alert
-     * @param aContentText Text that the conformation alert contains
+     * @param aTitle Title of the confirmation alert
+     * @param aHeaderText Header of the confirmation alert
+     * @param aContentText Text that the confirmation alert contains
      * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
      */
-    public static ButtonType guiConformationAlert(String aTitle, String aHeaderText, String aContentText){
+    public static ButtonType guiConfirmationAlert(String aTitle, String aHeaderText, String aContentText){
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
         tmpAlert.setResizable(true);
         tmpAlert.setTitle(aTitle);
