@@ -388,12 +388,12 @@ public class MainViewController {
     private boolean isFragmentationStopAndDataLossConfirmed() {
         ButtonType tmpConformationResult;
         if (this.isFragmentationRunning) {
-            tmpConformationResult = GuiUtil.guiConformationAlert(
+            tmpConformationResult = GuiUtil.guiConfirmationAlert(
                     Message.get("MainViewController.Warning.FragmentationRunning.Title"),
                     Message.get("MainViewController.Warning.FragmentationRunning.Header"),
                     Message.get("MainViewController.Warning.FragmentationRunning.Content"));
         } else {
-            tmpConformationResult = GuiUtil.guiConformationAlert(
+            tmpConformationResult = GuiUtil.guiConfirmationAlert(
                     Message.get("MainViewController.Warning.DataLoss.Title"),
                     Message.get("MainViewController.Warning.DataLoss.Header"),
                     Message.get("MainViewController.Warning.DataLoss.Content"));
@@ -520,7 +520,7 @@ public class MainViewController {
      */
     private void exportFile(Exporter.ExportTypes anExportType) {
         if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Molecules.toString()) {
-            GuiUtil.guiConformationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
+            GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
             return;
@@ -572,7 +572,7 @@ public class MainViewController {
             case PDB_FILE:
             case SINGLE_SD_FILE:
                 if (!ChemUtil.checkMoleculeListForCoordinates(getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments))) {
-                    ButtonType tmpConformationResult = GuiUtil.guiConformationAlert(
+                    ButtonType tmpConformationResult = GuiUtil.guiConfirmationAlert(
                             Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.title"),
                             Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.header"),
                             Message.get("Exporter.FragmentsTab.ConformationAlert.No3dInformationAvailable.text")

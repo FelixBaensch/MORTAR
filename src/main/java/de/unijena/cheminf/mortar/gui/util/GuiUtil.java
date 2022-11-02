@@ -96,31 +96,6 @@ public class GuiUtil {
     }
     //
     /**
-     * Creates and shows an alert with arbitrary alert type and returns the button selected by the user as ButtonType.
-     * Two buttons are possible - ButtonType.OK and ButtonType.CANCEL. To those alert types that do not have a CANCEL button
-     * by default, it is added externally in this method.
-     *
-     * @param anAlertType pre-built alert type of the alert message that the Alert class can use to pre-populate
-     *                    various properties, chosen of an enumeration containing the available types
-     * @param aTitle Title of the alert
-     * @param aHeaderText Header of the alert
-     * @param aContentText Text that the alert contains
-     * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
-     * @author Jonas Schaub
-     */
-    public static ButtonType guiMessageAlertWithCancelButton(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
-        Alert tmpAlert = new Alert(anAlertType);
-        tmpAlert.setTitle(aTitle);
-        tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.setContentText(aContentText);
-        tmpAlert.setResizable(true);
-        if (anAlertType != Alert.AlertType.CONFIRMATION) {
-            tmpAlert.getButtonTypes().addAll(ButtonType.CANCEL);
-        }
-        return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
-    }
-    //
-    /**
      * Creates and shows an alert with arbitrary alert type and the given hyperlink in the content section.
      *
      * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate
@@ -139,15 +114,15 @@ public class GuiUtil {
     }
     //
     /**
-     * Creates and shows conformation type alert and returns the button selected by user as ButtonType.
+     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
      * Two buttons are possible - ButtonType.OK and ButtonType.CANCEL.
      *
-     * @param aTitle Title of the conformation alert
-     * @param aHeaderText Header of the conformation alert
-     * @param aContentText Text that the conformation alert contains
+     * @param aTitle Title of the confirmation alert
+     * @param aHeaderText Header of the confirmation alert
+     * @param aContentText Text that the confirmation alert contains
      * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
      */
-    public static ButtonType guiConformationAlert(String aTitle, String aHeaderText, String aContentText){
+    public static ButtonType guiConfirmationAlert(String aTitle, String aHeaderText, String aContentText){
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
         tmpAlert.setResizable(true);
         tmpAlert.setTitle(aTitle);

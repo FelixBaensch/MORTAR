@@ -82,8 +82,8 @@ public class MainApp extends Application {
             if (!tmpSkipJavaVersionCheck) {
                 if (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
                     Logger.getLogger(Main.class.getName()).log(Level.WARNING, "Java version lower than minimum: " + tmpJavaVersion);
-                    String tmpContentText = String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION, tmpJavaVersion);
-                    if (GuiUtil.guiMessageAlertWithCancelButton(Alert.AlertType.WARNING, Message.get("Error.InvalidJavaVersion.Title"), null, tmpContentText) == ButtonType.CANCEL) {
+                    String tmpContentText = String.format(Message.get("Error.InvalidJavaVersion.Content"), BasicDefinitions.MINIMUM_JAVA_VERSION, tmpJavaVersion);
+                    if (GuiUtil.guiConfirmationAlert(Message.get("Error.InvalidJavaVersion.Title"), Message.get("Error.InvalidJavaVersion.Header"), tmpContentText) == ButtonType.CANCEL) {
                         System.exit(0);
                     } //else: The user ignores the fact that their Java version is insufficient
                 }
@@ -92,8 +92,7 @@ public class MainApp extends Application {
             //<editor-fold desc="Check single instance" defaultstate="collapsed">
             boolean tmpLCKFilePresent = LogUtil.checkForLCKFileInLogDir();
             if (tmpLCKFilePresent) {
-                if (GuiUtil.guiMessageAlertWithCancelButton(
-                        Alert.AlertType.WARNING,
+                if (GuiUtil.guiConfirmationAlert(
                         Message.get("Error.SecondInstance.Title"),
                         Message.get("Error.SecondInstance.Header"),
                         Message.get("Error.SecondInstance.Content")) == ButtonType.CANCEL) {
@@ -107,8 +106,8 @@ public class MainApp extends Application {
             boolean tmpWasLoggingInitializationSuccessful = LogUtil.initializeLoggingEnvironment();
             if (!tmpWasLoggingInitializationSuccessful) {
                 GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Error.LoggingInitialization.Title"),
-                        null,
-                        Message.get("Error.LoggingInitialization"));
+                        Message.get("Error.LoggingInitialization.Header"),
+                        Message.get("Error.LoggingInitialization.Content"));
             }
             //Start new logging session
             Logger.getLogger(Main.class.getName()).info(String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
