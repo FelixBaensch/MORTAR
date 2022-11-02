@@ -33,6 +33,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,13 +45,19 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class MainApp extends Application {
+    //
+    /**
+     * Name (starting with "-") of the command line parameter that can be used to skip the Java version check.
+     */
+    public static final String SKIP_JAVA_VERSION_CHECK_CMD_ARG_NAME = "-skipJavaVersionCheck";
+    //
     /**
      * Calls start(Stage) of Application class.
      *
      * @param args the command line arguments
      */
     public static void main(String[] args){
-        launch(args);
+        Application.launch(args);
     }
     //
     @Override
@@ -62,12 +69,24 @@ public class MainApp extends Application {
             //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Check Java version">
             String tmpJavaVersion = System.getProperty("java.version");
-            if (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
-                Logger.getLogger(Main.class.getName()).log(Level.WARNING, "Java version lower than minimum: " + tmpJavaVersion);
-                String tmpContentText = String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION, tmpJavaVersion);
-                if (GuiUtil.guiMessageAlertWithCancelButton(Alert.AlertType.WARNING, Message.get("Error.InvalidJavaVersion.Title"), null, tmpContentText) == ButtonType.CANCEL) {
-                    System.exit(0);
-                } //else: The user ignores the fact that their Java version is insufficient
+            List<String> tmpCMDArgs = this.getParameters().getRaw();
+            boolean tmpSkipJavaVersionCheck = false;
+            if (tmpCMDArgs.size() > 0) {
+                for (String tmpArg : tmpCMDArgs) {
+                    if (tmpArg.equals(MainApp.SKIP_JAVA_VERSION_CHECK_CMD_ARG_NAME)) {
+                        tmpSkipJavaVersionCheck = true;
+                        break;
+                    }
+                }
+            }
+            if (!tmpSkipJavaVersionCheck) {
+                if (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
+                    Logger.getLogger(Main.class.getName()).log(Level.WARNING, "Java version lower than minimum: " + tmpJavaVersion);
+                    String tmpContentText = String.format(Message.get("Error.InvalidJavaVersion.Context"), BasicDefinitions.MINIMUM_JAVA_VERSION, tmpJavaVersion);
+                    if (GuiUtil.guiMessageAlertWithCancelButton(Alert.AlertType.WARNING, Message.get("Error.InvalidJavaVersion.Title"), null, tmpContentText) == ButtonType.CANCEL) {
+                        System.exit(0);
+                    } //else: The user ignores the fact that their Java version is insufficient
+                }
             }
             //</editor-fold>
             //<editor-fold desc="Check single instance" defaultstate="collapsed">
@@ -93,6 +112,7 @@ public class MainApp extends Application {
             }
             //Start new logging session
             Logger.getLogger(Main.class.getName()).info(String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
+            Logger.getLogger(Main.class.getName()).info(String.format("Started with Java version %s.", tmpJavaVersion));
             // </editor-fold>
             //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
             String tmpAppDir = FileUtil.getAppDirPath();
