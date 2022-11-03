@@ -334,13 +334,15 @@ public class OverviewViewController {
                             //opening the enlarged structure view on left mouse click
                             tmpImageView.setOnMouseClicked((aMouseEvent) -> {
                                 if (MouseButton.PRIMARY.equals(aMouseEvent.getButton())) {
-                                    this.cacheMoleculeDataModelCorrespondingToEvent(aMouseEvent);
+                                    this.cachedMoleculeDataModel = tmpMoleculeDataModel;
+                                    //this.cacheMoleculeDataModelCorrespondingToEvent(aMouseEvent);
                                     this.showEnlargedStructureView(tmpMoleculeDataModel);
                                 }
                             });
                             //setting context menu to the image view
                             tmpImageView.setOnContextMenuRequested((aContextMenuRequest) -> {
-                                this.cacheMoleculeDataModelCorrespondingToEvent(aContextMenuRequest);
+                                this.cachedMoleculeDataModel = tmpMoleculeDataModel;
+                                //this.cacheMoleculeDataModelCorrespondingToEvent(aContextMenuRequest);
                                 this.structureContextMenu.show(tmpImageView, aContextMenuRequest.getScreenX(),
                                         aContextMenuRequest.getScreenY());
                             });
@@ -399,20 +401,19 @@ public class OverviewViewController {
     }
     //
     /**
-     * Caches and returns the MoleculeDataModel corresponding to the content of the node the given event occurred on.
-     * The parent of the node needs to be a child of the structureGridPane from the controller's OverviewView instance.
+     * Caches the MoleculeDataModel corresponding to the content of the node the given event occurred on. The parent of
+     * the node needs to be a child of the structureGridPane from the controller's OverviewView instance.
      *
      * @param anEvent Event of which the corresponding MoleculeDataModel should be cached of
-     * @return MoleculeDataModel instance corresponding to the content of the source of the event
      */
-    private MoleculeDataModel cacheMoleculeDataModelCorrespondingToEvent(Event anEvent) {
+    private void cacheMoleculeDataModelCorrespondingToEvent(Event anEvent) {    //TODO: remove method?!
         //calculations to find the MoleculeDataModel instance corresponding to the content of the source of the event
         int tmpRowIndex = GridPane.getRowIndex(((Node) anEvent.getSource()).getParent());
         int tmpColumnIndex = GridPane.getColumnIndex(((Node) anEvent.getSource()).getParent());
         int tmpIndexOfMolecule = this.overviewView.getPagination().getCurrentPageIndex()
                 * this.rowsPerPage * this.columnsPerPage
                 + tmpRowIndex * this.columnsPerPage + tmpColumnIndex;
-        return this.cachedMoleculeDataModel = this.moleculeDataModelList.get(tmpIndexOfMolecule);
+        this.cachedMoleculeDataModel = this.moleculeDataModelList.get(tmpIndexOfMolecule);
     }
     //
     /**
@@ -520,6 +521,8 @@ public class OverviewViewController {
             }
             this.overviewView.getPagination().setCurrentPageIndex(tmpCurrentPageIndex);
         }
+        this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
+                this.rowsPerPage, this.columnsPerPage);
     }
     //
     /**
