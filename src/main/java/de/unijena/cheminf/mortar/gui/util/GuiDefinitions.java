@@ -117,6 +117,14 @@ public final class GuiDefinitions {
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
     /**
+     * Initial width of the image to be displayed in the enlarged structure view.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH = 500.0;
+    /**
+     * Initial height of the image to be displayed in the enlarged structure view.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT = 400.0;
+    /**
      * KeyCodeCombination for Control + C
      */
     public static final KeyCodeCombination KEY_CODE_COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);

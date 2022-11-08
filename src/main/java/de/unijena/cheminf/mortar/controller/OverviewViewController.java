@@ -281,7 +281,6 @@ public class OverviewViewController {
                         if (tmpIterator >= tmpToIndex) {
                             break generationOfStructureImagesLoop;
                         }
-                        StackPane tmpStackPane = new StackPane();
                         Node tmpContentNode;
                         try {
                             //depiction of structure image
@@ -345,7 +344,7 @@ public class OverviewViewController {
                             tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
                             Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
                             tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
-                            tmpContentNode = tmpErrorLabel;
+                            tmpContentNode = new StackPane(tmpErrorLabel);
                         } catch (IndexOutOfBoundsException anIndexOutOfBoundsException) {
                             //should not happen
                             throw anIndexOutOfBoundsException;  //TODO: this way? @Felix, @Jonas
@@ -358,8 +357,7 @@ public class OverviewViewController {
                                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
                         }
                         //
-                        tmpStackPane.getChildren().add(tmpContentNode);
-                        this.overviewView.getStructureGridPane().add(tmpStackPane, j, i);
+                        this.overviewView.getStructureGridPane().add(tmpContentNode, j, i);
                         tmpIterator++;
                     }
                 }
@@ -380,86 +378,6 @@ public class OverviewViewController {
         }
         this.createStructureImages = true;
         return this.overviewView.getStructureGridPane();
-    }
-    //
-    /**
-     * Caches the MoleculeDataModel corresponding to the content of the node the given event occurred on. The parent of
-     * the node needs to be a child of the structureGridPane from the controller's OverviewView instance.
-     *
-     * @param anEvent Event of which the corresponding MoleculeDataModel should be cached of
-     */
-    private void cacheMoleculeDataModelCorrespondingToEvent(Event anEvent) {    //TODO: remove method?!
-        //calculations to find the MoleculeDataModel instance corresponding to the content of the source of the event
-        int tmpRowIndex = GridPane.getRowIndex(((Node) anEvent.getSource()).getParent());
-        int tmpColumnIndex = GridPane.getColumnIndex(((Node) anEvent.getSource()).getParent());
-        int tmpIndexOfMolecule = this.overviewView.getPagination().getCurrentPageIndex()
-                * this.rowsPerPage * this.columnsPerPage
-                + tmpRowIndex * this.columnsPerPage + tmpColumnIndex;
-        this.cachedMoleculeDataModel = this.moleculeDataModelList.get(tmpIndexOfMolecule);
-    }
-    //
-    /**
-     * Generates and returns a context menu with listeners for view components. The context menu can be generated
-     * without the option of opening an enlarged structure view. The actions are dependent on the currently cached
-     * MoleculeDataModel instance.
-     *
-     * @param aForEnlargedStructureView Boolean value for whether the context menu gets generated for the use in the
-     *                                  enlarged structure view
-     * @return ContextMenu for view components
-     */
-    private ContextMenu generateContextMenuWithListeners(boolean aForEnlargedStructureView) {
-        //context menu
-        ContextMenu tmpContextMenu = new ContextMenu();
-        //copyImageMenuItem
-        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
-        tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-        //copySmilesMenuItem
-        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
-        //adding Listeners to MenuItems
-        //copyImageMenuItem listener
-        tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
-            try {
-                ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putImage(DepictionUtil.depictImageWithZoom(
-                        this.cachedMoleculeDataModel.getAtomContainer(),
-                        1.0, 512, 350      //TODO: size of copied image as shown or with pre defined values? place values in settings? @Felix, @Jonas
-                )); //TODO: use Fill to fit method after merge
-                Clipboard.getSystemClipboard().setContent(tmpContent);
-            } catch (CDKException aCDKException) {
-                OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-                GuiUtil.guiExceptionAlert(
-                        Message.get("Error.ExceptionAlert.Title"),
-                        Message.get("Error.ExceptionAlert.Header"),
-                        aCDKException.toString(),
-                        aCDKException
-                );
-            }
-        });
-        //copySmilesMenuItem listener
-        tmpCopySmilesMenuItem.setOnAction((ActionEvent event) -> {
-            ClipboardContent tmpContent = new ClipboardContent();
-            tmpContent.putString(this.cachedMoleculeDataModel.getUniqueSmiles());
-            Clipboard.getSystemClipboard().setContent(tmpContent);
-        });
-        //add view-independent MenuItems
-        tmpContextMenu.getItems().addAll(
-                tmpCopyImageMenuItem,
-                tmpCopySmilesMenuItem
-        );
-        //add MenuItems that are only needed for overview view items
-        if (!aForEnlargedStructureView) {
-            //showStructureMenuItem
-            MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
-            tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
-                this.showEnlargedStructureView(this.cachedMoleculeDataModel);
-            });
-            //add view-dependent MenuItems
-            tmpContextMenu.getItems().addAll(
-                    new SeparatorMenuItem(),
-                    tmpShowStructureMenuItem
-            );
-        }
-        return tmpContextMenu;
     }
     //
     /**
@@ -545,6 +463,70 @@ public class OverviewViewController {
     }
     //
     /**
+     * Generates and returns a context menu with listeners for view components. The context menu can be generated
+     * without the option of opening an enlarged structure view. The actions are dependent on the currently cached
+     * MoleculeDataModel instance.
+     *
+     * @param aForEnlargedStructureView Boolean value for whether the context menu gets generated for the use in the
+     *                                  enlarged structure view
+     * @return ContextMenu for view components
+     */
+    private ContextMenu generateContextMenuWithListeners(boolean aForEnlargedStructureView) {
+        //context menu
+        ContextMenu tmpContextMenu = new ContextMenu();
+        //copyImageMenuItem
+        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        //copySmilesMenuItem
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        //adding Listeners to MenuItems
+        //copyImageMenuItem listener
+        tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
+            try {
+                ClipboardContent tmpContent = new ClipboardContent();
+                tmpContent.putImage(DepictionUtil.depictImageWithZoom(
+                        this.cachedMoleculeDataModel.getAtomContainer(),
+                        1.0, 512, 350      //TODO: size of copied image as shown or with pre defined values? place values in settings? @Felix, @Jonas
+                )); //TODO: use Fill to fit method after merge
+                Clipboard.getSystemClipboard().setContent(tmpContent);
+            } catch (CDKException aCDKException) {
+                OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+                GuiUtil.guiExceptionAlert(
+                        Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Error.ExceptionAlert.Header"),
+                        aCDKException.toString(),
+                        aCDKException
+                );
+            }
+        });
+        //copySmilesMenuItem listener
+        tmpCopySmilesMenuItem.setOnAction((ActionEvent event) -> {
+            ClipboardContent tmpContent = new ClipboardContent();
+            tmpContent.putString(this.cachedMoleculeDataModel.getUniqueSmiles());
+            Clipboard.getSystemClipboard().setContent(tmpContent);
+        });
+        //add view-independent MenuItems
+        tmpContextMenu.getItems().addAll(
+                tmpCopyImageMenuItem,
+                tmpCopySmilesMenuItem
+        );
+        //add MenuItems that are only needed for overview view items
+        if (!aForEnlargedStructureView) {
+            //showStructureMenuItem
+            MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
+            tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
+                this.showEnlargedStructureView(this.cachedMoleculeDataModel);
+            });
+            //add view-dependent MenuItems
+            tmpContextMenu.getItems().addAll(
+                    new SeparatorMenuItem(),
+                    tmpShowStructureMenuItem
+            );
+        }
+        return tmpContextMenu;
+    }
+    //
+    /**
      * Calculates the height of the pagination node via the mainGridPane cells that hold it.
      *
      * @return Double value of height of cells holding the pagination node
@@ -611,7 +593,9 @@ public class OverviewViewController {
         //initialization of the view
         Stage tmpEnlargedStructureViewStage = new Stage();
         AnchorPane tmpEnlargedStructureViewAnchorPane = new AnchorPane();
-        Scene tmpScene = new Scene(tmpEnlargedStructureViewAnchorPane, 500, 400);
+        Scene tmpScene = new Scene(tmpEnlargedStructureViewAnchorPane,
+                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH,
+                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT);
         tmpEnlargedStructureViewStage.setScene(tmpScene);
         tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
         tmpEnlargedStructureViewStage.initOwner(this.overviewViewStage);
@@ -631,7 +615,8 @@ public class OverviewViewController {
         try {
             //depiction of the structure
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
-                    tmpEnlargedStructureViewAnchorPane.getWidth(), tmpEnlargedStructureViewAnchorPane.getHeight()));
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH,
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT));
             tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpStructureImage);
             tmpStructureImage.setOnContextMenuRequested((event) -> {
                 tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY());
