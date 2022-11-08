@@ -48,6 +48,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.util.StringConverter;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -91,7 +92,9 @@ public class GuiUtil {
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
         tmpAlert.setContentText(aContentText);
-        tmpAlert.setResizable(true);
+        //tmpAlert.setResizable(true);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
         tmpAlert.showAndWait();
     }
     //
@@ -108,8 +111,10 @@ public class GuiUtil {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setContent(aHyperlink);
+        //tmpAlert.setResizable(true);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
         tmpAlert.showAndWait();
     }
     //
@@ -124,10 +129,12 @@ public class GuiUtil {
      */
     public static ButtonType guiConfirmationAlert(String aTitle, String aHeaderText, String aContentText){
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        tmpAlert.setResizable(true);
+        //tmpAlert.setResizable(true);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
         tmpAlert.setContentText(aContentText);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
     //
