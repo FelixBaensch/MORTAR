@@ -30,9 +30,11 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -52,7 +54,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import org.openscience.cdk.exception.CDKException;
 import java.io.InputStream;
 import java.util.List;
@@ -68,7 +69,7 @@ import java.util.logging.Logger;
  */
 public class OverviewViewController {
 
-    //<editor-fold desc="private static final class variables" defaultstate="collapsed">
+    //<editor-fold desc="private static final class constants" defaultstate="collapsed">
     /**
      * Logger of this class.
      */
@@ -126,12 +127,12 @@ public class OverviewViewController {
      * Constructor. Initializes the class variables and opens the overview view.
      */
     public OverviewViewController(Stage aStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList) {
-        //<editor-fold desc="checks" defaultstate="collapsed">  //@Felix, @Jonas: are these checks necessary? I added them after comparing my code with the MainViewController
+        //TODO: How do I check whether a String is empty?
+        //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
         Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
         //</editor-fold>
-        OverviewViewController.LOGGER.info("Display of overview view for the \"" + aTabName + "\" tab.");  //@Felix, @Jonas: Do you guys want this info (or even more e.g. of events happening in the view e.g. copy of SMILES) to be logged?
         this.mainStage = aStage;
         this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
         this.moleculeDataModelList = aMoleculeDataModelList;
@@ -146,8 +147,6 @@ public class OverviewViewController {
     //<editor-fold desc="private methods" dafaultstate="collapsed">
     /**
      * Initializes and opens the overview view. This method is only being called by the constructor.
-     *
-     * @Felix, @Jonas: should I remove the method and include the code into the constructor?!
      */
     private void showOverviewView() {
         if (this.overviewView == null)
@@ -175,9 +174,9 @@ public class OverviewViewController {
                 this.rowsPerPage, this.columnsPerPage));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        this.overviewView.addPaginationToGridPane(tmpPagination);
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getBottomLeftHBox(), 0, 1, 1, 1);
-        this.overviewView.addNodeToMainGridPane(this.overviewView.getBottomRightHBox(), 2, 1, 1, 1);
+        this.overviewView.addPaginationToMainGridPane(tmpPagination);
+        this.overviewView.addBottomLeftHBoxToMainGridPane();
+        this.overviewView.addBottomRightHBoxToMainGridPane();
         //
         this.structureContextMenu = this.generateContextMenuWithListeners(false);
         //
@@ -190,8 +189,6 @@ public class OverviewViewController {
      * Adds listeners and event handlers to elements of the overview view.
      */
     private void addListeners() {
-        //close window event EventFilter
-        this.overviewViewStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         //resize events listener
         ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
             Platform.runLater(() -> {
@@ -201,8 +198,8 @@ public class OverviewViewController {
         };
         this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
         this.overviewViewStage.widthProperty().addListener(tmpStageSizeListener);
-        //apply button listener
-        this.overviewView.getApplyButton().setOnAction(actionEvent -> {
+        //apply new grid configuration event handler
+        EventHandler tmpApplyNewGridConfigurationEventHandler = (actionEvent) -> {  //TODO: implementation without the use of an exception (after merge)
             try {
                 this.applyChangeOfGridConfiguration();
             } catch (IllegalArgumentException anIllegalArgumentException) {
@@ -216,29 +213,17 @@ public class OverviewViewController {
                         anIllegalArgumentException
                 );
             }
-        });
+        };
+        //apply button listener
+        this.overviewView.getApplyButton().setOnAction(tmpApplyNewGridConfigurationEventHandler);
+        //columns per page text field action event listener
+        this.overviewView.getColumnsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
+        //rows per page text field action event listener
+        this.overviewView.getRowsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
         //close button listener
         this.overviewView.getCloseButton().setOnAction(actionEvent -> {
-            this.closeOverviewView();
+            this.overviewViewStage.close();
         });
-    }
-    //
-    /**
-     * Closes the overview view.
-     */
-    private void closeOverviewView() {
-        OverviewViewController.LOGGER.info("Overview view has been closed.");
-        this.overviewViewStage.close();
-    }
-    //
-    /**
-     * Closes the overview view via closeOverviewView method when close window event was fired.
-     *
-     * @param anEvent WindowEvent
-     */
-    private void closeWindowEvent(WindowEvent anEvent) {
-        this.closeOverviewView();
-        anEvent.consume();
     }
     //
     /**
@@ -263,14 +248,12 @@ public class OverviewViewController {
             int tmpToIndex = Math.min(tmpFromIndex + (aRowsPerPage * aColumnsPerPage), this.moleculeDataModelList.size());
             int tmpIterator = tmpFromIndex;
             //
-            //calculation of height and width of the cells of the mainGridPane that hold the pagination node
-            double tmpMainGridPanePaginationNodeCellsHeight
-                    = this.overviewView.getMainGridPane().getCellBounds(0, 0).getHeight()
-                            + this.overviewView.getMainGridPane().getCellBounds(0, 1).getHeight();
-            double tmpPaginationCellsWidth = 0;
-            for (int i = 0; i < 3; i++) {
-                tmpPaginationCellsWidth += this.overviewView.getMainGridPane().getCellBounds(i, 0).getWidth();
-            }
+            /*
+            calculation of height and width of the pagination node via height and width of the cells of the mainGridPane
+            holding it; necessary since direct use of pagination height and width brought some issues
+             */
+            double tmpPaginationNodeHeight = this.calculateOverviewViewPaginationNodeHeight();
+            double tmpPaginationNodeWidth = this.calculateOverviewViewPaginationNodeWidth();
             //
             /*
             calculation of the structure images' height and width using height and width of the mainGridPane cells that
@@ -278,12 +261,12 @@ public class OverviewViewController {
             of the window; correction of the caused height deviation by the pagination control panel height; the
             further calculations generate the space between the images creating the grid lines
              */
-            double tmpImageHeight = ((tmpMainGridPanePaginationNodeCellsHeight -
+            double tmpImageHeight = ((tmpPaginationNodeHeight -
                     GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
-            double tmpImageWidth = ((tmpPaginationCellsWidth -
-                    (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO - 0.5) *
+            double tmpImageWidth = ((tmpPaginationNodeWidth -
+                    (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5) *
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             //
@@ -302,7 +285,10 @@ public class OverviewViewController {
                         Node tmpContentNode;
                         try {
                             //depiction of structure image
-                            MoleculeDataModel tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator);
+                            MoleculeDataModel tmpMoleculeDataModel;
+                            if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
+                                throw new NullPointerException("A MoleculeDataModel instance has been null.");
+                            }
                             ImageView tmpImageView = new ImageView(DepictionUtil.depictImageWithZoom(
                                     tmpMoleculeDataModel.getAtomContainer(),
                                     1.0, tmpImageWidth, tmpImageHeight
@@ -348,7 +334,7 @@ public class OverviewViewController {
                             });
                             //
                             tmpContentNode = tmpImageView;
-                        } catch (CDKException anException) {
+                        } catch (CDKException | NullPointerException anException) {
                             OverviewViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
                             //Error label to be shown when a structure can not be depicted
                             Label tmpErrorLabel = new Label(Message.get("OverviewView.ErrorLabel.text"));
@@ -361,11 +347,8 @@ public class OverviewViewController {
                             tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
                             tmpContentNode = tmpErrorLabel;
                         } catch (IndexOutOfBoundsException anIndexOutOfBoundsException) {
-                            //could be thrown when accessing the moleculeDataModelList
-                            OverviewViewController.LOGGER.log(Level.SEVERE, anIndexOutOfBoundsException.toString(),
-                                    anIndexOutOfBoundsException);
-                            //TODO: guiExceptionAlert needed?! @Felix, @Jonas
-                            break generationOfStructureImagesLoop;
+                            //should not happen
+                            throw anIndexOutOfBoundsException;  //TODO: this way? @Felix, @Jonas
                         }
                         //setting of shadow effects
                         if (tmpDrawImagesWithShadow) {
@@ -381,20 +364,19 @@ public class OverviewViewController {
                     }
                 }
             } else {
-                //creation of label to be displayed if the image dimensions fell below a limit
-                StackPane tmpStackPane = new StackPane();
-                Label tmpImageDimensionsBelowLimitLabel = new Label(
-                        Message.get("OverviewView.imageDimensionsBelowLimitLabel.text")
-                );
-                tmpImageDimensionsBelowLimitLabel.setStyle("-fx-alignment: CENTER");
-                Tooltip tmpImageDimensionsBelowLimitLabelTooltip = new Tooltip(
-                        Message.get("OverviewView.imageDimensionsBelowLimitLabel.tooltip")  //TODO: adapt tooltip after integration of overview view settings
-                );
-                tmpImageDimensionsBelowLimitLabel.setTooltip(tmpImageDimensionsBelowLimitLabelTooltip);
-                tmpStackPane.getChildren().add(tmpImageDimensionsBelowLimitLabel);
-                //
-                this.overviewView.getStructureGridPane().add(tmpStackPane, 0, 0, this.columnsPerPage, this.rowsPerPage);
+                //informing the user if the image dimensions fell below the defined limit
+                this.overviewView.getStructureGridPane().add(this.overviewView.getImageDimensionsBelowLimitVBox(),
+                        0, 0, this.columnsPerPage, this.rowsPerPage);
             }
+            //set tooltips with current max for columns and rows per page
+            this.overviewView.getColumnsPerPageTextField().getTooltip().setText(
+                    Message.get("OverviewView.columnsPerPageLabel.tooltip") + " " +
+                            this.calculateMaxColumnsPerPage(tmpPaginationNodeWidth)
+            );
+            this.overviewView.getRowsPerPageTextField().getTooltip().setText(
+                    Message.get("OverviewView.rowsPerPageLabel.tooltip") + " " +
+                            this.calculateMaxRowsPerPage(tmpPaginationNodeHeight)
+            );
         }
         this.createStructureImages = true;
         return this.overviewView.getStructureGridPane();
@@ -464,7 +446,6 @@ public class OverviewViewController {
                 tmpCopyImageMenuItem,
                 tmpCopySmilesMenuItem
         );
-        //
         //add MenuItems that are only needed for overview view items
         if (!aForEnlargedStructureView) {
             //showStructureMenuItem
@@ -487,23 +468,61 @@ public class OverviewViewController {
      *
      * @throws IllegalArgumentException if the rows or columns per page entry is less or equal to zero
      */
-    private void applyChangeOfGridConfiguration() throws IllegalArgumentException {
-        //@Felix, @Jonas: should a confirmation alert be shown if the user applies row and column inputs that do not fit to the current limits for structure image height and width?
+    private void applyChangeOfGridConfiguration() throws IllegalArgumentException { //TODO: remove throwing of exception after adaptions after merge
+        //validation of columns per page entry
+        int tmpColumnsPerPageEntry = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
+        if (tmpColumnsPerPageEntry <= 0) {  //TODO: not necessary after adaptions to IntegerFilter after merge
+            throw new IllegalArgumentException(Message.get("OverviewView.Error.ColumnsPerPageTextField.illegalArgument")
+                    + tmpColumnsPerPageEntry);
+        }
         //validation of rows per page entry
         int tmpRowsPerPageEntry = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
-        if (!(tmpRowsPerPageEntry <= 0)) {
-            this.rowsPerPage = tmpRowsPerPageEntry;
-        } else {
+        if (tmpRowsPerPageEntry <= 0) {  //TODO: not necessary after adaptions to IntegerFilter after merge
             throw new IllegalArgumentException(Message.get("OverviewView.Error.RowsPerPageTextField.illegalArgument")
                     + tmpRowsPerPageEntry);
         }
-        //validation of columns per page entry
-        int tmpColumnsPerPageEntry = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
-        if (!(tmpColumnsPerPageEntry <= 0)) {
+        //
+        //calculation of max columns and rows per page with current window size and limits for structure image size
+        int tmpMaxColumnsPerPage = this.calculateMaxColumnsPerPage(this.calculateOverviewViewPaginationNodeWidth());
+        int tmpMaxRowsPerPage = this.calculateMaxRowsPerPage(this.calculateOverviewViewPaginationNodeHeight());
+        //
+        //check whether the value columns and rows per page entry are confirm with the window size
+        if ((tmpColumnsPerPageEntry <= tmpMaxColumnsPerPage) && (tmpRowsPerPageEntry <= tmpMaxRowsPerPage)) {   //TODO: should I check both separately? what if only one is to high?
             this.columnsPerPage = tmpColumnsPerPageEntry;
+            this.rowsPerPage = tmpRowsPerPageEntry;
         } else {
-            throw new IllegalArgumentException(Message.get("OverviewView.Error.ColumnsPerPageTextField.illegalArgument")
-                    + tmpColumnsPerPageEntry);
+            //confirmation alert
+            ButtonType tmpConfirmationResult = GuiUtil.guiConformationAlert(   //TODO:rename method to "confirmationAlert"?
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.title"),
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.header"),
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.text")
+            );
+            if (tmpConfirmationResult == ButtonType.OK) {
+                //if "ok": set columnsPerPage and rowsPerPage to max
+                this.columnsPerPage = tmpMaxColumnsPerPage;
+                this.rowsPerPage = tmpMaxRowsPerPage;
+                this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
+                this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
+                /*  TODO: code for separate checks
+                if (tmpColumnsPerPageEntry > tmpMaxColumnsPerPage) {
+                    this.columnsPerPage = tmpMaxColumnsPerPage;
+                    this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
+                } else {
+                    this.columnsPerPage = tmpColumnsPerPageEntry;
+                }
+                if (tmpRowsPerPageEntry > tmpMaxRowsPerPage) {
+                    this.rowsPerPage = tmpMaxRowsPerPage;
+                    this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
+                } else {
+                    this.rowsPerPage = tmpRowsPerPageEntry;
+                }
+                 */
+            } else {
+                //else: reset the text fields to old value and do nothing (return)
+                this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
+                this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
+                return;
+            }
         }
         //reconfiguration of the OverviewView instance's structureGridPane
         this.overviewView.configureStructureGridPane(this.rowsPerPage, this.columnsPerPage);
@@ -523,6 +542,63 @@ public class OverviewViewController {
         }
         this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
                 this.rowsPerPage, this.columnsPerPage);
+    }
+    //
+    /**
+     * Calculates the height of the pagination node via the mainGridPane cells that hold it.
+     *
+     * @return Double value of height of cells holding the pagination node
+     */
+    private double calculateOverviewViewPaginationNodeHeight() {
+        double tmpMainGridPanePaginationNodeCellsHeight
+                = this.overviewView.getMainGridPane().getCellBounds(0, 0).getHeight()
+                + this.overviewView.getMainGridPane().getCellBounds(0, 1).getHeight();
+        return tmpMainGridPanePaginationNodeCellsHeight;
+    }
+    //
+    /**
+     * Calculates the width of the pagination node via the mainGridPane cells that hold it.
+     *
+     * @return Double value of width of cells holding the pagination node
+     */
+    private double calculateOverviewViewPaginationNodeWidth() {
+        double tmpMainGridPanePaginationNodeCellsWidth = 0;
+        for (int i = 0; i < 3; i++) {
+            tmpMainGridPanePaginationNodeCellsWidth += this.overviewView.getMainGridPane().getCellBounds(i, 0).getWidth();
+        }
+        return tmpMainGridPanePaginationNodeCellsWidth;
+    }
+    //
+    /**
+     * Calculates the maximum amount of columns of structure images that are displayable per overview view page with
+     * the current window size and limit for structure image width.
+     *
+     * @param aOverviewViewPaginationNodeWidth Double value of the width of the pagination node calculated via the
+     *                                         width of the mainGridPane cells holding it
+     * @return Integer value of the maximum amount of structure image columns per page
+     */
+    private int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) {
+        int tmpMaxColumnsPerPage = (int) ((aOverviewViewPaginationNodeWidth -
+                (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5) *
+                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) /
+                (30.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings
+        return tmpMaxColumnsPerPage;
+    }
+    //
+    /**
+     * Calculates the maximum amount of rows of structure images that are displayable per overview view page with the
+     * current window size and limit for structure image height.
+     *
+     * @param aOverviewViewPaginationNodeHeight Double value of the height of the pagination node calculated via the
+     *                                          height of the mainGridPane cells holding it
+     * @return Integer value of the maximum amount of structure image rows per page
+     */
+    private int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) {
+        int tmpMaxRowsPerPage = (int) ((aOverviewViewPaginationNodeHeight -
+                GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT -
+                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) /
+                (20.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings
+        return tmpMaxRowsPerPage;
     }
     //
     /**
@@ -602,5 +678,5 @@ public class OverviewViewController {
         }
     }
     //</editor-fold>
-
+    
 }

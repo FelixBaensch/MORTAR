@@ -107,7 +107,7 @@ public final class GuiDefinitions {
     /**
      * Ratio of the left and right border width to the grid lines width of the structure grid pane in overview view
      */
-    public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_GRIDLINES_WIDTH_RATIO = 2.0;
+    public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO = 2.0;
     /**
      * Minimal value for the width of the enlarged structure view
      */
