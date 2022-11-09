@@ -29,7 +29,6 @@ import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -47,7 +46,6 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -98,8 +96,9 @@ public class OverviewViewController {
      */
     private List<MoleculeDataModel> moleculeDataModelList;
     /**
-     * Slot for the caching of a MoleculeDataModel in reaction to a left or right mouse click on a structure shown in
-     * the overview view.
+     * Slot for the caching of a MoleculeDataModel in response to a left or right mouse click on a structure's
+     * ImageView. (Kind of the equivalent to a cell being selected in the application's TableViews; workaround for
+     * cells not being selectable in a GridPane.)
      */
     private MoleculeDataModel cachedMoleculeDataModel;
     /**
@@ -189,7 +188,7 @@ public class OverviewViewController {
      * Adds listeners and event handlers to elements of the overview view.
      */
     private void addListeners() {
-        //resize events listener
+        //listener for resize events
         ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
             Platform.runLater(() -> {
                 this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
@@ -198,28 +197,16 @@ public class OverviewViewController {
         };
         this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
         this.overviewViewStage.widthProperty().addListener(tmpStageSizeListener);
+        //
         //apply new grid configuration event handler
-        EventHandler tmpApplyNewGridConfigurationEventHandler = (actionEvent) -> {  //TODO: implementation without the use of an exception (after merge)
-            try {
-                this.applyChangeOfGridConfiguration();
-            } catch (IllegalArgumentException anIllegalArgumentException) {
-                //@Felix, @Jonas: should I remove this point of logging since the exception is meant to be thrown?
-                OverviewViewController.LOGGER.log(Level.WARNING, anIllegalArgumentException.toString(),
-                        anIllegalArgumentException);
-                GuiUtil.guiExceptionAlert(
-                        Message.get("OverviewView.Error.invalidTextFieldInput.title"),
-                        Message.get("OverviewView.Error.invalidTextFieldInput.header"),
-                        anIllegalArgumentException.toString(),
-                        anIllegalArgumentException
-                );
-            }
+        EventHandler<ActionEvent> tmpApplyNewGridConfigurationEventHandler = (actionEvent) -> {
+            this.applyChangeOfGridConfiguration();
         };
-        //apply button listener
+        //listeners for apply new grid configuration events
         this.overviewView.getApplyButton().setOnAction(tmpApplyNewGridConfigurationEventHandler);
-        //columns per page text field action event listener
         this.overviewView.getColumnsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
-        //rows per page text field action event listener
         this.overviewView.getRowsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
+        //
         //close button listener
         this.overviewView.getCloseButton().setOnAction(actionEvent -> {
             this.overviewViewStage.close();
@@ -271,9 +258,9 @@ public class OverviewViewController {
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             //
             //check if the limits for the image dimensions are being exceeded
-            if ((tmpImageHeight >= 20.0) && (tmpImageWidth >= 30.0)) {  //TODO: values to settings?! values need to be > 0 but images only start to make sense at values about 20 x 30 px
-                //shadow setting
-                boolean tmpDrawImagesWithShadow = true;    //TODO: place shadow option in settings
+            if ((tmpImageHeight >= 20.0) && (tmpImageWidth >= 30.0)) {  //TODO: settings! values need to exceed 0 but images only start to make sense at values about 20 x 30 px
+                //optional setting for change in usage of shadow effect
+                boolean tmpDrawImagesWithShadow = true;    //TODO: still place option in settings despite different decision in meeting? since it wont hurt anyone?
                 //main loop for generation of the page content
                 generationOfStructureImagesLoop:
                 for (int i = 0; i < aRowsPerPage; i++) {
@@ -291,7 +278,7 @@ public class OverviewViewController {
                             ImageView tmpImageView = new ImageView(DepictionUtil.depictImageWithZoom(
                                     tmpMoleculeDataModel.getAtomContainer(),
                                     1.0, tmpImageWidth, tmpImageHeight
-                            )); //TODO: check use of fill to fit method after merge
+                            )); //TODO: use new DepictionUtil method with fill to fit (after merge)
                             //changing the shadow effects at mouse entering an image
                             tmpImageView.setOnMouseEntered((mouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
@@ -319,15 +306,17 @@ public class OverviewViewController {
                             //opening the enlarged structure view on left mouse click
                             tmpImageView.setOnMouseClicked((aMouseEvent) -> {
                                 if (MouseButton.PRIMARY.equals(aMouseEvent.getButton())) {
+                                    //cache the MoleculeDataModel corresponding to the content of the event's source
+                                    //equivalent to the structure's grid pane cell being selected
                                     this.cachedMoleculeDataModel = tmpMoleculeDataModel;
-                                    //this.cacheMoleculeDataModelCorrespondingToEvent(aMouseEvent);
                                     this.showEnlargedStructureView(tmpMoleculeDataModel);
                                 }
                             });
                             //setting context menu to the image view
                             tmpImageView.setOnContextMenuRequested((aContextMenuRequest) -> {
+                                //cache the MoleculeDataModel corresponding to the content of the event's source
+                                //equivalent to the structure's grid pane cell being selected
                                 this.cachedMoleculeDataModel = tmpMoleculeDataModel;
-                                //this.cacheMoleculeDataModelCorrespondingToEvent(aContextMenuRequest);
                                 this.structureContextMenu.show(tmpImageView, aContextMenuRequest.getScreenX(),
                                         aContextMenuRequest.getScreenY());
                             });
@@ -366,7 +355,7 @@ public class OverviewViewController {
                 this.overviewView.getStructureGridPane().add(this.overviewView.getImageDimensionsBelowLimitVBox(),
                         0, 0, this.columnsPerPage, this.rowsPerPage);
             }
-            //set tooltips with current max for columns and rows per page
+            //set tooltips of the text fields with current max for columns and rows per page
             this.overviewView.getColumnsPerPageTextField().getTooltip().setText(
                     Message.get("OverviewView.columnsPerPageLabel.tooltip") + " " +
                             this.calculateMaxColumnsPerPage(tmpPaginationNodeWidth)
@@ -376,41 +365,45 @@ public class OverviewViewController {
                             this.calculateMaxRowsPerPage(tmpPaginationNodeHeight)
             );
         }
+        //boolean to true since the image generation only needs to be prevented in the first call of the method
         this.createStructureImages = true;
+        //
         return this.overviewView.getStructureGridPane();
     }
     //
     /**
      * Applies changes in rows and columns per page number to the configuration of structureGridPane of the controller's
      * OverviewView instance.
-     *
-     * @throws IllegalArgumentException if the rows or columns per page entry is less or equal to zero
      */
-    private void applyChangeOfGridConfiguration() throws IllegalArgumentException { //TODO: remove throwing of exception after adaptions after merge
-        //validation of columns per page entry
+    private void applyChangeOfGridConfiguration() {
+        //getting the text field entries
         int tmpColumnsPerPageEntry = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
-        if (tmpColumnsPerPageEntry <= 0) {  //TODO: not necessary after adaptions to IntegerFilter after merge
-            throw new IllegalArgumentException(Message.get("OverviewView.Error.ColumnsPerPageTextField.illegalArgument")
-                    + tmpColumnsPerPageEntry);
-        }
-        //validation of rows per page entry
         int tmpRowsPerPageEntry = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
-        if (tmpRowsPerPageEntry <= 0) {  //TODO: not necessary after adaptions to IntegerFilter after merge
-            throw new IllegalArgumentException(Message.get("OverviewView.Error.RowsPerPageTextField.illegalArgument")
-                    + tmpRowsPerPageEntry);
+        //validation of text field entries  TODO: remove (after merge) (validation not necessary when applying new IntegerFilter)
+        if (tmpColumnsPerPageEntry <= 0 && tmpRowsPerPageEntry <= 0) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.title"),
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.header"),
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.text")
+            );
+        }
+        //if (no changes done) -> return
+        if (tmpColumnsPerPageEntry == this.columnsPerPage && tmpRowsPerPageEntry == this.rowsPerPage) {
+            return;
         }
         //
         //calculation of max columns and rows per page with current window size and limits for structure image size
         int tmpMaxColumnsPerPage = this.calculateMaxColumnsPerPage(this.calculateOverviewViewPaginationNodeWidth());
         int tmpMaxRowsPerPage = this.calculateMaxRowsPerPage(this.calculateOverviewViewPaginationNodeHeight());
         //
-        //check whether the value columns and rows per page entry are confirm with the window size
-        if ((tmpColumnsPerPageEntry <= tmpMaxColumnsPerPage) && (tmpRowsPerPageEntry <= tmpMaxRowsPerPage)) {   //TODO: should I check both separately? what if only one is to high?
+        //check whether the values of the columns and rows per page entries are confirm with the window size
+        if ((tmpColumnsPerPageEntry <= tmpMaxColumnsPerPage) && (tmpRowsPerPageEntry <= tmpMaxRowsPerPage)) {   //TODO: should I check both separately? case: only one is too high (I would say no)
             this.columnsPerPage = tmpColumnsPerPageEntry;
             this.rowsPerPage = tmpRowsPerPageEntry;
         } else {
             //confirmation alert
-            ButtonType tmpConfirmationResult = GuiUtil.guiConformationAlert(   //TODO:rename method to "confirmationAlert"?
+            ButtonType tmpConfirmationResult = GuiUtil.guiConformationAlert(   //TODO: rename method to "confirmationAlert"?
                     Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.title"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.header"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.text")
@@ -442,6 +435,7 @@ public class OverviewViewController {
                 return;
             }
         }
+        //
         //reconfiguration of the OverviewView instance's structureGridPane
         this.overviewView.configureStructureGridPane(this.rowsPerPage, this.columnsPerPage);
         //
@@ -484,12 +478,13 @@ public class OverviewViewController {
         tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
             try {
                 ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putImage(DepictionUtil.depictImageWithZoom(
+                tmpContent.putImage(DepictionUtil.depictImageWithZoom(  //TODO: use new DepictionUtil method with fill to fit and Felix's image size values (after merge)
                         this.cachedMoleculeDataModel.getAtomContainer(),
-                        1.0, 512, 350      //TODO: size of copied image as shown or with pre defined values? place values in settings? @Felix, @Jonas
-                )); //TODO: use Fill to fit method after merge
+                        1.0, 512.0, 350.0
+                ));
                 Clipboard.getSystemClipboard().setContent(tmpContent);
             } catch (CDKException aCDKException) {
+                //should not happen since an initial depiction is needed to make the context menu accessible to the user
                 OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
                 GuiUtil.guiExceptionAlert(
                         Message.get("Error.ExceptionAlert.Title"),
@@ -563,7 +558,7 @@ public class OverviewViewController {
         int tmpMaxColumnsPerPage = (int) ((aOverviewViewPaginationNodeWidth -
                 (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5) *
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) /
-                (30.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings
+                (30.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings (after merge)
         return tmpMaxColumnsPerPage;
     }
     //
@@ -579,7 +574,7 @@ public class OverviewViewController {
         int tmpMaxRowsPerPage = (int) ((aOverviewViewPaginationNodeHeight -
                 GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT -
                 GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) /
-                (20.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings
+                (20.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings (after merge)
         return tmpMaxRowsPerPage;
     }
     //
@@ -630,7 +625,7 @@ public class OverviewViewController {
                                 aMoleculeDataModel.getAtomContainer(),
                                 tmpEnlargedStructureViewAnchorPane.getWidth(),
                                 tmpEnlargedStructureViewAnchorPane.getHeight()
-                        )); //TODO: use Fill to fit method after merge
+                        )); //TODO: use new DepictionUtil method with fill to fit (after merge)
                         tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpUpdatedStructureImage);
                         tmpUpdatedStructureImage.setOnContextMenuRequested((event) -> {
                             tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY());
