@@ -22,7 +22,7 @@ package de.unijena.cheminf.scaffoldGenerator;
  * IMPORTANT NOTE: This is a copy of
  * https://github.com/Julian-Z98/ScaffoldGenerator/blob/main/ScaffoldGenerator/src/main/java/de/unijena/cheminf/scaffolds/ScaffoldGenerator.java
  * Therefore, do not make any changes here but in the original repository!
- * Last copied on October 27th 2022
+ * Last copied on November 10th 2022
  */
 
 import org.openscience.cdk.CDKConstants;
@@ -68,6 +68,9 @@ import java.util.logging.Logger;
  * The network approach is based on the <a href="https://doi.org/10.1021/ci2000924">
  * Mining for Bioactive Scaffolds with Scaffold Networks</a> Paper.
  * Different trees or networks can also be merged together.
+ * The Scaffold Generator library is described in <a href="https://doi.org/10.1186/s13321-022-00656-x"> Schaub et al.
+ * "Scaffold Generator: a Java library implementing molecular scaffold functionalities in the Chemistry Development Kit
+ * (CDK)" (J Cheminform 14, 79, 2022)</a>
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
  * @version 1.0.4.0

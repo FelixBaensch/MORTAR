@@ -139,7 +139,7 @@ software article can be cited (<a href="https://doi.org/10.26434/chemrxiv-2022-z
 * [Source Code of Web Application](https://github.com/mSorok/SugarRemovalWeb)
 
 **Scaffold Generator**
-* [J. Schaub, J. Zander, A. Zielesny, and C. Steinbeck, ‘Scaffold Generator - A Java library implementing molecular scaffold functionalities in the Chemistry Development Kit (CDK)’, Chemistry, preprint, Mar. 2022. doi: 10.26434/chemrxiv-2022-7tf0h.](https://doi.org/10.26434/chemrxiv-2022-7tf0h)
+* [Schaub, J., Zander, J., Zielesny, A., Steinbeck, C. Scaffold Generator: a Java library implementing molecular scaffold functionalities in the Chemistry Development Kit (CDK). J Cheminform 14, 79 (2022). https://doi.org/10.1186/s13321-022-00656-x.](https://doi.org/10.1186/s13321-022-00656-x)
 * [G. W. Bemis and M. A. Murcko, “The Properties of Known Drugs. 1. Molecular Frameworks,” J. Med. Chem., vol. 39, no. 15, pp. 2887–2893, Jan. 1996, doi: 10.1021/jm9602928.](https://doi.org/10.1021/jm9602928)
 * [S. J. Wilkens, J. Janes, and A. I. Su, “HierS: Hierarchical Scaffold Clustering Using Topological Chemical Graphs,” J. Med. Chem., vol. 48, no. 9, pp. 3182–3193, May 2005, doi: 10.1021/jm049032d.](https://doi.org/10.1021/jm049032d)
 * [M. A. Koch et al., “Charting biologically relevant chemical space: A structural classification of natural products (SCONP),” Proceedings of the National Academy of Sciences, vol. 102, no. 48, pp. 17272–17277, Nov. 2005, doi: 10.1073/pnas.0503647102.](https://doi.org/10.1073/pnas.0503647102)

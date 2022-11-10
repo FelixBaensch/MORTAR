@@ -39,7 +39,7 @@
         <license>MIT License</license>
     </externalTool>
     <externalTool>
-        <name>ScaffoldGenerator</name>
+        <name>Scaffold Generator</name>
         <version>1.0.3</version>
         <author>Julian Zander, Jonas Schaub</author>
         <license>LGPL v2.1 (or later)</license>
