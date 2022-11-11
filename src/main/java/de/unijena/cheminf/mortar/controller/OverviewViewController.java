@@ -260,7 +260,7 @@ public class OverviewViewController {
             //check if the limits for the image dimensions are being exceeded
             if ((tmpImageHeight >= 20.0) && (tmpImageWidth >= 30.0)) {  //TODO: settings! values need to exceed 0 but images only start to make sense at values about 20 x 30 px
                 //optional setting for change in usage of shadow effect
-                boolean tmpDrawImagesWithShadow = true;    //TODO: still place option in settings despite different decision in meeting? since it wont hurt anyone?
+                boolean tmpDrawImagesWithShadow = true;    //TODO: still place in settings?
                 //main loop for generation of the page content
                 generationOfStructureImagesLoop:
                 for (int i = 0; i < aRowsPerPage; i++) {
@@ -284,8 +284,8 @@ public class OverviewViewController {
                                 if (tmpDrawImagesWithShadow) {
                                     tmpImageView.setStyle("-fx-effect: null");
                                 } else {
-                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, " +
-                                            "rgba(100, 100, 100, 0.6), " +
+                                    tmpImageView.setStyle("-fx-effect: dropshadow(gaussian, " +
+                                            "rgba(100, 100, 100, 0.8), " +
                                             GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", " +
                                             "0, 0, 0)");
                                 }
