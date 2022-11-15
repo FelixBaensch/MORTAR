@@ -126,7 +126,6 @@ public class OverviewViewController {
      * Constructor. Initializes the class variables and opens the overview view.
      */
     public OverviewViewController(Stage aStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList) {
-        //TODO: How do I check whether a String is empty?
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
         Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
@@ -135,8 +134,8 @@ public class OverviewViewController {
         this.mainStage = aStage;
         this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
         this.moleculeDataModelList = aMoleculeDataModelList;
-        this.rowsPerPage = 5;   //TODO: settings! default values should be customizable
-        this.columnsPerPage = 4;    //TODO: settings! default values should be customizable
+        this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
+        this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
         //creating an empty structureGridPane at first by setting createStructureImages to false
         this.createStructureImages = false;
         this.showOverviewView();
@@ -200,15 +199,20 @@ public class OverviewViewController {
         //
         //apply new grid configuration event handler
         EventHandler<ActionEvent> tmpApplyNewGridConfigurationEventHandler = (actionEvent) -> {
-            this.applyChangeOfGridConfiguration();
+            this.applyChangeOfGridConfiguration(false);
         };
         //listeners for apply new grid configuration events
         this.overviewView.getApplyButton().setOnAction(tmpApplyNewGridConfigurationEventHandler);
         this.overviewView.getColumnsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
         this.overviewView.getRowsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
         //
+        //default button listener
+        this.overviewView.getDefaultButton().setOnAction((actionEvent) -> {
+            this.applyChangeOfGridConfiguration(true);
+        });
+        //
         //close button listener
-        this.overviewView.getCloseButton().setOnAction(actionEvent -> {
+        this.overviewView.getCloseButton().setOnAction((actionEvent) -> {
             this.overviewViewStage.close();
         });
     }
@@ -258,9 +262,10 @@ public class OverviewViewController {
                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             //
             //check if the limits for the image dimensions are being exceeded
-            if ((tmpImageHeight >= 20.0) && (tmpImageWidth >= 30.0)) {  //TODO: settings! values need to exceed 0 but images only start to make sense at values about 20 x 30 px
+            if ((tmpImageHeight >= GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT)
+                    && (tmpImageWidth >= GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH)) {
                 //optional setting for change in usage of shadow effect
-                boolean tmpDrawImagesWithShadow = true;    //TODO: still place in settings?
+                boolean tmpDrawImagesWithShadow = true;
                 //main loop for generation of the page content
                 generationOfStructureImagesLoop:
                 for (int i = 0; i < aRowsPerPage; i++) {
@@ -336,7 +341,9 @@ public class OverviewViewController {
                             tmpContentNode = new StackPane(tmpErrorLabel);
                         } catch (IndexOutOfBoundsException anIndexOutOfBoundsException) {
                             //should not happen
-                            throw anIndexOutOfBoundsException;  //TODO: this way? @Felix, @Jonas
+                            OverviewViewController.LOGGER.log(Level.SEVERE, anIndexOutOfBoundsException.toString(),
+                                    anIndexOutOfBoundsException);
+                            break generationOfStructureImagesLoop;
                         }
                         //setting of shadow effects
                         if (tmpDrawImagesWithShadow) {
@@ -373,23 +380,47 @@ public class OverviewViewController {
     //
     /**
      * Applies changes in rows and columns per page number to the configuration of structureGridPane of the controller's
-     * OverviewView instance.
+     * OverviewView instance using the current entries in the columnsPerPage and rowsPerPage text field or using the
+     * default values for both.
+     * If the new values for columns or rows per page exceed the displayable maximum (depending on the current window
+     * size and the structure image size limits), the user has the choice to set the affected values to the displayable
+     * maximum value or to reset the affected values to their former value via a confirmation alert.
+     *
+     * @param aUseDefaultValues Boolean value whether the default grid configuration should be applied
      */
-    private void applyChangeOfGridConfiguration() {
-        //getting the text field entries
-        int tmpColumnsPerPageEntry = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
-        int tmpRowsPerPageEntry = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
-        //validation of text field entries  TODO: remove (after merge) (validation not necessary when applying new IntegerFilter)
-        if (tmpColumnsPerPageEntry <= 0 && tmpRowsPerPageEntry <= 0) {
+    private void applyChangeOfGridConfiguration(boolean aUseDefaultValues) {
+        //getting the values for the new grid configuration
+        int tmpNewColumnsPerPageValue;
+        int tmpNewRowsPerPageValue;
+        if (aUseDefaultValues) {
+            //use the default values and adapt the content of the text fields
+            tmpNewColumnsPerPageValue = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
+            tmpNewRowsPerPageValue = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
+            this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(tmpNewColumnsPerPageValue));
+            this.overviewView.getRowsPerPageTextField().setText(Integer.toString(tmpNewRowsPerPageValue));
+        } else {
+            //get the text field entries
+            tmpNewColumnsPerPageValue = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
+            tmpNewRowsPerPageValue = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
+        }
+        //validation of new values  TODO: remove (after merge) (validation not necessary when applying new IntegerFilter)
+        if (tmpNewColumnsPerPageValue <= 0 || tmpNewRowsPerPageValue <= 0) {
             GuiUtil.guiMessageAlert(
                     Alert.AlertType.INFORMATION,
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.title"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.header"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.text")
             );
+            if (tmpNewColumnsPerPageValue <= 0) {
+                this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPage));
+            }
+            if (tmpNewRowsPerPageValue <= 0) {
+                this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPage));
+            }
+            return;
         }
         //if (no changes done) -> return
-        if (tmpColumnsPerPageEntry == this.columnsPerPage && tmpRowsPerPageEntry == this.rowsPerPage) {
+        if (tmpNewColumnsPerPageValue == this.columnsPerPage && tmpNewRowsPerPageValue == this.rowsPerPage) {
             return;
         }
         //
@@ -397,39 +428,35 @@ public class OverviewViewController {
         int tmpMaxColumnsPerPage = this.calculateMaxColumnsPerPage(this.calculateOverviewViewPaginationNodeWidth());
         int tmpMaxRowsPerPage = this.calculateMaxRowsPerPage(this.calculateOverviewViewPaginationNodeHeight());
         //
-        //check whether the values of the columns and rows per page entries are confirm with the window size
-        if ((tmpColumnsPerPageEntry <= tmpMaxColumnsPerPage) && (tmpRowsPerPageEntry <= tmpMaxRowsPerPage)) {   //TODO: should I check both separately? case: only one is too high (I would say no)
-            this.columnsPerPage = tmpColumnsPerPageEntry;
-            this.rowsPerPage = tmpRowsPerPageEntry;
+        //check whether the new values for columns and rows per page are confirm with the window size
+        if ((tmpNewColumnsPerPageValue <= tmpMaxColumnsPerPage) && (tmpNewRowsPerPageValue <= tmpMaxRowsPerPage)) {
+            this.columnsPerPage = tmpNewColumnsPerPageValue;
+            this.rowsPerPage = tmpNewRowsPerPageValue;
         } else {
             //confirmation alert
-            ButtonType tmpConfirmationResult = GuiUtil.guiConformationAlert(   //TODO: rename method to "confirmationAlert"?
-                    Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.title"),
-                    Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.header"),
-                    Message.get("OverviewView.applyChangeOfGridConfiguration.conformationAlert.text")
+            ButtonType tmpConfirmationResult = GuiUtil.guiConformationAlert(   //TODO: rename method to "confirmationAlert"? (has been done; adapt method name after merge)
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.confirmationAlert.title"),
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.confirmationAlert.header"),
+                    Message.get("OverviewView.applyChangeOfGridConfiguration.confirmationAlert.text")
             );
             if (tmpConfirmationResult == ButtonType.OK) {
-                //if "ok": set columnsPerPage and rowsPerPage to max
-                this.columnsPerPage = tmpMaxColumnsPerPage;
-                this.rowsPerPage = tmpMaxRowsPerPage;
-                this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
-                this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
-                /*  TODO: code for separate checks
-                if (tmpColumnsPerPageEntry > tmpMaxColumnsPerPage) {
+                //if "ok": set the limit exceeding value(s) to the displayable maximum
+                //setting the columns per page
+                if (tmpNewColumnsPerPageValue > tmpMaxColumnsPerPage) {
                     this.columnsPerPage = tmpMaxColumnsPerPage;
                     this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
                 } else {
-                    this.columnsPerPage = tmpColumnsPerPageEntry;
+                    this.columnsPerPage = tmpNewColumnsPerPageValue;
                 }
-                if (tmpRowsPerPageEntry > tmpMaxRowsPerPage) {
+                //setting the rows per page
+                if (tmpNewRowsPerPageValue > tmpMaxRowsPerPage) {
                     this.rowsPerPage = tmpMaxRowsPerPage;
                     this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
                 } else {
-                    this.rowsPerPage = tmpRowsPerPageEntry;
+                    this.rowsPerPage = tmpNewRowsPerPageValue;
                 }
-                 */
             } else {
-                //else: reset the text fields to old value and do nothing (return)
+                //else: reset the text fields to former value and do nothing (return)
                 this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
                 this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
                 return;
@@ -541,7 +568,8 @@ public class OverviewViewController {
     private double calculateOverviewViewPaginationNodeWidth() {
         double tmpMainGridPanePaginationNodeCellsWidth = 0;
         for (int i = 0; i < 3; i++) {
-            tmpMainGridPanePaginationNodeCellsWidth += this.overviewView.getMainGridPane().getCellBounds(i, 0).getWidth();
+            tmpMainGridPanePaginationNodeCellsWidth
+                    += this.overviewView.getMainGridPane().getCellBounds(i, 0).getWidth();
         }
         return tmpMainGridPanePaginationNodeCellsWidth;
     }
@@ -555,10 +583,11 @@ public class OverviewViewController {
      * @return Integer value of the maximum amount of structure image columns per page
      */
     private int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) {
-        int tmpMaxColumnsPerPage = (int) ((aOverviewViewPaginationNodeWidth -
-                (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5) *
-                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) /
-                (30.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings (after merge)
+        int tmpMaxColumnsPerPage = (int) ((aOverviewViewPaginationNodeWidth
+                - (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5)
+                        * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH))
+                / (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH
+                        + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH));
         return tmpMaxColumnsPerPage;
     }
     //
@@ -571,10 +600,11 @@ public class OverviewViewController {
      * @return Integer value of the maximum amount of structure image rows per page
      */
     private int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) {
-        int tmpMaxRowsPerPage = (int) ((aOverviewViewPaginationNodeHeight -
-                GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT -
-                GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) /
-                (20.0 + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)); //TODO: structure image size limits from settings (after merge)
+        int tmpMaxRowsPerPage = (int) ((aOverviewViewPaginationNodeHeight
+                - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT
+                - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)
+                / (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT
+                        + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH));
         return tmpMaxRowsPerPage;
     }
     //
@@ -585,6 +615,8 @@ public class OverviewViewController {
      * @param aMoleculeDataModel MoleculeDataModel of the structure to be shown in the enlarged structure view
      */
     private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel) {
+        //checks
+        Objects.requireNonNull(aMoleculeDataModel);
         //initialization of the view
         Stage tmpEnlargedStructureViewStage = new Stage();
         AnchorPane tmpEnlargedStructureViewAnchorPane = new AnchorPane();

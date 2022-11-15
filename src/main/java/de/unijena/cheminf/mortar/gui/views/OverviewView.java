@@ -81,6 +81,10 @@ public class OverviewView extends AnchorPane {
      */
     private Button applyButton;
     /**
+     * Button to apply the default configuration to the structure grid pane.
+     */
+    private Button defaultButton;
+    /**
      * Button to close the view.
      */
     private Button closeButton;
@@ -215,8 +219,15 @@ public class OverviewView extends AnchorPane {
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
         //
+        this.defaultButton = new Button(Message.get("OverviewView.defaultButton.text"));
+        this.defaultButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.defaultButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.defaultButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.defaultButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.defaultButton.setTooltip(new Tooltip(Message.get("OverviewView.defaultButton.tooltip")));
+        //
         this.bottomLeftHBox.getChildren().addAll(tmpColumnsPerPageLabel, this.columnsPerPageTextField,
-                tmpRowsPerPageLabel, this.rowsPerPageTextField, this.applyButton);
+                tmpRowsPerPageLabel, this.rowsPerPageTextField, this.applyButton, this.defaultButton);
         //
         /*
         initialization of the bottomRightHBox and its component, the close button; the bottomRightHBox needs to be added
@@ -300,21 +311,21 @@ public class OverviewView extends AnchorPane {
     public void addPaginationToMainGridPane(Pagination aPagination) {
         Objects.requireNonNull(aPagination, "aPagination (instance of Pagination) is null");
         this.pagination = aPagination;
-        this.addNodeToMainGridPane(this.pagination, 0, 0, 3, 2);
+        this.addNodeToMainGridPane(this.pagination, 0, 0, 3, 2);    //magic numbers
     }
     //
     /**
      * Adds the overview view's bottomLeftHBox to the main grid pane.
      */
     public void addBottomLeftHBoxToMainGridPane() {
-        this.addNodeToMainGridPane(this.bottomLeftHBox, 0, 1, 1, 1);
+        this.addNodeToMainGridPane(this.bottomLeftHBox, 0, 1, 1, 1);    //magic numbers
     }
     //
     /**
      * Adds the overview view's bottomRightHBox to the main grid pane.
      */
     public void addBottomRightHBoxToMainGridPane() {
-        this.addNodeToMainGridPane(this.bottomRightHBox, 2, 1, 1, 1);
+        this.addNodeToMainGridPane(this.bottomRightHBox, 2, 1, 1, 1);   //magic numbers
     }
     //</editor-fold>
     //
@@ -329,6 +340,7 @@ public class OverviewView extends AnchorPane {
      * @param aRowSpan Integer value for number of rows for the node to span
      */
     private void addNodeToMainGridPane(Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
+        //method is private and only called with magic numbers
         this.mainGridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
     //</editor-fold>
@@ -343,6 +355,15 @@ public class OverviewView extends AnchorPane {
         return this.applyButton;
     }
     //
+    /**
+     * Returns the overview view's default button for applying the default grid configuration.
+     *
+     * @return Button
+     */
+    public Button getDefaultButton() {
+        return defaultButton;
+    }
+
     /**
      * Returns the overview view's close button.
      *

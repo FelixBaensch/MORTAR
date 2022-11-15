@@ -109,11 +109,27 @@ public final class GuiDefinitions {
      */
     public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO = 2.0;
     /**
-     * Minimal value for the width of the enlarged structure view
+     * Default value for columns of structure images per overview view page
+     */
+    public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT = 5;
+    /**
+     * Default value for rows of structure images per overview view page
+     */
+    public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT = 5;
+    /**
+     * Minimum value for the width of structure images displayed in the overview view
+     */
+    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH = 30.0;
+    /**
+     * Minimum value for the height of structure images displayed in the overview view
+     */
+    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = 20.0;
+    /**
+     * Minimum value for the width of the enlarged structure view
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE = 250.0;
     /**
-     * Minimal value for the height of the enlarged structure view
+     * Minimum value for the height of the enlarged structure view
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
     /**
