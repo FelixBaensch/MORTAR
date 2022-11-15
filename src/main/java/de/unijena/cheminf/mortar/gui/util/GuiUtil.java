@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.gui.util;
 
+import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.IDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
@@ -386,13 +387,28 @@ public class GuiUtil {
                 }
                 else if(tmpCell.getClass() == ImageView.class){
                     Image tmpImage;
+                    IAtomContainer tmpAtomContainer;
                     try {
-                        IAtomContainer tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
+                        if(aTableView.getClass() == FragmentsDataTableView.class){
+                            tmpAtomContainer = ((FragmentDataModel) aTableView.getItems().get(tmpRowIndex)).getFirstParentMolecule().getAtomContainer();
+                        }
+                        else if(aTableView.getClass() == ItemizationDataTableView.class){
+                            if(tmpColIndex > 1){
+                                String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
+                                tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getFragmentsOfSpecificAlgorithm(tmpFragmentationName).get(tmpColIndex-2).getAtomContainer(); //magic number
+                            }
+                            else {
+                                tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
+                            }
+                        }
+                        else {
+                            tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
+                        }
                         tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1,1500,1000,true, true);
+                        tmpClipboardContent.putImage(tmpImage);
                     } catch (CDKException e) {
-                        tmpImage = DepictionUtil.depictErrorImage(e.getMessage(), 150,100);
+                        tmpClipboardContent.putImage(((ImageView) tmpCell).getImage());
                     }
-                    tmpClipboardContent.putImage(tmpImage);
                 }
                 else{
                     return;
