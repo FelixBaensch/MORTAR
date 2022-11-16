@@ -124,12 +124,18 @@ public class OverviewViewController {
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor. Initializes the class variables and opens the overview view.
+     *
+     * TODO: persist grid configuration (and possible other settings)
      */
     public OverviewViewController(Stage aStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList) {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
         Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
+        if (aTabName.isBlank()) {
+            Exception tmpException = new IllegalArgumentException("aTabName (instance of String) is blank");
+            OverviewViewController.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
+        }
         //</editor-fold>
         this.mainStage = aStage;
         this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
@@ -138,17 +144,17 @@ public class OverviewViewController {
         this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
         //creating an empty structureGridPane at first by setting createStructureImages to false
         this.createStructureImages = false;
-        this.showOverviewView();
+        this.initializeAndShowOverviewView();
     }
     //</editor-fold>
     //
     //<editor-fold desc="private methods" dafaultstate="collapsed">
     /**
-     * Initializes and opens the overview view. This method is only being called by the constructor.
+     * Initializes and opens the overview view. This method is only called by the constructor.
      */
-    private void showOverviewView() {
+    private void initializeAndShowOverviewView() {
         if (this.overviewView == null)
-            this.overviewView = new OverviewView(this.rowsPerPage, this.columnsPerPage);
+            this.overviewView = new OverviewView(this.columnsPerPage, this.rowsPerPage);
         this.overviewViewStage = new Stage();
         Scene tmpScene = new Scene(this.overviewView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
@@ -252,14 +258,14 @@ public class OverviewViewController {
             of the window; correction of the caused height deviation by the pagination control panel height; the
             further calculations generate the space between the images creating the grid lines
              */
-            double tmpImageHeight = ((tmpPaginationNodeHeight -
-                    GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT -
-                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage) -
-                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
-            double tmpImageWidth = ((tmpPaginationNodeWidth -
-                    (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5) *
-                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage) -
-                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
+            double tmpImageHeight = ((tmpPaginationNodeHeight
+                    - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT
+                    - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage)
+                    - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
+            double tmpImageWidth = ((tmpPaginationNodeWidth
+                    - (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5)
+                    * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage)
+                    - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             //
             //check if the limits for the image dimensions are being exceeded
             if ((tmpImageHeight >= GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT)
@@ -404,9 +410,9 @@ public class OverviewViewController {
             tmpNewRowsPerPageValue = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
         }
         //validation of new values  TODO: remove (after merge) (validation not necessary when applying new IntegerFilter)
-        if (tmpNewColumnsPerPageValue <= 0 || tmpNewRowsPerPageValue <= 0) {
+        if (tmpNewColumnsPerPageValue <= 0 || tmpNewRowsPerPageValue <= 0) {    //TODO: note: zero or an empty/blank TextField might still be a problem even with adapted IntegerFilter
             GuiUtil.guiMessageAlert(
-                    Alert.AlertType.INFORMATION,
+                    Alert.AlertType.ERROR,
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.title"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.header"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.text")
@@ -464,7 +470,7 @@ public class OverviewViewController {
         }
         //
         //reconfiguration of the OverviewView instance's structureGridPane
-        this.overviewView.configureStructureGridPane(this.rowsPerPage, this.columnsPerPage);
+        this.overviewView.configureStructureGridPane(this.columnsPerPage, this.rowsPerPage);
         //
         //adaptions to page count and current page index of the pagination node
         int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPage * this.columnsPerPage);
@@ -581,8 +587,12 @@ public class OverviewViewController {
      * @param aOverviewViewPaginationNodeWidth Double value of the width of the pagination node calculated via the
      *                                         width of the mainGridPane cells holding it
      * @return Integer value of the maximum amount of structure image columns per page
+     * @throws IllegalArgumentException if the given parameter is < or = to zero
      */
-    private int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) {
+    private int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) throws IllegalArgumentException {
+        if (aOverviewViewPaginationNodeWidth <= 0.0)
+            throw new IllegalArgumentException("aOverviewViewPaginationNodeWidth (Double value) is < or = to zero.");
+        //
         int tmpMaxColumnsPerPage = (int) ((aOverviewViewPaginationNodeWidth
                 - (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5)
                         * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH))
@@ -598,8 +608,12 @@ public class OverviewViewController {
      * @param aOverviewViewPaginationNodeHeight Double value of the height of the pagination node calculated via the
      *                                          height of the mainGridPane cells holding it
      * @return Integer value of the maximum amount of structure image rows per page
+     * @throws IllegalArgumentException if the given parameter is < or = to zero
      */
-    private int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) {
+    private int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) throws IllegalArgumentException {
+        if (aOverviewViewPaginationNodeHeight <= 0.0)
+            throw new IllegalArgumentException("aOverviewViewPaginationNodeHeight (Double value) is < or = to zero.");
+        //
         int tmpMaxRowsPerPage = (int) ((aOverviewViewPaginationNodeHeight
                 - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT
                 - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)

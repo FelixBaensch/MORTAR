@@ -108,9 +108,23 @@ public class OverviewView extends AnchorPane {
      * added to the main grid pane of the view and are advised to be added after adding the pagination node to ensure
      * the accessibility of all view components.
      * No event listeners are being added to any components.
+     *
+     * @param aColumnsPerPage Integer value that gives the count of columns for the initial configuration of the grid
+     *                        pane holding the structure images
+     * @param aRowsPerPage Integer value that gives the count of rows for the initial configuration of the grid pane
+     *                     holding the structure images
+     * @throws IllegalArgumentException if one of the given parameters is < or = to zero
      */
-    public OverviewView(int aRowsPerPage, int aColumnsPerPage) {
+    public OverviewView(int aColumnsPerPage, int aRowsPerPage) throws IllegalArgumentException {
         super();
+        //
+        //<editor-fold desc="checks" defaultstate="collapsed">
+        if (aColumnsPerPage <= 0)
+            throw new IllegalArgumentException("aColumnsPerPage (Integer value) was <= to 0.");
+        if (aRowsPerPage <= 0)
+            throw new IllegalArgumentException("aRowsPerPage (Integer value) was <= to 0.");
+        //</editor-fold>
+        //
         //mainGridPane to style the view and set up its components
         this.mainGridPane = new GridPane();
         this.mainGridPane.setPadding(new Insets(0.0, 0.0, 0.0, 0.0));
@@ -166,7 +180,7 @@ public class OverviewView extends AnchorPane {
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
         );
-        this.configureStructureGridPane(aRowsPerPage, aColumnsPerPage);
+        this.configureStructureGridPane(aColumnsPerPage, aRowsPerPage);
         //
         /*
         initialization of the bottomLeftHBox and its components; the components are the text fields for rows and columns
@@ -185,7 +199,7 @@ public class OverviewView extends AnchorPane {
         this.columnsPerPageTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
         this.columnsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         TextFormatter<Integer> tmpFormatter2 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aColumnsPerPage, GuiUtil.getIntegerFilter());   //TODO: use new GuiUtil method for IntegerFilter after merge
+                aColumnsPerPage, GuiUtil.getIntegerFilter());   //TODO: use new GuiUtil method for IntegerFilter (after merge)
         this.columnsPerPageTextField.setTextFormatter(tmpFormatter2);
         Label tmpColumnsPerPageLabel = new Label(Message.get("OverviewView.columnsPerPageLabel.text"));
         tmpColumnsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
@@ -201,7 +215,7 @@ public class OverviewView extends AnchorPane {
         this.rowsPerPageTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
         this.rowsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         TextFormatter<Integer> tmpFormatter1 = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aRowsPerPage, GuiUtil.getIntegerFilter());  //TODO: use new GuiUtil method for IntegerFilter after merge
+                aRowsPerPage, GuiUtil.getIntegerFilter());  //TODO: use new GuiUtil method for IntegerFilter (after merge)
         this.rowsPerPageTextField.setTextFormatter(tmpFormatter1);
         Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
         tmpRowsPerPageLabel.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE / 3);
@@ -226,8 +240,12 @@ public class OverviewView extends AnchorPane {
         this.defaultButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.defaultButton.setTooltip(new Tooltip(Message.get("OverviewView.defaultButton.tooltip")));
         //
-        this.bottomLeftHBox.getChildren().addAll(tmpColumnsPerPageLabel, this.columnsPerPageTextField,
-                tmpRowsPerPageLabel, this.rowsPerPageTextField, this.applyButton, this.defaultButton);
+        this.bottomLeftHBox.getChildren().addAll(
+                tmpColumnsPerPageLabel, this.columnsPerPageTextField,
+                tmpRowsPerPageLabel, this.rowsPerPageTextField,
+                this.applyButton,
+                this.defaultButton
+        );
         //
         /*
         initialization of the bottomRightHBox and its component, the close button; the bottomRightHBox needs to be added
@@ -259,11 +277,6 @@ public class OverviewView extends AnchorPane {
                 Message.get("OverviewView.imageDimensionsBelowLimitInfoLabel.text")
         );
         tmpImageDimensionsBelowLimitInfoLabel.setStyle("-fx-alignment: CENTER");
-        Tooltip tmpImageDimensionsBelowLimitLabelTooltip = new Tooltip(
-                Message.get("OverviewView.imageDimensionsBelowLimitLabel.tooltip")  //TODO: adapt tooltip after integration of overview view settings
-        );
-        tmpImageDimensionsBelowLimitLabel.setTooltip(tmpImageDimensionsBelowLimitLabelTooltip);
-        tmpImageDimensionsBelowLimitInfoLabel.setTooltip(tmpImageDimensionsBelowLimitLabelTooltip);
         this.imageDimensionsBelowLimitVBox = new VBox(
                 tmpImageDimensionsBelowLimitLabel,
                 tmpImageDimensionsBelowLimitInfoLabel
@@ -277,27 +290,34 @@ public class OverviewView extends AnchorPane {
      * Configures the structure grid pane depending on the chosen numbers for rows and columns of structure images to
      * be displayed per page.
      *
-     * @param aRowsPerPage Integer value for rows of structure images to be displayed per page
      * @param aColumnsPerPage Integer value for columns of structure images to be displayed per page
+     * @param aRowsPerPage Integer value for rows of structure images to be displayed per page
+     * @throws IllegalArgumentException if one of the given parameters is < or = to zero
      */
-    public void configureStructureGridPane(int aRowsPerPage, int aColumnsPerPage) {
+    public void configureStructureGridPane(int aColumnsPerPage, int aRowsPerPage) throws IllegalArgumentException {
+        //<editor-fold desc="checks" defaultstate="collapsed">
+        if (aColumnsPerPage <= 0)
+            throw new IllegalArgumentException("aColumnsPerPage (Integer value) was < or = to 0.");
+        if (aRowsPerPage <= 0)
+            throw new IllegalArgumentException("aRowsPerPage (Integer value) was < or = to 0.");
+        //</editor-fold>
         if (this.structureGridPane == null) {
             this.structureGridPane = new GridPane();
         } else {
-            this.structureGridPane.getRowConstraints().clear();
             this.structureGridPane.getColumnConstraints().clear();
-        }
-        for (int i = 0; i < aRowsPerPage; i++) {
-            RowConstraints tmpRowCon = new RowConstraints();
-            tmpRowCon.setVgrow(Priority.ALWAYS);
-            tmpRowCon.setPercentHeight(100.0 / aRowsPerPage);
-            this.structureGridPane.getRowConstraints().add(tmpRowCon);
+            this.structureGridPane.getRowConstraints().clear();
         }
         for (int i = 0; i < aColumnsPerPage; i++) {
             ColumnConstraints tmpColCon = new ColumnConstraints();
             tmpColCon.setHgrow(Priority.ALWAYS);
             tmpColCon.setPercentWidth(100.0 / aColumnsPerPage);
             this.structureGridPane.getColumnConstraints().add(tmpColCon);
+        }
+        for (int i = 0; i < aRowsPerPage; i++) {
+            RowConstraints tmpRowCon = new RowConstraints();
+            tmpRowCon.setVgrow(Priority.ALWAYS);
+            tmpRowCon.setPercentHeight(100.0 / aRowsPerPage);
+            this.structureGridPane.getRowConstraints().add(tmpRowCon);
         }
         this.structureGridPane.setAlignment(Pos.CENTER);
     }
