@@ -263,8 +263,7 @@ public class OverviewViewController {
                     - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage)
                     - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             double tmpImageWidth = ((tmpPaginationNodeWidth
-                    - (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5)
-                    * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage)
+                    - (2 * GuiDefinitions.GUI_INSETS_VALUE)) / aColumnsPerPage)
                     - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
             //
             //check if the limits for the image dimensions are being exceeded
@@ -388,9 +387,8 @@ public class OverviewViewController {
      * Applies changes in rows and columns per page number to the configuration of structureGridPane of the controller's
      * OverviewView instance using the current entries in the columnsPerPage and rowsPerPage text field or using the
      * default values for both.
-     * If the new values for columns or rows per page exceed the displayable maximum (depending on the current window
-     * size and the structure image size limits), the user has the choice to set the affected values to the displayable
-     * maximum value or to reset the affected values to their former value via a confirmation alert.
+     * If one of the values exceeds the displayable maximum (depending on the current window size and the structure
+     * image size limits), the value gets set to the maximal displayable value.
      *
      * @param aUseDefaultValues Boolean value whether the default grid configuration should be applied
      */
@@ -410,7 +408,7 @@ public class OverviewViewController {
             tmpNewRowsPerPageValue = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
         }
         //validation of new values  TODO: remove (after merge) (validation not necessary when applying new IntegerFilter)
-        if (tmpNewColumnsPerPageValue <= 0 || tmpNewRowsPerPageValue <= 0) {    //TODO: note: zero or an empty/blank TextField might still be a problem even with adapted IntegerFilter
+        if (tmpNewColumnsPerPageValue <= 0 || tmpNewRowsPerPageValue <= 0) {    //TODO: even with new filter: make sure, zero or an empty/blank TextField is not possible
             GuiUtil.guiMessageAlert(
                     Alert.AlertType.ERROR,
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.title"),
@@ -425,54 +423,37 @@ public class OverviewViewController {
             }
             return;
         }
-        //if (no changes done) -> return
-        if (tmpNewColumnsPerPageValue == this.columnsPerPage && tmpNewRowsPerPageValue == this.rowsPerPage) {
-            return;
-        }
         //
         //calculation of max columns and rows per page with current window size and limits for structure image size
         int tmpMaxColumnsPerPage = this.calculateMaxColumnsPerPage(this.calculateOverviewViewPaginationNodeWidth());
         int tmpMaxRowsPerPage = this.calculateMaxRowsPerPage(this.calculateOverviewViewPaginationNodeHeight());
         //
-        //check whether the new values for columns and rows per page are confirm with the window size
-        if ((tmpNewColumnsPerPageValue <= tmpMaxColumnsPerPage) && (tmpNewRowsPerPageValue <= tmpMaxRowsPerPage)) {
-            this.columnsPerPage = tmpNewColumnsPerPageValue;
-            this.rowsPerPage = tmpNewRowsPerPageValue;
+        //if (no changes && values are valid) -> return
+        if (tmpNewColumnsPerPageValue == this.columnsPerPage && tmpNewColumnsPerPageValue <= tmpMaxColumnsPerPage
+                && tmpNewRowsPerPageValue == this.rowsPerPage && tmpNewRowsPerPageValue <= tmpMaxRowsPerPage) {
+            return;
+        }
+        //
+        //if the values exceed the max values for the current page, set them to their maximum
+        //setting the columns per page
+        if (tmpNewColumnsPerPageValue > tmpMaxColumnsPerPage) {
+            this.columnsPerPage = tmpMaxColumnsPerPage;
+            this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
         } else {
-            //confirmation alert
-            ButtonType tmpConfirmationResult = GuiUtil.guiConformationAlert(   //TODO: rename method to "confirmationAlert"? (has been done; adapt method name after merge)
-                    Message.get("OverviewView.applyChangeOfGridConfiguration.confirmationAlert.title"),
-                    Message.get("OverviewView.applyChangeOfGridConfiguration.confirmationAlert.header"),
-                    Message.get("OverviewView.applyChangeOfGridConfiguration.confirmationAlert.text")
-            );
-            if (tmpConfirmationResult == ButtonType.OK) {
-                //if "ok": set the limit exceeding value(s) to the displayable maximum
-                //setting the columns per page
-                if (tmpNewColumnsPerPageValue > tmpMaxColumnsPerPage) {
-                    this.columnsPerPage = tmpMaxColumnsPerPage;
-                    this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
-                } else {
-                    this.columnsPerPage = tmpNewColumnsPerPageValue;
-                }
-                //setting the rows per page
-                if (tmpNewRowsPerPageValue > tmpMaxRowsPerPage) {
-                    this.rowsPerPage = tmpMaxRowsPerPage;
-                    this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
-                } else {
-                    this.rowsPerPage = tmpNewRowsPerPageValue;
-                }
-            } else {
-                //else: reset the text fields to former value and do nothing (return)
-                this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPage));
-                this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
-                return;
-            }
+            this.columnsPerPage = tmpNewColumnsPerPageValue;
+        }
+        //setting the rows per page
+        if (tmpNewRowsPerPageValue > tmpMaxRowsPerPage) {
+            this.rowsPerPage = tmpMaxRowsPerPage;
+            this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPage));
+        } else {
+            this.rowsPerPage = tmpNewRowsPerPageValue;
         }
         //
         //reconfiguration of the OverviewView instance's structureGridPane
         this.overviewView.configureStructureGridPane(this.columnsPerPage, this.rowsPerPage);
         //
-        //adaptions to page count and current page index of the pagination node
+        //aftermath (adaptions to page count and current page index of the pagination node)
         int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPage * this.columnsPerPage);
         if (this.moleculeDataModelList.size() % (this.rowsPerPage * this.columnsPerPage) > 0) {
             tmpNewPageCount++;
@@ -594,8 +575,7 @@ public class OverviewViewController {
             throw new IllegalArgumentException("aOverviewViewPaginationNodeWidth (Double value) is < or = to zero.");
         //
         int tmpMaxColumnsPerPage = (int) ((aOverviewViewPaginationNodeWidth
-                - (2 * (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO - 0.5)
-                        * GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH))
+                - (2 * GuiDefinitions.GUI_INSETS_VALUE))
                 / (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH
                         + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH));
         return tmpMaxColumnsPerPage;
@@ -630,7 +610,7 @@ public class OverviewViewController {
      */
     private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel) {
         //checks
-        Objects.requireNonNull(aMoleculeDataModel);
+        Objects.requireNonNull(aMoleculeDataModel, "aMoleculeDataModel (instance of MoleculeDataModel) is null");
         //initialization of the view
         Stage tmpEnlargedStructureViewStage = new Stage();
         AnchorPane tmpEnlargedStructureViewAnchorPane = new AnchorPane();

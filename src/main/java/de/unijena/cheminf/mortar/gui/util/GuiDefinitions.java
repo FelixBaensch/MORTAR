@@ -105,9 +105,17 @@ public final class GuiDefinitions {
      */
     public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH = 8.0;
     /**
-     * Ratio of the left and right border width to the grid lines width of the structure grid pane in overview view
+     * Minimum value for the width of structure images displayed in the overview view
      */
-    public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_BORDER_TO_GRIDLINES_WIDTH_RATIO = 2.0;
+    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH = 30.0;
+    /**
+     * Minimum value for the height of structure images displayed in the overview view
+     */
+    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = 20.0;
+    /**
+     * Width of columns and rows per page label of the overview view
+     */
+    public static final double OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH = 10.0;
     /**
      * Default value for columns of structure images per overview view page
      */
@@ -116,14 +124,6 @@ public final class GuiDefinitions {
      * Default value for rows of structure images per overview view page
      */
     public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT = 5;
-    /**
-     * Minimum value for the width of structure images displayed in the overview view
-     */
-    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH = 30.0;
-    /**
-     * Minimum value for the height of structure images displayed in the overview view
-     */
-    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = 20.0;
     /**
      * Minimum value for the width of the enlarged structure view
      */
