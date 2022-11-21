@@ -114,7 +114,7 @@ public class OverviewView extends AnchorPane {
      *                        pane holding the structure images
      * @param aRowsPerPage Integer value that gives the count of rows for the initial configuration of the grid pane
      *                     holding the structure images
-     * @throws IllegalArgumentException if one of the given parameters is < or = to zero
+     * @throws IllegalArgumentException if one of the given parameters is less than or equal to zero
      */
     public OverviewView(int aColumnsPerPage, int aRowsPerPage) throws IllegalArgumentException {
         super();
@@ -130,10 +130,10 @@ public class OverviewView extends AnchorPane {
         this.mainGridPane = new GridPane();
         this.mainGridPane.setPadding(new Insets(0.0, 0.0, 0.0, 0.0));
         this.getChildren().add(this.mainGridPane);
-        OverviewView.setTopAnchor(this.mainGridPane, 0.0);
-        OverviewView.setRightAnchor(this.mainGridPane, 0.0);
-        OverviewView.setLeftAnchor(this.mainGridPane,0.0);
-        OverviewView.setBottomAnchor(this.mainGridPane, 0.0);
+        AnchorPane.setTopAnchor(this.mainGridPane, 0.0);
+        AnchorPane.setRightAnchor(this.mainGridPane, 0.0);
+        AnchorPane.setLeftAnchor(this.mainGridPane,0.0);
+        AnchorPane.setBottomAnchor(this.mainGridPane, 0.0);
         RowConstraints tmpRowCon1 = new RowConstraints();
         tmpRowCon1.setFillHeight(true);
         tmpRowCon1.setVgrow(Priority.ALWAYS);
@@ -167,7 +167,7 @@ public class OverviewView extends AnchorPane {
         upper and lower border: extend the image frame to grid line width; right and left border: extend the image frame
         to grid line width and add a spacing with a width dependent on the grid line width
          */
-        this.structureGridPane.setStyle(
+        this.structureGridPane.setStyle(    //TODO: check, why there is 1px difference in horizontal alignment of Structure images and HBoxes (hopefully done before meeting)
                 "-fx-background-color: LIGHTGREY; " +
                 "-fx-border-color: LIGHTGREY; " +
                 "-fx-border-width: " +
@@ -190,8 +190,11 @@ public class OverviewView extends AnchorPane {
         make sure all components are set up correct and accessible
          */
         this.bottomLeftHBox = new HBox();
-        this.bottomLeftHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,    //magic number
-                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.bottomLeftHBox.setPadding(new Insets(
+                GuiDefinitions.OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO
+                        * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
+                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE
+        ));
         this.bottomLeftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         //
         //labels and text fields for columns and rows per page
@@ -257,8 +260,11 @@ public class OverviewView extends AnchorPane {
         correct and accessible
          */
         this.bottomRightHBox = new HBox();
-        this.bottomRightHBox.setPadding(new Insets(1.2 * GuiDefinitions.GUI_INSETS_VALUE,   //magic number
-                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.bottomRightHBox.setPadding(new Insets(
+                GuiDefinitions.OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO
+                        * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
+                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE
+        ));
         this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -296,7 +302,7 @@ public class OverviewView extends AnchorPane {
      *
      * @param aColumnsPerPage Integer value for columns of structure images to be displayed per page
      * @param aRowsPerPage Integer value for rows of structure images to be displayed per page
-     * @throws IllegalArgumentException if one of the given parameters is < or = to zero
+     * @throws IllegalArgumentException if one of the given parameters is less than or equal to zero
      */
     public void configureStructureGridPane(int aColumnsPerPage, int aRowsPerPage) throws IllegalArgumentException {
         //<editor-fold desc="checks" defaultstate="collapsed">
@@ -334,8 +340,9 @@ public class OverviewView extends AnchorPane {
      * pagination class variable.
      *
      * @param aPagination Pagination to be added to the overview view
+     * @throws NullPointerException if the given pagination instance is null
      */
-    public void addPaginationToMainGridPane(Pagination aPagination) {
+    public void addPaginationToMainGridPane(Pagination aPagination) throws NullPointerException {
         Objects.requireNonNull(aPagination, "aPagination (instance of Pagination) is null");
         this.pagination = aPagination;
         this.addNodeToMainGridPane(this.pagination, 0, 0, 3, 2);    //magic numbers

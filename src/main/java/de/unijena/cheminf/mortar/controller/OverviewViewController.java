@@ -33,7 +33,6 @@ import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -124,12 +123,17 @@ public class OverviewViewController {
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor. Initializes the class variables and opens the overview view.
-     *
      * TODO: persist grid configuration (and possible other settings)
+     *
+     * @param aMainStage Stage that is to be the owner of the overview view's stage
+     * @param aTabName String containing the name of the tab that's content is to be shown in the overview view
+     * @param aMoleculeDataModelList List of MoleculeDataModel instances
+     * @throws NullPointerException if one of the parameters is null
      */
-    public OverviewViewController(Stage aStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList) {
+    public OverviewViewController(Stage aMainStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList)
+            throws NullPointerException {
         //<editor-fold desc="checks" defaultstate="collapsed">
-        Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
+        Objects.requireNonNull(aMainStage, "aMainStage (instance of Stage) is null");
         Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
         if (aTabName.isBlank()) {
@@ -137,7 +141,7 @@ public class OverviewViewController {
             OverviewViewController.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
         }
         //</editor-fold>
-        this.mainStage = aStage;
+        this.mainStage = aMainStage;
         this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
         this.moleculeDataModelList = aMoleculeDataModelList;
         this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
@@ -220,6 +224,25 @@ public class OverviewViewController {
         //close button listener
         this.overviewView.getCloseButton().setOnAction((actionEvent) -> {
             this.overviewViewStage.close();
+        });
+        //
+        //focused property change listener for columns per page text field
+        this.overviewView.getColumnsPerPageTextField().focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) {
+                if (this.overviewView.getColumnsPerPageTextField().getText().isBlank()
+                        || Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText()) == 0) {
+                    this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPage));
+                }
+            }
+        });
+        //focused property change listener for rows per page text field
+        this.overviewView.getRowsPerPageTextField().focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) {
+                if (this.overviewView.getRowsPerPageTextField().getText().isBlank()
+                        || Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText()) == 0) {
+                    this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPage));
+                }
+            }
         });
     }
     //
@@ -490,29 +513,33 @@ public class OverviewViewController {
         //adding Listeners to MenuItems
         //copyImageMenuItem listener
         tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
-            try {
-                ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putImage(DepictionUtil.depictImageWithZoom(  //TODO: use new DepictionUtil method with fill to fit and Felix's image size values (after merge)
-                        this.cachedMoleculeDataModel.getAtomContainer(),
-                        1.0, 512.0, 350.0
-                ));
-                Clipboard.getSystemClipboard().setContent(tmpContent);
-            } catch (CDKException aCDKException) {
-                //should not happen since an initial depiction is needed to make the context menu accessible to the user
-                OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-                GuiUtil.guiExceptionAlert(
-                        Message.get("Error.ExceptionAlert.Title"),
-                        Message.get("Error.ExceptionAlert.Header"),
-                        aCDKException.toString(),
-                        aCDKException
-                );
+            if (this.cachedMoleculeDataModel != null) {
+                try {
+                    ClipboardContent tmpContent = new ClipboardContent();
+                    tmpContent.putImage(DepictionUtil.depictImageWithZoom(  //TODO: use new DepictionUtil method with fill to fit and Felix's image size values (after merge)
+                            this.cachedMoleculeDataModel.getAtomContainer(),
+                            1.0, 512.0, 350.0
+                    ));
+                    Clipboard.getSystemClipboard().setContent(tmpContent);
+                } catch (CDKException aCDKException) {
+                    //should not happen since an initial depiction is needed to make the context menu accessible to the user
+                    OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+                    GuiUtil.guiExceptionAlert(
+                            Message.get("Error.ExceptionAlert.Title"),
+                            Message.get("Error.ExceptionAlert.Header"),
+                            aCDKException.toString(),
+                            aCDKException
+                    );
+                }
             }
         });
         //copySmilesMenuItem listener
         tmpCopySmilesMenuItem.setOnAction((ActionEvent event) -> {
-            ClipboardContent tmpContent = new ClipboardContent();
-            tmpContent.putString(this.cachedMoleculeDataModel.getUniqueSmiles());
-            Clipboard.getSystemClipboard().setContent(tmpContent);
+            if (this.cachedMoleculeDataModel != null) {
+                ClipboardContent tmpContent = new ClipboardContent();
+                tmpContent.putString(this.cachedMoleculeDataModel.getUniqueSmiles());
+                Clipboard.getSystemClipboard().setContent(tmpContent);
+            }
         });
         //add view-independent MenuItems
         tmpContextMenu.getItems().addAll(
@@ -524,7 +551,9 @@ public class OverviewViewController {
             //showStructureMenuItem
             MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
             tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
-                this.showEnlargedStructureView(this.cachedMoleculeDataModel);
+                if (this.cachedMoleculeDataModel != null) {
+                    this.showEnlargedStructureView(this.cachedMoleculeDataModel);
+                }
             });
             //add view-dependent MenuItems
             tmpContextMenu.getItems().addAll(
@@ -568,7 +597,7 @@ public class OverviewViewController {
      * @param aOverviewViewPaginationNodeWidth Double value of the width of the pagination node calculated via the
      *                                         width of the mainGridPane cells holding it
      * @return Integer value of the maximum amount of structure image columns per page
-     * @throws IllegalArgumentException if the given parameter is < or = to zero
+     * @throws IllegalArgumentException if the given parameter is less than or equal to zero
      */
     private int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) throws IllegalArgumentException {
         if (aOverviewViewPaginationNodeWidth <= 0.0)
@@ -588,7 +617,7 @@ public class OverviewViewController {
      * @param aOverviewViewPaginationNodeHeight Double value of the height of the pagination node calculated via the
      *                                          height of the mainGridPane cells holding it
      * @return Integer value of the maximum amount of structure image rows per page
-     * @throws IllegalArgumentException if the given parameter is < or = to zero
+     * @throws IllegalArgumentException if the given parameter is less than or equal to zero
      */
     private int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) throws IllegalArgumentException {
         if (aOverviewViewPaginationNodeHeight <= 0.0)
@@ -607,8 +636,9 @@ public class OverviewViewController {
      * the options to copy the image or the SMILES string of the structure.
      *
      * @param aMoleculeDataModel MoleculeDataModel of the structure to be shown in the enlarged structure view
+     * @throws NullPointerException if the given parameter is null
      */
-    private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel) {
+    private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel) throws NullPointerException {
         //checks
         Objects.requireNonNull(aMoleculeDataModel, "aMoleculeDataModel (instance of MoleculeDataModel) is null");
         //initialization of the view
