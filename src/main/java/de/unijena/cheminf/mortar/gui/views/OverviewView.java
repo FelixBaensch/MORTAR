@@ -139,9 +139,9 @@ public class OverviewView extends AnchorPane {
         tmpRowCon1.setVgrow(Priority.ALWAYS);
         this.mainGridPane.getRowConstraints().add(tmpRowCon1);
         RowConstraints tmpRowCon2 = new RowConstraints();
-        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
-        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
-        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
+        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
+        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
+        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
         tmpRowCon2.setVgrow(Priority.ALWAYS);
         this.mainGridPane.getRowConstraints().add(tmpRowCon2);
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
@@ -167,7 +167,7 @@ public class OverviewView extends AnchorPane {
         upper and lower border: extend the image frame to grid line width; right and left border: extend the image frame
         to grid line width and add a spacing with a width dependent on the grid line width
          */
-        this.structureGridPane.setStyle(    //TODO: check, why there is 1px difference in horizontal alignment of Structure images and HBoxes (hopefully done before meeting)
+        this.structureGridPane.setStyle(
                 "-fx-background-color: LIGHTGREY; " +
                 "-fx-border-color: LIGHTGREY; " +
                 "-fx-border-width: " +
@@ -191,7 +191,7 @@ public class OverviewView extends AnchorPane {
          */
         this.bottomLeftHBox = new HBox();
         this.bottomLeftHBox.setPadding(new Insets(
-                GuiDefinitions.OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO
+                GuiDefinitions.OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO    //TODO: remove constant, if the button positioning stays like this (after "after merge" changes)
                         * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE
         ));

@@ -116,7 +116,7 @@ public final class GuiDefinitions {
      * Ratio of the top inset of the horizontal boxes placed in the bottom left and right corner of the overview view
      * to the GuiDefinitions constant GUI_INSETS_VALUE
      */
-    public static final double OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO = 1.2;
+    public static final double OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO = 1.0;
     /**
      * Width of columns and rows per page label of the overview view
      */

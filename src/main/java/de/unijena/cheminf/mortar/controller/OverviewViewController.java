@@ -137,8 +137,7 @@ public class OverviewViewController {
         Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
         if (aTabName.isBlank()) {
-            Exception tmpException = new IllegalArgumentException("aTabName (instance of String) is blank");
-            OverviewViewController.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
+            OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
         }
         //</editor-fold>
         this.mainStage = aMainStage;
@@ -277,17 +276,19 @@ public class OverviewViewController {
             //
             /*
             calculation of the structure images' height and width using height and width of the mainGridPane cells that
-            hold the pagination; the usage of the structureGridPane and pagination dimensions caused issues at resizing
-            of the window; correction of the caused height deviation by the pagination control panel height; the
-            further calculations generate the space between the images creating the grid lines
+            hold the pagination node (since the structureGridPane and pagination node size artificially inflate when
+            lowering the window size); correction of the caused height deviation by the pagination control panel height;
+            the further calculations generate the space between the images creating the grid lines; the addition of 0.5
+            is a trick to avoid the basic rounding off of the width and height values when transferring them to amounts
+            of pixels to prevent the misalignment of the view's components due to a loss in size by the images
              */
             double tmpImageHeight = ((tmpPaginationNodeHeight
                     - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT
                     - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage)
-                    - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
+                    - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + 0.5;
             double tmpImageWidth = ((tmpPaginationNodeWidth
                     - (2 * GuiDefinitions.GUI_INSETS_VALUE)) / aColumnsPerPage)
-                    - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH;
+                    - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + 0.5;
             //
             //check if the limits for the image dimensions are being exceeded
             if ((tmpImageHeight >= GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT)
