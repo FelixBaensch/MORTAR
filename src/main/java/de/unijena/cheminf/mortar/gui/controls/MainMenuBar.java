@@ -141,6 +141,10 @@ public class MainMenuBar extends MenuBar {
      * MenuItem to open the histogram
      */
     private MenuItem histogramViewerMenuItem;
+    /**
+     * MenuItem to open the OverviewView
+     */
+    private MenuItem overviewMenuItem;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -191,6 +195,7 @@ public class MainMenuBar extends MenuBar {
         //viewsMenu
         this.viewsMenu = new Menu(Message.get("MainView.menuBar.viewsMenu.text"));
         this.histogramViewerMenuItem = new MenuItem(Message.get("MainView.menuBar.viewsMenu.HistogramMenuItem.text"));
+        this.overviewMenuItem = new MenuItem(Message.get("MainView.menuBar.toolsMenu.overviewMenuItem.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -239,6 +244,9 @@ public class MainMenuBar extends MenuBar {
         this.getMenus().add(this.viewsMenu);
         this.viewsMenu.getItems().add((this.histogramViewerMenuItem));
         this.histogramViewerMenuItem.setDisable(true);
+        //overviewMenuItem
+        this.viewsMenu.getItems().add(this.overviewMenuItem);
+        this.overviewMenuItem.setDisable(true);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
 //        this.helpMenu.getItems().add(this.logFilesMenuItem);
@@ -441,6 +449,16 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getPipelineSettingsMenuItem() {
         return this.pipelineSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getOverviewMenuItem defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the OverviewView
+     *
+     * @return the menu item that should open the OverviewView
+     */
+    public MenuItem getOverviewMenuItem() {
+        return this.overviewMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getAboutViewMenuItem" defaultstate="collapsed">

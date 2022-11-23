@@ -317,6 +317,10 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openPipelineSettingsView());
+        this.mainView.getMainMenuBar().getOverviewMenuItem().addEventHandler( //TODO
+                EventType.ROOT,
+                anEvent -> this.openOverviewView()
+        );
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -467,6 +471,7 @@ public class MainViewController {
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+                this.mainView.getMainMenuBar().getOverviewMenuItem().setDisable(false);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
                 int tmpExceptionCount = 0;
@@ -780,6 +785,34 @@ public class MainViewController {
                 }
             }
         });
+    }
+    //
+
+    /**
+     * Opens OverviewView
+     */
+    private void openOverviewView() {
+        OverviewViewController tmpOverviewViewController;
+        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Molecules.toString()) {
+            tmpOverviewViewController = new OverviewViewController(
+                    this.primaryStage,
+                    ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
+                    getItemsListOfSelectedFragmenterByTabId(TabNames.Molecules)
+            );
+        } else if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Fragments.toString()) {
+            tmpOverviewViewController = new OverviewViewController(
+                    this.primaryStage,
+                    ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
+                    getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
+            );
+        } else {
+            GuiUtil.guiMessageAlert(        //TODO
+                    Alert.AlertType.INFORMATION,
+                    "Information",
+                    "No overview available for the currently selected tab.",
+                    null
+            );
+        }
     }
     //
 
