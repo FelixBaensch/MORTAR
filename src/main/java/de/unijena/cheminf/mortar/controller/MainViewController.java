@@ -309,15 +309,15 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.openGlobalSettingsView()
         );
-
+        this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openPipelineSettingsView()
+        );
         this.mainView.getMainMenuBar().getHistogramViewerMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openHistogramView()
-                );
-        this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
-                EventType.ROOT,
-                anEvent -> this.openPipelineSettingsView());
-        this.mainView.getMainMenuBar().getOverviewMenuItem().addEventHandler( //TODO
+        );
+        this.mainView.getMainMenuBar().getOverviewViewMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openOverviewView()
         );
@@ -329,11 +329,11 @@ public class MainViewController {
                 keyEvent.consume();
                 return;
             }
-            if(GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.END){
+            if (GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.END) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getPageCount() - 1);
                 keyEvent.consume();
             }
-            else if(GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.HOME){
+            else if (GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.HOME) {
                 tmpGrid.getPagination().setCurrentPageIndex(0);
                 keyEvent.consume();
             }
@@ -348,13 +348,18 @@ public class MainViewController {
         });
         this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             Platform.runLater(() -> {
-                if(newValue == null){
+                if (newValue == null) {
                     return;
                 }
-                if (newValue.getId() == TabNames.Molecules.toString()) {
+                if (newValue.getId().equals(TabNames.Molecules.toString())) {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 } else {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                }
+                if (newValue.getId().equals(TabNames.Itemization.toString())) {
+                    this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
+                } else {
+                    this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 }
             });
         });
@@ -471,8 +476,8 @@ public class MainViewController {
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
-                this.mainView.getMainMenuBar().getOverviewMenuItem().setDisable(false);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
                 int tmpExceptionCount = 0;
                 for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
@@ -805,13 +810,10 @@ public class MainViewController {
                     ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
                     getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
             );
-        } else {
-            GuiUtil.guiMessageAlert(        //TODO
-                    Alert.AlertType.INFORMATION,
-                    "Information",
-                    "No overview available for the currently selected tab.",
-                    null
-            );
+        } else if (false) {
+            //TODO: Parent-Molecules of the Fragments-Tab (showing all fragments of one molecule in the overview)
+        } else if (false) {
+            //TODO: Items-Tab (showing all fragments of one molecule in an overview)
         }
     }
     //

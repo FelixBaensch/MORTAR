@@ -144,7 +144,7 @@ public class MainMenuBar extends MenuBar {
     /**
      * MenuItem to open the OverviewView
      */
-    private MenuItem overviewMenuItem;
+    private MenuItem overviewViewMenuItem;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -195,7 +195,7 @@ public class MainMenuBar extends MenuBar {
         //viewsMenu
         this.viewsMenu = new Menu(Message.get("MainView.menuBar.viewsMenu.text"));
         this.histogramViewerMenuItem = new MenuItem(Message.get("MainView.menuBar.viewsMenu.HistogramMenuItem.text"));
-        this.overviewMenuItem = new MenuItem(Message.get("MainView.menuBar.toolsMenu.overviewMenuItem.text"));
+        this.overviewViewMenuItem = new MenuItem(Message.get("MainView.menuBar.viewsMenu.overviewViewMenuItem.text"));
         //</editor-fold>
         this.addComponentsToMenuBar();
     }
@@ -245,8 +245,8 @@ public class MainMenuBar extends MenuBar {
         this.viewsMenu.getItems().add((this.histogramViewerMenuItem));
         this.histogramViewerMenuItem.setDisable(true);
         //overviewMenuItem
-        this.viewsMenu.getItems().add(this.overviewMenuItem);
-        this.overviewMenuItem.setDisable(true);
+        this.viewsMenu.getItems().add(this.overviewViewMenuItem);
+        this.overviewViewMenuItem.setDisable(true);
         //</editor-fold>
         //<editor-fold desc="helpMenu" defaultstate="collapsed">
 //        this.helpMenu.getItems().add(this.logFilesMenuItem);
@@ -457,8 +457,8 @@ public class MainMenuBar extends MenuBar {
      *
      * @return the menu item that should open the OverviewView
      */
-    public MenuItem getOverviewMenuItem() {
-        return this.overviewMenuItem;
+    public MenuItem getOverviewViewMenuItem() {
+        return this.overviewViewMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getAboutViewMenuItem" defaultstate="collapsed">
