@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.OverviewView;
@@ -44,7 +45,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -177,6 +177,7 @@ public class OverviewViewController {
             tmpPageCount++;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory((aPageIndex) -> this.createOverviewViewPage(aPageIndex,
                 this.rowsPerPage, this.columnsPerPage));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
@@ -309,10 +310,12 @@ public class OverviewViewController {
                             if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
                                 throw new NullPointerException("A MoleculeDataModel instance has been null.");
                             }
-                            ImageView tmpImageView = new ImageView(DepictionUtil.depictImageWithZoom(
-                                    tmpMoleculeDataModel.getAtomContainer(),
-                                    1.0, tmpImageWidth, tmpImageHeight
-                            )); //TODO: use new DepictionUtil method with fill to fit (after merge)
+                            ImageView tmpImageView = new ImageView(
+                                    DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                            tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                            tmpImageHeight, true, true
+                                    )
+                            );
                             //changing the shadow effects at mouse entering an image
                             tmpImageView.setOnMouseEntered((mouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
@@ -517,9 +520,11 @@ public class OverviewViewController {
             if (this.cachedMoleculeDataModel != null) {
                 try {
                     ClipboardContent tmpContent = new ClipboardContent();
-                    tmpContent.putImage(DepictionUtil.depictImageWithZoom(  //TODO: use new DepictionUtil method with fill to fit and Felix's image size values (after merge)
-                            this.cachedMoleculeDataModel.getAtomContainer(),
-                            1.0, 512.0, 350.0
+                    tmpContent.putImage(DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                            this.cachedMoleculeDataModel.getAtomContainer(), 1.0,
+                            GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
+                            GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
+                            true, true
                     ));
                     Clipboard.getSystemClipboard().setContent(tmpContent);
                 } catch (CDKException aCDKException) {
@@ -644,8 +649,14 @@ public class OverviewViewController {
         Objects.requireNonNull(aMoleculeDataModel, "aMoleculeDataModel (instance of MoleculeDataModel) is null");
         //initialization of the view
         Stage tmpEnlargedStructureViewStage = new Stage();
-        AnchorPane tmpEnlargedStructureViewAnchorPane = new AnchorPane();
-        Scene tmpScene = new Scene(tmpEnlargedStructureViewAnchorPane,
+        StackPane tmpEnlargedStructureViewStackPane = new StackPane();
+        tmpEnlargedStructureViewStackPane.setStyle(
+                "-fx-background-color: WHITE; " +
+                "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " +
+                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
+                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
+        );
+        Scene tmpScene = new Scene(tmpEnlargedStructureViewStackPane,
                 GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH,
                 GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT);
         tmpEnlargedStructureViewStage.setScene(tmpScene);
@@ -666,24 +677,30 @@ public class OverviewViewController {
         //
         try {
             //depiction of the structure
-            ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(),
-                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH,
-                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT));
-            tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpStructureImage);
+            ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                    aMoleculeDataModel.getAtomContainer(),1.0,
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH * 0.9,
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT * 0.9,
+                    true, true
+            ));
+            tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);
             tmpStructureImage.setOnContextMenuRequested((event) -> {
                 tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY());
             });
             //listener for resize events to fit the structure depiction to the view size
             ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) -> {
                 Platform.runLater(() -> {
-                    tmpEnlargedStructureViewAnchorPane.getChildren().clear();
+                    tmpEnlargedStructureViewStackPane.getChildren().clear();
                     try {
-                        ImageView tmpUpdatedStructureImage = new ImageView(DepictionUtil.depictImage(
-                                aMoleculeDataModel.getAtomContainer(),
-                                tmpEnlargedStructureViewAnchorPane.getWidth(),
-                                tmpEnlargedStructureViewAnchorPane.getHeight()
-                        )); //TODO: use new DepictionUtil method with fill to fit (after merge)
-                        tmpEnlargedStructureViewAnchorPane.getChildren().add(tmpUpdatedStructureImage);
+                        ImageView tmpUpdatedStructureImage = new ImageView(
+                                DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                        aMoleculeDataModel.getAtomContainer(), 1.0,
+                                        tmpEnlargedStructureViewStackPane.getWidth() * 0.9,
+                                        tmpEnlargedStructureViewStackPane.getHeight() * 0.9,
+                                        true, true
+                                )
+                        );
+                        tmpEnlargedStructureViewStackPane.getChildren().add(tmpUpdatedStructureImage);
                         tmpUpdatedStructureImage.setOnContextMenuRequested((event) -> {
                             tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY());
                         });

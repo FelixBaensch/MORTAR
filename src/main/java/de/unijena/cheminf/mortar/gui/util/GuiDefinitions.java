@@ -101,6 +101,14 @@ public final class GuiDefinitions {
      */
     public static final double GUI_TOOLTIP_MAX_WIDTH = 500.0;
     /**
+     * Width of an image copied to clipboard
+     */
+    public static final double GUI_COPY_IMAGE_IMAGE_WIDTH = 1500.0;
+    /**
+     * Height of an image copied to clipboard
+     */
+    public static final double GUI_COPY_IMAGE_IMAGE_HEIGHT = 1000.0;
+    /**
      * Width of grid lines of the structure grid pane in overview view
      */
     public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH = 8.0;
@@ -138,11 +146,11 @@ public final class GuiDefinitions {
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
     /**
-     * Initial width of the image to be displayed in the enlarged structure view.
+     * Initial width of the image to be displayed in the enlarged structure view
      */
     public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH = 500.0;
     /**
-     * Initial height of the image to be displayed in the enlarged structure view.
+     * Initial height of the image to be displayed in the enlarged structure view
      */
     public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT = 400.0;
     /**

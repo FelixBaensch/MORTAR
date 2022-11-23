@@ -404,7 +404,7 @@ public class GuiUtil {
                         else {
                             tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
                         }
-                        tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1,1500,1000,true, true);
+                        tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,true, true);
                         tmpClipboardContent.putImage(tmpImage);
                     } catch (CDKException e) {
                         tmpClipboardContent.putImage(((ImageView) tmpCell).getImage());

@@ -312,8 +312,8 @@ public class OverviewView extends AnchorPane {
             throw new IllegalArgumentException("aRowsPerPage (Integer value) was < or = to 0.");
         //</editor-fold>
         if (this.structureGridPane == null) {
-            this.structureGridPane = new GridPane();
             //should never happen, but if so, the grid pane will lack its styling
+            this.structureGridPane = new GridPane();
         } else {
             this.structureGridPane.getColumnConstraints().clear();
             this.structureGridPane.getRowConstraints().clear();
