@@ -244,6 +244,18 @@ public class OverviewViewController {
                 }
             }
         });
+        //
+        //change listener for resetting not applied text field entries when switching pagination page
+        this.overviewView.getPagination().currentPageIndexProperty().addListener((observable, oldValue, newValue) -> {
+            if (!this.overviewView.getColumnsPerPageTextField().getText()
+                    .equals(Integer.toString(this.columnsPerPage))) {
+                this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPage));
+            }
+            if (!this.overviewView.getRowsPerPageTextField().getText()
+                    .equals(Integer.toString(this.rowsPerPage))) {
+                this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPage));
+            }
+        });
     }
     //
     /**
@@ -434,20 +446,18 @@ public class OverviewViewController {
             tmpNewColumnsPerPageValue = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
             tmpNewRowsPerPageValue = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
         }
-        //validation of new values  TODO: remove (after merge) (validation not necessary when applying new IntegerFilter)
-        if (tmpNewColumnsPerPageValue <= 0 || tmpNewRowsPerPageValue <= 0) {    //TODO: even with new filter: make sure, zero or an empty/blank TextField is not possible
+        /*
+        checking whether the entries are valid; entries get set to zero if a user presses enter on an empty text field;
+        if so, the user gets informed via a message alert and the empty text field gets reset to its former value via
+        the focusedProperty change listener due to it loosing focus for a sec when the key is pressed
+         */
+        if (tmpNewColumnsPerPageValue <= 0 || tmpNewRowsPerPageValue <= 0) {
             GuiUtil.guiMessageAlert(
                     Alert.AlertType.ERROR,
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.title"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.header"),
                     Message.get("OverviewView.applyChangeOfGridConfiguration.messageAlert.text")
             );
-            if (tmpNewColumnsPerPageValue <= 0) {
-                this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPage));
-            }
-            if (tmpNewRowsPerPageValue <= 0) {
-                this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPage));
-            }
             return;
         }
         //
