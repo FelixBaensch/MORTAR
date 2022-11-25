@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.gui.controls;
 
 import de.unijena.cheminf.mortar.controller.TabNames;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import javafx.geometry.HPos;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableView;
@@ -99,15 +100,22 @@ public class GridTabForTableView extends Tab {
         tmpColCon2.setFillWidth(true);
         tmpColCon2.setHgrow(Priority.ALWAYS);
         gridPane.getColumnConstraints().add(tmpColCon2);
+        ColumnConstraints tmpColCon3 = new ColumnConstraints();
+        tmpColCon3.setHgrow(Priority.ALWAYS);
+        tmpColCon3.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setMinWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setPrefWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setHalignment(HPos.RIGHT);
+        gridPane.getColumnConstraints().add(tmpColCon3);
     }
     //
     /**
      * Adds given Node (aNode) to specified column (aColIndex) and row (aRowIndex) to GridPane
-     * Necessary to add the pagination via  MainViewController
+     * Necessary to add nodes via  MainViewController
      *
      * @param aNode Node to add
-     * @param aColIndex index in which col the node should be added, only be 1 or 2
-     * @param aRowIndex index in which row the node should be added, only be 1 or 2
+     * @param aColIndex index in which col the node should be added, only be 0, 1 or 2
+     * @param aRowIndex index in which row the node should be added, only be 0 or 1
      * @param aColSpan index how many cols should this node span
      * @param aRowSpan index how many rows should this node span
      */
@@ -116,18 +124,14 @@ public class GridTabForTableView extends Tab {
     }
     //
     /**
-     * Adds given Pagination to specified column (aColIndex) and row (aRowIndex) to GridPane
-     * Necessary to add the pagination via  MainViewController
+     * Adds given Pagination to GridPane
+     * Necessary to add the pagination via MainViewController
      *
      * @param aPagination Pagination to add
-     * @param aColIndex index in which col the node should be added, only be 1 or 2
-     * @param aRowIndex index in which row the node should be added, only be 1 or 2
-     * @param aColSpan index how many cols should this node span
-     * @param aRowSpan index how many rows should this node span
      */
-    public void addPaginationToGridPane(Pagination aPagination, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan) {
+    public void addPaginationToGridPane(Pagination aPagination) {
         this.pagination = aPagination;
-        this.addNodeToGridPane(this.pagination, 0, 0, 2, 2);
+        this.addNodeToGridPane(this.pagination, 0, 0, 3, 2);
     }
     //
     /**

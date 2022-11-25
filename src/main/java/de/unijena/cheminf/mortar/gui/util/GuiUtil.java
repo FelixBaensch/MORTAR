@@ -30,6 +30,7 @@ import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Control;
 import javafx.scene.control.Hyperlink;
@@ -478,6 +479,21 @@ public class GuiUtil {
             tmpAmount = Math.max(tmpAmount, tmpNrOfFragmentsOfCurrentMolecule);
         }
         return tmpAmount;
+    }
+    //
+    /**
+     * Returns a button with the GUI's standard width and height for buttons and the given text string set as its label.
+     *
+     * @param aText A text string for its label
+     * @return A Button of the GUI's standard size
+     */
+    public static Button getButtonOfStandardSize(String aText) {
+        Button tmpButton = new Button(aText);
+        tmpButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        tmpButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        return tmpButton;
     }
     //</editor-fold>
 }

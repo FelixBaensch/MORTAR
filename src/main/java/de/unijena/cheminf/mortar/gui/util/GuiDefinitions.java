@@ -97,6 +97,10 @@ public final class GuiDefinitions {
      */
     public static final double GUI_PAGINATION_CONTROL_PANEL_HEIGHT = 45.0;
     /**
+     * Width of the third column of gid panes used to align nodes
+     */
+    public static final double GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH = 200.0;
+    /**
      * Max width of tooltip
      */
     public static final double GUI_TOOLTIP_MAX_WIDTH = 500.0;
@@ -141,13 +145,17 @@ public final class GuiDefinitions {
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
     /**
-     * Initial width of the image to be displayed in the enlarged structure view
+     * Initial width of the enlarged structure view's scene
      */
-    public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH = 500.0;
+    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH = 500.0;
     /**
-     * Initial height of the image to be displayed in the enlarged structure view
+     * Initial height of the enlarged structure view's scene
      */
-    public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT = 400.0;
+    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT = 400.0;
+    /**
+     * Ratio of width and height of the enlarged structure view's structure image to the one of its parent stack pane
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO = 0.9;
     /**
      * KeyCodeCombination for Control + C
      */

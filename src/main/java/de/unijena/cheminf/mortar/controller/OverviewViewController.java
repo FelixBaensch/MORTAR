@@ -300,7 +300,8 @@ public class OverviewViewController {
                     - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH) / aRowsPerPage)
                     - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + 0.5;
             double tmpImageWidth = ((tmpPaginationNodeWidth
-                    - (2 * GuiDefinitions.GUI_INSETS_VALUE)) / aColumnsPerPage)
+                    - (2 * GuiDefinitions.GUI_INSETS_VALUE
+                            - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH)) / aColumnsPerPage)
                     - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + 0.5;
             //
             //check if the limits for the image dimensions are being exceeded
@@ -358,7 +359,7 @@ public class OverviewViewController {
                                     //cache the MoleculeDataModel corresponding to the content of the event's source
                                     //equivalent to the structure's grid pane cell being selected
                                     this.cachedMoleculeDataModel = tmpMoleculeDataModel;
-                                    this.showEnlargedStructureView(tmpMoleculeDataModel);
+                                    this.showEnlargedStructureView(tmpMoleculeDataModel, this.overviewViewStage);
                                 }
                             });
                             //setting context menu to the image view
@@ -568,7 +569,7 @@ public class OverviewViewController {
             MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
             tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
                 if (this.cachedMoleculeDataModel != null) {
-                    this.showEnlargedStructureView(this.cachedMoleculeDataModel);
+                    this.showEnlargedStructureView(this.cachedMoleculeDataModel, this.overviewViewStage);
                 }
             });
             //add view-dependent MenuItems
@@ -620,7 +621,8 @@ public class OverviewViewController {
             throw new IllegalArgumentException("aOverviewViewPaginationNodeWidth (Double value) is < or = to zero.");
         //
         int tmpMaxColumnsPerPage = (int) ((aOverviewViewPaginationNodeWidth
-                - (2 * GuiDefinitions.GUI_INSETS_VALUE))
+                - (2 * GuiDefinitions.GUI_INSETS_VALUE
+                        - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH))
                 / (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH
                         + GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH));
         return tmpMaxColumnsPerPage;
@@ -652,11 +654,14 @@ public class OverviewViewController {
      * the options to copy the image or the SMILES string of the structure.
      *
      * @param aMoleculeDataModel MoleculeDataModel of the structure to be shown in the enlarged structure view
-     * @throws NullPointerException if the given parameter is null
+     * @param anOwnerStage Stage to own the enlarged structure view's stage
+     * @throws NullPointerException if one of the given parameters is null
      */
-    private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel) throws NullPointerException {
+    private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel, Stage anOwnerStage)
+            throws NullPointerException {
         //checks
         Objects.requireNonNull(aMoleculeDataModel, "aMoleculeDataModel (instance of MoleculeDataModel) is null");
+        Objects.requireNonNull(anOwnerStage, "anOwnerStage (instance of Stage) is null");
         //initialization of the view
         Stage tmpEnlargedStructureViewStage = new Stage();
         StackPane tmpEnlargedStructureViewStackPane = new StackPane();
@@ -667,11 +672,11 @@ public class OverviewViewController {
                         GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
         );
         Scene tmpScene = new Scene(tmpEnlargedStructureViewStackPane,
-                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH,
-                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT);
+                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH,
+                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT);
         tmpEnlargedStructureViewStage.setScene(tmpScene);
         tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
-        tmpEnlargedStructureViewStage.initOwner(this.overviewViewStage);
+        tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
         tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
         InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
                 "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
@@ -689,8 +694,10 @@ public class OverviewViewController {
             //depiction of the structure
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                     aMoleculeDataModel.getAtomContainer(),1.0,
-                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH * 0.9,
-                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT * 0.9,
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH
+                            * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT
+                            * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
                     true, true
             ));
             tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);
@@ -705,8 +712,10 @@ public class OverviewViewController {
                         ImageView tmpUpdatedStructureImage = new ImageView(
                                 DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                         aMoleculeDataModel.getAtomContainer(), 1.0,
-                                        tmpEnlargedStructureViewStackPane.getWidth() * 0.9,
-                                        tmpEnlargedStructureViewStackPane.getHeight() * 0.9,
+                                        tmpEnlargedStructureViewStackPane.getWidth()
+                                                * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
+                                        tmpEnlargedStructureViewStackPane.getHeight()
+                                                * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
                                         true, true
                                 )
                         );
