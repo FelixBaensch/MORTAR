@@ -139,9 +139,9 @@ public class OverviewView extends AnchorPane {
         tmpRowCon1.setVgrow(Priority.ALWAYS);
         this.mainGridPane.getRowConstraints().add(tmpRowCon1);
         RowConstraints tmpRowCon2 = new RowConstraints();
-        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
-        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
-        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
+        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
+        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
+        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
         tmpRowCon2.setVgrow(Priority.ALWAYS);
         this.mainGridPane.getRowConstraints().add(tmpRowCon2);
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
@@ -155,10 +155,11 @@ public class OverviewView extends AnchorPane {
         tmpColCon2.setHgrow(Priority.ALWAYS);
         this.mainGridPane.getColumnConstraints().add(tmpColCon2);
         ColumnConstraints tmpColCon3 = new ColumnConstraints();
-        tmpColCon1.setHgrow(Priority.ALWAYS);
-        tmpColCon1.setMaxWidth(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpColCon1.setMinWidth(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpColCon1.setPrefWidth(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpColCon3.setHgrow(Priority.ALWAYS);
+        tmpColCon3.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setMinWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setPrefWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setHalignment(HPos.RIGHT);
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
         //
         //initialization, styling and initial configuration of the structureGridPane
@@ -193,6 +194,7 @@ public class OverviewView extends AnchorPane {
         this.bottomLeftHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.bottomLeftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        this.bottomLeftHBox.setAlignment(Pos.CENTER_LEFT);
         //
         //labels and text fields for columns and rows per page
         Label tmpColumnsPerPageLabel = new Label(Message.get("OverviewView.columnsPerPageLabel.text"));
@@ -259,6 +261,10 @@ public class OverviewView extends AnchorPane {
         this.bottomRightHBox = new HBox();
         this.bottomRightHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.bottomRightHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        this.bottomRightHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        this.bottomRightHBox.setAlignment(Pos.CENTER_RIGHT);
+        //
         this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -332,6 +338,7 @@ public class OverviewView extends AnchorPane {
     /**
      * Adds the pagination node to the main grid pane of the overview view at a fixed position and initializes the
      * pagination class variable.
+     * Necessary to add pagination to main grid pane via OverviewViewController.
      *
      * @param aPagination Pagination to be added to the overview view
      * @throws NullPointerException if the given pagination instance is null
@@ -344,6 +351,7 @@ public class OverviewView extends AnchorPane {
     //
     /**
      * Adds the overview view's bottomLeftHBox to the main grid pane.
+     * Necessary to add bottomLeftHBox to main grid pane via OverviewViewController.
      */
     public void addBottomLeftHBoxToMainGridPane() {
         this.addNodeToMainGridPane(this.bottomLeftHBox, 0, 1, 1, 1);    //magic numbers
@@ -351,6 +359,7 @@ public class OverviewView extends AnchorPane {
     //
     /**
      * Adds the overview view's bottomRightHBox to the main grid pane.
+     * Necessary to add bottomRightHBox to main grid pane via OverviewViewController.
      */
     public void addBottomRightHBoxToMainGridPane() {
         this.addNodeToMainGridPane(this.bottomRightHBox, 2, 1, 1, 1);   //magic numbers
