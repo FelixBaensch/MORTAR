@@ -30,6 +30,7 @@ import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -45,6 +46,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -95,12 +97,6 @@ public class OverviewViewController {
      */
     private List<MoleculeDataModel> moleculeDataModelList;
     /**
-     * Slot for the caching of a MoleculeDataModel in response to a left or right mouse click on a structure's
-     * ImageView. (Kind of the equivalent to a cell being selected in the application's TableViews; workaround for
-     * cells not being selectable in a GridPane.)
-     */
-    private MoleculeDataModel cachedMoleculeDataModel;
-    /**
      * Integer value that holds the number of rows of structure images to be displayed per page.
      */
     private int rowsPerPage;
@@ -109,11 +105,26 @@ public class OverviewViewController {
      */
     private int columnsPerPage;
     /**
+     * Integer value that holds the MoleculeDataModelList-index of the structure that has been the target of the latest
+     * left or right mouse click on an image view in the overview view. (Workaround for cells not being selectable in a
+     * GridPane.)
+     */
+    private int cachedIndexOfStructureInMoleculeDataModelList;
+    /**
      * Boolean value that defines, whether the structure images should be generated and shown when a new overview view
      * page gets created. This variable helps to avoid issues with the creation of the initial pagination page and
      * needs to be set to false at start.
      */
     private boolean createStructureImages;
+    /**
+     * Boolean value whether the option to show a specific structure in the main view via double-click or context menu
+     * should be available.
+     */
+    private boolean withShowInMainViewOption;
+    /**
+     * Boolean value whether an event to return to a specific structure in the MainView occurred.
+     */
+    private boolean returnToStructureEventOccurred;
     /**
      * Context menu for the structure images.
      */
@@ -122,24 +133,41 @@ public class OverviewViewController {
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor. Initializes the class variables and opens the overview view.
+     * Constructor. Initializes the class variables and opens the overview view.    TODO
      * TODO: persist grid configuration (and possible other settings)
      *
      * @param aMainStage Stage that is to be the owner of the overview view's stage
-     * @param aTabName String containing the name of the tab that's content is to be shown in the overview view
+     * @param aDataSource TODO
+     * @param aTabName String containing the name of the tab that's content is to be shown in the overview view TODO
      * @param aMoleculeDataModelList List of MoleculeDataModel instances
-     * @throws NullPointerException if one of the parameters is null
+     * @throws NullPointerException if one of the parameters is null    TODO
      */
-    public OverviewViewController(Stage aMainStage, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList)
+    public OverviewViewController(Stage aMainStage, DataSources aDataSource, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList)
             throws NullPointerException {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aMainStage, "aMainStage (instance of Stage) is null");
-        Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
+        Objects.requireNonNull(aDataSource, "aDataSource (enum value of DataSources) is null");
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
-        if (aTabName.isBlank()) {
-            OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
-        }
         //</editor-fold>
+        switch (aDataSource) {
+            case FRAGMENTS_TAB_PARENT_MOLECULES -> {
+                this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
+                        " - " + Message.get("OverviewView.nameOfView");
+                this.withShowInMainViewOption = false;
+            }
+            case ITEMS_TAB -> {
+                this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
+                        " - " + Message.get("OverviewView.nameOfView");
+                this.withShowInMainViewOption = false;
+            }
+            default -> {
+                Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");  //TODO
+                if (aTabName.isBlank()) {
+                    OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank"); //TODO
+                }
+                this.withShowInMainViewOption = true;
+            }
+        }
         this.mainStage = aMainStage;
         this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
         this.moleculeDataModelList = aMoleculeDataModelList;
@@ -147,6 +175,9 @@ public class OverviewViewController {
         this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
         //creating an empty structureGridPane at first by setting createStructureImages to false
         this.createStructureImages = false;
+        //initialization with -1 as marker whether the value has been changed
+        this.cachedIndexOfStructureInMoleculeDataModelList = -1;
+        this.returnToStructureEventOccurred = false;
         this.initializeAndShowOverviewView();
     }
     //</editor-fold>
@@ -323,14 +354,14 @@ public class OverviewViewController {
                             if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
                                 throw new NullPointerException("A MoleculeDataModel instance has been null.");
                             }
-                            ImageView tmpImageView = new ImageView(
+                            Node tmpImageView = new ImageView(
                                     DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                             tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
                                             tmpImageHeight, true, true
                                     )
                             );
                             //changing the shadow effects at mouse entering an image
-                            tmpImageView.setOnMouseEntered((mouseEvent) -> {
+                            tmpImageView.setOnMouseEntered((aMouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
                                     tmpImageView.setStyle("-fx-effect: null");
                                 } else {
@@ -341,7 +372,7 @@ public class OverviewViewController {
                                 }
                             });
                             //resetting the shadow effects at mouse leaving the image
-                            tmpImageView.setOnMouseExited((mouseEvent) -> {
+                            tmpImageView.setOnMouseExited((aMouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
                                     tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, " +
                                             "rgba(100, 100, 100, 0.6), " +
@@ -356,17 +387,19 @@ public class OverviewViewController {
                             //opening the enlarged structure view on left mouse click
                             tmpImageView.setOnMouseClicked((aMouseEvent) -> {
                                 if (MouseButton.PRIMARY.equals(aMouseEvent.getButton())) {
-                                    //cache the MoleculeDataModel corresponding to the content of the event's source
-                                    //equivalent to the structure's grid pane cell being selected
-                                    this.cachedMoleculeDataModel = tmpMoleculeDataModel;
+                                    //caching the index of the MoleculeDataModel that corresponds to the content of the
+                                    //event's source; equivalent to the structure's grid pane cell being selected
+                                    this.cachedIndexOfStructureInMoleculeDataModelList
+                                            = this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent);
                                     this.showEnlargedStructureView(tmpMoleculeDataModel, this.overviewViewStage);
                                 }
                             });
                             //setting context menu to the image view
                             tmpImageView.setOnContextMenuRequested((aContextMenuRequest) -> {
-                                //cache the MoleculeDataModel corresponding to the content of the event's source
-                                //equivalent to the structure's grid pane cell being selected
-                                this.cachedMoleculeDataModel = tmpMoleculeDataModel;
+                                //caching the index of the MoleculeDataModel that corresponds to the content of the
+                                //event's source; equivalent to the structure's grid pane cell being selected
+                                this.cachedIndexOfStructureInMoleculeDataModelList
+                                        = this.getIndexOfStructureInMoleculeDataModelList(aContextMenuRequest);
                                 this.structureContextMenu.show(tmpImageView, aContextMenuRequest.getScreenX(),
                                         aContextMenuRequest.getScreenY());
                             });
@@ -384,6 +417,7 @@ public class OverviewViewController {
                             Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
                             tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
                             tmpContentNode = new StackPane(tmpErrorLabel);
+                            tmpContentNode.disableProperty().set(true);
                         } catch (IndexOutOfBoundsException anIndexOutOfBoundsException) {
                             //should not happen
                             OverviewViewController.LOGGER.log(Level.SEVERE, anIndexOutOfBoundsException.toString(),
@@ -527,12 +561,13 @@ public class OverviewViewController {
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
         //adding Listeners to MenuItems
         //copyImageMenuItem listener
-        tmpCopyImageMenuItem.setOnAction((ActionEvent event) -> {
-            if (this.cachedMoleculeDataModel != null) {
+        tmpCopyImageMenuItem.setOnAction((ActionEvent anActionEvent) -> {
+            if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
                 try {
                     ClipboardContent tmpContent = new ClipboardContent();
                     tmpContent.putImage(DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
-                            this.cachedMoleculeDataModel.getAtomContainer(), 1.0,
+                            this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
+                                    .getAtomContainer(), 1.0,
                             GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
                             GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
                             true, true
@@ -551,10 +586,16 @@ public class OverviewViewController {
             }
         });
         //copySmilesMenuItem listener
-        tmpCopySmilesMenuItem.setOnAction((ActionEvent event) -> {
-            if (this.cachedMoleculeDataModel != null) {
+        tmpCopySmilesMenuItem.setOnAction((ActionEvent anActionEvent) -> {
+            if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
+                String tmpSmilesString;
+                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
+                    tmpSmilesString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getUniqueSmiles();
+                } else {
+                    tmpSmilesString = "";
+                }
                 ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putString(this.cachedMoleculeDataModel.getUniqueSmiles());
+                tmpContent.putString(tmpSmilesString);
                 Clipboard.getSystemClipboard().setContent(tmpContent);
             }
         });
@@ -565,20 +606,48 @@ public class OverviewViewController {
         );
         //add MenuItems that are only needed for overview view items
         if (!aForEnlargedStructureView) {
-            //showStructureMenuItem
-            MenuItem tmpShowStructureMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showStructureMenuItem"));
-            tmpShowStructureMenuItem.setOnAction((ActionEvent event) -> {
-                if (this.cachedMoleculeDataModel != null) {
-                    this.showEnlargedStructureView(this.cachedMoleculeDataModel, this.overviewViewStage);
+            //enlargedStructureViewMenuItem
+            MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
+            tmpEnlargedStructureViewMenuItem.setOnAction((ActionEvent anActionEvent) -> {
+                if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
+                    this.showEnlargedStructureView(
+                            this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList),
+                            this.overviewViewStage
+                    );
                 }
             });
+            //showInMainView
+            MenuItem tmpShowInMainViewMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showInMainViewMenuItem"));
+            if (this.withShowInMainViewOption) {
+                tmpShowInMainViewMenuItem.setOnAction((ActionEvent anActionEvent) -> {
+                    //the MoleculeDataModelList-index of the structure has already been cached
+                    this.overviewViewStage.close();
+                });
+            } else {
+                tmpShowInMainViewMenuItem.setDisable(true);
+            }
             //add view-dependent MenuItems
             tmpContextMenu.getItems().addAll(
                     new SeparatorMenuItem(),
-                    tmpShowStructureMenuItem
+                    tmpEnlargedStructureViewMenuItem,
+                    tmpShowInMainViewMenuItem
             );
         }
         return tmpContextMenu;
+    }
+    //
+    /**
+     * Gets the MoleculeDataModelList-index of the structure that's image view is the source of the given event.
+     *
+     * @param anEvent Event with the image view of a structure as source
+     * @return Index of structure in the MoleculeDataModelList
+     */
+    private int getIndexOfStructureInMoleculeDataModelList(Event anEvent) {
+        int tmpColIndex = GridPane.getColumnIndex(((ImageView) anEvent.getTarget()));
+        int tmpRowIndex = GridPane.getRowIndex(((ImageView) anEvent.getTarget()));
+        int tmpIndexOfStructureOnPage = tmpRowIndex * this.columnsPerPage + tmpColIndex;
+        return this.overviewView.getPagination().getCurrentPageIndex() * this.columnsPerPage * this.rowsPerPage
+                + tmpIndexOfStructureOnPage;
     }
     //
     /**
@@ -751,5 +820,44 @@ public class OverviewViewController {
         }
     }
     //</editor-fold>
-    
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns the index of the structure in the MoleculeDataModelList that has been the target of the latest left- or
+     * right-click on an image view in the overview view if an event to return to a specific structure in the main view
+     * occurred; else -1 is returned.
+     * @return Integer value of the cached index of structure or -1
+     */
+    public int getCachedIndexOfStructureInMoleculeDataModelList() {
+        if (!this.returnToStructureEventOccurred) {
+            return -1;
+        }
+        return this.cachedIndexOfStructureInMoleculeDataModelList;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="enum" defaultstate="collapsed">
+    /**
+     * Enum for different data sources data to be displayed in the overview view.
+     */
+    public enum DataSources {
+        /**
+         * Enum value for the data source molecules tab.
+         */
+        MOLECULES_TAB,
+        /**
+         * Enum value for the data source fragments tab.
+         */
+        FRAGMENTS_TAB,
+        /**
+         * Enum value for the data source fragments tab parent molecules.
+         */
+        FRAGMENTS_TAB_PARENT_MOLECULES,
+        /**
+         * Enum value for the data source items tab.
+         */
+        ITEMS_TAB
+    }
+    //</editor-fold>
+
 }
