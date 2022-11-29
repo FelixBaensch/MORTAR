@@ -31,6 +31,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -98,6 +99,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      * MenuItem of ContextMenu to copy selected cell to clipboard
      */
     private MenuItem copyMenuItem;
+    /**
+     * MenuItem of ContextMenu to open an overview view with the parent molecules of the row of the selected cell
+     */
+    private MenuItem overviewViewMenuItem;
     //</editor-fold>
     //
     /**
@@ -249,6 +254,11 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
         this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
         this.contextMenu.getItems().add(this.copyMenuItem);
+        //-separatorMenuItem
+        this.contextMenu.getItems().add(new SeparatorMenuItem());
+        //-overviewViewMenuItem
+        this.overviewViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.fragmentsTab.overviewViewMenuItem"));
+        this.contextMenu.getItems().add(this.overviewViewMenuItem);
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
@@ -347,6 +357,15 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      */
     public MenuItem getCopyMenuItem(){
         return this.copyMenuItem;
+    }
+    //
+    /**
+     * Returns the MenuItem to open the parent molecules overview view
+     *
+     * @return MenuItem
+     */
+    public MenuItem getOverviewViewMenuItem() {
+        return overviewViewMenuItem;
     }
     //
     /**

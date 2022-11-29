@@ -133,14 +133,15 @@ public class OverviewViewController {
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor. Initializes the class variables and opens the overview view.    TODO
+     * Constructor. Initializes the class variables and opens the overview view.
      * TODO: persist grid configuration (and possible other settings)
      *
      * @param aMainStage Stage that is to be the owner of the overview view's stage
-     * @param aDataSource TODO
-     * @param aTabName String containing the name of the tab that's content is to be shown in the overview view TODO
+     * @param aDataSource Source of the data to be shown in the overview view
+     * @param aTabName String containing the name of the tab that's content is to be shown in the overview view
      * @param aMoleculeDataModelList List of MoleculeDataModel instances
-     * @throws NullPointerException if one of the parameters is null    TODO
+     * @throws NullPointerException if one of the parameters is null; if the value of aDataSource is
+     * PARENT_MOLECULES_SAMPLE or ITEM_WITH_FRAGMENTS_SAMPLE, aTabName is allowed to be null
      */
     public OverviewViewController(Stage aMainStage, DataSources aDataSource, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList)
             throws NullPointerException {
@@ -150,26 +151,26 @@ public class OverviewViewController {
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
         //</editor-fold>
         switch (aDataSource) {
-            case FRAGMENTS_TAB_PARENT_MOLECULES -> {
+            case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
                         " - " + Message.get("OverviewView.nameOfView");
                 this.withShowInMainViewOption = false;
             }
-            case ITEMS_TAB -> {
+            case ITEM_WITH_FRAGMENTS_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
                         " - " + Message.get("OverviewView.nameOfView");
                 this.withShowInMainViewOption = false;
             }
             default -> {
-                Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");  //TODO
+                Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
                 if (aTabName.isBlank()) {
-                    OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank"); //TODO
+                    OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
                 }
+                this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
                 this.withShowInMainViewOption = true;
             }
         }
         this.mainStage = aMainStage;
-        this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
         this.moleculeDataModelList = aMoleculeDataModelList;
         this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
         this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
@@ -621,6 +622,7 @@ public class OverviewViewController {
             if (this.withShowInMainViewOption) {
                 tmpShowInMainViewMenuItem.setOnAction((ActionEvent anActionEvent) -> {
                     //the MoleculeDataModelList-index of the structure has already been cached
+                    this.returnToStructureEventOccurred = true;
                     this.overviewViewStage.close();
                 });
             } else {
@@ -842,21 +844,21 @@ public class OverviewViewController {
      */
     public enum DataSources {
         /**
-         * Enum value for the data source molecules tab.
+         * Enum value for the molecules tab as data source.
          */
         MOLECULES_TAB,
         /**
-         * Enum value for the data source fragments tab.
+         * Enum value for a fragments tab as data source.
          */
         FRAGMENTS_TAB,
         /**
-         * Enum value for the data source fragments tab parent molecules.
+         * Enum value for a parent molecules sample of a fragments tab as data source.
          */
-        FRAGMENTS_TAB_PARENT_MOLECULES,
+        PARENT_MOLECULES_SAMPLE,
         /**
-         * Enum value for the data source items tab.
+         * Enum value for an item of an items tab as data source.
          */
-        ITEMS_TAB
+        ITEM_WITH_FRAGMENTS_SAMPLE
     }
     //</editor-fold>
 

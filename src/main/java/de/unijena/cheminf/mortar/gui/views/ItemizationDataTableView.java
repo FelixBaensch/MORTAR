@@ -30,6 +30,7 @@ import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -79,6 +80,10 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      * MenuItem of ContextMenu to copy selected cell to clipboard
      */
     private MenuItem copyMenuItem;
+    /**
+     * MenuItem of ContextMenu to open an overview view with the item and its fragments
+     */
+    private MenuItem overviewViewMenuItem;
     //</editor-fold>
     //
     /**
@@ -130,6 +135,11 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
         this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
         this.contextMenu.getItems().add(this.copyMenuItem);
+        //-separatorMenuItem
+        this.contextMenu.getItems().add(new SeparatorMenuItem());
+        //-overviewViewMenuItem
+        this.overviewViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.itemsTab.overviewViewMenuItem"));
+        this.contextMenu.getItems().add(this.overviewViewMenuItem);
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
@@ -238,6 +248,15 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      */
     public MenuItem getCopyMenuItem(){
         return this.copyMenuItem;
+    }
+    //
+    /**
+     * Returns MenuItem to open an overview view of an item and its fragments
+     *
+     * @return MenuItem
+     */
+    public MenuItem getOverviewViewMenuItem() {
+        return overviewViewMenuItem;
     }
     //
     /**

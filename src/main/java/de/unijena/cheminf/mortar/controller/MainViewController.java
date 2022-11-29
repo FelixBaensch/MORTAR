@@ -63,7 +63,6 @@ import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
@@ -323,7 +322,8 @@ public class MainViewController {
                     } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())) {
                         this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB);
                     } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Itemization.toString())) {
-                        this.openOverviewView(OverviewViewController.DataSources.ITEMS_TAB);
+                        //should not happen
+                        throw new IllegalStateException();
                     }
                 }
         );
@@ -802,7 +802,7 @@ public class MainViewController {
     /**
      * Opens OverviewView
      *
-     * @param aDataSource TODO
+     * @param aDataSource Source of the data to be shown in the overview view
      */
     private void openOverviewView(OverviewViewController.DataSources aDataSource) {
         OverviewViewController tmpOverviewViewController;
@@ -810,7 +810,8 @@ public class MainViewController {
             switch (aDataSource) {
                 case MOLECULES_TAB -> {
                     if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Molecules.toString())))
-                        throw new IllegalStateException("..."); //TODO
+                        //should not happen
+                        throw new IllegalStateException();
                     tmpOverviewViewController = new OverviewViewController(
                             this.primaryStage,
                             aDataSource,
@@ -818,9 +819,10 @@ public class MainViewController {
                             getItemsListOfSelectedFragmenterByTabId(TabNames.Molecules)
                     );
                 }
-                case FRAGMENTS_TAB -> {    //TODO: switch back
+                case FRAGMENTS_TAB -> {
                     if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())))
-                        throw new IllegalStateException("..."); //TODO
+                        //should not happen
+                        throw new IllegalStateException();
                     tmpOverviewViewController = new OverviewViewController(
                             this.primaryStage,
                             aDataSource,
@@ -828,53 +830,61 @@ public class MainViewController {
                             this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
                     );
                 }
-                case FRAGMENTS_TAB_PARENT_MOLECULES -> {
+                case PARENT_MOLECULES_SAMPLE -> {
                     if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())))
-                        throw new IllegalStateException("..."); //TODO
-                    //TODO: Parent-Molecules of the Fragments-Tab (showing all fragments of one molecule in the overview)
-                    List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>();
+                        //should not happen
+                        throw new IllegalStateException();
+                    //Parent-Molecules of the Fragments-Tab (showing all fragments of one molecule in the overview view)
                     GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
-                    //TODO: what if there are more than one cell selected?
-                    for (TablePosition<?, ?> tmpSelectedCell : ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells()) {
-                        if (tmpSelectedCell.getColumn() == 2) {
-                            int tmpRow = tmpSelectedCell.getRow();
-                            int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpRow;
-                            tmpDataForOverviewView.add((MoleculeDataModel) ((ObservableList<?>) this.mapOfFragmentDataModelLists.get(tmpSelectedTab.getFragmentationNameOutOfTitle())).get(tmpIndexInDataList));
-                            tmpDataForOverviewView.addAll(((FragmentDataModel) ((ObservableList<?>) this.mapOfFragmentDataModelLists.get(tmpSelectedTab.getFragmentationNameOutOfTitle())).get(tmpIndexInDataList)).getParentMolecules());
-                        }
-                        break;
+                    //IllegalStateException if there is more than one cell selected
+                    if (((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().size() > 1) {
+                        //should not happen
+                        throw new IllegalStateException();
                     }
+                    //getting the data for the overview view
+                    List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>();
+                    int tmpSelectedRow = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
+                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRow;
+                    //adding the fragment itself
+                    tmpDataForOverviewView.add((MoleculeDataModel) ((ObservableList<?>) this.mapOfFragmentDataModelLists.get(tmpSelectedTab.getFragmentationNameOutOfTitle())).get(tmpIndexInDataList));
+                    //adding the sample of parent molecules
+                    tmpDataForOverviewView.addAll(((FragmentDataModel) ((ObservableList<?>) this.mapOfFragmentDataModelLists.get(tmpSelectedTab.getFragmentationNameOutOfTitle())).get(tmpIndexInDataList)).getParentMolecules());
                     tmpOverviewViewController = new OverviewViewController(
                             this.primaryStage,
-                            OverviewViewController.DataSources.FRAGMENTS_TAB_PARENT_MOLECULES,
+                            OverviewViewController.DataSources.PARENT_MOLECULES_SAMPLE,
                             null,
                             tmpDataForOverviewView
                     );
                 }
-                case ITEMS_TAB -> {
+                case ITEM_WITH_FRAGMENTS_SAMPLE -> {
                     if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Itemization.toString())))
-                        throw new IllegalStateException("..."); //TODO
-                    //TODO: Items-Tab (showing all fragments of one molecule in an overview)
-                    List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>(); //TODO
+                        //should not happen
+                        throw new IllegalStateException();
+                    //Items-Tab (showing all fragments of one molecule in the overview view)
                     GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
-                    //TODO: what if there are more than one row with selected cells?
-                    for (TablePosition<?, ?> tmpSelectedCell : ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells()) {
-                        int tmpRow = tmpSelectedCell.getRow();
-                        int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpRow;
-                        tmpDataForOverviewView.add(this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).get(tmpIndexInDataList));
-
-                        tmpDataForOverviewView.addAll(this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
-                        break;
+                    //IllegalStateException if there is more than one cell selected
+                    if (((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().size() > 1) {
+                        //should not happen
+                        throw new IllegalStateException();
                     }
+                    //getting the data for the overview view
+                    List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>();
+                    int tmpSelectedRow = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
+                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRow;
+                    //adding the item itself
+                    tmpDataForOverviewView.add(this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).get(tmpIndexInDataList));
+                    //adding the sample of fragments
+                    tmpDataForOverviewView.addAll(this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
                     tmpOverviewViewController = new OverviewViewController(
                             this.primaryStage,
-                            OverviewViewController.DataSources.ITEMS_TAB,
+                            OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE,
                             null,
                             tmpDataForOverviewView
                     );
                 }
                 default -> {
-                    return;
+                    //should not happen
+                    throw new IllegalStateException();
                 }
             }
         } catch (IllegalStateException anIllegalStateException) {
@@ -885,21 +895,21 @@ public class MainViewController {
         int tmpIndexOfMoleculeDataModelToReturnTo = tmpOverviewViewController.getCachedIndexOfStructureInMoleculeDataModelList();
         //since -1 is returned, if no specific structure should be shown
         if (tmpIndexOfMoleculeDataModelToReturnTo >= 0) {
-            //TODO: go to page showing the structure of the MoleculeDataModel with the given index
+            //go to page showing the structure of the MoleculeDataModel with the given index
             int tmpNewPageIndex = tmpIndexOfMoleculeDataModelToReturnTo / this.settingsContainer.getRowsPerPageSetting();
             ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getPagination()
                     .setCurrentPageIndex(tmpNewPageIndex);
             TableView tmpSelectedTabTableView = ((GridTabForTableView) this.mainTabPane.getSelectionModel()
                     .getSelectedItem()).getTableView();
             if (tmpSelectedTabTableView.getClass() == MoleculesDataTableView.class) {
-                //TODO: select structure cell
+                //select structure cell
                 int tmpRowIndexOfStructure = tmpIndexOfMoleculeDataModelToReturnTo
                         % this.settingsContainer.getRowsPerPageSetting();
                 tmpSelectedTabTableView.getSelectionModel().clearSelection();
                 tmpSelectedTabTableView.getSelectionModel().select(tmpRowIndexOfStructure,
                         ((MoleculesDataTableView) tmpSelectedTabTableView).getStructureColumn());
             } else if (tmpSelectedTabTableView.getClass() == FragmentsDataTableView.class) {
-                //TODO: select structure cell
+                //select structure cell
                 int tmpRowIndexOfStructure = tmpIndexOfMoleculeDataModelToReturnTo
                         % this.settingsContainer.getRowsPerPageSetting();
                 tmpSelectedTabTableView.getSelectionModel().clearSelection();
@@ -1202,6 +1212,7 @@ public class MainViewController {
         });
         tmpFragmentsDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
+        tmpFragmentsDataTableView.getOverviewViewMenuItem().setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.PARENT_MOLECULES_SAMPLE));
         tmpFragmentsDataTableView.setOnKeyPressed(event -> {
             if (GuiDefinitions.KEY_CODE_COPY.match(event)) {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
@@ -1270,6 +1281,7 @@ public class MainViewController {
         });
         tmpItemizationDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
+        tmpItemizationDataTableView.getOverviewViewMenuItem().setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE));
         tmpItemizationDataTableView.setOnKeyPressed(event -> {
             if (GuiDefinitions.KEY_CODE_COPY.match(event)) {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView);
