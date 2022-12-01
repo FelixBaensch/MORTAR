@@ -263,6 +263,10 @@ public class OverviewViewController {
         //event handler for window close requests
         this.overviewViewStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, event -> this.closeOverviewViewEvent());
         //
+        /*
+        The following block of code was inspired by a post of the user "mipa" of the stackoverflow community;
+        link to his answer / comment: https://stackoverflow.com/a/36245807 (2022_12_01; 12:00 GMT)
+         */
         //listener to distinguish a drag from a click event (on the image views)
         this.overviewView.getStructureGridPane().setOnMouseDragged((aMouseEvent) -> {
             if (aMouseEvent.getButton().equals(MouseButton.PRIMARY)) {
@@ -270,6 +274,10 @@ public class OverviewViewController {
             }
         });
         //
+        /*
+        The following block of code was inspired by a post of the user "mipa" of the stackoverflow community;
+        link to his answer / comment: https://stackoverflow.com/a/36245807 (2022_12_01; 12:00 GMT)
+         */
         //listener to handle single- and double-click events (on the image views)
         this.overviewView.getStructureGridPane().setOnMouseClicked((aMouseEvent) -> {
             if (aMouseEvent.getButton().equals(MouseButton.PRIMARY) && aMouseEvent.getTarget().getClass()
