@@ -101,11 +101,11 @@ public class CustomPaginationSkin extends PaginationSkin {
         this.lastButton = new Button(Message.get("CustomPaginationSkin.controlBox.lastButton.text"));
         this.lastButton.setTooltip(new Tooltip(Message.get("CustomPaginationSkin.controlBox.lastButton.tooltip")));
         this.lastButton.setOnAction(e -> {
-            tmpPagination.setCurrentPageIndex(tmpPagination.getPageCount());
+            tmpPagination.setCurrentPageIndex(tmpPagination.pageCountProperty().get());
         });
         this.lastButton.disableProperty().bind(
                 tmpPagination.currentPageIndexProperty().isEqualTo(
-                        tmpPagination.getPageCount() - 1));
+                        tmpPagination.pageCountProperty().subtract(1)));
         this.jumpToTextField = new TextField();
         this.jumpToTextField.setTooltip(new Tooltip(Message.get("CustomPaginationSkin.controlBox.textField.tooltip")));
         this.jumpToTextField.setMaxWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
@@ -116,8 +116,8 @@ public class CustomPaginationSkin extends PaginationSkin {
         this.jumpToTextField.setOnKeyPressed(key -> {
             if(key.getCode().equals(KeyCode.ENTER)){
                 int tmpPageNumber = Integer.parseInt(jumpToTextField.getText()) - 1;
-                if(tmpPageNumber > tmpPagination.getPageCount()){
-                    tmpPageNumber = tmpPagination.getPageCount();
+                if(tmpPageNumber > tmpPagination.pageCountProperty().get()){
+                    tmpPageNumber = tmpPagination.pageCountProperty().get();
                 }
                 tmpPagination.setCurrentPageIndex(tmpPageNumber);
             }
