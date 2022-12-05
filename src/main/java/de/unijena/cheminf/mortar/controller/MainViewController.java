@@ -843,12 +843,12 @@ public class MainViewController {
                     }
                     //getting the data for the overview view
                     List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>();
-                    int tmpSelectedRow = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
-                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRow;
+                    int tmpSelectedRowIndex = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
+                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRowIndex;
                     //adding the fragment itself
-                    tmpDataForOverviewView.add(this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments).get(tmpIndexInDataList));
+                    tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
                     //adding the sample of parent molecules
-                    tmpDataForOverviewView.addAll(((FragmentDataModel) this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments).get(tmpIndexInDataList)).getParentMolecules());
+                    tmpDataForOverviewView.addAll(((FragmentDataModel) ((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList)).getParentMolecules());
                     tmpOverviewViewController = new OverviewViewController(
                             this.primaryStage,
                             OverviewViewController.DataSources.PARENT_MOLECULES_SAMPLE,
@@ -869,12 +869,12 @@ public class MainViewController {
                     }
                     //getting the data for the overview view
                     List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>();
-                    int tmpSelectedRow = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
-                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRow;
+                    int tmpSelectedRowIndex = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
+                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRowIndex;
                     //adding the item itself
-                    tmpDataForOverviewView.add(this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).get(tmpIndexInDataList));
+                    tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
                     //adding the sample of fragments
-                    tmpDataForOverviewView.addAll(this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
+                    tmpDataForOverviewView.addAll(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
                     tmpOverviewViewController = new OverviewViewController(
                             this.primaryStage,
                             OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE,

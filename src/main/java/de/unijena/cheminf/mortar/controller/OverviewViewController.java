@@ -97,6 +97,10 @@ public class OverviewViewController {
      */
     private String overviewViewTitle;
     /**
+     * Source of the data to be displayed in the overview view.
+     */
+    private DataSources dataSource;
+    /**
      * List of MoleculeDataModels to be displayed in the overview view.
      */
     private List<MoleculeDataModel> moleculeDataModelList;
@@ -122,7 +126,7 @@ public class OverviewViewController {
     private boolean createStructureImages;
     /**
      * Boolean value whether the option to show a specific structure in the main view via double-click or context menu
-     * should be available.
+     * should be available. The value depends on the given data source.
      */
     private boolean withShowInMainViewOption;
     /**
@@ -167,26 +171,38 @@ public class OverviewViewController {
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
         //</editor-fold>
         switch (aDataSource) {
-            case PARENT_MOLECULES_SAMPLE -> {
-                this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
-                        " - " + Message.get("OverviewView.nameOfView");
-                this.withShowInMainViewOption = false;
-            }
-            case ITEM_WITH_FRAGMENTS_SAMPLE -> {
-                this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
-                        " - " + Message.get("OverviewView.nameOfView");
-                this.withShowInMainViewOption = false;
-            }
-            default -> {
+            case MOLECULES_TAB, FRAGMENTS_TAB -> {
                 Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
                 if (aTabName.isBlank()) {
                     OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
                 }
-                this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView");
+                this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView") +
+                        " - " + aMoleculeDataModelList.size() + " " +
+                        (aDataSource == DataSources.MOLECULES_TAB ? Message.get("OverviewView.titleOfView.molecules")
+                                : Message.get("OverviewView.titleOfView.fragments"));
                 this.withShowInMainViewOption = true;
+            }
+            case PARENT_MOLECULES_SAMPLE -> {
+                this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
+                        " - " + Message.get("OverviewView.nameOfView") +
+                        " - " + (aMoleculeDataModelList.size() - 1) +  " " +
+                        Message.get("OverviewView.titleOfView.molecules");
+                this.withShowInMainViewOption = false;
+            }
+            case ITEM_WITH_FRAGMENTS_SAMPLE -> {
+                this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
+                        " - " + Message.get("OverviewView.nameOfView") +
+                        " - " + (aMoleculeDataModelList.size() - 1) + " " +
+                        Message.get("OverviewView.titleOfView.fragments");
+                this.withShowInMainViewOption = false;
+            }
+            default -> {
+                //should not happen
+                throw new IllegalStateException();
             }
         }
         this.mainStage = aMainStage;
+        this.dataSource = aDataSource;
         this.moleculeDataModelList = aMoleculeDataModelList;
         this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
         this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
@@ -464,12 +480,23 @@ public class OverviewViewController {
                             if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
                                 throw new NullPointerException("A MoleculeDataModel instance has been null.");
                             }
-                            Node tmpImageView = new ImageView(
-                                    DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
-                                            tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                            tmpImageHeight, true, true
-                                    )
-                            );
+                            //different style for the first structure in parent molecules and item overview view
+                            Node tmpImageView;
+                            if (!(tmpIterator == 0 && !this.withShowInMainViewOption)) {
+                                tmpImageView = new ImageView(
+                                        DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                                tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                tmpImageHeight, true, true
+                                        )
+                                );
+                            } else {
+                                tmpImageView = new ImageView(
+                                        DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                                tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                tmpImageHeight, true, false
+                                        )
+                                );
+                            }
                             //changing the shadow effects at mouse entering an image
                             tmpImageView.setOnMouseEntered((aMouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
@@ -521,6 +548,11 @@ public class OverviewViewController {
                                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
                                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
                                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
+                        }
+                        //disabling the node if it is the fragment of the parent molecules overview view or the item
+                        // molecule of the item overview view
+                        if (!this.withShowInMainViewOption && tmpIterator == 0) {
+                            tmpContentNode.setDisable(true);
                         }
                         //
                         this.overviewView.getStructureGridPane().add(tmpContentNode, j, i);
@@ -710,7 +742,15 @@ public class OverviewViewController {
                 }
             });
             //showInMainView
-            MenuItem tmpShowInMainViewMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.showInMainViewMenuItem"));
+            MenuItem tmpShowInMainViewMenuItem = new MenuItem();
+            switch (this.dataSource) {
+                case MOLECULES_TAB -> tmpShowInMainViewMenuItem.setText(Message
+                        .get("OverviewView.contextMenu.showInMainViewMenuItem.molecules"));
+                case FRAGMENTS_TAB -> tmpShowInMainViewMenuItem.setText(Message
+                        .get("OverviewView.contextMenu.showInMainViewMenuItem.fragments"));
+                default -> tmpShowInMainViewMenuItem.setText(Message
+                        .get("OverviewView.contextMenu.showInMainViewMenuItem.default"));
+            }
             if (this.withShowInMainViewOption) {
                 tmpShowInMainViewMenuItem.setOnAction((ActionEvent anActionEvent) -> {
                     //the MoleculeDataModelList-index of the structure has already been cached
