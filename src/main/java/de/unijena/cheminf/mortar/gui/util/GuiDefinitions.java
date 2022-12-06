@@ -169,6 +169,10 @@ public final class GuiDefinitions {
      */
     public static final KeyCodeCombination KEY_CODE_FIRST_PAGE = new KeyCodeCombination(KeyCode.LEFT, KeyCombination.CONTROL_DOWN);
     /**
+     * Value for the delay of a second click to be registered as double-click (in ms)
+     */
+    public static final int DOUBLE_CLICK_DELAY = 250;
+    /**
      * Value for the width of the image corresponding to the structure of the fragments
      */
     public static final double GUI_IMAGE_WIDTH = 250.0;

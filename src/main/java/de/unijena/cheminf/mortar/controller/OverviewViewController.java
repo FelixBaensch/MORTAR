@@ -46,11 +46,17 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -296,38 +302,45 @@ public class OverviewViewController {
          */
         //listener to handle single- and double-click events (on the image views)
         this.overviewView.getStructureGridPane().setOnMouseClicked((aMouseEvent) -> {
-            if (aMouseEvent.getButton().equals(MouseButton.PRIMARY) && aMouseEvent.getTarget().getClass()
-                    .equals(ImageView.class)) {
+            if (aMouseEvent.getButton().equals(MouseButton.PRIMARY)
+                    && (aMouseEvent.getTarget().getClass().equals(ImageView.class)
+                            || (aMouseEvent.getTarget().getClass().equals(StackPane.class)
+                                    && this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent) == 0))) {
                 if (!this.dragFlag) {
                     if (aMouseEvent.getClickCount() == 1) {
                         //caching the index of the MoleculeDataModel that corresponds to the content of the
                         //event's source; equivalent to the structure's grid pane cell being selected
                         this.cachedIndexOfStructureInMoleculeDataModelList
                                 = this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent);
-                        //scheduled single-click action
-                        this.scheduledFuture = this.scheduledThreadPoolExecutor.schedule(
-                                //Platform runLater enables this method call in a separate thread
-                                () -> Platform.runLater(() ->
-                                        this.showEnlargedStructureView(
-                                                this.moleculeDataModelList
-                                                        .get(this.cachedIndexOfStructureInMoleculeDataModelList),
-                                                this.overviewViewStage
-                                        )
-                                ),
-                                250,
-                                TimeUnit.MILLISECONDS
-                        );
+                        //ensure that there is no single-click action is scheduled yet
+                        if (this.scheduledFuture == null || this.scheduledFuture.isDone()) {
+                            //scheduled single-click action
+                            this.scheduledFuture = this.scheduledThreadPoolExecutor.schedule(
+                                    //Platform runLater enables this method call in a separate thread
+                                    () -> Platform.runLater(() ->
+                                            this.showEnlargedStructureView(
+                                                    this.moleculeDataModelList
+                                                            .get(this.cachedIndexOfStructureInMoleculeDataModelList),
+                                                    this.overviewViewStage
+                                            )
+                                    ),
+                                    GuiDefinitions.DOUBLE_CLICK_DELAY,
+                                    TimeUnit.MILLISECONDS
+                            );
+                        }
                     } else if (aMouseEvent.getClickCount() > 1) {
                         if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()
                                 && !this.scheduledFuture.isDone()) {
+                            //terminating the scheduled single-click action
+                            this.scheduledFuture.cancel(false);
                             //check whether it is the same structure
                             if (this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent)
                                     == this.cachedIndexOfStructureInMoleculeDataModelList) {
-                                //terminating the scheduled single-click action
-                                this.scheduledFuture.cancel(false);
                                 //double-click action
-                                this.returnToStructureEventOccurred = true;
-                                this.closeOverviewViewEvent();
+                                if (this.withShowInMainViewOption) {
+                                    this.returnToStructureEventOccurred = true;
+                                    this.closeOverviewViewEvent();
+                                }
                             }
                         }
                     }
@@ -338,7 +351,9 @@ public class OverviewViewController {
         //
         //listener for context menu requests (on the image views)
         this.overviewView.getStructureGridPane().setOnContextMenuRequested(aContextMenuRequest -> {
-            if (aContextMenuRequest.getTarget().getClass().equals(ImageView.class)) {
+            if (aContextMenuRequest.getTarget().getClass().equals(ImageView.class)
+                    || (aContextMenuRequest.getTarget().getClass().equals(StackPane.class)
+                            && this.getIndexOfStructureInMoleculeDataModelList(aContextMenuRequest) == 0)) {
                 if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled() && !this.scheduledFuture.isDone()) {
                     this.scheduledFuture.cancel(false);
                 }
@@ -475,54 +490,80 @@ public class OverviewViewController {
                         }
                         Node tmpContentNode;
                         try {
-                            //depiction of structure image
                             MoleculeDataModel tmpMoleculeDataModel;
                             if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
                                 throw new NullPointerException("A MoleculeDataModel instance has been null.");
                             }
-                            //different style for the first structure in parent molecules and item overview view
-                            Node tmpImageView;
+                            //depiction of structure image
+                            final Node tmpFinalContentNode;
                             if (!(tmpIterator == 0 && !this.withShowInMainViewOption)) {
-                                tmpImageView = new ImageView(
+                                tmpFinalContentNode = new ImageView(
                                         DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                 tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
                                                 tmpImageHeight, true, true
                                         )
                                 );
                             } else {
-                                tmpImageView = new ImageView(
-                                        DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
-                                                tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                tmpImageHeight, true, false
+                                //highlighting first structure in parent molecules and item overview view
+                                StackPane tmpStackPane = new StackPane(
+                                        new ImageView(
+                                            DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                                    tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                    tmpImageHeight, true, false
+                                            )
                                         )
                                 );
+                                tmpStackPane.setMinWidth(tmpImageWidth);
+                                tmpStackPane.setMaxWidth(tmpImageWidth);
+                                tmpStackPane.setMinHeight(tmpImageHeight);
+                                tmpStackPane.setMaxHeight(tmpImageHeight);
+                                tmpStackPane.setBorder(new Border(new BorderStroke(Color.WHITE,
+                                        BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+                                //the style is set later on to avoid it being replaced
+                                tmpFinalContentNode = tmpStackPane;
                             }
                             //changing the shadow effects at mouse entering an image
-                            tmpImageView.setOnMouseEntered((aMouseEvent) -> {
+                            tmpFinalContentNode.setOnMouseEntered((aMouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
-                                    tmpImageView.setStyle("-fx-effect: null");
+                                    tmpFinalContentNode.setStyle("-fx-effect: null" +
+                                            ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                    : ""));
                                 } else {
-                                    tmpImageView.setStyle("-fx-effect: dropshadow(gaussian, " +
-                                            "rgba(100, 100, 100, 0.8), " +
-                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH + ", " +
-                                            "0, 0, 0)");
+                                    tmpFinalContentNode.setStyle(
+                                            "-fx-effect: dropshadow(gaussian, rgba(100, 100, 100, 0.8), " +
+                                                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH +
+                                                    ", 0, 0, 0)" +
+                                            ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                    : "")
+                                    );
                                 }
                             });
                             //resetting the shadow effects at mouse leaving the image
-                            tmpImageView.setOnMouseExited((aMouseEvent) -> {
+                            tmpFinalContentNode.setOnMouseExited((aMouseEvent) -> {
                                 if (tmpDrawImagesWithShadow) {
-                                    tmpImageView.setStyle("-fx-effect: dropshadow(three-pass-box, " +
-                                            "rgba(100, 100, 100, 0.6), " +
-                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 +
-                                            ", 0, " +
-                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
-                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
+                                    tmpFinalContentNode.setStyle(
+                                            "-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
+                                                            / 4 + ", 0, " +
+                                                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
+                                                            / 4 + ", " +
+                                                    GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
+                                                            / 4 + ")" +
+                                            ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                    : "")
+                                    );
                                 } else {
-                                    tmpImageView.setStyle("-fx-effect: null");
+                                    tmpFinalContentNode.setStyle("-fx-effect: null" +
+                                            ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                    : ""));
                                 }
                             });
                             //
-                            tmpContentNode = tmpImageView;
+                            tmpContentNode = tmpFinalContentNode;
                         } catch (CDKException | NullPointerException anException) {
                             OverviewViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
                             //Error label to be shown when a structure can not be depicted
@@ -549,10 +590,16 @@ public class OverviewViewController {
                                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
                                     GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
                         }
-                        //disabling the node if it is the fragment of the parent molecules overview view or the item
-                        // molecule of the item overview view
+                        //highlighting the first structure of parent molecules and item overview view
                         if (!this.withShowInMainViewOption && tmpIterator == 0) {
-                            tmpContentNode.setDisable(true);
+                            tmpContentNode.setStyle("-fx-alignment: CENTER; -fx-background-color: LIGHTGREY" +
+                                    (tmpDrawImagesWithShadow
+                                            ? "; -fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                            GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")"
+                                            : "")
+                            );
                         }
                         //
                         this.overviewView.getStructureGridPane().add(tmpContentNode, j, i);
@@ -771,14 +818,20 @@ public class OverviewViewController {
     }
     //
     /**
-     * Gets the MoleculeDataModelList-index of the structure that's image view is the source of the given event.
+     * Gets the MoleculeDataModelList-index of the structure that corresponds to the node that is the source of the
+     * given event.
      *
-     * @param anEvent Event with the image view of a structure as source
+     * @param anEvent Event with the image view or stack pane of a structure as source
      * @return Index of structure in the MoleculeDataModelList
      */
     private int getIndexOfStructureInMoleculeDataModelList(Event anEvent) {
-        int tmpColIndex = GridPane.getColumnIndex(((ImageView) anEvent.getTarget()));
-        int tmpRowIndex = GridPane.getRowIndex(((ImageView) anEvent.getTarget()));
+        Node tmpTargetNode = (Node) anEvent.getTarget();
+        if (tmpTargetNode.getParent().getClass().equals(StackPane.class)) {
+            //case: the highlighted structure of the parent molecules or item overview view itself got clicked
+            tmpTargetNode = ((Node) anEvent.getTarget()).getParent();
+        }
+        int tmpColIndex = GridPane.getColumnIndex(tmpTargetNode);
+        int tmpRowIndex = GridPane.getRowIndex(tmpTargetNode);
         int tmpIndexOfStructureOnPage = tmpRowIndex * this.columnsPerPage + tmpColIndex;
         return this.overviewView.getPagination().getCurrentPageIndex() * this.columnsPerPage * this.rowsPerPage
                 + tmpIndexOfStructureOnPage;
