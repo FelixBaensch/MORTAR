@@ -184,22 +184,25 @@ public class OverviewViewController {
                 }
                 this.overviewViewTitle = aTabName + " - " + Message.get("OverviewView.nameOfView") +
                         " - " + aMoleculeDataModelList.size() + " " +
-                        (aDataSource == DataSources.MOLECULES_TAB ? Message.get("OverviewView.titleOfView.molecules")
-                                : Message.get("OverviewView.titleOfView.fragments"));
+                        Message.get((aDataSource == DataSources.MOLECULES_TAB
+                                ? "OverviewView.titleOfView.molecule" : "OverviewView.titleOfView.fragment")
+                                + (aMoleculeDataModelList.size() != 1 ? "s" : ""));
                 this.withShowInMainViewOption = true;
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
                         " - " + Message.get("OverviewView.nameOfView") +
                         " - " + (aMoleculeDataModelList.size() - 1) +  " " +
-                        Message.get("OverviewView.titleOfView.molecules");
+                        Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.molecule"
+                                : "OverviewView.titleOfView.molecules"));
                 this.withShowInMainViewOption = false;
             }
             case ITEM_WITH_FRAGMENTS_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
                         " - " + Message.get("OverviewView.nameOfView") +
                         " - " + (aMoleculeDataModelList.size() - 1) + " " +
-                        Message.get("OverviewView.titleOfView.fragments");
+                        Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.fragment"
+                                : "OverviewView.titleOfView.fragments"));
                 this.withShowInMainViewOption = false;
             }
             default -> {
