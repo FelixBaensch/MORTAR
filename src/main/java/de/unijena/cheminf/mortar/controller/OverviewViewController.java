@@ -732,6 +732,8 @@ public class OverviewViewController {
         tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
         //copySmilesMenuItem
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        //copyNameMenuItem
+        MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyNameMenuItem"));
         //adding Listeners to MenuItems
         //copyImageMenuItem listener
         tmpCopyImageMenuItem.setOnAction((ActionEvent anActionEvent) -> {
@@ -772,10 +774,25 @@ public class OverviewViewController {
                 Clipboard.getSystemClipboard().setContent(tmpContent);
             }
         });
+        //copyNameMenuItem listener
+        tmpCopyNameMenuItem.setOnAction((ActionEvent anActionEvent) -> {
+            if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
+                String tmpNameString;
+                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
+                    tmpNameString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getName();
+                } else {
+                    tmpNameString = "";
+                }
+                ClipboardContent tmpContent = new ClipboardContent();
+                tmpContent.putString(tmpNameString);
+                Clipboard.getSystemClipboard().setContent(tmpContent);
+            }
+        });
         //add view-independent MenuItems
         tmpContextMenu.getItems().addAll(
                 tmpCopyImageMenuItem,
-                tmpCopySmilesMenuItem
+                tmpCopySmilesMenuItem,
+                tmpCopyNameMenuItem
         );
         //add MenuItems that are only needed for overview view items
         if (!aForEnlargedStructureView) {
