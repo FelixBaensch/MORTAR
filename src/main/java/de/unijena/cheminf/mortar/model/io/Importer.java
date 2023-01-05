@@ -389,7 +389,11 @@ public class Importer {
     //<editor-fold desc="protected methods" defaultstate="collapsed">
     /**
      * Imports a SMILES file. This method is able to parse different types of SMILES files, e.g. with and without header
-     * or with only one column or two (SMILES and name/ID, which is in which column is detected).
+     * and with up to three columns (SMILES and name/ID and an additional third column). The method identifies the used
+     * format by reading the first three lines of the file and then applying the detected format on all further lines.
+     * SMILES and name/ID string are expected to be in the first two columns. Files that do not fit to the expected
+     * format or lack a parseable SMILES string in the first three lines are classified as not being a SMILES file and
+     * an exception gets thrown.
      * Protected and not private for testing in class ImporterTest.
      *
      * @param aFile a SMILES codes-containing *.txt or *.smi file
@@ -436,13 +440,13 @@ public class Importer {
                 }
                 for (String tmpSeparator : BasicDefinitions.POSSIBLE_SMILES_FILE_SEPARATORS) {
                     //maximum of two array elements expected, otherwise the separator or the line itself are assumed to be invalid
-                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator, 3);
-                    if (tmpProcessedLineArray.length > 2) {
+                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator, 4);
+                    if (tmpProcessedLineArray.length > 3) {
                         continue;
                     }
                     int tmpIndex = 0;
                     for (String tmpNextElementOfLine : tmpProcessedLineArray) {
-                        if (tmpNextElementOfLine.isEmpty()) {
+                        if (tmpNextElementOfLine.isEmpty() || tmpIndex > 2) {
                             continue;
                         }
                         try {
@@ -478,7 +482,7 @@ public class Importer {
             while (!Thread.currentThread().isInterrupted() && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
                 //trying to parse as SMILES code
                 try {
-                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 2);
+                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 3);
                     if (!tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isEmpty()) {
                         tmpMolecule = tmpSmilesParser.parseSmiles(tmpProcessedLineArray[tmpSmilesCodeExpectedPosition]);
                         tmpSmilesFileParsableLinesCounter++;
