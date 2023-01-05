@@ -139,9 +139,9 @@ public class OverviewView extends AnchorPane {
         tmpRowCon1.setVgrow(Priority.ALWAYS);
         this.mainGridPane.getRowConstraints().add(tmpRowCon1);
         RowConstraints tmpRowCon2 = new RowConstraints();
-        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
-        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
-        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT);
+        tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
+        tmpRowCon2.setMinHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
+        tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
         tmpRowCon2.setVgrow(Priority.ALWAYS);
         this.mainGridPane.getRowConstraints().add(tmpRowCon2);
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
@@ -155,10 +155,11 @@ public class OverviewView extends AnchorPane {
         tmpColCon2.setHgrow(Priority.ALWAYS);
         this.mainGridPane.getColumnConstraints().add(tmpColCon2);
         ColumnConstraints tmpColCon3 = new ColumnConstraints();
-        tmpColCon1.setHgrow(Priority.ALWAYS);
-        tmpColCon1.setMaxWidth(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpColCon1.setMinWidth(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpColCon1.setPrefWidth(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpColCon3.setHgrow(Priority.ALWAYS);
+        tmpColCon3.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setMinWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setPrefWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setHalignment(HPos.RIGHT);
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
         //
         //initialization, styling and initial configuration of the structureGridPane
@@ -190,12 +191,10 @@ public class OverviewView extends AnchorPane {
         make sure all components are set up correct and accessible
          */
         this.bottomLeftHBox = new HBox();
-        this.bottomLeftHBox.setPadding(new Insets(
-                GuiDefinitions.OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO    //TODO: remove constant, if the button positioning stays like this (after "after merge" changes)
-                        * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE
-        ));
+        this.bottomLeftHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
+                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.bottomLeftHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        this.bottomLeftHBox.setAlignment(Pos.CENTER_LEFT);
         //
         //labels and text fields for columns and rows per page
         Label tmpColumnsPerPageLabel = new Label(Message.get("OverviewView.columnsPerPageLabel.text"));
@@ -207,13 +206,13 @@ public class OverviewView extends AnchorPane {
         Tooltip tmpColumnsPerPageTooltip = new Tooltip(Message.get("OverviewView.columnsPerPageLabel.tooltip"));
         tmpColumnsPerPageLabel.setTooltip(tmpColumnsPerPageTooltip);
         this.columnsPerPageTextField = new TextField();
-        this.columnsPerPageTextField.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-        this.columnsPerPageTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-        this.columnsPerPageTextField.setMaxWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+        this.columnsPerPageTextField.setMinWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
+        this.columnsPerPageTextField.setPrefWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
+        this.columnsPerPageTextField.setMaxWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
         this.columnsPerPageTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.columnsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         this.columnsPerPageTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aColumnsPerPage, GuiUtil.getIntegerFilter()));      //TODO: use new GuiUtil method for IntegerFilter (after merge)
+                aColumnsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
         this.columnsPerPageTextField.setTooltip(tmpColumnsPerPageTooltip);
         Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
         tmpRowsPerPageLabel.setMinWidth(GuiDefinitions.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
@@ -224,13 +223,13 @@ public class OverviewView extends AnchorPane {
         Tooltip tmpRowsPerPageTooltip = new Tooltip(Message.get("OverviewView.rowsPerPageLabel.tooltip"));
         tmpRowsPerPageLabel.setTooltip(tmpRowsPerPageTooltip);
         this.rowsPerPageTextField = new TextField();
-        this.rowsPerPageTextField.setMinWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-        this.rowsPerPageTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-        this.rowsPerPageTextField.setMaxWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+        this.rowsPerPageTextField.setMinWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
+        this.rowsPerPageTextField.setPrefWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
+        this.rowsPerPageTextField.setMaxWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
         this.rowsPerPageTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.rowsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         this.rowsPerPageTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aRowsPerPage, GuiUtil.getIntegerFilter()));     //TODO: use new GuiUtil method for IntegerFilter (after merge)
+                aRowsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
         this.rowsPerPageTextField.setTooltip(tmpRowsPerPageTooltip);
         //
         this.applyButton = new Button(Message.get("OverviewView.applyButton.text"));
@@ -260,11 +259,12 @@ public class OverviewView extends AnchorPane {
         correct and accessible
          */
         this.bottomRightHBox = new HBox();
-        this.bottomRightHBox.setPadding(new Insets(
-                GuiDefinitions.OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO
-                        * GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE
-        ));
+        this.bottomRightHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
+                GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        this.bottomRightHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        this.bottomRightHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        this.bottomRightHBox.setAlignment(Pos.CENTER_RIGHT);
+        //
         this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.closeButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -312,8 +312,8 @@ public class OverviewView extends AnchorPane {
             throw new IllegalArgumentException("aRowsPerPage (Integer value) was < or = to 0.");
         //</editor-fold>
         if (this.structureGridPane == null) {
-            this.structureGridPane = new GridPane();
             //should never happen, but if so, the grid pane will lack its styling
+            this.structureGridPane = new GridPane();
         } else {
             this.structureGridPane.getColumnConstraints().clear();
             this.structureGridPane.getRowConstraints().clear();
@@ -338,6 +338,7 @@ public class OverviewView extends AnchorPane {
     /**
      * Adds the pagination node to the main grid pane of the overview view at a fixed position and initializes the
      * pagination class variable.
+     * Necessary to add pagination to main grid pane via OverviewViewController.
      *
      * @param aPagination Pagination to be added to the overview view
      * @throws NullPointerException if the given pagination instance is null
@@ -350,6 +351,7 @@ public class OverviewView extends AnchorPane {
     //
     /**
      * Adds the overview view's bottomLeftHBox to the main grid pane.
+     * Necessary to add bottomLeftHBox to main grid pane via OverviewViewController.
      */
     public void addBottomLeftHBoxToMainGridPane() {
         this.addNodeToMainGridPane(this.bottomLeftHBox, 0, 1, 1, 1);    //magic numbers
@@ -357,6 +359,7 @@ public class OverviewView extends AnchorPane {
     //
     /**
      * Adds the overview view's bottomRightHBox to the main grid pane.
+     * Necessary to add bottomRightHBox to main grid pane via OverviewViewController.
      */
     public void addBottomRightHBoxToMainGridPane() {
         this.addNodeToMainGridPane(this.bottomRightHBox, 2, 1, 1, 1);   //magic numbers

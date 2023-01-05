@@ -53,10 +53,10 @@ import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioMenuItem;
@@ -80,6 +80,7 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -183,10 +184,6 @@ public class MainViewController {
      * Thread safe list to hold running threads to update StatusBar
      */
     private CopyOnWriteArrayList<Thread> threadList;
-    /**
-     * ButtonBar for the molecules tab, holds action buttons to start and cancel fragmentation
-     */
-    private ButtonBar moleculesTabButtonBar;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -309,17 +306,26 @@ public class MainViewController {
                 EventType.ROOT,
                 anEvent -> this.openGlobalSettingsView()
         );
-
+        this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openPipelineSettingsView()
+        );
         this.mainView.getMainMenuBar().getHistogramViewerMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openHistogramView()
-                );
-        this.mainView.getMainMenuBar().getPipelineSettingsMenuItem().addEventHandler(
+        );
+        this.mainView.getMainMenuBar().getOverviewViewMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.openPipelineSettingsView());
-        this.mainView.getMainMenuBar().getOverviewMenuItem().addEventHandler( //TODO
-                EventType.ROOT,
-                anEvent -> this.openOverviewView()
+                anEvent -> {
+                    if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Molecules.toString())) {
+                        this.openOverviewView(OverviewViewController.DataSources.MOLECULES_TAB);
+                    } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())) {
+                        this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB);
+                    } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Itemization.toString())) {
+                        //should not happen
+                        throw new IllegalStateException();
+                    }
+                }
         );
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> new AboutViewController(this.primaryStage));
@@ -329,11 +335,11 @@ public class MainViewController {
                 keyEvent.consume();
                 return;
             }
-            if(GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.END){
+            if (GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.END) {
                 tmpGrid.getPagination().setCurrentPageIndex(tmpGrid.getPagination().getPageCount() - 1);
                 keyEvent.consume();
             }
-            else if(GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.HOME){
+            else if (GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.HOME) {
                 tmpGrid.getPagination().setCurrentPageIndex(0);
                 keyEvent.consume();
             }
@@ -348,13 +354,18 @@ public class MainViewController {
         });
         this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             Platform.runLater(() -> {
-                if(newValue == null){
+                if (newValue == null) {
                     return;
                 }
-                if (newValue.getId() == TabNames.Molecules.toString()) {
+                if (newValue.getId().equals(TabNames.Molecules.toString())) {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 } else {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                }
+                if (newValue.getId().equals(TabNames.Itemization.toString())) {
+                    this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
+                } else {
+                    this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 }
             });
         });
@@ -471,9 +482,10 @@ public class MainViewController {
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
-                this.mainView.getMainMenuBar().getOverviewMenuItem().setDisable(false);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
-                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() + " molecules");
+                this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
+                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() +
+                        " " + Message.get((tmpAtomContainerSet.getAtomContainerCount() == 1 ? "Title.molecule" : "Title.molecules")));
                 int tmpExceptionCount = 0;
                 for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
                     //returns null if no SMILES code could be created
@@ -524,7 +536,7 @@ public class MainViewController {
      * @param anExportType Enum to specify what type of file to export
      */
     private void exportFile(Exporter.ExportTypes anExportType) {
-        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Molecules.toString()) {
+        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.Molecules.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
@@ -790,28 +802,121 @@ public class MainViewController {
 
     /**
      * Opens OverviewView
+     *
+     * @param aDataSource Source of the data to be shown in the overview view
      */
-    private void openOverviewView() {
+    private void openOverviewView(OverviewViewController.DataSources aDataSource) {
         OverviewViewController tmpOverviewViewController;
-        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Molecules.toString()) {
-            tmpOverviewViewController = new OverviewViewController(
-                    this.primaryStage,
-                    ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
-                    getItemsListOfSelectedFragmenterByTabId(TabNames.Molecules)
-            );
-        } else if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId() == TabNames.Fragments.toString()) {
-            tmpOverviewViewController = new OverviewViewController(
-                    this.primaryStage,
-                    ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
-                    getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
-            );
-        } else {
-            GuiUtil.guiMessageAlert(        //TODO
-                    Alert.AlertType.INFORMATION,
-                    "Information",
-                    "No overview available for the currently selected tab.",
-                    null
-            );
+        try {
+            switch (aDataSource) {
+                case MOLECULES_TAB -> {
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Molecules.toString())))
+                        //should not happen
+                        throw new IllegalStateException();
+                    tmpOverviewViewController = new OverviewViewController(
+                            this.primaryStage,
+                            aDataSource,
+                            ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
+                            getItemsListOfSelectedFragmenterByTabId(TabNames.Molecules)
+                    );
+                }
+                case FRAGMENTS_TAB -> {
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())))
+                        //should not happen
+                        throw new IllegalStateException();
+                    tmpOverviewViewController = new OverviewViewController(
+                            this.primaryStage,
+                            aDataSource,
+                            ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
+                    );
+                }
+                case PARENT_MOLECULES_SAMPLE -> {
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())))
+                        //should not happen
+                        throw new IllegalStateException();
+                    //Parent-Molecules of the Fragments-Tab (showing all fragments of one molecule in the overview view)
+                    GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
+                    //IllegalStateException if there is more than one cell selected
+                    if (((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().size() > 1) {
+                        //should not happen
+                        throw new IllegalStateException();
+                    }
+                    //getting the data for the overview view
+                    List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>();
+                    int tmpSelectedRowIndex = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
+                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRowIndex;
+                    //adding the fragment itself
+                    tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
+                    //adding the sample of parent molecules
+                    tmpDataForOverviewView.addAll(((FragmentDataModel) ((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList)).getParentMolecules());
+                    tmpOverviewViewController = new OverviewViewController(
+                            this.primaryStage,
+                            OverviewViewController.DataSources.PARENT_MOLECULES_SAMPLE,
+                            null,
+                            tmpDataForOverviewView
+                    );
+                }
+                case ITEM_WITH_FRAGMENTS_SAMPLE -> {
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Itemization.toString())))
+                        //should not happen
+                        throw new IllegalStateException();
+                    //Items-Tab (showing all fragments of one molecule in the overview view)
+                    GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
+                    //IllegalStateException if there is more than one cell selected
+                    if (((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().size() > 1) {
+                        //should not happen
+                        throw new IllegalStateException();
+                    }
+                    //getting the data for the overview view
+                    List<MoleculeDataModel> tmpDataForOverviewView = new ArrayList<>();
+                    int tmpSelectedRowIndex = ((TableView<?>) tmpSelectedTab.getTableView()).getSelectionModel().getSelectedCells().get(0).getRow();
+                    int tmpIndexInDataList = tmpSelectedTab.getPagination().getCurrentPageIndex() * this.settingsContainer.getRowsPerPageSetting() + tmpSelectedRowIndex;
+                    //adding the item itself
+                    tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
+                    //adding the sample of fragments
+                    tmpDataForOverviewView.addAll(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
+                    tmpOverviewViewController = new OverviewViewController(
+                            this.primaryStage,
+                            OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE,
+                            null,
+                            tmpDataForOverviewView
+                    );
+                }
+                default -> {
+                    //should not happen
+                    throw new IllegalStateException();
+                }
+            }
+        } catch (IllegalStateException anIllegalStateException) {
+            MainViewController.LOGGER.log(Level.SEVERE, anIllegalStateException.toString(), anIllegalStateException);
+            return;
+        }
+        //
+        int tmpIndexOfMoleculeDataModelToReturnTo = tmpOverviewViewController.getCachedIndexOfStructureInMoleculeDataModelList();
+        //since -1 is returned, if no specific structure should be shown
+        if (tmpIndexOfMoleculeDataModelToReturnTo >= 0) {
+            //go to page showing the structure of the MoleculeDataModel with the given index
+            int tmpNewPageIndex = tmpIndexOfMoleculeDataModelToReturnTo / this.settingsContainer.getRowsPerPageSetting();
+            ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getPagination()
+                    .setCurrentPageIndex(tmpNewPageIndex);
+            TableView tmpSelectedTabTableView = ((GridTabForTableView) this.mainTabPane.getSelectionModel()
+                    .getSelectedItem()).getTableView();
+            if (tmpSelectedTabTableView.getClass() == MoleculesDataTableView.class) {
+                //select structure cell
+                int tmpRowIndexOfStructure = tmpIndexOfMoleculeDataModelToReturnTo
+                        % this.settingsContainer.getRowsPerPageSetting();
+                tmpSelectedTabTableView.getSelectionModel().clearSelection();
+                tmpSelectedTabTableView.getSelectionModel().select(tmpRowIndexOfStructure,
+                        ((MoleculesDataTableView) tmpSelectedTabTableView).getStructureColumn());
+            } else if (tmpSelectedTabTableView.getClass() == FragmentsDataTableView.class) {
+                //select structure cell
+                int tmpRowIndexOfStructure = tmpIndexOfMoleculeDataModelToReturnTo
+                        % this.settingsContainer.getRowsPerPageSetting();
+                tmpSelectedTabTableView.getSelectionModel().clearSelection();
+                tmpSelectedTabTableView.getSelectionModel().select(tmpRowIndexOfStructure,
+                        ((FragmentsDataTableView) tmpSelectedTabTableView).getStructureColumn());
+            }
         }
     }
     //
@@ -834,28 +939,28 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpMoleculesTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
+        tmpMoleculesTab.addPaginationToGridPane(tmpPagination);
+        HBox tmpFragmentationButtonsHBox = new HBox();
+        tmpFragmentationButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        tmpFragmentationButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpFragmentationButtonsHBox.setAlignment(Pos.CENTER_LEFT);
         this.fragmentationButton = new Button();
         this.fragmentationButton.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
         Tooltip tmpTooltip = new Tooltip();
         tmpTooltip.textProperty().bind(Bindings.format(Message.get("MainTabPane.moleculesTab.fragmentButton.text"), this.fragmentationService.selectedFragmenterNamePropertyProperty()));
         this.fragmentationButton.setTooltip(tmpTooltip);
-        this.moleculesTabButtonBar = new ButtonBar();
-        this.moleculesTabButtonBar.setPadding(new Insets(0, 0, 0, 0));
         double tmpTextWidth = new Text(this.fragmentationService.getSelectedFragmenterNameProperty()).getLayoutBounds().getWidth() + 20;
         this.fragmentationButton.setPrefWidth(tmpTextWidth);
         this.fragmentationButton.setMinWidth(tmpTextWidth);
         this.fragmentationButton.setMaxWidth(tmpTextWidth);
-        this.moleculesTabButtonBar.setButtonMinWidth(tmpTextWidth);
         this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.fragmentationService.selectedFragmenterNamePropertyProperty().addListener((observable, oldValue, newValue) -> {
             double tmpTextWidthChange = new Text(this.fragmentationService.getSelectedFragmenterNameProperty()).getLayoutBounds().getWidth() + 20;
             this.fragmentationButton.setPrefWidth(tmpTextWidthChange);
             this.fragmentationButton.setMinWidth(tmpTextWidthChange);
             this.fragmentationButton.setMaxWidth(tmpTextWidthChange);
-            this.moleculesTabButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         });
-        this.moleculesTabButtonBar.getButtons().add(this.fragmentationButton);
+        tmpFragmentationButtonsHBox.getChildren().add(this.fragmentationButton);
         this.cancelFragmentationButton = new Button(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.text"));
         this.cancelFragmentationButton.setTooltip(new Tooltip(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")));
         this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -863,14 +968,24 @@ public class MainViewController {
         this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.cancelFragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.cancelFragmentationButton.setVisible(false);;
-        this.moleculesTabButtonBar.getButtons().add(this.cancelFragmentationButton);
-        tmpMoleculesTab.addNodeToGridPane(this.moleculesTabButtonBar, 0, 1, 1, 1);
+        tmpFragmentationButtonsHBox.getChildren().add(this.cancelFragmentationButton);
+        tmpMoleculesTab.addNodeToGridPane(tmpFragmentationButtonsHBox, 0, 1, 1, 1);
         this.fragmentationButton.setOnAction(event -> {
             this.startFragmentation();
         });
         this.cancelFragmentationButton.setOnAction(event -> {
             this.interruptFragmentation();
         });
+        HBox tmpViewButtonsHBox = new HBox();
+        tmpViewButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        tmpViewButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpViewButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
+        tmpViewButtonsHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        Button tmpOpenOverviewViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showOverviewViewButton.text"));
+        tmpOpenOverviewViewButton.setTooltip(new Tooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
+        tmpViewButtonsHBox.getChildren().add(tmpOpenOverviewViewButton);
+        tmpMoleculesTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
+        tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.MOLECULES_TAB));
         this.moleculesDataTableView.addTableViewHeightListener(this.settingsContainer);
         this.moleculesDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView));
         this.moleculesDataTableView.setOnKeyPressed(event -> {
@@ -931,7 +1046,6 @@ public class MainViewController {
      */
     private void startFragmentation(boolean isPipelining) {
         long tmpStartTime = System.nanoTime();
-        this.moleculesTabButtonBar.setButtonMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.cancelFragmentationButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.cancelFragmentationButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.cancelFragmentationButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
@@ -1058,27 +1172,36 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpFragmentsTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
-        Button tmpExportCsvButton = new Button(Message.get("MainTabPane.fragments.buttonCSV.txt"));
+        tmpFragmentsTab.addPaginationToGridPane(tmpPagination);
+        Button tmpExportCsvButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCSV.txt"));
         tmpExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCSV.tooltip")));
-        Button tmpExportPdfButton = new Button(Message.get("MainTabPane.fragments.buttonPDF.txt"));
+        Button tmpExportPdfButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonPDF.txt"));
         tmpExportPdfButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonPDF.tooltip")));
-        Button tmpCancelExportButton = new Button(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
+        Button tmpCancelExportButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
         tmpCancelExportButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
         tmpCancelExportButton.visibleProperty().bind(this.isExportRunningProperty);
-        ButtonBar tmpButtonBarFragments = new ButtonBar();
-        tmpButtonBarFragments.setPadding(new Insets(0, 0, 0, 0));
-        tmpExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        tmpExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpExportPdfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        tmpExportPdfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpCancelExportButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        tmpCancelExportButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpButtonBarFragments.getButtons().addAll(tmpExportCsvButton, tmpExportPdfButton, tmpCancelExportButton);
-        tmpFragmentsTab.addNodeToGridPane(tmpButtonBarFragments, 0, 1, 1, 1);
+        HBox tmpExportButtonsHBox = new HBox();
+        tmpExportButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        tmpExportButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpExportButtonsHBox.setAlignment(Pos.CENTER_LEFT);
+        tmpExportButtonsHBox.getChildren().addAll(tmpExportCsvButton, tmpExportPdfButton, tmpCancelExportButton);
+        tmpFragmentsTab.addNodeToGridPane(tmpExportButtonsHBox, 0, 1, 1, 1);
         tmpExportPdfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.FRAGMENT_PDF_FILE));
         tmpExportCsvButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.FRAGMENT_CSV_FILE));
         tmpCancelExportButton.setOnAction(event -> this.interruptExport());
+        HBox tmpViewButtonsHBox = new HBox();
+        tmpViewButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        tmpViewButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpViewButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
+        tmpViewButtonsHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        Button tmpOpenOverviewViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showOverviewViewButton.text"));
+        tmpOpenOverviewViewButton.setTooltip(new Tooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
+        Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
+        tmpOpenHistogramViewButton.setTooltip(new Tooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
+        tmpViewButtonsHBox.getChildren().addAll(tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
+        tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
+        tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
+        tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
@@ -1090,6 +1213,7 @@ public class MainViewController {
         });
         tmpFragmentsDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpFragmentsDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView));
+        tmpFragmentsDataTableView.getOverviewViewMenuItem().setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.PARENT_MOLECULES_SAMPLE));
         tmpFragmentsDataTableView.setOnKeyPressed(event -> {
             if (GuiDefinitions.KEY_CODE_COPY.match(event)) {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
@@ -1121,27 +1245,33 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        tmpItemizationTab.addPaginationToGridPane(tmpPagination, 0, 0, 2, 2);
-        Button tmpItemizationTabExportPDfButton = new Button(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
+        tmpItemizationTab.addPaginationToGridPane(tmpPagination);
+        Button tmpItemizationTabExportPDfButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
         tmpItemizationTabExportPDfButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.pdfButton.tooltip")));
-        Button tmpItemizationExportCsvButton = new Button(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
+        Button tmpItemizationExportCsvButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
         tmpItemizationExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.csvButton.tooltip")));
-        ButtonBar tmpButtonBarItemization = new ButtonBar();
-        tmpButtonBarItemization.setPadding(new Insets(0, 0, 0, 0));
-        tmpItemizationExportCsvButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        tmpItemizationExportCsvButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpItemizationTabExportPDfButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        tmpItemizationTabExportPDfButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        Button tmpCancelExportButton = new Button(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
+        Button tmpCancelExportButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
         tmpCancelExportButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
         tmpCancelExportButton.visibleProperty().bind(this.isExportRunningProperty);
-        tmpCancelExportButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        tmpCancelExportButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpButtonBarItemization.getButtons().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton, tmpCancelExportButton);
-        tmpItemizationTab.addNodeToGridPane(tmpButtonBarItemization, 0, 1, 1, 1);
         tmpItemizationExportCsvButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_CSV_FILE));
         tmpItemizationTabExportPDfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_PDF_FILE));
         tmpCancelExportButton.setOnAction(event -> this.interruptExport());
+        HBox tmpExportButtonsHBox = new HBox();
+        tmpExportButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        tmpExportButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpExportButtonsHBox.setAlignment(Pos.CENTER_LEFT);
+        tmpExportButtonsHBox.getChildren().addAll(tmpItemizationExportCsvButton, tmpItemizationTabExportPDfButton, tmpCancelExportButton);
+        tmpItemizationTab.addNodeToGridPane(tmpExportButtonsHBox, 0, 1, 1, 1);
+        HBox tmpViewButtonsHBox = new HBox();
+        tmpViewButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
+        tmpViewButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpViewButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
+        tmpViewButtonsHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
+        tmpOpenHistogramViewButton.setTooltip(new Tooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
+        tmpViewButtonsHBox.getChildren().add(tmpOpenHistogramViewButton);
+        tmpItemizationTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
+        tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
@@ -1152,6 +1282,7 @@ public class MainViewController {
         });
         tmpItemizationDataTableView.addTableViewHeightListener(this.settingsContainer);
         tmpItemizationDataTableView.getCopyMenuItem().setOnAction(event -> GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView));
+        tmpItemizationDataTableView.getOverviewViewMenuItem().setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE));
         tmpItemizationDataTableView.setOnKeyPressed(event -> {
             if (GuiDefinitions.KEY_CODE_COPY.match(event)) {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView);

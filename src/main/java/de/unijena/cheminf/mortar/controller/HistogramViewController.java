@@ -521,7 +521,7 @@ public class HistogramViewController {
         });
         tmpCopyStructureMenuItem.setOnAction(event -> {
             ClipboardContent tmpStructureClipboardContent = new ClipboardContent();
-            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(this.atomContainer,12.0,1500, 1000, true, true);
+            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(this.atomContainer,12.0, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT, true, true);
             tmpStructureClipboardContent.putImage(tmpCopyImageOnBar);
             Clipboard.getSystemClipboard().setContent(tmpStructureClipboardContent);
         });

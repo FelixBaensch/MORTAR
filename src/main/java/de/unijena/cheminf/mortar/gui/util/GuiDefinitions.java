@@ -97,9 +97,21 @@ public final class GuiDefinitions {
      */
     public static final double GUI_PAGINATION_CONTROL_PANEL_HEIGHT = 45.0;
     /**
+     * Width of the third column of gid panes used to align nodes
+     */
+    public static final double GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH = 200.0;
+    /**
      * Max width of tooltip
      */
     public static final double GUI_TOOLTIP_MAX_WIDTH = 500.0;
+    /**
+     * Width of an image copied to clipboard
+     */
+    public static final double GUI_COPY_IMAGE_IMAGE_WIDTH = 1500.0;
+    /**
+     * Height of an image copied to clipboard
+     */
+    public static final double GUI_COPY_IMAGE_IMAGE_HEIGHT = 1000.0;
     /**
      * Width of grid lines of the structure grid pane in overview view
      */
@@ -112,11 +124,6 @@ public final class GuiDefinitions {
      * Minimum value for the height of structure images displayed in the overview view
      */
     public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = 20.0;
-    /**
-     * Ratio of the top inset of the horizontal boxes placed in the bottom left and right corner of the overview view
-     * to the GuiDefinitions constant GUI_INSETS_VALUE
-     */
-    public static final double OVERVIEW_VIEW_BOTTOM_HBOX_TOP_INSET_TO_GUI_INSETS_VALUE_RATIO = 1.0;
     /**
      * Width of columns and rows per page label of the overview view
      */
@@ -138,13 +145,17 @@ public final class GuiDefinitions {
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
     /**
-     * Initial width of the image to be displayed in the enlarged structure view.
+     * Initial width of the enlarged structure view's scene
      */
-    public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_WIDTH = 500.0;
+    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH = 500.0;
     /**
-     * Initial height of the image to be displayed in the enlarged structure view.
+     * Initial height of the enlarged structure view's scene
      */
-    public static final double ENLARGED_STRUCTURE_VIEW_INITIAL_IMAGE_HEIGHT = 400.0;
+    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT = 400.0;
+    /**
+     * Ratio of width and height of the enlarged structure view's structure image to the one of its parent stack pane
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO = 0.9;
     /**
      * KeyCodeCombination for Control + C
      */
@@ -157,6 +168,10 @@ public final class GuiDefinitions {
      * KeyCodeCombination to navigate to first page of pagination
      */
     public static final KeyCodeCombination KEY_CODE_FIRST_PAGE = new KeyCodeCombination(KeyCode.LEFT, KeyCombination.CONTROL_DOWN);
+    /**
+     * Value for the delay of a second click to be registered as double-click (in ms)
+     */
+    public static final int DOUBLE_CLICK_DELAY = 250;
     /**
      * Value for the width of the image corresponding to the structure of the fragments
      */
