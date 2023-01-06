@@ -45,6 +45,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
@@ -416,6 +418,32 @@ public class OverviewViewController {
             if (!this.overviewView.getRowsPerPageTextField().getText()
                     .equals(Integer.toString(this.rowsPerPage))) {
                 this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPage));
+            }
+        });
+        //
+        //event handlers for controlling the pagination via keys
+        this.overviewViewStage.getScene().addEventHandler(KeyEvent.KEY_PRESSED, keyEvent -> {
+            /*GridTabForTableView tmpGrid = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem());
+            if (tmpGrid == null) {
+                keyEvent.consume();
+                return;
+            }*/
+            Pagination tmpPagination = this.overviewView.getPagination();
+            if (GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.END) {
+                tmpPagination.setCurrentPageIndex(tmpPagination.getPageCount() - 1);
+                keyEvent.consume();
+            }
+            else if (GuiDefinitions.KEY_CODE_FIRST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.HOME) {
+                tmpPagination.setCurrentPageIndex(0);
+                keyEvent.consume();
+            }
+            else if (keyEvent.getCode() == KeyCode.RIGHT || keyEvent.getCode() == KeyCode.PAGE_UP) {
+                tmpPagination.setCurrentPageIndex(tmpPagination.getCurrentPageIndex() + 1);
+                keyEvent.consume();
+            }
+            else if (keyEvent.getCode() == KeyCode.LEFT || keyEvent.getCode() == KeyCode.PAGE_DOWN) {
+                tmpPagination.setCurrentPageIndex(tmpPagination.getCurrentPageIndex() - 1);
+                keyEvent.consume();
             }
         });
     }
