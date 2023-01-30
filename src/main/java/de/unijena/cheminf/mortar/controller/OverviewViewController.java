@@ -423,11 +423,6 @@ public class OverviewViewController {
         //
         //event handlers for controlling the pagination via keys
         this.overviewViewStage.getScene().addEventHandler(KeyEvent.KEY_PRESSED, keyEvent -> {
-            /*GridTabForTableView tmpGrid = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem());
-            if (tmpGrid == null) {
-                keyEvent.consume();
-                return;
-            }*/
             Pagination tmpPagination = this.overviewView.getPagination();
             if (GuiDefinitions.KEY_CODE_LAST_PAGE.match(keyEvent) || keyEvent.getCode() == KeyCode.END) {
                 tmpPagination.setCurrentPageIndex(tmpPagination.getPageCount() - 1);
