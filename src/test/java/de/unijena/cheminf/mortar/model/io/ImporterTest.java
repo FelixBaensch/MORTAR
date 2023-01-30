@@ -21,8 +21,12 @@
 package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import org.junit.Assert;
 import org.junit.Test;
 
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Locale;
@@ -112,5 +116,28 @@ public class ImporterTest extends Importer {
          */
         tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
         this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+
+        /*
+        Expected output:    2 parsable lines
+                            2 invalid lines
+        Test file's specifications:
+        - headline and blank line first
+        - three elements per line
+        - SMILES first in line, ID second and a neglectable third element
+        - third element in line
+        - used separator: "\t"
+         */
+        tmpURL = this.getClass().getResource("SMILESTestFileFive.txt");
+        IAtomContainerSet tmpAtomContainerSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        //
+        String[] tmpTestFileFiveSmiles = new String[] {"OC=1C=C(O)C=C(C1)C=2OC=3C=CC=CC3C2", "OC=1C=C(O)C(=C(C1)C(C)C(O)C)C"};
+        String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
+        int i = 0;
+        for (IAtomContainer tmpAtomContainer :
+                tmpAtomContainerSet.atomContainers()) {
+            Assert.assertEquals(ChemUtil.createUniqueSmiles(tmpAtomContainer), tmpTestFileFiveSmiles[i]);
+            Assert.assertEquals(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), tmpTestFileFiveIDs[i]);
+            i++;
+        }
     }
 }
