@@ -26,8 +26,8 @@ currently integrated methods for fragmentation and substructure analysis -
 and <a href="https://github.com/Julian-Z98/ScaffoldGenerator">Scaffold Generator</a> - MORTAR allows straightforward integration of 
 additional fragmentation algorithms with automatic generation of settings 
 menus. All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
-The preprint of a scientific article describing MORTAR can be found here: 
-<a href="https://doi.org/10.26434/chemrxiv-2022-zgg8s"> https://doi.org/10.26434/chemrxiv-2022-zgg8s </a>
+The scientific article describing MORTAR can be found here: 
+<a href="https://doi.org/10.1186/s13321-022-00674-9"> MORTAR: a rich client application for in silico molecule fragmentation (Baensch et al. 2023) </a>
 
 ## Contents of this repository
 ### Sources
@@ -122,8 +122,9 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", 
   * License: GNU Lesser General Public License 2.1
 
 ## Citation
-You can cite this software or this repository as it is defined in the CITATION.cff file. Also, the preprint of our submitted
-software article can be cited (<a href="https://doi.org/10.26434/chemrxiv-2022-zgg8s"> https://doi.org/10.26434/chemrxiv-2022-zgg8s </a>).
+You can cite this software or this repository as it is defined in the CITATION.cff file. Also, please cite our scientific 
+article (<a href= "https://doi.org/10.1186/s13321-022-00674-9"> MORTAR: a rich client application for in silico molecule 
+fragmentation (Baensch et al. 2023)).
 
 ## References and useful links
 **Ertl algorithm**
