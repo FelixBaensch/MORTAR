@@ -438,6 +438,7 @@ public class MainViewController {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
             }
+            this.fragmentationService.clearCache();
         }
         Importer tmpImporter = new Importer(this.settingsContainer);
         File tmpFile = tmpImporter.openFile(aParentStage);

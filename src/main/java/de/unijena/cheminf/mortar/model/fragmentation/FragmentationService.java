@@ -790,6 +790,15 @@ public class FragmentationService {
             this.executorService.shutdownNow();
         }
     }
+
+    /**
+     * Clears all cached variables like existingFragmentations and fragments
+     */
+    public void clearCache(){
+        this.existingFragmentations = new LinkedList<String>();;
+        this.fragments.clear();
+        this.currentFragmentationName = null;
+    }
     //</editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
