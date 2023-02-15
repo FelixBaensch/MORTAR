@@ -144,7 +144,7 @@ public final class BasicDefinitions {
     /**
      * Version of application
      */
-    public static final String MORTAR_VERSION = "1.0.6.0";
+    public static final String MORTAR_VERSION = "1.1.0.0";
     //</editor-fold>
     //
     //<editor-fold desc="GitHub repository url">
