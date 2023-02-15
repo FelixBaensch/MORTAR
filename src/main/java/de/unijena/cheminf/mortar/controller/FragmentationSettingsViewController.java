@@ -27,9 +27,11 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragment
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
+import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -104,6 +106,8 @@ public class FragmentationSettingsViewController {
         this.fragmentationSettingsViewStage.setTitle(Message.get("FragmentationSettingsView.title.text"));
         this.fragmentationSettingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.fragmentationSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
+        InputStream tmpImageInputStream = FragmentationSettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
+        this.fragmentationSettingsViewStage.getIcons().add(new Image(tmpImageInputStream));
         //
         this.addListener();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
