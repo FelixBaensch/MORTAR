@@ -25,8 +25,7 @@ import javafx.scene.image.ImageView;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -63,7 +62,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * List of parent molecules, which contains this fragment
      */
-    private List<MoleculeDataModel> parentMolecules;
+    private HashSet<MoleculeDataModel> parentMolecules;
     //
     /**
      * First or random parent molecule which contains this fragment
@@ -76,7 +75,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     private static final Logger LOGGER = Logger.getLogger(FragmentDataModel.class.getName());
     //
     /**
-     * Constructor, sets absolute frequency to 1. Molecular information is taken from the given unique SMILES code. The
+     * Constructor, sets absolute frequency to 0. Molecular information is taken from the given unique SMILES code. The
      * data is not kept as atom container.
      *
      * @param aUniqueSmiles unique SMILES code
@@ -90,11 +89,11 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = new LinkedList<>();
+        this.parentMolecules = new HashSet<>(); //check if this must be a type of concurrent list
     }
     //
     /**
-     * Constructor, sets absolute frequency to 1. Retains the given data as atom container.
+     * Constructor, sets absolute frequency to 0. Retains the given data as atom container.
      *
      * @param anAtomContainer AtomContainer of the molecule
      * @throws NullPointerException if given SMILES string is null
@@ -105,7 +104,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = new LinkedList<>();
+        this.parentMolecules = new HashSet<>();
     }
     //
     /**
@@ -159,7 +158,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Returns list of parent molecules which contains this fragment
      * @return list of parent molecules
      */
-    public List<MoleculeDataModel> getParentMolecules(){
+    public HashSet<MoleculeDataModel> getParentMolecules(){
         return this.parentMolecules;
     }
     //
@@ -173,7 +172,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.get(0);
+            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
         }
         return this.parentMolecule;
     }
@@ -189,7 +188,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.get(0);
+            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
         }
         try {
             IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
@@ -210,7 +209,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-           this.parentMolecule = this.parentMolecules.get(0);
+           this.parentMolecule = this.parentMolecules.stream().findFirst().get();
         }
         return this.parentMolecule.getName();
     }
