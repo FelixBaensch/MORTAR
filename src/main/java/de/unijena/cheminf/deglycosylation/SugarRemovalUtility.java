@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022 Jonas Schaub, Achim Zielesny, Christoph Steinbeck, Maria Sorokina
+ * Copyright (C) 2023 Jonas Schaub, Achim Zielesny, Christoph Steinbeck, Maria Sorokina
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

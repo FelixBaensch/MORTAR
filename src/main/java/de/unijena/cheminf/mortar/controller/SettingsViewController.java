@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -27,9 +27,11 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,6 +105,8 @@ public class SettingsViewController {
         this.settingsViewStage.setTitle(Message.get("SettingsView.title.default.text"));
         this.settingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.settingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
+        InputStream tmpImageInputStream = SettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
+        this.settingsViewStage.getIcons().add(new Image(tmpImageInputStream));
         Platform.runLater(()->{
             this.addListeners();
             this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title.text"),

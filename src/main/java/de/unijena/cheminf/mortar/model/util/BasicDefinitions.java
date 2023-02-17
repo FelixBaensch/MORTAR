@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -144,7 +144,7 @@ public final class BasicDefinitions {
     /**
      * Version of application
      */
-    public static final String MORTAR_VERSION = "1.0.6.0";
+    public static final String MORTAR_VERSION = "1.1.0.0";
     //</editor-fold>
     //
     //<editor-fold desc="GitHub repository url">
