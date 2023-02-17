@@ -90,7 +90,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = ConcurrentHashMap.newKeySet();
+        this.parentMolecules = ConcurrentHashMap.newKeySet(); // sounds weird but to set the number of the total molecule set kills the performance
     }
     //
     /**
@@ -105,7 +105,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = ConcurrentHashMap.newKeySet();
+        this.parentMolecules = ConcurrentHashMap.newKeySet(); // sounds weird but to set the number of the total molecule set kills the performance
     }
     //
     /**
