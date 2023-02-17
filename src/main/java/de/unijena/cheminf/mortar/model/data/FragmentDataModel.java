@@ -25,9 +25,10 @@ import javafx.scene.image.ImageView;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,7 +63,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * List of parent molecules, which contains this fragment
      */
-    private HashSet<MoleculeDataModel> parentMolecules;
+    private Set<MoleculeDataModel> parentMolecules;
     //
     /**
      * First or random parent molecule which contains this fragment
@@ -89,7 +90,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = new HashSet<>(); //check if this must be a type of concurrent list
+        this.parentMolecules = ConcurrentHashMap.newKeySet();
     }
     //
     /**
@@ -104,7 +105,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = new HashSet<>();
+        this.parentMolecules = ConcurrentHashMap.newKeySet();
     }
     //
     /**
@@ -158,7 +159,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Returns list of parent molecules which contains this fragment
      * @return list of parent molecules
      */
-    public HashSet<MoleculeDataModel> getParentMolecules(){
+    public Set<MoleculeDataModel> getParentMolecules(){
         return this.parentMolecules;
     }
     //
