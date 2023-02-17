@@ -508,6 +508,7 @@ public class MainViewController {
                         + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
                 this.updateStatusBar(this.importerThread, Message.get("Status.imported"));
                 this.isImportRunningProperty.setValue(false);
+                this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");
                 this.openMoleculesTab();
             });
         });
