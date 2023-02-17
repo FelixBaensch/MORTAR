@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Julian Zander, Jonas Schaub, Achim Zielesny, Christoph Steinbeck
+ * Copyright (C) 2023 Julian Zander, Jonas Schaub, Achim Zielesny, Christoph Steinbeck
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License

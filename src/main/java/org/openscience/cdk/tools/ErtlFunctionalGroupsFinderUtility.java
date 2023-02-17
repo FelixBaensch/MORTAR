@@ -1,6 +1,6 @@
 /*
  * Utilities for ErtlFunctionalGroupsFinder for CDK
- * Copyright (C) 2022 Jonas Schaub
+ * Copyright (C) 2023 Jonas Schaub
  *
  * Source code is available at <https://github.com/zielesny/ErtlFunctionalGroupsFinder>
  *
