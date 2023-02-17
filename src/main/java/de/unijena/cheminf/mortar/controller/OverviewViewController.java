@@ -256,6 +256,9 @@ public class OverviewViewController {
         if (this.moleculeDataModelList.size() % (this.rowsPerPage * this.columnsPerPage) > 0) {
             tmpPageCount++;
         }
+        if(this.moleculeDataModelList.size() == 0){
+            tmpPageCount = 1;
+        }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory((aPageIndex) -> this.createOverviewViewPage(aPageIndex,

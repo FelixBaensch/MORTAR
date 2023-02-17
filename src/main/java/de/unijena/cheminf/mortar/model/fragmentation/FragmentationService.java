@@ -796,7 +796,7 @@ public class FragmentationService {
      */
     public void clearCache(){
         this.existingFragmentations = new LinkedList<String>();;
-        this.fragments.clear();
+        this.fragments = null;
         this.currentFragmentationName = null;
     }
     //</editor-fold>

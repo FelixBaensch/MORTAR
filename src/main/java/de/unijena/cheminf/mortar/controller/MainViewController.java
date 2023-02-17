@@ -936,6 +936,9 @@ public class MainViewController {
         if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
+        if(this.moleculeDataModelList.size() == 0){
+            tmpPageCount = 1;
+        }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer));
@@ -1169,6 +1172,9 @@ public class MainViewController {
         if (tmpList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
+        if(tmpList.size() == 0){
+            tmpPageCount = 1;
+        }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory((pageIndex) -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer));
@@ -1241,6 +1247,9 @@ public class MainViewController {
         int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
         if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
+        }
+        if(this.moleculeDataModelList.size() == 0){
+            tmpPageCount = 1;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
