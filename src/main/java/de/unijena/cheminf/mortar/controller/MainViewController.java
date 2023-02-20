@@ -1172,7 +1172,7 @@ public class MainViewController {
         if (tmpList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
-        if(tmpList.size() == 0){
+        if(tmpList.isEmpty() || tmpList.size() == 0){
             tmpPageCount = 1;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
@@ -1210,6 +1210,10 @@ public class MainViewController {
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
+        if(tmpList.size() == 0){
+            tmpOpenOverviewViewButton.setDisable(true);
+            tmpOpenHistogramViewButton.setDisable(true);
+        }
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
@@ -1248,7 +1252,7 @@ public class MainViewController {
         if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
             tmpPageCount++;
         }
-        if(this.moleculeDataModelList.size() == 0){
+        if(this.moleculeDataModelList.isEmpty() || this.moleculeDataModelList.size() == 0){
             tmpPageCount = 1;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
@@ -1299,6 +1303,9 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpItemizationDataTableView);
             }
         });
+        if(this.mapOfFragmentDataModelLists.get(aFragmentationName).size() == 0 ){
+            tmpOpenHistogramViewButton.setDisable(true);
+        }
         return tmpItemizationTab;
     }
     //
