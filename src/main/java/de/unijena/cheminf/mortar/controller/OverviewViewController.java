@@ -87,6 +87,17 @@ public class OverviewViewController {
     private static final Logger LOGGER = Logger.getLogger(OverviewViewController.class.getName());
     //</editor-fold>
     //
+    //<editor-fold desc="private static class variables" defaultstate="collapsed">
+    /**
+     * Work around to cache the columns per page. Will be removed in later version.
+     */
+    private static int columnsPerPageCache = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
+    /**
+     * Work around to cache the rows per page. Will be removed in later version.
+     */
+    private static int rowsPerPageCache =  GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
+    //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Main stage object of the application.
@@ -215,8 +226,13 @@ public class OverviewViewController {
         this.mainStage = aMainStage;
         this.dataSource = aDataSource;
         this.moleculeDataModelList = aMoleculeDataModelList;
-        this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
-        this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
+//        this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
+//        this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;\
+        /**
+         * Work around to cache the columns and rows per page. Will be removed in later version.
+         */
+        this.rowsPerPage = OverviewViewController.rowsPerPageCache;
+        this.columnsPerPage = OverviewViewController.columnsPerPageCache;
         //creating an empty structureGridPane at first by setting createStructureImages to false
         this.createStructureImages = false;
         //initializing the cached index with -1 as marker whether the value has been changed
@@ -679,6 +695,9 @@ public class OverviewViewController {
             //get the text field entries
             tmpNewColumnsPerPageValue = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
             tmpNewRowsPerPageValue = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
+            // workaround, will be removed in later version
+            OverviewViewController.columnsPerPageCache = tmpNewColumnsPerPageValue;
+            OverviewViewController.rowsPerPageCache = tmpNewRowsPerPageValue;
         }
         /*
         checking whether the entries are valid; entries get set to zero if a user presses enter on an empty text field;
