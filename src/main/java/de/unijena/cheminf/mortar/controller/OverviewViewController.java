@@ -695,10 +695,10 @@ public class OverviewViewController {
             //get the text field entries
             tmpNewColumnsPerPageValue = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
             tmpNewRowsPerPageValue = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
-            // workaround, will be removed in later version
-            OverviewViewController.columnsPerPageCache = tmpNewColumnsPerPageValue;
-            OverviewViewController.rowsPerPageCache = tmpNewRowsPerPageValue;
         }
+        // workaround, will be removed in later version
+        OverviewViewController.columnsPerPageCache = tmpNewColumnsPerPageValue;
+        OverviewViewController.rowsPerPageCache = tmpNewRowsPerPageValue;
         /*
         checking whether the entries are valid; entries get set to zero if a user presses enter on an empty text field;
         if so, the user gets informed via a message alert and the empty text field gets reset to its former value via
