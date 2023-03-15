@@ -29,7 +29,11 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
 
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
@@ -69,41 +73,130 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Controller class for the HistogramView
  *
- * @author Betuel Sevindik
- * @version 1.0.0.0
+ * @author Betuel Sevindik, Jonas Schaub
+ * @version 1.0.1.0
  */
-public class HistogramViewController {
+public class HistogramViewController implements IViewToolController {
+    /**
+     * Enum for the available bar spacing width options.
+     */
+    public static enum BarWidthOption {
+        SMALL,
+        MEDIUM,
+        LARGE;
+    }
+    /**
+     * Enum for the available frequency options, i.e. which frequency of the fragments to display, the absolute frequency
+     * or the molecule frequency.
+     */
+    public static enum FrequencyOptions {
+        MOLECULE_FREQUENCY,
+        ABSOLUTE_FREQUENCY;
+    }
     //<editor-fold desc="public static final class variables" defaultstate="collapsed">
     /**
-     * Default value for the number of initially displayed fragments.
+     * Default value for the number of displayed fragments.
      */
     public static final int DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS = 30;
     /**
-     * Default SMILES length at creation of histogram view.
+     * Default maximum SMILES length for display on the bar labels.
      */
     public static final int DEFAULT_MAX_SMILES_LENGTH = 25;
+    /**
+     * Default of bar spacing width.
+     */
+    public static final BarWidthOption DEFAULT_BAR_WIDTH = BarWidthOption.LARGE;
+    /**
+     * Default fragment frequency to display.
+     */
+    public static final FrequencyOptions DEFAULT_DISPLAY_FREQUENCY = FrequencyOptions.ABSOLUTE_FREQUENCY;
+    /**
+     * Default for whether bar labels (the fragment frequencies) should be displayed.
+     */
+    public static boolean DEFAULT_DISPLAY_BAR_LABELS_SETTING = true;
+    /**
+     * Default for whether bar shadows should be displayed in the histogram.
+     */
+    public static boolean DEFAULT_DISPLAY_BAR_SHADOWS_SETTING = true;
+    /**
+     * Default for whether to display vertical and horizontal grid lines in the histogram.
+     */
+    public static boolean DEFAULT_DISPLAY_GRID_LINES_SETTING = false;
+    /**
+     * Default for whether the fragment SMILES codes should be displayed on the y-axis.
+     */
+    public static boolean DEFAULT_DISPLAY_SMILES_SETTING = true;
+    /**
+     * View tool name for display in the GUI.
+     */
+    public static final String VIEW_TOOL_NAME_FOR_DISPLAY = Message.get("MainView.menuBar.viewsMenu.HistogramMenuItem.text"); //TODO move
     //</editor-fold>
     //
-    //<editor-fold desc="private final class variables" defaultstate="collapsed">
-    /**
-     * Stage for the MainView
-     */
-    private final Stage mainStage;
+    //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
      * Logger of this class
      */
     private static final Logger LOGGER = Logger.getLogger(HistogramViewController.class.getName());
     //</editor-fold>
     //
+    //<editor-fold desc="private final class variables" defaultstate="collapsed">
+    /**
+     * Setting for number of displayed fragments.
+     */
+    private final SimpleIntegerProperty displayedFragmentsNumberSetting;
+    /**
+     * Setting for width of spaces between the histogram bars.
+     */
+    private final SimpleEnumConstantNameProperty barWidthSetting;
+    /**
+     * Setting for which fragment frequency to display.
+     */
+    private final SimpleEnumConstantNameProperty displayFrequencySetting;
+    /**
+     * Setting for maximum SMILES length to display.
+     */
+    private final SimpleIntegerProperty maximumSMILESLengthSetting;
+    /**
+     * Setting for whether to display bar labels, i.e. the frequencies of the respective fragment.
+     */
+    private final SimpleBooleanProperty displayBarLabelsSetting;
+    /**
+     * Setting for whether to display bar shadows.
+     */
+    private final SimpleBooleanProperty displayBarShadowsSetting;
+    /**
+     * Setting for whether to display vertical and horizontal grid lines in the histogram.
+     */
+    private final SimpleBooleanProperty displayGridLinesSetting;
+    /**
+     * Setting for whether to display SMILES codes as labels on the y-axis.
+     */
+    private final SimpleBooleanProperty displaySMILESSetting;
+    /**
+     * All settings of this view tool, encapsulated in JavaFX properties for binding in GUI and persistence.
+     */
+    private final List<Property> settings;
+    /**
+     * Map to store pairs of {@literal <setting name, tooltip text>}.
+     */
+    private final HashMap<String, String> settingNameTooltipTextMap;
+    //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * Stage for the MainView
+     */
+    private Stage mainStage;
     /**
      * HistogramView
      */
@@ -113,9 +206,9 @@ public class HistogramViewController {
      */
     private Stage histogramStage;
     /**
-     * Copy of list
+     * List of fragments to display.
      */
-    private List<MoleculeDataModel> copyList;
+    private List<MoleculeDataModel> fragmentListCopy;
     /**
      * Width of the images
      */
@@ -135,69 +228,207 @@ public class HistogramViewController {
     /**
      * Histogram chart
      */
-   private BarChart histogramChart;
+    private BarChart histogramChart;
     /**
-     * AtomContainer to depict structures
+     * Atom container to depict structures
      */
-   private IAtomContainer atomContainer;
-    /**
-     * Current value for the number of fragments displayed
-     */
-    private int displayedFragmentsNumber;
+    private IAtomContainer atomContainer;
     //</editor-fold>
     //
+
     /**
-     * Constructor
+     * Constructor, initialises all settings with their default values.
+     */
+    public HistogramViewController()  {
+        this.imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
+        this.imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
+        this.imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
+        this.settingNameTooltipTextMap = new HashMap<>(10, 0.9f);
+        this.settings = new ArrayList<Property>(8);
+        this.displayedFragmentsNumberSetting = new SimpleIntegerProperty(this,
+                Message.get("HistogramView.DisplayedFragmentsNumberSetting.Name"), //TODO
+                HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
+            @Override
+            public void set(int newValue) throws NullPointerException, IllegalArgumentException {
+                super.set(newValue);
+                //TODO do not react here because the setting is only changed when you hit apply?
+            }
+        };
+        this.settings.add(this.displayedFragmentsNumberSetting);
+        this.settingNameTooltipTextMap.put(this.displayedFragmentsNumberSetting.getName(),
+                Message.get("HistogramView.DisplayedFragmentsNumberSetting.Tooltip")); //TODO
+        this.barWidthSetting = new SimpleEnumConstantNameProperty(this,
+                Message.get("HistogramView.BarWidthSetting.Name"), //TODO
+                HistogramViewController.DEFAULT_BAR_WIDTH.name(),
+                HistogramViewController.BarWidthOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                super.set(newValue);
+                //TODO do not react here because the setting is only changed when you hit apply?
+            }
+        };
+        this.settings.add(this.barWidthSetting);
+        this.settingNameTooltipTextMap.put(this.barWidthSetting.getName(),
+                Message.get("HistogramView.BarWidthSetting.Tooltip")); //TODO
+        this.displayFrequencySetting = new SimpleEnumConstantNameProperty(this,
+                Message.get("HistogramView.DisplayFrequencySetting.Name"), //TODO
+                HistogramViewController.DEFAULT_DISPLAY_FREQUENCY.name(),
+                HistogramViewController.BarWidthOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                super.set(newValue);
+                //TODO do not react here because the setting is only changed when you hit apply?
+            }
+        };
+        this.settings.add(this.displayedFragmentsNumberSetting);
+        this.settingNameTooltipTextMap.put(this.displayFrequencySetting.getName(),
+                Message.get("HistogramView.DisplayFrequencySetting.Tooltip")); //TODO
+        this.maximumSMILESLengthSetting = new SimpleIntegerProperty(this,
+                Message.get("HistogramView.MaximumSMILESLengthSetting.Name"), //TODO
+                HistogramViewController.DEFAULT_MAX_SMILES_LENGTH) {
+            @Override
+            public void set(int newValue) throws NullPointerException, IllegalArgumentException {
+                super.set(newValue);
+                //TODO do not react here because the setting is only changed when you hit apply?
+            }
+        };
+        this.settings.add(this.maximumSMILESLengthSetting);
+        this.settingNameTooltipTextMap.put(this.maximumSMILESLengthSetting.getName(),
+                Message.get("HistogramView.MaximumSMILESLengthSetting.Tooltip")); //TODO
+        this.displayBarLabelsSetting = new SimpleBooleanProperty(this,
+                Message.get("HistogramView.DisplayBarLabelsSetting.Name"), //TODO
+                HistogramViewController.DEFAULT_DISPLAY_BAR_LABELS_SETTING) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                //TODO react!
+            }
+        };
+        this.settings.add(this.displayBarLabelsSetting);
+        this.settingNameTooltipTextMap.put(this.displayBarLabelsSetting.getName(),
+                Message.get("HistogramView.DisplayBarLabelsSetting.Tooltip")); //TODO
+        this.displayBarShadowsSetting = new SimpleBooleanProperty(this,
+                Message.get("HistogramView.DisplayBarShadowsSetting.Name"), //TODO
+                HistogramViewController.DEFAULT_DISPLAY_BAR_SHADOWS_SETTING) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                //TODO react!
+            }
+        };
+        this.settings.add(this.displayBarShadowsSetting);
+        this.settingNameTooltipTextMap.put(this.displayBarShadowsSetting.getName(),
+                Message.get("HistogramView.DisplayBarShadowsSetting.Tooltip")); //TODO
+        this.displayGridLinesSetting = new SimpleBooleanProperty(this,
+                Message.get("HistogramView.DisplayGridLinesSetting.Name"), //TODO
+                HistogramViewController.DEFAULT_DISPLAY_GRID_LINES_SETTING) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                //TODO react!
+            }
+        };
+        this.settings.add(this.displayGridLinesSetting);
+        this.settingNameTooltipTextMap.put(this.displayGridLinesSetting.getName(),
+                Message.get("HistogramView.DisplayGridLinesSetting.Tooltip")); //TODO
+        this.displaySMILESSetting = new SimpleBooleanProperty(this,
+                Message.get("HistogramView.DisplaySMILESSetting.Name"), //TODO
+                HistogramViewController.DEFAULT_DISPLAY_SMILES_SETTING) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                //TODO react!
+            }
+        };
+        this.settings.add(this.displaySMILESSetting);
+        this.settingNameTooltipTextMap.put(this.displaySMILESSetting.getName(),
+                Message.get("HistogramView.DisplaySMILESSetting.Tooltip")); //TODO
+    }
+    //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
+
+    @Override
+    public List<Property> settingsProperties() {
+        return this.settings;
+    }
+
+    @Override
+    public String getViewToolNameForDisplay() {
+        return HistogramViewController.VIEW_TOOL_NAME_FOR_DISPLAY;
+    }
+
+    @Override
+    public Map<String, String> getSettingNameToTooltipTextMap() {
+        return this.settingNameTooltipTextMap;
+    }
+
+    @Override
+    public void restoreDefaultSettings() {
+        this.barWidthSetting.set(HistogramViewController.DEFAULT_BAR_WIDTH.name());
+        this.displayFrequencySetting.set(HistogramViewController.DEFAULT_DISPLAY_FREQUENCY.name());
+        this.maximumSMILESLengthSetting.set(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH);
+        this.displayedFragmentsNumberSetting.set((HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS));
+        this.displayBarLabelsSetting.set(HistogramViewController.DEFAULT_DISPLAY_BAR_LABELS_SETTING);
+        this.displayBarShadowsSetting.set(HistogramViewController.DEFAULT_DISPLAY_BAR_SHADOWS_SETTING);
+        this.displayGridLinesSetting.set(HistogramViewController.DEFAULT_DISPLAY_GRID_LINES_SETTING);
+        this.displaySMILESSetting.set(HistogramViewController.DEFAULT_DISPLAY_SMILES_SETTING);
+    }
+
+    @Override
+    public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant) {
+        switch(aTabNameEnumConstant){
+            //TODO capitalise enum constant names?
+            case Fragments:
+            case Itemization:
+                return true;
+            case Molecules:
+            default:
+                return false;
+        }
+    }
+    /**
+     * Initialises stage and view and opens view in the initialised stage.
      *
      * @param aMainStage Stage of the MainView
      * @param aMoleculeDataList ObservableList to hold MoleculeDataModels for visualisation in histogram
      */
-    public HistogramViewController(Stage aMainStage, List<MoleculeDataModel> aMoleculeDataList)  {
+    public void openHistogramView(Stage aMainStage, List<MoleculeDataModel> aMoleculeDataList)  {
+        //TODO checks!
         this.mainStage = aMainStage;
-        this.copyList = new ArrayList<>(aMoleculeDataList);
-        this.imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
-        this.imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
-        this.imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
-        this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
-        this.openHistogramView();
-    }
-    //
-    //<editor-fold desc="private methods" defaultstate="collapsed">
-    /**
-     * Initialises stage and view and opens view in the initialised stage
-     */
-    private void openHistogramView()  {
+        this.fragmentListCopy = new ArrayList<>(aMoleculeDataList);
         this.histogramStage = new Stage();
         this.histogramStage.initModality(Modality.WINDOW_MODAL);
         this.histogramStage.initOwner(this.mainStage);
         this.histogramStage.setTitle(Message.get("HistogramView.title"));
         this.histogramStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        this.histogramView = new HistogramView(this.copyList.size());
+        this.histogramView = new HistogramView(this.fragmentListCopy.size());
         this.categoryAxis = new CategoryAxis();
         InputStream tmpImageInputStream = HistogramViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
-        this.histogramView.getSmilesTextField().setText(Integer.toString(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH));
-        this.histogramView.getCheckbox().setSelected(true);
-        this.histogramView.getStylingCheckBox().setSelected(true);
-        if (this.copyList.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
-            this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
-            this.histogramView.getFrequencyTextField().setText(Integer.toString(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS));
-            ArrayList<Double> tmpDefaultBarWidth = this.getBarSpacing(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS, this.histogramView.getComboBox());
-            this.histogramChart = this.createHistogram(GuiDefinitions.HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY,
-                    this.histogramView, GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH, this.histogramView.getCheckbox(),this.histogramView.getStylingCheckBox(),
-                    tmpDefaultBarWidth.get(0));
-            this.histogramChart.setCategoryGap(tmpDefaultBarWidth.get(1));
-        } else {
-            this.histogramView.getFrequencyTextField().setText(String.valueOf(this.copyList.size()));
-            this.displayedFragmentsNumber = this.copyList.size();
-            ArrayList<Double> tmpDefaultBarGap = this.getBarSpacing(this.copyList.size(), this.histogramView.getComboBox());
-            this.histogramChart = this.createHistogram(this.copyList.size(),
-                    this.histogramView ,GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH, this.histogramView.getCheckbox(), this.histogramView.getStylingCheckBox(),
-                    tmpDefaultBarGap.get(0));
-             this.histogramChart.setCategoryGap(tmpDefaultBarGap.get(1));
+        //TODO: no binding because setting is actually only updated when the apply button is clicked?
+        this.histogramView.getMaximumSMILESLengthTextField().setText(Integer.toString(this.maximumSMILESLengthSetting.get()));
+        this.histogramView.getDisplayBarLabelsCheckbox().selectedProperty().bindBidirectional(this.displayBarLabelsSetting);
+        this.histogramView.getDisplayBarShadowsCheckBox().selectedProperty().bindBidirectional(this.displayBarShadowsSetting);
+        if (this.fragmentListCopy.size() >= this.displayedFragmentsNumberSetting.get()) {
+            this.histogramView.getDisplayedFragmentsNumberTextField().setText(Integer.toString(this.displayedFragmentsNumberSetting.get()));
+        } else { //size of list of fragments to display is shorter than currently set number of fragments to display
+            this.histogramView.getDisplayedFragmentsNumberTextField().setText(String.valueOf(this.fragmentListCopy.size()));
+            this.displayedFragmentsNumberSetting.set(this.fragmentListCopy.size());
         }
-        this.addListener();
+        //TODO: change second param to actual value, not the box; and what is this return list??
+        ArrayList<Double> tmpCalculatedBarWidth =
+                this.calculateBarSpacing(this.displayedFragmentsNumberSetting.get(), this.histogramView.getComboBox());
+        //TODO: change params to values instead of boxes
+        this.histogramChart = this.createHistogram(
+                this.displayedFragmentsNumberSetting.get(),
+                this.histogramView,
+                this.maximumSMILESLengthSetting.get(),
+                this.histogramView.getDisplayBarLabelsCheckbox(),
+                this.histogramView.getDisplayBarShadowsCheckBox(),
+                tmpCalculatedBarWidth.get(0));
+        this.histogramChart.setCategoryGap(tmpCalculatedBarWidth.get(1));
+        this.addListenersToHistogramView();
         Scene tmpHistogramScene = new Scene(this.histogramView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setScene(tmpHistogramScene);
         tmpHistogramScene.widthProperty().addListener((observable, oldValue, newValue) -> {
@@ -212,20 +443,21 @@ public class HistogramViewController {
             double tmpImageHeightChange = (GuiDefinitions.GUI_IMAGE_HEIGHT / 100) * tmpHeightChange;
             if (tmpHistogramScene.getWidth() == GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) {
                 this.imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT + tmpImageHeightChange;
-                this.imageWidth = 100 + this.imageHeight;
-                this.imageZoomFactor = (GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR / GuiDefinitions.GUI_IMAGE_WIDTH) * this.imageWidth;
             } else {
-                double tmpHeight = imageWidth - 100;
+                double tmpHeight = this.imageWidth - 100;
                 double tmpIntermediateImageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT + tmpImageHeightChange;
                 double tmpImageHeight = tmpHeight - tmpIntermediateImageHeight;
-                imageHeight = tmpIntermediateImageHeight + tmpImageHeight;
-                imageWidth = 100 + imageHeight;
-                imageZoomFactor = (GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR / GuiDefinitions.GUI_IMAGE_WIDTH) * imageWidth;
+                this.imageHeight = tmpIntermediateImageHeight + tmpImageHeight;
             }
+            this.imageWidth = 100 + this.imageHeight;
+            this.imageZoomFactor = (GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR / GuiDefinitions.GUI_IMAGE_WIDTH) * this.imageWidth;
         });
         this.histogramStage.show();
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
+    //TODO: Carry on here!
     /**
      * Create a configurable histogram.
      * All data is stored in corresponding lists (the x data are either fragment or molecule frequencies).
@@ -263,14 +495,14 @@ public class HistogramViewController {
         String tmpNewSmiles;
         ArrayList<String> tmpSmilesList = new ArrayList<>();
         ArrayList<Integer> tmpFrequencyList = new ArrayList<>();
-        int tmpIterator = this.copyList.size();
+        int tmpIterator = this.fragmentListCopy.size();
         FragmentDataModel tmpFragmentData = null;
         double tmpMaxOfFrequency;
         ArrayList<String> tmpFullSmilesLength = new ArrayList<>();
         String tmpSelectedData = (String) aHistogramView.getChooseDataComoBox().getValue();
         if (tmpSelectedData.equals(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"))) {
-            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "absoluteFrequency", "ASCENDING");
-            for (MoleculeDataModel tmpMoleculeData : this.copyList) {
+            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, "absoluteFrequency", "ASCENDING");
+            for (MoleculeDataModel tmpMoleculeData : this.fragmentListCopy) {
                 tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
                 if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) {
                     tmpNewSmiles = "SMILES too long (" + tmpIterator + ")";
@@ -284,8 +516,8 @@ public class HistogramViewController {
                 tmpFrequencyList.add(tmpFragmentData.getAbsoluteFrequency());
             }
         } else {
-            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "moleculeFrequency", "ASCENDING");
-            for (MoleculeDataModel tmpMoleculeData : this.copyList) {
+            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, "moleculeFrequency", "ASCENDING");
+            for (MoleculeDataModel tmpMoleculeData : this.fragmentListCopy) {
                 tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
                 if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) {
                     tmpNewSmiles = "SMILES too long (" + tmpIterator + ")";
@@ -378,23 +610,27 @@ public class HistogramViewController {
      * Add listeners
      *
      */
-    private void addListener() {
+    private void addListenersToHistogramView() {
         this.histogramView.getCloseButton().setOnAction(event -> {
             this.histogramStage.close();
         });
-        this.histogramView.getFrequencyTextField().setTextFormatter(
-                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), this.displayedFragmentsNumber, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
-        this.histogramView.getSmilesTextField().setTextFormatter(
-                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), HistogramViewController.DEFAULT_MAX_SMILES_LENGTH, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+        this.histogramView.getDisplayedFragmentsNumberTextField().setTextFormatter(
+                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                        this.displayedFragmentsNumberSetting.get(),
+                        GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+        this.histogramView.getMaximumSMILESLengthTextField().setTextFormatter(
+                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                        this.maximumSMILESLengthSetting.get(),
+                        GuiUtil.getPositiveIntegerWithoutZeroFilter()));
         this.histogramView.getApplyButton().disableProperty().bind(
-                Bindings.isEmpty(this.histogramView.getFrequencyTextField().textProperty()).
-                            and(Bindings.isEmpty(this.histogramView.getSmilesTextField().textProperty()))
+                Bindings.isEmpty(this.histogramView.getDisplayedFragmentsNumberTextField().textProperty()).
+                            and(Bindings.isEmpty(this.histogramView.getMaximumSMILESLengthTextField().textProperty()))
         );
         this.histogramView.getApplyButton().setOnAction(event -> {
             int tmpSmilesLengthInField;
             if (this.histogramView.getSmilesField().isEmpty()) {
-                this.displayedFragmentsNumber = Integer.parseInt(this.histogramView.getFragmentTextField());
-                if (this.displayedFragmentsNumber > this.copyList.size()) {
+                this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getFragmentTextField()));
+                if (this.displayedFragmentsNumberSetting.get() > this.fragmentListCopy.size()) {
                     GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
@@ -403,24 +639,29 @@ public class HistogramViewController {
                 tmpSmilesLengthInField = GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH;
             } else if (this.histogramView.getFragmentTextField().isEmpty()) {
                 tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
-                if (this.copyList.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
-                    this.displayedFragmentsNumber = HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS;
+                if (this.fragmentListCopy.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
+                    this.displayedFragmentsNumberSetting.set(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS);
                 } else {
-                    this.displayedFragmentsNumber = this.copyList.size();
+                    this.displayedFragmentsNumberSetting.set(this.fragmentListCopy.size());
                 }
             } else {
-                this.displayedFragmentsNumber = Integer.parseInt(this.histogramView.getFragmentTextField());
+                this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getFragmentTextField()));
                 tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
-                if (this.displayedFragmentsNumber > this.copyList.size()) {
+                if (this.displayedFragmentsNumberSetting.get() > this.fragmentListCopy.size()) {
                     GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
                     return;
                 }
             }
-            ArrayList<Double> tmpHistogramSizeGap = this.getBarSpacing(this.displayedFragmentsNumber,this.histogramView.getComboBox());
-            this.histogramChart=  this.createHistogram(this.displayedFragmentsNumber, this.histogramView, tmpSmilesLengthInField,
-                    this.histogramView.getCheckbox(), this.histogramView.getStylingCheckBox(), tmpHistogramSizeGap.get(0));
+            ArrayList<Double> tmpHistogramSizeGap = this.calculateBarSpacing(this.displayedFragmentsNumberSetting.get(),
+                    this.histogramView.getComboBox());
+            this.histogramChart=  this.createHistogram(this.displayedFragmentsNumberSetting.get(),
+                    this.histogramView,
+                    tmpSmilesLengthInField,
+                    this.histogramView.getDisplayBarLabelsCheckbox(),
+                    this.histogramView.getDisplayBarShadowsCheckBox(),
+                    tmpHistogramSizeGap.get(0));
             this.histogramChart.setCategoryGap(tmpHistogramSizeGap.get(1));
             if(this.histogramView.getGridLinesCheckBox().isSelected()) {
                 this.histogramChart.setVerticalGridLinesVisible(true);
@@ -431,7 +672,8 @@ public class HistogramViewController {
                 this.categoryAxis.setTickLabelsVisible(false);
             }
         });
-        this.histogramView.getGridLinesCheckBox().selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+        this.histogramView.getGridLinesCheckBox().selectedProperty()
+                .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (this.histogramView.getGridLinesCheckBox().isSelected()) {
                 this.histogramChart.setVerticalGridLinesVisible(true);
                 this.histogramChart.setHorizontalGridLinesVisible(true);
@@ -440,7 +682,8 @@ public class HistogramViewController {
                 this.histogramChart.setHorizontalGridLinesVisible(false);
             }
         });
-        this.histogramView.getSmilesTickLabel().selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+        this.histogramView.getSmilesTickLabel().selectedProperty()
+                .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (this.histogramView.getSmilesTickLabel().isSelected()) {
                 this.categoryAxis.setTickMarkVisible(false);
                 this.categoryAxis.setTickLabelsVisible(false);
@@ -585,7 +828,7 @@ public class HistogramViewController {
      * @param aComboBox to select one of the 3 options
      * @return ArrayList which contains both the value of the category gap and the value of the histogram height factor.
      */
-    private ArrayList getBarSpacing(int aNumber, ComboBox aComboBox){
+    private ArrayList calculateBarSpacing(int aNumber, ComboBox aComboBox){
         ArrayList<Double> tmpHistogramList = new ArrayList<>();
         double tmpCurrentHistogramHeight;
         double tmpGapDeviation;
@@ -663,7 +906,6 @@ public class HistogramViewController {
         return tmpXAxisExtensionValue;
     }
     //</editor-fold>
-    //
 }
 
 

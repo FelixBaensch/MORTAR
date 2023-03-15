@@ -133,6 +133,10 @@ public class MainViewController {
      */
     private FragmentationService fragmentationService;
     /**
+     * ViewToolsManager
+     */
+    private ViewToolsManager viewToolsManager;
+    /**
      * Button to start single algorithm fragmentation
      */
     private Button fragmentationButton;
@@ -223,6 +227,8 @@ public class MainViewController {
         this.fragmentationService = new FragmentationService(this.settingsContainer);
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
+        this.viewToolsManager = new ViewToolsManager();
+        this.viewToolsManager.reloadViewToolsSettings();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new TabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -382,6 +388,7 @@ public class MainViewController {
             }
         }
         this.settingsContainer.preserveSettings();
+        this.viewToolsManager.persistViewToolsSettings();
         this.fragmentationService.persistFragmenterSettings();
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if (this.isFragmentationRunning) {

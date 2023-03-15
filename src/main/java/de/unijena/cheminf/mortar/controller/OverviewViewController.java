@@ -78,7 +78,7 @@ import java.util.logging.Logger;
  * @author Samuel Behr
  * @version 1.0.0.0
  */
-public class OverviewViewController {
+public class OverviewViewController implements IViewToolController {
 
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">
     /**
@@ -102,7 +102,7 @@ public class OverviewViewController {
     /**
      * Main stage object of the application.
      */
-    private final Stage mainStage;
+    private Stage mainStage;
     /**
      * Stage of the overview view.
      */
@@ -175,6 +175,31 @@ public class OverviewViewController {
      * Constructor. Initializes the class variables and opens the overview view.
      * TODO: persist grid configuration (and possible other settings)
      *
+     */
+    public OverviewViewController() {
+//        this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
+//        this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;\
+        /**
+         * Work around to cache the columns and rows per page. Will be removed in later version.
+         */
+        this.rowsPerPage = OverviewViewController.rowsPerPageCache;
+        this.columnsPerPage = OverviewViewController.columnsPerPageCache;
+        //creating an empty structureGridPane at first by setting createStructureImages to false
+        this.createStructureImages = false;
+        //initializing the cached index with -1 as marker whether the value has been changed
+        this.cachedIndexOfStructureInMoleculeDataModelList = -1;
+        this.returnToStructureEventOccurred = false;
+        //
+        this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
+        this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
+        this.dragFlag = false;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private methods" dafaultstate="collapsed">
+    /**
+     * Initializes and opens the overview view.
+     *
      * @param aMainStage Stage that is to be the owner of the overview view's stage
      * @param aDataSource Source of the data to be shown in the overview view
      * @param aTabName String containing the name of the tab that's content is to be shown in the overview view
@@ -182,8 +207,7 @@ public class OverviewViewController {
      * @throws NullPointerException if one of the parameters is null; if the value of aDataSource is
      * PARENT_MOLECULES_SAMPLE or ITEM_WITH_FRAGMENTS_SAMPLE, aTabName is allowed to be null
      */
-    public OverviewViewController(Stage aMainStage, DataSources aDataSource, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList)
-            throws NullPointerException {
+    public void initializeAndShowOverviewView(Stage aMainStage, DataSources aDataSource, String aTabName, List<MoleculeDataModel> aMoleculeDataModelList) throws NullPointerException {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aMainStage, "aMainStage (instance of Stage) is null");
         Objects.requireNonNull(aDataSource, "aDataSource (enum value of DataSources) is null");
@@ -226,32 +250,6 @@ public class OverviewViewController {
         this.mainStage = aMainStage;
         this.dataSource = aDataSource;
         this.moleculeDataModelList = aMoleculeDataModelList;
-//        this.rowsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
-//        this.columnsPerPage = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;\
-        /**
-         * Work around to cache the columns and rows per page. Will be removed in later version.
-         */
-        this.rowsPerPage = OverviewViewController.rowsPerPageCache;
-        this.columnsPerPage = OverviewViewController.columnsPerPageCache;
-        //creating an empty structureGridPane at first by setting createStructureImages to false
-        this.createStructureImages = false;
-        //initializing the cached index with -1 as marker whether the value has been changed
-        this.cachedIndexOfStructureInMoleculeDataModelList = -1;
-        this.returnToStructureEventOccurred = false;
-        //
-        this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
-        this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
-        this.dragFlag = false;
-        //
-        this.initializeAndShowOverviewView();
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="private methods" dafaultstate="collapsed">
-    /**
-     * Initializes and opens the overview view. This method is only called by the constructor.
-     */
-    private void initializeAndShowOverviewView() {
         if (this.overviewView == null)
             this.overviewView = new OverviewView(this.columnsPerPage, this.rowsPerPage);
         this.overviewViewStage = new Stage();

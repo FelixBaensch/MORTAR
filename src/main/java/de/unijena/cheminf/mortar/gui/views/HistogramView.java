@@ -279,7 +279,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return TextField for deactivation
      */
-    public TextField getSmilesTextField() {
+    public TextField getMaximumSMILESLengthTextField() {
         return this.smilesField;
     }
     //
@@ -288,7 +288,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return TextField for deactivation
      */
-    public TextField getFrequencyTextField() {
+    public TextField getDisplayedFragmentsNumberTextField() {
         return this.fragmentTextField;
     }
     //
@@ -313,7 +313,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return CheckBox to Labelling the bars with frequencies
      */
-    public CheckBox getCheckbox() {
+    public CheckBox getDisplayBarLabelsCheckbox() {
         return this.checkbox;
     }
     //
@@ -340,7 +340,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return CheckBox
      */
-    public CheckBox getStylingCheckBox() {
+    public CheckBox getDisplayBarShadowsCheckBox() {
         return this.stylingCheckBox;
     }
     //
