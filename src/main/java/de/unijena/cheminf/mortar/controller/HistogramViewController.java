@@ -25,7 +25,6 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
-import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
 
@@ -73,10 +72,9 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -123,23 +121,27 @@ public class HistogramViewController implements IViewToolController {
     /**
      * Default for whether bar labels (the fragment frequencies) should be displayed.
      */
-    public static boolean DEFAULT_DISPLAY_BAR_LABELS_SETTING = true;
+    public static final boolean DEFAULT_DISPLAY_BAR_LABELS_SETTING = true;
     /**
      * Default for whether bar shadows should be displayed in the histogram.
      */
-    public static boolean DEFAULT_DISPLAY_BAR_SHADOWS_SETTING = true;
+    public static final boolean DEFAULT_DISPLAY_BAR_SHADOWS_SETTING = true;
     /**
      * Default for whether to display vertical and horizontal grid lines in the histogram.
      */
-    public static boolean DEFAULT_DISPLAY_GRID_LINES_SETTING = false;
+    public static final boolean DEFAULT_DISPLAY_GRID_LINES_SETTING = false;
     /**
      * Default for whether the fragment SMILES codes should be displayed on the y-axis.
      */
-    public static boolean DEFAULT_DISPLAY_SMILES_SETTING = true;
+    public static final boolean DEFAULT_DISPLAY_SMILES_SETTING = true;
     /**
      * View tool name for display in the GUI.
      */
-    public static final String VIEW_TOOL_NAME_FOR_DISPLAY = Message.get("MainView.menuBar.viewsMenu.HistogramMenuItem.text"); //TODO move
+    public static final String VIEW_TOOL_NAME_FOR_DISPLAY = Message.get("MainView.menuBar.viewsMenu.HistogramMenuItem.text");
+    /**
+     *
+     */
+    public static final String HISTOGRAM_BARS_COLOR_HEX_VALUE = "#1E90FF"; //dodger blue
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -186,10 +188,6 @@ public class HistogramViewController implements IViewToolController {
      * All settings of this view tool, encapsulated in JavaFX properties for binding in GUI and persistence.
      */
     private final List<Property> settings;
-    /**
-     * Map to store pairs of {@literal <setting name, tooltip text>}.
-     */
-    private final HashMap<String, String> settingNameTooltipTextMap;
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -208,7 +206,7 @@ public class HistogramViewController implements IViewToolController {
     /**
      * List of fragments to display.
      */
-    private List<MoleculeDataModel> fragmentListCopy;
+    private List<FragmentDataModel> fragmentListCopy;
     /**
      * Width of the images
      */
@@ -243,7 +241,6 @@ public class HistogramViewController implements IViewToolController {
         this.imageWidth = GuiDefinitions.GUI_IMAGE_WIDTH;
         this.imageHeight = GuiDefinitions.GUI_IMAGE_HEIGHT;
         this.imageZoomFactor = GuiDefinitions.GUI_IMAGE_ZOOM_FACTOR;
-        this.settingNameTooltipTextMap = new HashMap<>(10, 0.9f);
         this.settings = new ArrayList<Property>(8);
         this.displayedFragmentsNumberSetting = new SimpleIntegerProperty(this,
                 Message.get("HistogramView.DisplayedFragmentsNumberSetting.Name"), //TODO
@@ -255,8 +252,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.displayedFragmentsNumberSetting);
-        this.settingNameTooltipTextMap.put(this.displayedFragmentsNumberSetting.getName(),
-                Message.get("HistogramView.DisplayedFragmentsNumberSetting.Tooltip")); //TODO
         this.barWidthSetting = new SimpleEnumConstantNameProperty(this,
                 Message.get("HistogramView.BarWidthSetting.Name"), //TODO
                 HistogramViewController.DEFAULT_BAR_WIDTH.name(),
@@ -268,8 +263,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.barWidthSetting);
-        this.settingNameTooltipTextMap.put(this.barWidthSetting.getName(),
-                Message.get("HistogramView.BarWidthSetting.Tooltip")); //TODO
         this.displayFrequencySetting = new SimpleEnumConstantNameProperty(this,
                 Message.get("HistogramView.DisplayFrequencySetting.Name"), //TODO
                 HistogramViewController.DEFAULT_DISPLAY_FREQUENCY.name(),
@@ -281,8 +274,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.displayedFragmentsNumberSetting);
-        this.settingNameTooltipTextMap.put(this.displayFrequencySetting.getName(),
-                Message.get("HistogramView.DisplayFrequencySetting.Tooltip")); //TODO
         this.maximumSMILESLengthSetting = new SimpleIntegerProperty(this,
                 Message.get("HistogramView.MaximumSMILESLengthSetting.Name"), //TODO
                 HistogramViewController.DEFAULT_MAX_SMILES_LENGTH) {
@@ -293,8 +284,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.maximumSMILESLengthSetting);
-        this.settingNameTooltipTextMap.put(this.maximumSMILESLengthSetting.getName(),
-                Message.get("HistogramView.MaximumSMILESLengthSetting.Tooltip")); //TODO
         this.displayBarLabelsSetting = new SimpleBooleanProperty(this,
                 Message.get("HistogramView.DisplayBarLabelsSetting.Name"), //TODO
                 HistogramViewController.DEFAULT_DISPLAY_BAR_LABELS_SETTING) {
@@ -305,8 +294,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.displayBarLabelsSetting);
-        this.settingNameTooltipTextMap.put(this.displayBarLabelsSetting.getName(),
-                Message.get("HistogramView.DisplayBarLabelsSetting.Tooltip")); //TODO
         this.displayBarShadowsSetting = new SimpleBooleanProperty(this,
                 Message.get("HistogramView.DisplayBarShadowsSetting.Name"), //TODO
                 HistogramViewController.DEFAULT_DISPLAY_BAR_SHADOWS_SETTING) {
@@ -317,8 +304,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.displayBarShadowsSetting);
-        this.settingNameTooltipTextMap.put(this.displayBarShadowsSetting.getName(),
-                Message.get("HistogramView.DisplayBarShadowsSetting.Tooltip")); //TODO
         this.displayGridLinesSetting = new SimpleBooleanProperty(this,
                 Message.get("HistogramView.DisplayGridLinesSetting.Name"), //TODO
                 HistogramViewController.DEFAULT_DISPLAY_GRID_LINES_SETTING) {
@@ -329,8 +314,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.displayGridLinesSetting);
-        this.settingNameTooltipTextMap.put(this.displayGridLinesSetting.getName(),
-                Message.get("HistogramView.DisplayGridLinesSetting.Tooltip")); //TODO
         this.displaySMILESSetting = new SimpleBooleanProperty(this,
                 Message.get("HistogramView.DisplaySMILESSetting.Name"), //TODO
                 HistogramViewController.DEFAULT_DISPLAY_SMILES_SETTING) {
@@ -341,8 +324,6 @@ public class HistogramViewController implements IViewToolController {
             }
         };
         this.settings.add(this.displaySMILESSetting);
-        this.settingNameTooltipTextMap.put(this.displaySMILESSetting.getName(),
-                Message.get("HistogramView.DisplaySMILESSetting.Tooltip")); //TODO
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
@@ -355,11 +336,6 @@ public class HistogramViewController implements IViewToolController {
     @Override
     public String getViewToolNameForDisplay() {
         return HistogramViewController.VIEW_TOOL_NAME_FOR_DISPLAY;
-    }
-
-    @Override
-    public Map<String, String> getSettingNameToTooltipTextMap() {
-        return this.settingNameTooltipTextMap;
     }
 
     @Override
@@ -376,15 +352,11 @@ public class HistogramViewController implements IViewToolController {
 
     @Override
     public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant) {
-        switch(aTabNameEnumConstant){
+        return switch (aTabNameEnumConstant) {
             //TODO capitalise enum constant names?
-            case Fragments:
-            case Itemization:
-                return true;
-            case Molecules:
-            default:
-                return false;
-        }
+            case Fragments, Itemization -> true;
+            default -> false;
+        };
     }
     /**
      * Initialises stage and view and opens view in the initialised stage.
@@ -392,7 +364,7 @@ public class HistogramViewController implements IViewToolController {
      * @param aMainStage Stage of the MainView
      * @param aMoleculeDataList ObservableList to hold MoleculeDataModels for visualisation in histogram
      */
-    public void openHistogramView(Stage aMainStage, List<MoleculeDataModel> aMoleculeDataList)  {
+    public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aMoleculeDataList)  {
         //TODO checks!
         this.mainStage = aMainStage;
         this.fragmentListCopy = new ArrayList<>(aMoleculeDataList);
@@ -405,7 +377,8 @@ public class HistogramViewController implements IViewToolController {
         this.histogramView = new HistogramView(this.fragmentListCopy.size());
         this.categoryAxis = new CategoryAxis();
         InputStream tmpImageInputStream = HistogramViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
-        this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
+        if (!Objects.isNull(tmpImageInputStream))
+            this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
         //TODO: no binding because setting is actually only updated when the apply button is clicked?
         this.histogramView.getMaximumSMILESLengthTextField().setText(Integer.toString(this.maximumSMILESLengthSetting.get()));
         this.histogramView.getDisplayBarLabelsCheckbox().selectedProperty().bindBidirectional(this.displayBarLabelsSetting);
@@ -457,25 +430,32 @@ public class HistogramViewController implements IViewToolController {
     //</editor-fold>
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
-    //TODO: Carry on here!
     /**
      * Create a configurable histogram.
-     * All data is stored in corresponding lists (the x data are either fragment or molecule frequencies).
+     * All data is stored in corresponding lists (the x-axis data are either fragment or molecule frequencies).
      * Depending on how aFragmentNumber is selected, these lists/data are adjusted.
      * After they have been run through, they are displayed accordingly.
-     * The x-axis of the histogram is divided into readable steps depending on the maximum frequency ( manual adjustment of the
+     * The x-axis of the histogram is divided into readable steps depending on the maximum frequency (manual adjustment of the
      * x-axis ticks)
      *
      * @param aFragmentNumber to set the fragment number. The number of fragments that are displayed can be set via this parameter.
      * @param aHistogramView to access the view elements
      * @param aSmilesLength to set the SMILES length. The maximum SMILES length can be set via this parameter.
+     * //TODO add missing params and change them to bool?
      * @param aHistogramDefaultSize a double value that determines the height of the histogram.
      *                              The height of the histogram increases with the increase in fragments that are displayed.
+     * @throws //TODO
      * @return a BarChart to show
      */
-    private BarChart createHistogram(int aFragmentNumber, HistogramView aHistogramView, int aSmilesLength, CheckBox aBarLabelCheckBox, CheckBox aStylingCheckBox,
-                                     double aHistogramDefaultSize) {
-        XYChart.Series tmpSeries = new XYChart.Series();
+    private BarChart createHistogram(int aFragmentNumber,
+                                     HistogramView aHistogramView,
+                                     int aSmilesLength,
+                                     CheckBox aBarLabelCheckBox,
+                                     CheckBox aStylingCheckBox,
+                                     double aHistogramDefaultSize) throws IllegalArgumentException {
+        if (aFragmentNumber >  this.fragmentListCopy.size())
+            throw new IllegalArgumentException("Given number of fragments to display is bigger than number of available fragments.");
+        //TODO checks!
         NumberAxis tmpNumberAxis = new NumberAxis();
         BarChart tmpHistogramBarChart = new BarChart(tmpNumberAxis, this.categoryAxis);
         this.categoryAxis.setTickLabelFill(Color.BLACK);
@@ -486,6 +466,7 @@ public class HistogramViewController implements IViewToolController {
         tmpNumberAxis.setForceZeroInRange(true);
         tmpNumberAxis.setTickLabelFill(Color.BLACK);
         tmpNumberAxis.setLabel(Message.get("HistogramViewController.XAxisLabel.text"));
+        //TODO: Move constant here?
         this.categoryAxis.setTickLabelGap(GuiDefinitions.HISTOGRAM_TICK_LABEL_GAP);
         this.categoryAxis.setLabel(Message.get("HistogramViewController.YAxisLabel.text"));
         tmpHistogramBarChart.setCategoryGap(0);
@@ -496,52 +477,35 @@ public class HistogramViewController implements IViewToolController {
         ArrayList<String> tmpSmilesList = new ArrayList<>();
         ArrayList<Integer> tmpFrequencyList = new ArrayList<>();
         int tmpIterator = this.fragmentListCopy.size();
-        FragmentDataModel tmpFragmentData = null;
-        double tmpMaxOfFrequency;
         ArrayList<String> tmpFullSmilesLength = new ArrayList<>();
         String tmpSelectedData = (String) aHistogramView.getChooseDataComoBox().getValue();
-        if (tmpSelectedData.equals(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"))) {
-            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, "absoluteFrequency", "ASCENDING");
-            for (MoleculeDataModel tmpMoleculeData : this.fragmentListCopy) {
-                tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
-                if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) {
-                    tmpNewSmiles = "SMILES too long (" + tmpIterator + ")";
-                    tmpSmilesList.add(tmpNewSmiles);
-                } else {
-                    tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
-                    tmpSmilesList.add(tmpNewSmiles);
-                }
-                tmpIterator--;
-                tmpFullSmilesLength.add(tmpFragmentData.getUniqueSmiles());
-                tmpFrequencyList.add(tmpFragmentData.getAbsoluteFrequency());
+        //if false, molecule frequency is used for sorting
+        // TODO change condition to enum or sth?
+        boolean tmpSortByFragmentFrequency = tmpSelectedData.equals(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"));
+        String tmpSortProperty = (tmpSortByFragmentFrequency ? "absoluteFrequency" : "moleculeFrequency");
+        //TODO: rework method!
+        ListUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, tmpSortProperty, "ASCENDING");
+        for (FragmentDataModel tmpFragmentDataModel : this.fragmentListCopy) {
+            if (tmpFragmentDataModel.getUniqueSmiles().length() > aSmilesLength) {
+                tmpNewSmiles = Message.get("HistogramView.smilesTooLong") + " (" + tmpIterator + ")";
+            } else {
+                tmpNewSmiles = tmpFragmentDataModel.getUniqueSmiles();
             }
-        } else {
-            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, "moleculeFrequency", "ASCENDING");
-            for (MoleculeDataModel tmpMoleculeData : this.fragmentListCopy) {
-                tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
-                if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) {
-                    tmpNewSmiles = "SMILES too long (" + tmpIterator + ")";
-                    tmpSmilesList.add(tmpNewSmiles);
-                } else {
-                    tmpNewSmiles = tmpFragmentData.getUniqueSmiles();
-                    tmpSmilesList.add(tmpNewSmiles);
-                }
-                tmpIterator--;
-                tmpFullSmilesLength.add(tmpFragmentData.getUniqueSmiles());
-                tmpFrequencyList.add(tmpFragmentData.getMoleculeFrequency());
-            }
+            tmpSmilesList.add(tmpNewSmiles);
+            tmpIterator--;
+            tmpFullSmilesLength.add(tmpFragmentDataModel.getUniqueSmiles());
+            tmpFrequencyList.add(tmpSortByFragmentFrequency ? tmpFragmentDataModel.getAbsoluteFrequency() : tmpFragmentDataModel.getMoleculeFrequency());
         }
-        tmpMaxOfFrequency = Collections.max(tmpFrequencyList);
+        double tmpMaxFrequency = Collections.max(tmpFrequencyList);
         // make readable x-axis
-        double tmpXAxisTicks = 5.0/100.0*tmpMaxOfFrequency; // magic number
-        double tmpXAxisExtension = 15.0/100.0*tmpMaxOfFrequency; // magic number
+        double tmpXAxisTicks = 5.0 / 100.0 * tmpMaxFrequency; // magic number
+        double tmpXAxisExtension = 15.0 / 100.0 * tmpMaxFrequency; // magic number
         int tmpIntTmpXAxisTick = (int) Math.round(tmpXAxisTicks);
         int tmpIntXAxisExtension = (int) Math.round(tmpXAxisExtension);
         if (tmpIntTmpXAxisTick == 0 || tmpIntXAxisExtension == 0) {
            tmpNumberAxis.setTickUnit(1);
-           tmpNumberAxis.setUpperBound(tmpMaxOfFrequency+1);
-       }
-       else {
+           tmpNumberAxis.setUpperBound(tmpMaxFrequency + 1);
+        } else {
             int tmpNewXAxisTick = 0;
             if (tmpIntTmpXAxisTick >= 10) {
                 tmpNewXAxisTick = tmpIntTmpXAxisTick;
@@ -550,86 +514,87 @@ public class HistogramViewController implements IViewToolController {
                 int tmpFirstIntValue = Integer.parseInt(tmpFirstValue);
                 if (tmpFirstIntValue > 5) {
                     tmpNewXAxisTick = (int) Math.pow(10, tmpTickLength.length());
-                    tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
                 } else {
                     int tmpDigit = tmpTickLength.length() - 1;
                     int tmpCheckModulo = (int) Math.pow(10, tmpDigit);
-                    if (tmpNewXAxisTick % tmpCheckModulo == 0) {
-                        tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
-                    } else {
+                    if (tmpNewXAxisTick % tmpCheckModulo != 0) {
+                        //TODO: there must be a better way to do this
                         do {
                             tmpNewXAxisTick++;
                         } while (tmpNewXAxisTick % (tmpCheckModulo) != 0);
-                        tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
                     }
                 }
-                tmpNumberAxis.setUpperBound(this.calculateXAxisExtension((int) tmpMaxOfFrequency, tmpNewXAxisTick));
+                tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
+                tmpNumberAxis.setUpperBound(this.calculateXAxisExtension((int) tmpMaxFrequency, tmpNewXAxisTick));
             } else {
                 tmpNumberAxis.setTickUnit(tmpIntTmpXAxisTick);
-                tmpNumberAxis.setUpperBound(this.calculateXAxisExtension((int) tmpMaxOfFrequency, tmpIntTmpXAxisTick));
+                tmpNumberAxis.setUpperBound(this.calculateXAxisExtension((int) tmpMaxFrequency, tmpIntTmpXAxisTick));
             }
         }
-        Label tmpDisplayFrequency = aHistogramView.getDefaultFragmentLabel();
         List<String> tmpSublistSmiles;
         List<Integer> tmpSublistFrequency;
         List<String> tmpSmilesToDepict;
-        if (aFragmentNumber <= tmpSmilesList.size()) {
-            tmpSublistSmiles = tmpSmilesList.subList(tmpSmilesList.size() - aFragmentNumber, tmpSmilesList.size());
-            tmpSublistFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aFragmentNumber, tmpFrequencyList.size());
-            tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber, tmpFullSmilesLength.size());
-            tmpDisplayFrequency.setText("Displayed fragments:");
-        } else {
-            throw new IllegalArgumentException("the given number exceeds the maximum number of fragments");
-        }
+        tmpSublistSmiles = tmpSmilesList.subList(tmpSmilesList.size() - aFragmentNumber, tmpSmilesList.size());
+        tmpSublistFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aFragmentNumber, tmpFrequencyList.size());
+        tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber, tmpFullSmilesLength.size());
+        XYChart.Series tmpSeries = new XYChart.Series();
+        //TODO: can we not just make sure here that the three lists are of the same size and than iterate through them with an index?
         for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistFrequency.iterator(),
              tmpSmilesIterator = tmpSmilesToDepict.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpSmilesIterator.hasNext();) {
             Integer tmpCurrentFrequency = (Integer) tmpIntegerIterator.next();
             String tmpCurrentSmiles = (String) tmpStringIterator.next();
             String tmpSmiles = (String) tmpSmilesIterator.next();
             XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentSmiles);
-            StackPane tmpNode = this.histogramHover(aHistogramView.getImageStructure(), tmpSmiles);
+            StackPane tmpNode = this.addStructureDisplayAtHoveringToHistogramBar(aHistogramView.getImageStructure(), tmpSmiles);
             tmpStringNumberData.setNode(tmpNode);
-            tmpNode.setStyle("-fx-bar-fill: #1E90FF");
+            tmpNode.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);
             int tmpDigitLength = String.valueOf(tmpCurrentFrequency).length();
             this.getBarLabel(aBarLabelCheckBox, aStylingCheckBox, tmpNode, tmpCurrentFrequency, tmpDigitLength);
             tmpSeries.getData().add(tmpStringNumberData);
         }
-        double tmpHistogramSize = aHistogramDefaultSize *tmpSublistFrequency.size();
+        double tmpHistogramSize = aHistogramDefaultSize * tmpSublistFrequency.size();
         tmpHistogramBarChart.setPrefHeight(tmpHistogramSize);
         tmpHistogramBarChart.setMinHeight(tmpHistogramSize);
         tmpHistogramBarChart.getData().add(tmpSeries);
-        tmpHistogramBarChart.setLegendVisible(false);
+        tmpHistogramBarChart.setLegendVisible(false); //TODO: is this one of the settings?
         tmpHistogramBarChart.layout();
-        tmpHistogramBarChart.setHorizontalGridLinesVisible(false);
-        tmpHistogramBarChart.setVerticalGridLinesVisible(false);
+        tmpHistogramBarChart.setHorizontalGridLinesVisible(this.displayGridLinesSetting.get());
+        tmpHistogramBarChart.setVerticalGridLinesVisible(this.displayGridLinesSetting.get());
         tmpHistogramBarChart.setAnimated(false);
         return tmpHistogramBarChart;
     }
     //
     /**
      * Add listeners
-     *
      */
     private void addListenersToHistogramView() {
+        //close histogram stage with close button
         this.histogramView.getCloseButton().setOnAction(event -> {
             this.histogramStage.close();
         });
+        //add text formatter that only accepts integers and turns the input strings into those to the two text fields
         this.histogramView.getDisplayedFragmentsNumberTextField().setTextFormatter(
                 new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
                         this.displayedFragmentsNumberSetting.get(),
-                        GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+                        GuiUtil.getPositiveIntegerWithoutZeroFilter())
+        );
         this.histogramView.getMaximumSMILESLengthTextField().setTextFormatter(
                 new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
                         this.maximumSMILESLengthSetting.get(),
-                        GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+                        GuiUtil.getPositiveIntegerWithoutZeroFilter())
+        );
+        //disable apply button if the text fields are empty //TODO is the button also disabled if only one field is empty?
         this.histogramView.getApplyButton().disableProperty().bind(
                 Bindings.isEmpty(this.histogramView.getDisplayedFragmentsNumberTextField().textProperty()).
                             and(Bindings.isEmpty(this.histogramView.getMaximumSMILESLengthTextField().textProperty()))
         );
+        //apply button, update histogram
         this.histogramView.getApplyButton().setOnAction(event -> {
             int tmpSmilesLengthInField;
-            if (this.histogramView.getSmilesField().isEmpty()) {
-                this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getFragmentTextField()));
+            //TODO: what if both are empty?
+            //TODO: Carry on from here
+            if (this.histogramView.getMaximumSMILESLengthTextFieldContent().isEmpty()) {
+                this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getDisplayedFragmentsNumberTextFieldContent()));
                 if (this.displayedFragmentsNumberSetting.get() > this.fragmentListCopy.size()) {
                     GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
@@ -637,16 +602,16 @@ public class HistogramViewController implements IViewToolController {
                     return;
                 }
                 tmpSmilesLengthInField = GuiDefinitions.HISTOGRAM_DEFAULT_SMILES_LENGTH;
-            } else if (this.histogramView.getFragmentTextField().isEmpty()) {
-                tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
+            } else if (this.histogramView.getDisplayedFragmentsNumberTextFieldContent().isEmpty()) {
+                tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getMaximumSMILESLengthTextFieldContent());
                 if (this.fragmentListCopy.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
                     this.displayedFragmentsNumberSetting.set(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS);
                 } else {
                     this.displayedFragmentsNumberSetting.set(this.fragmentListCopy.size());
                 }
             } else {
-                this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getFragmentTextField()));
-                tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getSmilesField());
+                this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getDisplayedFragmentsNumberTextFieldContent()));
+                tmpSmilesLengthInField = Integer.parseInt(this.histogramView.getMaximumSMILESLengthTextFieldContent());
                 if (this.displayedFragmentsNumberSetting.get() > this.fragmentListCopy.size()) {
                     GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
@@ -695,16 +660,18 @@ public class HistogramViewController implements IViewToolController {
     }
     //
     /**
-     * Make the histogram hoverable and create the structure images, that are displayed in the histogram
-     * For this purpose: Add a StackPane to each bar as a node, and use the StackPanes to call the corresponding listener
+     * Make the histogram hoverable and create the structure images that are displayed in the histogram when the cursor
+     * hovers over a bar.
+     * For this purpose, add a StackPane to each bar as a node, and use the StackPanes to call the corresponding listener.
      * Hovering over the bars displays the corresponding structures.
-     * In addition, by right-clicking on the bars, the corresponding structures (1500x1000) can be copied to SMILES anyway (also about adding labels)
+     * In addition, by right-clicking on the bars, the corresponding structures (1500x1000) can be copied to SMILES
+     * anyway (also about adding labels).
      *
      * @param anImageView to display the structures
      * @param aSmiles to depict the structures and copy them
      * @return a StackPane that is used as a node in the histogram
      */
-    private StackPane histogramHover(ImageView anImageView, String aSmiles) {
+    private StackPane addStructureDisplayAtHoveringToHistogramBar(ImageView anImageView, String aSmiles) {
         StackPane tmpNodePane = new StackPane();
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT);
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemSmiles.text"));
@@ -764,7 +731,13 @@ public class HistogramViewController implements IViewToolController {
         });
         tmpCopyStructureMenuItem.setOnAction(event -> {
             ClipboardContent tmpStructureClipboardContent = new ClipboardContent();
-            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(this.atomContainer,12.0, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT, true, true);
+            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                    this.atomContainer,
+                    12.0,
+                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
+                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
+                    true,
+                    true);
             tmpStructureClipboardContent.putImage(tmpCopyImageOnBar);
             Clipboard.getSystemClipboard().setContent(tmpStructureClipboardContent);
         });

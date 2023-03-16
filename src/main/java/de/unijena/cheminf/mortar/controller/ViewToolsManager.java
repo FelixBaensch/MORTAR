@@ -220,7 +220,7 @@ public class ViewToolsManager {
         HashSet<String> tmpViewToolNames = new HashSet<>(this.viewToolsArray.length + 6, 1.0f);
         for (IViewToolController tmpViewTool : this.viewToolsArray) {
             //view tool name should be singleton and must be persistable
-            String tmpViewToolName = tmpViewTool.getViewToolName();
+            String tmpViewToolName = tmpViewTool.getViewToolNameForDisplay();
             if (!PreferenceUtil.isValidName(tmpViewToolName) || !SingleTermPreference.isValidContent(tmpViewToolName)) {
                 throw new Exception("View tool name " + tmpViewToolName + " is invalid.");
             }

@@ -62,7 +62,7 @@ public class HistogramView extends AnchorPane {
     /**
      * Text field for creating a new histogram with the given number of fragments
      */
-    private TextField fragmentTextField;
+    private TextField displayedFragmentsNumberTextField;
     /**
      * ImageView to display the structures
      */
@@ -70,7 +70,7 @@ public class HistogramView extends AnchorPane {
     /**
      * Text field for creating a new histogram with the given SMILES length
      */
-    private TextField smilesField;
+    private TextField maximumSMILESLengthTextField;
     /**
      * Checkbox to make bar labels adjustable
      */
@@ -160,20 +160,20 @@ public class HistogramView extends AnchorPane {
         tmpBorderPane.setCenter(tmpMainGrid);
         HBox tmpHBoxLeftSideControls = new HBox();
         // left side controls
-        this.fragmentTextField = new TextField();
-        this.fragmentTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
-        this.fragmentTextField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " "+aMaxFragmentNumber));
+        this.displayedFragmentsNumberTextField = new TextField();
+        this.displayedFragmentsNumberTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
+        this.displayedFragmentsNumberTextField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
         this.applyButton = new Button(Message.get("HistogramView.refreshButton.text"));
         this.applyButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.smilesField = new TextField();
-        this.smilesField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
-        this.smilesField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
+        this.maximumSMILESLengthTextField = new TextField();
+        this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
+        this.maximumSMILESLengthTextField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
         Label tmpSmilesLabel = new Label(Message.get("HistogramView.smilesLabel.text"));
         tmpSmilesLabel.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
-        this.defaultFragmentLabel = new Label();
-        this.defaultFragmentLabel.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " "+aMaxFragmentNumber));
+        this.defaultFragmentLabel = new Label(Message.get("HistogramView.displayedFragmentsTextFieldLabel.text"));
+        this.defaultFragmentLabel.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
         this.comboBox = new ComboBox<>();
         this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item1.text"));
         this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item2.text"));
@@ -199,8 +199,8 @@ public class HistogramView extends AnchorPane {
         tmpLeftSideGrid.add(this.chooseDataComoBox,1,1);
         tmpLeftSideGrid.add(tmpSmilesLabel,2,0);
         tmpLeftSideGrid.add(this.defaultFragmentLabel,2,1);
-        tmpLeftSideGrid.add(this.smilesField,3,0);
-        tmpLeftSideGrid.add(this.fragmentTextField,3,1);
+        tmpLeftSideGrid.add(this.maximumSMILESLengthTextField,3,0);
+        tmpLeftSideGrid.add(this.displayedFragmentsNumberTextField,3,1);
         tmpLeftSideGrid.add(this.applyButton,4,1);
         tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
         tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
@@ -272,7 +272,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return String new number of fragments to be displayed in the histogram
      */
-    public String getFragmentTextField() {return this.fragmentTextField.getText();}
+    public String getDisplayedFragmentsNumberTextFieldContent() {return this.displayedFragmentsNumberTextField.getText();}
     //
     /**
      * Returns the SMILES TextField which is deactivated if it is empty
@@ -280,7 +280,7 @@ public class HistogramView extends AnchorPane {
      * @return TextField for deactivation
      */
     public TextField getMaximumSMILESLengthTextField() {
-        return this.smilesField;
+        return this.maximumSMILESLengthTextField;
     }
     //
     /**
@@ -289,7 +289,7 @@ public class HistogramView extends AnchorPane {
      * @return TextField for deactivation
      */
     public TextField getDisplayedFragmentsNumberTextField() {
-        return this.fragmentTextField;
+        return this.displayedFragmentsNumberTextField;
     }
     //
     /**
@@ -297,7 +297,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return String corresponds to the SMiles length entered
      */
-    public String getSmilesField() {return this.smilesField.getText();}
+    public String getMaximumSMILESLengthTextFieldContent() {return this.maximumSMILESLengthTextField.getText();}
     //
     /**
      * Returns a ImageView to enable the display of the structures
@@ -349,7 +349,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return Label for display the maximum frequency in the histogram
      */
-    public Label getDefaultFragmentLabel() {
+    public Label getDisplayedFragmentsLabel() {
         return this.defaultFragmentLabel;
     }
     //

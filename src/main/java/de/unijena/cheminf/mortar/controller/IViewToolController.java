@@ -44,10 +44,6 @@ public interface IViewToolController {
      */
     public String getViewToolNameForDisplay();
     /**
-     *
-     */
-    public Map<String, String> getSettingNameToTooltipTextMap();
-    /**
      * Restore all settings of the view tool to their default values.
      */
     public void restoreDefaultSettings();
@@ -55,5 +51,8 @@ public interface IViewToolController {
      *
      */
     public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant);
+
+    //TODO how to add a getInstance method?
+    //TODO add open view tool method?
     //</editor-fold>
 }

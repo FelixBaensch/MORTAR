@@ -29,11 +29,12 @@ import java.util.List;
 /**
  * Util class for lists.
  *
- * @author Felix Baensch
+ * @author Felix Baensch, Jonas Schaub
  * @version 1.0.0.0
  */
 public final class ListUtil {
     //<editor-fold desc="public static methods" defaultstate="collapsed">
+    //TODO: check parameters, change params to enum values and bools, throw exceptions!
     /**
      * Sorts given list by property and sort type
      *
@@ -41,7 +42,7 @@ public final class ListUtil {
      * @param aProperty String
      * @param aSortType String
      */
-    public static void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType) {
+    public static void sortGivenFragmentListByPropertyAndSortType(List<? extends MoleculeDataModel> aList, String aProperty, String aSortType) {
         Collections.sort(aList, (m1, m2) -> {
             FragmentDataModel f1;
             FragmentDataModel f2;

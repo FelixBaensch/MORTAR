@@ -172,6 +172,7 @@ public final class GuiDefinitions {
      * Value for the delay of a second click to be registered as double-click (in ms)
      */
     public static final int DOUBLE_CLICK_DELAY = 250;
+    //TODO: Move all histogram constants to histogram view/controller?
     /**
      * Value for the width of the image corresponding to the structure of the fragments
      */
@@ -188,10 +189,6 @@ public final class GuiDefinitions {
      * Value for the not scrollable histogram
      */
     public static final double GUI_NOT_SCROLLABLE_HEIGHT = 651.0;
-    /**
-     * Value for the bar widths
-     */
-    public static final double GUI_BAR_WIDTH = 30.0;
     /**
      * Value for the width of the textField
      */
@@ -240,10 +237,6 @@ public final class GuiDefinitions {
      * Default SMILES length
      */
     public static final int HISTOGRAM_DEFAULT_SMILES_LENGTH = 25;
-    /**
-     * Default fragment frequency
-     */
-    public static  final int HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY = 30;
     /**
      * Value of tickLabel length
      */
