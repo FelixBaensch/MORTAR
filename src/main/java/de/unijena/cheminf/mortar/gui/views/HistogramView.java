@@ -175,10 +175,11 @@ public class HistogramView extends AnchorPane {
         this.defaultFragmentLabel = new Label(Message.get("HistogramView.displayedFragmentsTextFieldLabel.text"));
         this.defaultFragmentLabel.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
         this.comboBox = new ComboBox<>();
-        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item1.text"));
-        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item2.text"));
-        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item3.text"));
-        this.comboBox.setValue(Message.get("HistogramView.comboBox.item3.text"));
+        //TODO: adjust for enum and select current setting, not the default
+        this.comboBox.getItems().add(Message.get("HistogramView.barWidths.small"));
+        this.comboBox.getItems().add(Message.get("HistogramView.barWidths.medium"));
+        this.comboBox.getItems().add(Message.get("HistogramView.barWidths.large"));
+        this.comboBox.setValue(Message.get("HistogramView.barWidths.large"));
         this.comboBox.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
         Label tmpGapSettingsLabel = new Label(Message.get("HistogramView.gapSettingLabel.text"));
         tmpGapSettingsLabel.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
@@ -322,7 +323,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return CheckBox to set the grid lines in the histogram
      */
-    public CheckBox getGridLinesCheckBox() {
+    public CheckBox getDisplayGridLinesCheckBox() {
         return this.gridLinesCheckBox;
     }
     //
@@ -376,7 +377,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return CheckBox
      */
-    public CheckBox getSmilesTickLabel() {
+    public CheckBox getDisplaySmilesOnYAxisCheckBox() {
         return this.smilesTickLabel;
     }
     //
