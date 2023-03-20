@@ -23,7 +23,6 @@ package de.unijena.cheminf.mortar.controller;
 import javafx.beans.property.Property;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Interface that unifies view tools like the histogram view and the overview view.
@@ -34,13 +33,14 @@ import java.util.Map;
 public interface IViewToolController {
     //<editor-fold desc="Public properties">
     /**
-     * Returns a list of all available settings represented by properties for the given view tool.
+     * Returns a list of all available settings represented by properties for the given view tool. Differently from the
+     * fragmenters, the properties are mostly used for persisting the setting here.
      *
      * @return list of settings represented by properties
      */
     public List<Property> settingsProperties();
     /**
-     *
+     * Returns a view tool name that can be displayed in the GUI, e.g. in the views menu.
      */
     public String getViewToolNameForDisplay();
     /**
@@ -48,7 +48,8 @@ public interface IViewToolController {
      */
     public void restoreDefaultSettings();
     /**
-     *
+     * Specifies whether the view tool can be used on the given tab type, e.g. the histogram view cannot be used
+     * on the molecules tab.
      */
     public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant);
 

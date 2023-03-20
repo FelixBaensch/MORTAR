@@ -176,15 +176,15 @@ public final class GuiDefinitions {
     /**
      * Value for the width of the image corresponding to the structure of the fragments
      */
-    public static final double GUI_IMAGE_WIDTH = 250.0;
+    public static final double STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH = 250.0;
     /**
      * Value for the height of the image corresponding to the structure of the fragments
      */
-    public static final double GUI_IMAGE_HEIGHT = 150.0;
+    public static final double STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT = 150.0;
     /**
      * Image zoom factor value
      */
-    public static final double GUI_IMAGE_ZOOM_FACTOR = 3.0;
+    public static final double STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR = 3.0;
     /**
      * Value for the not scrollable histogram
      */
