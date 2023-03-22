@@ -742,8 +742,9 @@ public class MainViewController {
      * Opens HistogramView
      */
     private void openHistogramView()  {
-        //TODO fix call, do it via the view tools manager
-       HistogramViewController tmpHistogramViewController = new HistogramViewController(this.primaryStage, this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
+       //TODO fix call, do it via the view tools manager
+       HistogramViewController tmpHistogramViewController = new HistogramViewController();
+       tmpHistogramViewController.openHistogramView(this.primaryStage, (List<FragmentDataModel>) (FragmentDataModel) this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
     }
     //
 
