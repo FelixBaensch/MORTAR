@@ -84,6 +84,7 @@ import java.util.logging.Logger;
  * @version 1.0.1.0
  */
 public class HistogramViewController implements IViewToolController {
+    //<editor-fold desc="Enums" defaultstate="collapsed">
     /**
      * Enum for the available bar spacing width options.
      */
@@ -121,6 +122,7 @@ public class HistogramViewController implements IViewToolController {
             return this.displayName;
         }
     }
+    //
     /**
      * Enum for the available frequency options, i.e. which frequency of the fragments to display, the absolute frequency
      * or the molecule frequency.
@@ -155,6 +157,7 @@ public class HistogramViewController implements IViewToolController {
             return this.displayName;
         }
     }
+    //</editor-fold>
     //<editor-fold desc="public static final class variables" defaultstate="collapsed">
     /**
      * Default value for the number of displayed fragments.
@@ -291,7 +294,7 @@ public class HistogramViewController implements IViewToolController {
     private IAtomContainer atomContainerForDisplayCache;
     //</editor-fold>
     //
-
+    //<editor-fold desc="Constructors" defaultstate="collapsed">
     /**
      * Constructor, initialises all settings with their default values. Does *not* open the view.
      */
@@ -326,7 +329,7 @@ public class HistogramViewController implements IViewToolController {
                 //the name could be displayed but is not used for that currently
                 Message.get("HistogramView.displayFrequencySetting.name"),
                 HistogramViewController.DEFAULT_DISPLAY_FREQUENCY.name(),
-                HistogramViewController.BarWidthOption.class) {
+                HistogramViewController.FrequencyOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 super.set(newValue);
@@ -400,12 +403,13 @@ public class HistogramViewController implements IViewToolController {
         };
         this.settings.add(this.displaySMILESSetting);
     }
+    //</editor-fold>
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
 
     @Override
     public List<Property> settingsProperties() {
-        //TODO add note on how and when the settings in the view are actually updated accordingly?
+        //TODO add note on how and when the settings in the view are actually updated accordingly
         return this.settings;
     }
     //
@@ -416,7 +420,7 @@ public class HistogramViewController implements IViewToolController {
     //
     @Override
     public void restoreDefaultSettings() {
-        //TODO: adjust settings in other places, too? Add note that the view will only be affected when it is opened again?
+        //TODO: adjust settings in other places, too? And/or add note that the view will only be affected when it is opened again?
         this.barWidthSetting.set(HistogramViewController.DEFAULT_BAR_WIDTH.name());
         this.displayFrequencySetting.set(HistogramViewController.DEFAULT_DISPLAY_FREQUENCY.name());
         this.maximumSMILESLengthSetting.set(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH);
@@ -430,14 +434,13 @@ public class HistogramViewController implements IViewToolController {
     @Override
     public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant) {
         return switch (aTabNameEnumConstant) {
-            //TODO capitalise enum constant names? @Felix
-            case Fragments, Itemization -> true;
+            case FRAGMENTS, ITEMIZATION -> true;
             default -> false;
         };
     }
     //TODO: harmonise this method in the IViewToolController interface?
     /**
-     * Initialises stage and view and opens view in the initialised stage.
+     * Initialises stage and view and opens view in the initialised stage. //TODO more extensive doc
      *
      * @param aMainStage Stage of the MainView
      * @param aFragmentDataModelList ObservableList that holds FragmentDataModel objects for visualisation in histogram
@@ -445,7 +448,7 @@ public class HistogramViewController implements IViewToolController {
     public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aFragmentDataModelList)  {
         //TODO checks!
         //these need to be reset to default because the histogram view is re-initialised with default size
-        //TODO: Maybe move constant to this class or view class?
+        //TODO: Maybe move constant to this class or view class? To encapsulate the tool consistently, yes
         this.imageWidth = GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH;
         this.imageHeight = GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT;
         this.imageZoomFactor = GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR;
@@ -518,11 +521,11 @@ public class HistogramViewController implements IViewToolController {
                 GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setScene(tmpHistogramScene);
-        //TODO: move this to addListenersToHistogramView()?
+        //TODO: move this to addListenersToHistogramView()? You can try, but move addListeners method down, after creation of scene
         tmpHistogramScene.widthProperty().addListener((observable, oldValue, newValue) -> {
             double tmpWidthChange = ((tmpHistogramScene.getWidth() - GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) * 100;
             double tmpImageWidthChange = (GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH / 100) * tmpWidthChange;
-            this.imageWidth = GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH +tmpImageWidthChange;
+            this.imageWidth = GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH + tmpImageWidthChange;
             this.imageHeight = this.imageWidth - 100;
             this.imageZoomFactor = (GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR / GuiDefinitions.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH) * this.imageWidth;
         });
@@ -589,7 +592,7 @@ public class HistogramViewController implements IViewToolController {
         tmpHistogramBarChart.setBarGap(0);
         ScrollPane tmpScrollPane = aHistogramView.getHistogramScrollPane();
         tmpScrollPane.setContent(tmpHistogramBarChart);
-        //---create data for histogram, i.e. categories ((abbr.) SMILES) and values (frequencies)
+        //---create data for histogram, i.e. categories ((abbr.) SMILES) and values (frequencies)---
         String tmpNewSmiles;
         ArrayList<String> tmpSmilesList = new ArrayList<>();
         ArrayList<Integer> tmpFrequencyList = new ArrayList<>();
@@ -614,8 +617,10 @@ public class HistogramViewController implements IViewToolController {
         //---calculate tick size and histogram size---
         double tmpMaxFrequency = Collections.max(tmpFrequencyList);
         // make readable x-axis
-        double tmpXAxisTicks = 5.0 / 100.0 * tmpMaxFrequency; // magic number
-        double tmpXAxisExtension = 15.0 / 100.0 * tmpMaxFrequency; // magic number
+        //double tmpXAxisTicks = 5.0 / 100.0 * tmpMaxFrequency; // magic number
+        double tmpXAxisTicks = 0.05 * tmpMaxFrequency; // magic number
+        //double tmpXAxisExtension = 15.0 / 100.0 * tmpMaxFrequency; // magic number
+        double tmpXAxisExtension = 0.15 * tmpMaxFrequency; // magic number
         int tmpIntTmpXAxisTick = (int) Math.round(tmpXAxisTicks);
         int tmpIntXAxisExtension = (int) Math.round(tmpXAxisExtension);
         if (tmpIntTmpXAxisTick == 0 || tmpIntXAxisExtension == 0) {
@@ -625,19 +630,19 @@ public class HistogramViewController implements IViewToolController {
             int tmpNewXAxisTick = 0;
             if (tmpIntTmpXAxisTick >= 10) {
                 tmpNewXAxisTick = tmpIntTmpXAxisTick;
-                String tmpTickLength = String.valueOf(tmpNewXAxisTick);
-                String tmpFirstValue = String.valueOf(tmpTickLength.charAt(0));
+                String tmpTickStringRepresentation = String.valueOf(tmpNewXAxisTick);
+                String tmpFirstValue = String.valueOf(tmpTickStringRepresentation.charAt(0));
                 int tmpFirstIntValue = Integer.parseInt(tmpFirstValue);
                 if (tmpFirstIntValue > 5) {
-                    tmpNewXAxisTick = (int) Math.pow(10, tmpTickLength.length());
+                    tmpNewXAxisTick = (int) Math.pow(10, tmpTickStringRepresentation.length());
                 } else {
-                    int tmpDigit = tmpTickLength.length() - 1;
-                    int tmpCheckModulo = (int) Math.pow(10, tmpDigit);
-                    if (tmpNewXAxisTick % tmpCheckModulo != 0) {
-                        //TODO: there must be a better way to do this
+                    int tmpDigit = tmpTickStringRepresentation.length() - 1;
+                    int tmpPowerOfTen = (int) Math.pow(10, tmpDigit);
+                    if (tmpNewXAxisTick % tmpPowerOfTen != 0) {
+                        //TODO: there must be a better way to do this @Betül
                         do {
                             tmpNewXAxisTick++;
-                        } while (tmpNewXAxisTick % (tmpCheckModulo) != 0);
+                        } while (tmpNewXAxisTick % (tmpPowerOfTen) != 0);
                     }
                 }
                 tmpNumberAxis.setTickUnit(tmpNewXAxisTick);
@@ -655,7 +660,7 @@ public class HistogramViewController implements IViewToolController {
         tmpSublistFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aFragmentNumber, tmpFrequencyList.size());
         tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber, tmpFullSmilesLength.size());
         XYChart.Series tmpSeries = new XYChart.Series();
-        //TODO: can we not just make sure here that the three lists are of the same size and than iterate through them with an index?
+        //TODO: can we not just make sure here that the three lists are of the same size and than iterate through them with an index? - yes, try it!
         for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistFrequency.iterator(),
              tmpSmilesIterator = tmpSmilesToDepict.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpSmilesIterator.hasNext();) {
             Integer tmpCurrentFrequency = (Integer) tmpIntegerIterator.next();
@@ -694,8 +699,9 @@ public class HistogramViewController implements IViewToolController {
         //close histogram stage with close button
         this.histogramView.getCloseButton().setOnAction(event -> {
             this.histogramStage.close();
-            //TODO: discard some cached values here?
+            //TODO: discard some cached values and remove bindings here!
         });
+        //TODO: add listener to close window button in frame
         //add text formatter that only accepts integers and turns the input strings into those to the two text fields
         this.histogramView.getDisplayedFragmentsNumberTextField().setTextFormatter(
                 new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
@@ -708,7 +714,7 @@ public class HistogramViewController implements IViewToolController {
                         GuiUtil.getPositiveIntegerWithoutZeroFilter())
         );
         //disable apply button if the text fields are empty
-        // TODO is the button also disabled if only one field is empty?
+        // TODO is the button also disabled if only one field is empty? no, only disabled if both are empty
         this.histogramView.getApplyButton().disableProperty().bind(
                 Bindings.isEmpty(this.histogramView.getDisplayedFragmentsNumberTextField().textProperty()).
                             and(Bindings.isEmpty(this.histogramView.getMaximumSMILESLengthTextField().textProperty()))
@@ -846,8 +852,8 @@ public class HistogramViewController implements IViewToolController {
                     tmpContextMenu.show(tmpNodePane, event2.getScreenX(), event2.getScreenY());
                 });
             }
-            // TODO check MoleculeDataModel getAtomContainer (?)
-            //TODO: Can we replace that with a central SMILES parsing method in ChemUtil?
+            // TODO check MoleculeDataModel getAtomContainer, can we use it here? What is the difference?
+            //TODO: Can we replace that with a central SMILES parsing method in ChemUtil? -> the SMILES parsing routine of MoleculeDataModel!
             SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
             this.atomContainerForDisplayCache = null;
             try {
@@ -858,6 +864,7 @@ public class HistogramViewController implements IViewToolController {
             } catch (CDKException anException) {
                 HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                 //TODO what further to do if atom container could not be parsed?? Indicate this in cache? Or display error image below?
+                // -> the used depiction method returns an error image if image creation fails
             }
             Image tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                     this.atomContainerForDisplayCache,
@@ -923,7 +930,7 @@ public class HistogramViewController implements IViewToolController {
         if(this.displayBarLabelsSetting.get()) {
            aStackPane.getChildren().add(tmpBarLabel);
         }
-        //TODO move this (all the listeners) somewhere else? Can we turn this around, i.e. one listener displays/hides all the labels?
+        //TODO move this (all the listeners) somewhere else? Can we turn this around, i.e. one listener displays/hides all the labels? No
         aLabelCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (aLabelCheckBox.isSelected()) {
                 aStackPane.getChildren().add(tmpBarLabel);

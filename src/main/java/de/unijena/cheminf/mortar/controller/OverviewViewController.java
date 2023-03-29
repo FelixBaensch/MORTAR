@@ -203,7 +203,7 @@ public class OverviewViewController implements IViewToolController {
     public OverviewViewController() {
         //TODO move the default constants here?
         this.rowsPerPageSetting = new SimpleIntegerProperty(this, Message.get("TODO"), GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT);
-        this.columnsPerPageSetting = GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
+        this.columnsPerPageSetting = new SimpleIntegerProperty(GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT);
 
         //TODO Work around to cache the columns and rows per page. Will be removed in later version.
         //this.rowsPerPage = OverviewViewController.rowsPerPageCache;
@@ -275,7 +275,7 @@ public class OverviewViewController implements IViewToolController {
         this.dataSource = aDataSource;
         this.moleculeDataModelList = aMoleculeDataModelList;
         if (this.overviewView == null)
-            this.overviewView = new OverviewView(this.columnsPerPageSetting, this.rowsPerPageSetting);
+            this.overviewView = new OverviewView(this.columnsPerPageSetting.get(), this.rowsPerPageSetting.get());
         this.overviewViewStage = new Stage();
         Scene tmpScene = new Scene(this.overviewView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
@@ -290,8 +290,8 @@ public class OverviewViewController implements IViewToolController {
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //
-        int tmpPageCount = this.moleculeDataModelList.size() / (this.rowsPerPageSetting * this.columnsPerPageSetting);
-        if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting * this.columnsPerPageSetting) > 0) {
+        int tmpPageCount = this.moleculeDataModelList.size() / (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get());
+        if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get()) > 0) {
             tmpPageCount++;
         }
         if(this.moleculeDataModelList.size() == 0){
@@ -300,7 +300,7 @@ public class OverviewViewController implements IViewToolController {
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory((aPageIndex) -> this.createOverviewViewPage(aPageIndex,
-                this.rowsPerPageSetting, this.columnsPerPageSetting));
+                this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get()));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         this.overviewView.addPaginationToMainGridPane(tmpPagination);
@@ -322,7 +322,7 @@ public class OverviewViewController implements IViewToolController {
         ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
             Platform.runLater(() -> {
                 this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
-                        this.rowsPerPageSetting, this.columnsPerPageSetting);
+                        this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get());
             });
         };
         this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
@@ -436,7 +436,7 @@ public class OverviewViewController implements IViewToolController {
             if (!newValue) {
                 if (this.overviewView.getColumnsPerPageTextField().getText().isBlank()
                         || Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText()) == 0) {
-                    this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting));
+                    this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting.get()));
                 }
             }
         });
@@ -445,7 +445,7 @@ public class OverviewViewController implements IViewToolController {
             if (!newValue) {
                 if (this.overviewView.getRowsPerPageTextField().getText().isBlank()
                         || Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText()) == 0) {
-                    this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting));
+                    this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting.get()));
                 }
             }
         });
@@ -453,12 +453,12 @@ public class OverviewViewController implements IViewToolController {
         //change listener for resetting not applied text field entries when switching pagination page
         this.overviewView.getPagination().currentPageIndexProperty().addListener((observable, oldValue, newValue) -> {
             if (!this.overviewView.getColumnsPerPageTextField().getText()
-                    .equals(Integer.toString(this.columnsPerPageSetting))) {
-                this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting));
+                    .equals(Integer.toString(this.columnsPerPageSetting.get()))) {
+                this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting.get()));
             }
             if (!this.overviewView.getRowsPerPageTextField().getText()
-                    .equals(Integer.toString(this.rowsPerPageSetting))) {
-                this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting));
+                    .equals(Integer.toString(this.rowsPerPageSetting.get()))) {
+                this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting.get()));
             }
         });
         //
@@ -676,7 +676,7 @@ public class OverviewViewController implements IViewToolController {
             } else {
                 //informing the user if the image dimensions fell below the defined limit
                 this.overviewView.getStructureGridPane().add(this.overviewView.getImageDimensionsBelowLimitVBox(),
-                        0, 0, this.columnsPerPageSetting, this.rowsPerPageSetting);
+                        0, 0, this.columnsPerPageSetting.get(), this.rowsPerPageSetting.get());
             }
             //set tooltips of the text fields with current max for columns and rows per page
             this.overviewView.getColumnsPerPageTextField().getTooltip().setText(
@@ -741,33 +741,33 @@ public class OverviewViewController implements IViewToolController {
         int tmpMaxRowsPerPage = this.calculateMaxRowsPerPage(this.calculateOverviewViewPaginationNodeHeight());
         //
         //if (no changes && values are valid) -> return
-        if (tmpNewColumnsPerPageValue == this.columnsPerPageSetting && tmpNewColumnsPerPageValue <= tmpMaxColumnsPerPage
-                && tmpNewRowsPerPageValue == this.rowsPerPageSetting && tmpNewRowsPerPageValue <= tmpMaxRowsPerPage) {
+        if (tmpNewColumnsPerPageValue == this.columnsPerPageSetting.getValue() && tmpNewColumnsPerPageValue <= tmpMaxColumnsPerPage
+                && tmpNewRowsPerPageValue == this.rowsPerPageSetting.getValue() && tmpNewRowsPerPageValue <= tmpMaxRowsPerPage) {
             return;
         }
         //
         //if the values exceed the max values for the current page, set them to their maximum
         //setting the columns per page
         if (tmpNewColumnsPerPageValue > tmpMaxColumnsPerPage) {
-            this.columnsPerPageSetting = tmpMaxColumnsPerPage;
+            this.columnsPerPageSetting.set(tmpMaxColumnsPerPage);
             this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPageSetting));
         } else {
-            this.columnsPerPageSetting = tmpNewColumnsPerPageValue;
+            this.columnsPerPageSetting.set(tmpNewColumnsPerPageValue);
         }
         //setting the rows per page
         if (tmpNewRowsPerPageValue > tmpMaxRowsPerPage) {
-            this.rowsPerPageSetting = tmpMaxRowsPerPage;
+            this.rowsPerPageSetting.set(tmpMaxRowsPerPage);
             this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPageSetting));
         } else {
-            this.rowsPerPageSetting = tmpNewRowsPerPageValue;
+            this.rowsPerPageSetting.set(tmpNewRowsPerPageValue);
         }
         //
         //reconfiguration of the OverviewView instance's structureGridPane
-        this.overviewView.configureStructureGridPane(this.columnsPerPageSetting, this.rowsPerPageSetting);
+        this.overviewView.configureStructureGridPane(this.columnsPerPageSetting.get(), this.rowsPerPageSetting.get());
         //
         //aftermath (adaptions to page count and current page index of the pagination node)
-        int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPageSetting * this.columnsPerPageSetting);
-        if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting * this.columnsPerPageSetting) > 0) {
+        int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get());
+        if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get()) > 0) {
             tmpNewPageCount++;
         }
         if (this.overviewView.getPagination().getPageCount() != tmpNewPageCount) {
@@ -779,7 +779,7 @@ public class OverviewViewController implements IViewToolController {
             this.overviewView.getPagination().setCurrentPageIndex(tmpCurrentPageIndex);
         }
         this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
-                this.rowsPerPageSetting, this.columnsPerPageSetting);
+                this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get());
     }
     //
     /**
@@ -919,8 +919,8 @@ public class OverviewViewController implements IViewToolController {
         }
         int tmpColIndex = GridPane.getColumnIndex(tmpTargetNode);
         int tmpRowIndex = GridPane.getRowIndex(tmpTargetNode);
-        int tmpIndexOfStructureOnPage = tmpRowIndex * this.columnsPerPageSetting + tmpColIndex;
-        return this.overviewView.getPagination().getCurrentPageIndex() * this.columnsPerPageSetting * this.rowsPerPageSetting
+        int tmpIndexOfStructureOnPage = tmpRowIndex * this.columnsPerPageSetting.get() + tmpColIndex;
+        return this.overviewView.getPagination().getCurrentPageIndex() * this.columnsPerPageSetting.get() * this.rowsPerPageSetting.get()
                 + tmpIndexOfStructureOnPage;
     }
     //

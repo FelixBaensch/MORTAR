@@ -175,8 +175,8 @@ public class GridTabForTableView extends Tab {
      * @return fragmentation name
      */
     public String getFragmentationNameOutOfTitle(){
-        if(this.getId().equals(TabNames.Molecules.name()))
-            return TabNames.Molecules.name();
+        if(this.getId().equals(TabNames.MOLECULES.name()))
+            return TabNames.MOLECULES.name();
         return this.getText().split("-", 2)[1].trim();
     }
 }

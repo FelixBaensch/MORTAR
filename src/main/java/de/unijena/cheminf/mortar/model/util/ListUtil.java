@@ -34,7 +34,7 @@ import java.util.List;
  */
 public final class ListUtil {
     //<editor-fold desc="public static methods" defaultstate="collapsed">
-    //TODO: check parameters, change params to enum values and bools, throw exceptions!
+    //TODO: check parameters, change params to enum values (and bools?), throw exceptions!
     /**
      * Sorts given list by property and sort type
      *
