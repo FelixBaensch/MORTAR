@@ -24,10 +24,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGeneratorFragmenter;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.*;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
@@ -153,6 +150,10 @@ public class FragmentationService {
      */
     private IMoleculeFragmenter ScaffoldGF;
     /**
+     * Alkyl Structure Fragmenter
+     */
+    private IMoleculeFragmenter AlkylSF;
+    /**
      * List of  names of fragmentation algorithms that have already been run
      */
     private List<String> existingFragmentations;
@@ -197,13 +198,15 @@ public class FragmentationService {
      */
     public FragmentationService(SettingsContainer aSettingsContainer){
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
-        this.fragmenters = new IMoleculeFragmenter[3];
+        this.fragmenters = new IMoleculeFragmenter[4];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
         this.fragmenters[1] = this.sugarRUF;
         this.ScaffoldGF = new ScaffoldGeneratorFragmenter();
         this.fragmenters[2] = this.ScaffoldGF;
+        this.AlkylSF = new AlkylStructureFragmenter();
+        this.fragmenters[3] = this.AlkylSF;
         //
         Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
         this.settingsContainer = aSettingsContainer;
