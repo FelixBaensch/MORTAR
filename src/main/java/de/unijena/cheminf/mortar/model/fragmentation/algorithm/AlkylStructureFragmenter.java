@@ -5,13 +5,9 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,12 +15,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Enum for options concerning maximum fragment length of carbohydrate chain created by fragmenter.
      */
-    public static enum ChainFragmentLengthOption {
+    public enum ChainFragmentLengthOption {
         METHANE,
         ETHANE,
         PROPANE,
-        BUTANE;
+        BUTANE
     }
+    public enum PreserveRingMaxSizeOption {
+        CYCLO_PROPANE,
+        CYCLO_BUTANE,
+        CYCLO_PENTANE,
+        CYCLO_HEXANE
+    }
+
     /**
      * Name of the fragmenter.
      */
@@ -33,10 +36,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default option for maximum fragment length of carbohydrate chain, set to Methane.
      */
     public static final ChainFragmentLengthOption Chain_Fragment_LENGTH_OPTION_DEFAULT = ChainFragmentLengthOption.METHANE;
+    public static final boolean DISSECT_SPIRO_CARBON_OPTION_DEFAULT = false;
+    public static final boolean DISSECT_RINGS_OPTION_DEFAULT = false;
+    public static final PreserveRingMaxSizeOption Preserve_Ring_MAX_SIZE_OPTION_DEFAULT = PreserveRingMaxSizeOption.CYCLO_HEXANE;
+    public static final boolean PRESERVE_RING_SYSTEM_OPTION_DEFAULT = true;
     /**
      * A property that has a constant name from the ChainFragmentLengthOption enum as value.
      */
     private final SimpleEnumConstantNameProperty chainFragmentLengthSetting;
+    /**
+     * Boolean property whether spiro carbons should be dissected.
+     */
+    public final SimpleBooleanProperty dissectSpiroCarbonSetting;
+    public final SimpleBooleanProperty dissectRingsSetting;
+    public final SimpleEnumConstantNameProperty preserveRingMaxSizeSetting;
+    public final SimpleBooleanProperty preserveRingSystemSetting;
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -44,7 +58,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding to GUI.
      */
-    private List<Property> settings;
+    private final List<Property> settings;
     /**
      * Logger of this class.
      */
@@ -55,7 +69,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public AlkylStructureFragmenter(){
         this.settingNameTooltipTextMap = new HashMap(10, 0.9f);
-        this.settings = new ArrayList<Property>(1);
         this.chainFragmentLengthSetting = new SimpleEnumConstantNameProperty(this, "Chain fragment length setting",
                 AlkylStructureFragmenter.Chain_Fragment_LENGTH_OPTION_DEFAULT.name(),
                 ChainFragmentLengthOption.class) {
@@ -72,10 +85,44 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
         };
-
         this.settingNameTooltipTextMap.put(this.chainFragmentLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.chainFragmentLengthSetting.tooltip"));
+        this.dissectSpiroCarbonSetting = new SimpleBooleanProperty(this, "Dissect spiro carbon setting",
+                AlkylStructureFragmenter.DISSECT_SPIRO_CARBON_OPTION_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.dissectSpiroCarbonSetting.getName(),
+                Message.get("AlkylStructureFragmenter.dissectSpiroCarbonSetting.tooltip"));
+        this.dissectRingsSetting = new SimpleBooleanProperty(this, "Dissect rings setting",
+                AlkylStructureFragmenter.DISSECT_RINGS_OPTION_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.dissectRingsSetting.getName(),
+                Message.get("AlkylStructureFragmenter.dissectRingsSetting.tooltip"));
+        this.preserveRingMaxSizeSetting = new SimpleEnumConstantNameProperty(this, "Preserve ring max size setting (preserves if Dissect rings setting is set false)",
+                AlkylStructureFragmenter.Preserve_Ring_MAX_SIZE_OPTION_DEFAULT.name(),
+                PreserveRingMaxSizeOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
+        this.settingNameTooltipTextMap.put(this.preserveRingMaxSizeSetting.getName(),
+                Message.get("AlkylStructureFragmenter.preserveRingMaxSizeSetting.tooltip"));
+        this.preserveRingSystemSetting = new SimpleBooleanProperty(this, "Preserve ring system setting (preserves if Dissect rings setting is set false)",
+                AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_OPTION_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.preserveRingSystemSetting.getName(),
+                Message.get("AlkylStructureFragmenter.preserveRingSystemSetting.tooltip"));
+
+        this.settings = new ArrayList<Property>(5);
         this.settings.add(this.chainFragmentLengthSetting);
+        this.settings.add(this.dissectSpiroCarbonSetting);
+        this.settings.add(this.dissectRingsSetting);
+        this.settings.add(this.preserveRingMaxSizeSetting);
+        this.settings.add(this.preserveRingSystemSetting);
     }
     /**
      * Returns a list of all available settings represented by properties for the given fragmentation algorithm.
@@ -191,8 +238,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @throws CloneNotSupportedException if cloning the given molecule fails
      */
     @Override
-    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
-        //add Logic here
+    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
+            throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
+        //<editor-fold desc="Parameter tests">
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
+        if (!tmpCanBeFragmented) {
+            throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
+        }
+        //</editor-fold>
+
         return null;
     }
 
@@ -206,6 +261,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+
         return false;
     }
 
@@ -233,7 +290,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
-        return false;
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
+        boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
+        if (tmpShouldBeFiltered || tmpShouldBePreprocessed) {
+            return false;
+        }
+        //throws NullpointerException if molecule is null
+        return true;
     }
 
     /**
