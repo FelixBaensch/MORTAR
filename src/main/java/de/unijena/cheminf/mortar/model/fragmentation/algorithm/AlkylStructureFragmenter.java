@@ -5,8 +5,10 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -262,8 +264,37 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        int tmpMoleculeAtomCount = aMolecule.getAtomCount();
+        boolean tmpShouldBeFiltered = false;
+        boolean[] tmpIsCarbonArray = new boolean[tmpMoleculeAtomCount];
+        try {
+            for (int i = 0; i <= tmpMoleculeAtomCount; i++) {
+                IAtom tmpAtom = aMolecule.getAtom(i);
+                boolean tmpIsCarbon;
+                int tmpAtomicNumber = tmpAtom.getAtomicNumber();
+                if (tmpAtomicNumber == 6) {
+                    tmpIsCarbonArray[i] = true;
+                    int tmpAtomBondCount = tmpAtom.getBondCount();
+                    int tmpCarbonHydrogenBonds = tmpAtom.getImplicitHydrogenCount();
+                    //get atoms in a bond via IAtom.getBegin() or .getEnd()
+                    //check if second atom is carbon
+                } else if (tmpAtomicNumber == 1) {
+                    tmpIsCarbonArray[i] = false;
+                } else {
+                    tmpIsCarbonArray[i] = false;
+                    tmpShouldBeFiltered = true;
+                }
 
-        return false;
+            }
+        } catch (Exception anException) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING,
+                    anException.toString() + " Molecule ID: " +
+                            //get ID for logging purpose method with every case
+                            aMolecule.getID());
+            tmpShouldBeFiltered = true;
+        }
+
+        return tmpShouldBeFiltered;
     }
 
     /**
