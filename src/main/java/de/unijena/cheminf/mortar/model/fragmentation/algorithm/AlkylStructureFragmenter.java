@@ -8,11 +8,16 @@ import javafx.beans.property.SimpleBooleanProperty;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Java class implementing an algorithm for detection and fragmentation of alkyl
+ * structures in MORTAR using the CDK.
+ *
+ * @author Maximilian Rottmann
+ */
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Enum for options concerning maximum fragment length of carbohydrate chain created by fragmenter.
@@ -23,6 +28,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         PROPANE,
         BUTANE
     }
+
+    /**
+     * Enum for maximum size options for rings to be preserved by the algorithm.
+     */
     public enum PreserveRingMaxSizeOption {
         CYCLO_PROPANE,
         CYCLO_BUTANE,
@@ -38,9 +47,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default option for maximum fragment length of carbohydrate chain, set to Methane.
      */
     public static final ChainFragmentLengthOption Chain_Fragment_LENGTH_OPTION_DEFAULT = ChainFragmentLengthOption.METHANE;
+    /**
+     * Default option for spiro carbon dissection.
+     */
     public static final boolean DISSECT_SPIRO_CARBON_OPTION_DEFAULT = false;
+    /**
+     * Default option for ring dissection.
+     */
     public static final boolean DISSECT_RINGS_OPTION_DEFAULT = false;
+    /**
+     * Default option for maximum size of preserved rings.
+     */
     public static final PreserveRingMaxSizeOption Preserve_Ring_MAX_SIZE_OPTION_DEFAULT = PreserveRingMaxSizeOption.CYCLO_HEXANE;
+    /**
+     * Default option for ring system preservation.
+     */
     public static final boolean PRESERVE_RING_SYSTEM_OPTION_DEFAULT = true;
     /**
      * A property that has a constant name from the ChainFragmentLengthOption enum as value.
@@ -50,8 +71,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Boolean property whether spiro carbons should be dissected.
      */
     public final SimpleBooleanProperty dissectSpiroCarbonSetting;
+    /**
+     * Boolean property whether rings should be dissected.
+     */
     public final SimpleBooleanProperty dissectRingsSetting;
+    /**
+     * Enum property for maximum size of preserved rings.
+     */
     public final SimpleEnumConstantNameProperty preserveRingMaxSizeSetting;
+    /**
+     * Boolean property whether ring systems should be preserved.
+     */
     public final SimpleBooleanProperty preserveRingSystemSetting;
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
@@ -264,36 +294,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        int tmpMoleculeAtomCount = aMolecule.getAtomCount();
         boolean tmpShouldBeFiltered = false;
-        boolean[] tmpIsCarbonArray = new boolean[tmpMoleculeAtomCount];
         try {
-            for (int i = 0; i <= tmpMoleculeAtomCount; i++) {
-                IAtom tmpAtom = aMolecule.getAtom(i);
-                boolean tmpIsCarbon;
-                int tmpAtomicNumber = tmpAtom.getAtomicNumber();
-                if (tmpAtomicNumber == 6) {
-                    tmpIsCarbonArray[i] = true;
-                    int tmpAtomBondCount = tmpAtom.getBondCount();
-                    int tmpCarbonHydrogenBonds = tmpAtom.getImplicitHydrogenCount();
-                    //get atoms in a bond via IAtom.getBegin() or .getEnd()
-                    //check if second atom is carbon
-                } else if (tmpAtomicNumber == 1) {
-                    tmpIsCarbonArray[i] = false;
-                } else {
-                    tmpIsCarbonArray[i] = false;
+            for (IAtom tmpAtom : aMolecule.atoms()) {
+                if (tmpAtom.getAtomicNumber() != 6 || tmpAtom.getAtomicNumber() != 1) {
                     tmpShouldBeFiltered = true;
+                    break;
                 }
-
+                //pseudoatom handling!
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException.toString() + " Molecule ID: " +
-                            //get ID for logging purpose method with every case
-                            aMolecule.getID());
+                    anException.toString() + " Molecule ID: " + aMolecule.getID());
             tmpShouldBeFiltered = true;
         }
-
         return tmpShouldBeFiltered;
     }
 
