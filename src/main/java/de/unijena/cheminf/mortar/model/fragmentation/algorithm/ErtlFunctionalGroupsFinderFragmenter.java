@@ -338,7 +338,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
-        this.settingNameTooltipTextMap = new HashMap(10, 0.9f);
+        this.settingNameTooltipTextMap = new HashMap(6 * (4/3) + 1, 0.75f);
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override

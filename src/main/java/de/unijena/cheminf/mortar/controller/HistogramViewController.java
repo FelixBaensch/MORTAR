@@ -27,7 +27,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
-import de.unijena.cheminf.mortar.model.util.ListUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
@@ -269,7 +269,7 @@ public class HistogramViewController {
         ArrayList<String> tmpFullSmilesLength = new ArrayList<>();
         String tmpSelectedData = (String) aHistogramView.getChooseDataComoBox().getValue();
         if (tmpSelectedData.equals(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"))) {
-            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "absoluteFrequency", "ASCENDING");
+            CollectionUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "absoluteFrequency", "ASCENDING");
             for (MoleculeDataModel tmpMoleculeData : this.copyList) {
                 tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
                 if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) {
@@ -284,7 +284,7 @@ public class HistogramViewController {
                 tmpFrequencyList.add(tmpFragmentData.getAbsoluteFrequency());
             }
         } else {
-            ListUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "moleculeFrequency", "ASCENDING");
+            CollectionUtil.sortGivenFragmentListByPropertyAndSortType(this.copyList, "moleculeFrequency", "ASCENDING");
             for (MoleculeDataModel tmpMoleculeData : this.copyList) {
                 tmpFragmentData = (FragmentDataModel) tmpMoleculeData;
                 if (tmpFragmentData.getUniqueSmiles().length() > aSmilesLength) {

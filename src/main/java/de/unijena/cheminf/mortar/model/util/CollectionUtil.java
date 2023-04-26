@@ -27,15 +27,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Util class for lists.
+ * Util class for collections.
  *
- * @author Felix Baensch
- * @version 1.0.0.0
+ * @author Felix Baensch, Jonas Schaub
+ * @version 1.0.1.0
  */
-public final class ListUtil {
+public final class CollectionUtil {
     //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
-     * Sorts given list by property and sort type
+     * Sorts given list by property and sort type.
      *
      * @param aList List
      * @param aProperty String
@@ -108,6 +108,13 @@ public final class ListUtil {
             }
             return 0;
         });
+    }
+    //
+    /**
+     *
+     */
+    public static int calculateInitialHashMapSize(int aSize, float aLoadingFacotr ) {
+        return 0;
     }
     //</editor-fold>
 }
