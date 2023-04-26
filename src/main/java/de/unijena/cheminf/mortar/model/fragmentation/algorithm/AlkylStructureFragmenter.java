@@ -5,8 +5,17 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.apache.xalan.xsltc.util.IntegerArray;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.qsar.DescriptorValue;
+import org.openscience.cdk.qsar.descriptors.molecular.LargestChainDescriptor;
+import org.openscience.cdk.qsar.descriptors.molecular.SmallRingDescriptor;
+import org.openscience.cdk.qsar.result.IDescriptorResult;
+import org.openscience.cdk.qsar.result.IntegerArrayResult;
+import org.openscience.cdk.qsar.result.IntegerArrayResultType;
+import org.openscience.cdk.qsar.result.IntegerResult;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -95,7 +104,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Logger of this class.
      */
     private final Logger logger = Logger.getLogger(AlkylStructureFragmenter.class.getName());
-
+    /**
+     * ToDo: largestChainDescriptor for detection of longest chain
+     */
+    private final LargestChainDescriptor largestChainDescriptor = new LargestChainDescriptor();
+    private final SmallRingDescriptor smallRingDescriptor = new SmallRingDescriptor();
     /**
      * Constructor, all settings are initialised with their respective default values.
      */
@@ -240,7 +253,35 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
 
     }
-
+    //todo: javadoc
+    public void setChainFragmentLengthSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name in the enum
+        ChainFragmentLengthOption tmpConstant = ChainFragmentLengthOption.valueOf(anOptionName);
+        this.setChainFragmentLengthSetting(tmpConstant);
+    }
+    public void setChainFragmentLengthSetting(ChainFragmentLengthOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given option is null.");
+        this.chainFragmentLengthSetting.set(anOption.name());
+    }
+    public void setDissectSpiroCarbonSetting(boolean aBoolean) {
+        this.dissectSpiroCarbonSetting.set(aBoolean);
+    }
+    public void setDissectRingsSetting(boolean aBoolean) {
+        this.dissectRingsSetting.set(aBoolean);
+    }
+    public void setPreserveRingMaxSizeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
+        Objects.requireNonNull(anOptionName, "Given option is null.");
+        PreserveRingMaxSizeOption tmpConstant = PreserveRingMaxSizeOption.valueOf(anOptionName);
+        this.setPreserveRingMaxSizeSetting(tmpConstant);
+    }
+    public void setPreserveRingMaxSizeSetting(PreserveRingMaxSizeOption anOption) throws NullPointerException {
+        Objects.requireNonNull(anOption, "Given option name is null.");
+        this.preserveRingMaxSizeSetting.set(anOption.name());
+    }
+    public void setPreserveRingSystemSetting(boolean aBoolean) {
+        this.preserveRingSystemSetting.set(aBoolean);
+    }
     /**
      * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
      * multi-threaded work where every thread needs its own fragmenter instance.
@@ -249,7 +290,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public IMoleculeFragmenter copy() {
-        return null;
+        AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
+        tmpCopy.setChainFragmentLengthSetting(this.chainFragmentLengthSetting.get());
+        tmpCopy.setDissectSpiroCarbonSetting(this.dissectSpiroCarbonSetting.get());
+        tmpCopy.setDissectRingsSetting(this.dissectRingsSetting.get());
+        tmpCopy.setPreserveRingMaxSizeSetting(this.preserveRingMaxSizeSetting.get());
+        tmpCopy.setPreserveRingSystemSetting(this.preserveRingSystemSetting.get());
+        return tmpCopy;
     }
 
     /**
@@ -273,14 +320,51 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         //<editor-fold desc="Parameter tests">
+        List<IAtomContainer> tmpFragments = new ArrayList<>(1);
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
         if (!tmpCanBeFragmented) {
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
+        boolean hasRings = false;
         //</editor-fold>
+        //ToDo
+        Object[] tmpParamsLCD = new Object[2];
+        tmpParamsLCD[0] = false;
+        tmpParamsLCD[1] = true;
+        try {
+            largestChainDescriptor.setParameters(tmpParamsLCD);
+            DescriptorValue tmpChainDescriptorValue = largestChainDescriptor.calculate(aMolecule);
+            IDescriptorResult tmpValue = tmpChainDescriptorValue.getValue();
+            int tmpLargestChain = ((IntegerResult) tmpValue).intValue();
+            if (tmpLargestChain < 1) {
+                tmpFragments.add(aMolecule);
+            }
 
-        return null;
+        } catch (CDKException cdkException) {
+            throw new RuntimeException(cdkException);
+        }
+        try {
+            DescriptorValue tmpRingValue = smallRingDescriptor.calculate(aMolecule);
+            int tmpSmallRingCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(0);
+            if (tmpSmallRingCount > 0) {
+                hasRings = true;
+                /* experimental!
+                int tmpCycloPropaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(5);
+                int tmpCycloButaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(6);
+                int tmpCycloPentaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(7);
+                int tmpCycloHexaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(8);
+                int tmpCycloHeptaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(9);
+
+                System.out.println(tmpCycloPentaneCount);
+                 */
+
+            }
+        } catch (Exception anException) {
+            throw new RuntimeException(anException);
+        }
+        tmpFragments.add(aMolecule);
+        return tmpFragments;
     }
 
     /**
@@ -297,7 +381,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         boolean tmpShouldBeFiltered = false;
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
-                if (tmpAtom.getAtomicNumber() != 6 || tmpAtom.getAtomicNumber() != 1) {
+                if (tmpAtom.getAtomicNumber() == 6 || tmpAtom.getAtomicNumber() == 1) {
+                } else {
                     tmpShouldBeFiltered = true;
                     break;
                 }
@@ -305,7 +390,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException.toString() + " Molecule ID: " + aMolecule.getID());
+                    anException + " Molecule ID: " + aMolecule.getID());
             tmpShouldBeFiltered = true;
         }
         return tmpShouldBeFiltered;
@@ -338,11 +423,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
-        if (tmpShouldBeFiltered || tmpShouldBePreprocessed) {
-            return false;
-        }
+        return !tmpShouldBeFiltered && !tmpShouldBePreprocessed;
         //throws NullpointerException if molecule is null
-        return true;
     }
 
     /**
