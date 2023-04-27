@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.scaffoldGenerator.ScaffoldGenerator;
 import javafx.beans.property.Property;
@@ -340,7 +341,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      */
     public ScaffoldGeneratorFragmenter() {
         this.scaffoldGeneratorInstance = new ScaffoldGenerator();
-        this.settingNameTooltipTextMap = new HashMap(16, 0.9f);
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashMapCapacity(16, 0.75f);
+        this.settingNameTooltipTextMap = new HashMap(tmpInitialCapacityForSettingNameTooltipTextMap, 0.75f);
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override

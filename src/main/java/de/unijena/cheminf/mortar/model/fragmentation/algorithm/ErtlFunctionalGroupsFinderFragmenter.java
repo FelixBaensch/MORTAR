@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -338,7 +339,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
-        this.settingNameTooltipTextMap = new HashMap(6 * (4/3) + 1, 0.75f);
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashMapCapacity(6, 0.75f);
+        this.settingNameTooltipTextMap = new HashMap(tmpInitialCapacityForSettingNameTooltipTextMap, 0.75f);
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
@@ -805,7 +807,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             this.logger.log(Level.WARNING, anException.toString(), anException);
             throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
         }
-        HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(tmpMoleculeClone.getAtomCount() + 1, 1);
+        int tmpInitialCapacityForIdToAtomMap = CollectionUtil.calculateInitialHashMapCapacity(tmpMoleculeClone.getAtomCount(), 0.75f);
+        HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(tmpInitialCapacityForIdToAtomMap, 0.75f);
         for (int i = 0; i < tmpMoleculeClone.getAtomCount(); i++) {
             IAtom tmpAtom = tmpMoleculeClone.getAtom(i);
             tmpAtom.setProperty(ErtlFunctionalGroupsFinderFragmenter.INTERNAL_INDEX_PROPERTY_KEY, i);

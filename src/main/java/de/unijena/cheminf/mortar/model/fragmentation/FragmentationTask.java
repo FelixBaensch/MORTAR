@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -134,7 +135,7 @@ public class FragmentationTask implements Callable<Integer> {
                     continue;
                 }
                 List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpFragmentsList.size());
-                HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(tmpFragmentsList.size());
+                HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashMapCapacity(tmpFragmentsList.size()));
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
                     String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
                     if (tmpSmiles == null) {

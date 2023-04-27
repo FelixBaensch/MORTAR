@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
@@ -85,7 +86,7 @@ public class FragmentationSettingsViewController {
      */
     public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName){
         this.mainStage = aStage;
-        this.recentProperties = new HashMap<>(anArrayOfFragmenters.length);
+        this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashMapCapacity(anArrayOfFragmenters.length));
         this.fragmenters = anArrayOfFragmenters;
         this.selectedFragmenterName = aSelectedFragmenterAlgorithmName;
         this.openFragmentationSettingsView();
@@ -111,7 +112,7 @@ public class FragmentationSettingsViewController {
         //
         this.addListener();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-            HashMap<String, Object> tmpRecentProperties = new HashMap<>(tmpFragmenter.settingsProperties().size());
+            HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashMapCapacity(tmpFragmenter.settingsProperties().size()));
             this.recentProperties.put(tmpFragmenter.getFragmentationAlgorithmName(), tmpRecentProperties);
             Tab tmpTab = this.settingsView.addTab(this.fragmentationSettingsViewStage,
                     tmpFragmenter.getFragmentationAlgorithmName(), tmpFragmenter.settingsProperties(),

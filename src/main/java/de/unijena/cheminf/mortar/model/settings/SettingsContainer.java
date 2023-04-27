@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.settings;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
@@ -609,7 +610,8 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        this.settingNameTooltipTextMap = new HashMap<String, String>(10, 0.9f);
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashMapCapacity(10, 0.75f);
+        this.settingNameTooltipTextMap = new HashMap<String, String>(tmpInitialCapacityForSettingNameTooltipTextMap, 0.75f);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 "Rows per page setting",
                 SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT) {

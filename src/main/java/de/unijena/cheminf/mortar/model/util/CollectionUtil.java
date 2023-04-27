@@ -111,10 +111,45 @@ public final class CollectionUtil {
     }
     //
     /**
+     * Calculates a suitable initial size for instantiating a new HashMap instance based on the number of elements
+     * supposed to be stored in it and the load factor that determines the rehash threshold.
+     * Calculation: initCap = (int) aNumberOfElement * (1/aLoadFactor) + 2
+     * <br>The initial capacity multiplied with the load factor (= rehash threshold) must be higher than the number of
+     * elements.
      *
+     * @param aNumberOfElements number of elements supposed to be stored in the new HashMap instance
+     * @param aLoadFactor load factor that is specified for the new HashMap instance
+     * @return a suitable initial size for the new HashMap instance that leads to a rehash threshold that is slightly
+     * higher than the number of elements
+     * @throws IllegalArgumentException if the number of elements or the load factor is negative or equal to zero
+     * or if the load factor is greater than 1.0
      */
-    public static int calculateInitialHashMapSize(int aSize, float aLoadingFacotr ) {
-        return 0;
+    public static int calculateInitialHashMapCapacity(int aNumberOfElements, float aLoadFactor)
+            throws IllegalArgumentException {
+        if (aNumberOfElements <= 0) {
+            throw new IllegalArgumentException("Number of elements needs to be higher than 0 but is " + aNumberOfElements);
+        }
+        if (aLoadFactor <= 0 || aLoadFactor > 1.0f) {
+            throw new IllegalArgumentException("Load factor must be higher than 0 and not bigger than 1.0 but is " + aLoadFactor);
+        }
+        float tmpInitialSize = (float) aNumberOfElements * (1.0f / aLoadFactor) + 2.0f;
+        return (int) tmpInitialSize;
+    }
+    //
+    /**
+     * Calculates a suitable initial size for instantiating a new HashMap instance based on the number of elements
+     * supposed to be stored in it and the default load factor (0.75) that determines the rehash threshold.
+     * Calculation: initCap = (int) aNumberOfElement * (1/0.75) + 2
+     * <br>The initial capacity multiplied with the load factor (= rehash threshold) must be higher than the number of
+     * elements.
+     *
+     * @param aNumberOfElements number of elements supposed to be stored in the new HashMap instance
+     * @return a suitable initial size for the new HashMap instance that leads to a rehash threshold that is slightly
+     * higher than the number of elements
+     * @throws IllegalArgumentException if the number of elements is negative or equal to zero
+     */
+    public static int calculateInitialHashMapCapacity(int aNumberOfElements) throws IllegalArgumentException {
+        return CollectionUtil.calculateInitialHashMapCapacity(aNumberOfElements, 0.75f);
     }
     //</editor-fold>
 }
