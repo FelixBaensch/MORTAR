@@ -37,7 +37,7 @@ public class CollectionUtilTest {
         float[] tmpLoadFactor = new float[]{0.75f, 0.75f, 0.6f, 0.75f};
         int[] tmpExpectedInitialCapacity = new int[]{15, 135, 7255762, 42};
         for (int i = 0; i < tmpNumberOfElements.length; i++) {
-            int tmpCalculatedInitialHashMapCapacity = CollectionUtil.calculateInitialHashMapCapacity(tmpNumberOfElements[i], tmpLoadFactor[i]);
+            int tmpCalculatedInitialHashMapCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpNumberOfElements[i], tmpLoadFactor[i]);
             float tmpRehashThreshold = tmpCalculatedInitialHashMapCapacity * tmpLoadFactor[i];
             System.out.println("\nNumber of elements: " + tmpNumberOfElements[i]);
             System.out.println("Load factor: " + tmpLoadFactor[i]);

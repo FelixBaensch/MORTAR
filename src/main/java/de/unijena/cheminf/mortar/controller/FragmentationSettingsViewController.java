@@ -86,7 +86,7 @@ public class FragmentationSettingsViewController {
      */
     public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName){
         this.mainStage = aStage;
-        this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashMapCapacity(anArrayOfFragmenters.length));
+        this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(anArrayOfFragmenters.length));
         this.fragmenters = anArrayOfFragmenters;
         this.selectedFragmenterName = aSelectedFragmenterAlgorithmName;
         this.openFragmentationSettingsView();
@@ -112,7 +112,7 @@ public class FragmentationSettingsViewController {
         //
         this.addListener();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-            HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashMapCapacity(tmpFragmenter.settingsProperties().size()));
+            HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmenter.settingsProperties().size()));
             this.recentProperties.put(tmpFragmenter.getFragmentationAlgorithmName(), tmpRecentProperties);
             Tab tmpTab = this.settingsView.addTab(this.fragmentationSettingsViewStage,
                     tmpFragmenter.getFragmentationAlgorithmName(), tmpFragmenter.settingsProperties(),

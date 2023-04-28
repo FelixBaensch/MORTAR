@@ -87,7 +87,7 @@ public class SettingsViewController {
         this.mainStage = aStage;
         this.settingsContainer = aSettingsContainer;
         this.recentSettingsContainer = aSettingsContainer;
-        this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashMapCapacity(this.settingsContainer.settingsProperties().size()));
+        this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(this.settingsContainer.settingsProperties().size()));
         this.showSettingsView();
     }
     //
