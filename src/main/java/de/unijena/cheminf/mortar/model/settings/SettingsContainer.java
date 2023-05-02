@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.settings;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
@@ -609,7 +610,11 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        this.settingNameTooltipTextMap = new HashMap<String, String>(10, 0.9f);
+        int tmpNumberOfSettings = 8;
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                tmpNumberOfSettings,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameTooltipTextMap = new HashMap<String, String>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 "Rows per page setting",
                 SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT) {
@@ -752,15 +757,16 @@ public class SettingsContainer {
         //setting names and values must adhere to the preference input restrictions
         //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
         List<Property> tmpSettingsList = this.settings;
-        HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingsList.size() + 6, 1.0f);
+        int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpSettingsList.size(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        HashSet<String> tmpSettingNamesSet = new HashSet<>(tmpSettingNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (Property tmpSetting : tmpSettingsList) {
             if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
                 throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");
             }
-            if (tmpSettingNames.contains(tmpSetting.getName())) {
+            if (tmpSettingNamesSet.contains(tmpSetting.getName())) {
                 throw new Exception("Setting name " + tmpSetting.getName() + " is used multiple times.");
             } else {
-                tmpSettingNames.add(tmpSetting.getName());
+                tmpSettingNamesSet.add(tmpSetting.getName());
             }
             if (tmpSetting instanceof SimpleBooleanProperty) {
                 //nothing to do here, booleans cannot have invalid values

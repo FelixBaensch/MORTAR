@@ -27,15 +27,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Util class for lists.
+ * Util class for collections.
  *
- * @author Felix Baensch
- * @version 1.0.0.0
+ * @author Felix Baensch, Jonas Schaub
+ * @version 1.0.1.0
  */
-public final class ListUtil {
+public final class CollectionUtil {
     //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
-     * Sorts given list by property and sort type
+     * Sorts given list by property and sort type.
      *
      * @param aList List
      * @param aProperty String
@@ -108,6 +108,46 @@ public final class ListUtil {
             }
             return 0;
         });
+    }
+    //
+    /**
+     * Calculates a suitable initial size for instantiating a new HashMap or HashSet instance based on the number of elements
+     * supposed to be stored in it and the load factor that determines the resize threshold.
+     * Calculation: initCap = (int) aNumberOfElement * (1/aLoadFactor) + 2
+     * <br>The initial capacity multiplied with the load factor (= resize threshold) must be higher than the number of
+     * elements.
+     *
+     * @param aNumberOfElements number of elements supposed to be stored in the new HashMap or HashSet instance
+     * @param aLoadFactor load factor that is specified for the new HashMap or HashSet instance
+     * @return a suitable initial size for the new HashMap or HashSet instance that leads to a resize threshold that is slightly
+     * higher than the number of elements
+     * @throws IllegalArgumentException if the number of elements or the load factor is negative or equal to zero
+     * or if the load factor is greater than 1.0
+     */
+    public static int calculateInitialHashCollectionCapacity(int aNumberOfElements, float aLoadFactor)
+            throws IllegalArgumentException {
+        if (aNumberOfElements <= 0) {
+            throw new IllegalArgumentException("Number of elements needs to be higher than 0 but is " + aNumberOfElements);
+        }
+        if (aLoadFactor <= 0 || aLoadFactor > 1.0f) {
+            throw new IllegalArgumentException("Load factor must be higher than 0 and not bigger than 1.0 but is " + aLoadFactor);
+        }
+        float tmpInitialSize = (float) aNumberOfElements * (1.0f / aLoadFactor) + 2.0f;
+        return (int) tmpInitialSize;
+    }
+    //
+    /**
+     * Calculates a suitable initial size for instantiating a new HashMap or HashSet instance with the default load factor.
+     * <br>For more details, see {@link #calculateInitialHashCollectionCapacity(int, float) calculateInitialHashCollectionCapacity(int, float)}.
+     *
+     *
+     * @param aNumberOfElements number of elements supposed to be stored in the new HashMap or HashSet instance
+     * @return a suitable initial size for the new HashMap or HashSet instance that leads to a resize threshold that is slightly
+     * higher than the number of elements
+     * @throws IllegalArgumentException if the number of elements is negative or equal to zero
+     */
+    public static int calculateInitialHashCollectionCapacity(int aNumberOfElements) throws IllegalArgumentException {
+        return CollectionUtil.calculateInitialHashCollectionCapacity(aNumberOfElements, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
     }
     //</editor-fold>
 }

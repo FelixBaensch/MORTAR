@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
@@ -86,7 +87,7 @@ public class SettingsViewController {
         this.mainStage = aStage;
         this.settingsContainer = aSettingsContainer;
         this.recentSettingsContainer = aSettingsContainer;
-        this.recentProperties = new HashMap<>(this.settingsContainer.settingsProperties().size());
+        this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(this.settingsContainer.settingsProperties().size()));
         this.showSettingsView();
     }
     //

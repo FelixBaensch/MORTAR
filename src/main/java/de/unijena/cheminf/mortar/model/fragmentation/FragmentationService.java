@@ -31,6 +31,7 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtili
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
@@ -1063,23 +1064,26 @@ public class FragmentationService {
      * anything does not meet the requirements.
      */
     private void checkFragmenters() throws Exception {
-        HashSet<String> tmpAlgorithmNames = new HashSet<>(this.fragmenters.length + 6, 1.0f);
+        int tmpAlgorithmNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(this.fragmenters.length,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        HashSet<String> tmpAlgorithmNamesSet = new HashSet<>(tmpAlgorithmNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             //algorithm name should be singleton and must be persistable
             String tmpAlgName = tmpFragmenter.getFragmentationAlgorithmName();
             if (!PreferenceUtil.isValidName(tmpAlgName) || !SingleTermPreference.isValidContent(tmpAlgName)) {
                 throw new Exception("Algorithm name " + tmpAlgName + " is invalid.");
             }
-            if (tmpAlgorithmNames.contains(tmpAlgName)) {
+            if (tmpAlgorithmNamesSet.contains(tmpAlgName)) {
                 throw new Exception("Algorithm name " + tmpAlgName + " is used multiple times.");
             } else {
-                tmpAlgorithmNames.add(tmpAlgName);
+                tmpAlgorithmNamesSet.add(tmpAlgName);
             }
             //setting names must be singletons within the respective class
             //setting names and values must adhere to the preference input restrictions
             //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
             List<Property> tmpSettingsList = tmpFragmenter.settingsProperties();
-            HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingsList.size() + 6, 1.0f);
+            int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpSettingsList.size(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+            HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
             for (Property tmpSetting : tmpSettingsList) {
                 if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
                     throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");
