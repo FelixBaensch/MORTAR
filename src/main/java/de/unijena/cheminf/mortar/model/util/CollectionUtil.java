@@ -112,14 +112,14 @@ public final class CollectionUtil {
     //
     /**
      * Calculates a suitable initial size for instantiating a new HashMap or HashSet instance based on the number of elements
-     * supposed to be stored in it and the load factor that determines the rehash threshold.
+     * supposed to be stored in it and the load factor that determines the resize threshold.
      * Calculation: initCap = (int) aNumberOfElement * (1/aLoadFactor) + 2
-     * <br>The initial capacity multiplied with the load factor (= rehash threshold) must be higher than the number of
+     * <br>The initial capacity multiplied with the load factor (= resize threshold) must be higher than the number of
      * elements.
      *
      * @param aNumberOfElements number of elements supposed to be stored in the new HashMap or HashSet instance
      * @param aLoadFactor load factor that is specified for the new HashMap or HashSet instance
-     * @return a suitable initial size for the new HashMap or HashSet instance that leads to a rehash threshold that is slightly
+     * @return a suitable initial size for the new HashMap or HashSet instance that leads to a resize threshold that is slightly
      * higher than the number of elements
      * @throws IllegalArgumentException if the number of elements or the load factor is negative or equal to zero
      * or if the load factor is greater than 1.0
@@ -137,14 +137,12 @@ public final class CollectionUtil {
     }
     //
     /**
-     * Calculates a suitable initial size for instantiating a new HashMap or HashSet instance based on the number of elements
-     * supposed to be stored in it and the default load factor (0.75) that determines the rehash threshold.
-     * Calculation: initCap = (int) aNumberOfElement * (1/0.75) + 2
-     * <br>The initial capacity multiplied with the load factor (= rehash threshold) must be higher than the number of
-     * elements.
+     * Calculates a suitable initial size for instantiating a new HashMap or HashSet instance with the default load factor.
+     * <br>For more details, see {@link #calculateInitialHashCollectionCapacity(int, float) calculateInitialHashCollectionCapacity(int, float)}.
+     *
      *
      * @param aNumberOfElements number of elements supposed to be stored in the new HashMap or HashSet instance
-     * @return a suitable initial size for the new HashMap or HashSet instance that leads to a rehash threshold that is slightly
+     * @return a suitable initial size for the new HashMap or HashSet instance that leads to a resize threshold that is slightly
      * higher than the number of elements
      * @throws IllegalArgumentException if the number of elements is negative or equal to zero
      */
