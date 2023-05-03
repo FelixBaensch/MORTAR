@@ -27,8 +27,8 @@ package de.unijena.cheminf.mortar.preference;
  */
 
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.awt.*;
 import java.io.BufferedReader;
@@ -59,7 +59,7 @@ public class PreferenceTest {
     public void testBooleanPreference() throws Exception {
         BooleanPreference tmpPreference = new BooleanPreference("MORTAR is cool", false);
         tmpPreference.setContent(true);
-        Assert.assertTrue(tmpPreference.getContent());
+        Assertions.assertTrue(tmpPreference.getContent());
         this.testPreferenceBasics(tmpPreference);
     }
     //
@@ -82,7 +82,7 @@ public class PreferenceTest {
                 Color.PINK.getBlue(),
                 Color.PINK.getAlpha());
         this.testPreferenceBasics(tmpPreference2);
-        Assert.assertArrayEquals(tmpPreference.getComponents(), tmpPreference2.getComponents(), 0);
+        Assertions.assertArrayEquals(tmpPreference.getComponents(), tmpPreference2.getComponents(), 0);
     }
     //
     /**
@@ -140,9 +140,9 @@ public class PreferenceTest {
         IPreference tmpPreference = PreferenceFactory.reinitializePreference(tmpReader.readLine(), tmpReader);
         tmpWriter.close();
         tmpReader.close();
-        Assert.assertTrue(aPreference.getContentRepresentative().equals(tmpPreference.getContentRepresentative()));
-        Assert.assertEquals(aPreference.getName(), tmpPreference.getName());
-        Assert.assertEquals(aPreference.getGUID(), tmpPreference.getGUID());
-        Assert.assertEquals(aPreference.toString(), tmpPreference.toString());
+        Assertions.assertTrue(aPreference.getContentRepresentative().equals(tmpPreference.getContentRepresentative()));
+        Assertions.assertEquals(aPreference.getName(), tmpPreference.getName());
+        Assertions.assertEquals(aPreference.getGUID(), tmpPreference.getGUID());
+        Assertions.assertEquals(aPreference.toString(), tmpPreference.toString());
     }
 }

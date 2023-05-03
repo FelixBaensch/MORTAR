@@ -26,8 +26,8 @@ package org.openscience.cdk.tools.test;
  * Last copied on September 26th 2022
  */
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -45,8 +45,8 @@ import org.openscience.cdk.isomorphism.Pattern;
 import org.openscience.cdk.isomorphism.VentoFoggia;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.ErtlFunctionalGroupsFinder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -238,21 +238,19 @@ public class ErtlFunctionalGroupsFinderTest {
      * @throws Exception	if anything does not work as planned
      */
     private void assertIsomorphism(List<IAtomContainer> expectedFGs, List<IAtomContainer> actualFGs) {
-    	Assert.assertEquals("Number of functional groups does not match the expected number of groups",
-                expectedFGs.size(), actualFGs.size());
+    	Assertions.assertEquals(expectedFGs.size(), actualFGs.size(),
+				"Number of functional groups does not match the expected number of groups");
 
 		for(int i = 0; i < expectedFGs.size(); i++) {
     		IAtomContainer cExp = expectedFGs.get(i);
     		IAtomContainer cAct = actualFGs.get(i);
 
-    		Assert.assertEquals("Groups #" + i + ": different atom count",
-                    cExp.getAtomCount(), cAct.getAtomCount());
-    		Assert.assertEquals("Groups #" + i + ": different bond count",
-					cExp.getBondCount(),  cAct.getBondCount());
+    		Assertions.assertEquals(cExp.getAtomCount(), cAct.getAtomCount(), "Groups #" + i + ": different atom count");
+    		Assertions.assertEquals(cExp.getBondCount(),  cAct.getBondCount(), "Groups #" + i + ": different bond count");
 
 			Pattern pattern = VentoFoggia.findIdentical(cExp);
 
-			Assert.assertTrue("Groups #" + i + ": not isomorph", pattern.matches(cAct));
+			Assertions.assertTrue(pattern.matches(cAct), "Groups #" + i + ": not isomorph");
     		
     		Mappings mappings = pattern.matchAll(cAct);
 
@@ -260,16 +258,17 @@ public class ErtlFunctionalGroupsFinderTest {
     		for (Map.Entry<IAtom, IAtom> e : atomMap.entrySet()) {
     	         IAtom atomExp  = e.getKey();
     	         IAtom atomAct = e.getValue();
-    	         Assert.assertEquals("Groups #" + i + ": Atom aromaticity does not match" + atomAct.getSymbol() + atomAct.isAromatic() + atomExp.getSymbol() + atomExp.isAromatic(),
-                         atomExp.isAromatic(), atomAct.isAromatic());
+    	         Assertions.assertEquals(
+                         atomExp.isAromatic(), atomAct.isAromatic(),
+						 "Groups #" + i + ": Atom aromaticity does not match" + atomAct.getSymbol() + atomAct.isAromatic() + atomExp.getSymbol() + atomExp.isAromatic()
+						 );
     	     }
 
     		Map<IBond, IBond> bondMap = mappings.toBondMap().iterator().next();
     		for (Map.Entry<IBond, IBond> e : bondMap.entrySet()) {
     	         IBond bondExp  = e.getKey();
     	         IBond bondAct = e.getValue();
-    	         Assert.assertEquals("Groups #" + i + ": Bond aromaticity does not match",
-                         bondExp.isAromatic(), bondAct.isAromatic());
+    	         Assertions.assertEquals(bondExp.isAromatic(), bondAct.isAromatic(), "Groups #" + i + ": Bond aromaticity does not match");
     	     }
     	}
     }

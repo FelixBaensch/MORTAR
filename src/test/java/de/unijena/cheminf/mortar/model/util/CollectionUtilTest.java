@@ -20,8 +20,8 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test class for CollectionUtil routines.
@@ -44,8 +44,8 @@ public class CollectionUtilTest {
             System.out.println("Expected initial capacity ((int) n_elements * (1/lf) + 2): " + tmpExpectedInitialCapacity[i]);
             System.out.println("Calculated initial capacity: " + tmpCalculatedInitialHashMapCapacity);
             System.out.println("Rehash threshold (lf * initCap, must be higher than number of elements): " + tmpRehashThreshold);
-            Assert.assertTrue(tmpNumberOfElements[i] < tmpRehashThreshold);
-            Assert.assertEquals(tmpExpectedInitialCapacity[i], tmpCalculatedInitialHashMapCapacity);
+            Assertions.assertTrue(tmpNumberOfElements[i] < tmpRehashThreshold);
+            Assertions.assertEquals(tmpExpectedInitialCapacity[i], tmpCalculatedInitialHashMapCapacity);
         }
     }
 }

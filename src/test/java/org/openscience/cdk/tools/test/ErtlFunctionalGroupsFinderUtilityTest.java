@@ -26,8 +26,8 @@ package org.openscience.cdk.tools.test;
  * Last copied on September 26th 2022
  */
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.hash.MoleculeHashGenerator;
 import org.openscience.cdk.interfaces.IAtom;
@@ -77,7 +77,7 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
         for (String tmpSmilesCode : tmpTestPairsMap.keySet()) {
             tmpTestMolecule = tmpSmilesParser.parseSmiles(tmpSmilesCode);
             tmpPseudoSmilesCode = ErtlFunctionalGroupsFinderUtility.createPseudoSmilesCode(tmpTestMolecule);
-            Assert.assertEquals(tmpTestPairsMap.get(tmpSmilesCode), tmpPseudoSmilesCode);
+            Assertions.assertEquals(tmpTestPairsMap.get(tmpSmilesCode), tmpPseudoSmilesCode);
         }
     }
 
@@ -110,7 +110,7 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
         }
         for (Long tmpHashCode1 : tmpHashCodesList) {
             for (Long tmpHashCode2 : tmpHashCodesList) {
-                Assert.assertEquals(tmpHashCode1.longValue(), tmpHashCode2.longValue());
+                Assertions.assertEquals(tmpHashCode1.longValue(), tmpHashCode2.longValue());
             }
         }
         /*Functional groups like the tertiary amine or the hydroxyl group appear with aromatic and non-aromatic central
@@ -122,7 +122,7 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
             if (tmpAtom.getSymbol().equals("N"))
                 tmpAtom.setIsAromatic(true);
         }
-        Assert.assertNotEquals(tmpHashGenerator.generate(tmpAromMol), tmpHashGenerator.generate(tmpNonAromMol));
+        Assertions.assertNotEquals(tmpHashGenerator.generate(tmpAromMol), tmpHashGenerator.generate(tmpNonAromMol));
         String tmpHydroxylGroupSmiles = "[H]O[C]";
         tmpAromMol = tmpSmilesParser.parseSmiles(tmpHydroxylGroupSmiles);
         tmpNonAromMol = tmpSmilesParser.parseSmiles(tmpHydroxylGroupSmiles);
@@ -130,7 +130,7 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
             if (tmpAtom.getSymbol().equals("C"))
                 tmpAtom.setIsAromatic(true);
         }
-        Assert.assertNotEquals(tmpHashGenerator.generate(tmpAromMol), tmpHashGenerator.generate(tmpNonAromMol));
+        Assertions.assertNotEquals(tmpHashGenerator.generate(tmpAromMol), tmpHashGenerator.generate(tmpNonAromMol));
         /*The following are examples of different (unique!) SMILES codes representing the same functional groups.
         They should be assigned the same hash code*/
         HashMap<String,String> tmpEquivalentSmilesMap = new HashMap<>(20);
@@ -149,7 +149,7 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
         for (String tmpKeySmiles : tmpEquivalentSmilesMap.keySet()) {
             IAtomContainer tmpKeyMol = tmpSmilesParser.parseSmiles(tmpKeySmiles);
             IAtomContainer tmpValueMol = tmpSmilesParser.parseSmiles(tmpEquivalentSmilesMap.get(tmpKeySmiles));
-            Assert.assertEquals(tmpHashGenerator.generate(tmpKeyMol), tmpHashGenerator.generate(tmpValueMol));
+            Assertions.assertEquals(tmpHashGenerator.generate(tmpKeyMol), tmpHashGenerator.generate(tmpValueMol));
         }
     }
 
@@ -163,11 +163,11 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
         String tmpSmiles = "CC[O-].C";
         SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpMol = tmpSmilesParser.parseSmiles(tmpSmiles);
-        Assert.assertTrue(ErtlFunctionalGroupsFinderUtility.shouldBePreprocessed(tmpMol));
-        Assert.assertFalse(ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(tmpMol));
+        Assertions.assertTrue(ErtlFunctionalGroupsFinderUtility.shouldBePreprocessed(tmpMol));
+        Assertions.assertFalse(ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(tmpMol));
         tmpMol = ErtlFunctionalGroupsFinderUtility.applyFiltersAndPreprocessing(tmpMol, Aromaticity.cdkLegacy());
         SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Unique);
-        Assert.assertEquals("OCC", tmpGenerator.create(tmpMol));
+        Assertions.assertEquals("OCC", tmpGenerator.create(tmpMol));
     }
 
     /**
@@ -230,19 +230,19 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         //CHEMBL1201736
         IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("CO/N=C(\\C(=O)N[C@@H]1C(=O)N2C(C(=O)[O-])=C(C[N+]3(C)CCCC3)CS[C@H]12)c1csc(N)n1.Cl");
-        Assert.assertTrue(ErtlFunctionalGroupsFinderUtility.isStructureUnconnected(tmpMolecule));
-        Assert.assertTrue(ErtlFunctionalGroupsFinderUtility.isMoleculeCharged(tmpMolecule));
-        Assert.assertFalse(ErtlFunctionalGroupsFinderUtility.isAtomOrBondCountZero(tmpMolecule));
-        Assert.assertFalse(ErtlFunctionalGroupsFinderUtility.containsInvalidAtomicNumbers(tmpMolecule));
-        Assert.assertFalse(ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(tmpMolecule));
-        Assert.assertTrue(ErtlFunctionalGroupsFinderUtility.shouldBePreprocessed(tmpMolecule));
-        Assert.assertFalse(ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(tmpMolecule));
+        Assertions.assertTrue(ErtlFunctionalGroupsFinderUtility.isStructureUnconnected(tmpMolecule));
+        Assertions.assertTrue(ErtlFunctionalGroupsFinderUtility.isMoleculeCharged(tmpMolecule));
+        Assertions.assertFalse(ErtlFunctionalGroupsFinderUtility.isAtomOrBondCountZero(tmpMolecule));
+        Assertions.assertFalse(ErtlFunctionalGroupsFinderUtility.containsInvalidAtomicNumbers(tmpMolecule));
+        Assertions.assertFalse(ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(tmpMolecule));
+        Assertions.assertTrue(ErtlFunctionalGroupsFinderUtility.shouldBePreprocessed(tmpMolecule));
+        Assertions.assertFalse(ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(tmpMolecule));
         tmpMolecule = ErtlFunctionalGroupsFinderUtility.selectBiggestUnconnectedComponent(tmpMolecule);
-        Assert.assertNotNull(tmpMolecule);
+        Assertions.assertNotNull(tmpMolecule);
         ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpMolecule);
         ErtlFunctionalGroupsFinderUtility.perceiveAtomTypesAndConfigureAtoms(tmpMolecule);
         ErtlFunctionalGroupsFinderUtility.applyAromaticityDetection(tmpMolecule, Aromaticity.cdkLegacy());
-        Assert.assertTrue(ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(tmpMolecule));
+        Assertions.assertTrue(ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(tmpMolecule));
         ErtlFunctionalGroupsFinder tmpEFGF = ErtlFunctionalGroupsFinderUtility.getErtlFunctionalGroupsFinderGeneralizingMode();
         List<IAtomContainer> tmpFGList = tmpEFGF.find(tmpMolecule);
         for (IAtomContainer tmpFG : tmpFGList) {
@@ -269,11 +269,11 @@ public class ErtlFunctionalGroupsFinderUtilityTest {
             System.out.println(tmpPseudoSmiles);
             tmpPseudoSmilesList.add(tmpPseudoSmiles);
         }
-        Assert.assertTrue(tmpPseudoSmilesList.contains("[N]C(=O)[C]=N[O]"));
-        Assert.assertTrue(tmpPseudoSmilesList.contains("[C]=C(C(=O)[O])N([C]=O)[C][S]"));
-        Assert.assertTrue(tmpPseudoSmilesList.contains("[N]"));
-        Assert.assertTrue(tmpPseudoSmilesList.contains("[S*]"));
-        Assert.assertTrue(tmpPseudoSmilesList.contains("[N*]"));
-        Assert.assertTrue(tmpPseudoSmilesList.size() == 6);
+        Assertions.assertTrue(tmpPseudoSmilesList.contains("[N]C(=O)[C]=N[O]"));
+        Assertions.assertTrue(tmpPseudoSmilesList.contains("[C]=C(C(=O)[O])N([C]=O)[C][S]"));
+        Assertions.assertTrue(tmpPseudoSmilesList.contains("[N]"));
+        Assertions.assertTrue(tmpPseudoSmilesList.contains("[S*]"));
+        Assertions.assertTrue(tmpPseudoSmilesList.contains("[N*]"));
+        Assertions.assertTrue(tmpPseudoSmilesList.size() == 6);
     }
 }

@@ -21,7 +21,7 @@
 package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test class for the custom-made {@link de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty} JavaFx

@@ -21,8 +21,8 @@
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import javafx.beans.property.Property;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
@@ -81,15 +81,15 @@ public class SugarRemovalUtilityFragmenterTest {
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 //CNP0151033
                 "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4");
-        Assert.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpOriginalMolecule));
-        Assert.assertFalse(tmpSRUFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
-        Assert.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpOriginalMolecule));
+        Assertions.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpOriginalMolecule));
+        Assertions.assertFalse(tmpSRUFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
+        Assertions.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpOriginalMolecule));
         tmpFragmentList = tmpSRUFragmenter.fragmentMolecule(tmpOriginalMolecule);
         tmpSmilesCode = tmpSmiGen.create(tmpFragmentList.get(0));
         System.out.println(tmpSmilesCode + " " + tmpFragmentList.get(0).getProperty(
                 IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         //The sugar ring is not terminal and should not be removed, so the molecule remains unchanged
-        Assert.assertEquals("O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4", tmpSmilesCode);
+        Assertions.assertEquals("O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4", tmpSmilesCode);
         tmpSRUFragmenter.setRemoveOnlyTerminalSugarsSetting(false);
         tmpFragmentList = tmpSRUFragmenter.fragmentMolecule(tmpOriginalMolecule);
         tmpSmilesCode = tmpSmiGen.create(tmpFragmentList.get(0));
@@ -97,15 +97,15 @@ public class SugarRemovalUtilityFragmenterTest {
                 IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         //Now that all sugars are removed, the sugar ring is removed and an unconnected structure remains
         // the unconnected fragments are separated into different atom containers in the returned list
-        Assert.assertEquals("O=C(OCC1(O)C(O)CC2C(=COC(OC(=O)CC(C)C)C21)CO)C", tmpSmilesCode);
-        Assert.assertEquals("O=C(O)C=CC1=CC=C(O)C=C1", tmpSmiGen.create(tmpFragmentList.get(1)));
+        Assertions.assertEquals("O=C(OCC1(O)C(O)CC2C(=COC(OC(=O)CC(C)C)C21)CO)C", tmpSmilesCode);
+        Assertions.assertEquals("O=C(O)C=CC1=CC=C(O)C=C1", tmpSmiGen.create(tmpFragmentList.get(1)));
         System.out.println(tmpSmiGen.create(tmpFragmentList.get(2)) + " " + tmpFragmentList.get(2).getProperty(
                 IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         tmpSRUFragmenter.setRemoveOnlyTerminalSugarsSetting(true);
-        Assert.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpFragmentList.get(0)));
-        Assert.assertFalse(tmpSRUFragmenter.shouldBePreprocessed(tmpFragmentList.get(0)));
-        Assert.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpFragmentList.get(0)));
+        Assertions.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpFragmentList.get(0)));
+        Assertions.assertFalse(tmpSRUFragmenter.shouldBePreprocessed(tmpFragmentList.get(0)));
+        Assertions.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpFragmentList.get(0)));
         IAtomContainer tmpAfterPreprocessing = tmpSRUFragmenter.applyPreprocessing(tmpFragmentList.get(0));
-        Assert.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpAfterPreprocessing));
+        Assertions.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpAfterPreprocessing));
     }
 }

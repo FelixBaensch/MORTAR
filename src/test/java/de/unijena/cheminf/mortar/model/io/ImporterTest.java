@@ -21,7 +21,7 @@
 package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 import java.nio.file.Paths;

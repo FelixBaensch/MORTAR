@@ -21,8 +21,8 @@
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import javafx.beans.property.Property;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
@@ -86,9 +86,9 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 //CNP0151033
                 "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4");
-        Assert.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
-        Assert.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
-        Assert.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
+        Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
+        Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
+        Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {
             System.out.println(tmpSmiGen.create(tmpFragment) + " " + tmpFragment.getProperty(
