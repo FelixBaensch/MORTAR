@@ -11,9 +11,12 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.Intractable;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
+import org.openscience.cdk.graph.SpanningTree;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IElement;
 import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.layout.AtomPlacer;
 import org.openscience.cdk.qsar.DescriptorValue;
 import org.openscience.cdk.qsar.descriptors.molecular.LargestChainDescriptor;
 import org.openscience.cdk.qsar.descriptors.molecular.SmallRingDescriptor;
@@ -56,7 +59,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Name of the fragmenter.
      */
-    public static final String ALGORITHM_NAME = "Alkyl structure fragmenter";
+    public static final String ALGORITHM_NAME = "Alkyl structure";
     /**
      * Default option for maximum fragment length of carbohydrate chain, set to Methane.
      */
@@ -129,7 +132,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        this.settingNameTooltipTextMap = new HashMap(10, 0.9f);
+        this.settingNameTooltipTextMap = new HashMap(12, 0.75f);
         this.chainFragmentLengthSetting = new SimpleEnumConstantNameProperty(this, "Chain fragment length setting",
                 AlkylStructureFragmenter.Chain_Fragment_LENGTH_OPTION_DEFAULT.name(),
                 ChainFragmentLengthOption.class) {
@@ -399,7 +402,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
-
+        IAtomContainer tmpClone = aMolecule.clone();
         //<editor-fold desc="Parameter Checks">
         List<IAtomContainer> tmpFragments = new ArrayList<>(1);
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
@@ -412,14 +415,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
         //<editor-fold desc="Descriptor Checks">
         /**
-         * ToDo
+         * ToDo descriptor
          */
+        /*
         Object[] tmpParamsLCD = new Object[2];
         tmpParamsLCD[0] = false;
         tmpParamsLCD[1] = true;
         try {
-            largestChainDescriptor.setParameters(tmpParamsLCD);
-            DescriptorValue tmpChainDescriptorValue = largestChainDescriptor.calculate(aMolecule);
+            this.largestChainDescriptor.setParameters(tmpParamsLCD);
+            DescriptorValue tmpChainDescriptorValue = this.largestChainDescriptor.calculate(aMolecule);
             IDescriptorResult tmpValue = tmpChainDescriptorValue.getValue();
             int tmpLargestChain = ((IntegerResult) tmpValue).intValue();
             if (tmpLargestChain < 1) {
@@ -429,39 +433,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         } catch (CDKException cdkException) {
             throw new RuntimeException(cdkException);
         }
-        try {
-            DescriptorValue tmpRingValue = smallRingDescriptor.calculate(aMolecule);
-            int tmpSmallRingCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(0);
-            if (tmpSmallRingCount > 0) {
-                hasRings = true;
-                //debugging uses!
-                /*
-                int tmpCycloPropaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(4);
-                int tmpCycloButaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(5);
-                int tmpCycloPentaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(6);
-                int tmpCycloHexaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(7);
-                int tmpCycloHeptaneCount = ((IntegerArrayResult) tmpRingValue.getValue()).get(8);
-                System.out.println("contains nRing n often");
-                System.out.println("3: " + tmpCycloPropaneCount);
-                System.out.println("4: " + tmpCycloButaneCount);
-                System.out.println("5: " + tmpCycloPentaneCount);
-                System.out.println("6: " + tmpCycloHexaneCount);
-                System.out.println("7: " + tmpCycloHeptaneCount);
-                 */
-            }
-        } catch (Exception anException) {
-            throw new RuntimeException(anException);
-        }
+        */
         //</editor-fold>
 
         //<editor-fold desc="CycleFinder">
         CycleFinder tmpMCBCycleFinder = Cycles.mcb();
         CycleFinder tmpRelevantCycleFinder = Cycles.relevant();
         CycleFinder tmpEssentialCycleFinder = Cycles.essential();
-        //*
+
         /**
          * ToDo: option/setting which algorithm to use?
          */
+        /*
         try {
             Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
             IRingSet tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
@@ -476,7 +459,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         } catch (Intractable e) {
             throw new RuntimeException(e);
         }
-        //*/
+        */
         /*
         try {
             Cycles tmpRelevantCycles = tmpRelevantCycleFinder.find(aMolecule);
@@ -515,14 +498,41 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         /**
          * ToDo: SpanningTree
          */
-        //</editor-fold>
+        try {
+            SpanningTree tmpSpanningTree = new SpanningTree(aMolecule);
+            IRingSet tmpSTRingSet = tmpSpanningTree.getBasicRings();
+            int tmpCount = tmpSTRingSet.getAtomContainerCount();
+            for (int i = 0; i < tmpCount; i++) {
+                if (tmpSTRingSet.getAtomContainer(i) == null) {
+                    this.logger.log(Level.WARNING, "AtomContainer in tmpSTRingSet is null");
+                    continue;
+                }
+                tmpFragments.add(tmpSTRingSet.getAtomContainer(i));
+            }
+            System.out.println(tmpSpanningTree.getBondsAcyclicCount() + " Acyclic");
+            System.out.println(tmpSpanningTree.getBondsCyclicCount() + " Cyclic");
 
+            //tmpFragments.add(tmpSpanningTree.getCyclicFragmentsContainer());
+        } catch (Exception anException) {
+            throw new RuntimeException(anException);
+        }
+        try {
+            IAtomContainer tmpLongestChainContainer = AtomPlacer.getInitialLongestChain(aMolecule);
+            tmpFragments.add(tmpLongestChainContainer);
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
+        //</editor-fold>
         return tmpFragments;
     }
 
     /**
      * Returns true if the given molecule cannot be fragmented by the respective algorithm, even after preprocessing.
      * If the molecule is null, true is returned and no exception thrown.
+     *
+     * <p>
+     *     Checks the given IAtomContainer aMolecule for non-carbon and non-hydrogen atoms.
+     * </p>
      *
      * @param aMolecule the molecule to check
      * @return true if the given molecule is not acceptable as input for the fragmentation algorithm, even if it would be
@@ -531,22 +541,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        boolean tmpShouldBeFiltered = false;
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
-                if (tmpAtom.getAtomicNumber() == 6 || tmpAtom.getAtomicNumber() == 1) {
-                } else {
-                    tmpShouldBeFiltered = true;
-                    break;
+                if (!(tmpAtom.getAtomicNumber() != IElement.C || tmpAtom.getAtomicNumber() != IElement.H)) {
+                    return true;
                 }
+                return false;
                 //pseudoatom handling!
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " Molecule ID: " + aMolecule.getID());
-            tmpShouldBeFiltered = true;
+            return true;
         }
-        return tmpShouldBeFiltered;
+        return true;
     }
 
     /**
@@ -594,5 +602,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         return null;
+    }
+    /**
+     * ToDo
+     */
+    private IAtomContainer findLongestPath(SpanningTree aSpanningTree) {
+        IAtomContainer tmpLongestPathContainer = null;
+
+
+        return tmpLongestPathContainer;
     }
 }
