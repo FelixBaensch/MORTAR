@@ -7,15 +7,15 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import org.apache.xalan.xsltc.util.IntegerArray;
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.Intractable;
+import org.openscience.cdk.graph.AllPairsShortestPaths;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.SpanningTree;
-import org.openscience.cdk.interfaces.IAtom;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IElement;
-import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.layout.AtomPlacer;
 import org.openscience.cdk.qsar.DescriptorValue;
 import org.openscience.cdk.qsar.descriptors.molecular.LargestChainDescriptor;
@@ -28,6 +28,7 @@ import org.openscience.cdk.qsar.result.IntegerResult;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 
 /**
  * Java class implementing an algorithm for detection and fragmentation of alkyl
@@ -128,6 +129,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * smallRingDescriptor for detection of number of rings in given IAtomContainer.
      */
     private final SmallRingDescriptor smallRingDescriptor = new SmallRingDescriptor();
+
+    //<editor-fold desc="Constructor">
     /**
      * Constructor, all settings are initialised with their respective default values.
      */
@@ -193,7 +196,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settings.add(this.preserveRingSystemSetting);
         this.settings.add(this.preserveRingSystemMaxSetting);
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Get Settings">
     /**
      * Returns a list of all available settings represented by properties for the given fragmentation algorithm.
      *
@@ -255,7 +260,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public FragmentSaturationOption getFragmentSaturationSettingConstant() {
         return null;
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Set Settings">
     /**
      * Sets the option for saturating free valences on returned fragment molecules.
      *
@@ -363,6 +370,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public void setPreserveRingSystemMaxSetting(int anInt) {
         this.preserveRingSystemMaxSetting.set(anInt);
     }
+    //</editor-fold>
 
     /**
      * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
@@ -500,14 +508,43 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
          */
         try {
             SpanningTree tmpSpanningTree = new SpanningTree(aMolecule);
-            IRingSet tmpSTRingSet = tmpSpanningTree.getBasicRings();
-            int tmpCount = tmpSTRingSet.getAtomContainerCount();
+            Cycles.markRingAtomsAndBonds(tmpClone);
+
+            final Set<IAtom> included = new HashSet<>();
+            for (IAtom atom : tmpClone.atoms()) {
+                if (!atom.isInRing() && atom.getAtomicNumber() != 1)
+                    included.add(atom);
+            }
+            tmpFragments.add(extractAlkylChain(tmpClone, included));
+            IAtomContainer subset = subsetMol(tmpClone, included);
+
+            AllPairsShortestPaths apsp = new AllPairsShortestPaths(subset);
+            IAtom tmpChainStartAtom;
+            IAtom tmpChainEndAtom;
+            IAtomContainer tmpContainer = new AtomContainer();
+            int max = 0;
+            int numAtoms = subset.getAtomCount();
+            for (int i = 0; i < numAtoms; i++) {
+                for (int j = i+1; j < numAtoms; j++) {
+                    int len = apsp.from(i).pathTo(j).length;
+                    System.out.println("len:" + len);
+                    if (len > max) {
+                        System.out.println("if len:" + len);
+                        max = len;
+                    }
+                }
+            }
+
+            //tmpFragments.add(tmpContainer);
+
+            IRingSet tmpSpanTreeRingSet = tmpSpanningTree.getBasicRings();
+            int tmpCount = tmpSpanTreeRingSet.getAtomContainerCount();
             for (int i = 0; i < tmpCount; i++) {
-                if (tmpSTRingSet.getAtomContainer(i) == null) {
-                    this.logger.log(Level.WARNING, "AtomContainer in tmpSTRingSet is null");
+                if (tmpSpanTreeRingSet.getAtomContainer(i) == null) {
+                    this.logger.log(Level.WARNING, "AtomContainer in tmpSpanTreeRingSet is null");
                     continue;
                 }
-                tmpFragments.add(tmpSTRingSet.getAtomContainer(i));
+                IAtomContainer tmpSpanTreeRingSetAtomContainerContainer = tmpSpanTreeRingSet.getAtomContainer(i);
             }
             System.out.println(tmpSpanningTree.getBondsAcyclicCount() + " Acyclic");
             System.out.println(tmpSpanningTree.getBondsCyclicCount() + " Cyclic");
@@ -515,14 +552,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //tmpFragments.add(tmpSpanningTree.getCyclicFragmentsContainer());
         } catch (Exception anException) {
             throw new RuntimeException(anException);
-        }
+        }/*
         try {
             IAtomContainer tmpLongestChainContainer = AtomPlacer.getInitialLongestChain(aMolecule);
+            //ToDo: folowing in own method?
+            
             tmpFragments.add(tmpLongestChainContainer);
         } catch (CDKException e) {
             throw new RuntimeException(e);
-        }
+        }*/
+
         //</editor-fold>
+
+
         return tmpFragments;
     }
 
@@ -604,12 +646,55 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return null;
     }
     /**
+     * copied from largestChainDescriptor
      * ToDo
      */
-    private IAtomContainer findLongestPath(SpanningTree aSpanningTree) {
-        IAtomContainer tmpLongestPathContainer = null;
-
-
-        return tmpLongestPathContainer;
+    private static IAtomContainer subsetMol(IAtomContainer mol, Set<IAtom> include) {
+        IAtomContainer cpy = mol.getBuilder().newInstance(IAtomContainer.class, mol.getAtomCount(), mol.getBondCount(), 0, 0);
+        for (IAtom atom : mol.atoms()) {
+            if (include.contains(atom))
+                cpy.addAtom(atom);
+        }
+        for (IBond bond : mol.bonds()) {
+            if (include.contains(bond.getBegin()) && include.contains(bond.getEnd()))
+                cpy.addBond(bond);
+        }
+        return cpy;
+    }
+    //copy end
+    private static IAtomContainer extractAlkylChain(IAtomContainer anAtomContainer, Set<IAtom> anAtomSet) {
+        IAtomContainer tmpRemnant = new AtomContainer();
+        try {
+            tmpRemnant = anAtomContainer.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+        for (IAtom atom: anAtomContainer.atoms()) {
+            if (anAtomSet.contains(atom)) {
+                tmpRemnant.getAtom(atom.getIndex()).setFlag(CDKConstants.ISPLACED, true);
+            }
+        }
+        for (IBond bond: anAtomContainer.bonds()) {
+            if (anAtomSet.contains(bond)) {
+                tmpRemnant.getBond(bond.getIndex()).setFlag(CDKConstants.ISPLACED, true);
+            }
+        }
+        int tmpAtoms = anAtomContainer.getAtomCount();
+        int tmpBonds = anAtomContainer.getBondCount();
+        for (int i = 0; i ==tmpBonds; i++) {
+            //todo if clause does not work
+            if (anAtomContainer.getBond(i).getFlag(CDKConstants.ISPLACED)) {
+                System.out.println("test bonds");
+                tmpRemnant.removeBond(i);
+            }
+        }
+        for (int j = 0; j == tmpAtoms; j++) {
+            //todo if clause does not work
+            if (anAtomContainer.getAtom(j).getFlag(CDKConstants.ISPLACED)) {
+                System.out.println("test atoms");
+                tmpRemnant.removeAtom(j);
+            }
+        }
+        return tmpRemnant;
     }
 }
