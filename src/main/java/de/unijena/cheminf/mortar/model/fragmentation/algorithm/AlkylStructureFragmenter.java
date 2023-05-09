@@ -6,28 +6,18 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import org.apache.xalan.xsltc.util.IntegerArray;
-import org.openscience.cdk.AtomContainer;
-import org.openscience.cdk.CDKConstants;
-import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.Intractable;
-import org.openscience.cdk.graph.AllPairsShortestPaths;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.SpanningTree;
 import org.openscience.cdk.interfaces.*;
-import org.openscience.cdk.layout.AtomPlacer;
-import org.openscience.cdk.qsar.DescriptorValue;
 import org.openscience.cdk.qsar.descriptors.molecular.LargestChainDescriptor;
 import org.openscience.cdk.qsar.descriptors.molecular.SmallRingDescriptor;
-import org.openscience.cdk.qsar.result.IDescriptorResult;
-import org.openscience.cdk.qsar.result.IntegerArrayResult;
-import org.openscience.cdk.qsar.result.IntegerArrayResultType;
-import org.openscience.cdk.qsar.result.IntegerResult;
 
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.openscience.cdk.tools.manipulator.AtomContainerManipulator.extractSubstructure;
 
 
 /**
@@ -515,27 +505,50 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 if (!atom.isInRing() && atom.getAtomicNumber() != 1)
                     included.add(atom);
             }
-            tmpFragments.add(extractAlkylChain(tmpClone, included));
             IAtomContainer subset = subsetMol(tmpClone, included);
-
-            AllPairsShortestPaths apsp = new AllPairsShortestPaths(subset);
-            IAtom tmpChainStartAtom;
-            IAtom tmpChainEndAtom;
-            IAtomContainer tmpContainer = new AtomContainer();
-            int max = 0;
-            int numAtoms = subset.getAtomCount();
-            for (int i = 0; i < numAtoms; i++) {
-                for (int j = i+1; j < numAtoms; j++) {
-                    int len = apsp.from(i).pathTo(j).length;
-                    System.out.println("len:" + len);
-                    if (len > max) {
-                        System.out.println("if len:" + len);
-                        max = len;
-                    }
-                }
+            //ToDo: get List of substructure AtomContainers via private method
+            IAtomContainerSet tmpAtomContainerSet = findAlkylChain(subset);
+            for (IAtomContainer atomcontainer: tmpAtomContainerSet.atomContainers()) {
+                tmpFragments.add(atomcontainer);
             }
+            /*
+            IAtom tmpOldAtom = null;
+            IAtom tmpNewAtom;
+            for (IAtom atom: subset.atoms()) {
+                List<IAtom> tmpAtomList = subset.getConnectedAtomsList(atom);
+                System.out.println("size " + tmpAtomList.size());
+                System.out.println("iteration");
+                if (atom.getFlag(CDKConstants.VISITED)) {
+                    System.out.println("continue");
+                    continue;
+                }
+                if (tmpAtomList.isEmpty()) {
+                    tmpChainFragment.addAtom(atom);
+                    atom.setFlag(CDKConstants.VISITED, true);
+                    System.out.println(atom.getIndex() + " empty");
+                    tmpFragments.add(tmpChainFragment);
+                    continue;
+                }
+                System.out.println(atom.getIndex());
 
-            //tmpFragments.add(tmpContainer);
+                for (int i = 0; i == tmpAtomList.size(); i++) {
+                    tmpAtomList.get(i).setFlag(CDKConstants.VISITED, true);
+                    tmpChainFragment.addAtom(tmpAtomList.get(i));
+
+                    for (IBond bond: tmpAtomList.get(i).bonds()) {
+                        tmpChainFragment.addBond(bond);
+                    }
+
+
+                }
+                tmpFragments.add(tmpChainFragment);
+                //System.out.println("removed Elements " + tmpChainFragment.getAtomCount());
+
+                //tmpFragments.add(tmpChainFragment);
+                //System.out.println("added to fragments " + tmpChainFragment.getAtomCount());
+            }
+            */
+            tmpFragments.add(subset);
 
             IRingSet tmpSpanTreeRingSet = tmpSpanningTree.getBasicRings();
             int tmpCount = tmpSpanTreeRingSet.getAtomContainerCount();
@@ -544,24 +557,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     this.logger.log(Level.WARNING, "AtomContainer in tmpSpanTreeRingSet is null");
                     continue;
                 }
-                IAtomContainer tmpSpanTreeRingSetAtomContainerContainer = tmpSpanTreeRingSet.getAtomContainer(i);
+                IAtomContainer tmpSTRSAtomContainer = tmpSpanTreeRingSet.getAtomContainer(i);
+                tmpFragments.add(tmpSTRSAtomContainer);
             }
-            System.out.println(tmpSpanningTree.getBondsAcyclicCount() + " Acyclic");
-            System.out.println(tmpSpanningTree.getBondsCyclicCount() + " Cyclic");
-
-            //tmpFragments.add(tmpSpanningTree.getCyclicFragmentsContainer());
         } catch (Exception anException) {
             throw new RuntimeException(anException);
-        }/*
-        try {
-            IAtomContainer tmpLongestChainContainer = AtomPlacer.getInitialLongestChain(aMolecule);
-            //ToDo: folowing in own method?
-            
-            tmpFragments.add(tmpLongestChainContainer);
-        } catch (CDKException e) {
-            throw new RuntimeException(e);
-        }*/
-
+        }
         //</editor-fold>
 
 
@@ -662,39 +663,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return cpy;
     }
     //copy end
-    private static IAtomContainer extractAlkylChain(IAtomContainer anAtomContainer, Set<IAtom> anAtomSet) {
-        IAtomContainer tmpRemnant = new AtomContainer();
-        try {
-            tmpRemnant = anAtomContainer.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-        for (IAtom atom: anAtomContainer.atoms()) {
-            if (anAtomSet.contains(atom)) {
-                tmpRemnant.getAtom(atom.getIndex()).setFlag(CDKConstants.ISPLACED, true);
-            }
-        }
-        for (IBond bond: anAtomContainer.bonds()) {
-            if (anAtomSet.contains(bond)) {
-                tmpRemnant.getBond(bond.getIndex()).setFlag(CDKConstants.ISPLACED, true);
-            }
-        }
-        int tmpAtoms = anAtomContainer.getAtomCount();
-        int tmpBonds = anAtomContainer.getBondCount();
-        for (int i = 0; i ==tmpBonds; i++) {
-            //todo if clause does not work
-            if (anAtomContainer.getBond(i).getFlag(CDKConstants.ISPLACED)) {
-                System.out.println("test bonds");
-                tmpRemnant.removeBond(i);
-            }
-        }
-        for (int j = 0; j == tmpAtoms; j++) {
-            //todo if clause does not work
-            if (anAtomContainer.getAtom(j).getFlag(CDKConstants.ISPLACED)) {
-                System.out.println("test atoms");
-                tmpRemnant.removeAtom(j);
-            }
-        }
-        return tmpRemnant;
+
+    //ToDo routine to detect and return whole alkyl chains, use extractSubstructure()? -> Set of atoms marked to copy -> detection of connected atoms needed
+    private static IAtomContainerSet findAlkylChain(IAtomContainer anAtomContainer) {
+        IAtomContainerSet tmpAtomContainerSet = null;
+
+        return tmpAtomContainerSet;
     }
 }
