@@ -6,6 +6,10 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import org.openscience.cdk.Atom;
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.SpanningTree;
@@ -508,8 +512,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             IAtomContainer subset = subsetMol(tmpClone, included);
             //ToDo: get List of substructure AtomContainers via private method
             IAtomContainerSet tmpAtomContainerSet = findAlkylChain(subset);
-            for (IAtomContainer atomcontainer: tmpAtomContainerSet.atomContainers()) {
-                tmpFragments.add(atomcontainer);
+            int var = 0; //debugging var
+            for (IAtomContainer atomContainer: tmpAtomContainerSet.atomContainers()) {
+                System.out.println("extract atomcontainer from set " + var);
+                if (atomContainer.isEmpty()) {
+                    continue;
+                }
+                tmpFragments.add(atomContainer);
+                var++;
             }
             /*
             IAtom tmpOldAtom = null;
@@ -548,7 +558,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 //System.out.println("added to fragments " + tmpChainFragment.getAtomCount());
             }
             */
-            tmpFragments.add(subset);
+            //tmpFragments.add(subset);
 
             IRingSet tmpSpanTreeRingSet = tmpSpanningTree.getBasicRings();
             int tmpCount = tmpSpanTreeRingSet.getAtomContainerCount();
@@ -569,6 +579,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return tmpFragments;
     }
 
+    //<editor-fold desc="Pre-Fragmentation Tasks">
     /**
      * Returns true if the given molecule cannot be fragmented by the respective algorithm, even after preprocessing.
      * If the molecule is null, true is returned and no exception thrown.
@@ -586,10 +597,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
-                if (!(tmpAtom.getAtomicNumber() != IElement.C || tmpAtom.getAtomicNumber() != IElement.H)) {
-                    return true;
-                }
-                return false;
+                return !(tmpAtom.getAtomicNumber() != IElement.C || tmpAtom.getAtomicNumber() != IElement.H);
                 //pseudoatom handling!
             }
         } catch (Exception anException) {
@@ -646,6 +654,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         return null;
     }
+    //</editor-fold>
+
     /**
      * copied from largestChainDescriptor
      * ToDo
@@ -666,8 +676,42 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
     //ToDo routine to detect and return whole alkyl chains, use extractSubstructure()? -> Set of atoms marked to copy -> detection of connected atoms needed
     private static IAtomContainerSet findAlkylChain(IAtomContainer anAtomContainer) {
-        IAtomContainerSet tmpAtomContainerSet = null;
+        IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+        IAtom tmpOldAtom = null;
+        IAtom tmpNewAtom;
+        IAtomContainer tmpChainAtomContainer = new AtomContainer();
+        int tmpCounter = 0;
+        for (IAtom atom: anAtomContainer.atoms()) {
+            atom.setFlag(CDKConstants.VISITED, true);
+            List<IAtom> tmpAtomList = anAtomContainer.getConnectedAtomsList(atom);
+            List<IBond> tmpBondList = anAtomContainer.getConnectedBondsList(atom);
+            if (tmpAtomList.isEmpty()) {
+                IAtomContainer tmpSingleAtomContainer = new AtomContainer();
+                tmpSingleAtomContainer.addAtom(atom);
+                tmpAtomContainerSet.addAtomContainer(tmpSingleAtomContainer);
+                continue;
+            }
+            tmpNewAtom = atom;
+            if (tmpCounter < 1) {
+                tmpChainAtomContainer.addAtom(tmpNewAtom);
+            }
+            System.out.println("tmpAtomList.size " + tmpAtomList.size());
+            if (tmpAtomList.contains(tmpOldAtom) && tmpOldAtom != null) {
+                tmpChainAtomContainer.addAtom(tmpOldAtom);
+            }/*
+            for (IBond bond: atom.bonds()) {
+                if (tmpBondList.contains(bond)) {
 
+                    tmpChainAtomContainer.addAtom(atom);
+                    tmpChainAtomContainer.addBond(bond);
+                    tmpAtomContainerSet.addAtomContainer(tmpChainAtomContainer);
+                }
+            }*/
+
+            tmpOldAtom = tmpNewAtom;
+        }
+        System.out.println(tmpAtomContainerSet.getAtomContainerCount());
+        tmpCounter++;
         return tmpAtomContainerSet;
     }
 }
