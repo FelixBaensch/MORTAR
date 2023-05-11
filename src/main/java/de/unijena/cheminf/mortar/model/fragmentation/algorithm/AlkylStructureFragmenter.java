@@ -516,6 +516,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             for (IAtomContainer atomContainer: tmpAtomContainerSet.atomContainers()) {
                 System.out.println("extract atomcontainer from set " + var);
                 if (atomContainer.isEmpty()) {
+                    System.out.println(atomContainer.getAtomCount());
                     continue;
                 }
                 tmpFragments.add(atomContainer);
@@ -679,39 +680,49 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
         IAtom tmpOldAtom = null;
         IAtom tmpNewAtom;
-        IAtomContainer tmpChainAtomContainer = new AtomContainer();
+        IAtomContainer tmpChainAtomContainer = new AtomContainer(anAtomContainer.getAtomCount(),anAtomContainer.getBondCount(),anAtomContainer.getLonePairCount(),anAtomContainer.getSingleElectronCount());
         int tmpCounter = 0;
         for (IAtom atom: anAtomContainer.atoms()) {
-            atom.setFlag(CDKConstants.VISITED, true);
             List<IAtom> tmpAtomList = anAtomContainer.getConnectedAtomsList(atom);
-            List<IBond> tmpBondList = anAtomContainer.getConnectedBondsList(atom);
-            if (tmpAtomList.isEmpty()) {
-                IAtomContainer tmpSingleAtomContainer = new AtomContainer();
-                tmpSingleAtomContainer.addAtom(atom);
-                tmpAtomContainerSet.addAtomContainer(tmpSingleAtomContainer);
-                continue;
-            }
-            tmpNewAtom = atom;
-            if (tmpCounter < 1) {
-                tmpChainAtomContainer.addAtom(tmpNewAtom);
-            }
-            System.out.println("tmpAtomList.size " + tmpAtomList.size());
-            if (tmpAtomList.contains(tmpOldAtom) && tmpOldAtom != null) {
-                tmpChainAtomContainer.addAtom(tmpOldAtom);
-            }/*
-            for (IBond bond: atom.bonds()) {
-                if (tmpBondList.contains(bond)) {
+            int k = tmpAtomList.size();
+            System.out.println("find alkyl chain 1. for " + tmpAtomList.size());
 
-                    tmpChainAtomContainer.addAtom(atom);
-                    tmpChainAtomContainer.addBond(bond);
-                    tmpAtomContainerSet.addAtomContainer(tmpChainAtomContainer);
+            //List<IBond> tmpBondList = anAtomContainer.getConnectedBondsList(atom);
+            //ToDo: iterate over atoms
+                if (tmpAtomList.isEmpty()) {
+                    atom.setFlag(CDKConstants.VISITED, true);
+                    IAtomContainer tmpSingleAtomContainer = new AtomContainer();
+                    tmpSingleAtomContainer.addAtom(atom);
+                    tmpAtomContainerSet.addAtomContainer(tmpSingleAtomContainer);
+                    atom.setFlag(CDKConstants.ISPLACED, true);
+                    System.out.println("Debug 1: " + tmpSingleAtomContainer.getAtomCount());
                 }
-            }*/
+                for (IAtom deepAtom: tmpContainer.atoms()) {
+                    System.out.println("find alkyl chain 2. for " + deepAtom.getIndex());
+                    if (deepAtom.getFlag(CDKConstants.VISITED)) {
+                        System.out.println("if 2. for");
+                        continue;
+                    }
+                    deepAtom.setFlag(CDKConstants.VISITED, true);
+                    tmpChainAtomContainer.addAtom(deepAtom);
+                    System.out.println("Debug 2 " + tmpChainAtomContainer.getAtomCount());
+                }
 
-            tmpOldAtom = tmpNewAtom;
+            /*
+                tmpNewAtom = atom;
+                if (tmpCounter < 1) {
+                    tmpChainAtomContainer.addAtom(tmpNewAtom);
+                }
+                System.out.println("tmpAtomList.size " + tmpAtomList.size());
+                if (tmpAtomList.contains(tmpOldAtom) && tmpOldAtom != null) {
+                    tmpChainAtomContainer.addAtom(tmpOldAtom);
+                }
+
+                tmpOldAtom = tmpNewAtom;
+        */
         }
-        System.out.println(tmpAtomContainerSet.getAtomContainerCount());
         tmpCounter++;
+        tmpAtomContainerSet.addAtomContainer(tmpChainAtomContainer);
         return tmpAtomContainerSet;
     }
 }
