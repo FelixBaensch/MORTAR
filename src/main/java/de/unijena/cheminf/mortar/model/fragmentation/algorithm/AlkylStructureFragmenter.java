@@ -511,7 +511,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             IAtomContainer subset = subsetMol(tmpClone, included);
             //ToDo: get List of substructure AtomContainers via private method
-            IAtomContainerSet tmpAtomContainerSet = findAlkylChain(subset);
+            IAtomContainerSet tmpAtomContainerSet;// = findAlkylChain(subset);
+            tmpAtomContainerSet = findAlkylChain(tmpClone);
             int var = 0; //debugging var
             for (IAtomContainer atomContainer: tmpAtomContainerSet.atomContainers()) {
                 System.out.println("extract atomcontainer from set " + var);
@@ -522,43 +523,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpFragments.add(atomContainer);
                 var++;
             }
-            /*
-            IAtom tmpOldAtom = null;
-            IAtom tmpNewAtom;
-            for (IAtom atom: subset.atoms()) {
-                List<IAtom> tmpAtomList = subset.getConnectedAtomsList(atom);
-                System.out.println("size " + tmpAtomList.size());
-                System.out.println("iteration");
-                if (atom.getFlag(CDKConstants.VISITED)) {
-                    System.out.println("continue");
-                    continue;
-                }
-                if (tmpAtomList.isEmpty()) {
-                    tmpChainFragment.addAtom(atom);
-                    atom.setFlag(CDKConstants.VISITED, true);
-                    System.out.println(atom.getIndex() + " empty");
-                    tmpFragments.add(tmpChainFragment);
-                    continue;
-                }
-                System.out.println(atom.getIndex());
-
-                for (int i = 0; i == tmpAtomList.size(); i++) {
-                    tmpAtomList.get(i).setFlag(CDKConstants.VISITED, true);
-                    tmpChainFragment.addAtom(tmpAtomList.get(i));
-
-                    for (IBond bond: tmpAtomList.get(i).bonds()) {
-                        tmpChainFragment.addBond(bond);
-                    }
-
-
-                }
-                tmpFragments.add(tmpChainFragment);
-                //System.out.println("removed Elements " + tmpChainFragment.getAtomCount());
-
-                //tmpFragments.add(tmpChainFragment);
-                //System.out.println("added to fragments " + tmpChainFragment.getAtomCount());
-            }
-            */
             //tmpFragments.add(subset);
 
             IRingSet tmpSpanTreeRingSet = tmpSpanningTree.getBasicRings();
@@ -681,7 +645,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtom tmpOldAtom = null;
         IAtom tmpNewAtom;
         IAtomContainer tmpChainAtomContainer = new AtomContainer(anAtomContainer.getAtomCount(),anAtomContainer.getBondCount(),anAtomContainer.getLonePairCount(),anAtomContainer.getSingleElectronCount());
-        int tmpCounter = 0;
+        int tmpAtomCount = anAtomContainer.getAtomCount();
+        List<IAtom> tmpConnectedAtoms = null;
+
         for (IAtom atom: anAtomContainer.atoms()) {
             List<IAtom> tmpAtomList = anAtomContainer.getConnectedAtomsList(atom);
             int k = tmpAtomList.size();
@@ -689,39 +655,48 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
             //List<IBond> tmpBondList = anAtomContainer.getConnectedBondsList(atom);
             //ToDo: iterate over atoms
-                if (tmpAtomList.isEmpty()) {
-                    atom.setFlag(CDKConstants.VISITED, true);
-                    IAtomContainer tmpSingleAtomContainer = new AtomContainer();
-                    tmpSingleAtomContainer.addAtom(atom);
-                    tmpAtomContainerSet.addAtomContainer(tmpSingleAtomContainer);
-                    atom.setFlag(CDKConstants.ISPLACED, true);
-                    System.out.println("Debug 1: " + tmpSingleAtomContainer.getAtomCount());
+            if (tmpAtomList.isEmpty()) {
+                atom.setFlag(CDKConstants.VISITED, true);
+                IAtomContainer tmpSingleAtomContainer = new AtomContainer();
+                tmpSingleAtomContainer.addAtom(atom);
+                tmpAtomContainerSet.addAtomContainer(tmpSingleAtomContainer);
+                atom.setFlag(CDKConstants.ISPLACED, true);
+                if (atom.getFlag(CDKConstants.VISITED) && atom.getFlag(CDKConstants.ISPLACED)) {
+                    System.out.println("Debug 1: " + Arrays.toString(atom.getFlags()));
                 }
-                for (IAtom deepAtom: tmpContainer.atoms()) {
-                    System.out.println("find alkyl chain 2. for " + deepAtom.getIndex());
-                    if (deepAtom.getFlag(CDKConstants.VISITED)) {
-                        System.out.println("if 2. for");
-                        continue;
+            } else if (tmpConnectedAtoms != null && tmpConnectedAtoms.size() >= 0) {
+                if (tmpConnectedAtoms.contains(atom)) {
+                    System.out.println("Debug 2");
+                    if (atom.getFlag(CDKConstants.VISITED) && !atom.getFlag(CDKConstants.ISPLACED)) {
+                        System.out.println("Debug 3");
+                        atom.setFlag(CDKConstants.ISPLACED, true);
+                        tmpChainAtomContainer.addAtom(atom);
+                        for (IBond bond: atom.bonds()) {
+                            tmpChainAtomContainer.addBond(bond);
+                        }
+                    } else {
+                        System.out.println("Debug 6");
+                        atom.setFlag(CDKConstants.VISITED, true);
+                        tmpChainAtomContainer.addAtom(atom);
+                        atom.setFlag(CDKConstants.ISPLACED, true);
+                        for (IBond bond: atom.bonds()) {
+                            tmpChainAtomContainer.addBond(bond);
+                        }
                     }
-                    deepAtom.setFlag(CDKConstants.VISITED, true);
-                    tmpChainAtomContainer.addAtom(deepAtom);
-                    System.out.println("Debug 2 " + tmpChainAtomContainer.getAtomCount());
+                } else {
+                    System.out.println("Debug 4");
+                    atom.setFlag(CDKConstants.VISITED, true);
+                    tmpChainAtomContainer.addAtom(atom);
+                    atom.setFlag(CDKConstants.ISPLACED, true);
+                    for (IBond bond: atom.bonds()) {
+                        tmpChainAtomContainer.addBond(bond);
+                    }
                 }
-
-            /*
-                tmpNewAtom = atom;
-                if (tmpCounter < 1) {
-                    tmpChainAtomContainer.addAtom(tmpNewAtom);
-                }
-                System.out.println("tmpAtomList.size " + tmpAtomList.size());
-                if (tmpAtomList.contains(tmpOldAtom) && tmpOldAtom != null) {
-                    tmpChainAtomContainer.addAtom(tmpOldAtom);
-                }
-
-                tmpOldAtom = tmpNewAtom;
-        */
+            }
+            System.out.println("Debug 5");
+            tmpConnectedAtoms = tmpAtomList;
+            System.out.println("connectedAtoms size " + tmpConnectedAtoms.size());
         }
-        tmpCounter++;
         tmpAtomContainerSet.addAtomContainer(tmpChainAtomContainer);
         return tmpAtomContainerSet;
     }
