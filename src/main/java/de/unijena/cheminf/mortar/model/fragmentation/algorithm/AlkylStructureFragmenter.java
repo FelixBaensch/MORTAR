@@ -511,8 +511,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             IAtomContainer subset = subsetMol(tmpClone, included);
             //ToDo: get List of substructure AtomContainers via private method
+            //tmpFragments.add(subset);
             IAtomContainerSet tmpAtomContainerSet;// = findAlkylChain(subset);
-            tmpAtomContainerSet = findAlkylChain(tmpClone);
+            tmpAtomContainerSet = findAlkylChain(subset);
             int var = 0; //debugging var
             for (IAtomContainer atomContainer: tmpAtomContainerSet.atomContainers()) {
                 System.out.println("extract atomcontainer from set " + var);
@@ -664,7 +665,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 if (atom.getFlag(CDKConstants.VISITED) && atom.getFlag(CDKConstants.ISPLACED)) {
                     System.out.println("Debug 1: " + Arrays.toString(atom.getFlags()));
                 }
-            } else if (tmpConnectedAtoms != null && tmpConnectedAtoms.size() >= 0) {
+            } else if (tmpConnectedAtoms != null) {
                 if (tmpConnectedAtoms.contains(atom)) {
                     System.out.println("Debug 2");
                     if (atom.getFlag(CDKConstants.VISITED) && !atom.getFlag(CDKConstants.ISPLACED)) {
