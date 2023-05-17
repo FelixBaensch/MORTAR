@@ -10,12 +10,16 @@ import org.openscience.cdk.Atom;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.Intractable;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.SpanningTree;
+import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.qsar.descriptors.molecular.LargestChainDescriptor;
 import org.openscience.cdk.qsar.descriptors.molecular.SmallRingDescriptor;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -439,29 +443,29 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
 
         //<editor-fold desc="CycleFinder">
+        // ToDo: option/setting which algorithm to use?
         CycleFinder tmpMCBCycleFinder = Cycles.mcb();
         CycleFinder tmpRelevantCycleFinder = Cycles.relevant();
         CycleFinder tmpEssentialCycleFinder = Cycles.essential();
 
-        /**
-         * ToDo: option/setting which algorithm to use?
-         */
+
         /*
-        try {
-            Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
-            IRingSet tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
-            int tmpCount = tmpMCBCyclesSet.getAtomContainerCount();
-            for (int i = 0; i < tmpCount; i++) {
-                if (tmpMCBCyclesSet.getAtomContainer(i) == null) {
-                    this.logger.log(Level.WARNING, "AtomContainer in tmpMCBCyclesSet is null");
-                    continue;
+            try {
+                Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
+                IRingSet tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
+                int tmpCount = tmpMCBCyclesSet.getAtomContainerCount();
+                for (int i = 0; i < tmpCount; i++) {
+                    if (tmpMCBCyclesSet.getAtomContainer(i) == null) {
+                        this.logger.log(Level.WARNING, "AtomContainer in tmpMCBCyclesSet is null");
+                        continue;
+                    }
+                    tmpFragments.add(tmpMCBCyclesSet.getAtomContainer(i));
                 }
-                tmpFragments.add(tmpMCBCyclesSet.getAtomContainer(i));
+            } catch (Intractable e) {
+                throw new RuntimeException(e);
             }
-        } catch (Intractable e) {
-            throw new RuntimeException(e);
-        }
         */
+
         /*
         try {
             Cycles tmpRelevantCycles = tmpRelevantCycleFinder.find(aMolecule);
@@ -497,34 +501,31 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
 
         //<editor-fold desc="SpanningTree">
-        /**
-         * ToDo: SpanningTree
-         */
+        /*
         try {
             SpanningTree tmpSpanningTree = new SpanningTree(aMolecule);
-            Cycles.markRingAtomsAndBonds(tmpClone);
 
-            final Set<IAtom> included = new HashSet<>();
-            for (IAtom atom : tmpClone.atoms()) {
-                if (!atom.isInRing() && atom.getAtomicNumber() != 1)
-                    included.add(atom);
-            }
-            IAtomContainer subset = subsetMol(tmpClone, included);
-            //ToDo: get List of substructure AtomContainers via private method
-            //tmpFragments.add(subset);
-            IAtomContainerSet tmpAtomContainerSet;// = findAlkylChain(subset);
-            tmpAtomContainerSet = findAlkylChain(subset);
-            int var = 0; //debugging var
-            for (IAtomContainer atomContainer: tmpAtomContainerSet.atomContainers()) {
-                System.out.println("extract atomcontainer from set " + var);
-                if (atomContainer.isEmpty()) {
-                    System.out.println(atomContainer.getAtomCount());
-                    continue;
+            Cycles.markRingAtomsAndBonds(tmpClone);
+                final Set<IAtom> included = new HashSet<>();
+                for (IAtom atom : tmpClone.atoms()) {
+                    if (!atom.isInRing() && atom.getAtomicNumber() != 1)
+                        included.add(atom);
                 }
-                tmpFragments.add(atomContainer);
-                var++;
-            }
-            //tmpFragments.add(subset);
+                IAtomContainer subset = subsetMol(tmpClone, included);
+
+                    //ToDo: get List of substructure AtomContainers via private method
+                    IAtomContainerSet tmpAtomContainerSet;
+                    tmpAtomContainerSet = findAlkylChain(subset);
+                    int var = 0; //debugging var
+                    for (IAtomContainer atomContainer: tmpAtomContainerSet.atomContainers()) {
+                        System.out.println("extract atomcontainer from set " + var);
+                        if (atomContainer.isEmpty()) {
+                            System.out.println(atomContainer.getAtomCount());
+                            continue;
+                        }
+                        tmpFragments.add(atomContainer);
+                        var++;
+                    }
 
             IRingSet tmpSpanTreeRingSet = tmpSpanningTree.getBasicRings();
             int tmpCount = tmpSpanTreeRingSet.getAtomContainerCount();
@@ -539,7 +540,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         } catch (Exception anException) {
             throw new RuntimeException(anException);
         }
+        */
         //</editor-fold>
+
+        ConjugatedPiSystemsDetector tmpPiDetector = new ConjugatedPiSystemsDetector();
+        IAtomContainerSet tmpContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
+        for (IAtomContainer tmpAtomContainer: tmpContainerSet.atomContainers()) {
+            CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
+            try {
+                tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+            } catch (CDKException e) {
+                throw new RuntimeException(e);
+            }
+            tmpFragments.add(tmpAtomContainer);
+        }
+        //todo: no detection of ring systems -> old algorithm did that -> smallestRingDetector?
 
 
         return tmpFragments;
@@ -563,7 +578,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
-                return !(tmpAtom.getAtomicNumber() != IElement.C || tmpAtom.getAtomicNumber() != IElement.H);
+                return (tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C));
                 //pseudoatom handling!
             }
         } catch (Exception anException) {
@@ -640,6 +655,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //copy end
 
+
+
     //ToDo routine to detect and return whole alkyl chains, use extractSubstructure()? -> Set of atoms marked to copy -> detection of connected atoms needed
     private static IAtomContainerSet findAlkylChain(IAtomContainer anAtomContainer) {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
@@ -655,7 +672,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             System.out.println("find alkyl chain 1. for " + tmpAtomList.size());
 
             //List<IBond> tmpBondList = anAtomContainer.getConnectedBondsList(atom);
-            //ToDo: iterate over atoms
             if (tmpAtomList.isEmpty()) {
                 atom.setFlag(CDKConstants.VISITED, true);
                 IAtomContainer tmpSingleAtomContainer = new AtomContainer();
