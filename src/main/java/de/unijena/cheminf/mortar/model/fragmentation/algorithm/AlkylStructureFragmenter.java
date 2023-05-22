@@ -420,9 +420,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
 
         //<editor-fold desc="Descriptor Checks">
-        /**
-         * ToDo descriptor
-         */
         /*
         Object[] tmpParamsLCD = new Object[2];
         tmpParamsLCD[0] = false;
@@ -444,27 +441,36 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
         //<editor-fold desc="CycleFinder">
         // ToDo: option/setting which algorithm to use?
-        CycleFinder tmpMCBCycleFinder = Cycles.mcb();
+        CycleFinder tmpMCBCycleFinder = Cycles.mcb(); //currently used for cycle detection
+        /*
         CycleFinder tmpRelevantCycleFinder = Cycles.relevant();
         CycleFinder tmpEssentialCycleFinder = Cycles.essential();
+        //alternative cycle detection methods
+         */
 
-
-        /*
-            try {
-                Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
-                IRingSet tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
-                int tmpCount = tmpMCBCyclesSet.getAtomContainerCount();
-                for (int i = 0; i < tmpCount; i++) {
-                    if (tmpMCBCyclesSet.getAtomContainer(i) == null) {
-                        this.logger.log(Level.WARNING, "AtomContainer in tmpMCBCyclesSet is null");
-                        continue;
-                    }
-                    tmpFragments.add(tmpMCBCyclesSet.getAtomContainer(i));
+        IRingSet tmpMCBCyclesSet;
+        try {
+            Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
+            tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
+            int tmpCount = tmpMCBCyclesSet.getAtomContainerCount();
+            for (int i = 0; i < tmpCount; i++) {
+                if (tmpMCBCyclesSet.getAtomContainer(i) == null) {
+                    this.logger.log(Level.WARNING, "AtomContainer in tmpMCBCyclesSet is null for ", aMolecule.getID());
+                    continue;
                 }
-            } catch (Intractable e) {
-                throw new RuntimeException(e);
+                //tmpFragments.add(tmpMCBCyclesSet.getAtomContainer(i));
             }
-        */
+            for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
+                for (IAtom tmpAtom: tmpContainer.atoms()) {
+                    tmpAtom.setFlag(CDKConstants.ISINRING, true);
+                }
+                for (IBond tmpBond: tmpContainer.bonds()) {
+                    tmpBond.setFlag(CDKConstants.ISINRING, true);
+                }
+            }
+        } catch (Intractable e) {
+            throw new RuntimeException(e);
+        }
 
         /*
         try {
@@ -543,17 +549,40 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         */
         //</editor-fold>
 
-        ConjugatedPiSystemsDetector tmpPiDetector = new ConjugatedPiSystemsDetector();
-        IAtomContainerSet tmpContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
-        for (IAtomContainer tmpAtomContainer: tmpContainerSet.atomContainers()) {
-            CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
-            try {
-                tmpAdder.addImplicitHydrogens(tmpAtomContainer);
-            } catch (CDKException e) {
-                throw new RuntimeException(e);
+        //<editor-fold desc="ConjugatedPiSystemsDetector">
+        IAtomContainerSet tmpConjugatedAtomContainerSet;
+        try {
+            tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
+            for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
+                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
+                try {
+                    tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                } catch (CDKException e) {
+                    throw new RuntimeException(e);
+                }
+                for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
+                    tmpAtom.setFlag(CDKConstants.ISCONJUGATED, true);
+                }
+                for (IBond tmpBond: tmpAtomContainer.bonds()) {
+                    tmpBond.setFlag(CDKConstants.ISCONJUGATED, true);
+                }
+
+                //tmpFragments.add(tmpAtomContainer);
             }
-            tmpFragments.add(tmpAtomContainer);
+        } catch (Exception anException) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING,
+                    anException + " Molecule ID: " + aMolecule.getID());
+            throw new RuntimeException(anException);
         }
+        //</editor-fold>
+        //ToDo: detect ring systems
+        //ToDo: ring systems out of non- and conjugated systems
+        for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
+            for (IAtom tmpAtom: tmpContainer.atoms()) {
+
+            }
+        }
+
         //todo: no detection of ring systems -> old algorithm did that -> smallestRingDetector?
 
 
