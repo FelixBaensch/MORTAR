@@ -413,9 +413,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         List<IAtomContainer> tmpFragments = new ArrayList<>(1);
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
+        //todo: return non-fragmentable molecules
+        System.out.println("vor if " + tmpCanBeFragmented);
         if (!tmpCanBeFragmented) {
-            throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
+            System.out.println("tmpCanBeFragmented" + tmpCanBeFragmented);
+            List<IAtomContainer> tmpMoleculeList = new ArrayList<>(1);
+            tmpMoleculeList.add(aMolecule);
+            this.logger.log(Level.WARNING, "Molecule " + aMolecule.getID() + " could not be fragmented and got filtered out.") ;
+            //throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
+            return tmpMoleculeList;
         }
+        System.out.println("not if");
         boolean hasRings = false;
         //</editor-fold>
 
@@ -455,7 +463,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             int tmpCount = tmpMCBCyclesSet.getAtomContainerCount();
             for (int i = 0; i < tmpCount; i++) {
                 if (tmpMCBCyclesSet.getAtomContainer(i) == null) {
-                    this.logger.log(Level.WARNING, "AtomContainer in tmpMCBCyclesSet is null for ", aMolecule.getID());
+                    this.logger.log(Level.WARNING, "AtomContainer in tmpMCBCyclesSet is null for " + aMolecule.getID());
                     continue;
                 }
                 //tmpFragments.add(tmpMCBCyclesSet.getAtomContainer(i));
@@ -577,11 +585,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
         //ToDo: detect ring systems
         //ToDo: ring systems out of non- and conjugated systems
+        /*
         for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
             for (IAtom tmpAtom: tmpContainer.atoms()) {
 
             }
         }
+
+         */
 
         //todo: no detection of ring systems -> old algorithm did that -> smallestRingDetector?
 
@@ -608,7 +619,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
                 return (tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C));
-                //pseudoatom handling!
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
