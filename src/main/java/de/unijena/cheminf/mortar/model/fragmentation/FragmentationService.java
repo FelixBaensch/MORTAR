@@ -155,6 +155,10 @@ public class FragmentationService {
      */
     private IMoleculeFragmenter AlkylSF;
     /**
+     * Conjugated Pi System Fragmenter
+     */
+    private IMoleculeFragmenter ConjPiSysF;
+    /**
      * List of  names of fragmentation algorithms that have already been run
      */
     private List<String> existingFragmentations;
@@ -199,7 +203,7 @@ public class FragmentationService {
      */
     public FragmentationService(SettingsContainer aSettingsContainer){
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
-        this.fragmenters = new IMoleculeFragmenter[4];
+        this.fragmenters = new IMoleculeFragmenter[5];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
@@ -208,6 +212,8 @@ public class FragmentationService {
         this.fragmenters[2] = this.ScaffoldGF;
         this.AlkylSF = new AlkylStructureFragmenter();
         this.fragmenters[3] = this.AlkylSF;
+        this.ConjPiSysF = new ConjugatedPiSystemFragmenter();
+        this.fragmenters[4] = this.ConjPiSysF;
         //
         Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
         this.settingsContainer = aSettingsContainer;

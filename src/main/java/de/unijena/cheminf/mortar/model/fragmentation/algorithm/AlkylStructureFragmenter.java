@@ -133,7 +133,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        this.settingNameTooltipTextMap = new HashMap(12, 0.75f);
+        this.settingNameTooltipTextMap = new HashMap<>(12, 0.75f);
         this.chainFragmentLengthSetting = new SimpleEnumConstantNameProperty(this, "Chain fragment length setting",
                 AlkylStructureFragmenter.Chain_Fragment_LENGTH_OPTION_DEFAULT.name(),
                 ChainFragmentLengthOption.class) {
