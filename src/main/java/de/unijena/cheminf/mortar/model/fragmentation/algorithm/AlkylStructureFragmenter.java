@@ -414,14 +414,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
         //todo: return non-fragmentable molecules
+
         System.out.println("vor if " + tmpCanBeFragmented);
         if (!tmpCanBeFragmented) {
             System.out.println("tmpCanBeFragmented" + tmpCanBeFragmented);
-            List<IAtomContainer> tmpMoleculeList = new ArrayList<>(1);
-            tmpMoleculeList.add(aMolecule);
+            tmpFragments.add(aMolecule);
             this.logger.log(Level.WARNING, "Molecule " + aMolecule.getID() + " could not be fragmented and got filtered out.") ;
             //throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
-            return tmpMoleculeList;
+            return tmpFragments;
         }
         System.out.println("not if");
         boolean hasRings = false;
@@ -618,7 +618,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
+                boolean out = (tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C));
+                System.out.println(out);
                 return (tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C));
+
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
