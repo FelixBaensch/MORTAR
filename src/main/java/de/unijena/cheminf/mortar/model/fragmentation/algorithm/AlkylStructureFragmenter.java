@@ -19,6 +19,7 @@ import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.qsar.descriptors.molecular.LargestChainDescriptor;
 import org.openscience.cdk.qsar.descriptors.molecular.SmallRingDescriptor;
+import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 
 import java.util.*;
@@ -84,29 +85,33 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final int PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT = 1;
     /**
+     * A property that has a constant fragment hydrogen saturation setting.
+     */
+    private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+    /**
      * A property that has a constant name from the ChainFragmentLengthOption enum as value.
      */
     private final SimpleEnumConstantNameProperty chainFragmentLengthSetting;
     /**
      * Boolean property whether spiro carbons should be dissected.
      */
-    public final SimpleBooleanProperty dissectSpiroCarbonSetting;
+    private final SimpleBooleanProperty dissectSpiroCarbonSetting;
     /**
      * Boolean property whether rings should be dissected.
      */
-    public final SimpleBooleanProperty dissectRingsSetting;
+    private final SimpleBooleanProperty dissectRingsSetting;
     /**
      * Enum property for maximum size of preserved rings.
      */
-    public final SimpleEnumConstantNameProperty preserveRingMaxSizeSetting;
+    private final SimpleEnumConstantNameProperty preserveRingMaxSizeSetting;
     /**
      * Boolean property whether ring systems should be preserved.
      */
-    public final SimpleBooleanProperty preserveRingSystemSetting;
+    private final SimpleBooleanProperty preserveRingSystemSetting;
     /**
      * Integer property for maximum rings contained in preserved ring system.
      */
-    public final SimpleIntegerProperty preserveRingSystemMaxSetting;
+    private final SimpleIntegerProperty preserveRingSystemMaxSetting;
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -133,7 +138,24 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        this.settingNameTooltipTextMap = new HashMap<>(12, 0.75f);
+        this.settingNameTooltipTextMap = new HashMap<>(13, 0.75f);
+        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment Saturation Setting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
+            @Override
+            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    //call to super.set() for parameter checks
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
+        this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
+                Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
         this.chainFragmentLengthSetting = new SimpleEnumConstantNameProperty(this, "Chain fragment length setting",
                 AlkylStructureFragmenter.Chain_Fragment_LENGTH_OPTION_DEFAULT.name(),
                 ChainFragmentLengthOption.class) {
@@ -186,7 +208,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settingNameTooltipTextMap.put(this.preserveRingSystemMaxSetting.getName(),
                 Message.get("AlkylStructureFragmenter.preserveRingSystemMaxSetting.tooltip"));
         //
-        this.settings = new ArrayList<Property>(6);
+        this.settings = new ArrayList<Property>(7);
+        this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.chainFragmentLengthSetting);
         this.settings.add(this.dissectSpiroCarbonSetting);
         this.settings.add(this.dissectRingsSetting);
@@ -236,7 +259,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public String getFragmentSaturationSetting() {
-        return null;
+        return this.fragmentSaturationSetting.get();
     }
 
     /**
@@ -246,7 +269,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
-        return null;
+        return this.fragmentSaturationSetting;
     }
 
     /**
@@ -256,7 +279,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public FragmentSaturationOption getFragmentSaturationSettingConstant() {
-        return null;
+        return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
     }
     //</editor-fold>
 
@@ -270,7 +293,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
-
+        Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
+        //throws IllegalArgumentException if the given name does not match a constant name
+        FragmentSaturationOption tmpConstant = FragmentSaturationOption.valueOf(anOptionName);
+        this.fragmentSaturationSetting.set(tmpConstant.name());
     }
 
     /**
@@ -281,7 +307,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
-
+        Objects.requireNonNull(anOption, "Given saturation option is null.");
+        this.fragmentSaturationSetting.set(anOption.name());
     }
 
     /**
@@ -379,6 +406,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public IMoleculeFragmenter copy() {
         AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
+        tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
         tmpCopy.setChainFragmentLengthSetting(this.chainFragmentLengthSetting.get());
         tmpCopy.setDissectSpiroCarbonSetting(this.dissectSpiroCarbonSetting.get());
         tmpCopy.setDissectRingsSetting(this.dissectRingsSetting.get());
@@ -393,7 +421,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public void restoreDefaultSettings() {
-
+        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.chainFragmentLengthSetting.set(AlkylStructureFragmenter.Chain_Fragment_LENGTH_OPTION_DEFAULT.name());
+        this.dissectSpiroCarbonSetting.set(AlkylStructureFragmenter.DISSECT_SPIRO_CARBON_OPTION_DEFAULT);
+        this.dissectRingsSetting.set(AlkylStructureFragmenter.DISSECT_RINGS_OPTION_DEFAULT);
+        this.preserveRingMaxSizeSetting.set(AlkylStructureFragmenter.Preserve_Ring_MAX_SIZE_OPTION_DEFAULT.name());
+        this.preserveRingSystemSetting.set(AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_OPTION_DEFAULT);
+        this.preserveRingSystemMaxSetting.set(AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT);
     }
 
     /**
@@ -410,7 +444,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         IAtomContainer tmpClone = aMolecule.clone();
         //<editor-fold desc="Parameter Checks">
-        List<IAtomContainer> tmpFragments = new ArrayList<>(1);
+        List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(1);
+        IAtomContainerSet tmpFragments = new AtomContainerSet();
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
         //todo: return non-fragmentable molecules
@@ -418,10 +453,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         System.out.println("vor if " + tmpCanBeFragmented);
         if (!tmpCanBeFragmented) {
             System.out.println("tmpCanBeFragmented" + tmpCanBeFragmented);
-            tmpFragments.add(aMolecule);
+            tmpFragments.addAtomContainer(aMolecule);
             this.logger.log(Level.WARNING, "Molecule " + aMolecule.getID() + " could not be fragmented and got filtered out.") ;
             //throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
-            return tmpFragments;
+            for (IAtomContainer tmpContainer: tmpFragments.atomContainers()) {
+                tmpProcessedFragments.add(tmpContainer);
+            }
+            return tmpProcessedFragments;
         }
         System.out.println("not if");
         boolean hasRings = false;
@@ -561,13 +599,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainerSet tmpConjugatedAtomContainerSet;
         try {
             tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
+
             for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
-                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
-                try {
-                    tmpAdder.addImplicitHydrogens(tmpAtomContainer);
-                } catch (CDKException e) {
-                    throw new RuntimeException(e);
-                }
+                /*
+                    CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
+                    try {
+                        tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                    } catch (CDKException e) {
+                        throw new RuntimeException(e);
+                    }
+                */
                 for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
                     tmpAtom.setFlag(CDKConstants.ISCONJUGATED, true);
                 }
@@ -575,29 +616,81 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpBond.setFlag(CDKConstants.ISCONJUGATED, true);
                 }
 
-                //tmpFragments.add(tmpAtomContainer);
+                tmpFragments.addAtomContainer(tmpAtomContainer);
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " Molecule ID: " + aMolecule.getID());
             throw new RuntimeException(anException);
         }
+
         //</editor-fold>
+
         //ToDo: detect ring systems
-        //ToDo: ring systems out of non- and conjugated systems
-        /*
-        for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
-            for (IAtom tmpAtom: tmpContainer.atoms()) {
-
+        try {
+            RingSearch ringSearch = new RingSearch(aMolecule);
+            List<IAtomContainer> tmpFusedList = ringSearch.fusedRingFragments();
+            int tmpFusedListSize = tmpFusedList.size();
+            System.out.println("ringsearch ");
+            /*
+                if (!(tmpFusedListSize == 0)) {
+                    tmpFragments.addAtomContainer(tmpFusedList.get(0));
+                }
+            */
+            for (int i = 0; i == tmpFusedListSize; i++) {
+                System.out.println("ringsearch fuse for " + i);
+                if (tmpFusedListSize > 0) {
+                    tmpFragments.addAtomContainer(tmpFusedList.get(i));
+                }
             }
-        }
+            List<IAtomContainer> tmpIsolatedList = ringSearch.isolatedRingFragments();
+            int tmpIsolatedListSize = tmpIsolatedList.size();
+            /*
+                if (!(tmpIsolatedListSize == 0)) {
+                    tmpFragments.addAtomContainer(tmpIsolatedList.get(0));
+                }
+            */
+            for (int i = 0; i == tmpIsolatedListSize; i++) {
+                System.out.println("ringsearch iso for " + i);
+                if (tmpIsolatedListSize > 0) {
+                    tmpFragments.addAtomContainer(tmpIsolatedList.get(i));
+                }
+            }
 
-         */
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        //ToDo: ring systems out of non- and conjugated systems
 
         //todo: no detection of ring systems -> old algorithm did that -> smallestRingDetector?
 
-
-        return tmpFragments;
+        //<editor-fold desc="Hydrogen Saturation">
+        if (tmpFragments.isEmpty()) {
+            System.out.println("tmpFragments empty");
+        }
+        if (!tmpFragments.isEmpty() && !(tmpFragments == null)) {
+            for (IAtomContainer tmpAtomContainer: tmpFragments.atomContainers()) {
+                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                    CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
+                    try {
+                        tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                        tmpProcessedFragments.add(tmpAtomContainer);
+                    } catch (CDKException e) {
+                        AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Molecule ID: "
+                                + tmpAtomContainer.getID() + " Unable to add Implicit Hydrogen.");
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    tmpProcessedFragments.add(tmpAtomContainer);
+                }
+            }
+        }
+        //</editor-fold>
+        if (tmpProcessedFragments.isEmpty()) {
+            System.out.println("tmpProcessedFragments empty");
+        }
+        System.out.println("fragmentation done");
+        return tmpProcessedFragments;
     }
 
     //<editor-fold desc="Pre-Fragmentation Tasks">

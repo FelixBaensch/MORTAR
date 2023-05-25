@@ -36,6 +36,7 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 try {
+                    //call to super.set() for parameter checks
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
