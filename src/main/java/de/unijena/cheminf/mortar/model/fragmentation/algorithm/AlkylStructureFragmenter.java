@@ -6,10 +6,7 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import org.openscience.cdk.Atom;
-import org.openscience.cdk.AtomContainer;
-import org.openscience.cdk.AtomContainerSet;
-import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.*;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.Intractable;
 import org.openscience.cdk.graph.CycleFinder;
@@ -440,29 +437,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainerSet tmpFragments = new AtomContainerSet();
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
-        //todo: return non-fragmentable molecules
-
-        System.out.println("vor if " + tmpCanBeFragmented);
-
-
-
-        if (!tmpCanBeFragmented) {
-            System.out.println("tmpCanBeFragmented" + tmpCanBeFragmented);
-            tmpFragments.addAtomContainer(aMolecule);
-            this.logger.log(Level.WARNING, "Molecule " + aMolecule.getID() + " could not be fragmented and got filtered out.") ;
-            //throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
-            for (IAtomContainer tmpContainer: tmpFragments.atomContainers()) {
-                tmpProcessedFragments.add(tmpContainer);
-            }
-            return tmpProcessedFragments;
-        }
-
-
-
-
-
-        System.out.println("not if");
-        boolean hasRings = false;
         //</editor-fold>
 
         //<editor-fold desc="Descriptor Checks">
@@ -549,6 +523,48 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         */
         //</editor-fold>
 
+        //<editor-fold desc="Ring System Detection">
+        try {
+            System.out.println("ringsearch");
+            RingSearch ringSearch = new RingSearch(aMolecule);
+            List<IAtomContainer> tmpFusedList = ringSearch.fusedRingFragments();
+            Iterator<IAtomContainer> tmpFusedIterator = tmpFusedList.iterator();
+            IAtomContainerSet tmpFusedSet = new AtomContainerSet();
+            while (tmpFusedIterator.hasNext()) {
+                tmpFusedSet.addAtomContainer(tmpFusedIterator.next());
+            }
+            for (IAtomContainer tmpFusedAtomContainer: tmpFusedSet.atomContainers()) {
+
+
+                /*
+                    for (IAtomContainer tmpCyclesAtomContainer: tmpMCBCyclesSet.atomContainers()) {
+                        IAtomContainer tmpContainsAtomContainer = new AtomContainer();
+                        for (IAtom tmpAtom: tmpCyclesAtomContainer.atoms()) {
+                            if (tmpFusedAtomContainer.contains(tmpAtom)) {
+                                tmpContainsAtomContainer.addAtom(tmpAtom);
+                            }
+                        }
+                    }
+                */
+            }
+            tmpFragments.add(tmpFusedSet);
+
+
+            //ringsearch for isolated rings could be unnecessary
+            //because single rings get detected by MCB algorithm
+            /*
+                List<IAtomContainer> tmpIsolatedList = ringSearch.isolatedRingFragments();
+                if (!(tmpIsolatedList.isEmpty())) {
+                    for (IAtomContainer tmpAtomContainer : tmpIsolatedList) {
+                        tmpFragments.addAtomContainer(tmpAtomContainer);
+                    }
+                }
+            */
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        //</editor-fold>
+
         //<editor-fold desc="SpanningTree">
         /*
         try {
@@ -618,35 +634,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
         //</editor-fold>
 
-        //<editor-fold desc="Ring System Detection">
-        try {
-            System.out.println("ringsearch");
-            RingSearch ringSearch = new RingSearch(aMolecule);
-            List<IAtomContainer> tmpFusedList = ringSearch.fusedRingFragments();
-            if (!(tmpFusedList.isEmpty())) {
-                for (IAtomContainer tmpAtomContainer : tmpFusedList) {
-                    tmpFragments.addAtomContainer(tmpAtomContainer);
-                }
-            }
-            //ringsearch for isolated rings could be unnecessary
-            //because single rings get detected by MCB algorithm
-            /*
-                List<IAtomContainer> tmpIsolatedList = ringSearch.isolatedRingFragments();
-                if (!(tmpIsolatedList.isEmpty())) {
-                    for (IAtomContainer tmpAtomContainer : tmpIsolatedList) {
-                        tmpFragments.addAtomContainer(tmpAtomContainer);
-                    }
-                }
-            */
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        //</editor-fold>
-
-
-
-
-
 
 
         //<editor-fold desc="Hydrogen Saturation">
@@ -668,6 +655,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         }
         //</editor-fold>
+
         System.out.println("fragmentation done");
         return tmpProcessedFragments;
     }
@@ -688,19 +676,24 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        boolean tmpShouldBeFiltered = true;
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
-                boolean out = (tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C));
-                System.out.println(out);
-                return (tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C));
-
+                //tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C)
+                if (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C) {
+                    tmpShouldBeFiltered = true;
+                    break;
+                } else {
+                    tmpShouldBeFiltered = false;
+                }
             }
+            System.out.println("shouldBeFiltered: " + tmpShouldBeFiltered);
+            return tmpShouldBeFiltered;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " Molecule ID: " + aMolecule.getID());
-            return true;
+            return tmpShouldBeFiltered;
         }
-        return true;
     }
 
     /**
