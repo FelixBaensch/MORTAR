@@ -14,6 +14,9 @@ import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.SpanningTree;
 import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.*;
+import org.openscience.cdk.isomorphism.DfPattern;
+import org.openscience.cdk.isomorphism.Mappings;
+import org.openscience.cdk.isomorphism.Pattern;
 import org.openscience.cdk.qsar.descriptors.molecular.LargestChainDescriptor;
 import org.openscience.cdk.qsar.descriptors.molecular.SmallRingDescriptor;
 import org.openscience.cdk.ringsearch.RingSearch;
@@ -470,11 +473,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
         IRingSet tmpMCBCyclesSet;
         try {
-            System.out.println("MCB");
             Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
             tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
             for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
-                System.out.println("MCB for");
                 for (IAtom tmpAtom: tmpContainer.atoms()) {
                     tmpAtom.setFlag(CDKConstants.ISINRING, true);
                 }
@@ -525,31 +526,43 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
         //<editor-fold desc="Ring System Detection">
         try {
-            System.out.println("ringsearch");
             RingSearch ringSearch = new RingSearch(aMolecule);
             List<IAtomContainer> tmpFusedList = ringSearch.fusedRingFragments();
-            Iterator<IAtomContainer> tmpFusedIterator = tmpFusedList.iterator();
-            IAtomContainerSet tmpFusedSet = new AtomContainerSet();
-            while (tmpFusedIterator.hasNext()) {
-                tmpFusedSet.addAtomContainer(tmpFusedIterator.next());
-            }
-            for (IAtomContainer tmpFusedAtomContainer: tmpFusedSet.atomContainers()) {
-
-
-                /*
-                    for (IAtomContainer tmpCyclesAtomContainer: tmpMCBCyclesSet.atomContainers()) {
-                        IAtomContainer tmpContainsAtomContainer = new AtomContainer();
-                        for (IAtom tmpAtom: tmpCyclesAtomContainer.atoms()) {
-                            if (tmpFusedAtomContainer.contains(tmpAtom)) {
-                                tmpContainsAtomContainer.addAtom(tmpAtom);
-                            }
+            if (!tmpFusedList.isEmpty()) {
+                Objects.requireNonNull(tmpFusedList, "Fused ring list cannot be null.");
+                Iterator<IAtomContainer> tmpFusedIterator = tmpFusedList.iterator();
+                IAtomContainerSet tmpFusedSet = new AtomContainerSet();
+                while (tmpFusedIterator.hasNext()) {
+                    tmpFusedSet.addAtomContainer(tmpFusedIterator.next());
+                }
+                for (IAtomContainer tmpContainer: tmpFusedSet.atomContainers()) {
+                    Mappings tmpMap = DfPattern.findSubstructure(tmpContainer).matchAll(tmpClone);
+                    for (int[] tmpAtomMapArray: tmpMap) {
+                        for (int i = 0; i < tmpAtomMapArray.length; i++) {
+                            tmpClone.getAtom(tmpAtomMapArray[i]).setFlag(CDKConstants.ISPLACED, true);
                         }
                     }
-                */
+                    for (int[] tmpBondMapArray: tmpMap) {
+                        for (int j = 0; j < tmpBondMapArray.length; j++) {
+                            tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
+                            System.out.println(tmpClone.getBond(tmpBondMapArray[j]).getFlag(CDKConstants.ISPLACED));
+                        }
+                    }
+                }
+
+                IAtomContainer tmpFragmentationContainer = new AtomContainer();
+                for (IAtom tmpAtom: tmpClone.atoms()) {
+                    if (tmpAtom.getFlag(CDKConstants.ISPLACED)) {
+                        tmpFragmentationContainer.addAtom(tmpAtom);
+                    }
+                }
+                for (IBond tmpBond: tmpClone.bonds()) {
+                    if (tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED)) {
+                        tmpFragmentationContainer.addBond(tmpBond);
+                    }
+                }
+                tmpFragments.addAtomContainer(tmpFragmentationContainer);
             }
-            tmpFragments.add(tmpFusedSet);
-
-
             //ringsearch for isolated rings could be unnecessary
             //because single rings get detected by MCB algorithm
             /*
@@ -609,17 +622,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
 
         //<editor-fold desc="ConjugatedPiSystemsDetector">
-
-        //Set<IAtom> tmpConjPiSysAtomSet = new HashSet<>();
+        //Todo: mapping conjugated system to tmpClone; extraction via flag checks (see line 553ff)
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet;
-            System.out.println("Conj");
             tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
             for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
-                System.out.println("Conj for");
                 for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
                     tmpAtom.setFlag(CDKConstants.ISCONJUGATED, true);
-                    //tmpConjPiSysAtomSet.add(tmpAtom);
                 }
                 for (IBond tmpBond: tmpAtomContainer.bonds()) {
                     tmpBond.setFlag(CDKConstants.ISCONJUGATED, true);
@@ -634,7 +643,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
         //</editor-fold>
 
+        //<editor-fold desc="Fragment Extraction">
 
+        //</editor-fold>
 
         //<editor-fold desc="Hydrogen Saturation">
         if (!tmpFragments.isEmpty() && !(tmpFragments == null)) {
@@ -679,7 +690,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         boolean tmpShouldBeFiltered = true;
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
-                //tmpAtom.getAtomicNumber() != IElement.C || (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C)
                 if (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C) {
                     tmpShouldBeFiltered = true;
                     break;
@@ -687,7 +697,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpShouldBeFiltered = false;
                 }
             }
-            System.out.println("shouldBeFiltered: " + tmpShouldBeFiltered);
             return tmpShouldBeFiltered;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
