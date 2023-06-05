@@ -172,19 +172,6 @@ public final class GuiDefinitions {
      * Value for the delay of a second click to be registered as double-click (in ms)
      */
     public static final int DOUBLE_CLICK_DELAY = 250;
-    //TODO: Move all histogram constants to histogram view/controller?
-    /**
-     * Value for the width of the image corresponding to the structure of the fragments
-     */
-    public static final double STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH = 250.0;
-    /**
-     * Value for the height of the image corresponding to the structure of the fragments
-     */
-    public static final double STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT = 150.0;
-    /**
-     * Image zoom factor value
-     */
-    public static final double STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR = 3.0;
     /**
      * Value for the not scrollable histogram
      */
@@ -193,66 +180,6 @@ public final class GuiDefinitions {
      * Value for the width of the textField
      */
     public static final double GUI_TEXT_FIELD_WIDTH = 50.0;
-    /**
-     * Value for the small bar gap
-     */
-    public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.5416;
-    /**
-     * Value fpr the medium bar gap
-     */
-    public static final double GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST = 5.0;
-    /**
-     * Value for the large bar gap
-     */
-    public static final double GUI_HISTOGRAM_LARGE_BAR_GAP_CONST = 6.5384;
-    /**
-     * Value for the small bar width
-     */
-    public static final double GUI_HISTOGRAM_SMALL_BAR_WIDTH = 15;
-    /**
-     * Value for the medium bar width
-     */
-    public static final double GUI_HISTOGRAM_MEDIUM_BAR_WIDTH = 20;
-    /***
-     * Value for the large bar width
-     */
-    public static final double GUI_HISTOGRAM_LARGE_BAR_WIDTH = 30;
-    /**
-     * Value for the small histogram growth factor
-     */
-    public static final double GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE = 27;
-    /**
-     * Value for the medium histogram growth factor
-     */
-    public static final double GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE = 37;
-    /**
-     * Value for the large histogram growth factor
-     */
-    public static final double GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE = 50;
-    /**
-     * Value of the bar label sizes
-     */
-    public static final double GUI_BAR_LABEL_SIZE = 10.0;
-    /**
-     * Default SMILES length
-     */
-    public static final int HISTOGRAM_DEFAULT_SMILES_LENGTH = 25;
-    /**
-     * Value of tickLabel length
-     */
-    public static  final double HISTOGRAM_TICK_LABEL_LENGTH = 15.0;
-    /**
-     * Value of tickLabel gap
-     */
-    public static final double HISTOGRAM_TICK_LABEL_GAP = 10.0;
-    /**
-     * Value for the width of the Copy SMILES context menu
-     */
-    public static final double HISTOGRAM_CONTEXTMENU_LABEL = 10.0;
-    /**
-     * Renewed width of the context menu
-     */
-    public static final double HISTOGRAM_CONTEXTMENU_LABEL_NEW = 50.0;
     /**
      * Width for the text field in the pagination control box
      */

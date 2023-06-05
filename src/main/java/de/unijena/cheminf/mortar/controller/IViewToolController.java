@@ -34,7 +34,8 @@ public interface IViewToolController {
     //<editor-fold desc="Public properties">
     /**
      * Returns a list of all available settings represented by properties for the given view tool. Differently from the
-     * fragmenters, the properties are mostly used for persisting the setting here.
+     * fragmenters, the properties are mostly used for persisting the setting here and *not* for actually configuring the
+     * settings via the Property objects.
      *
      * @return list of settings represented by properties
      */

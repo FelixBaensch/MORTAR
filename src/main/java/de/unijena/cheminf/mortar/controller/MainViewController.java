@@ -742,9 +742,14 @@ public class MainViewController {
      * Opens HistogramView
      */
     private void openHistogramView()  {
+        List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS);
+        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
+        for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
+            tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
+        }
        //TODO fix call, do it via the view tools manager
        HistogramViewController tmpHistogramViewController = new HistogramViewController();
-       tmpHistogramViewController.openHistogramView(this.primaryStage, (List<FragmentDataModel>) (FragmentDataModel) this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS));
+       tmpHistogramViewController.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
     //
 
