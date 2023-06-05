@@ -37,6 +37,10 @@ import static org.openscience.cdk.tools.manipulator.AtomContainerManipulator.get
  */
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
+     * Name of the fragmenter.
+     */
+    public static final String ALGORITHM_NAME = "Alkyl structure";
+    /**
      * Enum for options concerning maximum fragment length of carbohydrate chain created by fragmenter.
      */
     public enum ChainFragmentLengthOption {
@@ -44,8 +48,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         ETHANE,
         PROPANE,
         BUTANE
-    }
 
+    }
     /**
      * Enum for maximum size options for rings to be preserved by the algorithm.
      */
@@ -54,12 +58,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         CYCLO_BUTANE,
         CYCLO_PENTANE,
         CYCLO_HEXANE
-    }
 
-    /**
-     * Name of the fragmenter.
-     */
-    public static final String ALGORITHM_NAME = "Alkyl structure";
+    }
     /**
      * Default option for maximum fragment length of carbohydrate chain, set to Methane.
      */
@@ -438,31 +438,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         //</editor-fold>
         //todo: initCap after fragmentation before saturation
-        List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(1);
         IAtomContainerSet tmpFragments = new AtomContainerSet();
         IAtomContainer tmpClone = aMolecule.clone();
-        boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
-
-        //<editor-fold desc="Descriptor Checks">
-        /*
-        Object[] tmpParamsLCD = new Object[2];
-        tmpParamsLCD[0] = false;
-        tmpParamsLCD[1] = true;
-        try {
-            this.largestChainDescriptor.setParameters(tmpParamsLCD);
-            DescriptorValue tmpChainDescriptorValue = this.largestChainDescriptor.calculate(aMolecule);
-            IDescriptorResult tmpValue = tmpChainDescriptorValue.getValue();
-            int tmpLargestChain = ((IntegerResult) tmpValue).intValue();
-            if (tmpLargestChain < 1) {
-                tmpFragments.add(aMolecule);
-            }
-            System.out.println("largest chain " + tmpLargestChain);
-        } catch (CDKException cdkException) {
-            throw new RuntimeException(cdkException);
-        }
-        */
-        //</editor-fold>
-
 
         //<editor-fold desc="Ring System Detection">
         try {
@@ -553,15 +530,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             IAtomContainerSet tmpConjugatedAtomContainerSet;
             tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
             for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
-                /*
-                for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-                    tmpAtom.setFlag(CDKConstants.ISCONJUGATED, true);
-                }
-                for (IBond tmpBond: tmpAtomContainer.bonds()) {
-                    tmpBond.setFlag(CDKConstants.ISCONJUGATED, true);
-                }
-                */
-
                 Mappings tmpMap = DfPattern.findSubstructure(tmpAtomContainer).matchAll(tmpClone);
                 for (int[] tmpAtomMapArray: tmpMap) {
                     for (int i = 0; i < tmpAtomMapArray.length; i++) {
@@ -575,7 +543,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISCONJUGATED, true);
                     }
                 }
-                //tmpFragments.addAtomContainer(tmpAtomContainer);
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
@@ -599,15 +566,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
             tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
             for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
-                /*
-                for (IAtom tmpAtom: tmpContainer.atoms()) {
-                    tmpAtom.setFlag(CDKConstants.ISINRING, true);
-                }
-                for (IBond tmpBond: tmpContainer.bonds()) {
-                    tmpBond.setFlag(CDKConstants.ISINRING, true);
-                }
-                */
-
                 Mappings tmpMap = DfPattern.findSubstructure(tmpContainer).matchAll(tmpClone);
                 for (int[] tmpAtomMapArray: tmpMap) {
                     for (int i = 0; i < tmpAtomMapArray.length; i++) {
@@ -621,7 +579,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISINRING, true);
                     }
                 }
-                //tmpFragments.addAtomContainer(tmpContainer);
             }
         } catch (Intractable e) {
             throw new RuntimeException(e);
@@ -666,9 +623,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
         //<editor-fold desc="Fragment Extraction">
         try {
-            System.out.println("try");
             for (int i = 0; i <= tmpClone.getAtomCount(); i++) {
-                System.out.println("fragment extraction " + i);
                 IAtomContainer tmpFragmentationContainer = new AtomContainer();
                 for (IAtom tmpAtom: tmpClone.atoms()) {
                     if (tmpAtom.getFlag(CDKConstants.ISPLACED) && !tmpAtom.getFlag(CDKConstants.VISITED)) {
@@ -689,49 +644,47 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
                 if (tmpFragmentationContainer.isEmpty()) {
-                    System.out.println("frag con empty " + i);
                     continue;
                 }
                 if (!ConnectivityChecker.isConnected(tmpFragmentationContainer)) {
                     IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpFragmentationContainer);
                     for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                         tmpFragments.addAtomContainer(tmpContainer);
+                        tmpFragments.addAtomContainer(tmpContainer);
                     }
                 } else {
                     tmpFragments.addAtomContainer(tmpFragmentationContainer);
                 }
             }
-            System.out.println("try end");
-
-            //tmpFragments.addAtomContainer(extractSubstructure(tmpFragmentationContainer, tmpAtomSet));
-            //tmpFragments.addAtomContainer(tmpFragmentationContainer);
         } catch (Exception e) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Fragment Extraction failed");
             throw new RuntimeException(e);
         }
         //</editor-fold>
 
-        //<editor-fold desc="Hydrogen Saturation">
-        if (!tmpFragments.isEmpty() && !(tmpFragments == null)) {
-            for (IAtomContainer tmpAtomContainer: tmpFragments.atomContainers()) {
-                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                    CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
-                    try {
-                        tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+        //<editor-fold desc="Hydrogen Saturation" defaultstate="collapsed">
+        List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(tmpFragments.getAtomContainerCount());
+        try {
+            if (!tmpFragments.isEmpty() && !(tmpFragments == null)) {
+                for (IAtomContainer tmpAtomContainer: tmpFragments.atomContainers()) {
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                        CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
+                        try {
+                            tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                            tmpProcessedFragments.add(tmpAtomContainer);
+                        } catch (CDKException e) {
+                            AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Molecule ID: "
+                                    + tmpAtomContainer.getID() + " Unable to add Implicit Hydrogen.");
+                            throw new RuntimeException(e);
+                        }
+                    } else {
                         tmpProcessedFragments.add(tmpAtomContainer);
-                    } catch (CDKException e) {
-                        AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Molecule ID: "
-                                + tmpAtomContainer.getID() + " Unable to add Implicit Hydrogen.");
-                        throw new RuntimeException(e);
                     }
-                } else {
-                    tmpProcessedFragments.add(tmpAtomContainer);
                 }
             }
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
         }
         //</editor-fold>
-
-        System.out.println("fragmentation done");
         return tmpProcessedFragments;
     }
 
