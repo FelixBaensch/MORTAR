@@ -61,6 +61,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import javafx.stage.WindowEvent;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -71,7 +72,6 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -267,11 +267,11 @@ public class HistogramViewController implements IViewToolController {
     /**
      * Value for the width of the Copy SMILES context menu
      */
-    public static final double HISTOGRAM_CONTEXT_MENU_LABEL = 10.0;
+    public static final double HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH = 10.0;
     /**
      * Renewed width of the context menu
      */
-    public static final double HISTOGRAM_CONTEXT_MENU_LABEL_NEW = 50.0;
+    public static final double HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS = 50.0;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -605,15 +605,11 @@ public class HistogramViewController implements IViewToolController {
             this.displayedFragmentsNumberSetting.set(this.fragmentListCopy.size());
         }
         this.histogramView.getDisplayedFragmentsNumberTextField().setText(Integer.toString(this.displayedFragmentsNumberSetting.get()));
-        //these settings are updated immediately; therefore, bindings are set TODO: necessary?
+        //note: settings are updated for persistence in the listeners on the checkboxes added below
         this.histogramView.getDisplayBarLabelsCheckBox().setSelected(this.displayBarLabelsSetting.get());
-        this.histogramView.getDisplayBarLabelsCheckBox().selectedProperty().bindBidirectional(this.displayBarLabelsSetting);
         this.histogramView.getDisplayBarShadowsCheckBox().setSelected(this.displayBarShadowsSetting.get());
-        this.histogramView.getDisplayBarShadowsCheckBox().selectedProperty().bindBidirectional(this.displayBarShadowsSetting);
         this.histogramView.getDisplayGridLinesCheckBox().setSelected(this.displayGridLinesSetting.get());
-        this.histogramView.getDisplayGridLinesCheckBox().selectedProperty().bindBidirectional(this.displayGridLinesSetting);
         this.histogramView.getDisplaySmilesOnYAxisCheckBox().setSelected(this.displaySMILESSetting.get());
-        this.histogramView.getDisplaySmilesOnYAxisCheckBox().selectedProperty().bindBidirectional(this.displaySMILESSetting);
         //</editor-fold>
         //
         //<editor-fold desc="Initialise histogram with given settings and add listeners" defaultstate="collapsed">
@@ -758,25 +754,26 @@ public class HistogramViewController implements IViewToolController {
             }
         }
         //</editor-fold>
-        //TODO: carry on here
-        //---add function (structure display at hover) to bars---
-        List<String> tmpSublistSmiles;
-        List<Integer> tmpSublistFrequency;
-        List<String> tmpSmilesToDepict;
-        tmpSublistSmiles = tmpSmilesList.subList(tmpSmilesList.size() - aFragmentNumber, tmpSmilesList.size());
-        tmpSublistFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aFragmentNumber, tmpFrequencyList.size());
-        tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber, tmpFullSmilesLength.size());
+        //
+        //<editor-fold desc="add functionality (structure display at hover) to bars" defaultstate="collapsed>
+        List<String> tmpSublistSmiles = tmpSmilesList.subList(tmpSmilesList.size() - aFragmentNumber,
+                tmpSmilesList.size());
+        List<Integer> tmpSublistFrequency = tmpFrequencyList.subList(tmpFrequencyList.size() - aFragmentNumber,
+                tmpFrequencyList.size());
+        List<String> tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber,
+                tmpFullSmilesLength.size());
         XYChart.Series tmpSeries = new XYChart.Series();
-        //TODO: can we not just make sure here that the three lists are of the same size and than iterate through them with an index? - yes, try it!
-        for (Iterator tmpStringIterator = tmpSublistSmiles.iterator(), tmpIntegerIterator = tmpSublistFrequency.iterator(),
-                tmpSmilesIterator = tmpSmilesToDepict.iterator(); tmpStringIterator.hasNext() && tmpIntegerIterator.hasNext() && tmpSmilesIterator.hasNext();) {
-            Integer tmpCurrentFrequency = (Integer) tmpIntegerIterator.next();
-            String tmpCurrentSmiles = (String) tmpStringIterator.next();
-            String tmpSmiles = (String) tmpSmilesIterator.next();
-            XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentSmiles);
+        if (tmpSublistSmiles.size() != tmpSublistFrequency.size() || tmpSublistSmiles.size() != tmpSmilesToDepict.size()) {
+            throw new IllegalArgumentException("SMILES code and frequency sublists for display are of unequal size.");
+        }
+        for (int i = 0; i < tmpSublistSmiles.size(); i++) {
+            Integer tmpCurrentFrequency = tmpSublistFrequency.get(i);
+            String tmpCurrentDisplaySmiles = tmpSublistSmiles.get(i);
+            String tmpCurrentFullSmilesForParsing = tmpSmilesToDepict.get(i);
+            XYChart.Data<Number, String> tmpStringNumberData = new XYChart.Data(tmpCurrentFrequency, tmpCurrentDisplaySmiles);
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aHistogramView.getStructureDisplayImageView(),
-                    tmpSmiles);
+                    tmpCurrentFullSmilesForParsing);
             tmpHistogramBarStackPane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);
             this.addFrequencyBarLabelToBarAndAddListenersToBarCheckBoxes(
                     aBarLabelCheckBox,
@@ -786,6 +783,8 @@ public class HistogramViewController implements IViewToolController {
             tmpStringNumberData.setNode(tmpHistogramBarStackPane);
             tmpSeries.getData().add(tmpStringNumberData);
         }
+        //</editor-fold>
+        //<editor-fold desc="layout histogram bar chart" defauktstate="collapsed">
         double tmpHistogramSize = aHistogramDefaultSize * tmpSublistFrequency.size();
         tmpHistogramBarChart.setPrefHeight(tmpHistogramSize);
         tmpHistogramBarChart.setMinHeight(tmpHistogramSize);
@@ -795,21 +794,23 @@ public class HistogramViewController implements IViewToolController {
         tmpHistogramBarChart.setHorizontalGridLinesVisible(this.displayGridLinesSetting.get());
         tmpHistogramBarChart.setVerticalGridLinesVisible(this.displayGridLinesSetting.get());
         tmpHistogramBarChart.setAnimated(false);
+        //</editor-fold>
         return tmpHistogramBarChart;
     }
     //
-    //TODO introduce param to make data flow explicit?
     /**
-     * Add listeners
+     * Add listeners and/or text formatters to close button, displayed fragments number text field, maximum smiles
+     * length text field, apply button, display grid lines checkbox, display SMILES codes on y-axis check box, width
+     * and height properties of the scene for resizing.
      */
     private void addListenersToHistogramView() {
-        //close histogram stage with close button
+        //close histogram stage with close button and stage window close request
         this.histogramView.getCloseButton().setOnAction(event -> {
             this.histogramStage.close();
-            //TODO: discard some cached values and remove bindings here!
+            this.clearAllGUICaches();
         });
-        //TODO: add listener to close window button in frame
-        //add text formatter that only accepts integers and turns the input strings into those to the two text fields
+        this.histogramStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
+        //adding text formatter that only accepts integers and turns the input strings into those to the two text fields
         this.histogramView.getDisplayedFragmentsNumberTextField().setTextFormatter(
                 new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
                         this.displayedFragmentsNumberSetting.get(), //default value
@@ -820,27 +821,31 @@ public class HistogramViewController implements IViewToolController {
                         this.maximumSMILESLengthSetting.get(), //default value
                         GuiUtil.getPositiveIntegerWithoutZeroFilter())
         );
-        //disable apply button if the text fields are empty
-        // TODO is the button also disabled if only one field is empty? no, only disabled if both are empty
+        //disable apply button if both(!) text fields are empty
         this.histogramView.getApplyButton().disableProperty().bind(
                 Bindings.isEmpty(this.histogramView.getDisplayedFragmentsNumberTextField().textProperty()).
                             and(Bindings.isEmpty(this.histogramView.getMaximumSMILESLengthTextField().textProperty()))
         );
         //apply button, update histogram
         this.histogramView.getApplyButton().setOnAction(event -> {
-            //int tmpMaxSmilesLengthInField;
-            //TODO: what if both are empty? else if is not called if the if statement is true, right?
+            //if both text fields are empty, "apply" is disabled, see above
+            // but if only one text field is empty, it is reset to default here along with its tied setting property
             if (this.histogramView.getMaximumSMILESLengthTextFieldContent().isEmpty()) {
+                //maximum SMILES length text field is empty -> reset this setting to default and parse displayed
+                // fragments number setting from text field
                 this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getDisplayedFragmentsNumberTextFieldContent()));
                 if (this.displayedFragmentsNumberSetting.get() > this.fragmentListCopy.size()) {
                     GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
+                    //no resets of settings or text field content, the user has to take care of that
                     return;
                 }
                 this.maximumSMILESLengthSetting.set(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH);
                 this.histogramView.getMaximumSMILESLengthTextField().setText(String.valueOf(this.maximumSMILESLengthSetting.get()));
             } else if (this.histogramView.getDisplayedFragmentsNumberTextFieldContent().isEmpty()) {
+                //displayed fragments nr text field is empty -> reset this setting to default and parse maximum SMILES length
+                // setting from text field
                 this.maximumSMILESLengthSetting.set(Integer.parseInt(this.histogramView.getMaximumSMILESLengthTextFieldContent()));
                 if (this.fragmentListCopy.size() >= HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS) {
                     this.displayedFragmentsNumberSetting.set(HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS);
@@ -849,21 +854,26 @@ public class HistogramViewController implements IViewToolController {
                 }
                 this.histogramView.getDisplayedFragmentsNumberTextField().setText(String.valueOf(this.displayedFragmentsNumberSetting.get()));
             } else {
+                //both text fields have values -> parse and check
                 this.displayedFragmentsNumberSetting.set(Integer.parseInt(this.histogramView.getDisplayedFragmentsNumberTextFieldContent()));
                 this.maximumSMILESLengthSetting.set(Integer.parseInt(this.histogramView.getMaximumSMILESLengthTextFieldContent()));
                 if (this.displayedFragmentsNumberSetting.get() > this.fragmentListCopy.size()) {
                     GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
                             Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
+                    //no resets of settings or text field content, the user has to take care of that
                     return;
                 }
-                this.histogramView.getDisplayedFragmentsNumberTextField().setText(String.valueOf(this.displayedFragmentsNumberSetting.get()));
-                this.histogramView.getMaximumSMILESLengthTextField().setText(String.valueOf(this.maximumSMILESLengthSetting.get()));
+                //TODO: WHY?!
+                //this.histogramView.getDisplayedFragmentsNumberTextField().setText(String.valueOf(this.displayedFragmentsNumberSetting.get()));
+                //this.histogramView.getMaximumSMILESLengthTextField().setText(String.valueOf(this.maximumSMILESLengthSetting.get()));
             }
-            this.barWidthSetting.set(this.getBarWidthOptionEnumConstantFromDisplayName((String)this.histogramView.getBarWidthsComboBox().getValue()).name());
+            BarWidthOption tmpBarWidthSettingEnumValue = this.getBarWidthOptionEnumConstantFromDisplayName(
+                    (String)this.histogramView.getBarWidthsComboBox().getValue());
+            this.barWidthSetting.set(tmpBarWidthSettingEnumValue.name());
             Double[] tmpHistogramSizeGap = this.calculateBarSpacing(
                     this.displayedFragmentsNumberSetting.get(),
-                    this.getBarWidthOptionEnumConstantFromDisplayName((String)this.histogramView.getBarWidthsComboBox().getValue()));
+                    tmpBarWidthSettingEnumValue);
             this.displayFrequencySetting.set(this.getFrequencyOptionEnumConstantFromDisplayName((String)this.histogramView.getFrequencyComboBox().getValue()).name());
             this.histogramChart = this.createHistogram(
                     this.displayedFragmentsNumberSetting.get(),
@@ -876,33 +886,31 @@ public class HistogramViewController implements IViewToolController {
             if(this.displayGridLinesSetting.get()) {
                 this.histogramChart.setVerticalGridLinesVisible(true);
                 this.histogramChart.setHorizontalGridLinesVisible(true);
-            }
-            if (this.displaySMILESSetting.get()) {
-                this.categoryAxis.setTickMarkVisible(true);
-                this.categoryAxis.setTickLabelsVisible(true);
-            }
-        });
-        this.histogramView.getDisplayGridLinesCheckBox().selectedProperty()
-                .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-            //setting in controller is updated via bidirectional binding
-            if (this.histogramView.getDisplayGridLinesCheckBox().isSelected()) {
-                this.histogramChart.setVerticalGridLinesVisible(true);
-                this.histogramChart.setHorizontalGridLinesVisible(true);
             } else {
                 this.histogramChart.setVerticalGridLinesVisible(false);
                 this.histogramChart.setHorizontalGridLinesVisible(false);
             }
-        });
-        this.histogramView.getDisplaySmilesOnYAxisCheckBox().selectedProperty()
-                .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-            //setting in controller is updated via bidirectional binding
-            if (this.histogramView.getDisplaySmilesOnYAxisCheckBox().isSelected()) {
+            if (this.displaySMILESSetting.get()) {
                 this.categoryAxis.setTickMarkVisible(true);
                 this.categoryAxis.setTickLabelsVisible(true);
             } else {
                 this.categoryAxis.setTickMarkVisible(false);
                 this.categoryAxis.setTickLabelsVisible(false);
             }
+        });
+        this.histogramView.getDisplayGridLinesCheckBox().selectedProperty()
+                .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+            this.histogramChart.setVerticalGridLinesVisible(new_val);
+            this.histogramChart.setHorizontalGridLinesVisible(new_val);
+            //update setting for persistence
+            this.displayGridLinesSetting.set(new_val);
+        });
+        this.histogramView.getDisplaySmilesOnYAxisCheckBox().selectedProperty()
+                .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+            this.categoryAxis.setTickMarkVisible(new_val);
+            this.categoryAxis.setTickLabelsVisible(new_val);
+            //update setting for persistence
+            this.displaySMILESSetting.set(new_val);
         });
         this.histogramScene.widthProperty().addListener((observable, oldValue, newValue) -> {
             double tmpWidthChange = ((this.histogramScene.getWidth() - GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) * 100;
@@ -932,8 +940,8 @@ public class HistogramViewController implements IViewToolController {
      * hovers over a bar. Basically an addListener-method.
      * For this purpose, add a StackPane to each bar as a node, and use the StackPanes to call the corresponding listener.
      * Hovering over the bars displays the corresponding structures.
-     * In addition, by right-clicking on the bars, the corresponding structures (1500x1000) can be copied to SMILES
-     * anyway (also about adding labels). //TODO explain this sentence
+     * In addition, by right-clicking on a bar, the corresponding structure image (1500x1000) or the SMILES code can be
+     * copied.
      *
      * @param anImageView central image view of the histogram to display the structure on
      * @param aSmiles SMILES code that is associated with the respective bar to depict the structures and copy them
@@ -944,27 +952,31 @@ public class HistogramViewController implements IViewToolController {
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT);
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemSmiles.text"));
         MenuItem tmpCopyStructureMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemStructure.text"));
-        //TODO add try-catch because Image constructor throws exception if url is invalid?
-        tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-        tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        try {
+            tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+            tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        } catch (NullPointerException | IllegalArgumentException anException) {
+            HistogramViewController.LOGGER.log(Level.WARNING, "Copy icon for context menus could not be imported.");
+        }
         ContextMenu tmpContextMenu = new ContextMenu();
         tmpContextMenu.getItems().addAll(tmpCopySmilesMenuItem, tmpCopyStructureMenuItem);
         Label tmpContextMenuLabel = new Label();
-        tmpContextMenuLabel.setPrefWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL);
-        tmpContextMenuLabel.setMaxWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL);
-        tmpContextMenuLabel.setMinWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL);
+        tmpContextMenuLabel.setPrefWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH);
+        tmpContextMenuLabel.setMaxWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH);
+        tmpContextMenuLabel.setMinWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH);
         tmpContextMenuLabel.setTranslateX(20);
         tmpContextMenuLabel.setContextMenu(tmpContextMenu);
         tmpNodePane.getChildren().addAll(tmpContextMenuLabel);
         tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
-            //---context menu listener and structure display---
+            //context menu listener (right-click) and structure display at hovering
             tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE);
-            // two different ways to call context menu needed because bar might be too small
+            //two different ways to call context menu needed because bar might be too small
             if (tmpNodePane.getWidth() >= 10) {
                 tmpContextMenuLabel.setPrefWidth(tmpNodePane.getWidth());
                 tmpContextMenuLabel.setMaxWidth(tmpNodePane.getWidth());
                 tmpContextMenuLabel.setMinWidth(tmpNodePane.getWidth());
                 tmpContextMenuLabel.setTranslateX(0);
+                //TODO: @Betül, why do you use different listeners here and below? And why the context menu label color setting in only one of them?
                 tmpContextMenuLabel.addEventHandler(MouseEvent.MOUSE_CLICKED,event1 -> {
                     if (MouseButton.SECONDARY.equals(event1.getButton())) {
                         tmpContextMenuLabel.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE);
@@ -972,9 +984,9 @@ public class HistogramViewController implements IViewToolController {
                     }
                 });
             } else {
-                tmpContextMenuLabel.setPrefWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_NEW);
-                tmpContextMenuLabel.setMaxWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_NEW);
-                tmpContextMenuLabel.setMinWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_NEW);
+                tmpContextMenuLabel.setPrefWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS);
+                tmpContextMenuLabel.setMaxWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS);
+                tmpContextMenuLabel.setMinWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS);
                 tmpContextMenuLabel.setTranslateX(20);
                 tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event2 -> {
                     tmpContextMenu.show(tmpNodePane, event2.getScreenX(), event2.getScreenY());
@@ -1060,21 +1072,52 @@ public class HistogramViewController implements IViewToolController {
         }
         //TODO move this (all the listeners) somewhere else? Can we turn this around, i.e. one listener displays/hides all the labels? No
         aLabelCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-            if (aLabelCheckBox.isSelected()) {
+            if (new_val) {
                 aStackPane.getChildren().add(tmpBarLabel);
             } else {
                 aStackPane.getChildren().remove(tmpBarLabel);
             }
+            this.displayBarLabelsSetting.set(new_val);
         });
         if(this.displayBarShadowsSetting.get()) {
             aStackPane.setEffect(new DropShadow(10,2,3, Color.BLACK));
         }
         aBarStylingCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-            if(aBarStylingCheckBox.isSelected()) {
+            if(new_val) {
                 aStackPane.setEffect(new DropShadow(10, 2, 3, Color.BLACK));
-            } else
+            } else {
                 aStackPane.setEffect(null);
+            }
+            this.displayBarShadowsSetting.set(new_val);
         });
+    }
+    //
+    /**
+     * Discards all GUI variable values for when the view is closed.
+     */
+    private void clearAllGUICaches() {
+        this.mainStage = null;
+        this.histogramView = null;
+        this.histogramStage = null;
+        this.histogramScene = null;
+        this.fragmentListCopy = null;
+        this.imageWidth = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH;
+        this.imageHeight = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT;
+        this.imageZoomFactor = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR;
+        this.categoryAxis = null;
+        this.numberAxis = null;
+        this.histogramChart = null;
+        this.atomContainerForDisplayCache = null;
+    }
+    //
+    /**
+     * Closes the histogram view (stage) and clears all GUI caches when close window event was fired.
+     *
+     * @param anEvent WindowEvent
+     */
+    private void closeWindowEvent(WindowEvent anEvent) {
+        this.histogramStage.close();
+        this.clearAllGUICaches();
     }
     //
     /**

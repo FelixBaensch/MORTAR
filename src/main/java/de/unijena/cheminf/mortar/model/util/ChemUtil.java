@@ -32,6 +32,7 @@ import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.LonePairElectronChecker;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -86,6 +87,30 @@ public final class ChemUtil {
             ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "; molecule name: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
         }
         return tmpSmiles;
+    }
+
+    /**
+     * Returns IAtomContainer which represents the molecule. Bond types and atom types are assigned to it (the
+     * former through kekulization). Aromaticity flags are set only if there is aromaticity information present in the
+     * SMILES code.
+     *
+     * @return IAtomContainer atom container of the molecule
+     * @throws CDKException if SMILES parsing, kekulization, or atom type matching fails
+     */
+    public IAtomContainer parseSmilesToAtomContainer(String aSmilesCode, boolean shouldBeKekulized) throws CDKException {
+        IAtomContainer tmpAtomContainer;
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        tmpSmiPar.kekulise(false);
+        try{
+            tmpAtomContainer = tmpSmiPar.parseSmiles(aSmilesCode);
+            Kekulization.kekulize(tmpAtomContainer);
+        } catch (CDKException aCdkException){
+            SmilesParser tmpSmiPar2 = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            tmpSmiPar2.kekulise(false);
+            tmpAtomContainer = tmpSmiPar2.parseSmiles(aSmilesCode);
+        }
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+        return tmpAtomContainer;
     }
 
     /**
