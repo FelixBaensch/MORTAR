@@ -44,19 +44,42 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Enum for options concerning maximum fragment length of carbohydrate chain created by fragmenter.
      */
     public enum ChainFragmentLengthOption {
+        /**
+         * Maximum fragment length defined as alkane chain Methane
+         */
         METHANE,
+        /**
+         * Maximum fragment length defined as alkane chain Ethane
+         */
         ETHANE,
+        /**
+         * Maximum fragment length defined as alkane chain Propane
+         */
         PROPANE,
+        /**
+         * Maximum fragment length defined as alkane chain Butane
+         */
         BUTANE
-
     }
     /**
      * Enum for maximum size options for rings to be preserved by the algorithm.
      */
     public enum PreserveRingMaxSizeOption {
+        /**
+         * Maximum ring size defined as cyclo-alkane chain Cyclo-Propane
+         */
         CYCLO_PROPANE,
+        /**
+         * Maximum ring size defined as cyclo-alkane chain Cyclo-Butane
+         */
         CYCLO_BUTANE,
+        /**
+         * Maximum ring size defined as cyclo-alkane chain Cyclo-Pentane
+         */
         CYCLO_PENTANE,
+        /**
+         * Maximum ring size defined as cyclo-alkane chain Cyclo-Hexane
+         */
         CYCLO_HEXANE
 
     }
@@ -158,7 +181,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set",
+                            anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -457,6 +481,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     for (int[] tmpAtomMapArray: tmpMap) {
                         for (int i = 0; i < tmpAtomMapArray.length; i++) {
                             tmpClone.getAtom(tmpAtomMapArray[i]).setFlag(CDKConstants.ISPLACED, true);
+                            //todo:
+                            tmpClone.getAtom(tmpAtomMapArray[i]).setFlag(CDKConstants.ISINRING, true);
                         }
                     }
                     for (int[] tmpBondMapArray: tmpMap) {
@@ -464,6 +490,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
                         }
                     }
+                    tmpFragments.addAtomContainer(tmpContainer);
                 }
             }
             //ringsearch for isolated rings could be unnecessary
@@ -635,7 +662,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
                 for (IBond tmpBond: tmpClone.bonds()) {
-                    if (tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED) && !tmpBond.getFlag(CDKConstants.VISITED)) {
+                    if ((tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED)) //atoms of bond are placed
+                            && !tmpBond.getFlag(CDKConstants.VISITED) //bond has not been extracted yet
+                            //todo: bugfix for bond between rings or ring systems
+                            && (tmpBond.getFlag(CDKConstants.ISINRING) || tmpBond.getFlag(CDKConstants.ISCONJUGATED)) //bond is in ring or conjugated
+                    ) {
                         tmpFragmentationContainer.addBond(tmpBond);
                         tmpBond.setFlag(CDKConstants.VISITED, true);
                     } else if (!tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && !tmpBond.getEnd().getFlag(CDKConstants.ISPLACED) && !tmpBond.getFlag(CDKConstants.VISITED)) {
