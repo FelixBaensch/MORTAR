@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.model.io.Importer;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
@@ -90,27 +91,43 @@ public final class ChemUtil {
     }
 
     /**
-     * Returns IAtomContainer which represents the molecule. Bond types and atom types are assigned to it (the
-     * former through kekulization). Aromaticity flags are set only if there is aromaticity information present in the
-     * SMILES code.
+     * Returns an IAtomContainer instance which represents the molecule parsed from the SMILES string. Bond types and
+     * atom types are assigned to it (the former through kekulization) if required. Aromaticity flags are set only if
+     * there is aromaticity information present in the SMILES code, no aromaticity perception is performed here.
      *
      * @return IAtomContainer atom container of the molecule
-     * @throws CDKException if SMILES parsing, kekulization, or atom type matching fails
+     * @param aSmilesCode SMILES representation
+     * @param shouldBeKekulized whether explicit bond orders should be assigned or "aromatic bond" can be used if present;
+     *                          does not affect aromaticity flags
+     * @param shouldAtomTypesBePerceived whether atom types should be perceived and configured
+     * @throws InvalidSmilesException if the given SMILES is invalid
+     * @throws CDKException if kekulization or atom type matching fails
      */
-    public IAtomContainer parseSmilesToAtomContainer(String aSmilesCode, boolean shouldBeKekulized) throws CDKException {
+    public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode, boolean shouldBeKekulized, boolean shouldAtomTypesBePerceived)
+            throws InvalidSmilesException, CDKException {
+        //no checks because .parseSmiles() checks and throws InvalidSmilesException if the SMILES cannot be parsed
         IAtomContainer tmpAtomContainer;
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         tmpSmiPar.kekulise(false);
-        try{
-            tmpAtomContainer = tmpSmiPar.parseSmiles(aSmilesCode);
+        //throws InvalidSmilesException
+        tmpAtomContainer = tmpSmiPar.parseSmiles(aSmilesCode);
+        if (shouldBeKekulized) {
+            //throws CDKException
             Kekulization.kekulize(tmpAtomContainer);
-        } catch (CDKException aCdkException){
-            SmilesParser tmpSmiPar2 = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            tmpSmiPar2.kekulise(false);
-            tmpAtomContainer = tmpSmiPar2.parseSmiles(aSmilesCode);
         }
-        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+        if (shouldAtomTypesBePerceived) {
+            //throws CDKException
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+        }
         return tmpAtomContainer;
+    }
+
+    /**
+     * Call to {@link #parseSmilesToAtomContainer(String, boolean, boolean)} with kekulization and atom type perception
+     * set to true.
+     */
+    public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode) throws InvalidSmilesException, CDKException {
+        return ChemUtil.parseSmilesToAtomContainer(aSmilesCode, true, true);
     }
 
     /**

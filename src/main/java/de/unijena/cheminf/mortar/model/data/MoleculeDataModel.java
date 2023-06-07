@@ -147,30 +147,27 @@ public class MoleculeDataModel {
     //
     /**
      * Returns IAtomContainer which represents the molecule. Depending on the preference, the atom container is saved
-     * as class variable. If it is re-created from the SMILES code, bond types and atom types are assigned to it (the
-     * former through kekulization). Aromaticity flags are set if there is aromaticity information present in the
+     * as class variable. If it is re-created from the SMILES code, it is attempted(!) to assign bond types and atom types
+     * to it (the former through kekulization). Aromaticity flags are set if there is aromaticity information present in the
      * SMILES code.
      *
      * @return IAtomContainer atom container of the molecule
-     * @throws CDKException if SMILES parsing, kekulization, or atom type matching fails
+     * @throws CDKException if SMILES parsing fails
      */
     public IAtomContainer getAtomContainer() throws CDKException {
         if(this.atomContainer != null){
             return this.atomContainer;
         }
         IAtomContainer tmpAtomContainer;
-        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        tmpSmiPar.kekulise(false);
         try{
-            tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
-            Kekulization.kekulize(tmpAtomContainer);
+            tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, true, true);
         } catch (CDKException aCdkException){
-            SmilesParser tmpSmiPar2 = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            tmpSmiPar2.kekulise(false);
-            tmpAtomContainer = tmpSmiPar2.parseSmiles(this.uniqueSmiles);
+            //TODO: log this? It blows up the log file quite a bit
+            //Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.WARNING, "atom container parsed from SMILES "
+            //        + this.uniqueSmiles + " could not be kekulized or atom types assigned to it.", aCdkException);
+            tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, false, false);
         }
         tmpAtomContainer.addProperties(this.properties);
-        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
         if(this.keepAtomContainer){
             this.atomContainer = tmpAtomContainer;
         }

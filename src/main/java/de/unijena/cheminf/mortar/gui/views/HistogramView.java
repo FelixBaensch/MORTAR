@@ -85,17 +85,9 @@ public class HistogramView extends AnchorPane {
      */
     private CheckBox displayBarLabelsCheckBox;
     /**
-     * Label for the display bar labels check box
-     */
-    private Label displayBarLabelsLabel;
-    /**
      * CheckBox to display or hide histogram gridlines
      */
     private CheckBox displayGridLinesCheckBox;
-    /**
-     * Label for the display grid lines check box.
-     */
-    private Label displayGridLinesLabel;
     /**
      * ScrollPane to make histogram scrollable
      */
@@ -117,17 +109,9 @@ public class HistogramView extends AnchorPane {
      */
     private CheckBox barStylingCheckBox;
     /**
-     * Label for the bar styling check box.
-     */
-    private Label barStylingLabel;
-    /**
      * CheckBox to show or hide the SMILES labels on the y-axis
      */
     private CheckBox displaySMILESonYaxisCheckBox;
-    /**
-     * Label for the display SMILES on y-axis check box.
-     */
-    Label displaySMILESonYaxisLabel;
     /**
      * ComboBox to choose which frequency is used
      */
@@ -143,14 +127,9 @@ public class HistogramView extends AnchorPane {
      *
      * @param aMaxFragmentNumber indicates the maximum number of fragments available for display; is included in some
      *                           tooltips
-     * @throws IllegalArgumentException
      */
-    public HistogramView(int aMaxFragmentNumber) throws IllegalArgumentException {
+    public HistogramView(int aMaxFragmentNumber) {
         super();
-        //TODO more checks!
-        //<editor-fold desc="checks" defaultstate="collapsed">
-
-        //</editor-fold>
         this.histogramScrollPane = new ScrollPane();
         this.histogramScrollPane.setFitToHeight(true);
         this.histogramScrollPane.setFitToWidth(true);
@@ -379,16 +358,6 @@ public class HistogramView extends AnchorPane {
     public CheckBox getDisplayBarShadowsCheckBox() {
         return this.barStylingCheckBox;
     }
-    //
-    //TODO getters for labels necessary?
-    /**
-     * Returns a Label that asks to enter the number of fragments to display in the accompanying text field.
-     *
-     * @return Label that asks to enter the number of fragments to display in the accompanying text field.
-     */
-    /*public Label getDisplayedFragmentsNumberLabel() {
-        return this.displayedFragmentsNumberLabel;
-    }*/
     //
     /**
      * Returns a ScrollPane in which the histogram is to be displayed.

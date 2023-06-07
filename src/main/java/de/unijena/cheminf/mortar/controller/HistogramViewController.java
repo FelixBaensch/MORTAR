@@ -26,6 +26,7 @@ import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.ListUtil;
 
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
@@ -62,12 +63,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import javafx.stage.WindowEvent;
-import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -159,7 +156,7 @@ public class HistogramViewController implements IViewToolController {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="public static final class variables" defaultstate="collapsed">
+    //<editor-fold desc="public static final class constants" defaultstate="collapsed">
     /**
      * Default value for the number of displayed fragments.
      */
@@ -376,7 +373,7 @@ public class HistogramViewController implements IViewToolController {
      * Constructor, initialises all settings with their default values. Does *not* open the view.
      */
     public HistogramViewController()  {
-        this.settings = new ArrayList<Property>(8);
+        this.settings = new ArrayList<>(8);
         this.displayedFragmentsNumberSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
                 Message.get("HistogramView.displayedFragmentsNumberSetting.name"),
@@ -488,7 +485,7 @@ public class HistogramViewController implements IViewToolController {
      * {@inheritDoc}
      *
      * <p>
-     *     For the histogram view, settings can be configured via the properties between instantiating the object and
+     *     For the histogram view, settings can be configured via the properties only(!) between instantiating the object and
      *     opening the view using .openHistogramView().
      * </p>
      */
@@ -515,7 +512,6 @@ public class HistogramViewController implements IViewToolController {
      */
     @Override
     public void restoreDefaultSettings() {
-        //TODO: adjust settings in other places, too? And/or add note that the view will only be affected when it is opened again?
         this.barWidthSetting.set(HistogramViewController.DEFAULT_BAR_WIDTH.name());
         this.displayFrequencySetting.set(HistogramViewController.DEFAULT_DISPLAY_FREQUENCY.name());
         this.maximumSMILESLengthSetting.set(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH);
@@ -941,7 +937,7 @@ public class HistogramViewController implements IViewToolController {
      * For this purpose, add a StackPane to each bar as a node, and use the StackPanes to call the corresponding listener.
      * Hovering over the bars displays the corresponding structures.
      * In addition, by right-clicking on a bar, the corresponding structure image (1500x1000) or the SMILES code can be
-     * copied.
+     * copied. This method needs to be executed for every bar in the histogram separately!
      *
      * @param anImageView central image view of the histogram to display the structure on
      * @param aSmiles SMILES code that is associated with the respective bar to depict the structures and copy them
@@ -992,19 +988,21 @@ public class HistogramViewController implements IViewToolController {
                     tmpContextMenu.show(tmpNodePane, event2.getScreenX(), event2.getScreenY());
                 });
             }
-            // TODO check MoleculeDataModel getAtomContainer, can we use it here? What is the difference?
-            //TODO: Can we replace that with a central SMILES parsing method in ChemUtil? -> the SMILES parsing routine of MoleculeDataModel!
-            SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
             this.atomContainerForDisplayCache = null;
             try {
-                tmpSmiPar.kekulise(false);
-                this.atomContainerForDisplayCache = tmpSmiPar.parseSmiles(aSmiles);
-                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(this.atomContainerForDisplayCache);
-                Kekulization.kekulize(this.atomContainerForDisplayCache);
+                boolean tmpShouldBeKekulized = true;
+                boolean tmpShouldAtomTypesBePerceived = true;
+                this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, tmpShouldBeKekulized, tmpShouldAtomTypesBePerceived);
             } catch (CDKException anException) {
-                HistogramViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                //TODO what further to do if atom container could not be parsed?? Indicate this in cache? Or display error image below?
-                // -> the used depiction method returns an error image if image creation fails
+                //TODO: log this? It blows up the log file quite a bit
+                //HistogramViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                try {
+                    this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
+                } catch (CDKException aSecondException) {
+                    HistogramViewController.LOGGER.log(Level.WARNING, aSecondException.toString(), aSecondException);
+                    this.atomContainerForDisplayCache = null;
+                    //Note: the used depiction method returns an error image if image creation fails, so nothing else to do here
+                }
             }
             Image tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                     this.atomContainerForDisplayCache,
@@ -1041,11 +1039,11 @@ public class HistogramViewController implements IViewToolController {
     }
     //
     /**
-     * Enables the labelling of the histogram.
-     * Clicking on the CheckBox displays the frequencies next to the bars.
+     * Enables the labelling of the histogram. Needs to be executed for every bar in the histogram separately!
+     * Clicking on the bar label check box displays the frequencies next to the bars.
      * In this method, the labels are also added to the StackPanes that will later display the frequencies next to the bars.
      * The bar labels are an extension of the StackPanes.
-     * The method enables the display of the bars with shadows when the checkbox provided for this purpose is clicked.
+     * The method enables the display of the bars with shadows when the check box provided for this purpose is clicked.
      *
      * @param aLabelCheckBox to make the display of the fragment labels adjustable
      * @param aBarStylingCheckBox to make the display of bar shadows adjustable
@@ -1070,7 +1068,6 @@ public class HistogramViewController implements IViewToolController {
         if(this.displayBarLabelsSetting.get()) {
            aStackPane.getChildren().add(tmpBarLabel);
         }
-        //TODO move this (all the listeners) somewhere else? Can we turn this around, i.e. one listener displays/hides all the labels? No
         aLabelCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (new_val) {
                 aStackPane.getChildren().add(tmpBarLabel);
@@ -1097,6 +1094,7 @@ public class HistogramViewController implements IViewToolController {
      */
     private void clearAllGUICaches() {
         this.mainStage = null;
+        //note: must have been closed before
         this.histogramView = null;
         this.histogramStage = null;
         this.histogramScene = null;
@@ -1121,19 +1119,19 @@ public class HistogramViewController implements IViewToolController {
     }
     //
     /**
-     * Method to create the bar gaps depending on the bar width and histogram height factor value (category gap).
+     * Method to calculate the bar gaps depending on the bar width and histogram height factor value (category gap).
      * Default bar width option used is "large" if the given option does not fit the predefined possible options.
      *
      * @param aNumberOfDisplayedFragments fragment number currently displayed in the HistogramView
      * @param aBarWidthOptionConstant enum constant from BarWidthOption to set the bar width value
-     * @return double array which contains both the value of the histogram height factor [0] and the value of the category gap [1].
+     * @return double array which contains both, a value for the histogram height factor [0] and a value for the category gap [1].
      */
     private Double[] calculateBarSpacing(int aNumberOfDisplayedFragments, BarWidthOption aBarWidthOptionConstant) {
         Double[] tmpHistogramHeightFactorAndCategoryGap = new Double[2];
         double tmpCurrentHistogramHeight;
         double tmpGapDeviation;
         double tmpGapSpacing;
-        double tmpCategoryGap = 0;
+        double tmpCategoryGap;
         double tmpFinalHistogramHeight = 0;
         double tmpFinalGapSpacing;
         switch (aBarWidthOptionConstant) {
