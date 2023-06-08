@@ -21,8 +21,8 @@
 package de.unijena.cheminf.mortar.model.settings;
 
 import javafx.beans.property.Property;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Locale;
@@ -57,13 +57,13 @@ public class SettingsContainerTest {
         System.out.println(tmpSettingsContainer.recentDirectoryPathSettingProperty().getName() + ": "
                 + tmpSettingsContainer.recentDirectoryPathSettingProperty().getValue());
         System.out.println();
-        Assert.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT, tmpSettingsContainer.getRowsPerPageSetting());
-        Assert.assertEquals(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT, tmpSettingsContainer.getAddImplicitHydrogensAtImportSetting());
-        Assert.assertEquals(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault(), tmpSettingsContainer.getNumberOfTasksForFragmentationSetting());
-        Assert.assertEquals(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT, tmpSettingsContainer.getRecentDirectoryPathSetting());
-        Assert.assertEquals(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
-        Assert.assertEquals(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
-        Assert.assertEquals(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT, tmpSettingsContainer.getCsvExportSeparatorSetting());
+        Assertions.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT, tmpSettingsContainer.getRowsPerPageSetting());
+        Assertions.assertEquals(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT, tmpSettingsContainer.getAddImplicitHydrogensAtImportSetting());
+        Assertions.assertEquals(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault(), tmpSettingsContainer.getNumberOfTasksForFragmentationSetting());
+        Assertions.assertEquals(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT, tmpSettingsContainer.getRecentDirectoryPathSetting());
+        Assertions.assertEquals(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
+        Assertions.assertEquals(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+        Assertions.assertEquals(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT, tmpSettingsContainer.getCsvExportSeparatorSetting());
         tmpSettingsContainer.setRowsPerPageSetting(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5);
         tmpSettingsContainer.setAddImplicitHydrogensAtImportSetting(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         //tmpSettingsContainer.setNumberOfTasksForFragmentationSetting(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault() - 1);
@@ -75,12 +75,12 @@ public class SettingsContainerTest {
         //reload persisted container
         SettingsContainer tmpSecondContainer = new SettingsContainer();
         tmpSecondContainer.reloadGlobalSettings();
-        Assert.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5, tmpSecondContainer.getRowsPerPageSetting());
-        Assert.assertEquals(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT, tmpSecondContainer.getAddImplicitHydrogensAtImportSetting());
-        //Assert.assertEquals(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault() - 1, tmpSecondContainer.getNumberOfTasksForFragmentationSetting());
-        //Assert.assertEquals(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
-        Assert.assertEquals(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
-        Assert.assertEquals(tmpCsvExportSeparatorTest, tmpSecondContainer.getCsvExportSeparatorSetting());
+        Assertions.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5, tmpSecondContainer.getRowsPerPageSetting());
+        Assertions.assertEquals(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT, tmpSecondContainer.getAddImplicitHydrogensAtImportSetting());
+        //Assertions.assertEquals(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault() - 1, tmpSecondContainer.getNumberOfTasksForFragmentationSetting());
+        //Assertions.assertEquals(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
+        Assertions.assertEquals(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+        Assertions.assertEquals(tmpCsvExportSeparatorTest, tmpSecondContainer.getCsvExportSeparatorSetting());
         tmpSecondContainer.restoreDefaultSettings();
         tmpSecondContainer.preserveSettings();
     }

@@ -186,5 +186,9 @@ public final class BasicDefinitions {
      * Default distance between image and text
      */
     public static final int DEFAULT_IMAGE_TEXT_DISTANCE = 15;
+    /**
+     * Default load factor for HashMap and HashSet instances, defined based on default value given in the Java documentation.
+     */
+    public static final float DEFAULT_HASH_COLLECTION_LOAD_FACTOR = 0.75f;
     //</editor-fold>
 }

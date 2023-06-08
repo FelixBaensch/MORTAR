@@ -28,7 +28,9 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -234,8 +236,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      */
     public SugarRemovalUtilityFragmenter() {
         this.sugarRUInstance = new SugarRemovalUtility(SilentChemObjectBuilder.getInstance());
-        this.settings = new ArrayList<>(15);
-        this.settingNameTooltipTextMap = new HashMap<>(20, 0.9f);
+        int tmpNumberOfSettings = 15;
+        this.settings = new ArrayList<>(tmpNumberOfSettings);
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                tmpNumberOfSettings,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",
                 SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name(), SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.class) {
             @Override

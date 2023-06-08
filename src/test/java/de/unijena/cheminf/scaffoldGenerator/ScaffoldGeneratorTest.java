@@ -25,9 +25,9 @@ package de.unijena.cheminf.scaffoldGenerator;
  * Last copied on October 27th 2022
  */
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
@@ -622,23 +622,23 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         /*Generate the linkers of the scaffold*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldModeOption.SCAFFOLD);
         List<IAtomContainer> tmpLinkers = tmpScaffoldGenerator.getLinkers(tmpMolecule, true);
-        Assert.assertEquals("N=C",tmpSmilesGenerator.create(tmpLinkers.get(0)));
+        Assertions.assertEquals("N=C",tmpSmilesGenerator.create(tmpLinkers.get(0)));
         /*Generate the linkers of the Murcko Framework*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldModeOption.MURCKO_FRAMEWORK);
         tmpLinkers = tmpScaffoldGenerator.getLinkers(tmpMolecule, true);
-        Assert.assertEquals("N=C",tmpSmilesGenerator.create(tmpLinkers.get(0)));
+        Assertions.assertEquals("N=C",tmpSmilesGenerator.create(tmpLinkers.get(0)));
         /*Generate the linkers of the Elemental Wire Frame*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldModeOption.ELEMENTAL_WIRE_FRAME);
         tmpLinkers = tmpScaffoldGenerator.getLinkers(tmpMolecule, true);
-        Assert.assertEquals("NC",tmpSmilesGenerator.create(tmpLinkers.get(0)));
+        Assertions.assertEquals("NC",tmpSmilesGenerator.create(tmpLinkers.get(0)));
         /*Generate the linkers of the Basic Framework*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldModeOption.BASIC_FRAMEWORK);
         tmpLinkers = tmpScaffoldGenerator.getLinkers(tmpMolecule, true);
-        Assert.assertEquals("C=C",tmpSmilesGenerator.create(tmpLinkers.get(0)));
+        Assertions.assertEquals("C=C",tmpSmilesGenerator.create(tmpLinkers.get(0)));
         /*Generate the linkers of the Basic Wire Frame*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldModeOption.BASIC_WIRE_FRAME);
         tmpLinkers = tmpScaffoldGenerator.getLinkers(tmpMolecule, true);
-        Assert.assertEquals("CC",tmpSmilesGenerator.create(tmpLinkers.get(0)));
+        Assertions.assertEquals("CC",tmpSmilesGenerator.create(tmpLinkers.get(0)));
     }
     //</editor-fold>
 
@@ -699,12 +699,12 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
             IAtomContainer tmpTestMolecule = (IAtomContainer) tmpTestNode.getMolecule();
             tmpMoleculeList.add(tmpTestMolecule);
             String tmpOrigin = (String) tmpTestNodeBase.getOriginSmilesList().get(0);
-            Assert.assertEquals("[H]C12SC(C)(C)C(C(=O)O)N2C(=O)C1NC(=O)C=3C(=NOC3C)C=4C(F)=CC=CC4Cl", tmpOrigin);
+            Assertions.assertEquals("[H]C12SC(C)(C)C(C(=O)O)N2C(=O)C1NC(=O)C=3C(=NOC3C)C=4C(F)=CC=CC4Cl", tmpOrigin);
         }
-        Assert.assertEquals("O=C1NCC1", tmpSmilesGenerator.create(tmpMoleculeList.get(0)));
-        Assert.assertEquals("O=C1N2CCSC2C1", tmpSmilesGenerator.create(tmpMoleculeList.get(1)));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpSmilesGenerator.create(tmpMoleculeList.get(2)));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpSmilesGenerator.create(tmpMoleculeList.get(3)));
+        Assertions.assertEquals("O=C1NCC1", tmpSmilesGenerator.create(tmpMoleculeList.get(0)));
+        Assertions.assertEquals("O=C1N2CCSC2C1", tmpSmilesGenerator.create(tmpMoleculeList.get(1)));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpSmilesGenerator.create(tmpMoleculeList.get(2)));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpSmilesGenerator.create(tmpMoleculeList.get(3)));
     }
 
     /**
@@ -730,22 +730,22 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
             IAtomContainer tmpTestMolecule = (IAtomContainer) tmpTestNode.getMolecule();
             tmpMoleculeList.add(tmpTestMolecule);
             tmpStringList.add(tmpSmilesGenerator.create(tmpTestMolecule));
-            Assert.assertEquals("[H]C12SC(C)(C)C(C(=O)O)N2C(=O)C1NC(=O)C=3C(=NOC3C)C=4C(F)=CC=CC4Cl", tmpTestNode.getOriginSmilesList().get(0));
+            Assertions.assertEquals("[H]C12SC(C)(C)C(C(=O)O)N2C(=O)C1NC(=O)C=3C(=NOC3C)C=4C(F)=CC=CC4Cl", tmpTestNode.getOriginSmilesList().get(0));
             if(!tmpTestNode.getNonVirtualOriginCount().equals(0)) {
-                Assert.assertEquals("[H]C12SC(C)(C)C(C(=O)O)N2C(=O)C1NC(=O)C=3C(=NOC3C)C=4C(F)=CC=CC4Cl", tmpTestNode.getNonVirtualOriginSmilesList().get(0));
+                Assertions.assertEquals("[H]C12SC(C)(C)C(C(=O)O)N2C(=O)C1NC(=O)C=3C(=NOC3C)C=4C(F)=CC=CC4Cl", tmpTestNode.getNonVirtualOriginSmilesList().get(0));
             }
         }
         Collections.sort(tmpStringList);
-        Assert.assertEquals("C=1C=CC=CC1", tmpStringList.get(0));
-        Assert.assertEquals("N=1OC=CC1", tmpStringList.get(1));
-        Assert.assertEquals("N=1OC=CC1C=2C=CC=CC2", tmpStringList.get(2));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpStringList.get(3));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpStringList.get(4));
-        Assert.assertEquals("O=C(NC1C(=O)NC1)C2=CON=C2C=3C=CC=CC3", tmpStringList.get(5));
-        Assert.assertEquals("O=C(NC1C(=O)NC1)C=2C=NOC2", tmpStringList.get(6));
-        Assert.assertEquals("O=C1N2CCSC2C1", tmpStringList.get(7));
-        Assert.assertEquals("O=C1NCC1", tmpStringList.get(8));
-        Assert.assertEquals("S1CNCC1", tmpStringList.get(9));
+        Assertions.assertEquals("C=1C=CC=CC1", tmpStringList.get(0));
+        Assertions.assertEquals("N=1OC=CC1", tmpStringList.get(1));
+        Assertions.assertEquals("N=1OC=CC1C=2C=CC=CC2", tmpStringList.get(2));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpStringList.get(3));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpStringList.get(4));
+        Assertions.assertEquals("O=C(NC1C(=O)NC1)C2=CON=C2C=3C=CC=CC3", tmpStringList.get(5));
+        Assertions.assertEquals("O=C(NC1C(=O)NC1)C=2C=NOC2", tmpStringList.get(6));
+        Assertions.assertEquals("O=C1N2CCSC2C1", tmpStringList.get(7));
+        Assertions.assertEquals("O=C1NCC1", tmpStringList.get(8));
+        Assertions.assertEquals("S1CNCC1", tmpStringList.get(9));
     }
 
     /**
@@ -783,16 +783,16 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         tmpScaffoldTree.mergeTree(tmpOverlapScaffoldTree);
         ScaffoldTree tmpUnfitScaffoldTree = tmpScaffoldGenerator.generateSchuffenhauerTree(tmpMolecule);
         /*Does the new tree fit in the old one*/
-        Assert.assertEquals(false, tmpScaffoldTree.mergeTree(tmpUnfitScaffoldTree));
+        Assertions.assertEquals(false, tmpScaffoldTree.mergeTree(tmpUnfitScaffoldTree));
         /*Check number of nodes*/
-        Assert.assertEquals(7, tmpScaffoldTree.getAllNodes().size());
+        Assertions.assertEquals(7, tmpScaffoldTree.getAllNodes().size());
         IAtomContainer tmpRootMolecule = (IAtomContainer) tmpScaffoldTree.getRoot().getMolecule();
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique);
         /*Check root*/
-        Assert.assertEquals("N1NCNC1", tmpSmilesGenerator.create(tmpRootMolecule));
+        Assertions.assertEquals("N1NCNC1", tmpSmilesGenerator.create(tmpRootMolecule));
         IAtomContainer tmpMoleculeFive = (IAtomContainer) tmpScaffoldTree.getMatrixNode(5).getMolecule();
         /*Check molecule 5*/
-        Assert.assertEquals("C=1C=CC(=CC1)C2NNC(N2)C=3C=CC=CC3", tmpSmilesGenerator.create(tmpMoleculeFive));
+        Assertions.assertEquals("C=1C=CC(=CC1)C2NNC(N2)C=3C=CC=CC3", tmpSmilesGenerator.create(tmpMoleculeFive));
     }
 
     /**
@@ -822,13 +822,13 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         tmpScaffoldNetwork.mergeNetwork(tmpScaffoldNetwork3);
         tmpScaffoldNetwork.mergeNetwork(tmpScaffoldNetwork4);
         /*Checks*/
-        Assert.assertEquals(5, tmpScaffoldNetwork.getRoots().size());
-        Assert.assertEquals(16, tmpScaffoldNetwork.getAllNodes().size());
-        Assert.assertEquals(6, tmpScaffoldNetwork.getAllNodesOnLevel(0).size());
-        Assert.assertEquals(3, tmpScaffoldNetwork.getMaxLevel());
+        Assertions.assertEquals(5, tmpScaffoldNetwork.getRoots().size());
+        Assertions.assertEquals(16, tmpScaffoldNetwork.getAllNodes().size());
+        Assertions.assertEquals(6, tmpScaffoldNetwork.getAllNodesOnLevel(0).size());
+        Assertions.assertEquals(3, tmpScaffoldNetwork.getMaxLevel());
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Unique);
         IAtomContainer tmpNodeMolecule = (IAtomContainer) tmpScaffoldNetwork.getMatrixNode(8).getMolecule();
-        Assert.assertEquals("S1C(NN2NC(NC12)C=3C=CC=CC3)C=4C=CC=CC4", tmpSmilesGenerator.create(tmpNodeMolecule));
+        Assertions.assertEquals("S1C(NN2NC(NC12)C=3C=CC=CC3)C=4C=CC=CC4", tmpSmilesGenerator.create(tmpNodeMolecule));
     }
 
     /**
@@ -869,7 +869,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
                 }
             }
         }
-        Assert.assertEquals(5, tmpScaffoldTree.getAllNodes().size());
+        Assertions.assertEquals(5, tmpScaffoldTree.getAllNodes().size());
         /*Display the tree*/
         //GraphStreamUtility.displayWithGraphStream(tmpScaffoldTree, true);
     }
@@ -909,7 +909,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
                 System.out.println("Molecules:" + tmpSmilesGenerator.create((IAtomContainer) tmpNode.getMolecule()));
             }
         }
-        Assert.assertEquals(4, tmpScaffoldTree.getAllNodes().size());
+        Assertions.assertEquals(4, tmpScaffoldTree.getAllNodes().size());
         /*Display the tree*/
         //GraphStreamUtility.displayWithGraphStream(tmpScaffoldTree, true);
     }
@@ -926,12 +926,12 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
         List<IAtomContainer> tmpMoleculeList = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
         /*Check if there is only one empty fragment there*/
-        Assert.assertEquals(1, tmpMoleculeList.size());
-        Assert.assertEquals(0, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(1, tmpMoleculeList.size());
+        Assertions.assertEquals(0, tmpMoleculeList.get(0).getAtomCount());
         tmpMoleculeList = tmpScaffoldGenerator.applyEnumerativeRemoval(tmpMolecule);
         /*Check if there is only one empty fragment there*/
-        Assert.assertEquals(1, tmpMoleculeList.size());
-        Assert.assertEquals(0, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(1, tmpMoleculeList.size());
+        Assertions.assertEquals(0, tmpMoleculeList.get(0).getAtomCount());
     }
 
     /**
@@ -946,12 +946,12 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
         List<IAtomContainer> tmpMoleculeList = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
         /*Check if there is only one fragment there*/
-        Assert.assertEquals(1, tmpMoleculeList.size());
-        Assert.assertEquals(10, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(1, tmpMoleculeList.size());
+        Assertions.assertEquals(10, tmpMoleculeList.get(0).getAtomCount());
         tmpMoleculeList = tmpScaffoldGenerator.applyEnumerativeRemoval(tmpMolecule);
         /*Check if there is only one fragment there*/
-        Assert.assertEquals(1, tmpMoleculeList.size());
-        Assert.assertEquals(10, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(1, tmpMoleculeList.size());
+        Assertions.assertEquals(10, tmpMoleculeList.get(0).getAtomCount());
     }
 
     /**
@@ -969,29 +969,29 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         tmpScaffoldGenerator.setRetainOnlyHybridisationsAtAromaticBondsSetting(true);
         List<IAtomContainer> tmpMoleculeList = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
         /*Check if there is only one fragment there*/
-        Assert.assertEquals(1, tmpMoleculeList.size());
-        Assert.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(1, tmpMoleculeList.size());
+        Assertions.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
         /*With aromaticity and without only hybridisation at aromatic bonds*/
         tmpScaffoldGenerator.setDetermineAromaticitySetting(true);
         tmpScaffoldGenerator.setRetainOnlyHybridisationsAtAromaticBondsSetting(false);
         tmpMoleculeList = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
         /*Check if there is only one fragment there*/
-        Assert.assertEquals(1, tmpMoleculeList.size());
-        Assert.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(1, tmpMoleculeList.size());
+        Assertions.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
         /*Without aromaticity and with only hybridisation at aromatic bonds*/
         tmpScaffoldGenerator.setDetermineAromaticitySetting(false);
         tmpScaffoldGenerator.setRetainOnlyHybridisationsAtAromaticBondsSetting(true);
         tmpMoleculeList = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
         /*Check if there is only one fragment there*/
-        Assert.assertEquals(4, tmpMoleculeList.size());
-        Assert.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(4, tmpMoleculeList.size());
+        Assertions.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
         /*Without aromaticity and without only hybridisation at aromatic bonds*/
         tmpScaffoldGenerator.setDetermineAromaticitySetting(false);
         tmpScaffoldGenerator.setRetainOnlyHybridisationsAtAromaticBondsSetting(false);
         tmpMoleculeList = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
         /*Check if there is only one fragment there*/
-        Assert.assertEquals(1, tmpMoleculeList.size());
-        Assert.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
+        Assertions.assertEquals(1, tmpMoleculeList.size());
+        Assertions.assertEquals(16, tmpMoleculeList.get(0).getAtomCount());
     }
 
     /**
@@ -1009,14 +1009,14 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         /*Uncomment the molecule to display it*/
         ScaffoldNetwork tmpScaffoldNetwork = tmpScaffoldGenerator.generateScaffoldNetwork(tmpMolecule1);//Ondasetron
         /*Print some further information*/
-        Assert.assertEquals(3, tmpScaffoldNetwork.getAllNodes().size());//Should not be disassembled further
+        Assertions.assertEquals(3, tmpScaffoldNetwork.getAllNodes().size());//Should not be disassembled further
         for(ScaffoldNodeBase tmpNode : tmpScaffoldNetwork.getAllNodes()) {
             IAtomContainer tmpNodeMolecule = (IAtomContainer) tmpNode.getMolecule();
             boolean tmpIsEmpty = true;
             if(tmpNodeMolecule.getAtomCount() != 0) {
                 tmpIsEmpty = false;
             }
-            Assert.assertEquals(false, tmpIsEmpty);
+            Assertions.assertEquals(false, tmpIsEmpty);
         }
         tmpMolecule1 = tmpParser.parseSmiles("O=C1C=C2C(=CC=C1OC)C3=C(OC)C(=O)C(O)=CC34N5C2CC54C");
         /*Uncomment the molecule to display it*/
@@ -1027,10 +1027,10 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
             if(tmpNodeMolecule.getAtomCount() != 0) {
                 tmpIsEmpty = false;
             }
-            Assert.assertEquals(false, tmpIsEmpty);
+            Assertions.assertEquals(false, tmpIsEmpty);
         }
         /*Print some further information*/
-        Assert.assertEquals(17, tmpScaffoldNetwork.getAllNodes().size());//Should not be disassembled further
+        Assertions.assertEquals(17, tmpScaffoldNetwork.getAllNodes().size());//Should not be disassembled further
     }
 
     /**
@@ -1053,10 +1053,10 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
             if(tmpNodeMolecule.getAtomCount() != 0) {
                 tmpIsEmpty = false;
             }
-            Assert.assertEquals(false, tmpIsEmpty);
+            Assertions.assertEquals(false, tmpIsEmpty);
         }
         /*Print some further information*/
-        Assert.assertEquals(2, tmpTree.getAllNodes().size());//Should not be disassembled further
+        Assertions.assertEquals(2, tmpTree.getAllNodes().size());//Should not be disassembled further
         tmpMolecule1 = tmpParser.parseSmiles("O=C1C=C2C(=CC=C1OC)C3=C(OC)C(=O)C(O)=CC34N5C2CC54C");
         /*Uncomment the molecule to display it*/
         tmpTree = tmpScaffoldGenerator.generateSchuffenhauerTree(tmpMolecule1);//Ondasetron
@@ -1066,10 +1066,10 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
             if(tmpNodeMolecule.getAtomCount() != 0) {
                 tmpIsEmpty = false;
             }
-            Assert.assertEquals(false, tmpIsEmpty);
+            Assertions.assertEquals(false, tmpIsEmpty);
         }
         /*Print some further information*/
-        Assert.assertEquals(5, tmpTree.getAllNodes().size());//Should not be disassembled further
+        Assertions.assertEquals(5, tmpTree.getAllNodes().size());//Should not be disassembled further
     }
     //</editor-fold>
 
@@ -1078,7 +1078,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Creates a ScaffoldTree from a V2000 or V3000 mol file and displays it as a network with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void graphStreamTreeTest() throws Exception {
         String tmpFileName = "Test3" ;
@@ -1121,7 +1121,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Creates a ScaffoldNetwork from a V2000 or V3000 mol file and displays it as a network with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void graphStreamNetworkTest() throws Exception {
         String tmpFileName = "Test3" ;
@@ -1167,7 +1167,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * By selecting the corresponding lines, the molecule to be displayed can be chosen.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void getFigure1NetworkTest() throws Exception {
         //SMILES to IAtomContainer
@@ -1207,7 +1207,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Creates different ScaffoldTrees and merges them. The result is visualised with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeTreeDisplayTest() throws Exception {
         //SMILES to IAtomContainer
@@ -1253,7 +1253,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * A network is added here that has no connection to the rest of the network.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeNetworkDisplayTest() throws Exception {
         //SMILES to IAtomContainer
@@ -1302,7 +1302,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * A network is added here that has no connection to the rest of the network.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void generateEnumerativeForestTest() throws Exception {
         //SMILES to IAtomContainer
@@ -1360,7 +1360,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * The result is visualised with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeFigure1NetworkTest() throws Exception {
         //SMILES to IAtomContainer
@@ -1406,7 +1406,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Creates different ScaffoldTrees and merges them. The result is visualised with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeTreeOriginTest() throws Exception {
         //SMILES to IAtomContainer
@@ -1460,7 +1460,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Creates different ScaffoldTrees and merges them. The result is visualised with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeMoleculesToForestProblemTest() throws Exception {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
@@ -1495,7 +1495,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Creates different ScaffoldTrees and merges them. The result is visualised with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeMoleculesToForestTest() throws Exception {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
@@ -1546,7 +1546,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Creates different ScaffoldTrees and merges them. The result is visualised with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeAllTestMoleculesToForestTest() throws Exception {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
@@ -1576,7 +1576,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * The result is visualised with GraphStream.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void mergeCOCONUTMoleculesToForestTest() throws Exception {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
@@ -1614,7 +1614,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         //GraphStreamUtility.displayWithGraphStream(tmpScaffoldTree, true);
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void generateSdfNetworkTest() throws Exception {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
@@ -1662,7 +1662,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Shows that one piece of information is retained even though the other has already been removed.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void stereoFragmentationTest() throws Exception {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
@@ -1766,7 +1766,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpSmilesGenerator.create(tmpScaffoldSMILES));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpSmilesGenerator.create(tmpScaffoldSMILES));
     }
 
     /**
@@ -1806,7 +1806,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
             ImageIO.write(tmpImgRemove, "png", tmpOutputRemove);
             tmpCounter++;
             /*Check boolean*/
-            Assert.assertEquals(false, tmpIsRingRemovable);
+            Assertions.assertEquals(false, tmpIsRingRemovable);
         }
     }
 
@@ -1846,7 +1846,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRemove, "png", tmpOutputRemove);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpRemovedRing));
+        Assertions.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpRemovedRing));
     }
 
     /**
@@ -1888,9 +1888,9 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
             tmpCounter++;
         }
         /*Check booleans*/
-        Assert.assertEquals(false, tmpScaffoldGenerator.isRingRemovable(tmpRings.get(0), tmpRings, tmpScaffold));
-        Assert.assertEquals(false, tmpScaffoldGenerator.isRingRemovable(tmpRings.get(1), tmpRings, tmpScaffold));
-        Assert.assertEquals(true, tmpScaffoldGenerator.isRingRemovable(tmpRings.get(2), tmpRings, tmpScaffold));
+        Assertions.assertEquals(false, tmpScaffoldGenerator.isRingRemovable(tmpRings.get(0), tmpRings, tmpScaffold));
+        Assertions.assertEquals(false, tmpScaffoldGenerator.isRingRemovable(tmpRings.get(1), tmpRings, tmpScaffold));
+        Assertions.assertEquals(true, tmpScaffoldGenerator.isRingRemovable(tmpRings.get(2), tmpRings, tmpScaffold));
     }
 
     /**
@@ -1926,7 +1926,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRuleOne, "png" ,tmpOutputRuleOne);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1OC(C=CC=2N=CSC2)CC=CCCCCCCC(=O)CCC1", tmpSmilesGenerator.create(tmpRuleOne.get(1)));
+        Assertions.assertEquals("O=C1OC(C=CC=2N=CSC2)CC=CCCCCCCC(=O)CCC1", tmpSmilesGenerator.create(tmpRuleOne.get(1)));
     }
 
     /**
@@ -1954,7 +1954,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate picture of the SchuffenhauerRuleOne*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleOne(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -1966,7 +1966,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRuleOne, "png" ,tmpOutputRuleOne);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1OC(C=CC=2N=CSC2)CC=CCCCCCCC(=O)CCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("O=C1OC(C=CC=2N=CSC2)CC=CCCCCCCC(=O)CCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2011,7 +2011,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1NCC(=O)NCC(=O)NC(C(=O)NCC(=O)NCC(=O)NC1)CC=2C=CNC2", tmpSmilesGenerator.create(tmpRule.get(1)));
+        Assertions.assertEquals("O=C1NCC(=O)NCC(=O)NC(C(=O)NCC(=O)NCC(=O)NC1)CC=2C=CNC2", tmpSmilesGenerator.create(tmpRule.get(1)));
     }
 
     /**
@@ -2038,7 +2038,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ScaffoldGenerator tmpScaffoldGenerator = this.getScaffoldGeneratorTestSettings();
         IAtomContainer tmpScaffold = tmpScaffoldGenerator.getScaffold(tmpMolecule, true);
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleTwo(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2050,7 +2050,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1NCC(=O)NCC(=O)NC(C(=O)NCC(=O)NCC(=O)NC1)CC=2C=CNC2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("O=C1NCC(=O)NCC(=O)NC(C(=O)NCC(=O)NCC(=O)NC1)CC=2C=CNC2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2083,7 +2083,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpSmilesGenerator.create(tmpRule.get(1)));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpSmilesGenerator.create(tmpRule.get(1)));
     }
 
     /**
@@ -2110,7 +2110,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleThree(tmpScaffold, this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2122,7 +2122,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C=3C=NOC3", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2156,7 +2156,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CC2CCNC(C1)C2", tmpSmilesGenerator.create(tmpRule.get(1)));
+        Assertions.assertEquals("C1=CC2CCNC(C1)C2", tmpSmilesGenerator.create(tmpRule.get(1)));
     }
 
     /**
@@ -2184,7 +2184,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleFourAndFive(tmpScaffold, this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2196,7 +2196,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CC2CCNC(C1)C2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("C1=CC2CCNC(C1)C2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2229,7 +2229,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N1CC2CCCN3CCCC(C1)C32", tmpSmilesGenerator.create(tmpRule.get(1)));
+        Assertions.assertEquals("N1CC2CCCN3CCCC(C1)C32", tmpSmilesGenerator.create(tmpRule.get(1)));
     }
 
     /**
@@ -2256,7 +2256,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleFourAndFive(tmpScaffold, this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2268,7 +2268,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N1CC2CCCN3CCCC(C1)C32", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("N1CC2CCCN3CCCC(C1)C32", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2309,7 +2309,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1NC=CC12CNCC2", tmpSmilesGenerator.create(tmpRule.get(2)));
+        Assertions.assertEquals("O=C1NC=CC12CNCC2", tmpSmilesGenerator.create(tmpRule.get(2)));
     }
 
     /**
@@ -2337,7 +2337,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleFourAndFive(tmpScaffold, this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2349,7 +2349,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1NC=CC12CNCC2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("O=C1NC=CC12CNCC2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2390,7 +2390,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1CC2CCC(C1)C2", tmpSmilesGenerator.create(tmpRule.get(3)));
+        Assertions.assertEquals("C1CC2CCC(C1)C2", tmpSmilesGenerator.create(tmpRule.get(3)));
     }
 
     /**
@@ -2418,7 +2418,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleFourAndFive(tmpScaffold, this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2430,7 +2430,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1CC2CCC(C1)C2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("C1CC2CCC(C1)C2", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2473,7 +2473,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1NCC1", tmpSmilesGenerator.create(tmpRule.get(3)));
+        Assertions.assertEquals("O=C1NCC1", tmpSmilesGenerator.create(tmpRule.get(3)));
     }
 
     /**
@@ -2502,7 +2502,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleSix(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, false, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2514,7 +2514,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1NCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("O=C1NCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2555,7 +2555,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CCC=CCN1", tmpSmilesGenerator.create(tmpRule.get(3)));
+        Assertions.assertEquals("C1=CCC=CCN1", tmpSmilesGenerator.create(tmpRule.get(3)));
     }
 
     /**
@@ -2583,7 +2583,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleSix(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2595,7 +2595,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CCC=CCN1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("C1=CCC=CCN1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2637,7 +2637,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N1=CC=CN1", tmpSmilesGenerator.create(tmpRule.get(2)));
+        Assertions.assertEquals("N1=CC=CN1", tmpSmilesGenerator.create(tmpRule.get(2)));
     }
 
     /**
@@ -2666,7 +2666,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleSeven(tmpScaffold, this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2678,7 +2678,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N1=CC=CN1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("N1=CC=CN1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2687,7 +2687,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * and electron donation models are combined and the results printed as SMILES strings with aromaticity encoded.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void pyrazoloPyrimidineElectronDonationAndCycleFinderTest() throws Exception {
         String tmpPyrimidineSMILES = "OCC1OC2OC3C(O)C(O)C(OC3CO)OC4C(O)C(O)C(OC4CO)OC5C(O)C(O)C(OC5CO)OC6C(O)C(O)C(OC6CO)OC7C(O)C(O)C(OC7CO)OC8C(O)C(O)C(OC8CO)OC9C(O)C(O)C(OC9CO)OC%10C(O)C(O)C(OC%10CO)OC%11C(O)C(O)C(OC%11CO)OC%12C(O)C(O)C(OC%12CO)OC1C(O)C2O";
@@ -2752,7 +2752,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C=1C=CNC1", tmpSmilesGenerator.create(tmpRule.get(1)));
+        Assertions.assertEquals("C=1C=CNC1", tmpSmilesGenerator.create(tmpRule.get(1)));
     }
 
     /**
@@ -2780,7 +2780,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleEight(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2792,7 +2792,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C=1C=CNC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("C=1C=CNC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2833,7 +2833,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpRule.get(2)));
+        Assertions.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpRule.get(2)));
     }
 
     /**
@@ -2861,7 +2861,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleNine(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2873,7 +2873,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2914,7 +2914,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1CCCCCCC1", tmpSmilesGenerator.create(tmpRule.get(2)));
+        Assertions.assertEquals("C1CCCCCCC1", tmpSmilesGenerator.create(tmpRule.get(2)));
     }
 
     /**
@@ -2942,7 +2942,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleTen(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -2954,7 +2954,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1CCCCCCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("C1CCCCCCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -2995,7 +2995,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CCCCC1", tmpSmilesGenerator.create(tmpRule.get(2)));
+        Assertions.assertEquals("C1=CCCCC1", tmpSmilesGenerator.create(tmpRule.get(2)));
     }
 
     /**
@@ -3023,7 +3023,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleEleven(this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -3035,7 +3035,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("C1=CCCCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("C1=CCCCC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -3070,7 +3070,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N=1NC(=NC1C=2C=CC=CC2)C=3C=CC=CC3", tmpSmilesGenerator.create(tmpRule.get(1)));
+        Assertions.assertEquals("N=1NC(=NC1C=2C=CC=CC2)C=3C=CC=CC3", tmpSmilesGenerator.create(tmpRule.get(1)));
     }
 
     /**
@@ -3099,7 +3099,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate image of the scaffold with removed ring*/
         List<IAtomContainer> tmpRemovalRings = tmpScaffoldGenerator.applySchuffenhauerRuleTwelve(tmpScaffold, this.getRingsForSchuffenhauer(tmpScaffold));
-        Assert.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
+        Assertions.assertEquals(1, tmpRemovalRings.size()); //Only one fragment should be created
         //Remove the ring from the fragment currently being treated
         IAtomContainer tmpRingRemoved = this.removeRing(tmpScaffold, true, tmpRemovalRings.get(0));
         //Remove the linkers
@@ -3111,7 +3111,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N=1NC(=NC1C=2C=CC=CC2)C=3C=CC=CC3", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("N=1NC(=NC1C=2C=CC=CC2)C=3C=CC=CC3", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -3160,7 +3160,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgLast, "png" ,tmpOutputLast);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O1C=2C=CC=CC2C(C=3C=CC=CC3)CC1", tmpSmilesGenerator.create(tmpRule.get(2)));
+        Assertions.assertEquals("O1C=2C=CC=CC2C(C=3C=CC=CC3)CC1", tmpSmilesGenerator.create(tmpRule.get(2)));
     }
 
     /**
@@ -3198,7 +3198,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O1C=2C=CC=CC2C(C=3C=CC=CC3)CC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
+        Assertions.assertEquals("O1C=2C=CC=CC2C(C=3C=CC=CC3)CC1", tmpSmilesGenerator.create(tmpScaffoldRingRemoved));
     }
 
     /**
@@ -3240,8 +3240,8 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgStep2Diazepam, "png" ,tmpOutputStep2Diazepam);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1NC=2C=CC=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolDiazepam.get(1)));
-        Assert.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolDiazepam.get(2)));
+        Assertions.assertEquals("O=C1NC=2C=CC=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolDiazepam.get(1)));
+        Assertions.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolDiazepam.get(2)));
 
         /*-----Bromazepam-----*/
         //SMILES to IAtomContainer
@@ -3269,8 +3269,8 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputStep2Bromazepam = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/SchuffenhauerRules/Scheme18/BromazepamStep2.png");
         ImageIO.write(tmpImgStep2Bromazepam, "png" ,tmpOutputStep2Bromazepam);
         /*Generate and check SMILES*/
-        Assert.assertEquals("O=C1NC=2C=CC=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolBromazepam.get(1)));
-        Assert.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolBromazepam.get(2)));
+        Assertions.assertEquals("O=C1NC=2C=CC=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolBromazepam.get(1)));
+        Assertions.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolBromazepam.get(2)));
 
         /*-----Zolazepam-----*/
         //SMILES to IAtomContainer
@@ -3298,8 +3298,8 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputStep2Zolazepam = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/SchuffenhauerRules/Scheme18/ZolazepamStep2.png");
         ImageIO.write(tmpImgStep2Zolazepam, "png" ,tmpOutputStep2Zolazepam);
         /*Generate and check SMILES*/
-        Assert.assertEquals("O=C1NC=2NN=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolZolazepam.get(1)));
-        Assert.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolZolazepam.get(2)));
+        Assertions.assertEquals("O=C1NC=2NN=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolZolazepam.get(1)));
+        Assertions.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolZolazepam.get(2)));
 
         /*-----Clotiazepam-----*/
         //SMILES to IAtomContainer
@@ -3327,8 +3327,8 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputStep2Clotiazepam = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/SchuffenhauerRules/Scheme18/ClotiazepamStep2.png");
         ImageIO.write(tmpImgStep2Clotiazepam, "png" ,tmpOutputStep2Clotiazepam);
         /*Generate and check SMILES*/
-        Assert.assertEquals("O=C1NC=2SC=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolClotiazepam.get(1)));
-        Assert.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolClotiazepam.get(2)));
+        Assertions.assertEquals("O=C1NC=2SC=CC2C=NC1", tmpSmilesGenerator.create(tmpStep2MolClotiazepam.get(1)));
+        Assertions.assertEquals("O=C1NC=CC=NC1", tmpSmilesGenerator.create(tmpStep2MolClotiazepam.get(2)));
     }
 
     /**
@@ -3384,10 +3384,10 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgStep4, "png" ,tmpOutputStep4);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C1CC2=CCCC(C2)CC3C1CCC4OCC43", tmpSmilesGenerator.create(tmpScaffolds.get(1)));
-        Assert.assertEquals("O=C1CC2=CCCC(C2)CC3CCCCC13", tmpSmilesGenerator.create(tmpScaffolds.get(2)));
-        Assert.assertEquals("O=C1CC2=CCCC(C2)CCC1", tmpSmilesGenerator.create(tmpScaffolds.get(3)));
-        Assert.assertEquals("O=C1CCCCCCC1", tmpSmilesGenerator.create(tmpScaffolds.get(4)));
+        Assertions.assertEquals("O=C1CC2=CCCC(C2)CC3C1CCC4OCC43", tmpSmilesGenerator.create(tmpScaffolds.get(1)));
+        Assertions.assertEquals("O=C1CC2=CCCC(C2)CC3CCCCC13", tmpSmilesGenerator.create(tmpScaffolds.get(2)));
+        Assertions.assertEquals("O=C1CC2=CCCC(C2)CCC1", tmpSmilesGenerator.create(tmpScaffolds.get(3)));
+        Assertions.assertEquals("O=C1CCCCCCC1", tmpSmilesGenerator.create(tmpScaffolds.get(4)));
     }
     //</editor-fold>
 
@@ -3421,7 +3421,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgRule, "png" ,tmpOutputRule);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N1=CC=CN1", tmpSmilesGenerator.create(tmpRule.get(2)));
+        Assertions.assertEquals("N1=CC=CN1", tmpSmilesGenerator.create(tmpRule.get(2)));
         /*Generate picture of the SchuffenhauerRule without Rule 7*/
         tmpScaffoldGenerator.setRuleSevenAppliedSetting(false);
         List<IAtomContainer> tmpRuleFalse = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
@@ -3431,7 +3431,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputRuleFalse = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/isRule7Applied/RuleSevenFalse.png");
         ImageIO.write(tmpImgRuleFalse, "png" ,tmpOutputRuleFalse);
         /*Generate and check SMILES*/
-        Assert.assertEquals("N1=CC=CNC1", tmpSmilesGenerator.create(tmpRuleFalse.get(2)));
+        Assertions.assertEquals("N1=CC=CNC1", tmpSmilesGenerator.create(tmpRuleFalse.get(2)));
     }
 
     /**
@@ -3465,7 +3465,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpSmilesGenerator.create(tmpScaffoldSMILES));
+        Assertions.assertEquals("O=C(NC1C(=O)N2CCSC21)C3=CON=C3C=4C=CC=CC4", tmpSmilesGenerator.create(tmpScaffoldSMILES));
         /*Generate Murcko Scaffold*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.MURCKO_FRAMEWORK);
         IAtomContainer tmpMurckoSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, true);
@@ -3476,7 +3476,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputMurcko = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/ScaffoldModeTest/Murcko.png");
         ImageIO.write(tmpImgMurcko, "png" ,tmpOutputMurcko);
         /*Generate and check SMILES*/
-        Assert.assertEquals("N=1OC=C(C1C=2C=CC=CC2)CNC3CN4CCSC43", tmpSmilesGenerator.create(tmpMurckoSMILES));
+        Assertions.assertEquals("N=1OC=C(C1C=2C=CC=CC2)CNC3CN4CCSC43", tmpSmilesGenerator.create(tmpMurckoSMILES));
         /*Generate Basic Wire Frame*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.BASIC_WIRE_FRAME);
         IAtomContainer tmpBWFSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, true);
@@ -3487,7 +3487,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputBWF = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/ScaffoldModeTest/BasicWireFrame.png");
         ImageIO.write(tmpImgBWF, "png" ,tmpOutputBWF);
         /*Generate and check SMILES*/
-        Assert.assertEquals("C1CCC(CC1)C2CCCC2CCC3CC4CCCC43", tmpSmilesGenerator.create(tmpBWFSMILES));
+        Assertions.assertEquals("C1CCC(CC1)C2CCCC2CCC3CC4CCCC43", tmpSmilesGenerator.create(tmpBWFSMILES));
         /*Generate Element Wire Frame*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.ELEMENTAL_WIRE_FRAME);
         IAtomContainer tmpEWFSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, true);
@@ -3498,7 +3498,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputEWF = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/ScaffoldModeTest/ElementWireFrame.png");
         ImageIO.write(tmpImgEWF, "png" ,tmpOutputEWF);
         /*Generate and check SMILES*/
-        Assert.assertEquals("O1NC(C(C1)CNC2CN3CCSC32)C4CCCCC4", tmpSmilesGenerator.create(tmpEWFSMILES));
+        Assertions.assertEquals("O1NC(C(C1)CNC2CN3CCSC32)C4CCCCC4", tmpSmilesGenerator.create(tmpEWFSMILES));
         /*Generate Basic Framework*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.BASIC_FRAMEWORK);
         IAtomContainer tmpBFSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, true);
@@ -3510,7 +3510,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgBF, "png" ,tmpOutputBF);
         /*Generate and check SMILES*/
         System.out.println(tmpSmilesGenerator.create(tmpBFSMILES));
-        Assert.assertEquals("C=1C=CC(=CC1)C2=CCC=C2CCC3CC4CCCC34", tmpSmilesGenerator.create(tmpBFSMILES));
+        Assertions.assertEquals("C=1C=CC(=CC1)C2=CCC=C2CCC3CC4CCCC34", tmpSmilesGenerator.create(tmpBFSMILES));
     }
 
     /**
@@ -3544,7 +3544,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgSMILES, "png" ,tmpOutputSMILES);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("O=C(NC1C(=O)N2[CH][C]SC21)C3=[C]ON=C3C=4[C]=CC=C[C]4", tmpSmilesGenerator.create(tmpScaffoldSMILES));
+        Assertions.assertEquals("O=C(NC1C(=O)N2[CH][C]SC21)C3=[C]ON=C3C=4[C]=CC=C[C]4", tmpSmilesGenerator.create(tmpScaffoldSMILES));
         /*Generate Murcko Scaffold*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.MURCKO_FRAMEWORK);
         IAtomContainer tmpMurckoSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, false);
@@ -3555,7 +3555,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputMurcko = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/ScaffoldModeTest/MurckoWithoutH.png");
         ImageIO.write(tmpImgMurcko, "png" ,tmpOutputMurcko);
         /*Generate and check SMILES*/
-        Assert.assertEquals("[C]1SC2N([C]C2N[C]C3=[C]ON=C3C=4[C]=CC=C[C]4)[CH]1", tmpSmilesGenerator.create(tmpMurckoSMILES));
+        Assertions.assertEquals("[C]1SC2N([C]C2N[C]C3=[C]ON=C3C=4[C]=CC=C[C]4)[CH]1", tmpSmilesGenerator.create(tmpMurckoSMILES));
         /*Generate Basic Wire Frame*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.BASIC_WIRE_FRAME);
         IAtomContainer tmpBWFSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, false);
@@ -3566,7 +3566,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputBWF = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/ScaffoldModeTest/BasicWireFrameWithoutH.png");
         ImageIO.write(tmpImgBWF, "png" ,tmpOutputBWF);
         /*Generate and check SMILES*/
-        Assert.assertEquals("[C]1[C][C][C]([C][C]1)[C]2[C][C][C][C]2[C][C][C]3[C][C]4[C][C][C][C]43", tmpSmilesGenerator.create(tmpBWFSMILES));
+        Assertions.assertEquals("[C]1[C][C][C]([C][C]1)[C]2[C][C][C][C]2[C][C][C]3[C][C]4[C][C][C][C]43", tmpSmilesGenerator.create(tmpBWFSMILES));
         /*Generate Element Wire Frame*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.ELEMENTAL_WIRE_FRAME);
         IAtomContainer tmpEWFSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, false);
@@ -3577,7 +3577,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputEWF = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/ScaffoldModeTest/ElementWireFrameWithoutH.png");
         ImageIO.write(tmpImgEWF, "png" ,tmpOutputEWF);
         /*Generate and check SMILES*/
-        Assert.assertEquals("[C]1[C][C][C]([C][C]1)[C]2[N]O[C][C]2[C][N][C]3[C]N4[C][C]S[C]34", tmpSmilesGenerator.create(tmpEWFSMILES));
+        Assertions.assertEquals("[C]1[C][C][C]([C][C]1)[C]2[N]O[C][C]2[C][N][C]3[C]N4[C][C]S[C]34", tmpSmilesGenerator.create(tmpEWFSMILES));
         /*Generate Basic Framework*/
         tmpScaffoldGenerator.setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption.BASIC_FRAMEWORK);
         IAtomContainer tmpBFSMILES = tmpScaffoldGenerator.getScaffold(tmpMolecule, false);
@@ -3589,7 +3589,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgBF, "png" ,tmpOutputBF);
         /*Generate and check SMILES*/
         System.out.println(tmpSmilesGenerator.create(tmpBFSMILES));
-        Assert.assertEquals("[C]1[C]=C([C][CH]C2[C][C]3[CH][C][C]C32)C(=[C]1)C4=[C]C=CC=[C]4", tmpSmilesGenerator.create(tmpBFSMILES));
+        Assertions.assertEquals("[C]1[C]=C([C][CH]C2[C][C]3[CH][C][C]C32)C(=[C]1)C4=[C]C=CC=[C]4", tmpSmilesGenerator.create(tmpBFSMILES));
     }
 
     /**
@@ -3621,7 +3621,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         ImageIO.write(tmpImgFragmentFalse, "png", tmpOutputFragmentFalse);
         /*Generate and check SMILES*/
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator((SmiFlavor.Unique));
-        Assert.assertEquals("N1CCCCC1", tmpSmilesGenerator.create(tmpSchuffenhauerFragments.get(1)));
+        Assertions.assertEquals("N1CCCCC1", tmpSmilesGenerator.create(tmpSchuffenhauerFragments.get(1)));
         /*Generate picture with NonAromaticDBObtainedSetting turned on*/
         tmpScaffoldGenerator.setRetainOnlyHybridisationsAtAromaticBondsSetting(false);
         tmpSchuffenhauerFragments = tmpScaffoldGenerator.applySchuffenhauerRules(tmpMolecule);
@@ -3631,7 +3631,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
         File tmpOutputFragmentTrue = new File(System.getProperty("user.dir") + "/scaffoldTestOutput/Settings/RetainOnlyHybridisationsAtAromaticBondsSetting/KeepNonAromaticDB.png");
         ImageIO.write(tmpImgFragmentTrue, "png", tmpOutputFragmentTrue);
         /*Generate and check SMILES*/
-        Assert.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpSchuffenhauerFragments.get(1)));
+        Assertions.assertEquals("C1=CCCNC1", tmpSmilesGenerator.create(tmpSchuffenhauerFragments.get(1)));
     }
     //</editor-fold>
 
@@ -3640,7 +3640,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Speed test for the getScaffold() Method with over 400000 molecules from the COCONUT DB.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void calculateSchuffenhauerSpeedTest() throws Exception {
         this.ScaffoldGeneratorSpeedTest(true, false, false, false, false, true, 4242);
@@ -3651,7 +3651,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * getScaffold() must also be executed for all molecules.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void calculateRingsSpeedTest() throws Exception {
         this.ScaffoldGeneratorSpeedTest(false, true, false, false, false, false, 4242);
@@ -3662,7 +3662,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * getScaffold() and getRings() must also be executed for all molecules.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void calculateRemoveRingsSpeedTest() throws Exception {
         this.ScaffoldGeneratorSpeedTest(false, false, true, false, false, true, 4242);
@@ -3673,7 +3673,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * getScaffold() and getRings() must also be executed for all molecules.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void calculateApplySchuffenhauerRulesSpeedTest() throws Exception {
         this.ScaffoldGeneratorSpeedTest(false, false, false, true, false, true, 4242);
@@ -3683,7 +3683,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Speed test for the getRemovalNetworkRules Method with over 400000 molecules from the COCONUT DB.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void calculateGetRemovalNetworkSpeedTest() throws Exception {
         this.ScaffoldGeneratorSpeedTest(false, false, false, true, false, true, 4242);
@@ -3970,7 +3970,7 @@ public class ScaffoldGeneratorTest extends ScaffoldGenerator {
      * Counts the number of molecules whose stereoelements are reduced by the scaffold formation.
      * @throws Exception if anything goes wrong
      */
-    @Ignore
+    @Disabled
     @Test
     public void calculateStereoSpeedTest() throws Exception {
         //Start timer

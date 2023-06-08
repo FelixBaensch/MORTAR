@@ -40,6 +40,7 @@ import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import javafx.application.Platform;
@@ -245,7 +246,7 @@ public class MainViewController {
         //</editor-fold>
         this.isImportRunningProperty = new SimpleBooleanProperty(false);
         this.isExportRunningProperty = new SimpleBooleanProperty(false);
-        this.mapOfFragmentDataModelLists = new HashMap<>(5);
+        this.mapOfFragmentDataModelLists = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(5));
         this.threadList = new CopyOnWriteArrayList();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();

@@ -24,10 +24,10 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGro
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
@@ -73,20 +73,20 @@ public class PreferenceContainerTest {
         SingleNumberPreference tmpPreference4 = new SingleNumberPreference("Layout parameter xy", 2.0);
         SingleTermPreference tmpPreference5 = new SingleTermPreference("Welcoming message", "Welcome to MORTAR");
 
-        Assert.assertTrue(tmpContainer.add(tmpPreference1));
-        Assert.assertFalse(tmpContainer.add(tmpPreference1));
-        Assert.assertTrue(tmpContainer.contains(tmpPreference1));
-        Assert.assertTrue(tmpContainer.add(tmpPreference2));
-        Assert.assertTrue(tmpContainer.add(tmpPreference3));
-        Assert.assertTrue(tmpContainer.add(tmpPreference4));
-        Assert.assertTrue(tmpContainer.add(tmpPreference5));
-        Assert.assertTrue(tmpContainer.getSize() == 5);
+        Assertions.assertTrue(tmpContainer.add(tmpPreference1));
+        Assertions.assertFalse(tmpContainer.add(tmpPreference1));
+        Assertions.assertTrue(tmpContainer.contains(tmpPreference1));
+        Assertions.assertTrue(tmpContainer.add(tmpPreference2));
+        Assertions.assertTrue(tmpContainer.add(tmpPreference3));
+        Assertions.assertTrue(tmpContainer.add(tmpPreference4));
+        Assertions.assertTrue(tmpContainer.add(tmpPreference5));
+        Assertions.assertEquals(5, tmpContainer.getSize());
         IPreference[] tmpSortedNameAscending = tmpContainer.getPreferencesSortedNameAscending();
-        Assert.assertEquals(tmpPreference4, tmpSortedNameAscending[0]);
-        Assert.assertEquals(tmpPreference1, tmpSortedNameAscending[1]);
-        Assert.assertEquals(tmpPreference2, tmpSortedNameAscending[2]);
-        Assert.assertEquals(tmpPreference3, tmpSortedNameAscending[3]);
-        Assert.assertEquals(tmpPreference5, tmpSortedNameAscending[4]);
+        Assertions.assertEquals(tmpPreference4, tmpSortedNameAscending[0]);
+        Assertions.assertEquals(tmpPreference1, tmpSortedNameAscending[1]);
+        Assertions.assertEquals(tmpPreference2, tmpSortedNameAscending[2]);
+        Assertions.assertEquals(tmpPreference3, tmpSortedNameAscending[3]);
+        Assertions.assertEquals(tmpPreference5, tmpSortedNameAscending[4]);
 
         System.out.println(tmpContainer.getGUID());
         System.out.println(tmpContainer.getTimeStamp());
@@ -101,11 +101,11 @@ public class PreferenceContainerTest {
 
         File tmpPreferenceContainerFile = new File(tmpContainer.getContainerFilePathname());
         PreferenceContainer tmpReloadedContainer = new PreferenceContainer(tmpPreferenceContainerFile);
-        Assert.assertArrayEquals(tmpContainer.getPreferences(), tmpReloadedContainer.getPreferences());
-        Assert.assertEquals(tmpContainer.getGUID(), tmpReloadedContainer.getGUID());
-        Assert.assertEquals(tmpContainer.getTimeStamp(), tmpReloadedContainer.getTimeStamp());
-        Assert.assertEquals(tmpContainer.toString(), tmpReloadedContainer.toString());
-        Assert.assertEquals(tmpContainer, tmpReloadedContainer);
+        Assertions.assertArrayEquals(tmpContainer.getPreferences(), tmpReloadedContainer.getPreferences());
+        Assertions.assertEquals(tmpContainer.getGUID(), tmpReloadedContainer.getGUID());
+        Assertions.assertEquals(tmpContainer.getTimeStamp(), tmpReloadedContainer.getTimeStamp());
+        Assertions.assertEquals(tmpContainer.toString(), tmpReloadedContainer.toString());
+        Assertions.assertEquals(tmpContainer, tmpReloadedContainer);
         System.out.println();
     }
     //
