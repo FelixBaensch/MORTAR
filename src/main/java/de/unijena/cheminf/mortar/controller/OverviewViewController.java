@@ -948,14 +948,14 @@ public class OverviewViewController implements IViewToolController {
         //setting the columns per page
         if (tmpNewColumnsPerPageValue > tmpMaxColumnsPerPage) {
             this.columnsPerPageSetting.set(tmpMaxColumnsPerPage);
-            this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPageSetting));
+            this.overviewView.getColumnsPerPageTextField().setText(String.valueOf(this.columnsPerPageSetting.get()));
         } else {
             this.columnsPerPageSetting.set(tmpNewColumnsPerPageValue);
         }
         //setting the rows per page
         if (tmpNewRowsPerPageValue > tmpMaxRowsPerPage) {
             this.rowsPerPageSetting.set(tmpMaxRowsPerPage);
-            this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPageSetting));
+            this.overviewView.getRowsPerPageTextField().setText(String.valueOf(this.rowsPerPageSetting.get()));
         } else {
             this.rowsPerPageSetting.set(tmpNewRowsPerPageValue);
         }

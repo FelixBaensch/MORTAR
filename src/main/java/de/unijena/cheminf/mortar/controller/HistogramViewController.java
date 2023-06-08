@@ -20,6 +20,11 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+/**
+ * TODO:
+ * - add default button to histogram view
+ */
+
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.HistogramView;
