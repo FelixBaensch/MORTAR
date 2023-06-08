@@ -27,12 +27,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Util class for lists.
+ * Util class for collections.
  *
  * @author Felix Baensch, Jonas Schaub
- * @version 1.0.0.0
+ * @version 1.0.1.0
  */
-public final class ListUtil {
+public final class CollectionUtil {
     //<editor-fold desc="public static methods" defaultstate="collapsed">
     //TODO: check parameters, change params to enum values (and bools?), throw exceptions!
     /**

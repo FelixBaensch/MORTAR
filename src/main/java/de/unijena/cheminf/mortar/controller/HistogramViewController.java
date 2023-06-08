@@ -32,7 +32,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
-import de.unijena.cheminf.mortar.model.util.ListUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.binding.Bindings;
@@ -699,7 +699,7 @@ public class HistogramViewController implements IViewToolController {
         boolean tmpSortByFragmentFrequency = this.displayFrequencySetting.get().equals(FrequencyOption.ABSOLUTE_FREQUENCY.name());
         String tmpSortProperty = (tmpSortByFragmentFrequency ? "absoluteFrequency" : "moleculeFrequency");
         //TODO: rework method and usage
-        ListUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, tmpSortProperty, "ASCENDING");
+        CollectionUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, tmpSortProperty, "ASCENDING");
         for (FragmentDataModel tmpFragmentDataModel : this.fragmentListCopy) {
             if (tmpFragmentDataModel.getUniqueSmiles().length() > aSmilesLength) {
                 tmpNewSmiles = Message.get("HistogramView.smilesTooLong") + " (" + tmpFragmentListIndexDecreasing + ")";

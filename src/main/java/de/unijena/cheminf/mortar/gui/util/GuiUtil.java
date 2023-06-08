@@ -28,7 +28,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import de.unijena.cheminf.mortar.model.util.ListUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -212,7 +212,7 @@ public class GuiUtil {
             return;
         String tmpSortProp = ((PropertyValueFactory)((TableColumn) anEvent.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
         TableColumn.SortType tmpSortType = ((TableColumn) anEvent.getSource().getSortOrder().get(0)).getSortType();
-        ListUtil.sortGivenFragmentListByPropertyAndSortType(((IDataTableView)anEvent.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
+        CollectionUtil.sortGivenFragmentListByPropertyAndSortType(((IDataTableView)anEvent.getSource()).getItemsList(), tmpSortProp, tmpSortType.toString());
         int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((IDataTableView)anEvent.getSource()).getItemsList().size());
         anEvent.getSource().getItems().clear();
