@@ -71,6 +71,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.openscience.cdk.exception.CDKException;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,8 +85,8 @@ import java.util.logging.Logger;
 /**
  * Controller class of the overview view.
  *
- * @author Samuel Behr
- * @version 1.0.0.0
+ * @author Samuel Behr, Jonas Schaub
+ * @version 1.0.1.0
  */
 public class OverviewViewController implements IViewToolController {
     //<editor-fold desc="Enum DataSources" defaultstate="collapsed">
@@ -108,7 +109,11 @@ public class OverviewViewController implements IViewToolController {
         /**
          * Enum value for an item of an items tab as data source.
          */
-        ITEM_WITH_FRAGMENTS_SAMPLE;
+        ITEM_WITH_FRAGMENTS_SAMPLE,
+        /**
+         * Enum value for any other data source.
+         */
+        ANY;
     }
     //</editor-fold>
     //
@@ -222,6 +227,7 @@ public class OverviewViewController implements IViewToolController {
      * Boolean value saying whether the option to show a specific structure in the main view via double-click or context menu
      * should be available. The value depends on the given data source.
      */
+    //TODO: separate this into two variables? One for highlighting the first structure, one for being able to jump to structures in the main view?
     private boolean withShowInMainViewOption;
     /**
      * Boolean value whether an event to return to a specific structure in the MainView occurred.
@@ -258,8 +264,8 @@ public class OverviewViewController implements IViewToolController {
             @Override
             public void set(int newValue) throws NullPointerException, IllegalArgumentException {
                 super.set(newValue);
-                //value transferred to GUI in TODO
-                //value updated in TODO
+                //value transferred to GUI in initializeAndShowOverviewView()
+                //value updated in applyChangeOfGridConfiguration()
             }
         };
         this.settings.add(this.rowsPerPageSetting);
@@ -270,8 +276,8 @@ public class OverviewViewController implements IViewToolController {
             @Override
             public void set(int newValue) throws NullPointerException, IllegalArgumentException {
                 super.set(newValue);
-                //value transferred to GUI in TODO
-                //value updated in TODO
+                //value transferred to GUI in initializeAndShowOverviewView()
+                //value updated in applyChangeOfGridConfiguration()
             }
         };
         this.settings.add(this.columnsPerPageSetting);
@@ -283,6 +289,29 @@ public class OverviewViewController implements IViewToolController {
         this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         this.dragFlag = false;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="public properties" defaultstate="collapsed">
+    /**
+     * Returns the index of the structure in the MoleculeDataModelList that has been the latest target to a left- or
+     * right-click on its image view if an event to return to a specific structure in the main view occurred; else -1
+     * is returned.
+     * @return Integer value of the cached index of structure or -1
+     */
+    public int getCachedIndexOfStructureInMoleculeDataModelList() {
+        if (!this.returnToStructureEventOccurred) {
+            return -1;
+        }
+        return this.cachedIndexOfStructureInMoleculeDataModelList;
+    }
+    /**
+     * Resets the index of the structure in the given molecules list cache that the view was supposed to jump to at
+     * closing the overview view.
+     */
+    public void resetCachedIndexOfStructureInMoleculeDataModelList() {
+        this.returnToStructureEventOccurred = false;
+        this.cachedIndexOfStructureInMoleculeDataModelList = -1;
     }
     //</editor-fold>
     //
@@ -331,7 +360,6 @@ public class OverviewViewController implements IViewToolController {
         };
     }
     //</editor-fold>
-    //TODO: harmonise this method in the IViewToolController interface?
     /**
      * Initializes and opens the overview view.
      *
@@ -365,7 +393,6 @@ public class OverviewViewController implements IViewToolController {
                                 ? "OverviewView.titleOfView.molecule" : "OverviewView.titleOfView.fragment")
                                 + (aMoleculeDataModelList.size() != 1 ? "s" : ""));
                 this.withShowInMainViewOption = true;
-                break;
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
@@ -374,7 +401,6 @@ public class OverviewViewController implements IViewToolController {
                         Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.molecule"
                                 : "OverviewView.titleOfView.molecules"));
                 this.withShowInMainViewOption = false;
-                break;
             }
             case ITEM_WITH_FRAGMENTS_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
@@ -383,15 +409,12 @@ public class OverviewViewController implements IViewToolController {
                         Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.fragment"
                                 : "OverviewView.titleOfView.fragments"));
                 this.withShowInMainViewOption = false;
-                break;
+            }
+            case ANY -> {
+                this.setOverviewViewTitleForDefaultOrAnyDataSource(aTabName, aMoleculeDataModelList.size());
             }
             default -> {
-                Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
-                if (aTabName.isBlank()) {
-                    OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
-                }
-                this.overviewViewTitle = aTabName;
-                this.withShowInMainViewOption = false;
+                this.setOverviewViewTitleForDefaultOrAnyDataSource(aTabName, aMoleculeDataModelList.size());
             }
         }
         this.mainStage = aMainStage;
@@ -409,7 +432,11 @@ public class OverviewViewController implements IViewToolController {
         InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
                 "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
         );
-        this.overviewViewStage.getIcons().add(new Image(tmpImageInputStream));
+        if (tmpImageInputStream != null) {
+            this.overviewViewStage.getIcons().add(new Image(tmpImageInputStream));
+        } else {
+            OverviewViewController.LOGGER.log(Level.WARNING, "MORTAR icon could not be imported.");
+        }
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //
@@ -439,6 +466,27 @@ public class OverviewViewController implements IViewToolController {
     //</editor-fold>
     //
     //<editor-fold desc="private methods" dafaultstate="collapsed">
+    /**
+     * Sets overview view name to given tab name plus number of given molecules and sets option to jump to molecules
+     * in main view to false.
+     *
+     * @param aMoleculeDataModelListSize number of molecules in the overview view
+     * @param aTabName given title for the overview view, derived from the tab name where it was opened
+     * @throws NullPointerException if tab name is null
+     */
+    private void setOverviewViewTitleForDefaultOrAnyDataSource(String aTabName, int aMoleculeDataModelListSize)
+            throws NullPointerException {
+        Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
+        if (aTabName.isBlank()) {
+            OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
+        }
+        this.overviewViewTitle = aTabName +
+                " - " + Message.get("OverviewView.nameOfView") +
+                " - " + (aMoleculeDataModelListSize - 1) + " " +
+                Message.get(((aMoleculeDataModelListSize - 1 == 1) ? "OverviewView.titleOfView.molecule"
+                        : "OverviewView.titleOfView.molecules"));
+        this.withShowInMainViewOption = false;
+    }
     /**
      * Adds listeners and event handlers to elements of the overview view.
      */
@@ -614,17 +662,18 @@ public class OverviewViewController implements IViewToolController {
      */
     private void closeOverviewViewEvent() {
         if (!this.returnToStructureEventOccurred) {
-            this.cachedIndexOfStructureInMoleculeDataModelList = -1;
+            this.resetCachedIndexOfStructureInMoleculeDataModelList();
         }
-        //TODO clear this cache at some point? what is "else"?
+        //else: this.cachedIndexOfStructureInMoleculeDataModelList and this.returnToStructureEventOccurred are reset
+        // separately in resetCachedIndexOfStructureInMoleculeDataModelList()
         this.overviewViewStage.close();
-        this.clearAllGUICaches();
+        this.clearGUICachesAtClosing();
     }
     //
     /**
      * Discards all GUI variable values for when the view is closed.
      */
-    private void clearAllGUICaches() {
+    private void clearGUICachesAtClosing() {
         this.mainStage = null;
         //note: must have been closed before
         this.overviewViewStage = null;
@@ -633,22 +682,26 @@ public class OverviewViewController implements IViewToolController {
         this.dataSource = null;
         this.moleculeDataModelList = null;
         this.createStructureImages = false;
-        //TODO: do this here?
-        //this.cachedIndexOfStructureInMoleculeDataModelList = -1;
-        //this.returnToStructureEventOccurred = false;
+        this.withShowInMainViewOption = false;
+        if (!this.returnToStructureEventOccurred) {
+            this.resetCachedIndexOfStructureInMoleculeDataModelList();
+        }
+        //else: this.cachedIndexOfStructureInMoleculeDataModelList and this.returnToStructureEventOccurred are reset
+        // separately in resetCachedIndexOfStructureInMoleculeDataModelList()
+        this.structureContextMenu = null;
         this.scheduledThreadPoolExecutor.shutdown();
         this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         this.dragFlag = false;
     }
     //
-    //TODO: @Jonas, carry on here
     /**
-     * Creates an overview view page according to the given page index. A GridPane containing structure images gets
-     * returned. The SMILES and image of each structure can be copied and an enlarged version of the image be shown in
-     * a separate view via a context menu. If an exception gets thrown during the depiction of a structure a label will
+     * Creates an overview view page according to the given page index. This method is called again and again for every page!
+     * A GridPane containing structure images is returned. The SMILES and image of each structure can be copied and an
+     * enlarged version of the image be shown in a separate view via a context menu.
+     * If an exception gets thrown during the depiction of a structure, a label will
      * be placed instead of the structure image (as placeholder and to inform the user).
-     * If the image dimensions fall below a defined minimum instead of the images a label is placed that spans the hole
+     * If the image dimensions fall below a defined minimum, instead of the images a label is placed that spans the hole
      * grid and holds information for the user.
      *
      * @param aPageIndex Integer value for the index of the page to be created
@@ -705,6 +758,7 @@ public class OverviewViewController implements IViewToolController {
                         try {
                             MoleculeDataModel tmpMoleculeDataModel;
                             if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
+                                //caught below by catch block
                                 throw new NullPointerException("A MoleculeDataModel instance has been null.");
                             }
                             //depiction of structure image
@@ -720,10 +774,10 @@ public class OverviewViewController implements IViewToolController {
                                 //highlighting first structure in parent molecules and item overview view
                                 StackPane tmpStackPane = new StackPane(
                                         new ImageView(
-                                            DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
-                                                    tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                    tmpImageHeight, true, false
-                                            )
+                                                DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                                        tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                        tmpImageHeight, true, false
+                                                )
                                         )
                                 );
                                 tmpStackPane.setMinWidth(tmpImageWidth);
@@ -857,6 +911,7 @@ public class OverviewViewController implements IViewToolController {
             //use the default values and adapt the content of the text fields
             tmpNewColumnsPerPageValue = OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT;
             tmpNewRowsPerPageValue = OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT;
+            //values are parsed from text fields below, so set them here accordingly
             this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(tmpNewColumnsPerPageValue));
             this.overviewView.getRowsPerPageTextField().setText(Integer.toString(tmpNewRowsPerPageValue));
         } else {
@@ -864,10 +919,6 @@ public class OverviewViewController implements IViewToolController {
             tmpNewColumnsPerPageValue = Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText());
             tmpNewRowsPerPageValue = Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText());
         }
-        //TODO: fix the data flow to the main view controller which was previously done via public static variables in the following lines!
-        //TODO: don't set these here but later?
-        //this.columnsPerPageSetting.set(tmpNewColumnsPerPageValue);
-        //this.rowsPerPageSetting.set(tmpNewRowsPerPageValue);
         /*
         checking whether the entries are valid; entries get set to zero if a user presses enter on an empty text field;
         if so, the user gets informed via a message alert and the empty text field gets reset to its former value via
@@ -943,7 +994,11 @@ public class OverviewViewController implements IViewToolController {
         ContextMenu tmpContextMenu = new ContextMenu();
         //copyImageMenuItem
         MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
-        tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        try {
+            tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        } catch (NullPointerException anException) {
+            OverviewViewController.LOGGER.log(Level.WARNING, "Copy icon could not be imported.");
+        }
         //copySmilesMenuItem
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
         //copyNameMenuItem
@@ -1171,7 +1226,11 @@ public class OverviewViewController implements IViewToolController {
         InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
                 "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
         );
-        tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
+        if (tmpImageInputStream != null) {
+            tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
+        } else {
+            OverviewViewController.LOGGER.log(Level.WARNING, "MORTAR icon could not be imported");
+        }
         tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
         //
@@ -1239,21 +1298,6 @@ public class OverviewViewController implements IViewToolController {
             );
             tmpEnlargedStructureViewStage.close();
         }
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="public properties" defaultstate="collapsed">
-    /**
-     * Returns the index of the structure in the MoleculeDataModelList that has been the latest target to a left- or
-     * right-click on its image view if an event to return to a specific structure in the main view occurred; else -1
-     * is returned.
-     * @return Integer value of the cached index of structure or -1
-     */
-    public int getCachedIndexOfStructureInMoleculeDataModelList() {
-        if (!this.returnToStructureEventOccurred) {
-            return -1;
-        }
-        return this.cachedIndexOfStructureInMoleculeDataModelList;
     }
     //</editor-fold>
 }

@@ -22,6 +22,8 @@ package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
@@ -38,6 +40,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Alert;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,35 +57,39 @@ import java.util.logging.Logger;
  * @author Jonas Schaub
  */
 public class ViewToolsManager {
-    //<editor-fold desc="private static final class variables" defaultstate="collapsed">
+    //<editor-fold desc="public static final class constants" defaultstate="collapsed">
+    /**
+     * Folder name for storing the view tool settings within the usual MORTAR settings folder.
+     */
+    public static final String VIEW_TOOLS_SETTINGS_SUBFOLDER_NAME = "View_Tools_Settings";
+    //</editor-fold>
+    //
+    //<editor-fold desc="private static final class constants" defaultstate="collapsed">
     /**
      * Logger
      */
     private static final Logger LOGGER = Logger.getLogger(ViewToolsManager.class.getName());
     //</editor-fold>
     //
-    /**
-     *
-     */
-    public static final String VIEW_TOOLS_SETTINGS_SUBFOLDER_NAME = "View_Tools_Settings";
-    //
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
      * Array for the different view tools available.
      */
-    private IViewToolController[] viewToolsArray;
+    private final IViewToolController[] viewToolsArray;
     /**
-     *
+     * HistogramViewController instance.
      */
-    private HistogramViewController histogramViewController;
+    private final HistogramViewController histogramViewController;
     /**
-     *
+     * OverviewViewController instance.
      */
-    private OverviewViewController overviewViewController;
+    private final OverviewViewController overviewViewController;
     //</editor-fold>
     //
+    //<editor-fold desc="constructor" defaultstate="collapsed">
     /**
-     *
+     * Constructor that initialises the view tool instances and checks whether they are all valid (see {@link #checkViewTools()}).
+     * Opens a GUI exception alert if they are not.
      */
     public ViewToolsManager() {
         this.viewToolsArray = new IViewToolController[2];
@@ -96,19 +103,53 @@ public class ViewToolsManager {
             ViewToolsManager.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
-                    Message.get("FragmentationService.Error.invalidSettingFormat"), //TODO
+                    Message.get("ViewToolsManager.Error.invalidSettingFormat"),
                     anException);
         }
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     *
+     * Returns the array containing the instances of available view tools.
      */
     public IViewToolController[] getViewToolControllers() {
         return this.viewToolsArray;
     }
     /**
-     *
+     * See {@link HistogramViewController#openHistogramView(Stage, List)}.
+     */
+    public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList) throws NullPointerException {
+        this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList);
+    }
+    /**
+     * See {@link OverviewViewController#initializeAndShowOverviewView(Stage, OverviewViewController.DataSources, String, List)}.
+     */
+    public void openOverviewView(
+            Stage aMainStage,
+            OverviewViewController.DataSources aDataSource,
+            String aTabName,
+            List<MoleculeDataModel> aMoleculeDataModelList)
+            throws NullPointerException {
+        this.overviewViewController.initializeAndShowOverviewView(aMainStage, aDataSource, aTabName, aMoleculeDataModelList);
+    }
+    /**
+     * See {@link OverviewViewController#getCachedIndexOfStructureInMoleculeDataModelList()}.
+     */
+    public int getCachedIndexOfStructureInMoleculeDataModelList() {
+        return this.overviewViewController.getCachedIndexOfStructureInMoleculeDataModelList();
+    }
+    /**
+     * See {@link OverviewViewController#resetCachedIndexOfStructureInMoleculeDataModelList()}.
+     */
+    public void resetCachedIndexOfStructureInMoleculeDataModelList() {
+        this.overviewViewController.resetCachedIndexOfStructureInMoleculeDataModelList();
+    }
+    /**
+     * Persists settings of the view tools in preference container files in a subfolder of the settings directory. The settings of the
+     * view tools are translated to matching preference objects. If a single setting or several cannot be persisted, it
+     * is only logged in the log file. But if persisting a whole view tool fails, a warning is given to the user. The
+     * settings are saved to files denoted with the simple class name of the respective IViewToolController-implementing class.
      */
     public void persistViewToolsSettings() {
         String tmpDirectoryPath = FileUtil.getSettingsDirPath()
@@ -122,7 +163,7 @@ public class ViewToolsManager {
         if (!tmpDirectory.canWrite()) {
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
-                    Message.get("FragmentationService.Error.settingsPersistence")); //TODO
+                    Message.get("ViewToolsManager.Error.settingsPersistence"));
             return;
         }
         for (IViewToolController tmpViewTool : this.viewToolsArray) {
@@ -140,10 +181,11 @@ public class ViewToolsManager {
                 PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
                 tmpPrefContainer.writeRepresentation();
             } catch (NullPointerException | IllegalArgumentException | IOException | SecurityException anException) {
-                ViewToolsManager.LOGGER.log(Level.WARNING, "View tools settings persistence went wrong, exception: " + anException.toString(), anException);
+                ViewToolsManager.LOGGER.log(Level.WARNING, "View tools settings persistence went wrong, exception: "
+                        + anException.toString(), anException);
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),
-                        Message.get("FragmentationService.Error.settingsPersistence"), //TODO
+                        Message.get("ViewToolsManager.Error.settingsPersistence"),
                         anException);
                 continue;
             }
@@ -165,7 +207,8 @@ public class ViewToolsManager {
                 try {
                     tmpContainer = new PreferenceContainer(tmpViewToolsSettingsFile);
                 } catch (IllegalArgumentException | IOException anException) {
-                    ViewToolsManager.LOGGER.log(Level.WARNING, "Unable to reload settings of view tool " + tmpClassName + " : " + anException.toString(), anException);
+                    ViewToolsManager.LOGGER.log(Level.WARNING, "Unable to reload settings of view tool "
+                            + tmpClassName + " : " + anException.toString(), anException);
                     continue;
                 }
                 this.updatePropertiesFromPreferences(tmpViewTool.settingsProperties(), tmpContainer);
@@ -175,6 +218,9 @@ public class ViewToolsManager {
             }
         }
     }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      * Sets the values of the given properties according to the preferences in the given container with the same name.
      * If no matching preference for a given property is found, the value will remain in its default setting.
@@ -211,13 +257,12 @@ public class ViewToolsManager {
             }
         }
     }
-
     /**
      * Checks the available view tools and their settings for restrictions imposed by persistence. Throws an exception if
      * anything does not meet the requirements.
      */
     private void checkViewTools() throws Exception {
-        HashSet<String> tmpViewToolNames = new HashSet<>(this.viewToolsArray.length + 6, 1.0f);
+        HashSet<String> tmpViewToolNames = new HashSet<>((int)(this.viewToolsArray.length * 1.5), 0.75f);
         for (IViewToolController tmpViewTool : this.viewToolsArray) {
             //view tool name should be singleton and must be persistable
             String tmpViewToolName = tmpViewTool.getViewToolNameForDisplay();
@@ -233,7 +278,7 @@ public class ViewToolsManager {
             //setting names and values must adhere to the preference input restrictions
             //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
             List<Property> tmpSettingsList = tmpViewTool.settingsProperties();
-            HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingsList.size() + 6, 1.0f);
+            HashSet<String> tmpSettingNames = new HashSet<>((int) (tmpSettingsList.size() * 1.5), 0.75f);
             for (Property tmpSetting : tmpSettingsList) {
                 if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
                     throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");

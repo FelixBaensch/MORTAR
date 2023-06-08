@@ -51,10 +51,12 @@ import java.util.Objects;
  * @version 1.0.0.0
  */
 public class OverviewView extends AnchorPane {
+    //<editor-fold desc="public static final class constants", defaultstate="collapsed">
     /**
      * Width of columns and rows per page label of the overview view
      */
     public static final double OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH = 10.0;
+    //</editor-fold>
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Grid pane used to style the view.
@@ -175,11 +177,11 @@ public class OverviewView extends AnchorPane {
         this.structureGridPane.setStyle(
                 "-fx-background-color: LIGHTGREY; " +
                 "-fx-border-color: LIGHTGREY; " +
-                "-fx-border-width: " +
-                        + (OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                "-fx-border-width: "
+                        + (OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px "
                         + (GuiDefinitions.GUI_INSETS_VALUE
-                                - OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
-                        + (OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                                - OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px "
+                        + (OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px "
                         + (GuiDefinitions.GUI_INSETS_VALUE
                                 - OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px; " +
                 "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " +
@@ -469,5 +471,4 @@ public class OverviewView extends AnchorPane {
         return this.imageDimensionsBelowLimitVBox;
     }
     //</editor-fold>
-
 }

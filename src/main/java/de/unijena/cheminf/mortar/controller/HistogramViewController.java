@@ -432,7 +432,6 @@ public class HistogramViewController implements IViewToolController {
             public void set(boolean newValue) {
                 super.set(newValue);
                 //value transferred to GUI in openHistogramView()
-                //also, bidirectionally bound in openHistogramView() to respective check box in view
                 //in addFrequencyBarLabelToBarAndAddListenersToBarCheckBoxes(), listener is added
             }
         };
@@ -445,7 +444,6 @@ public class HistogramViewController implements IViewToolController {
             public void set(boolean newValue) {
                 super.set(newValue);
                 //value transferred to GUI in openHistogramView()
-                //also, bidirectionally bound in openHistogramView() to respective check box in view
                 //in addFrequencyBarLabelToBarAndAddListenersToBarCheckBoxes(), listener is added
             }
         };
@@ -458,7 +456,6 @@ public class HistogramViewController implements IViewToolController {
             public void set(boolean newValue) {
                 super.set(newValue);
                 //value transferred to GUI in openHistogramView()
-                //also, bidirectionally bound in openHistogramView() to respective check box in view
                 //value also used in createHistogram() and addListenersToHistogramView()
             }
         };
@@ -471,7 +468,6 @@ public class HistogramViewController implements IViewToolController {
             public void set(boolean newValue) {
                 super.set(newValue);
                 //value transferred to GUI in openHistogramView()
-                //also, bidirectionally bound in openHistogramView() to respective check box in view
                 //value also used in addListenersToHistogramView()
             }
         };
@@ -533,7 +529,6 @@ public class HistogramViewController implements IViewToolController {
         };
     }
     //</editor-fold>
-    //TODO: harmonise this method in the IViewToolController interface?
     /**
      * Initialises stage and view and opens view in the initialised stage. Also, adds listeners and sets settings
      * according to current values of the setting properties.
@@ -673,6 +668,8 @@ public class HistogramViewController implements IViewToolController {
         this.categoryAxis.setTickLength(HistogramViewController.HISTOGRAM_TICK_LABEL_LENGTH);
         this.categoryAxis.setTickLabelGap(HistogramViewController.HISTOGRAM_TICK_LABEL_GAP);
         this.categoryAxis.setLabel(Message.get("HistogramViewController.YAxisLabel.text"));
+        this.categoryAxis.setTickMarkVisible(this.displaySMILESSetting.get());
+        this.categoryAxis.setTickLabelsVisible(this.displaySMILESSetting.get());
         this.numberAxis = new NumberAxis();
         this.numberAxis.setSide(Side.TOP);
         this.numberAxis.setAutoRanging(false);
@@ -860,7 +857,7 @@ public class HistogramViewController implements IViewToolController {
                     //no resets of settings or text field content, the user has to take care of that
                     return;
                 }
-                //TODO: WHY?!
+                //TODO: Why the next two lines, @Betül
                 //this.histogramView.getDisplayedFragmentsNumberTextField().setText(String.valueOf(this.displayedFragmentsNumberSetting.get()));
                 //this.histogramView.getMaximumSMILESLengthTextField().setText(String.valueOf(this.maximumSMILESLengthSetting.get()));
             }
@@ -879,20 +876,12 @@ public class HistogramViewController implements IViewToolController {
                     this.histogramView.getDisplayBarShadowsCheckBox(),
                     tmpHistogramSizeGap[0]);
             this.histogramChart.setCategoryGap(tmpHistogramSizeGap[1]);
-            if(this.displayGridLinesSetting.get()) {
-                this.histogramChart.setVerticalGridLinesVisible(true);
-                this.histogramChart.setHorizontalGridLinesVisible(true);
-            } else {
-                this.histogramChart.setVerticalGridLinesVisible(false);
-                this.histogramChart.setHorizontalGridLinesVisible(false);
-            }
-            if (this.displaySMILESSetting.get()) {
-                this.categoryAxis.setTickMarkVisible(true);
-                this.categoryAxis.setTickLabelsVisible(true);
-            } else {
-                this.categoryAxis.setTickMarkVisible(false);
-                this.categoryAxis.setTickLabelsVisible(false);
-            }
+            boolean tmpDisplayGridLines = this.displayGridLinesSetting.get();
+            this.histogramChart.setVerticalGridLinesVisible(tmpDisplayGridLines);
+            this.histogramChart.setHorizontalGridLinesVisible(tmpDisplayGridLines);
+            boolean tmpDisplaySMILES = this.displaySMILESSetting.get();
+            this.categoryAxis.setTickMarkVisible(tmpDisplaySMILES);
+            this.categoryAxis.setTickLabelsVisible(tmpDisplaySMILES);
         });
         this.histogramView.getDisplayGridLinesCheckBox().selectedProperty()
                 .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {

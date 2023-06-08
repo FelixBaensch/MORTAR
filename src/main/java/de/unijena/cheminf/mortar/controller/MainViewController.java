@@ -328,7 +328,7 @@ public class MainViewController {
                     } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.FRAGMENTS.toString())) {
                         this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB);
                     } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.ITEMIZATION.toString())) {
-                        //should not happen
+                        //should not happen, since menu item should be disabled if items tab is active
                         throw new IllegalStateException();
                     }
                 }
@@ -747,9 +747,7 @@ public class MainViewController {
         for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
             tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
         }
-       //TODO fix call, do it via the view tools manager
-       HistogramViewController tmpHistogramViewController = new HistogramViewController();
-       tmpHistogramViewController.openHistogramView(this.primaryStage, tmpFragmentsList);
+        this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
     //
 
@@ -822,15 +820,13 @@ public class MainViewController {
      * @param aDataSource Source of the data to be shown in the overview view
      */
     private void openOverviewView(OverviewViewController.DataSources aDataSource) {
-        OverviewViewController tmpOverviewViewController;
         try {
             switch (aDataSource) {
                 case MOLECULES_TAB -> {
                     if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.MOLECULES.toString())))
                         //should not happen
                         throw new IllegalStateException();
-                    tmpOverviewViewController = new OverviewViewController();
-                    tmpOverviewViewController.initializeAndShowOverviewView(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             aDataSource,
                             ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
@@ -841,8 +837,7 @@ public class MainViewController {
                     if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.FRAGMENTS.toString())))
                         //should not happen
                         throw new IllegalStateException();
-                    tmpOverviewViewController = new OverviewViewController();
-                    tmpOverviewViewController.initializeAndShowOverviewView(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             aDataSource,
                             ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
@@ -868,8 +863,7 @@ public class MainViewController {
                     tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
                     //adding the sample of parent molecules
                     tmpDataForOverviewView.addAll(((FragmentDataModel) ((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList)).getParentMolecules());
-                    tmpOverviewViewController = new OverviewViewController();
-                    tmpOverviewViewController.initializeAndShowOverviewView(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             OverviewViewController.DataSources.PARENT_MOLECULES_SAMPLE,
                             null,
@@ -895,8 +889,7 @@ public class MainViewController {
                     tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
                     //adding the sample of fragments
                     tmpDataForOverviewView.addAll(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
-                    tmpOverviewViewController = new OverviewViewController();
-                    tmpOverviewViewController.initializeAndShowOverviewView(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE,
                             null,
@@ -913,7 +906,7 @@ public class MainViewController {
             return;
         }
         //
-        int tmpIndexOfMoleculeDataModelToReturnTo = tmpOverviewViewController.getCachedIndexOfStructureInMoleculeDataModelList();
+        int tmpIndexOfMoleculeDataModelToReturnTo = this.viewToolsManager.getCachedIndexOfStructureInMoleculeDataModelList();
         //since -1 is returned, if no specific structure should be shown
         if (tmpIndexOfMoleculeDataModelToReturnTo >= 0) {
             //go to page showing the structure of the MoleculeDataModel with the given index
@@ -938,6 +931,7 @@ public class MainViewController {
                         ((FragmentsDataTableView) tmpSelectedTabTableView).getStructureColumn());
             }
         }
+        this.viewToolsManager.resetCachedIndexOfStructureInMoleculeDataModelList();
     }
     //
 
