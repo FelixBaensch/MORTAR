@@ -461,7 +461,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Parameter Checks">
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         //</editor-fold>
-        //todo: initCap after fragmentation before saturation
         IAtomContainerSet tmpFragments = new AtomContainerSet();
         IAtomContainer tmpClone = aMolecule.clone();
 
@@ -481,16 +480,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     for (int[] tmpAtomMapArray: tmpMap) {
                         for (int i = 0; i < tmpAtomMapArray.length; i++) {
                             tmpClone.getAtom(tmpAtomMapArray[i]).setFlag(CDKConstants.ISPLACED, true);
-                            //todo:
                             tmpClone.getAtom(tmpAtomMapArray[i]).setFlag(CDKConstants.ISINRING, true);
                         }
                     }
                     for (int[] tmpBondMapArray: tmpMap) {
                         for (int j = 0; j < tmpBondMapArray.length; j++) {
                             tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
+                            tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISINRING, true);
                         }
                     }
-                    tmpFragments.addAtomContainer(tmpContainer);
                 }
             }
             //ringsearch for isolated rings could be unnecessary
@@ -521,7 +519,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
                 IAtomContainer subset = subsetMol(tmpClone, included);
 
-                    //ToDo: get List of substructure AtomContainers via private method
                     IAtomContainerSet tmpAtomContainerSet;
                     tmpAtomContainerSet = findAlkylChain(subset);
                     int var = 0; //debugging var
@@ -552,7 +549,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
 
         //<editor-fold desc="ConjugatedPiSystemsDetector">
-        //Todo: mapping conjugated system to tmpClone; extraction via flag checks (see line 553ff)
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet;
             tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
@@ -565,7 +561,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
                 for (int[] tmpBondMapArray: tmpMap) {
-                    for (int j = 0; j < tmpBondMapArray.length; j++) { //todo: bug: .length is one more with linear conj sys
+                    for (int j = 0; j < tmpBondMapArray.length; j++) {
                         tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
                         tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISCONJUGATED, true);
                     }
@@ -649,6 +645,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
 
         //<editor-fold desc="Fragment Extraction">
+
         try {
             for (int i = 0; i <= tmpClone.getAtomCount(); i++) {
                 IAtomContainer tmpFragmentationContainer = new AtomContainer();
@@ -662,14 +659,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
                 for (IBond tmpBond: tmpClone.bonds()) {
-                    if ((tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED)) //atoms of bond are placed
+                    if (((tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED)) //atoms of bond are placed
+                            //&& tmpBond.getFlag(CDKConstants.ISPLACED)
+                            ) //todo: bugfix for bond between rings or ring systems
+
                             && !tmpBond.getFlag(CDKConstants.VISITED) //bond has not been extracted yet
-                            //todo: bugfix for bond between rings or ring systems
-                            && (tmpBond.getFlag(CDKConstants.ISINRING) || tmpBond.getFlag(CDKConstants.ISCONJUGATED)) //bond is in ring or conjugated
                     ) {
                         tmpFragmentationContainer.addBond(tmpBond);
                         tmpBond.setFlag(CDKConstants.VISITED, true);
-                    } else if (!tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && !tmpBond.getEnd().getFlag(CDKConstants.ISPLACED) && !tmpBond.getFlag(CDKConstants.VISITED)) {
+                    }
+                    //correct chain extraction
+                    else if (!tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && !tmpBond.getEnd().getFlag(CDKConstants.ISPLACED) && !tmpBond.getFlag(CDKConstants.VISITED)) {
                         tmpFragmentationContainer.addBond(tmpBond);
                         tmpBond.setFlag(CDKConstants.VISITED, true);
                     }
@@ -802,9 +802,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //</editor-fold>
 
     /**
-     * copied from largestChainDescriptor
-     * ToDo
+     * Method to find and extract subset out of given molecule.
+     *
+     * @deprecated currently not used in algorithmic structure
+     *
+     * @param mol IAtomcontainer to be worked on
+     * @param include Atom Set of atoms inlcuded in subset molecule
+     * @return IAtomcontainer with extracted subset
      */
+    //copied from LargestChainDescriptor
     private static IAtomContainer subsetMol(IAtomContainer mol, Set<IAtom> include) {
         IAtomContainer cpy = mol.getBuilder().newInstance(IAtomContainer.class, mol.getAtomCount(), mol.getBondCount(), 0, 0);
         for (IAtom atom : mol.atoms()) {
@@ -819,9 +825,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //copy end
 
-
-
-    //ToDo routine to detect and return whole alkyl chains, use extractSubstructure()? -> Set of atoms marked to copy -> detection of connected atoms needed
+    /**
+     * Method to detect substructure alkyl chains and extract said chains into an AtomcontainerSet.
+     *
+     * @deprecated no longer used, as alkyl chain detection is not necessary in current algorithmic structure
+     * @param anAtomContainer the atomcontainer to find alkyl chains in
+     * @return AtomcontainerSet with extracted alkyl chains
+     */
     private static IAtomContainerSet findAlkylChain(IAtomContainer anAtomContainer) {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
         IAtom tmpOldAtom = null;
