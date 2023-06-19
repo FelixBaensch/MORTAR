@@ -862,9 +862,6 @@ public class HistogramViewController implements IViewToolController {
                     //no resets of settings or text field content, the user has to take care of that
                     return;
                 }
-                //TODO: Why the next two lines, @Betül
-                //this.histogramView.getDisplayedFragmentsNumberTextField().setText(String.valueOf(this.displayedFragmentsNumberSetting.get()));
-                //this.histogramView.getMaximumSMILESLengthTextField().setText(String.valueOf(this.maximumSMILESLengthSetting.get()));
             }
             BarWidthOption tmpBarWidthSettingEnumValue = this.getBarWidthOptionEnumConstantFromDisplayName(
                     (String)this.histogramView.getBarWidthsComboBox().getValue());
@@ -988,8 +985,7 @@ public class HistogramViewController implements IViewToolController {
                 boolean tmpShouldAtomTypesBePerceived = true;
                 this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, tmpShouldBeKekulized, tmpShouldAtomTypesBePerceived);
             } catch (CDKException anException) {
-                //TODO: log this? It blows up the log file quite a bit
-                //HistogramViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                //no logging, this happens too often, e.g. for fragments of aromatic rings
                 try {
                     this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
                 } catch (CDKException aSecondException) {
