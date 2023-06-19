@@ -1126,11 +1126,11 @@ public class HistogramViewController implements IViewToolController {
         double tmpGapDeviation;
         double tmpGapSpacing;
         double tmpCategoryGap;
-        double tmpFinalHistogramHeight = 0;
+        double tmpFinalHistogramHeight = 0.0; //return value is initialised here with a default value
         double tmpFinalGapSpacing;
         switch (aBarWidthOptionConstant) {
             case SMALL:
-                if (aNumberOfDisplayedFragments <= 24) {
+                if (aNumberOfDisplayedFragments <= 24) { //magic number
                     tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedFragments;
                     tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 24);
                     tmpGapSpacing = HistogramViewController.GUI_HISTOGRAM_SMALL_BAR_GAP_CONST * tmpGapDeviation;
@@ -1144,7 +1144,7 @@ public class HistogramViewController implements IViewToolController {
                 }
                 break;
             case MEDIUM:
-                if (aNumberOfDisplayedFragments <= 17) {
+                if (aNumberOfDisplayedFragments <= 17) { //magic number
                     tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedFragments;
                     tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 17);
                     tmpGapSpacing = HistogramViewController.GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST * tmpGapDeviation;
@@ -1159,7 +1159,7 @@ public class HistogramViewController implements IViewToolController {
                 break;
             case LARGE:
             default:
-                if (aNumberOfDisplayedFragments <= 13) {
+                if (aNumberOfDisplayedFragments <= 13) { //magic number
                     tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedFragments;
                     tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 13);
                     tmpGapSpacing = HistogramViewController.GUI_HISTOGRAM_LARGE_BAR_GAP_CONST * tmpGapDeviation;

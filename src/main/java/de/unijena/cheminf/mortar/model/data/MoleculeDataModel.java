@@ -162,9 +162,7 @@ public class MoleculeDataModel {
         try{
             tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, true, true);
         } catch (CDKException aCdkException){
-            //TODO: log this? It blows up the log file quite a bit
-            //Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.WARNING, "atom container parsed from SMILES "
-            //        + this.uniqueSmiles + " could not be kekulized or atom types assigned to it.", aCdkException);
+            //no logging, this happens too often, e.g. for fragments of aromatic rings
             tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, false, false);
         }
         tmpAtomContainer.addProperties(this.properties);
