@@ -964,10 +964,9 @@ public class HistogramViewController implements IViewToolController {
                 tmpContextMenuLabel.setMinWidth(tmpNodePane.getWidth());
                 tmpContextMenuLabel.setTranslateX(0);
                 //TODO: @Betül, why do you use different listeners here and below? And why the context menu label color setting in only one of them?
-                tmpContextMenuLabel.addEventHandler(MouseEvent.MOUSE_CLICKED,event1 -> {
-                    if (MouseButton.SECONDARY.equals(event1.getButton())) {
-                        tmpContextMenuLabel.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE);
-                        tmpContextMenu.show(tmpContextMenuLabel, tmpNodePane.getWidth() / 2, tmpNodePane.getHeight());
+                tmpContextMenuLabel.addEventHandler(MouseEvent.MOUSE_CLICKED, event1 -> {
+                    if (event1.getButton().equals(MouseButton.SECONDARY)) {
+                        tmpContextMenu.show(tmpContextMenuLabel, tmpNodePane.getWidth() * 0.5, tmpNodePane.getHeight());
                     }
                 });
             } else {
