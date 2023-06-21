@@ -485,7 +485,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                     for (int[] tmpBondMapArray: tmpMap) {
                         for (int j = 0; j < tmpBondMapArray.length; j++) {
-                            tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
+                            //tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
                             tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISINRING, true);
                         }
                     }
@@ -562,7 +562,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
                 for (int[] tmpBondMapArray: tmpMap) {
                     for (int j = 0; j < tmpBondMapArray.length; j++) {
-                        tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
+                        //tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
                         tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISCONJUGATED, true);
                     }
                 }
@@ -598,7 +598,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
                 for (int[] tmpBondMapArray: tmpMap) {
                     for (int j = 0; j < tmpBondMapArray.length; j++) {
-                        tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
+                        //tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISPLACED, true);
                         tmpClone.getBond(tmpBondMapArray[j]).setFlag(CDKConstants.ISINRING, true);
                     }
                 }
@@ -647,8 +647,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Fragment Extraction">
 
         try {
+
             for (int i = 0; i <= tmpClone.getAtomCount(); i++) {
                 IAtomContainer tmpFragmentationContainer = new AtomContainer();
+                //atom extraction
                 for (IAtom tmpAtom: tmpClone.atoms()) {
                     if (tmpAtom.getFlag(CDKConstants.ISPLACED) && !tmpAtom.getFlag(CDKConstants.VISITED)) {
                         tmpFragmentationContainer.addAtom(tmpAtom);
@@ -658,6 +660,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         tmpAtom.setFlag(CDKConstants.VISITED, true);
                     }
                 }
+                //bond extraction
                 for (IBond tmpBond: tmpClone.bonds()) {
                     if (((tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED)) //atoms of bond are placed
                             //&& tmpBond.getFlag(CDKConstants.ISPLACED)
@@ -665,8 +668,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
                             && !tmpBond.getFlag(CDKConstants.VISITED) //bond has not been extracted yet
                     ) {
-                        tmpFragmentationContainer.addBond(tmpBond);
-                        tmpBond.setFlag(CDKConstants.VISITED, true);
+                        if ((tmpBond.getBegin().getFlag(CDKConstants.ISINRING) || tmpBond.getBegin().getFlag(CDKConstants.ISCONJUGATED))
+                                && (tmpBond.getEnd().getFlag(CDKConstants.ISINRING) || tmpBond.getEnd().getFlag(CDKConstants.ISCONJUGATED))) {
+                            if (tmpBond.getFlag(CDKConstants.ISINRING) || tmpBond.getFlag(CDKConstants.ISCONJUGATED)) {
+                                tmpFragmentationContainer.addBond(tmpBond);
+                                tmpBond.setFlag(CDKConstants.VISITED, true);
+                            }
+
+                        }
                     }
                     //correct chain extraction
                     else if (!tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && !tmpBond.getEnd().getFlag(CDKConstants.ISPLACED) && !tmpBond.getFlag(CDKConstants.VISITED)) {
