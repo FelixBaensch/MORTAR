@@ -944,6 +944,7 @@ public class HistogramViewController implements IViewToolController {
                 boolean tmpShouldAtomTypesBePerceived = true;
                 this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, tmpShouldBeKekulized, tmpShouldAtomTypesBePerceived);
             } catch (CDKException anException) {
+                // no logging, this happens too often, e.g. for fragments of aromatic rings
                 try {
                     this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
                 } catch (CDKException aSecondException) {
