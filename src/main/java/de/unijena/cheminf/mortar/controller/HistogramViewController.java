@@ -933,10 +933,14 @@ public class HistogramViewController implements IViewToolController {
         MenuItem tmpCopyStructureMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemStructure.text"));
         ContextMenu tmpContextMenu = new ContextMenu();
         tmpContextMenu.getItems().addAll(tmpCopySmilesMenuItem, tmpCopyStructureMenuItem);
-        tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-        tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        try {
+            tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+            tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        } catch(NullPointerException | IllegalArgumentException anException) {
+            HistogramViewController.LOGGER.log(Level.WARNING, "Copy icon for context menus could not be imported.");
+        }
         // Event to hover over histogram bars to display structure
-        EventHandler<MouseEvent> tmpMouseHoverEvent = event -> {
+        EventHandler<MouseEvent> tmpMouseHoverEventHandler = event -> {
             tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE);
             this.atomContainerForDisplayCache = null;
             try {
@@ -965,11 +969,11 @@ public class HistogramViewController implements IViewToolController {
         /* Event to open context menu (right click) to copy SMILES string or structure.
            Context menu also opens, if  a right click on the frequency label is detected.
          */
-        EventHandler<ContextMenuEvent> tmpContextMenuEvent = event -> {
+        EventHandler<ContextMenuEvent> tmpContextMenuEventHandler = event -> {
             tmpContextMenu.show(tmpNodePane, event.getScreenX(), event.getScreenY());
         };
-        tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, tmpMouseHoverEvent);
-        tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, tmpContextMenuEvent);
+        tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, tmpMouseHoverEventHandler);
+        tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, tmpContextMenuEventHandler);
         // Listener ContextMenuItems
         tmpCopySmilesMenuItem.setOnAction(event -> {
             ClipboardContent tmpSmilesClipboardContent = new ClipboardContent();
