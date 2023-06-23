@@ -40,6 +40,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
@@ -60,7 +61,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -233,27 +233,27 @@ public class HistogramViewController implements IViewToolController {
     /**
      * Value for the small bar width
      */
-    public static final double GUI_HISTOGRAM_SMALL_BAR_WIDTH = 15;
+    public static final double GUI_HISTOGRAM_SMALL_BAR_WIDTH = 15.0;
     /**
      * Value for the medium bar width
      */
-    public static final double GUI_HISTOGRAM_MEDIUM_BAR_WIDTH = 20;
+    public static final double GUI_HISTOGRAM_MEDIUM_BAR_WIDTH = 20.0;
     /***
      * Value for the large bar width
      */
-    public static final double GUI_HISTOGRAM_LARGE_BAR_WIDTH = 30;
+    public static final double GUI_HISTOGRAM_LARGE_BAR_WIDTH = 30.0;
     /**
      * Value for the small histogram growth factor
      */
-    public static final double GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE = 27;
+    public static final double GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE = 27.0;
     /**
      * Value for the medium histogram growth factor
      */
-    public static final double GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE = 37;
+    public static final double GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE = 37.0;
     /**
      * Value for the large histogram growth factor
      */
-    public static final double GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE = 50;
+    public static final double GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE = 50.0;
     /**
      * Value of the bar label sizes
      */
@@ -266,14 +266,6 @@ public class HistogramViewController implements IViewToolController {
      * Value of tickLabel gap
      */
     public static final double HISTOGRAM_TICK_LABEL_GAP = 10.0;
-    /**
-     * Value for the width of the Copy SMILES context menu
-     */
-    public static final double HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH = 10.0;
-    /**
-     * Renewed width of the context menu
-     */
-    public static final double HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS = 50.0;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -683,8 +675,8 @@ public class HistogramViewController implements IViewToolController {
         this.numberAxis.setTickLabelFill(Color.BLACK);
         this.numberAxis.setLabel(Message.get("HistogramViewController.XAxisLabel.text"));
         BarChart tmpHistogramBarChart = new BarChart(this.numberAxis, this.categoryAxis);
-        tmpHistogramBarChart.setCategoryGap(0);
-        tmpHistogramBarChart.setBarGap(0);
+        tmpHistogramBarChart.setCategoryGap(0.0);
+        tmpHistogramBarChart.setBarGap(0.0);
         ScrollPane tmpScrollPane = aHistogramView.getHistogramScrollPane();
         tmpScrollPane.setContent(tmpHistogramBarChart);
         //</editor-fold>
@@ -721,8 +713,8 @@ public class HistogramViewController implements IViewToolController {
         int tmpIntTmpXAxisTick = (int) Math.round(tmpXAxisTicks);
         int tmpIntXAxisExtension = (int) Math.round(tmpXAxisExtension);
         if (tmpIntTmpXAxisTick == 0 || tmpIntXAxisExtension == 0) {
-           this.numberAxis.setTickUnit(1);
-           this.numberAxis.setUpperBound(tmpMaxFrequency + 1);
+           this.numberAxis.setTickUnit(1.0);
+           this.numberAxis.setUpperBound(tmpMaxFrequency + 1.0);
         } else {
             if (tmpIntTmpXAxisTick < 10) {
                 this.numberAxis.setTickUnit(tmpIntTmpXAxisTick);
@@ -900,24 +892,24 @@ public class HistogramViewController implements IViewToolController {
             this.displaySMILESSetting.set(new_val);
         });
         this.histogramScene.widthProperty().addListener((observable, oldValue, newValue) -> {
-            double tmpWidthChange = ((this.histogramScene.getWidth() - GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) * 100;
-            double tmpImageWidthChange = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH / 100) * tmpWidthChange;
+            double tmpWidthChange = ((this.histogramScene.getWidth() - GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) * 100.0;
+            double tmpImageWidthChange = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH / 100.0) * tmpWidthChange;
             this.imageWidth = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH + tmpImageWidthChange;
-            this.imageHeight = this.imageWidth - 100;
+            this.imageHeight = this.imageWidth - 100.0;
             this.imageZoomFactor = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR / HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH) * this.imageWidth;
         });
         this.histogramScene.heightProperty().addListener((observable, oldValue, newValue) -> {
-            double tmpHeightChange = ((this.histogramScene.getHeight() - GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE) * 100;
-            double tmpImageHeightChange = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT / 100) * tmpHeightChange;
+            double tmpHeightChange = ((this.histogramScene.getHeight() - GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE) * 100.0;
+            double tmpImageHeightChange = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT / 100.0) * tmpHeightChange;
             if (this.histogramScene.getWidth() == GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) {
                 this.imageHeight = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT + tmpImageHeightChange;
             } else {
-                double tmpHeight = this.imageWidth - 100;
+                double tmpHeight = this.imageWidth - 100.0;
                 double tmpIntermediateImageHeight = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT + tmpImageHeightChange;
                 double tmpImageHeight = tmpHeight - tmpIntermediateImageHeight;
                 this.imageHeight = tmpIntermediateImageHeight + tmpImageHeight;
             }
-            this.imageWidth = 100 + this.imageHeight;
+            this.imageWidth = 100.0 + this.imageHeight;
             this.imageZoomFactor = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR / HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH) * this.imageWidth;
         });
     }
@@ -939,52 +931,24 @@ public class HistogramViewController implements IViewToolController {
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT);
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemSmiles.text"));
         MenuItem tmpCopyStructureMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemStructure.text"));
+        ContextMenu tmpContextMenu = new ContextMenu();
+        tmpContextMenu.getItems().addAll(tmpCopySmilesMenuItem, tmpCopyStructureMenuItem);
         try {
             tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
             tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-        } catch (NullPointerException | IllegalArgumentException anException) {
+        } catch(NullPointerException | IllegalArgumentException anException) {
             HistogramViewController.LOGGER.log(Level.WARNING, "Copy icon for context menus could not be imported.");
         }
-        ContextMenu tmpContextMenu = new ContextMenu();
-        tmpContextMenu.getItems().addAll(tmpCopySmilesMenuItem, tmpCopyStructureMenuItem);
-        Label tmpContextMenuLabel = new Label();
-        tmpContextMenuLabel.setPrefWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH);
-        tmpContextMenuLabel.setMaxWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH);
-        tmpContextMenuLabel.setMinWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH);
-        tmpContextMenuLabel.setTranslateX(20);
-        tmpContextMenuLabel.setContextMenu(tmpContextMenu);
-        tmpNodePane.getChildren().addAll(tmpContextMenuLabel);
-        tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
-            //context menu listener (right-click) and structure display at hovering
+        // Event to hover over histogram bars to display structure
+        EventHandler<MouseEvent> tmpMouseHoverEventHandler = event -> {
             tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE);
-            //two different ways to call context menu needed because bar might be too small
-            if (tmpNodePane.getWidth() >= 10) {
-                tmpContextMenuLabel.setPrefWidth(tmpNodePane.getWidth());
-                tmpContextMenuLabel.setMaxWidth(tmpNodePane.getWidth());
-                tmpContextMenuLabel.setMinWidth(tmpNodePane.getWidth());
-                tmpContextMenuLabel.setTranslateX(0);
-                //TODO: @Betül, why do you use different listeners here and below? And why the context menu label color setting in only one of them?
-                tmpContextMenuLabel.addEventHandler(MouseEvent.MOUSE_CLICKED, event1 -> {
-                    if (event1.getButton().equals(MouseButton.SECONDARY)) {
-                        tmpContextMenu.show(tmpContextMenuLabel, tmpNodePane.getWidth() * 0.5, tmpNodePane.getHeight());
-                    }
-                });
-            } else {
-                tmpContextMenuLabel.setPrefWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS);
-                tmpContextMenuLabel.setMaxWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS);
-                tmpContextMenuLabel.setMinWidth(HistogramViewController.HISTOGRAM_CONTEXT_MENU_LABEL_WIDTH_SMALL_BARS);
-                tmpContextMenuLabel.setTranslateX(20);
-                tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event2 -> {
-                    tmpContextMenu.show(tmpNodePane, event2.getScreenX(), event2.getScreenY());
-                });
-            }
             this.atomContainerForDisplayCache = null;
             try {
                 boolean tmpShouldBeKekulized = true;
                 boolean tmpShouldAtomTypesBePerceived = true;
                 this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, tmpShouldBeKekulized, tmpShouldAtomTypesBePerceived);
             } catch (CDKException anException) {
-                //no logging, this happens too often, e.g. for fragments of aromatic rings
+                // no logging, this happens too often, e.g. for fragments of aromatic rings
                 try {
                     this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
                 } catch (CDKException aSecondException) {
@@ -1001,7 +965,15 @@ public class HistogramViewController implements IViewToolController {
                     true,
                     true);
             anImageView.setImage(tmpImage);
-        });
+        };
+        /* Event to open context menu (right click) to copy SMILES string or structure.
+           Context menu also opens, if  a right click on the frequency label is detected.
+         */
+        EventHandler<ContextMenuEvent> tmpContextMenuEventHandler = event -> {
+            tmpContextMenu.show(tmpNodePane, event.getScreenX(), event.getScreenY());
+        };
+        tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, tmpMouseHoverEventHandler);
+        tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, tmpContextMenuEventHandler);
         // Listener ContextMenuItems
         tmpCopySmilesMenuItem.setOnAction(event -> {
             ClipboardContent tmpSmilesClipboardContent = new ClipboardContent();
@@ -1046,12 +1018,12 @@ public class HistogramViewController implements IViewToolController {
             int aFrequency) {
         int tmpDigitLength = String.valueOf(aFrequency).length();
         Label tmpBarLabel = new Label();
-        tmpBarLabel.setTranslateY(0);
+        tmpBarLabel.setTranslateY(0.0);
         tmpBarLabel.setAlignment(Pos.CENTER_RIGHT);
-        tmpBarLabel.setPrefWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * tmpDigitLength);
-        tmpBarLabel.setMinWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * tmpDigitLength);
-        tmpBarLabel.setMaxWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * tmpDigitLength);
-        tmpBarLabel.setTranslateX(tmpDigitLength * HistogramViewController.GUI_BAR_LABEL_SIZE + 5);
+        tmpBarLabel.setPrefWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * (double) tmpDigitLength);
+        tmpBarLabel.setMinWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * (double) tmpDigitLength);
+        tmpBarLabel.setMaxWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * (double) tmpDigitLength);
+        tmpBarLabel.setTranslateX(tmpDigitLength * HistogramViewController.GUI_BAR_LABEL_SIZE + 5.0);
         tmpBarLabel.setStyle(null);
         tmpBarLabel.setText(String.valueOf(aFrequency));
         if(this.displayBarLabelsSetting.get()) {
@@ -1126,44 +1098,44 @@ public class HistogramViewController implements IViewToolController {
         switch (aBarWidthOptionConstant) {
             case SMALL:
                 if (aNumberOfDisplayedFragments <= 24) { //magic number
-                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedFragments;
-                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 24);
+                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / (double) aNumberOfDisplayedFragments;
+                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 24.0);
                     tmpGapSpacing = HistogramViewController.GUI_HISTOGRAM_SMALL_BAR_GAP_CONST * tmpGapDeviation;
                     tmpFinalGapSpacing = tmpCurrentHistogramHeight - tmpGapSpacing;
                     tmpCategoryGap = tmpFinalGapSpacing - HistogramViewController.GUI_HISTOGRAM_SMALL_BAR_WIDTH;
                 } else {
                     tmpFinalHistogramHeight = HistogramViewController.GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE;
-                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * aNumberOfDisplayedFragments - 85;
+                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * (double) aNumberOfDisplayedFragments - 85.0;
                     tmpGapSpacing = tmpCurrentHistogramHeight / aNumberOfDisplayedFragments;
                     tmpCategoryGap = tmpGapSpacing - HistogramViewController.GUI_HISTOGRAM_SMALL_BAR_WIDTH;
                 }
                 break;
             case MEDIUM:
                 if (aNumberOfDisplayedFragments <= 17) { //magic number
-                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedFragments;
-                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 17);
+                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / (double) aNumberOfDisplayedFragments;
+                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 17.0);
                     tmpGapSpacing = HistogramViewController.GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST * tmpGapDeviation;
                     tmpFinalGapSpacing = tmpCurrentHistogramHeight - tmpGapSpacing;
                     tmpCategoryGap = tmpFinalGapSpacing - HistogramViewController.GUI_HISTOGRAM_MEDIUM_BAR_WIDTH;
                 } else {
                     tmpFinalHistogramHeight = HistogramViewController.GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE;
-                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * aNumberOfDisplayedFragments - 85;
-                    tmpGapSpacing = tmpCurrentHistogramHeight / aNumberOfDisplayedFragments;
+                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * (double) aNumberOfDisplayedFragments - 85.0;
+                    tmpGapSpacing = tmpCurrentHistogramHeight / (double) aNumberOfDisplayedFragments;
                     tmpCategoryGap = tmpGapSpacing - HistogramViewController.GUI_HISTOGRAM_MEDIUM_BAR_WIDTH ;
                 }
                 break;
             case LARGE:
             default:
                 if (aNumberOfDisplayedFragments <= 13) { //magic number
-                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedFragments;
-                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 13);
+                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / (double) aNumberOfDisplayedFragments;
+                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 13.0);
                     tmpGapSpacing = HistogramViewController.GUI_HISTOGRAM_LARGE_BAR_GAP_CONST * tmpGapDeviation;
                     tmpFinalGapSpacing = tmpCurrentHistogramHeight - tmpGapSpacing;
                     tmpCategoryGap = tmpFinalGapSpacing - HistogramViewController.GUI_HISTOGRAM_LARGE_BAR_WIDTH;
                 } else {
                     tmpFinalHistogramHeight = HistogramViewController.GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE;
-                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * aNumberOfDisplayedFragments - 85;
-                    tmpGapSpacing = tmpCurrentHistogramHeight / aNumberOfDisplayedFragments;
+                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * (double) aNumberOfDisplayedFragments - 85.0;
+                    tmpGapSpacing = tmpCurrentHistogramHeight / (double) aNumberOfDisplayedFragments;
                     tmpCategoryGap = tmpGapSpacing - HistogramViewController.GUI_HISTOGRAM_LARGE_BAR_WIDTH;
                 }
                 break;
