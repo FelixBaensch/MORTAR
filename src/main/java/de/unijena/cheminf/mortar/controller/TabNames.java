@@ -30,13 +30,13 @@ public enum TabNames {
     /**
      * enum value for molecules tab
      */
-    Molecules,
+    MOLECULES,
     /**
      * enum value for fragments tab
      */
-    Fragments,
+    FRAGMENTS,
     /**
      * enum value for items tab
      */
-    Itemization
+    ITEMIZATION;
 }

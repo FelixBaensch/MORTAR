@@ -134,6 +134,10 @@ public class MainViewController {
      */
     private FragmentationService fragmentationService;
     /**
+     * ViewToolsManager
+     */
+    private ViewToolsManager viewToolsManager;
+    /**
      * Button to start single algorithm fragmentation
      */
     private Button fragmentationButton;
@@ -224,6 +228,8 @@ public class MainViewController {
         this.fragmentationService = new FragmentationService(this.settingsContainer);
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
+        this.viewToolsManager = new ViewToolsManager();
+        this.viewToolsManager.reloadViewToolsSettings();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new TabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -318,12 +324,12 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getOverviewViewMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> {
-                    if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Molecules.toString())) {
+                    if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.MOLECULES.toString())) {
                         this.openOverviewView(OverviewViewController.DataSources.MOLECULES_TAB);
-                    } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())) {
+                    } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.FRAGMENTS.toString())) {
                         this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB);
-                    } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Itemization.toString())) {
-                        //should not happen
+                    } else if (this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.ITEMIZATION.toString())) {
+                        //should not happen, since menu item should be disabled if items tab is active
                         throw new IllegalStateException();
                     }
                 }
@@ -358,12 +364,12 @@ public class MainViewController {
                 if (newValue == null) {
                     return;
                 }
-                if (newValue.getId().equals(TabNames.Molecules.toString())) {
+                if (newValue.getId().equals(TabNames.MOLECULES.toString())) {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 } else {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
                 }
-                if (newValue.getId().equals(TabNames.Itemization.toString())) {
+                if (newValue.getId().equals(TabNames.ITEMIZATION.toString())) {
                     this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
                 } else {
                     this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
@@ -383,6 +389,7 @@ public class MainViewController {
             }
         }
         this.settingsContainer.preserveSettings();
+        this.viewToolsManager.persistViewToolsSettings();
         this.fragmentationService.persistFragmenterSettings();
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if (this.isFragmentationRunning) {
@@ -539,7 +546,7 @@ public class MainViewController {
      * @param anExportType Enum to specify what type of file to export
      */
     private void exportFile(Exporter.ExportTypes anExportType) {
-        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.Molecules.toString())) {
+        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
@@ -551,8 +558,8 @@ public class MainViewController {
             case FRAGMENT_PDF_FILE:
             case SINGLE_SD_FILE:
             case SD_FILE:
-                if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments) == null ||
-                        this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments).size() == 0 ||
+                if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS) == null ||
+                        this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS).size() == 0 ||
                         ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
                     GuiUtil.guiMessageAlert(
                             Alert.AlertType.INFORMATION,
@@ -565,8 +572,8 @@ public class MainViewController {
                 break;
             case ITEM_CSV_FILE:
             case ITEM_PDF_FILE:
-                if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization) == null ||
-                        this.getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization).size() == 0 ||
+                if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.ITEMIZATION) == null ||
+                        this.getItemsListOfSelectedFragmenterByTabId(TabNames.ITEMIZATION).size() == 0 ||
                         this.moleculeDataModelList == null || this.moleculeDataModelList.size() == 0 ||
                         ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
                     GuiUtil.guiMessageAlert(
@@ -591,7 +598,7 @@ public class MainViewController {
         switch (anExportType) {
             case PDB_FILE:
             case SINGLE_SD_FILE:
-                if (!ChemUtil.checkMoleculeListForCoordinates(getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments))) {
+                if (!ChemUtil.checkMoleculeListForCoordinates(getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS))) {
                     ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
                             Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.title"),
                             Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.header"),
@@ -608,28 +615,28 @@ public class MainViewController {
                 switch (anExportType) {
                     case FRAGMENT_CSV_FILE:
                         return tmpExporter.exportCsvFile(
-                                getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                                getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 settingsContainer.getCsvExportSeparatorSetting(),
-                                TabNames.Fragments
+                                TabNames.FRAGMENTS
                         );
                     case PDB_FILE:
                         return tmpExporter.exportFragmentsAsChemicalFile(
-                                getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                                getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 ChemFileTypes.PDB,
                                 tmpGenerate2dAtomCoordinatesFinal
                         );
                     case FRAGMENT_PDF_FILE:
                         return tmpExporter.exportPdfFile(
-                                getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                                getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS),
                                 moleculeDataModelList,
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                                TabNames.Fragments
+                                TabNames.FRAGMENTS
                         );
                     case SINGLE_SD_FILE:
                         return tmpExporter.exportFragmentsAsChemicalFile(
-                                getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                                getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 ChemFileTypes.SDF,
                                 tmpGenerate2dAtomCoordinatesFinal,
@@ -637,7 +644,7 @@ public class MainViewController {
                         );
                     case SD_FILE:
                         return tmpExporter.exportFragmentsAsChemicalFile(
-                                getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments),
+                                getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS),
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 ChemFileTypes.SDF,
                                 false
@@ -647,14 +654,14 @@ public class MainViewController {
                                 moleculeDataModelList,
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 settingsContainer.getCsvExportSeparatorSetting(),
-                                TabNames.Itemization
+                                TabNames.ITEMIZATION
                         );
                     case ITEM_PDF_FILE:
                         return tmpExporter.exportPdfFile(
-                                getItemsListOfSelectedFragmenterByTabId(TabNames.Itemization),
+                                getItemsListOfSelectedFragmenterByTabId(TabNames.ITEMIZATION),
                                 moleculeDataModelList,
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                                TabNames.Itemization
+                                TabNames.ITEMIZATION
                         );
                 }
                 return null;
@@ -736,7 +743,12 @@ public class MainViewController {
      * Opens HistogramView
      */
     private void openHistogramView()  {
-       HistogramViewController tmpHistogramViewController = new HistogramViewController(this.primaryStage,this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments));
+        List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS);
+        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
+        for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
+            tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
+        }
+        this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
     //
 
@@ -809,33 +821,32 @@ public class MainViewController {
      * @param aDataSource Source of the data to be shown in the overview view
      */
     private void openOverviewView(OverviewViewController.DataSources aDataSource) {
-        OverviewViewController tmpOverviewViewController;
         try {
             switch (aDataSource) {
                 case MOLECULES_TAB -> {
-                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Molecules.toString())))
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.MOLECULES.toString())))
                         //should not happen
                         throw new IllegalStateException();
-                    tmpOverviewViewController = new OverviewViewController(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             aDataSource,
                             ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
-                            getItemsListOfSelectedFragmenterByTabId(TabNames.Molecules)
+                            getItemsListOfSelectedFragmenterByTabId(TabNames.MOLECULES)
                     );
                 }
                 case FRAGMENTS_TAB -> {
-                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())))
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.FRAGMENTS.toString())))
                         //should not happen
                         throw new IllegalStateException();
-                    tmpOverviewViewController = new OverviewViewController(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             aDataSource,
                             ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
-                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.Fragments)
+                            this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS)
                     );
                 }
                 case PARENT_MOLECULES_SAMPLE -> {
-                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Fragments.toString())))
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.FRAGMENTS.toString())))
                         //should not happen
                         throw new IllegalStateException();
                     //Parent-Molecules of the Fragments-Tab (showing all fragments of one molecule in the overview view)
@@ -853,7 +864,7 @@ public class MainViewController {
                     tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
                     //adding the sample of parent molecules
                     tmpDataForOverviewView.addAll(((FragmentDataModel) ((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList)).getParentMolecules());
-                    tmpOverviewViewController = new OverviewViewController(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             OverviewViewController.DataSources.PARENT_MOLECULES_SAMPLE,
                             null,
@@ -861,7 +872,7 @@ public class MainViewController {
                     );
                 }
                 case ITEM_WITH_FRAGMENTS_SAMPLE -> {
-                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.Itemization.toString())))
+                    if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.ITEMIZATION.toString())))
                         //should not happen
                         throw new IllegalStateException();
                     //Items-Tab (showing all fragments of one molecule in the overview view)
@@ -879,7 +890,7 @@ public class MainViewController {
                     tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
                     //adding the sample of fragments
                     tmpDataForOverviewView.addAll(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
-                    tmpOverviewViewController = new OverviewViewController(
+                    this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE,
                             null,
@@ -896,7 +907,7 @@ public class MainViewController {
             return;
         }
         //
-        int tmpIndexOfMoleculeDataModelToReturnTo = tmpOverviewViewController.getCachedIndexOfStructureInMoleculeDataModelList();
+        int tmpIndexOfMoleculeDataModelToReturnTo = this.viewToolsManager.getCachedIndexOfStructureInMoleculeDataModelList();
         //since -1 is returned, if no specific structure should be shown
         if (tmpIndexOfMoleculeDataModelToReturnTo >= 0) {
             //go to page showing the structure of the MoleculeDataModel with the given index
@@ -921,6 +932,7 @@ public class MainViewController {
                         ((FragmentsDataTableView) tmpSelectedTabTableView).getStructureColumn());
             }
         }
+        this.viewToolsManager.resetCachedIndexOfStructureInMoleculeDataModelList();
     }
     //
 
@@ -930,7 +942,7 @@ public class MainViewController {
     private void openMoleculesTab() {
         this.moleculesDataTableView = new MoleculesDataTableView();
         this.moleculesDataTableView.setItemsList(this.moleculeDataModelList);
-        GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.Molecules.name(), this.moleculesDataTableView);
+        GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.MOLECULES.name(), this.moleculesDataTableView);
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
@@ -1161,7 +1173,7 @@ public class MainViewController {
      */
     private Tab createFragmentsTab(String aFragmentationName){
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
-        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.Fragments.name(), tmpFragmentsDataTableView);
+        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         ObservableList<MoleculeDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
         for(MoleculeDataModel tmpMoleculeDataModel : tmpList){
@@ -1246,7 +1258,7 @@ public class MainViewController {
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
         tmpItemizationDataTableView.setItemsList(
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
-        GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.Itemization.name(), tmpItemizationDataTableView);
+        GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
