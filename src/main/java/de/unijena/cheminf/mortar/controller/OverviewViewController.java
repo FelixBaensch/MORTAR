@@ -368,7 +368,7 @@ public class OverviewViewController implements IViewToolController {
      * @param aTabName String containing the name of the tab that's content is to be shown in the overview view
      * @param aMoleculeDataModelList List of MoleculeDataModel instances
      * @throws NullPointerException if one of the parameters is null; aTabName is allowed to be null if the value of aDataSource is
-     *      * PARENT_MOLECULES_SAMPLE or ITEM_WITH_FRAGMENTS_SAMPLE
+     *         PARENT_MOLECULES_SAMPLE or ITEM_WITH_FRAGMENTS_SAMPLE
      */
     public void initializeAndShowOverviewView(
             Stage aMainStage,

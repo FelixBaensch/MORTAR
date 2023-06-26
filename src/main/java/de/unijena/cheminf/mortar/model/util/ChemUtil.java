@@ -95,11 +95,11 @@ public final class ChemUtil {
      * atom types are assigned to it (the former through kekulization) if required. Aromaticity flags are set only if
      * there is aromaticity information present in the SMILES code, no aromaticity perception is performed here.
      *
-     * @return IAtomContainer atom container of the molecule
      * @param aSmilesCode SMILES representation
      * @param shouldBeKekulized whether explicit bond orders should be assigned or "aromatic bond" can be used if present;
      *                          does not affect aromaticity flags
      * @param shouldAtomTypesBePerceived whether atom types should be perceived and configured
+     * @return IAtomContainer atom container of the molecule
      * @throws InvalidSmilesException if the given SMILES is invalid
      * @throws CDKException if kekulization or atom type matching fails
      */
@@ -125,6 +125,11 @@ public final class ChemUtil {
     /**
      * Call to {@link #parseSmilesToAtomContainer(String, boolean, boolean)} with kekulization and atom type perception
      * set to true.
+     *
+     * @param aSmilesCode SMILES representation
+     * @return IAtomContainer atom container of the molecule
+     * @throws InvalidSmilesException if the given SMILES is invalid
+     * @throws CDKException if kekulization or atom type matching fails
      */
     public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode) throws InvalidSmilesException, CDKException {
         return ChemUtil.parseSmilesToAtomContainer(aSmilesCode, true, true);

@@ -112,18 +112,31 @@ public class ViewToolsManager {
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      * Returns the array containing the instances of available view tools.
+     *
+     * @return array with one instance per available view tool
      */
     public IViewToolController[] getViewToolControllers() {
         return this.viewToolsArray;
     }
     /**
      * See {@link HistogramViewController#openHistogramView(Stage, List)}.
+     *
+     * @param aMainStage Stage of the MainView
+     * @param aFragmentDataModelList ObservableList that holds FragmentDataModel objects for visualisation in histogram
+     * @throws NullPointerException if any param is null
      */
     public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList) throws NullPointerException {
         this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList);
     }
     /**
      * See {@link OverviewViewController#initializeAndShowOverviewView(Stage, OverviewViewController.DataSources, String, List)}.
+     *
+     * @param aMainStage Stage that is to be the owner of the overview view's stage
+     * @param aDataSource Source of the data to be shown in the overview view
+     * @param aTabName String containing the name of the tab that's content is to be shown in the overview view
+     * @param aMoleculeDataModelList List of MoleculeDataModel instances
+     * @throws NullPointerException if one of the parameters is null; aTabName is allowed to be null if the value of aDataSource is
+     *         PARENT_MOLECULES_SAMPLE or ITEM_WITH_FRAGMENTS_SAMPLE
      */
     public void openOverviewView(
             Stage aMainStage,
@@ -135,6 +148,8 @@ public class ViewToolsManager {
     }
     /**
      * See {@link OverviewViewController#getCachedIndexOfStructureInMoleculeDataModelList()}.
+     *
+     * @return Integer value of the cached index of structure or -1
      */
     public int getCachedIndexOfStructureInMoleculeDataModelList() {
         return this.overviewViewController.getCachedIndexOfStructureInMoleculeDataModelList();
