@@ -106,9 +106,21 @@ public class MainMenuBar extends MenuBar {
      */
     private Menu helpMenu;
     /**
+     * TODO
+     */
+    private Menu fingerprinterMenu;
+    /**
      * MenuItem to open fragmentation settings
      */
     private MenuItem fragmentationSettingsMenuItem;
+    /**
+     * MenuItem to open clustering settings
+     */
+    private MenuItem clusteringSettingsMenuItem;
+    /**
+     * TODO
+     */
+    private MenuItem fingerprinterSettingsMenuItem;
     /**
      * MenuItem to open global settings
      */
@@ -125,6 +137,10 @@ public class MainMenuBar extends MenuBar {
      * Menu to choose fragmentation algorithm
      */
     private Menu fragmentationAlgorithmMenu;
+    /**
+     * TODO
+     */
+    private Menu clusteringAlgorithmMenu;
     /**
      * MenuItem to cancel molecule import, only visible if import is running
      */
@@ -184,6 +200,10 @@ public class MainMenuBar extends MenuBar {
         this.globalSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.globalSettingsMenuItem.text"));
         this.fragmentationAlgorithmMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.fragmentationAlgorithmMenuItem.text"));
         this.fragmentationSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.fragmentationSettingsMenuItem.text"));
+        this.clusteringAlgorithmMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.clusteringAlgorithmMenuItem.text"));
+        this.clusteringSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.clusteringSettingsMenuItem.text"));
+        this.fingerprinterMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.fingerprinterMenuItem.text"));
+        this.fingerprinterSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.fingerprinterSettingsMenuItem.text"));
         //pipelineMenu
         this.pipelineMenu = new Menu(Message.get("MainView.menuBar.pipelineMenu.text"));
         this.pipelineSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.pipelineMenu.pipelineSettingsMenuItem.text"));
@@ -234,6 +254,14 @@ public class MainMenuBar extends MenuBar {
         this.settingsMenu.getItems().add(this.fragmentationAlgorithmMenu);
         //fragmentationSettingsMenuItem
         this.settingsMenu.getItems().add(this.fragmentationSettingsMenuItem);
+        //clusteringAlgorithmMenu
+        this.settingsMenu.getItems().add(this.clusteringAlgorithmMenu);
+        //clusteringSettingsMenuItem
+        this.settingsMenu.getItems().add(this.clusteringSettingsMenuItem);
+        //fingerprinterMenu
+        this.settingsMenu.getItems().add(this.fingerprinterMenu);
+        //fingerprinterSettingsMenuItem
+        this.settingsMenu.getItems().add(this.fingerprinterSettingsMenuItem);
         //</editor-fold>
         //<editor-fold desc="pipelineMenu" defaultstate="collapsed">
         this.getMenus().add(this.pipelineMenu);
@@ -439,6 +467,43 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getFragmentationSettingsMenuItem() {
         return this.fragmentationSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getClusteringAlgorithmMenu" defaultstate="collapsed">
+    /**
+     * TODO
+     *
+     * @return
+     */
+    public Menu getClusteringAlgorithmMenu() {
+        return this.clusteringAlgorithmMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFingerprinterMenu" defaultstate="collapsed">
+    /**
+     * TODO
+     * @return
+     */
+    public Menu getFingerprinterMenu() {
+        return this.fingerprinterMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFingerprinterSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * TODO
+     * @return
+     */
+    public MenuItem getFingerprinterSettingsMenuItem() {
+        return this.fingerprinterSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getClusteringSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * TODO
+     * @return
+     */
+    public MenuItem getClusteringSettingsMenuItem() {
+        return this.clusteringSettingsMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getPipelineSettingsMenuItem" defaultstate="collapsed">

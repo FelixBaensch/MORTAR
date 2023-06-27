@@ -30,6 +30,10 @@ import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.Fingerprints.FingerprinterService;
+import de.unijena.cheminf.mortar.model.Fingerprints.IMoleculeFingerprinter;
+import de.unijena.cheminf.mortar.model.clustering.ClusteringService;
+import de.unijena.cheminf.mortar.model.clustering.IFingerprintClustering;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
@@ -130,9 +134,25 @@ public class MainViewController {
      */
     private SettingsContainer settingsContainer;
     /**
+     * TODO
+     */
+    private SettingsContainer settingsContainerClustering;
+    /**
+     * TODO
+     */
+    private SettingsContainer settingsContainerFingerprinter;
+    /**
      * FragmentationService
      */
     private FragmentationService fragmentationService;
+    /**
+     * TODO
+     */
+    private ClusteringService clusteringService;
+    /**
+     * TODO
+     */
+    private FingerprinterService fingerprinterService;
     /**
      * ViewToolsManager
      */
@@ -224,10 +244,14 @@ public class MainViewController {
         this.primaryStage = aStage;
         this.mainView = aMainView;
         this.settingsContainer = new SettingsContainer();
+        this.settingsContainerClustering = new SettingsContainer();
         this.settingsContainer.reloadGlobalSettings();
         this.fragmentationService = new FragmentationService(this.settingsContainer);
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
+        this.clusteringService = new ClusteringService(this.settingsContainerClustering);// TODO
+        this.fingerprinterService = new FingerprinterService(this.settingsContainerFingerprinter);
+        this.fingerprinterService.reloadFingerprinterSettings();
         this.viewToolsManager = new ViewToolsManager();
         this.viewToolsManager.reloadViewToolsSettings();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
@@ -250,6 +274,8 @@ public class MainViewController {
         this.threadList = new CopyOnWriteArrayList();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
+        this.addClusteringAlgorithmCheckMenuItems();
+        this.addFingerprinterCheckMenuItems();
     }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
@@ -308,6 +334,14 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openFragmentationSettingsView()
+        );
+        this.mainView.getMainMenuBar().getClusteringSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openClusteringSettingsView()
+        );
+        this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openFingerprintsSettingsView()
         );
         this.mainView.getMainMenuBar().getGlobalSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -391,6 +425,7 @@ public class MainViewController {
         this.settingsContainer.preserveSettings();
         this.viewToolsManager.persistViewToolsSettings();
         this.fragmentationService.persistFragmenterSettings();
+        this.fingerprinterService.persistFingerprinterSettings();
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if (this.isFragmentationRunning) {
             this.interruptFragmentation();
@@ -728,6 +763,19 @@ public class MainViewController {
     //
 
     /**
+     * TODO
+     */
+    private void openClusteringSettingsView() {
+        ClusteringSettingsViewController tmpClusteringSettingsViewController =
+                new ClusteringSettingsViewController(this.primaryStage, this.clusteringService.getClusterer(), this.clusteringService.getSelectedClusteringAlgorithm().getClusteringName());
+    }
+    public void openFingerprintsSettingsView() {
+        FingerprinterSettingsViewController tmpFingerprinterSettingsViewController =
+                new FingerprinterSettingsViewController(this.primaryStage, this.fingerprinterService.getFingerprinter(), this.fingerprinterService.getSelectedFingerprinter().getFingerprinterName());
+    }
+    //
+
+    /**
      * Opens PipelineSettingsView
      */
     private void openPipelineSettingsView() {
@@ -769,6 +817,45 @@ public class MainViewController {
             if (tmpToggleGroup.getSelectedToggle() != null) {
                 this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
                 this.fragmentationService.setSelectedFragmenterNameProperty(((RadioMenuItem) newValue).getText());
+            }
+        });
+    }
+    //
+
+    /**
+     * TODO
+     */
+    private void addClusteringAlgorithmCheckMenuItems() {
+        ToggleGroup tmpToggleGroup = new ToggleGroup();
+        for(IFingerprintClustering tmpClusteringAlgorithm : this.clusteringService.getClusterer()) {
+            RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpClusteringAlgorithm.getClusteringName());
+            tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
+            this.mainView.getMainMenuBar().getClusteringAlgorithmMenu().getItems().add(tmpRadioMenuItem);
+            if(!Objects.isNull(this.clusteringService.getSelectedClusteringAlgorithm()) && tmpClusteringAlgorithm.getClusteringName().equals(this.clusteringService.getSelectedClusteringAlgorithm().getClusteringName())) {
+                tmpToggleGroup.selectToggle(tmpRadioMenuItem);
+            }
+        }
+        tmpToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if(tmpToggleGroup.getSelectedToggle() != null) {
+                this.clusteringService.setSelectedClusteringAlgorithm(((RadioMenuItem) newValue).getText());
+                this.clusteringService.setSelectedClusteringAlgorithmNameProperty(((RadioMenuItem) newValue).getText());
+            }
+        });
+    }
+    public void addFingerprinterCheckMenuItems() {
+        ToggleGroup tmpToggleGroup = new ToggleGroup();
+        for(IMoleculeFingerprinter tmpFingerprinter : this.fingerprinterService.getFingerprinter()) {
+            RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFingerprinter.getFingerprinterName());
+            tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
+            this.mainView.getMainMenuBar().getFingerprinterMenu().getItems().add(tmpRadioMenuItem);
+            if(!Objects.isNull(this.fingerprinterService.getSelectedFingerprinter()) && tmpFingerprinter.getFingerprinterName().equals(this.fingerprinterService.getSelectedFingerprinter().getFingerprinterName())) {
+                tmpToggleGroup.selectToggle(tmpRadioMenuItem);
+            }
+        }
+        tmpToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if(tmpToggleGroup.getSelectedToggle() != null) {
+                this.fingerprinterService.setSelectedFingerprinter(((RadioMenuItem) newValue).getText());
+                this.fingerprinterService.setSelectedFingerprinterNameProperty(((RadioMenuItem) newValue).getText());
             }
         });
     }
@@ -1149,6 +1236,310 @@ public class MainViewController {
         }
     }
     //
+    public void startClustering() throws InterruptedException {
+        int[][] tmpTestDataMatrix = new int[10][28];
+        //valdiazen
+        tmpTestDataMatrix[0][0] = 1;
+        tmpTestDataMatrix[0][1] = 0;
+        tmpTestDataMatrix[0][2] = 0;
+        tmpTestDataMatrix[0][3] = 0;
+        tmpTestDataMatrix[0][4] = 0;
+        tmpTestDataMatrix[0][5] = 0;
+        tmpTestDataMatrix[0][6] = 0;
+        tmpTestDataMatrix[0][7] = 0;
+        tmpTestDataMatrix[0][8] = 1;
+        tmpTestDataMatrix[0][9] = 0;
+        tmpTestDataMatrix[0][10] = 0;
+        tmpTestDataMatrix[0][11] = 0;
+        tmpTestDataMatrix[0][12] = 0;
+        tmpTestDataMatrix[0][13] = 0;
+        tmpTestDataMatrix[0][14] = 0;
+        tmpTestDataMatrix[0][15] = 0;
+        tmpTestDataMatrix[0][16] = 0;
+        tmpTestDataMatrix[0][17] = 1;
+        tmpTestDataMatrix[0][18] = 0;
+        tmpTestDataMatrix[0][19] = 0;
+        tmpTestDataMatrix[0][20] = 0;
+        tmpTestDataMatrix[0][21] = 0;
+        tmpTestDataMatrix[0][22] = 0;
+        tmpTestDataMatrix[0][23] = 0;
+        tmpTestDataMatrix[0][24] = 0;
+        tmpTestDataMatrix[0][25] = 0;
+        tmpTestDataMatrix[0][26] = 0;
+        tmpTestDataMatrix[0][27] = 0;
+
+        // Napthomycin d
+        tmpTestDataMatrix[1][0] = 0;
+        tmpTestDataMatrix[1][1] = 0;
+        tmpTestDataMatrix[1][2] = 0;
+        tmpTestDataMatrix[1][3] = 0;
+        tmpTestDataMatrix[1][4] = 0;
+        tmpTestDataMatrix[1][5] = 1;
+        tmpTestDataMatrix[1][6] = 1;
+        tmpTestDataMatrix[1][7] = 1;
+        tmpTestDataMatrix[1][8] = 0;
+        tmpTestDataMatrix[1][9] = 0;
+        tmpTestDataMatrix[1][10] = 0;
+        tmpTestDataMatrix[1][11] = 0;
+        tmpTestDataMatrix[1][12] = 1;
+        tmpTestDataMatrix[1][13] = 0;
+        tmpTestDataMatrix[1][14] = 0;
+        tmpTestDataMatrix[1][15] = 1;
+        tmpTestDataMatrix[1][16] = 0;
+        tmpTestDataMatrix[1][17] = 1;
+        tmpTestDataMatrix[1][18] = 0;
+        tmpTestDataMatrix[1][19] = 0;
+        tmpTestDataMatrix[1][20] = 0;
+        tmpTestDataMatrix[1][21] = 1;
+        tmpTestDataMatrix[1][22] = 0;
+        tmpTestDataMatrix[1][23] = 0;
+        tmpTestDataMatrix[1][24] = 0;
+        tmpTestDataMatrix[1][25] = 1;
+        tmpTestDataMatrix[1][26] = 1;
+        tmpTestDataMatrix[1][27] = 1;
+
+        // Nona-2,6-dienal
+        tmpTestDataMatrix[2][0] = 0;
+        tmpTestDataMatrix[2][1] = 0;
+        tmpTestDataMatrix[2][2] = 0;
+        tmpTestDataMatrix[2][3] = 0;
+        tmpTestDataMatrix[2][4] = 0;
+        tmpTestDataMatrix[2][5] = 0;
+        tmpTestDataMatrix[2][6] = 0;
+        tmpTestDataMatrix[2][7] = 0;
+        tmpTestDataMatrix[2][8] = 0;
+        tmpTestDataMatrix[2][9] = 0;
+        tmpTestDataMatrix[2][10] = 0;
+        tmpTestDataMatrix[2][11] = 0;
+        tmpTestDataMatrix[2][12] = 1;
+        tmpTestDataMatrix[2][13] = 0;
+        tmpTestDataMatrix[2][14] = 0;
+        tmpTestDataMatrix[2][15] = 0;
+        tmpTestDataMatrix[2][16] = 0;
+        tmpTestDataMatrix[2][17] = 0;
+        tmpTestDataMatrix[2][18] = 0;
+        tmpTestDataMatrix[2][19] = 1;
+        tmpTestDataMatrix[2][20] = 0;
+        tmpTestDataMatrix[2][21] = 1;
+        tmpTestDataMatrix[2][22] = 0;
+        tmpTestDataMatrix[2][23] = 0;
+        tmpTestDataMatrix[2][24] = 0;
+        tmpTestDataMatrix[2][25] = 0;
+        tmpTestDataMatrix[2][26] = 0;
+        tmpTestDataMatrix[2][27] = 0;
+
+        // Istanbulin A
+        tmpTestDataMatrix[3][0] = 0;
+        tmpTestDataMatrix[3][1] = 0;
+        tmpTestDataMatrix[3][2] = 0;
+        tmpTestDataMatrix[3][3] = 0;
+        tmpTestDataMatrix[3][4] = 0;
+        tmpTestDataMatrix[3][5] = 1;
+        tmpTestDataMatrix[3][6] = 0;
+        tmpTestDataMatrix[3][7] = 0;
+        tmpTestDataMatrix[3][8] = 0;
+        tmpTestDataMatrix[3][9] = 0;
+        tmpTestDataMatrix[3][10] = 0;
+        tmpTestDataMatrix[3][11] = 0;
+        tmpTestDataMatrix[3][12] = 0;
+        tmpTestDataMatrix[3][13] = 1;
+        tmpTestDataMatrix[3][14] = 0;
+        tmpTestDataMatrix[3][15] = 0;
+        tmpTestDataMatrix[3][16] = 1;
+        tmpTestDataMatrix[3][17] = 0;
+        tmpTestDataMatrix[3][18] = 0;
+        tmpTestDataMatrix[3][19] = 0;
+        tmpTestDataMatrix[3][20] = 0;
+        tmpTestDataMatrix[3][21] = 0;
+        tmpTestDataMatrix[3][22] = 0;
+        tmpTestDataMatrix[3][23] = 0;
+        tmpTestDataMatrix[3][24] = 1;
+        tmpTestDataMatrix[3][25] = 0;
+        tmpTestDataMatrix[3][26] = 0;
+        tmpTestDataMatrix[3][27] = 0;
+
+        // Estradiol
+        tmpTestDataMatrix[4][0] = 0;
+        tmpTestDataMatrix[4][1] = 0;
+        tmpTestDataMatrix[4][2] = 0;
+        tmpTestDataMatrix[4][3] = 0;
+        tmpTestDataMatrix[4][4] = 1;
+        tmpTestDataMatrix[4][5] = 0;
+        tmpTestDataMatrix[4][6] = 0;
+        tmpTestDataMatrix[4][7] = 0;
+        tmpTestDataMatrix[4][8] = 0;
+        tmpTestDataMatrix[4][9] = 0;
+        tmpTestDataMatrix[4][10] = 0;
+        tmpTestDataMatrix[4][11] = 0;
+        tmpTestDataMatrix[4][12] = 0;
+        tmpTestDataMatrix[4][13] = 0;
+        tmpTestDataMatrix[4][14] = 0;
+        tmpTestDataMatrix[4][15] = 0;
+        tmpTestDataMatrix[4][16] = 0;
+        tmpTestDataMatrix[4][17] = 1;
+        tmpTestDataMatrix[4][18] = 0;
+        tmpTestDataMatrix[4][19] = 0;
+        tmpTestDataMatrix[4][20] = 0;
+        tmpTestDataMatrix[4][21] = 0;
+        tmpTestDataMatrix[4][22] = 0;
+        tmpTestDataMatrix[4][23] = 0;
+        tmpTestDataMatrix[4][24] = 0;
+        tmpTestDataMatrix[4][25] = 0;
+        tmpTestDataMatrix[4][26] = 0;
+        tmpTestDataMatrix[4][27] = 1;
+
+        // Paradise
+        tmpTestDataMatrix[5][0] = 0;
+        tmpTestDataMatrix[5][1] = 1;
+        tmpTestDataMatrix[5][2] = 0;
+        tmpTestDataMatrix[5][3] = 0;
+        tmpTestDataMatrix[5][4] = 0;
+        tmpTestDataMatrix[5][5] = 0;
+        tmpTestDataMatrix[5][6] = 0;
+        tmpTestDataMatrix[5][7] = 0;
+        tmpTestDataMatrix[5][8] = 0;
+        tmpTestDataMatrix[5][9] = 0;
+        tmpTestDataMatrix[5][10] = 0;
+        tmpTestDataMatrix[5][11] = 0;
+        tmpTestDataMatrix[5][12] = 0;
+        tmpTestDataMatrix[5][13] = 0;
+        tmpTestDataMatrix[5][14] = 0;
+        tmpTestDataMatrix[5][15] = 0;
+        tmpTestDataMatrix[5][16] = 0;
+        tmpTestDataMatrix[5][17] = 0;
+        tmpTestDataMatrix[5][18] = 0;
+        tmpTestDataMatrix[5][19] = 0;
+        tmpTestDataMatrix[5][20] = 1;
+        tmpTestDataMatrix[5][21] = 0;
+        tmpTestDataMatrix[5][22] = 0;
+        tmpTestDataMatrix[5][23] = 0;
+        tmpTestDataMatrix[5][24] = 0;
+        tmpTestDataMatrix[5][25] = 0;
+        tmpTestDataMatrix[5][26] = 0;
+        tmpTestDataMatrix[5][27] = 0;
+
+        // Curumin
+        tmpTestDataMatrix[6][0] = 0;
+        tmpTestDataMatrix[6][1] = 0;
+        tmpTestDataMatrix[6][2] = 0;
+        tmpTestDataMatrix[6][3] = 0;
+        tmpTestDataMatrix[6][4] = 0;
+        tmpTestDataMatrix[6][5] = 1;
+        tmpTestDataMatrix[6][6] = 0;
+        tmpTestDataMatrix[6][7] = 0;
+        tmpTestDataMatrix[6][8] = 0;
+        tmpTestDataMatrix[6][9] = 0;
+        tmpTestDataMatrix[6][10] = 0;
+        tmpTestDataMatrix[6][11] = 0;
+        tmpTestDataMatrix[6][12] = 0;
+        tmpTestDataMatrix[6][13] = 0;
+        tmpTestDataMatrix[6][14] = 0;
+        tmpTestDataMatrix[6][15] = 0;
+        tmpTestDataMatrix[6][16] = 0;
+        tmpTestDataMatrix[6][17] = 0;
+        tmpTestDataMatrix[6][18] = 1;
+        tmpTestDataMatrix[6][19] = 0;
+        tmpTestDataMatrix[6][20] = 1;
+        tmpTestDataMatrix[6][21] = 0;
+        tmpTestDataMatrix[6][22] = 0;
+        tmpTestDataMatrix[6][23] = 0;
+        tmpTestDataMatrix[6][24] = 0;
+        tmpTestDataMatrix[6][25] = 1;
+        tmpTestDataMatrix[6][26] = 0;
+        tmpTestDataMatrix[6][27] = 1;
+
+        // Catechin
+        tmpTestDataMatrix[7][0] = 0;
+        tmpTestDataMatrix[7][1] = 0;
+        tmpTestDataMatrix[7][2] = 0;
+        tmpTestDataMatrix[7][3] = 0;
+        tmpTestDataMatrix[7][4] = 0;
+        tmpTestDataMatrix[7][5] = 0;
+        tmpTestDataMatrix[7][6] = 0;
+        tmpTestDataMatrix[7][7] = 0;
+        tmpTestDataMatrix[7][8] = 0;
+        tmpTestDataMatrix[7][9] = 0;
+        tmpTestDataMatrix[7][10] = 1;
+        tmpTestDataMatrix[7][11] = 0;
+        tmpTestDataMatrix[7][12] = 0;
+        tmpTestDataMatrix[7][13] = 0;
+        tmpTestDataMatrix[7][14] = 0;
+        tmpTestDataMatrix[7][15] = 0;
+        tmpTestDataMatrix[7][16] = 0;
+        tmpTestDataMatrix[7][17] = 1;
+        tmpTestDataMatrix[7][18] = 1;
+        tmpTestDataMatrix[7][19] = 0;
+        tmpTestDataMatrix[7][20] = 0;
+        tmpTestDataMatrix[7][21] = 0;
+        tmpTestDataMatrix[7][22] = 0;
+        tmpTestDataMatrix[7][23] = 0;
+        tmpTestDataMatrix[7][24] = 0;
+        tmpTestDataMatrix[7][25] = 0;
+        tmpTestDataMatrix[7][26] = 0;
+        tmpTestDataMatrix[7][27] = 1;
+
+        // Bittersweet
+        tmpTestDataMatrix[8][0] = 0;
+        tmpTestDataMatrix[8][1] = 0;
+        tmpTestDataMatrix[8][2] = 1;
+        tmpTestDataMatrix[8][3] = 1;
+        tmpTestDataMatrix[8][4] = 0;
+        tmpTestDataMatrix[8][5] = 1;
+        tmpTestDataMatrix[8][6] = 0;
+        tmpTestDataMatrix[8][7] = 0;
+        tmpTestDataMatrix[8][8] = 0;
+        tmpTestDataMatrix[8][9] = 0;
+        tmpTestDataMatrix[8][10] = 0;
+        tmpTestDataMatrix[8][11] = 1;
+        tmpTestDataMatrix[8][12] = 0;
+        tmpTestDataMatrix[8][13] = 0;
+        tmpTestDataMatrix[8][14] = 0;
+        tmpTestDataMatrix[8][15] = 0;
+        tmpTestDataMatrix[8][16] = 0;
+        tmpTestDataMatrix[8][17] = 0;
+        tmpTestDataMatrix[8][18] = 0;
+        tmpTestDataMatrix[8][19] = 0;
+        tmpTestDataMatrix[8][20] = 0;
+        tmpTestDataMatrix[8][21] = 0;
+        tmpTestDataMatrix[8][22] = 1;
+        tmpTestDataMatrix[8][23] = 1;
+        tmpTestDataMatrix[8][24] = 0;
+        tmpTestDataMatrix[8][25] = 0;
+        tmpTestDataMatrix[8][26] = 0;
+        tmpTestDataMatrix[8][27] = 0;
+
+        // Variamycin
+        tmpTestDataMatrix[9][0] = 0;
+        tmpTestDataMatrix[9][1] = 0;
+        tmpTestDataMatrix[9][2] = 0;
+        tmpTestDataMatrix[9][3] = 1;
+        tmpTestDataMatrix[9][4] = 0;
+        tmpTestDataMatrix[9][5] = 1;
+        tmpTestDataMatrix[9][6] = 0;
+        tmpTestDataMatrix[9][7] = 0;
+        tmpTestDataMatrix[9][8] = 0;
+        tmpTestDataMatrix[9][9] = 1;
+        tmpTestDataMatrix[9][10] = 0;
+        tmpTestDataMatrix[9][11] = 0;
+        tmpTestDataMatrix[9][12] = 0;
+        tmpTestDataMatrix[9][13] = 0;
+        tmpTestDataMatrix[9][14] = 1;
+        tmpTestDataMatrix[9][15] = 0;
+        tmpTestDataMatrix[9][16] = 1;
+        tmpTestDataMatrix[9][17] = 1;
+        tmpTestDataMatrix[9][18] = 1;
+        tmpTestDataMatrix[9][19] = 0;
+        tmpTestDataMatrix[9][20] = 0;
+        tmpTestDataMatrix[9][21] = 0;
+        tmpTestDataMatrix[9][22] = 0;
+        tmpTestDataMatrix[9][23] = 0;
+        tmpTestDataMatrix[9][24] = 0;
+        tmpTestDataMatrix[9][25] = 0;
+        tmpTestDataMatrix[9][26] = 1;
+        tmpTestDataMatrix[9][27] = 1;
+
+        this.clusteringService.startClustering(tmpTestDataMatrix, 9);
+    }
 
     /**
      * Adds a tab for fragments and a tab for items (results of fragmentation)
@@ -1219,10 +1610,19 @@ public class MainViewController {
         tmpOpenOverviewViewButton.setTooltip(new Tooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
         Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
         tmpOpenHistogramViewButton.setTooltip(new Tooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
-        tmpViewButtonsHBox.getChildren().addAll(tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
+        Button tmpClusteringButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showClusterViewButton.text"));
+        tmpClusteringButton.setTooltip(new Tooltip(Message.get("MainView.showClusterViewButton.tooltip")));
+        tmpViewButtonsHBox.getChildren().addAll(tmpClusteringButton,tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
+        tmpClusteringButton.setOnAction(event -> {
+            try {
+                this.startClustering();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
         if(tmpList.size() == 0){
             tmpOpenOverviewViewButton.setDisable(true);
             tmpOpenHistogramViewButton.setDisable(true);
