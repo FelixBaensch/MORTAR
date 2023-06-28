@@ -32,21 +32,16 @@ import org.openscience.cdk.exception.Intractable;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.graph.SpanningTree;
 import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.*;
-import org.openscience.cdk.isomorphism.DfPattern;
-import org.openscience.cdk.isomorphism.Mappings;
 import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.openscience.cdk.tools.manipulator.AtomContainerManipulator.extractSubstructure;
-import static org.openscience.cdk.tools.manipulator.AtomContainerManipulator.getIntersection;
 
 /**
  * Java class implementing an algorithm for detection and fragmentation of alkyl
@@ -480,6 +475,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Parameter Checks" defaultstate="collapsed">
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         //</editor-fold>
+        //Key: IndexProperty Value = IndexInt; Value: IAtom/IBond with IndexInt
+        HashMap<Integer, IAtom> tmpAtomHashMap = new HashMap<Integer, IAtom>(aMolecule.getAtomCount() + (int) (0.25f * aMolecule.getAtomCount()),0.75f);
+        HashMap<Integer, IBond> tmpBondHashMap = new HashMap<Integer, IBond>(aMolecule.getBondCount() + (int) (0.25f * aMolecule.getBondCount()), 0.75f);
         //
         //<editor-fold desc="Set Property" defaultstate="collapsed">
         int tmpAlkylSFAtomIndexInt = 0;
@@ -489,10 +487,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainerSet tmpFragments = new AtomContainerSet();
         for (IAtom tmpAtom: aMolecule.atoms()) {
             tmpAtom.setProperty(tmpAlkylSFAtomIndexProperty, tmpAlkylSFAtomIndexInt);
+            tmpAtomHashMap.put(tmpAlkylSFAtomIndexInt, tmpAtom);
             tmpAlkylSFAtomIndexInt ++;
         }
         for (IBond tmpBond: aMolecule.bonds()) {
             tmpBond.setProperty(tmpAlkylSFBondIndexProperty, tmpAlkylSFBondIndexInt);
+            tmpBondHashMap.put(tmpAlkylSFBondIndexInt, tmpBond);
             tmpAlkylSFBondIndexInt ++;
         }
         IAtomContainer tmpClone = aMolecule.clone();
@@ -588,18 +588,26 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet;
-            //.detect method needs to work with aMolecule, otherwise an error occurs
+            //.detect method needs to work with (original) aMolecule, otherwise an error occurs
             tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
-            for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
-                for (IAtom tmpConjAtom: tmpAtomContainer.atoms()) {
+            //molecule mapping
+            //iterate over every atomcontainer from ConjPiSystemsDetector output
+            for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
+                for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
+                    //HashMap mapping
+                    //HashMap<Integer, IAtom> tmpConjAtomHashMap = new HashMap<Integer, IAtom>(tmpConjAtomContainer.getAtomCount() + (int) (0.25f * tmpConjAtomContainer.getAtomCount()), 0.75f);
+                    tmpAtomHashMap.get(tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISCONJUGATED, true);
+                    tmpAtomHashMap.get(tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISPLACED, true);
+                    /*
                     for (IAtom tmpCloneAtom: tmpClone.atoms()) {
                         if (tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty).equals(tmpCloneAtom.getProperty(tmpAlkylSFAtomIndexProperty))) {
                             tmpCloneAtom.setFlag(CDKConstants.ISCONJUGATED, true);
                             tmpCloneAtom.setFlag(CDKConstants.ISPLACED,true);
                         }
                     }
+                    */
                 }
-                for (IBond tmpConjBond: tmpAtomContainer.bonds()) {
+                for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
                     for (IBond tmpCloneBond: tmpClone.bonds()) {
                         if (tmpConjBond.getProperty(tmpAlkylSFBondIndexProperty).equals(tmpCloneBond.getProperty(tmpAlkylSFBondIndexProperty))) {
                             tmpCloneBond.setFlag(CDKConstants.ISCONJUGATED, true);
@@ -608,6 +616,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
             }
+
+
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " Molecule ID: " + aMolecule.getID());
@@ -874,6 +884,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Method to detect substructure alkyl chains and extract said chains into an AtomcontainerSet.
      *
      * @deprecated no longer used, as alkyl chain detection is not necessary in current algorithmic structure
+     *
      * @param anAtomContainer the atomcontainer to find alkyl chains in
      * @return AtomcontainerSet with extracted alkyl chains
      */
