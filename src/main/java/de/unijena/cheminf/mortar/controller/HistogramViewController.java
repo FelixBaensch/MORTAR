@@ -223,7 +223,7 @@ public class HistogramViewController implements IViewToolController {
      */
     public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.5416;
     /**
-     * Value fpr the medium bar gap
+     * Value for the medium bar gap
      */
     public static final double GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST = 5.0;
     /**

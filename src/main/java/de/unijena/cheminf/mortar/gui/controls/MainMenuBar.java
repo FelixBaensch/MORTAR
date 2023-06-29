@@ -254,10 +254,14 @@ public class MainMenuBar extends MenuBar {
         this.settingsMenu.getItems().add(this.fragmentationAlgorithmMenu);
         //fragmentationSettingsMenuItem
         this.settingsMenu.getItems().add(this.fragmentationSettingsMenuItem);
+        //separator
+        this.settingsMenu.getItems().add(new SeparatorMenuItem());
         //clusteringAlgorithmMenu
         this.settingsMenu.getItems().add(this.clusteringAlgorithmMenu);
         //clusteringSettingsMenuItem
         this.settingsMenu.getItems().add(this.clusteringSettingsMenuItem);
+        //separator
+        this.settingsMenu.getItems().add(new SeparatorMenuItem());
         //fingerprinterMenu
         this.settingsMenu.getItems().add(this.fingerprinterMenu);
         //fingerprinterSettingsMenuItem

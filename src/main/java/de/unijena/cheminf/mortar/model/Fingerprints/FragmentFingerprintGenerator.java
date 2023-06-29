@@ -3,6 +3,8 @@ package de.unijena.cheminf.mortar.model.Fingerprints;
 import de.unijena.cheminf.fragmentFingerprinter.FragmentFingerprinter;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.clustering.Art2aClusteringAlgorithm;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
@@ -31,6 +33,7 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
     private final int defaultFingerprintDimensionalityValue;
     private final int DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD = 1;
     private final List<Property> settings;
+    private List<FragmentDataModel> fragmentDataModelList;
     private final HashMap<String, String> settingNameTooltipTextMap;
     private final Logger logger = Logger.getLogger(FragmentFingerprintGenerator.class.getName());
 
@@ -50,7 +53,7 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
         };
         this.settings.add(this.fingerprintTyp);
         this.settingNameTooltipTextMap.put(this.fingerprintTyp.getName(), Message.get("FragmentFingerprinterGenerator.fingerprintTyp.tooltip"));
-        this.defaultFingerprintDimensionalityValue = 5;
+        this.defaultFingerprintDimensionalityValue = 1; // TODO
         this.fingerprintDimensionality = new SimpleIntegerProperty(this, "Fragment Fingerprint Dimensionality", this.defaultFingerprintDimensionalityValue) {
             @Override
             public void set(int newValue) {
@@ -108,5 +111,27 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
         this.fingerprintDimensionality.set(this.defaultFingerprintDimensionalityValue);
         this.fingerprintFrequencyThreshold.set(this.DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD);
 
+    }
+    public int[][] getFragmentFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
+        int[][] tmpDataMatrix =  new int[aMoleculeDataModelList.size()][aFragmentDataModelList.size()];
+        ArrayList<String> tmpKeyFragmentsToGenerateBitFingerprints = new ArrayList<>(aFragmentDataModelList.size());
+        for(FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+            tmpKeyFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
+        }
+        FragmentFingerprinter tmpFragmentFingerprinter = new FragmentFingerprinter(tmpKeyFragmentsToGenerateBitFingerprints);
+        int tmpIterator = 0;
+        for(MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+            ArrayList<String> tmpMoleculeFragmentsToGenerateBitFingerprints = new ArrayList<>(); // TODO add initial size
+            if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+                continue;
+            }
+            List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
+            for(FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
+                tmpMoleculeFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
+            }
+            tmpDataMatrix[tmpIterator] = tmpFragmentFingerprinter.getBitArray(tmpMoleculeFragmentsToGenerateBitFingerprints);
+            tmpIterator++;
+        }
+        return tmpDataMatrix;
     }
 }

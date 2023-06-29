@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
@@ -129,6 +130,10 @@ public class MainViewController {
      * MoleculesDataTableView to show imported molecules
      */
     private MoleculesDataTableView moleculesDataTableView;
+    /**
+     * TODO
+     */
+    private IArt2aClusteringResult[] clusteringResult;
     /**
      * SettingsContainer
      */
@@ -250,6 +255,7 @@ public class MainViewController {
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
         this.clusteringService = new ClusteringService(this.settingsContainerClustering);// TODO
+        this.clusteringService.reloadClusteringSettings();
         this.fingerprinterService = new FingerprinterService(this.settingsContainerFingerprinter);
         this.fingerprinterService.reloadFingerprinterSettings();
         this.viewToolsManager = new ViewToolsManager();
@@ -400,8 +406,10 @@ public class MainViewController {
                 }
                 if (newValue.getId().equals(TabNames.MOLECULES.toString())) {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                    this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(true);
                 } else {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                    this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(false);
                 }
                 if (newValue.getId().equals(TabNames.ITEMIZATION.toString())) {
                     this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
@@ -426,6 +434,7 @@ public class MainViewController {
         this.viewToolsManager.persistViewToolsSettings();
         this.fragmentationService.persistFragmenterSettings();
         this.fingerprinterService.persistFingerprinterSettings();
+        this.clusteringService.persistClusteringSettings();
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if (this.isFragmentationRunning) {
             this.interruptFragmentation();
@@ -527,6 +536,7 @@ public class MainViewController {
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(true);
                 this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() +
                         " " + Message.get((tmpAtomContainerSet.getAtomContainerCount() == 1 ? "Title.molecule" : "Title.molecules")));
@@ -797,6 +807,9 @@ public class MainViewController {
             tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
         }
         this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
+    }
+    private void openClusteringView() {
+        this.viewToolsManager.openClusteringView(this.primaryStage, this.clusteringResult);
     }
     //
 
@@ -1195,6 +1208,7 @@ public class MainViewController {
                         this.updateStatusBar(this.fragmentationThread, Message.get("Status.finished"));
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                         this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                        this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
@@ -1236,9 +1250,18 @@ public class MainViewController {
         }
     }
     //
-    public void startClustering() throws InterruptedException {
-        this.clusteringService.startClustering(null, 9); // TODO number of tasks and dataMatrix ( for dataMatrix first calculate fingerprints)
+    private void startClustering(int[][] aDataMatrix) throws InterruptedException {
+      this.clusteringResult = this.clusteringService.startClustering(aDataMatrix, 9); // TODO number of tasks and dataMatrix ( for dataMatrix first calculate fingerprints)
     }
+    private int[][] startFingerprinting() {
+        List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS);
+        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
+        for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
+            tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
+        }
+        return this.fingerprinterService.getFingerprints(moleculeDataModelList,tmpFragmentsList,((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+    }
+
 
     /**
      * Adds a tab for fragments and a tab for items (results of fragmentation)
@@ -1317,7 +1340,12 @@ public class MainViewController {
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
         tmpClusteringButton.setOnAction(event -> {
             try {
-                this.startClustering();
+                // TODO start fingerprinting
+                this.startFingerprinting();
+                this.startClustering(this.startFingerprinting());
+                System.out.println(this.clusteringResult[0].getVigilanceParameter() + "---------vigilance parameter");
+                System.out.println(this.clusteringResult[1].getVigilanceParameter() + "---------vigilance parameter");
+                this.openClusteringView();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

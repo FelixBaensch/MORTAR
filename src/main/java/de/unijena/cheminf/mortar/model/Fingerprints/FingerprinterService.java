@@ -2,9 +2,8 @@ package de.unijena.cheminf.mortar.model.Fingerprints;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.clustering.IFingerprintClustering;
-import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
@@ -33,9 +32,6 @@ import java.util.logging.Logger;
 public class FingerprinterService {
     private static final String DEFAULT_SELECTED_FINGERPRINTER_NAME = FragmentFingerprintGenerator.FINGERPRINTER_NAME;
     public static final String FINGERPRINTER_SETTINGS_SUBFOLDER_NAME = "Fingerprinter_Settings";
-    public static final String FINGERPRINTER_SERVICE_SETTINGS_SUBFOLDER_NAME = "Fingerprinter_Service_Settings";
-    public static final String FINGERPRINTER_SERVICE_SETTINGS_FILE_NAME = "FingerprinterServiceSettings";
-    public static final String FINGERPRINTER_CLUSTERING_ALGORITHM_NAME = "SelectedClusteringAlgorithm";
 
     IMoleculeFingerprinter[] fingerprinter;
     FragmentFingerprintGenerator fragmentFingerprinterGenerator;
@@ -168,6 +164,13 @@ public class FingerprinterService {
                 //setting will remain in default
                 FingerprinterService.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
             }
+        }
+    }
+    public int[][] getFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
+        if(selectedFingerprinter.getFingerprinterName().equals("Fragment Fingerprinter")) {// TODO
+           return this.fragmentFingerprinterGenerator.getFragmentFingerprints(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName);
+        } else {
+            return null;
         }
     }
 }

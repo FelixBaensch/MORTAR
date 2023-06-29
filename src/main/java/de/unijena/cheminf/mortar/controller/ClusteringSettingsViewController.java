@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ClusteringSettingsViewController {
+
     private final Stage mainStage;
     private SettingsView settingsView;
     private Stage clusteringSettingsViewStage;
@@ -69,14 +70,16 @@ public class ClusteringSettingsViewController {
             this.clusteringSettingsViewStage.close();
         });
         this.settingsView.getCancelButton().setOnAction(event -> {
-            System.out.println("cancel button");
             for(int i = 0; i < this.clusteringTyp.length; i++) {
                 this.setRecentProperties(this.clusteringTyp[i], this.recentProperties.get(this.clusteringTyp[i].getClusteringName()));
             }
+           this.clusteringSettingsViewStage.close();
         });
         this.settingsView.getDefaultButton().setOnAction(event -> {
             for(int i = 0; i < this.clusteringTyp.length; i++) {
-                if(this.clusteringTyp[i].getClusteringName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
+                if(this.clusteringTyp[i].getClusteringName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
+                    this.clusteringTyp[i].restoreDefaultSettings();
+                }
             }
         });
     }
