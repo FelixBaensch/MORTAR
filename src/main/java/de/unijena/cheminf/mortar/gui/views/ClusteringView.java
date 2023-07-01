@@ -26,6 +26,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.paint.Color;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class ClusteringView extends AnchorPane {
     /**
      * Button to close view
@@ -41,6 +44,9 @@ public class ClusteringView extends AnchorPane {
     private Button vigilanceParameter8Button;
     private Button vigilanceParameter9Button;
     private Button clusterRepresentativesButton;
+    private Button applyButton;
+    private TextField field;
+
     /**
      * ImageView to display the structures when the cursor hovers over a bar
      */
@@ -115,7 +121,7 @@ public class ClusteringView extends AnchorPane {
         tmpBorderPane.setCenter(tmpMainGrid);
         HBox tmpHBoxLeftSideControls = new HBox();
         // left side controls
-        this.vigilanceParameter1Button = new Button("0.1");
+        this.vigilanceParameter1Button = new Button();
         this.vigilanceParameter2Button = new Button("0.2");
         this.vigilanceParameter3Button = new Button("0.3");
         this.vigilanceParameter4Button = new Button("0.4");
@@ -124,6 +130,7 @@ public class ClusteringView extends AnchorPane {
         this.vigilanceParameter7Button = new Button("0.7");
         this.vigilanceParameter8Button = new Button("0.8");
         this.vigilanceParameter9Button = new Button("0.9");
+
         this.clusterRepresentativesButton = new Button("Representatives");
         this.barWidthsComboBox = new ComboBox<>();
         for (ClusteringViewController.BarWidthOption tmpBarWidthOptionConstant : ClusteringViewController.BarWidthOption.values()) {
@@ -260,6 +267,51 @@ public class ClusteringView extends AnchorPane {
     }
     public Button getVigilanceParameter9Button(){
         return this.vigilanceParameter9Button;
+    }
+    public Button getCloseButton() {
+        return this.closeButton;
+    }
+    public HashMap<String,Button> getVigilanceParameterButtons() {
+        HashMap<String,Button> tmpVigilanceParameterButtonToIndexMap = new HashMap<>(); // TODO add init value
+        tmpVigilanceParameterButtonToIndexMap.put("1",this.vigilanceParameter1Button);
+        tmpVigilanceParameterButtonToIndexMap.put("2",this.vigilanceParameter2Button);
+        tmpVigilanceParameterButtonToIndexMap.put("3",this.vigilanceParameter3Button);
+        tmpVigilanceParameterButtonToIndexMap.put("4",this.vigilanceParameter4Button);
+        tmpVigilanceParameterButtonToIndexMap.put("5",this.vigilanceParameter5Button);
+        tmpVigilanceParameterButtonToIndexMap.put("6",this.vigilanceParameter6Button);
+        tmpVigilanceParameterButtonToIndexMap.put("7",this.vigilanceParameter7Button);
+        tmpVigilanceParameterButtonToIndexMap.put("8",this.vigilanceParameter8Button);
+        tmpVigilanceParameterButtonToIndexMap.put("9",this.vigilanceParameter9Button);
+        return tmpVigilanceParameterButtonToIndexMap;
+    }
+    public HashMap<Button, String> getVigilanceButtons() {
+        HashMap<Button, String> tmpVigilanceParameterButtonToIndexMap = new HashMap<>(); // TODO add init value
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter1Button,"1");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter2Button, "2");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter3Button, "3");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter4Button, "4");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter5Button, "5");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter6Button, "6");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter7Button, "7");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter8Button, "8");
+        tmpVigilanceParameterButtonToIndexMap.put(this.vigilanceParameter9Button, "9");
+        return tmpVigilanceParameterButtonToIndexMap;
+    }
+    public ArrayList<Button> getButtons() {
+        ArrayList<Button> tmpButtonsList = new ArrayList<>(9);
+        tmpButtonsList.add(this.vigilanceParameter1Button);
+        tmpButtonsList.add(this.vigilanceParameter2Button);
+        tmpButtonsList.add(this.vigilanceParameter3Button);
+        tmpButtonsList.add(this.vigilanceParameter4Button);
+        tmpButtonsList.add(this.vigilanceParameter5Button);
+        tmpButtonsList.add(this.vigilanceParameter6Button);
+        tmpButtonsList.add(this.vigilanceParameter7Button);
+        tmpButtonsList.add(this.vigilanceParameter8Button);
+        tmpButtonsList.add(this.vigilanceParameter9Button);
+        return tmpButtonsList;
+    }
+    public Button getClusterRepresentativesButton() {
+        return this.clusterRepresentativesButton;
     }
 
 }

@@ -135,8 +135,9 @@ public class ViewToolsManager {
      * @param aMainStage
      * @param aClusteringResults
      */
-    public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResults) {
-        this.clusteringViewController.openClusteringView(aMainStage, aClusteringResults);
+    public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResults, List<MoleculeDataModel> aMoleculeDataModelList,OverviewViewController.DataSources aDataSource,
+                                   String aTabName, ViewToolsManager manager) {
+        this.clusteringViewController.openClusteringView(aMainStage, aClusteringResults, aMoleculeDataModelList,manager,aTabName, aDataSource);
     }
     /**
      * See {@link OverviewViewController#initializeAndShowOverviewView(Stage, OverviewViewController.DataSources, String, List)}.

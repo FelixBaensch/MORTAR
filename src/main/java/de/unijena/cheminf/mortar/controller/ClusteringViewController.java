@@ -3,14 +3,20 @@ package de.unijena.cheminf.mortar.controller;
 import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClustering;
 import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.ClusteringView;
 import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -20,11 +26,14 @@ import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,6 +49,7 @@ import javafx.stage.WindowEvent;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import javax.swing.text.View;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -52,6 +62,28 @@ import java.util.logging.Logger;
 
 public class ClusteringViewController implements IViewToolController {
     //<editor-fold desc="Enums" defaultstate="collapsed">
+    /*
+    public static enum VigilanceParameterButtonOption {
+        VIGILANCE_PARAMETER_BUTTON_0_1(Message.get("ClusteringView.vigilanceParameterButton.1")),
+        VIGILANCE_PARAMETER_BUTTON_0_2(Message.get("ClusteringView.vigilanceParameterButton.2")),
+        VIGILANCE_PARAMETER_BUTTON_0_3(Message.get("ClusteringView.vigilanceParameterButton.3")),
+        VIGILANCE_PARAMETER_BUTTON_0_4(Message.get("ClusteringView.vigilanceParameterButton.4")),
+        VIGILANCE_PARAMETER_BUTTON_0_5(Message.get("ClusteringView.vigilanceParameterButton.5")),
+        VIGILANCE_PARAMETER_BUTTON_0_6(Message.get("ClusteringView.vigilanceParameterButton.6")),
+        VIGILANCE_PARAMETER_BUTTON_0_7(Message.get("ClusteringView.vigilanceParameterButton.7")),
+        VIGILANCE_PARAMETER_BUTTON_0_8(Message.get("ClusteringView.vigilanceParameterButton.8")),
+        VIGILANCE_PARAMETER_BUTTON_0_9(Message.get("ClusteringView.vigilanceParameterButton.9"));
+
+        private final String displayVigilanceParameter;
+        VigilanceParameterButtonOption(String aDisplayName) {
+            this.displayVigilanceParameter = aDisplayName;
+        }
+        public String getDisplayName() {
+            return this.displayVigilanceParameter;
+        }
+    }
+
+     */
     /**
      * Enum for the available bar spacing width options.
      */
@@ -93,6 +125,7 @@ public class ClusteringViewController implements IViewToolController {
      * Default of bar spacing width.
      */
     public static final ClusteringViewController.BarWidthOption DEFAULT_BAR_WIDTH = ClusteringViewController.BarWidthOption.LARGE;
+  //  public static final ClusteringViewController.VigilanceParameterButtonOption DEFAULT_VIGILANCE_PARAMETER_BUTTON = VigilanceParameterButtonOption.VIGILANCE_PARAMETER_BUTTON_0_1;
     /**
      * Default for whether bar labels (the fragment frequencies) should be displayed.
      */
@@ -192,6 +225,7 @@ public class ClusteringViewController implements IViewToolController {
      * Setting for width of spaces between the histogram bars.
      */
     private final SimpleEnumConstantNameProperty barWidthSetting;
+    //private final SimpleEnumConstantNameProperty buttonSetting;
     /**
      * Setting for whether to display bar shadows.
      */
@@ -216,11 +250,14 @@ public class ClusteringViewController implements IViewToolController {
      * Stage of the HistogramView
      */
     private Stage histogramStage;
+    private int xValue;
     /**
      * Scene of the histogram stage
      */
     private Scene histogramScene;
     private IArt2aClusteringResult[] clusteringResult;
+    private OverviewViewController.DataSources dataSources;
+    private ViewToolsManager manager;
     /**
      * Width of molecule depictions displayed when the cursor hovers over a bar. Changes when histogram is resized.
      */
@@ -242,9 +279,16 @@ public class ClusteringViewController implements IViewToolController {
      */
     private NumberAxis numberAxis;
     /**
+     *
+     */
+    private List<MoleculeDataModel> moleculeDataModel;
+    private List<MoleculeDataModel> representativesMoleculesDataModel;
+    /**
      * Histogram chart
      */
     private BarChart histogramChart;
+    private String name;
+    private IViewToolController[] viewToolController;
     /**
      * Atom container to depict the respective structure when the cursor hovers over a bar
      */
@@ -269,8 +313,8 @@ public class ClusteringViewController implements IViewToolController {
         this.barWidthSetting = new SimpleEnumConstantNameProperty(this,
                 //the name could be displayed but is not used for that currently
                 Message.get("HistogramView.barWidthSetting.name"),
-                HistogramViewController.DEFAULT_BAR_WIDTH.name(),
-                HistogramViewController.BarWidthOption.class) {
+                ClusteringViewController.DEFAULT_BAR_WIDTH.name(),
+                ClusteringViewController.BarWidthOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 super.set(newValue);
@@ -280,6 +324,15 @@ public class ClusteringViewController implements IViewToolController {
         };
         this.settings.add(this.barWidthSetting);
         this.settings.add(this.displayBarLabelsSetting);
+        /*
+        this.buttonSetting = new SimpleEnumConstantNameProperty(this, "Buttons",ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.name(),ClusteringViewController.VigilanceParameterButtonOption.class) {
+            @Override
+            public void set(String newValue) {
+                super.set(newValue);
+            }
+        };
+
+         */
         this.displayBarShadowsSetting = new SimpleBooleanProperty(this,
                 //the name could be displayed but is not used for that currently
                 Message.get("HistogramView.displayBarShadowsSetting.name"),
@@ -323,6 +376,7 @@ public class ClusteringViewController implements IViewToolController {
         this.displayBarShadowsSetting.set(ClusteringViewController.DEFAULT_DISPLAY_BAR_SHADOWS_SETTING);
         this.displayGridLinesSetting.set(ClusteringViewController.DEFAULT_DISPLAY_GRID_LINES_SETTING);
         this.barWidthSetting.set(ClusteringViewController.DEFAULT_BAR_WIDTH.name());
+     //   this.buttonSetting.set(ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.name());
 
     }
 
@@ -334,7 +388,8 @@ public class ClusteringViewController implements IViewToolController {
         };
     }
 
-    public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResult) throws NullPointerException {
+    public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResult, List<MoleculeDataModel> aMoleculeDataModel,
+                                   ViewToolsManager aManager, String name, OverviewViewController.DataSources dataSources ) throws NullPointerException {
         //<editor-fold desc="Checks" defaultstate="collapsed">
         Objects.requireNonNull(aMainStage, "Main stage is null.");
         //</editor-fold>
@@ -347,6 +402,10 @@ public class ClusteringViewController implements IViewToolController {
         this.imageZoomFactor = ClusteringViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR;
         this.mainStage = aMainStage;
         this.clusteringResult = aClusteringResult;
+        this.moleculeDataModel = aMoleculeDataModel;
+        this.manager = aManager;
+        this.name = name;
+        this.dataSources = dataSources;
         this.histogramStage = new Stage();
         this.histogramStage.initModality(Modality.WINDOW_MODAL);
         this.histogramStage.initOwner(this.mainStage);
@@ -366,34 +425,57 @@ public class ClusteringViewController implements IViewToolController {
         //note: no binding between the text field and the setting property is established because the setting is only updated
         // when the "apply" button is clicked
         String tmpCurrentlySetBarWidthOptionDisplayName = null;
-        for (HistogramViewController.BarWidthOption tmpBarWidthOption : HistogramViewController.BarWidthOption.values()) {
+        for (ClusteringViewController.BarWidthOption tmpBarWidthOption : ClusteringViewController.BarWidthOption.values()) {
             if (tmpBarWidthOption.name().equals(this.barWidthSetting.get())) {
                 tmpCurrentlySetBarWidthOptionDisplayName = tmpBarWidthOption.getDisplayName();
             }
         }
         if (Objects.isNull(tmpCurrentlySetBarWidthOptionDisplayName)) {
             this.barWidthSetting.set(HistogramViewController.DEFAULT_BAR_WIDTH.name());
-            tmpCurrentlySetBarWidthOptionDisplayName = HistogramViewController.DEFAULT_BAR_WIDTH.getDisplayName();
+            tmpCurrentlySetBarWidthOptionDisplayName =ClusteringViewController.DEFAULT_BAR_WIDTH.getDisplayName();
         }
         this.clusteringView.getBarWidthsComboBox().setValue(tmpCurrentlySetBarWidthOptionDisplayName);
+        /*
+        String tmpCurrentButtonName = null;
+        for(ClusteringViewController.VigilanceParameterButtonOption tmpVigilanceOptions : ClusteringViewController.VigilanceParameterButtonOption.values()) {
+            if(tmpVigilanceOptions.name().equals(this.buttonSetting.get())) {
+                tmpCurrentButtonName = tmpVigilanceOptions.getDisplayName();
+            }
+        }
+        if(Objects.isNull(tmpCurrentButtonName)) {
+            this.buttonSetting.set(ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.name());
+            tmpCurrentButtonName = ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.getDisplayName();
+        }
+
+         */
         //note: settings are updated for persistence in the listeners on the checkboxes added below
+        ArrayList<Button> tmpVigilanceParameterButtons= this.clusteringView.getButtons();
+        int i = 0;
+        for(Button tmpButton : tmpVigilanceParameterButtons) {
+            tmpButton.setText(String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters()));
+            i++;
+        }
         this.clusteringView.getDisplayBarLabelsCheckBox().setSelected(this.displayBarLabelsSetting.get());
         this.clusteringView.getDisplayBarShadowsCheckBox().setSelected(this.displayBarShadowsSetting.get());
         this.clusteringView.getDisplayGridLinesCheckBox().setSelected(this.displayGridLinesSetting.get());
         //</editor-fold>
         //
         //<editor-fold desc="Initialise histogram with given settings and add listeners" defaultstate="collapsed">
+        //Button a = this.clusteringView.getVigilanceParameterButtons().get(tmpCurrentButtonName); // TODO
+       // String v = this.clusteringView.getVigilanceButtons().get(a);
+       // int test = Integer.parseInt(v);
         Double[] tmpHistogramHeightFactorAndCategoryGap = this.calculateBarSpacing(
                 aClusteringResult[0].getNumberOfDetectedClusters(),
-                this.getBarWidthOptionEnumConstantFromDisplayName((String)this.clusteringView.getBarWidthsComboBox().getValue()));
-        this.histogramChart = this.createHistogram(this.clusteringView, this.clusteringView.getDisplayBarLabelsCheckBox(), this.clusteringView.getDisplayBarShadowsCheckBox(),tmpHistogramHeightFactorAndCategoryGap[0]);
+                this.getBarWidthOptionEnumConstantFromDisplayName((String)this.clusteringView.getBarWidthsComboBox().getValue())); // TODO aClusteringResult [0]
+
+        this.histogramChart = this.createHistogram(this.clusteringView, this.clusteringView.getDisplayBarLabelsCheckBox(), this.clusteringView.getDisplayBarShadowsCheckBox(),tmpHistogramHeightFactorAndCategoryGap[0],0);
         this.histogramChart.setCategoryGap(tmpHistogramHeightFactorAndCategoryGap[1]);
         this.histogramScene = new Scene(
                 this.clusteringView,
                 GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setScene(this.histogramScene);
-        // this.addListenersToHistogramView();
+        this.addListenersToHistogramView();
         this.histogramStage.show();
         //</editor-fold>
     }
@@ -473,7 +555,7 @@ public class ClusteringViewController implements IViewToolController {
         }
         return tmpEnumConstantBarWidth;
     }
-    private BarChart createHistogram(ClusteringView aClusteringView, CheckBox aBarLabelCheckBox, CheckBox aStyingCheckBox, double aHistogramDefaultSize) {
+    private BarChart createHistogram(ClusteringView aClusteringView, CheckBox aBarLabelCheckBox, CheckBox aStyingCheckBox, double aHistogramDefaultSize, int x) {
         this.categoryAxis = new CategoryAxis();
         this.categoryAxis.setTickLabelFill(Color.BLACK);
         this.categoryAxis.setTickLength(HistogramViewController.HISTOGRAM_TICK_LABEL_LENGTH);
@@ -496,19 +578,27 @@ public class ClusteringViewController implements IViewToolController {
         ArrayList<Integer> tmpNumberOfDetectedClusters = new ArrayList<>();
         ArrayList<Integer> tmpNumberOfEpochs = new ArrayList<>();
         ArrayList<ArrayList<int[]>> listOfLists = new ArrayList<>();
-        ArrayList<Integer> tmpClusterRepresentatives = new ArrayList<>();
+       // ArrayList<Integer> tmpClusterRepresentatives = new ArrayList<>();
+        ArrayList<ArrayList<Integer>> listOfListforRepresentatives = new ArrayList<>();
+
         for(IArt2aClusteringResult tmpClusteringResult : this.clusteringResult) {
             System.out.println(tmpClusteringResult.getVigilanceParameter() + "----------vigilance parameter");
             tmpNumberOfDetectedClusters.add(tmpClusteringResult.getNumberOfDetectedClusters());
             tmpNumberOfEpochs.add(tmpClusteringResult.getNumberOfEpochs());
             ArrayList<int[]> tmpClusterIndices = new ArrayList<>();
+            ArrayList<Integer> tmpRepresentativesIndices = new ArrayList<>();
             for(int i = 0; i < tmpClusteringResult.getNumberOfDetectedClusters(); i++) {
                 tmpClusterIndices.add(tmpClusteringResult.getClusterIndices(i));
-                tmpClusterRepresentatives.add(tmpClusteringResult.getClusterRepresentatives(i));
+                tmpRepresentativesIndices.add(tmpClusteringResult.getClusterRepresentatives(i));
+                System.out.println(tmpClusteringResult.getClusterRepresentatives(i) + "---------------representanten");
+                //tmpClusterRepresentatives.add(tmpClusteringResult.getClusterRepresentatives(i));
             }
             listOfLists.add(tmpClusterIndices);
+            listOfListforRepresentatives.add(tmpRepresentativesIndices); // Alle clusterrepresentanten eines vigiliance parameter sind in einer Liste gespeichert, wobei dieses Liste in einer übergeordneten liste gespeichert ist
         }
-        ArrayList<int[]> a = listOfLists.get(0); // TODO 0 ersetzen durch ein Button property
+
+        ArrayList<int[]> a = listOfLists.get(x); // TODO 0 ersetzen durch ein Button property INFO a sollte alle Clusterindices von allen für den gegebenen vigilance parameter entstandene cluster
+        ArrayList<Integer> tmpRepresentatives = listOfListforRepresentatives.get(x);
         int maxLength = 0;
         int[] maxLengthArray = null;
 
@@ -554,12 +644,36 @@ public class ClusteringViewController implements IViewToolController {
                 this.numberAxis.setUpperBound(this.calculateXAxisUpperBoundWithSpaceForLabels((int) tmpMaxFrequency, tmpNewXAxisTick));
             }
         }
+        representativesMoleculesDataModel= new ArrayList<>();
         XYChart.Series tmpSeries = new XYChart.Series();
-        for(int i = 0; i<tmpNumberOfDetectedClusters.get(0); i++) {
+        for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1
+            int tmpClusterRepresentative = tmpRepresentatives.get(i);
             XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf(i));
+            StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
+                    aClusteringView.getStructureDisplayImageView(),
+                    tmpClusterRepresentative);
+            tmpHistogramBarStackPane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);
+            this.addFrequencyBarLabelToBarAndAddListenersToBarCheckBoxes(
+                    aBarLabelCheckBox,
+                    aStyingCheckBox,
+                    tmpHistogramBarStackPane,
+                    a.get(i).length);
+            tmpTestData.setNode(tmpHistogramBarStackPane);
             tmpSeries.getData().add(tmpTestData);
+            int iter = 0;
+            for(MoleculeDataModel model : this.moleculeDataModel) {
+                if(iter == tmpClusterRepresentative) {
+                    this.representativesMoleculesDataModel.add(model);
+                }
+                iter++;
+            }
         }
+        double tmpHistogramSize = aHistogramDefaultSize * tmpNumberOfDetectedClusters.get(0);
+        tmpHistogramBarChart.setPrefHeight(tmpHistogramSize);
+        tmpHistogramBarChart.setMinHeight(tmpHistogramSize);
         tmpHistogramBarChart.getData().add(tmpSeries);
+        tmpHistogramBarChart.setLegendVisible(false);
+        tmpHistogramBarChart.layout();
         return tmpHistogramBarChart;
 
     }
@@ -573,4 +687,207 @@ public class ClusteringViewController implements IViewToolController {
         }
         return tmpXAxisExtensionValue;
     }
+    private StackPane createStackPaneWithContextMenuAndStructureDisplayForBar(ImageView anImageView, int representatives) {
+        StackPane tmpNodePane = new StackPane();
+        tmpNodePane.setAlignment(Pos.CENTER_RIGHT);
+        MenuItem tmpCopyStructureMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemStructure.text"));
+        ContextMenu tmpContextMenu = new ContextMenu();
+        tmpContextMenu.getItems().add(tmpCopyStructureMenuItem);
+        try {
+            tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        } catch(NullPointerException | IllegalArgumentException anException) {
+           ClusteringViewController.LOGGER.log(Level.WARNING, "Copy icon for context menus could not be imported.");
+        }
+        // Event to hover over histogram bars to display structure
+        EventHandler<MouseEvent> tmpMouseHoverEventHandler = event -> {
+            String tmpSmiles =  this.moleculeDataModel.get(representatives).getUniqueSmiles();
+            tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE);
+            this.atomContainerForDisplayCache = null;
+            try {
+                boolean tmpShouldBeKekulized = true;
+                boolean tmpShouldAtomTypesBePerceived = true;
+                this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(tmpSmiles, tmpShouldBeKekulized, tmpShouldAtomTypesBePerceived);
+            } catch (CDKException anException) {
+                // no logging, this happens too often, e.g. for fragments of aromatic rings
+                try {
+                    this.atomContainerForDisplayCache = ChemUtil.parseSmilesToAtomContainer(tmpSmiles, false, false);
+                } catch (CDKException aSecondException) {
+                    ClusteringViewController.LOGGER.log(Level.WARNING, aSecondException.toString(), aSecondException);
+                    this.atomContainerForDisplayCache = null;
+                    //Note: the used depiction method returns an error image if image creation fails, so nothing else to do here
+                }
+            }
+            Image tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                    this.atomContainerForDisplayCache,
+                    this.imageZoomFactor,
+                    this.imageWidth,
+                    this.imageHeight,
+                    true,
+                    true);
+            anImageView.setImage(tmpImage);
+        };
+        /* Event to open context menu (right click) to copy SMILES string or structure.
+           Context menu also opens, if  a right click on the frequency label is detected.
+         */
+        EventHandler<ContextMenuEvent> tmpContextMenuEventHandler = event -> {
+            tmpContextMenu.show(tmpNodePane, event.getScreenX(), event.getScreenY());
+        };
+        tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, tmpMouseHoverEventHandler);
+        tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, tmpContextMenuEventHandler);
+        // Listener ContextMenuItems
+        tmpCopyStructureMenuItem.setOnAction(event -> {
+            ClipboardContent tmpStructureClipboardContent = new ClipboardContent();
+            Image tmpCopyImageOnBar = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                    this.atomContainerForDisplayCache,
+                    12.0,
+                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
+                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
+                    true,
+                    true);
+            tmpStructureClipboardContent.putImage(tmpCopyImageOnBar);
+            Clipboard.getSystemClipboard().setContent(tmpStructureClipboardContent);
+        });
+        tmpNodePane.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
+            tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);
+            anImageView.setImage(null);
+        });
+        return tmpNodePane;
+    }
+    private void addFrequencyBarLabelToBarAndAddListenersToBarCheckBoxes(
+            CheckBox aLabelCheckBox,
+            CheckBox aBarStylingCheckBox,
+            StackPane aStackPane,
+            int aFrequency) {
+        int tmpDigitLength = String.valueOf(aFrequency).length();
+        Label tmpBarLabel = new Label();
+        tmpBarLabel.setTranslateY(0.0);
+        tmpBarLabel.setAlignment(Pos.CENTER_RIGHT);
+        tmpBarLabel.setPrefWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * (double) tmpDigitLength);
+        tmpBarLabel.setMinWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * (double) tmpDigitLength);
+        tmpBarLabel.setMaxWidth(HistogramViewController.GUI_BAR_LABEL_SIZE * (double) tmpDigitLength);
+        tmpBarLabel.setTranslateX(tmpDigitLength * HistogramViewController.GUI_BAR_LABEL_SIZE + 5.0);
+        tmpBarLabel.setStyle(null);
+        tmpBarLabel.setText(String.valueOf(aFrequency));
+        if(this.displayBarLabelsSetting.get()) {
+            aStackPane.getChildren().add(tmpBarLabel);
+        }
+        aLabelCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+            if (new_val) {
+                aStackPane.getChildren().add(tmpBarLabel);
+            } else {
+                aStackPane.getChildren().remove(tmpBarLabel);
+            }
+            this.displayBarLabelsSetting.set(new_val);
+        });
+        if(this.displayBarShadowsSetting.get()) {
+            aStackPane.setEffect(new DropShadow(10,2,3, Color.BLACK));
+        }
+        aBarStylingCheckBox.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+            if(new_val) {
+                aStackPane.setEffect(new DropShadow(10, 2, 3, Color.BLACK));
+            } else {
+                aStackPane.setEffect(null);
+            }
+            this.displayBarShadowsSetting.set(new_val);
+        });
+    }
+    private void addListenersToHistogramView() {
+        //adding text formatter that only accepts integers and turns the input strings into those to the two text fields
+        this.clusteringView.getBarWidthsComboBox().getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                ClusteringViewController.BarWidthOption tmpBarWidthSettingEnumValue = getBarWidthOptionEnumConstantFromDisplayName(newValue);
+                barWidthSetting.set(tmpBarWidthSettingEnumValue.name());
+                updateHistogramChart(tmpBarWidthSettingEnumValue, xValue );
+            }
+
+        });
+       this.clusteringView.getVigilanceParameter1Button().setOnAction(event -> {
+           xValue = 0;
+           updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+           /*
+           Double[] tmpHistogramSizeGap = this.calculateBarSpacing(this.clusteringResult[0].getNumberOfDetectedClusters(),tmpBarWidthSettingEnumValue);
+           this.histogramChart = this.createHistogram(this.clusteringView,
+                   this.clusteringView.getDisplayBarLabelsCheckBox(),
+                   this.clusteringView.getDisplayBarShadowsCheckBox(), tmpHistogramSizeGap[0],0
+                   );
+           this.histogramChart.setCategoryGap(tmpHistogramSizeGap[1]);
+
+            */
+
+       });
+        this.clusteringView.getVigilanceParameter2Button().setOnAction(event -> {
+            xValue = 1;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+
+        });
+        this.clusteringView.getVigilanceParameter3Button().setOnAction(event -> {
+            xValue = 2;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+
+        });
+        this.clusteringView.getVigilanceParameter4Button().setOnAction(event -> {
+            xValue = 3;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+
+        });
+        this.clusteringView.getVigilanceParameter5Button().setOnAction(event -> {
+            xValue = 4;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+
+        });
+        this.clusteringView.getVigilanceParameter6Button().setOnAction(event -> {
+            xValue = 5;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+        });
+        this.clusteringView.getVigilanceParameter7Button().setOnAction(event -> {
+            xValue = 6;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+        });
+        this.clusteringView.getVigilanceParameter8Button().setOnAction(event -> {
+            xValue = 7;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+        });
+        this.clusteringView.getVigilanceParameter9Button().setOnAction(event -> {
+            xValue = 8;
+            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
+        });
+        this.clusteringView.getClusterRepresentativesButton().setOnAction(event -> {
+          //ViewToolsManager tmpManager = new ViewToolsManager();
+         // this.manager.openOverviewView(this.mainStage,this.dataSources, this.name, this.moleculeDataModel);
+            this.manager.openOverviewView(this.mainStage,this.dataSources, this.name, this.representativesMoleculesDataModel);
+
+        });
+
+        this.histogramScene.widthProperty().addListener((observable, oldValue, newValue) -> {
+            double tmpWidthChange = ((this.histogramScene.getWidth() - GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) * 100.0;
+            double tmpImageWidthChange = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH / 100.0) * tmpWidthChange;
+            this.imageWidth = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH + tmpImageWidthChange;
+            this.imageHeight = this.imageWidth - 100.0;
+            this.imageZoomFactor = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR / HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH) * this.imageWidth;
+        });
+        this.histogramScene.heightProperty().addListener((observable, oldValue, newValue) -> {
+            double tmpHeightChange = ((this.histogramScene.getHeight() - GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE) * 100.0;
+            double tmpImageHeightChange = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT / 100.0) * tmpHeightChange;
+            if (this.histogramScene.getWidth() == GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) {
+                this.imageHeight = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT + tmpImageHeightChange;
+            } else {
+                double tmpHeight = this.imageWidth - 100.0;
+                double tmpIntermediateImageHeight = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT + tmpImageHeightChange;
+                double tmpImageHeight = tmpHeight - tmpIntermediateImageHeight;
+                this.imageHeight = tmpIntermediateImageHeight + tmpImageHeight;
+            }
+            this.imageWidth = 100.0 + this.imageHeight;
+            this.imageZoomFactor = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR / HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH) * this.imageWidth;
+        });
+    }
+    private void updateHistogramChart(ClusteringViewController.BarWidthOption barWidthOption, int x) {
+        Double[] tmpHistogramSizeGap = calculateBarSpacing(this.clusteringResult[x].getNumberOfDetectedClusters(), barWidthOption);
+        this.histogramChart = createHistogram(this.clusteringView,
+                this.clusteringView.getDisplayBarLabelsCheckBox(),
+                this.clusteringView.getDisplayBarShadowsCheckBox(),
+                tmpHistogramSizeGap[0], x);
+        this.histogramChart.setCategoryGap(tmpHistogramSizeGap[1]);
+    }
+
 }

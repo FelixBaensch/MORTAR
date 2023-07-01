@@ -809,7 +809,7 @@ public class MainViewController {
         this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
     private void openClusteringView() {
-        this.viewToolsManager.openClusteringView(this.primaryStage, this.clusteringResult);
+        this.viewToolsManager.openClusteringView(this.primaryStage, this.clusteringResult, this.moleculeDataModelList,OverviewViewController.DataSources.MOLECULES_TAB, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(), this.viewToolsManager);
     }
     //
 
