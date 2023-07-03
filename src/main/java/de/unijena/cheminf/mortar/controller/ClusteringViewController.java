@@ -55,6 +55,8 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -409,7 +411,7 @@ public class ClusteringViewController implements IViewToolController {
         this.histogramStage = new Stage();
         this.histogramStage.initModality(Modality.WINDOW_MODAL);
         this.histogramStage.initOwner(this.mainStage);
-        this.histogramStage.setTitle(Message.get("HistogramView.title"));
+        this.histogramStage.setTitle("Clustering result");
         this.histogramStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         InputStream tmpImageInputStream = ClusteringViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
@@ -560,7 +562,7 @@ public class ClusteringViewController implements IViewToolController {
         this.categoryAxis.setTickLabelFill(Color.BLACK);
         this.categoryAxis.setTickLength(HistogramViewController.HISTOGRAM_TICK_LABEL_LENGTH);
         this.categoryAxis.setTickLabelGap(HistogramViewController.HISTOGRAM_TICK_LABEL_GAP);
-        this.categoryAxis.setLabel(Message.get("HistogramViewController.YAxisLabel.text"));
+        this.categoryAxis.setLabel("Detected clusters");
         this.categoryAxis.setTickMarkVisible(true);
         this.categoryAxis.setTickLabelsVisible(true);
         this.numberAxis = new NumberAxis();
@@ -569,7 +571,7 @@ public class ClusteringViewController implements IViewToolController {
         this.numberAxis.setMinorTickCount(1);
         this.numberAxis.setForceZeroInRange(true);
         this.numberAxis.setTickLabelFill(Color.BLACK);
-        this.numberAxis.setLabel(Message.get("HistogramViewController.XAxisLabel.text"));
+        this.numberAxis.setLabel("Number of molecules");
         BarChart tmpHistogramBarChart = new BarChart(this.numberAxis, this.categoryAxis);
         tmpHistogramBarChart.setCategoryGap(0.0);
         tmpHistogramBarChart.setBarGap(0.0);
@@ -599,6 +601,7 @@ public class ClusteringViewController implements IViewToolController {
 
         ArrayList<int[]> a = listOfLists.get(x); // TODO 0 ersetzen durch ein Button property INFO a sollte alle Clusterindices von allen für den gegebenen vigilance parameter entstandene cluster
         ArrayList<Integer> tmpRepresentatives = listOfListforRepresentatives.get(x);
+        System.out.println(tmpRepresentatives +"------rep");
         int maxLength = 0;
         int[] maxLengthArray = null;
 
@@ -644,11 +647,34 @@ public class ClusteringViewController implements IViewToolController {
                 this.numberAxis.setUpperBound(this.calculateXAxisUpperBoundWithSpaceForLabels((int) tmpMaxFrequency, tmpNewXAxisTick));
             }
         }
+        System.out.println("vor der sortierung");
+        System.out.println(java.util.Arrays.toString(a.get(0)));
+        System.out.println(java.util.Arrays.toString(a.get(1)));
+        System.out.println(java.util.Arrays.toString(a.get(2)));
+        System.out.println(java.util.Arrays.toString(a.get(3)));
+        System.out.println(java.util.Arrays.toString(a.get(4)));
+        System.out.println(java.util.Arrays.toString(a.get(5)));
+        HashMap<int[], Integer> map = new HashMap<>();
+        for(int i = 0; i<a.size(); i++) {
+            map.put(a.get(i),i);
+        }
+        System.out.println(map +"----map");
+        a.sort(Comparator.comparingInt(arr -> arr.length));
+        Collections.reverse(a);
+        System.out.println("nach der Sortierung");
+        System.out.println(java.util.Arrays.toString(a.get(0)));
+        System.out.println(java.util.Arrays.toString(a.get(1)));
+        System.out.println(java.util.Arrays.toString(a.get(2)));
+        System.out.println(java.util.Arrays.toString(a.get(3)));
+        System.out.println(java.util.Arrays.toString(a.get(4)));
+        System.out.println(java.util.Arrays.toString(a.get(5)));
         representativesMoleculesDataModel= new ArrayList<>();
         XYChart.Series tmpSeries = new XYChart.Series();
-        for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1
-            int tmpClusterRepresentative = tmpRepresentatives.get(i);
-            XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf(i));
+        for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1  int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--  int i = 0; i<tmpNumberOfDetectedClusters.get(x); i++
+            //int tmpClusterRepresentative = tmpRepresentatives.get(i);
+            int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i)));
+            System.out.println(tmpRepresentatives +"----ricgtige repre");
+            XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf("Cluster "+(i +1)));
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aClusteringView.getStructureDisplayImageView(),
                     tmpClusterRepresentative);
@@ -668,12 +694,15 @@ public class ClusteringViewController implements IViewToolController {
                 iter++;
             }
         }
-        double tmpHistogramSize = aHistogramDefaultSize * tmpNumberOfDetectedClusters.get(0);
+        double tmpHistogramSize = aHistogramDefaultSize * tmpNumberOfDetectedClusters.get(x);
         tmpHistogramBarChart.setPrefHeight(tmpHistogramSize);
         tmpHistogramBarChart.setMinHeight(tmpHistogramSize);
         tmpHistogramBarChart.getData().add(tmpSeries);
         tmpHistogramBarChart.setLegendVisible(false);
         tmpHistogramBarChart.layout();
+        tmpHistogramBarChart.setHorizontalGridLinesVisible(this.displayGridLinesSetting.get());
+        tmpHistogramBarChart.setVerticalGridLinesVisible(this.displayGridLinesSetting.get());
+        tmpHistogramBarChart.setAnimated(false);
         return tmpHistogramBarChart;
 
     }
@@ -805,16 +834,6 @@ public class ClusteringViewController implements IViewToolController {
        this.clusteringView.getVigilanceParameter1Button().setOnAction(event -> {
            xValue = 0;
            updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
-           /*
-           Double[] tmpHistogramSizeGap = this.calculateBarSpacing(this.clusteringResult[0].getNumberOfDetectedClusters(),tmpBarWidthSettingEnumValue);
-           this.histogramChart = this.createHistogram(this.clusteringView,
-                   this.clusteringView.getDisplayBarLabelsCheckBox(),
-                   this.clusteringView.getDisplayBarShadowsCheckBox(), tmpHistogramSizeGap[0],0
-                   );
-           this.histogramChart.setCategoryGap(tmpHistogramSizeGap[1]);
-
-            */
-
        });
         this.clusteringView.getVigilanceParameter2Button().setOnAction(event -> {
             xValue = 1;
@@ -853,12 +872,20 @@ public class ClusteringViewController implements IViewToolController {
             updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
         });
         this.clusteringView.getClusterRepresentativesButton().setOnAction(event -> {
-          //ViewToolsManager tmpManager = new ViewToolsManager();
-         // this.manager.openOverviewView(this.mainStage,this.dataSources, this.name, this.moleculeDataModel);
             this.manager.openOverviewView(this.mainStage,this.dataSources, this.name, this.representativesMoleculesDataModel);
 
         });
-
+        this.clusteringView.getCloseButton().setOnAction(event -> {
+            this.histogramStage.close();
+            this.clearAllGUICaches();
+        });
+        this.clusteringView.getDisplayGridLinesCheckBox().selectedProperty()
+                .addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+                    this.histogramChart.setVerticalGridLinesVisible(new_val);
+                    this.histogramChart.setHorizontalGridLinesVisible(new_val);
+                    //update setting for persistence
+                    this.displayGridLinesSetting.set(new_val);
+                });
         this.histogramScene.widthProperty().addListener((observable, oldValue, newValue) -> {
             double tmpWidthChange = ((this.histogramScene.getWidth() - GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) / GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE) * 100.0;
             double tmpImageWidthChange = (HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH / 100.0) * tmpWidthChange;
@@ -888,6 +915,21 @@ public class ClusteringViewController implements IViewToolController {
                 this.clusteringView.getDisplayBarShadowsCheckBox(),
                 tmpHistogramSizeGap[0], x);
         this.histogramChart.setCategoryGap(tmpHistogramSizeGap[1]);
+    }
+    private void clearAllGUICaches() { // TODO set some other class variables to null?
+        this.mainStage = null;
+        //note: must have been closed before
+        this.clusteringView = null;
+        this.histogramStage = null;
+        this.histogramScene = null;
+        this.clusteringResult = null;
+        this.imageWidth = ClusteringViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH;
+        this.imageHeight = ClusteringViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT;
+        this.imageZoomFactor = ClusteringViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR;
+        this.categoryAxis = null;
+        this.numberAxis = null;
+        this.histogramChart = null;
+        this.atomContainerForDisplayCache = null;
     }
 
 }

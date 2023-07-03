@@ -38,6 +38,7 @@ public class FingerprinterService {
     IMoleculeFingerprinter selectedFingerprinter;
     private SettingsContainer settingsContainer;
     private SimpleStringProperty selectedFingerprinterNameProperty;
+    private List<FragmentDataModel> model;
     private static final Logger LOGGER = Logger.getLogger(FingerprinterService.class.getName());
 
     public FingerprinterService(SettingsContainer settingsContainer) {

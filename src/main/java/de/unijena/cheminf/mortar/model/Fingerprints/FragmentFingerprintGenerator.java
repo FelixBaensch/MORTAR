@@ -32,6 +32,7 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
     private SimpleIntegerProperty fingerprintFrequencyThreshold;
     private final int defaultFingerprintDimensionalityValue;
     private final int DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD = 1;
+    private int dimensionality;
     private final List<Property> settings;
     private List<FragmentDataModel> fragmentDataModelList;
     private final HashMap<String, String> settingNameTooltipTextMap;

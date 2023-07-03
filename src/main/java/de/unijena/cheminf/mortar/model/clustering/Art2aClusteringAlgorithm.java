@@ -46,6 +46,7 @@ public class Art2aClusteringAlgorithm implements IFingerprintClustering {
     private final int DEFAULT_MAX_EPOCHS_NUMBER = 7;
     private final List<Property> settings;
     private final HashMap<String, String> settingNameTooltipTextMap;
+    private IArt2aClusteringResult[] clusteringResult;
     private static final Logger LOGGER = Logger.getLogger(Art2aClusteringAlgorithm.class.getName());
 
 
@@ -246,5 +247,7 @@ public class Art2aClusteringAlgorithm implements IFingerprintClustering {
         Art2aClusteringAlgorithm.LOGGER.info("Clustering \"" + tmpClusteringName + "\" of " + aDataMatrix.length
                 + " molecules complete. It took");
         return resultArray;
+
+
     }
 }

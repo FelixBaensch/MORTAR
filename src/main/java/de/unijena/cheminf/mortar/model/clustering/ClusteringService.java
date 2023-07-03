@@ -1,5 +1,6 @@
 package de.unijena.cheminf.mortar.model.clustering;
 
+import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClustering;
 import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -27,6 +28,7 @@ import javafx.scene.control.Alert;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +45,8 @@ public class ClusteringService {
     IFingerprintClustering selectedClusteringAlgorithm;
     private SettingsContainer settingsContainer;
     private SimpleStringProperty selectedClusteringAlgorithmNameProperty;
+    private IArt2aClusteringResult[] clusteringResults;
+    private HashMap<String, IArt2aClusteringResult[]> clusteringMap;
     private static final Logger LOGGER = Logger.getLogger(ClusteringService.class.getName());
     public ClusteringService(SettingsContainer settingsContainer) {
         this.clusterer = new IFingerprintClustering[1];
@@ -76,6 +80,15 @@ public class ClusteringService {
         } else {
             return null;
         }
+    }
+    public IArt2aClusteringResult[] getClusteringResults() {
+        return this.clusteringResults;
+    }
+    public List<Property> getClusteringSettings() {
+        return this.art2aClustering.settingsProperties();
+    }
+    public HashMap<String, IArt2aClusteringResult[]> getClusteringMap() {
+        return this.clusteringMap;
     }
     public IFingerprintClustering[] getClusterer() {
         return this.clusterer;

@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClustering;
 import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
@@ -52,6 +53,7 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -90,6 +92,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -157,7 +160,19 @@ public class MainViewController {
     /**
      * TODO
      */
+    List<Property> listProperty;
+    /**
+     * TODO
+     */
+    List<List<Property>> properties;
+    /**
+     * TODO
+     */
     private FingerprinterService fingerprinterService;
+    /**
+     * TODO
+     */
+    HashMap<List<Property>,IArt2aClusteringResult[]> testMap;
     /**
      * ViewToolsManager
      */
@@ -191,6 +206,14 @@ public class MainViewController {
      */
     private Thread importerThread;
     /**
+     * TODO
+     */
+    private Thread clusteringThread;
+    /**
+     * TODO
+     */
+    private Task<Void> clusteringMainTask;
+    /**
      * Task for molecule file import
      */
     private Task<IAtomContainerSet> importTask;
@@ -214,6 +237,11 @@ public class MainViewController {
      * Thread safe list to hold running threads to update StatusBar
      */
     private CopyOnWriteArrayList<Thread> threadList;
+    /**
+     * TODO
+     */
+    private HashMap<String,IArt2aClusteringResult[]> clusteringMap;
+    private HashMap<String, String> map;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -256,10 +284,16 @@ public class MainViewController {
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
         this.clusteringService = new ClusteringService(this.settingsContainerClustering);// TODO
         this.clusteringService.reloadClusteringSettings();
-        this.fingerprinterService = new FingerprinterService(this.settingsContainerFingerprinter);
+        listProperty = this.clusteringService.getClusteringSettings();
+        System.out.println(listProperty + "---------listProperty");
+         properties =   new ArrayList<>();
+        this.fingerprinterService = new FingerprinterService(this.settingsContainerFingerprinter); // TODO
         this.fingerprinterService.reloadFingerprinterSettings();
         this.viewToolsManager = new ViewToolsManager();
         this.viewToolsManager.reloadViewToolsSettings();
+        this.clusteringMap = new HashMap<>(); // TODO
+        this.map = new HashMap<>(); // TODO
+        this.testMap = new HashMap<>(); // TODO
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
         this.mainTabPane = new TabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
@@ -491,6 +525,8 @@ public class MainViewController {
                 return;
             }
             this.fragmentationService.clearCache();
+            this.clusteringMap = null; // TODO
+           // this.clusteringResult = null; // TODO
         }
         Importer tmpImporter = new Importer(this.settingsContainer);
         File tmpFile = tmpImporter.openFile(aParentStage);
@@ -808,8 +844,8 @@ public class MainViewController {
         }
         this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
-    private void openClusteringView() {
-        this.viewToolsManager.openClusteringView(this.primaryStage, this.clusteringResult, this.moleculeDataModelList,OverviewViewController.DataSources.MOLECULES_TAB, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(), this.viewToolsManager);
+    private void openClusteringView(IArt2aClusteringResult[] a) {
+        this.viewToolsManager.openClusteringView(this.primaryStage,a , this.moleculeDataModelList,OverviewViewController.DataSources.MOLECULES_TAB, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(), this.viewToolsManager);
     }
     //
 
@@ -1177,11 +1213,11 @@ public class MainViewController {
                 @Override
                 protected Void call() throws Exception {
                     if (isPipelining) {
-                            MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
+                           fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
                                     tmpNumberOfCores);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
                     } else {
-                        MainViewController.this.fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
+                        fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
                                 tmpNumberOfCores);
                     }
                     return null;
@@ -1189,7 +1225,7 @@ public class MainViewController {
 
                 @Override
                 public boolean cancel(boolean anInterruptThread) {
-                    MainViewController.this.fragmentationService.abortExecutor();
+                    fragmentationService.abortExecutor();
                     return super.cancel(anInterruptThread);
                 }
             };
@@ -1250,8 +1286,93 @@ public class MainViewController {
         }
     }
     //
-    private void startClustering(int[][] aDataMatrix) throws InterruptedException {
-      this.clusteringResult = this.clusteringService.startClustering(aDataMatrix, 9); // TODO number of tasks and dataMatrix ( for dataMatrix first calculate fingerprints)
+    private void startClustering(int[][] aDataMatrix) throws InterruptedException, ExecutionException {
+        /*
+        int tmpNumberOfClusteringTasks = this.settingsContainerClustering.getNumberOfTasksForFragmentationSetting();
+        System.out.println(tmpNumberOfClusteringTasks + "-----------------number of tasks");
+        this.clusteringMainTask = new Task<>() {
+            @Override
+            protected IArt2aClusteringResult[] call() throws Exception {
+                IArt2aClusteringResult[]  tmpclusteringResult = clusteringService.startClustering(aDataMatrix, tmpNumberOfClusteringTasks);
+                return tmpclusteringResult;
+            }
+        };
+        IArt2aClusteringResult[][] tmptest = null;
+        this.clusteringMainTask.setOnSucceeded(event -> {
+           // IArt2aClusteringResult[] tmptest = null;
+            try {
+                this.clusteringResult = this.clusteringMainTask.get();
+                System.out.println(this.clusteringResult[0] + "-------clustering result position 0");
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        System.out.println("test 1");
+        this.clusteringThread = new Thread(clusteringThread);
+        this.clusteringThread.setName(ThreadType.CLUSTERING_THREAD.getThreadName());
+        this.clusteringThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+        this.clusteringThread.setDaemon(false);
+        this.clusteringThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
+        this.isImportRunningProperty.setValue(true);
+        this.updateStatusBar(this.clusteringThread, "Clustering");
+        this.clusteringThread.start();
+        System.out.println("test 2");
+       // System.out.println(this.clusteringResult[0] + "-------clustering result position 0");
+        return this.clusteringResult;
+
+        //this.clusteringResult = this.clusteringService.startClustering(aDataMatrix, tmpNumberOfClusteringTasks); // TODO number of tasks and dataMatrix ( for dataMatrix first calculate fingerprints)
+        //this.updateStatusBar(this.clusteringThread, "Clustering");
+
+
+
+        int tmpNumberOfClusteringTasks = this.settingsContainerClustering.getNumberOfTasksForFragmentationSetting();
+        this.clusteringMainTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                System.out.println("start clustering");
+                clusteringService.startClustering(aDataMatrix, tmpNumberOfClusteringTasks);
+                return null;
+            }
+        };
+
+        this.clusteringMainTask.setOnSucceeded(event -> {
+            clusteringMainTask.getValue();
+
+            // Weitere Aktionen mit tmpClusteringResult ausführen
+        });
+
+        this.clusteringMainTask.setOnCancelled(event -> {
+            System.out.println("Cancel");
+        });
+
+        this.clusteringMainTask.setOnFailed(event -> {
+            System.out.println("failed");
+        });
+
+        Thread clusteringThread = new Thread(clusteringMainTask);
+        clusteringThread.setName(ThreadType.CLUSTERING_THREAD.getThreadName());
+        clusteringThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+        clusteringThread.setDaemon(false);
+        clusteringThread.setPriority(Thread.currentThread().getPriority() - 2); // Magische Zahl
+
+        isImportRunningProperty.setValue(true);
+        updateStatusBar(clusteringThread, "Clustering");
+        clusteringThread.start();
+
+         */
+        int tmpNumberOfClusteringTasks = this.settingsContainerClustering.getNumberOfTasksForFragmentationSetting();
+        IArt2aClusteringResult[] result =  clusteringService.startClustering(aDataMatrix, tmpNumberOfClusteringTasks);
+      //  properties.add(this.clusteringService.getClusteringSettings());
+        // listProperty = this.clusteringService.getClusteringSettings();
+        // this.clusteringResult = this.clusteringService.getClusteringResults();
+        // this.clusteringMap.put(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName(), tmpClusteringResult);
+        this.clusteringMap.put(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(), result); // wichtig
+        IArt2aClusteringResult[] a = this.clusteringMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle());
+        //this.map.put(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(), );
+        System.out.println(this.map + "---------tab map");
+
     }
     private int[][] startFingerprinting() {
         List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS);
@@ -1338,15 +1459,29 @@ public class MainViewController {
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
+        properties.add(this.clusteringService.getClusteringSettings());
         tmpClusteringButton.setOnAction(event -> {
             try {
                 // TODO start fingerprinting
-                this.startFingerprinting();
-                this.startClustering(this.startFingerprinting());
-                System.out.println(this.clusteringResult[0].getVigilanceParameter() + "---------vigilance parameter");
-                System.out.println(this.clusteringResult[1].getVigilanceParameter() + "---------vigilance parameter");
-                this.openClusteringView();
+                String tmpTabName = ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle();
+                System.out.println(this.clusteringMap + "----------clustering map vor ");
+               // properties.add(this.clusteringService.getClusteringSettings());
+                System.out.println(properties + "---------meine propertiesliste");
+                if(this.clusteringMap.containsKey(tmpTabName) && !properties.contains(this.clusteringService.getClusteringSettings())) {
+                    System.out.println("einfach öffnen");
+                    System.out.println("hahahah");
+                    this.openClusteringView(this.clusteringMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle()));
+                } else {
+                    System.out.println("clustering result ist null"); // TODO clear cache this.clusteringResult if another molecule files is loading
+                    this.startFingerprinting();
+                    this.startClustering(this.startFingerprinting());
+                    openClusteringView(this.clusteringMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle()));
+                }
+                //this.openClusteringView();
+                System.out.println("open clustering view");
             } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -1519,6 +1654,8 @@ public class MainViewController {
                 return Message.get("Status.importing");
             case EXPORT_THREAD:
                 return Message.get("Status.exporting");
+            case CLUSTERING_THREAD:
+                return "Clustering";
             default:
                 return "Could not find message";
         }
@@ -1542,7 +1679,8 @@ public class MainViewController {
         /**
          * enum value for export thread
          */
-        EXPORT_THREAD("Export_Thread");
+        EXPORT_THREAD("Export_Thread"),
+        CLUSTERING_THREAD("Clustering_Thread");
 
         private String threadName;
 
