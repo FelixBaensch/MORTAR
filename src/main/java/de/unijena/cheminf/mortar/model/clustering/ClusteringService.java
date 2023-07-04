@@ -1,12 +1,9 @@
 package de.unijena.cheminf.mortar.model.clustering;
 
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClustering;
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.Fingerprints.FingerprinterService;
-import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;

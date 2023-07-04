@@ -49,6 +49,7 @@ dependencies {
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'mac'
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'linux-aarch64'
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'mac-aarch64'
+    implementation group: 'io.github.jonasschaub', name: 'ART2a-Clustering-for-Java', version: '1.0.1.0'
 }
 
 test {

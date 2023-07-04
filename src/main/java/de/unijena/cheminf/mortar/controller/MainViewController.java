@@ -20,8 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClustering;
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
@@ -90,6 +89,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -149,6 +149,10 @@ public class MainViewController {
      * TODO
      */
     private SettingsContainer settingsContainerFingerprinter;
+    /**
+     * TODO
+     */
+    private int[][] fingerprints;
     /**
      * FragmentationService
      */
@@ -282,12 +286,9 @@ public class MainViewController {
         this.fragmentationService = new FragmentationService(this.settingsContainer);
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
-        this.clusteringService = new ClusteringService(this.settingsContainerClustering);// TODO
+        this.clusteringService = new ClusteringService(this.settingsContainer);// TODO
         this.clusteringService.reloadClusteringSettings();
-        listProperty = this.clusteringService.getClusteringSettings();
-        System.out.println(listProperty + "---------listProperty");
-         properties =   new ArrayList<>();
-        this.fingerprinterService = new FingerprinterService(this.settingsContainerFingerprinter); // TODO
+        this.fingerprinterService = new FingerprinterService(this.settingsContainer); // TODO
         this.fingerprinterService.reloadFingerprinterSettings();
         this.viewToolsManager = new ViewToolsManager();
         this.viewToolsManager.reloadViewToolsSettings();
@@ -1192,6 +1193,7 @@ public class MainViewController {
      */
     private void startFragmentation() {
         this.startFragmentation(false);
+       // Hashtable<String, FragmentDataModel> a = this.fragmentationService.getFragments();
     }
     //
 
@@ -1249,6 +1251,7 @@ public class MainViewController {
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
+                        this.startFingerprinting();
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -1380,7 +1383,9 @@ public class MainViewController {
         for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
             tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
         }
-        return this.fingerprinterService.getFingerprints(moleculeDataModelList,tmpFragmentsList,((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+        this.fingerprints = this.fingerprinterService.getFingerprints(moleculeDataModelList, tmpFragmentsList, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+        this.fingerprinterService.setSize(tmpFragmentsList.size());
+        return this.fingerprints;
     }
 
 
@@ -1459,24 +1464,14 @@ public class MainViewController {
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
-        properties.add(this.clusteringService.getClusteringSettings());
+        listProperty  = this.clusteringService.getClusteringSettings();
         tmpClusteringButton.setOnAction(event -> {
             try {
                 // TODO start fingerprinting
                 String tmpTabName = ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle();
-                System.out.println(this.clusteringMap + "----------clustering map vor ");
                // properties.add(this.clusteringService.getClusteringSettings());
-                System.out.println(properties + "---------meine propertiesliste");
-                if(this.clusteringMap.containsKey(tmpTabName) && !properties.contains(this.clusteringService.getClusteringSettings())) {
-                    System.out.println("einfach öffnen");
-                    System.out.println("hahahah");
-                    this.openClusteringView(this.clusteringMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle()));
-                } else {
-                    System.out.println("clustering result ist null"); // TODO clear cache this.clusteringResult if another molecule files is loading
-                    this.startFingerprinting();
-                    this.startClustering(this.startFingerprinting());
-                    openClusteringView(this.clusteringMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle()));
-                }
+                this.startClustering(this.fingerprints);
+                openClusteringView(this.clusteringMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle()));
                 //this.openClusteringView();
                 System.out.println("open clustering view");
             } catch (InterruptedException e) {

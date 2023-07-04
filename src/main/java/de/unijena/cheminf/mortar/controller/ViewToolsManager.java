@@ -20,7 +20,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
@@ -135,7 +135,7 @@ public class ViewToolsManager {
      * @param aMainStage
      * @param aClusteringResults
      */
-    public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResults, List<MoleculeDataModel> aMoleculeDataModelList,OverviewViewController.DataSources aDataSource,
+    public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResults, List<MoleculeDataModel> aMoleculeDataModelList, OverviewViewController.DataSources aDataSource,
                                    String aTabName, ViewToolsManager manager) {
         this.clusteringViewController.openClusteringView(aMainStage, aClusteringResults, aMoleculeDataModelList,manager,aTabName, aDataSource);
     }

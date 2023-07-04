@@ -1,8 +1,8 @@
 package de.unijena.cheminf.mortar.model.clustering;
 
-import de.unijena.cheminf.art2aClustering.clustering.Art2aFloatClustering;
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClustering;
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
+import de.unijena.cheminf.clustering.art2a.Art2aClusteringTask;
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClustering;
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.fragmentFingerprinter.IFragmentFingerprinter;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
@@ -169,6 +169,7 @@ public class Art2aClusteringAlgorithm implements IFingerprintClustering {
         this.setSimilarityParameter(this.DEFAULT_SIMILARITY_PARAMETER);
         this.setMaximumNumberOfEpochs(this.DEFAULT_MAX_EPOCHS_NUMBER);
         this.setLearningParameter(this.DEFAULT_LEARNING_PARAMETER);
+        this.setSeedValue(this.DEFAULT_SEED_VALUE);
     }
 
     @Override
@@ -190,7 +191,7 @@ public class Art2aClusteringAlgorithm implements IFingerprintClustering {
         int tmpSeedValue = this.getSeedValue();
         String tmpClusteringName = aClusteringName;
         ExecutorService tmpExecutorService = Executors.newFixedThreadPool(aNumberOfTasks); // number of tasks // TODO
-        List<ClusteringTask> tmpClusteringTask = new LinkedList<>();
+        List<Art2aClusteringTask> tmpClusteringTask = new LinkedList<>();
         if(this.getMachinePrecision().equals(Art2aClusteringAlgorithm.PrecisionOption.FLOAT_MACHINE_PRECISION.name())) {
             float[][] tmpFloatDataMatrix = new float[aDataMatrix.length][aDataMatrix[0].length];
             for (int i = 0; i < aDataMatrix.length; i++) {
@@ -202,7 +203,7 @@ public class Art2aClusteringAlgorithm implements IFingerprintClustering {
                 }
             }
             for (float tmpVigilanceParameter = 0.1f; tmpVigilanceParameter < 1.0f; tmpVigilanceParameter += 0.1f) { //TODO vigilance Parameter
-                ClusteringTask tmpART2aFloatClusteringTask = new ClusteringTask(tmpVigilanceParameter,
+                Art2aClusteringTask tmpART2aFloatClusteringTask = new Art2aClusteringTask(tmpVigilanceParameter,
                         tmpFloatDataMatrix, tmpMaximumNumberOfEpochs, false,
                         (float) tmpSimilarityParameter, (float) tmpLearningParameter);
                 tmpART2aFloatClusteringTask.setSeed(tmpSeedValue);
@@ -219,8 +220,8 @@ public class Art2aClusteringAlgorithm implements IFingerprintClustering {
                     tmpDoubleDataMatrix[i][j] = tmpDoubleValue;
                 }
             }
-            for(double tmpVigilanceParameter = 0.1; tmpVigilanceParameter < 1.0; tmpVigilanceParameter += 0.1) {
-                ClusteringTask tmpART2aDoubleClusteringTask = new ClusteringTask(tmpVigilanceParameter,
+            for(double tmpVigilanceParameter = 0.1; tmpVigilanceParameter < 0.9; tmpVigilanceParameter += 0.1) {
+                Art2aClusteringTask tmpART2aDoubleClusteringTask = new Art2aClusteringTask(tmpVigilanceParameter,
                         tmpDoubleDataMatrix, tmpMaximumNumberOfEpochs, false,
                         tmpSimilarityParameter, tmpLearningParameter);
                 tmpART2aDoubleClusteringTask.setSeed(tmpSeedValue);

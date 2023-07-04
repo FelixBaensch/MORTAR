@@ -1,7 +1,6 @@
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClustering;
-import de.unijena.cheminf.art2aClustering.interfaces.IArt2aClusteringResult;
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.ClusteringView;
@@ -584,7 +583,6 @@ public class ClusteringViewController implements IViewToolController {
         ArrayList<ArrayList<Integer>> listOfListforRepresentatives = new ArrayList<>();
 
         for(IArt2aClusteringResult tmpClusteringResult : this.clusteringResult) {
-            System.out.println(tmpClusteringResult.getVigilanceParameter() + "----------vigilance parameter");
             tmpNumberOfDetectedClusters.add(tmpClusteringResult.getNumberOfDetectedClusters());
             tmpNumberOfEpochs.add(tmpClusteringResult.getNumberOfEpochs());
             ArrayList<int[]> tmpClusterIndices = new ArrayList<>();
@@ -592,7 +590,6 @@ public class ClusteringViewController implements IViewToolController {
             for(int i = 0; i < tmpClusteringResult.getNumberOfDetectedClusters(); i++) {
                 tmpClusterIndices.add(tmpClusteringResult.getClusterIndices(i));
                 tmpRepresentativesIndices.add(tmpClusteringResult.getClusterRepresentatives(i));
-                System.out.println(tmpClusteringResult.getClusterRepresentatives(i) + "---------------representanten");
                 //tmpClusterRepresentatives.add(tmpClusteringResult.getClusterRepresentatives(i));
             }
             listOfLists.add(tmpClusterIndices);
@@ -648,32 +645,17 @@ public class ClusteringViewController implements IViewToolController {
             }
         }
         System.out.println("vor der sortierung");
-        System.out.println(java.util.Arrays.toString(a.get(0)));
-        System.out.println(java.util.Arrays.toString(a.get(1)));
-        System.out.println(java.util.Arrays.toString(a.get(2)));
-        System.out.println(java.util.Arrays.toString(a.get(3)));
-        System.out.println(java.util.Arrays.toString(a.get(4)));
-        System.out.println(java.util.Arrays.toString(a.get(5)));
         HashMap<int[], Integer> map = new HashMap<>();
         for(int i = 0; i<a.size(); i++) {
             map.put(a.get(i),i);
         }
-        System.out.println(map +"----map");
         a.sort(Comparator.comparingInt(arr -> arr.length));
         Collections.reverse(a);
-        System.out.println("nach der Sortierung");
-        System.out.println(java.util.Arrays.toString(a.get(0)));
-        System.out.println(java.util.Arrays.toString(a.get(1)));
-        System.out.println(java.util.Arrays.toString(a.get(2)));
-        System.out.println(java.util.Arrays.toString(a.get(3)));
-        System.out.println(java.util.Arrays.toString(a.get(4)));
-        System.out.println(java.util.Arrays.toString(a.get(5)));
         representativesMoleculesDataModel= new ArrayList<>();
         XYChart.Series tmpSeries = new XYChart.Series();
         for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1  int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--  int i = 0; i<tmpNumberOfDetectedClusters.get(x); i++
             //int tmpClusterRepresentative = tmpRepresentatives.get(i);
             int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i)));
-            System.out.println(tmpRepresentatives +"----ricgtige repre");
             XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf("Cluster "+(i +1)));
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aClusteringView.getStructureDisplayImageView(),

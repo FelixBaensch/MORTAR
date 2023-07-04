@@ -13,7 +13,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
         this.settings.add(this.fingerprintTyp);
         this.settingNameTooltipTextMap.put(this.fingerprintTyp.getName(), Message.get("FragmentFingerprinterGenerator.fingerprintTyp.tooltip"));
         this.defaultFingerprintDimensionalityValue = 1; // TODO
-        this.fingerprintDimensionality = new SimpleIntegerProperty(this, "Fragment Fingerprint Dimensionality", this.defaultFingerprintDimensionalityValue) {
+        this.fingerprintDimensionality = new SimpleIntegerProperty(this, "Fragment Fingerprint Dimensionality") {
             @Override
             public void set(int newValue) {
                 super.set(newValue);
@@ -114,6 +113,26 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
 
     }
     public int[][] getFragmentFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
+        /*
+        int tmpMaximumDimensionalityNumber =  this.getFingerprintDimensionality();
+        System.out.println(tmpMaximumDimensionalityNumber + "-------dim 0");
+        if(tmpMaximumDimensionalityNumber == 1) {
+            tmpMaximumDimensionalityNumber = aFragmentDataModelList.size();
+        } else {
+           tmpMaximumDimensionalityNumber =  this.getFingerprintDimensionality();
+            System.out.println(this.getFingerprintDimensionality() + "---dimensionality ");
+        }
+        this.setFingerprintDimensionality(tmpMaximumDimensionalityNumber);
+        String tmpSortProperty = "absoluteFrequency";
+        CollectionUtil.sortGivenFragmentListByPropertyAndSortType( aFragmentDataModelList,tmpSortProperty, "DESCENDING");
+        List<FragmentDataModel> tmpSubList = aFragmentDataModelList.subList(0,tmpMaximumDimensionalityNumber);
+        System.out.println(tmpSubList.size() + "------sublist size ");
+        System.out.println("hallllooooooooo");
+        System.out.println(tmpSubList + "-------sublist");
+        for(FragmentDataModel test : tmpSubList){
+            System.out.println(test.getUniqueSmiles() + "--------uniques Smiles");
+        }
+        */
         int[][] tmpDataMatrix =  new int[aMoleculeDataModelList.size()][aFragmentDataModelList.size()];
         ArrayList<String> tmpKeyFragmentsToGenerateBitFingerprints = new ArrayList<>(aFragmentDataModelList.size());
         for(FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
