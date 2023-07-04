@@ -22,6 +22,8 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -476,8 +478,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         //</editor-fold>
         //Key: IndexProperty Value = IndexInt; Value: IAtom/IBond with IndexInt
-        HashMap<Integer, IAtom> tmpAtomHashMap = new HashMap<Integer, IAtom>(aMolecule.getAtomCount() + (int) (0.25f * aMolecule.getAtomCount()),0.75f);
-        HashMap<Integer, IBond> tmpBondHashMap = new HashMap<Integer, IBond>(aMolecule.getBondCount() + (int) (0.25f * aMolecule.getBondCount()), 0.75f);
+        int tmpInitialAtomCountForHashMap = aMolecule.getAtomCount();
+        int tmpInitialBondCountForHashMap = aMolecule.getBondCount();
+        int tmpInitialCapacityForAtomHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                tmpInitialAtomCountForHashMap,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        int tmpInitialCapacityForBondHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                tmpInitialBondCountForHashMap,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR
+        );
+        HashMap<Integer, IAtom> tmpAtomHashMap = new HashMap<>(tmpInitialAtomCountForHashMap, tmpInitialCapacityForAtomHashMap);
+        HashMap<Integer, IBond> tmpBondHashMap = new HashMap<>(tmpInitialBondCountForHashMap, tmpInitialCapacityForBondHashMap);
         //
         //<editor-fold desc="Set Property" defaultstate="collapsed">
         int tmpAlkylSFAtomIndexInt = 0;
@@ -486,14 +497,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         String tmpAlkylSFBondIndexProperty = "AlkylSFBondIndex";
         IAtomContainerSet tmpFragments = new AtomContainerSet();
         for (IAtom tmpAtom: aMolecule.atoms()) {
-            tmpAtom.setProperty(tmpAlkylSFAtomIndexProperty, tmpAlkylSFAtomIndexInt);
-            tmpAtomHashMap.put(tmpAlkylSFAtomIndexInt, tmpAtom);
-            tmpAlkylSFAtomIndexInt ++;
+            if (!(tmpAtom == null)) {
+                tmpAtom.setProperty(tmpAlkylSFAtomIndexProperty, tmpAlkylSFAtomIndexInt);
+                tmpAtomHashMap.put(tmpAlkylSFAtomIndexInt, tmpAtom);
+                tmpAlkylSFAtomIndexInt ++;
+            }
         }
         for (IBond tmpBond: aMolecule.bonds()) {
-            tmpBond.setProperty(tmpAlkylSFBondIndexProperty, tmpAlkylSFBondIndexInt);
-            tmpBondHashMap.put(tmpAlkylSFBondIndexInt, tmpBond);
-            tmpAlkylSFBondIndexInt ++;
+            if (!(tmpBond == null)) {
+                tmpBond.setProperty(tmpAlkylSFBondIndexProperty, tmpAlkylSFBondIndexInt);
+                tmpBondHashMap.put(tmpAlkylSFBondIndexInt, tmpBond);
+                tmpAlkylSFBondIndexInt ++;
+            }
         }
         IAtomContainer tmpClone = aMolecule.clone();
         //</editor-fold>
@@ -737,46 +752,99 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         //<editor-fold desc="Fragment Extraction" defaultstate="collapsed">
         try {
-            for (int i = 0; i <= tmpClone.getAtomCount(); i++) {
-                IAtomContainer tmpFragmentationContainer = new AtomContainer();
-                //atom extraction
-                for (IAtom tmpAtom: tmpClone.atoms()) {
-                    if (!tmpAtom.getFlag(CDKConstants.VISITED) && tmpAtom.getFlag(CDKConstants.ISPLACED)
-                            && (tmpAtom.getFlag(CDKConstants.ISINRING) || tmpAtom.getFlag(CDKConstants.ISCONJUGATED))) {
-                        tmpFragmentationContainer.addAtom(tmpAtom);
-                        tmpAtom.setFlag(CDKConstants.VISITED, true);
-                    } else if (!tmpAtom.getFlag(CDKConstants.VISITED)) {
-                        tmpFragmentationContainer.addAtom(tmpAtom);
-                        tmpAtom.setFlag(CDKConstants.VISITED, true);
-                    }
+            IAtomContainer tmpFragmentationContainer = new AtomContainer();
+            //atom extraction
+                //test
+            /*
+            tmpAtomHashMap.forEach((tmpInt, tmpAtom) -> {
+                if (!tmpAtom.getFlag(CDKConstants.VISITED) && tmpAtom.getFlag(CDKConstants.ISPLACED)
+                        && (tmpAtom.getFlag(CDKConstants.ISINRING) || tmpAtom.getFlag(CDKConstants.ISCONJUGATED))) {
+                    tmpFragmentationContainer.addAtom(tmpAtom);
+                    tmpAtom.setFlag(CDKConstants.VISITED, true);
                 }
-                //bond extraction
-                //ToDo
-                for (IBond tmpBond: tmpClone.bonds()) {
-                    if (!tmpBond.getFlag(CDKConstants.VISITED)) {
-                        if (tmpBond.getFlag(CDKConstants.ISPLACED)) {
-                            if (tmpBond.getFlag(CDKConstants.ISINRING) || tmpBond.getFlag(CDKConstants.ISCONJUGATED)) {
-                                tmpFragmentationContainer.addBond(tmpBond);
-                                tmpBond.setFlag(CDKConstants.VISITED, true);
-                            }
-                        } else {
+            });
+            */
+            for (Map.Entry<Integer, IAtom> entry : tmpAtomHashMap.entrySet()) {
+                Integer key = entry.getKey();
+                IAtom value = entry.getValue();
+                if (!value.getFlag(CDKConstants.VISITED) && value.getFlag(CDKConstants.ISPLACED)
+                        && (value.getFlag(CDKConstants.ISINRING) || value.getFlag(CDKConstants.ISCONJUGATED))) {
+                    tmpFragmentationContainer.addAtom(value);
+                    value.setFlag(CDKConstants.VISITED, true);
+                }
+            }
+
+            /*
+            Iterator<Map.Entry<Integer, IAtom>> tmpAtomHashMapIter = tmpAtomHashMap.entrySet().iterator();
+            System.out.println("atom hash iter extract");
+            while (tmpAtomHashMapIter.hasNext()) {
+                Map.Entry<Integer, IAtom> tmpEntry = tmpAtomHashMapIter.next();
+                IAtom tmpAtom = tmpEntry.getValue();
+                int tmpInt = tmpEntry.getKey();
+                System.out.println(tmpInt);
+                if (!tmpAtom.getFlag(CDKConstants.VISITED) && tmpAtom.getFlag(CDKConstants.ISPLACED)
+                        && (tmpAtom.getFlag(CDKConstants.ISINRING) || tmpAtom.getFlag(CDKConstants.ISCONJUGATED))) {
+                    tmpFragmentationContainer.addAtom(tmpAtom);
+                    tmpAtom.setFlag(CDKConstants.VISITED, true);
+                }
+            }
+            */
+                //test end
+            /*
+            for (IAtom tmpAtom: tmpClone.atoms()) {
+                if (!tmpAtom.getFlag(CDKConstants.VISITED) && tmpAtom.getFlag(CDKConstants.ISPLACED)
+                        && (tmpAtom.getFlag(CDKConstants.ISINRING) || tmpAtom.getFlag(CDKConstants.ISCONJUGATED))) {
+                    tmpFragmentationContainer.addAtom(tmpAtom);
+                    tmpAtom.setFlag(CDKConstants.VISITED, true);
+                } else if (!tmpAtom.getFlag(CDKConstants.VISITED)) {
+                    tmpFragmentationContainer.addAtom(tmpAtom);
+                    tmpAtom.setFlag(CDKConstants.VISITED, true);
+                }
+            }
+            */
+            //bond extraction
+            //ToDo
+            //test
+            Iterator<Map.Entry<Integer, IBond>> tmpBondHashMapIter = tmpBondHashMap.entrySet().iterator();
+            System.out.println("bond hash iter extract");
+            while (tmpBondHashMapIter.hasNext()) {
+                Map.Entry<Integer, IBond> tmpEntry = tmpBondHashMapIter.next();
+                IBond tmpBond = tmpEntry.getValue();
+                if (!tmpBond.getFlag(CDKConstants.VISITED) && tmpBond.getFlag(CDKConstants.ISPLACED)
+                        && (tmpBond.getFlag(CDKConstants.ISINRING) || tmpBond.getFlag(CDKConstants.ISCONJUGATED))) {
+                    tmpFragmentationContainer.addBond(tmpBond);
+                    tmpBond.setFlag(CDKConstants.VISITED, true);
+                }
+            }
+            //test end
+            /*
+            for (IBond tmpBond: tmpClone.bonds()) {
+                if (!tmpBond.getFlag(CDKConstants.VISITED)) {
+                    if (tmpBond.getFlag(CDKConstants.ISPLACED)) {
+                        if (tmpBond.getFlag(CDKConstants.ISINRING) || tmpBond.getFlag(CDKConstants.ISCONJUGATED)) {
                             tmpFragmentationContainer.addBond(tmpBond);
                             tmpBond.setFlag(CDKConstants.VISITED, true);
                         }
+                    } else {
+                        tmpFragmentationContainer.addBond(tmpBond);
+                        tmpBond.setFlag(CDKConstants.VISITED, true);
                     }
-                }
-                if (tmpFragmentationContainer.isEmpty()) {
-                    continue;
-                }
-                if (!ConnectivityChecker.isConnected(tmpFragmentationContainer)) {
-                    IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpFragmentationContainer);
-                    for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                        tmpFragments.addAtomContainer(tmpContainer);
-                    }
-                } else {
-                    tmpFragments.addAtomContainer(tmpFragmentationContainer);
                 }
             }
+
+            if (tmpFragmentationContainer.isEmpty()) {
+                continue;
+            }
+            if (!ConnectivityChecker.isConnected(tmpFragmentationContainer)) {
+                IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpFragmentationContainer);
+                for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
+                    tmpFragments.addAtomContainer(tmpContainer);
+                }
+            } else {
+                tmpFragments.addAtomContainer(tmpFragmentationContainer);
+            }
+            */
+
         } catch (Exception e) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Fragment Extraction failed");
             throw new RuntimeException(e);
