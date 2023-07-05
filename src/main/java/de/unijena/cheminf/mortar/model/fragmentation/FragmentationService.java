@@ -70,7 +70,7 @@ import java.util.logging.Logger;
  * Service class for fragmentation, single and in a pipeline.
  *
  * @author Jonas Schaub, Felix Baensch
- * @version 1.0.0.0
+ * @version 1.0.0.1
  */
 public class FragmentationService {
     //<editor-fold desc="public static final constants">
@@ -756,7 +756,7 @@ public class FragmentationService {
                         anException);
                 return;
             }
-            IMoleculeFragmenter[] tmpFragmenterArray = new IMoleculeFragmenter[tmpPipelineSize];
+            List<IMoleculeFragmenter> tmpFragmenterList = new ArrayList(tmpPipelineSize);
             for (int i = 0; i < tmpPipelineSize; i++) {
                 String tmpPath = tmpFragmentationServiceSettingsPath + FragmentationService.PIPELINE_FRAGMENTER_FILE_NAME_PREFIX + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
                 File tmpFragmenterFile = new File(tmpPath);
@@ -766,7 +766,7 @@ public class FragmentationService {
                         String tmpFragmenterClassName = tmpFragmenterSettingsContainer.getPreferences(FragmentationService.PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME)[0].getContentRepresentative();
                         IMoleculeFragmenter tmpFragmenter = this.createNewFragmenterObjectByAlgorithmName(tmpFragmenterClassName);
                         this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpFragmenterSettingsContainer);
-                        tmpFragmenterArray[i] = tmpFragmenter;
+                        tmpFragmenterList.add(tmpFragmenter);
                     } catch (Exception anException) {
                         FragmentationService.LOGGER.log(Level.WARNING, "FragmentationService settings reload failed: " + anException.toString(), anException);
                         GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -776,10 +776,12 @@ public class FragmentationService {
                         continue;
                     }
                 } else {
-                    FragmentationService.LOGGER.log(Level.WARNING, "Unable to reload pipeline fragmenter " + i + " : No respective file available.");
+                    FragmentationService.LOGGER.log(Level.WARNING, "Unable to reload pipeline fragmenter " + i
+                            + " : No respective file available. Will be skipped.");
                     continue;
                 }
             }
+            IMoleculeFragmenter[] tmpFragmenterArray = tmpFragmenterList.toArray(new IMoleculeFragmenter[tmpFragmenterList.size()]);
             this.setPipelineFragmenter(tmpFragmenterArray);
         } else {
             FragmentationService.LOGGER.log(Level.WARNING, "File containing persisted FragmentationService settings not found.");

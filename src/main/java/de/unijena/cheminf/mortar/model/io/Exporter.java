@@ -183,10 +183,10 @@ public class Exporter {
         try {
             if (this.file == null)
                 return null;
-            if (aTabName.equals(TabNames.Fragments)) {
+            if (aTabName.equals(TabNames.FRAGMENTS)) {
                 //can throw FileNotFoundException, gets handled in setOnFailed()
                 this.createFragmentationTabCsvFile(this.file, aMoleculeDataModelList, aSeparator);
-            } else if (aTabName.equals(TabNames.Itemization)) {
+            } else if (aTabName.equals(TabNames.ITEMIZATION)) {
                 //can throw FileNotFoundException, gets handled in setOnFailed()
                 this.createItemizationTabCsvFile(this.file, aMoleculeDataModelList, aFragmentationName, aSeparator);
             }
@@ -211,10 +211,10 @@ public class Exporter {
         try {
             if (this.file == null)
                 return null;
-            if (aTabName.equals(TabNames.Fragments)) {
+            if (aTabName.equals(TabNames.FRAGMENTS)) {
                 //throws FileNotFoundException, gets handled in setOnFailed()
                 return this.createFragmentationTabPdfFile(this.file, aFragmentDataModelList, aMoleculeDataModelList, aFragmentationName);
-            } else if (aTabName.equals(TabNames.Itemization)) {
+            } else if (aTabName.equals(TabNames.ITEMIZATION)) {
                 //throws FileNotFoundException, gets handled in setOnFailed()
                 return this.createItemizationTabPdfFile(this.file, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
             }

@@ -34,6 +34,7 @@ import java.util.List;
  */
 public final class CollectionUtil {
     //<editor-fold desc="public static methods" defaultstate="collapsed">
+    //TODO: check parameters, change params to enum values (and bools?), throw exceptions!
     /**
      * Sorts given list by property and sort type.
      *
@@ -41,7 +42,7 @@ public final class CollectionUtil {
      * @param aProperty String
      * @param aSortType String
      */
-    public static void sortGivenFragmentListByPropertyAndSortType(List<MoleculeDataModel> aList, String aProperty, String aSortType) {
+    public static void sortGivenFragmentListByPropertyAndSortType(List<? extends MoleculeDataModel> aList, String aProperty, String aSortType) {
         Collections.sort(aList, (m1, m2) -> {
             FragmentDataModel f1;
             FragmentDataModel f2;
@@ -126,7 +127,7 @@ public final class CollectionUtil {
      */
     public static int calculateInitialHashCollectionCapacity(int aNumberOfElements, float aLoadFactor)
             throws IllegalArgumentException {
-        if (aNumberOfElements <= 0) {
+        if (aNumberOfElements < 0) {
             throw new IllegalArgumentException("Number of elements needs to be higher than 0 but is " + aNumberOfElements);
         }
         if (aLoadFactor <= 0 || aLoadFactor > 1.0f) {

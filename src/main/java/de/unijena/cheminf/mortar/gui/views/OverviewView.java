@@ -20,6 +20,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.controller.OverviewViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -50,7 +51,12 @@ import java.util.Objects;
  * @version 1.0.0.0
  */
 public class OverviewView extends AnchorPane {
-
+    //<editor-fold desc="public static final class constants", defaultstate="collapsed">
+    /**
+     * Width of columns and rows per page label of the overview view
+     */
+    public static final double OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH = 10.0;
+    //</editor-fold>
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Grid pane used to style the view.
@@ -171,16 +177,16 @@ public class OverviewView extends AnchorPane {
         this.structureGridPane.setStyle(
                 "-fx-background-color: LIGHTGREY; " +
                 "-fx-border-color: LIGHTGREY; " +
-                "-fx-border-width: " +
-                        + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                "-fx-border-width: "
+                        + (OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px "
                         + (GuiDefinitions.GUI_INSETS_VALUE
-                                - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
-                        + (GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px " +
+                                - OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px "
+                        + (OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px "
                         + (GuiDefinitions.GUI_INSETS_VALUE
-                                - GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px; " +
+                                - OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2) + "px; " +
                 "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " +
-                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
-                        GuiDefinitions.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
+                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
+                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
         );
         this.configureStructureGridPane(aColumnsPerPage, aRowsPerPage);
         //
@@ -198,9 +204,9 @@ public class OverviewView extends AnchorPane {
         //
         //labels and text fields for columns and rows per page
         Label tmpColumnsPerPageLabel = new Label(Message.get("OverviewView.columnsPerPageLabel.text"));
-        tmpColumnsPerPageLabel.setMinWidth(GuiDefinitions.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
-        tmpColumnsPerPageLabel.setPrefWidth(GuiDefinitions.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
-        tmpColumnsPerPageLabel.setMaxWidth(GuiDefinitions.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
+        tmpColumnsPerPageLabel.setMinWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
+        tmpColumnsPerPageLabel.setPrefWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
+        tmpColumnsPerPageLabel.setMaxWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
         tmpColumnsPerPageLabel.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpColumnsPerPageLabel.setAlignment(Pos.CENTER_LEFT);
         Tooltip tmpColumnsPerPageTooltip = new Tooltip(Message.get("OverviewView.columnsPerPageLabel.tooltip"));
@@ -215,9 +221,9 @@ public class OverviewView extends AnchorPane {
                 aColumnsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
         this.columnsPerPageTextField.setTooltip(tmpColumnsPerPageTooltip);
         Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
-        tmpRowsPerPageLabel.setMinWidth(GuiDefinitions.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
-        tmpRowsPerPageLabel.setPrefWidth(GuiDefinitions.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
-        tmpRowsPerPageLabel.setMaxWidth(GuiDefinitions.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
+        tmpRowsPerPageLabel.setMinWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
+        tmpRowsPerPageLabel.setPrefWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
+        tmpRowsPerPageLabel.setMaxWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
         tmpRowsPerPageLabel.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpRowsPerPageLabel.setAlignment(Pos.CENTER_LEFT);
         Tooltip tmpRowsPerPageTooltip = new Tooltip(Message.get("OverviewView.rowsPerPageLabel.tooltip"));
@@ -465,5 +471,4 @@ public class OverviewView extends AnchorPane {
         return this.imageDimensionsBelowLimitVBox;
     }
     //</editor-fold>
-
 }
