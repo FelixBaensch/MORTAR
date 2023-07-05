@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
@@ -489,6 +490,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         );
         HashMap<Integer, IAtom> tmpAtomHashMap = new HashMap<>(tmpInitialAtomCountForHashMap, tmpInitialCapacityForAtomHashMap);
         HashMap<Integer, IBond> tmpBondHashMap = new HashMap<>(tmpInitialBondCountForHashMap, tmpInitialCapacityForBondHashMap);
+
+        IAtom[] tmpAtomArray = new IAtom[aMolecule.getAtomCount()];
+        IBond[] tmpBondArray = new IBond[aMolecule.getBondCount()];
         //
         //<editor-fold desc="Set Property" defaultstate="collapsed">
         int tmpAlkylSFAtomIndexInt = 0;
@@ -499,6 +503,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         for (IAtom tmpAtom: aMolecule.atoms()) {
             if (!(tmpAtom == null)) {
                 tmpAtom.setProperty(tmpAlkylSFAtomIndexProperty, tmpAlkylSFAtomIndexInt);
+                tmpAtomArray[tmpAlkylSFAtomIndexInt] = tmpAtom;
                 tmpAtomHashMap.put(tmpAlkylSFAtomIndexInt, tmpAtom);
                 tmpAlkylSFAtomIndexInt ++;
             }
@@ -506,6 +511,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         for (IBond tmpBond: aMolecule.bonds()) {
             if (!(tmpBond == null)) {
                 tmpBond.setProperty(tmpAlkylSFBondIndexProperty, tmpAlkylSFBondIndexInt);
+                tmpBondArray[tmpAlkylSFBondIndexInt] = tmpBond;
                 tmpBondHashMap.put(tmpAlkylSFBondIndexInt, tmpBond);
                 tmpAlkylSFBondIndexInt ++;
             }
@@ -537,7 +543,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         } else {
                             tmpAtomHashMap.get(tmpFusedAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISINRING,true);
                             tmpAtomHashMap.get(tmpFusedAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISPLACED,true);
-
+                            int tmpAtomInteger = tmpFusedAtom.getProperty(tmpAlkylSFAtomIndexProperty);
+                            tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISINRING,true);
+                            tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,true);
                         }
 
                     }
@@ -552,6 +560,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         } else {
                             tmpBondHashMap.get(tmpFusedBond.getProperty(tmpAlkylSFBondIndexProperty)).setFlag(CDKConstants.ISINRING,true);
                             tmpBondHashMap.get(tmpFusedBond.getProperty(tmpAlkylSFBondIndexProperty)).setFlag(CDKConstants.ISPLACED,true);
+                            int tmpBondInteger = tmpFusedBond.getProperty(tmpAlkylSFBondIndexProperty);
+                            tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISINRING,true);
+                            tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED,true);
                         }
                     }
                 }
@@ -634,6 +645,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     } else {
                         tmpAtomHashMap.get(tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISCONJUGATED, true);
                         tmpAtomHashMap.get(tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISPLACED, true);
+                        int tmpAtomInteger = tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty);
+                        tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISCONJUGATED,true);
+                        tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,true);
                     }
                 }
                 for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
@@ -648,9 +662,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     } else {
                         tmpBondHashMap.get(tmpConjBond.getProperty(tmpAlkylSFBondIndexProperty)).setFlag(CDKConstants.ISCONJUGATED,true);
                         tmpBondHashMap.get(tmpConjBond.getProperty(tmpAlkylSFBondIndexProperty)).setFlag(CDKConstants.ISPLACED,true);
-
+                        int tmpBondInteger = tmpConjBond.getProperty(tmpAlkylSFBondIndexProperty);
+                        tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISCONJUGATED,true);
+                        tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED,true);
                     }
-
                 }
             }
 
@@ -678,8 +693,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
             for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
                 for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
-
-
                     if (tmpPerfomanceTestBool) {
                         for (IAtom tmpCloneAtom: tmpClone.atoms()) {
                             if (tmpSingleRingAtom.getProperty(tmpAlkylSFAtomIndexProperty).equals(tmpCloneAtom.getProperty(tmpAlkylSFAtomIndexProperty))) {
@@ -690,6 +703,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     } else {
                         tmpAtomHashMap.get(tmpSingleRingAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISINRING,true);
                         tmpAtomHashMap.get(tmpSingleRingAtom.getProperty(tmpAlkylSFAtomIndexProperty)).setFlag(CDKConstants.ISPLACED,true);
+                        int tmpAtomInteger = tmpSingleRingAtom.getProperty(tmpAlkylSFAtomIndexProperty);
+                        tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISINRING,true);
+                        tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,true);
                     }
 
                 }
@@ -705,6 +721,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     } else {
                         tmpBondHashMap.get(tmpSingleRingBond.getProperty(tmpAlkylSFBondIndexProperty)).setFlag(CDKConstants.ISINRING,true);
                         tmpBondHashMap.get(tmpSingleRingBond.getProperty(tmpAlkylSFBondIndexProperty)).setFlag(CDKConstants.ISPLACED,true);
+                        int tmpBondInteger = tmpSingleRingBond.getProperty(tmpAlkylSFBondIndexProperty);
+                        tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISINRING,true);
+                        tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED,true);
                     }
 
                 }
@@ -755,40 +774,47 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             IAtomContainer tmpFragmentationContainer = new AtomContainer();
             //atom extraction
                 //test
+            for (int i = 0; i == tmpAtomArray.length; i++) {
+                IAtom tmpAtom = tmpAtomArray[i];
+                if (tmpAtom.getFlag(CDKConstants.ISPLACED)){
+                    tmpFragmentationContainer.addAtom(tmpAtom);
+                }
+            }
             /*
-            tmpAtomHashMap.forEach((tmpInt, tmpAtom) -> {
+            System.out.println(tmpAtomHashMap.get(0).getProperty(tmpAlkylSFAtomIndexProperty).toString());
+            tmpFragmentationContainer.addAtom(tmpAtomHashMap.get(0));
+            for (Map.Entry<Integer, IAtom> entry : tmpAtomHashMap.entrySet()) {
+                Integer key = entry.getKey();
+                //IAtom tmpAtom = entry.getValue();
+                IAtom tmpAtom = tmpAtomHashMap.get(key);
+                tmpFragmentationContainer.addAtom(tmpAtom);
+                System.out.println("atom extract");
+
                 if (!tmpAtom.getFlag(CDKConstants.VISITED) && tmpAtom.getFlag(CDKConstants.ISPLACED)
                         && (tmpAtom.getFlag(CDKConstants.ISINRING) || tmpAtom.getFlag(CDKConstants.ISCONJUGATED))) {
                     tmpFragmentationContainer.addAtom(tmpAtom);
+
                     tmpAtom.setFlag(CDKConstants.VISITED, true);
                 }
-            });
-            */
-            for (Map.Entry<Integer, IAtom> entry : tmpAtomHashMap.entrySet()) {
-                Integer key = entry.getKey();
-                IAtom value = entry.getValue();
-                if (!value.getFlag(CDKConstants.VISITED) && value.getFlag(CDKConstants.ISPLACED)
-                        && (value.getFlag(CDKConstants.ISINRING) || value.getFlag(CDKConstants.ISCONJUGATED))) {
-                    tmpFragmentationContainer.addAtom(value);
-                    value.setFlag(CDKConstants.VISITED, true);
-                }
+
             }
+            */
 
             /*
             Iterator<Map.Entry<Integer, IAtom>> tmpAtomHashMapIter = tmpAtomHashMap.entrySet().iterator();
-            System.out.println("atom hash iter extract");
             while (tmpAtomHashMapIter.hasNext()) {
                 Map.Entry<Integer, IAtom> tmpEntry = tmpAtomHashMapIter.next();
                 IAtom tmpAtom = tmpEntry.getValue();
                 int tmpInt = tmpEntry.getKey();
-                System.out.println(tmpInt);
                 if (!tmpAtom.getFlag(CDKConstants.VISITED) && tmpAtom.getFlag(CDKConstants.ISPLACED)
                         && (tmpAtom.getFlag(CDKConstants.ISINRING) || tmpAtom.getFlag(CDKConstants.ISCONJUGATED))) {
                     tmpFragmentationContainer.addAtom(tmpAtom);
+                    System.out.println("atom extract");
                     tmpAtom.setFlag(CDKConstants.VISITED, true);
                 }
             }
             */
+
                 //test end
             /*
             for (IAtom tmpAtom: tmpClone.atoms()) {
@@ -805,17 +831,35 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //bond extraction
             //ToDo
             //test
+            for (int i = 0; i == tmpBondArray.length; i++) {
+                IBond tmpBond = tmpBondArray[i];
+                if (tmpBond.getFlag(CDKConstants.ISPLACED)){
+                    tmpFragmentationContainer.addBond(tmpBond);
+                }
+            }
+            /*
+            for (Map.Entry<Integer, IBond> entry : tmpBondHashMap.entrySet()) {
+                Integer key = entry.getKey();
+                //IBond tmpBond = entry.getValue();
+                IBond tmpBond = tmpBondHashMap.get(key);
+                tmpFragmentationContainer.addBond(tmpBond);
+                System.out.println("bond hash extract");
+            }
+            */
+
+            /*
             Iterator<Map.Entry<Integer, IBond>> tmpBondHashMapIter = tmpBondHashMap.entrySet().iterator();
-            System.out.println("bond hash iter extract");
             while (tmpBondHashMapIter.hasNext()) {
                 Map.Entry<Integer, IBond> tmpEntry = tmpBondHashMapIter.next();
                 IBond tmpBond = tmpEntry.getValue();
                 if (!tmpBond.getFlag(CDKConstants.VISITED) && tmpBond.getFlag(CDKConstants.ISPLACED)
                         && (tmpBond.getFlag(CDKConstants.ISINRING) || tmpBond.getFlag(CDKConstants.ISCONJUGATED))) {
                     tmpFragmentationContainer.addBond(tmpBond);
+                    System.out.println("bond extract");
                     tmpBond.setFlag(CDKConstants.VISITED, true);
                 }
             }
+            */
             //test end
             /*
             for (IBond tmpBond: tmpClone.bonds()) {
@@ -831,19 +875,23 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
             }
-
-            if (tmpFragmentationContainer.isEmpty()) {
-                continue;
-            }
-            if (!ConnectivityChecker.isConnected(tmpFragmentationContainer)) {
-                IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpFragmentationContainer);
-                for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                    tmpFragments.addAtomContainer(tmpContainer);
-                }
-            } else {
-                tmpFragments.addAtomContainer(tmpFragmentationContainer);
-            }
             */
+            try {
+                if (!tmpFragmentationContainer.isEmpty()) {
+                    if (!ConnectivityChecker.isConnected(tmpFragmentationContainer)) {
+                        IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpFragmentationContainer);
+                        for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
+                            tmpFragments.addAtomContainer(tmpContainer);
+                        }
+                    } else {
+                        tmpFragments.addAtomContainer(tmpFragmentationContainer);
+                    }
+                }
+            } catch (Exception e) {
+                AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Connectivity Checking failed");
+                throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + e.toString() + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+            }
+
 
         } catch (Exception e) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Fragment Extraction failed");
