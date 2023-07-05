@@ -127,7 +127,7 @@ public final class CollectionUtil {
      */
     public static int calculateInitialHashCollectionCapacity(int aNumberOfElements, float aLoadFactor)
             throws IllegalArgumentException {
-        if (aNumberOfElements <= 0) {
+        if (aNumberOfElements < 0) {
             throw new IllegalArgumentException("Number of elements needs to be higher than 0 but is " + aNumberOfElements);
         }
         if (aLoadFactor <= 0 || aLoadFactor > 1.0f) {
