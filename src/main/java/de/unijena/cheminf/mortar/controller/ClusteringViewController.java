@@ -33,6 +33,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -258,6 +259,7 @@ public class ClusteringViewController implements IViewToolController {
     private Scene histogramScene;
     private IArt2aClusteringResult[] clusteringResult;
     private OverviewViewController.DataSources dataSources;
+    private ToggleButton lastSelectedButton = null;
     private ViewToolsManager manager;
     /**
      * Width of molecule depictions displayed when the cursor hovers over a bar. Changes when histogram is resized.
@@ -279,6 +281,7 @@ public class ClusteringViewController implements IViewToolController {
      * X-axis of the histogram
      */
     private NumberAxis numberAxis;
+    ArrayList<int[]> a;
     /**
      *
      */
@@ -289,6 +292,7 @@ public class ClusteringViewController implements IViewToolController {
      */
     private BarChart histogramChart;
     private String name;
+    private String name1;
     private IViewToolController[] viewToolController;
     /**
      * Atom container to depict the respective structure when the cursor hovers over a bar
@@ -390,7 +394,7 @@ public class ClusteringViewController implements IViewToolController {
     }
 
     public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResult, List<MoleculeDataModel> aMoleculeDataModel,
-                                   ViewToolsManager aManager, String name, OverviewViewController.DataSources dataSources ) throws NullPointerException {
+                                   ViewToolsManager aManager, String name, String name1, OverviewViewController.DataSources dataSources ) throws NullPointerException {
         //<editor-fold desc="Checks" defaultstate="collapsed">
         Objects.requireNonNull(aMainStage, "Main stage is null.");
         //</editor-fold>
@@ -406,6 +410,7 @@ public class ClusteringViewController implements IViewToolController {
         this.moleculeDataModel = aMoleculeDataModel;
         this.manager = aManager;
         this.name = name;
+        this.name1 = name1;
         this.dataSources = dataSources;
         this.histogramStage = new Stage();
         this.histogramStage.initModality(Modality.WINDOW_MODAL);
@@ -450,12 +455,13 @@ public class ClusteringViewController implements IViewToolController {
 
          */
         //note: settings are updated for persistence in the listeners on the checkboxes added below
-        ArrayList<Button> tmpVigilanceParameterButtons= this.clusteringView.getButtons();
+        ArrayList<ToggleButton> tmpVigilanceParameterButtons= this.clusteringView.getButtons();
         int i = 0;
-        for(Button tmpButton : tmpVigilanceParameterButtons) {
+        for(ToggleButton tmpButton : tmpVigilanceParameterButtons) {
             tmpButton.setText(String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters()));
             i++;
         }
+        tmpVigilanceParameterButtons.get(0).setSelected(true);
         this.clusteringView.getDisplayBarLabelsCheckBox().setSelected(this.displayBarLabelsSetting.get());
         this.clusteringView.getDisplayBarShadowsCheckBox().setSelected(this.displayBarShadowsSetting.get());
         this.clusteringView.getDisplayGridLinesCheckBox().setSelected(this.displayGridLinesSetting.get());
@@ -596,7 +602,7 @@ public class ClusteringViewController implements IViewToolController {
             listOfListforRepresentatives.add(tmpRepresentativesIndices); // Alle clusterrepresentanten eines vigiliance parameter sind in einer Liste gespeichert, wobei dieses Liste in einer übergeordneten liste gespeichert ist
         }
 
-        ArrayList<int[]> a = listOfLists.get(x); // TODO 0 ersetzen durch ein Button property INFO a sollte alle Clusterindices von allen für den gegebenen vigilance parameter entstandene cluster
+         a = listOfLists.get(x); // TODO 0 ersetzen durch ein Button property INFO a sollte alle Clusterindices von allen für den gegebenen vigilance parameter entstandene cluster
         ArrayList<Integer> tmpRepresentatives = listOfListforRepresentatives.get(x);
         System.out.println(tmpRepresentatives +"------rep");
         int maxLength = 0;
@@ -649,17 +655,28 @@ public class ClusteringViewController implements IViewToolController {
         for(int i = 0; i<a.size(); i++) {
             map.put(a.get(i),i);
         }
+        System.out.println(map + "--------map");
+
+        /*
         a.sort(Comparator.comparingInt(arr -> arr.length));
         Collections.reverse(a);
+
+         */
+
+
         representativesMoleculesDataModel= new ArrayList<>();
         XYChart.Series tmpSeries = new XYChart.Series();
         for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1  int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--  int i = 0; i<tmpNumberOfDetectedClusters.get(x); i++
-            //int tmpClusterRepresentative = tmpRepresentatives.get(i);
-            int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i)));
-            XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf("Cluster "+(i +1)));
+            int tmpClusterRepresentative = tmpRepresentatives.get(i); // dont sort
+            //int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i))); // sort
+            System.out.println(map.get(a.get(i)) +"------------ map value");
+            System.out.println(tmpRepresentatives.get(map.get(a.get(i))) +"--------rep indices");
+            int t = map.get(a.get(i));
+           // XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf("Cluster "+(t+1))); // sort
+            XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1)); // dont sort
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aClusteringView.getStructureDisplayImageView(),
-                    tmpClusterRepresentative);
+                    tmpClusterRepresentative, a.get(i));
             tmpHistogramBarStackPane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);
             this.addFrequencyBarLabelToBarAndAddListenersToBarCheckBoxes(
                     aBarLabelCheckBox,
@@ -698,7 +715,7 @@ public class ClusteringViewController implements IViewToolController {
         }
         return tmpXAxisExtensionValue;
     }
-    private StackPane createStackPaneWithContextMenuAndStructureDisplayForBar(ImageView anImageView, int representatives) {
+    private StackPane createStackPaneWithContextMenuAndStructureDisplayForBar(ImageView anImageView, int representatives, int[] molecules) {
         StackPane tmpNodePane = new StackPane();
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT);
         MenuItem tmpCopyStructureMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemStructure.text"));
@@ -743,8 +760,23 @@ public class ClusteringViewController implements IViewToolController {
         EventHandler<ContextMenuEvent> tmpContextMenuEventHandler = event -> {
             tmpContextMenu.show(tmpNodePane, event.getScreenX(), event.getScreenY());
         };
+        EventHandler<MouseEvent> tmpMouseClickedOnBarEventHandler = event -> {
+            if(event.getClickCount() == 2) {
+                System.out.println("Doppelcklick");
+                List<MoleculeDataModel> clusterMolecules = new ArrayList<>();
+            for(int test :  molecules) {
+                System.out.println(test + "--------test");
+                clusterMolecules.add(this.moleculeDataModel.get(test));
+
+            }
+               System.out.println(clusterMolecules + "----------cluster molecules");
+                this.manager.openOverviewView(this.mainStage, this.dataSources, this.name1, clusterMolecules);
+           }
+
+        };
         tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, tmpMouseHoverEventHandler);
         tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, tmpContextMenuEventHandler);
+        tmpNodePane.addEventHandler(MouseEvent.MOUSE_CLICKED,tmpMouseClickedOnBarEventHandler);
         // Listener ContextMenuItems
         tmpCopyStructureMenuItem.setOnAction(event -> {
             ClipboardContent tmpStructureClipboardContent = new ClipboardContent();
@@ -854,7 +886,7 @@ public class ClusteringViewController implements IViewToolController {
             updateHistogramChart(getBarWidthOptionEnumConstantFromDisplayName((String) this.clusteringView.getBarWidthsComboBox().getValue()), xValue);
         });
         this.clusteringView.getClusterRepresentativesButton().setOnAction(event -> {
-            this.manager.openOverviewView(this.mainStage,this.dataSources, this.name, this.representativesMoleculesDataModel);
+           this.manager.openOverviewView(this.mainStage,this.dataSources, this.name, this.representativesMoleculesDataModel);
 
         });
         this.clusteringView.getCloseButton().setOnAction(event -> {
@@ -913,5 +945,22 @@ public class ClusteringViewController implements IViewToolController {
         this.histogramChart = null;
         this.atomContainerForDisplayCache = null;
     }
+    private void handleToggleButtonSelection(ToggleButton button) {
+        if (button.isSelected()) {
+            // Stilklasse des ausgewählten Buttons aktualisieren
+            button.getStyleClass().add("selected-button");
 
+            // Stilklasse des vorherigen Buttons entfernen
+            if (lastSelectedButton != null && lastSelectedButton != button) {
+                lastSelectedButton.getStyleClass().remove("selected-button");
+            }
+
+            // Den aktuellen Button als zuletzt ausgewählten Button festlegen
+            lastSelectedButton = button;
+        } else {
+            // Stilklasse entfernen, wenn der Button abgewählt wird
+            button.getStyleClass().remove("selected-button");
+            lastSelectedButton = null;
+        }
+    }
 }

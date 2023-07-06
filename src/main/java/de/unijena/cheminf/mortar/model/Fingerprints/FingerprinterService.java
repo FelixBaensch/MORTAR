@@ -176,5 +176,6 @@ public class FingerprinterService {
     }
     public void setSize(int aNumber) {
         this.fragmentFingerprinterGenerator.setFingerprintDimensionality(aNumber);
+       // this.fragmentFingerprinterGenerator.setFingerprintDimensionality(aNumber);
     }
 }

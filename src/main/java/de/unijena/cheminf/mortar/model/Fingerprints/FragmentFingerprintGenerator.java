@@ -113,16 +113,13 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
 
     }
     public int[][] getFragmentFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
-        /*
-        int tmpMaximumDimensionalityNumber =  this.getFingerprintDimensionality();
-        System.out.println(tmpMaximumDimensionalityNumber + "-------dim 0");
-        if(tmpMaximumDimensionalityNumber == 1) {
-            tmpMaximumDimensionalityNumber = aFragmentDataModelList.size();
+        int tmpMaximumDimensionalityNumber = getFingerprintDimensionality();
+        if(tmpMaximumDimensionalityNumber == aFragmentDataModelList.size()) {
+            System.out.println("size full");
         } else {
-           tmpMaximumDimensionalityNumber =  this.getFingerprintDimensionality();
-            System.out.println(this.getFingerprintDimensionality() + "---dimensionality ");
+            System.out.println("nicht full");
         }
-        this.setFingerprintDimensionality(tmpMaximumDimensionalityNumber);
+       // this.setFingerprintDimensionality(tmpMaximumDimensionalityNumber);
         String tmpSortProperty = "absoluteFrequency";
         CollectionUtil.sortGivenFragmentListByPropertyAndSortType( aFragmentDataModelList,tmpSortProperty, "DESCENDING");
         List<FragmentDataModel> tmpSubList = aFragmentDataModelList.subList(0,tmpMaximumDimensionalityNumber);
@@ -132,10 +129,9 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
         for(FragmentDataModel test : tmpSubList){
             System.out.println(test.getUniqueSmiles() + "--------uniques Smiles");
         }
-        */
-        int[][] tmpDataMatrix =  new int[aMoleculeDataModelList.size()][aFragmentDataModelList.size()];
-        ArrayList<String> tmpKeyFragmentsToGenerateBitFingerprints = new ArrayList<>(aFragmentDataModelList.size());
-        for(FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+        int[][] tmpDataMatrix =  new int[aMoleculeDataModelList.size()][tmpSubList.size()];
+        ArrayList<String> tmpKeyFragmentsToGenerateBitFingerprints = new ArrayList<>(tmpSubList.size());
+        for(FragmentDataModel tmpFragmentDataModel : tmpSubList) {
             tmpKeyFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
         }
         FragmentFingerprinter tmpFragmentFingerprinter = new FragmentFingerprinter(tmpKeyFragmentsToGenerateBitFingerprints);
@@ -149,9 +145,12 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
             for(FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
                 tmpMoleculeFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
             }
+            tmpFragmentFingerprinter.getBitFingerprint(tmpMoleculeFragmentsToGenerateBitFingerprints);
             tmpDataMatrix[tmpIterator] = tmpFragmentFingerprinter.getBitArray(tmpMoleculeFragmentsToGenerateBitFingerprints);
             tmpIterator++;
         }
+        System.out.println(java.util.Arrays.toString(tmpDataMatrix[39]));
+        System.out.println(tmpDataMatrix[39].length +"-------length 39");
         return tmpDataMatrix;
     }
 }

@@ -111,6 +111,10 @@ public class OverviewViewController implements IViewToolController {
          */
         ITEM_WITH_FRAGMENTS_SAMPLE,
         /**
+         * Enum value for parent molecules in clustering view as data source.
+         */
+        CLUSTERING_VIEW,
+        /**
          * Enum value for any other data source.
          */
         ANY;
@@ -393,6 +397,12 @@ public class OverviewViewController implements IViewToolController {
                                 ? "OverviewView.titleOfView.molecule" : "OverviewView.titleOfView.fragment")
                                 + (aMoleculeDataModelList.size() != 1 ? "s" : ""));
                 this.withShowInMainViewOption = true;
+            }
+            case CLUSTERING_VIEW -> {
+                this.overviewViewTitle =  aTabName + " - " + Message.get("OverviewView.nameOfView") +
+                        " - " + aMoleculeDataModelList.size() + " " + "Molecules";
+                this.withShowInMainViewOption = true;
+
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
