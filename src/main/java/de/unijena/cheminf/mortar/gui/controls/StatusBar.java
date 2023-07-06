@@ -20,13 +20,14 @@
 
 package de.unijena.cheminf.mortar.gui.controls;
 
+import static de.unijena.cheminf.mortar.gui.util.GuiDefinitions.GUI_STATUSBAR_HEIGHT_VALUE;
+
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.FlowPane;
-
-import static de.unijena.cheminf.mortar.gui.util.GuiDefinitions.GUI_STATUSBAR_HEIGHT_VALUE;
 
 /**
  * StatusBar to show status of the application and progress of a running task
@@ -83,4 +84,3 @@ public class StatusBar extends FlowPane {
     }
     //</editor-fold>
 }
-

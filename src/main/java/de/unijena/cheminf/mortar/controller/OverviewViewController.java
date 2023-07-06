@@ -33,6 +33,7 @@ import de.unijena.cheminf.mortar.gui.views.OverviewView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -70,6 +71,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
 import org.openscience.cdk.exception.CDKException;
 
 import java.io.InputStream;

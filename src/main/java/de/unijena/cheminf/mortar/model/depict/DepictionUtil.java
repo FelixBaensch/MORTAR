@@ -21,11 +21,13 @@
 package de.unijena.cheminf.mortar.model.depict;
 
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import javafx.embed.swing.SwingFXUtils;
 
 import java.awt.Color;
 import java.awt.Font;

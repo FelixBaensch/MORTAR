@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
+
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

@@ -127,6 +127,9 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", 
 * LibrePDF OpenPDF version 1.3.26
   * [OpenPDF GitHub repository](https://github.com/LibrePDF/OpenPDF)
   * License: GNU Lesser General Public License 2.1
+* Spotless version 6.19
+  * [Spotless GitHub repository](https://github.com/diffplug/spotless)
+  * License: Apache-2.0 license
 
 ## Citation
 You can cite this software or this repository as it is defined in the CITATION.cff file. Also, please cite our scientific 

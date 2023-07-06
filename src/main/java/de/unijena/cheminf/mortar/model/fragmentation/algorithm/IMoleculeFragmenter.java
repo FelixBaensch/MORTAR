@@ -22,12 +22,14 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 /**
  * TODO:
- * - 
+ * -
  */
 
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+
 import javafx.beans.property.Property;
+
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.List;

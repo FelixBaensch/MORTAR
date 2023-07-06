@@ -25,8 +25,10 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.ChemFile;

@@ -24,8 +24,8 @@ import de.unijena.cheminf.mortar.controller.HistogramViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
 
-import javafx.geometry.Pos;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;

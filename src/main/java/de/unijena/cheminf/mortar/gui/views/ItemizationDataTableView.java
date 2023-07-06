@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;

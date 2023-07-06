@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas-schaub@uni-jena.de)
+ * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -26,8 +26,10 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.scaffoldGenerator.ScaffoldGenerator;
+
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
+
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.graph.CycleFinder;
@@ -258,7 +260,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * A cycle finder instance for construction of the aromaticity model.
      */
     private CycleFinder cycleFinderInstance;
-    
+
     /**
      * A cycle finder instance for construction of the aromaticity model.
      */
@@ -748,7 +750,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public SideChainOption getSideChainSettingConstant() {
         return SideChainOption.valueOf(this.sideChainSetting.get());
     }
-    
+
     /**
      * Returns the string representation of the currently set option for the fragmentation type.
      *
@@ -1246,4 +1248,3 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
     //</editor-fold>
 }
-

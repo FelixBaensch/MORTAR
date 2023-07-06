@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
+
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
@@ -41,6 +42,7 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
