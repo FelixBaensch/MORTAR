@@ -179,7 +179,7 @@ public class FragmentationService {
     private SettingsContainer settingsContainer;
     /**
      * Property of name of selected fragmenter
-      */
+     */
     private SimpleStringProperty selectedFragmenterNameProperty;
     //</editor-fold>
     //

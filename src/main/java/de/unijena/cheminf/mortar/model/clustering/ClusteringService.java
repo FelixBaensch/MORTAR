@@ -37,16 +37,16 @@ public class ClusteringService {
     public static final String DEFAULT_SELECTED_CLUSTERING_ALGORITHM_NAME = Art2aClusteringAlgorithm.CLUSTERING_NAME;
     public static final String CLUSTERING_SETTINGS_SUBFOLDER_NAME = "Clustering_Settings";
 
-    IFingerprintClustering[] clusterer;
+    IMortarClustering[] clusterer;
     Art2aClusteringAlgorithm art2aClustering;
-    IFingerprintClustering selectedClusteringAlgorithm;
+    IMortarClustering selectedClusteringAlgorithm;
     private SettingsContainer settingsContainer;
     private SimpleStringProperty selectedClusteringAlgorithmNameProperty;
     private IArt2aClusteringResult[] clusteringResults;
     private HashMap<String, IArt2aClusteringResult[]> clusteringMap;
     private static final Logger LOGGER = Logger.getLogger(ClusteringService.class.getName());
     public ClusteringService(SettingsContainer settingsContainer) {
-        this.clusterer = new IFingerprintClustering[1];
+        this.clusterer = new IMortarClustering[1];
         this.art2aClustering = new Art2aClusteringAlgorithm();
         this.clusterer[0] = this.art2aClustering;
         this.settingsContainer = settingsContainer;
@@ -60,7 +60,7 @@ public class ClusteringService {
                     Message.get("FragmentationService.Error.invalidSettingFormat"),
                     anException);
         }
-        for(IFingerprintClustering tmpClustering : this.clusterer) {
+        for(IMortarClustering tmpClustering : this.clusterer) {
             if(tmpClustering.getClusteringName().equals(ClusteringService.DEFAULT_SELECTED_CLUSTERING_ALGORITHM_NAME)) {
                 this.selectedClusteringAlgorithm = tmpClustering;
             }
@@ -87,17 +87,17 @@ public class ClusteringService {
     public HashMap<String, IArt2aClusteringResult[]> getClusteringMap() {
         return this.clusteringMap;
     }
-    public IFingerprintClustering[] getClusterer() {
+    public IMortarClustering[] getClusterer() {
         return this.clusterer;
     }
-    public IFingerprintClustering getSelectedClusteringAlgorithm() {
+    public IMortarClustering getSelectedClusteringAlgorithm() {
         return this.selectedClusteringAlgorithm;
     }
     public void setSelectedClusteringAlgorithmNameProperty(String aClusteringAlgorithmName) {
         this.selectedClusteringAlgorithmNameProperty.set(aClusteringAlgorithmName);
     }
     public void setSelectedClusteringAlgorithm(String anAlgorithmName){
-        for(IFingerprintClustering tmpClusteringAlgorithm : this.clusterer) {
+        for(IMortarClustering tmpClusteringAlgorithm : this.clusterer) {
             if(anAlgorithmName.equals(tmpClusteringAlgorithm.getClusteringName())) {
                 this.selectedClusteringAlgorithm = tmpClusteringAlgorithm;
             }
@@ -118,7 +118,7 @@ public class ClusteringService {
                     Message.get("FragmentationService.Error.settingsPersistence"));
             return;
         }
-        for (IFingerprintClustering tmpFingerprinter : this.clusterer) {
+        for (IMortarClustering tmpFingerprinter : this.clusterer) {
             if (Objects.isNull(tmpFingerprinter)) {
                 continue;
             }
@@ -145,7 +145,7 @@ public class ClusteringService {
     public void reloadClusteringSettings() {
         String tmpDirectoryPath = FileUtil.getSettingsDirPath()
                 + FingerprinterService.FINGERPRINTER_SETTINGS_SUBFOLDER_NAME + File.separator;
-        for (IFingerprintClustering tmpFragmenter : this.clusterer) {
+        for (IMortarClustering tmpFragmenter : this.clusterer) {
             String tmpClassName = tmpFragmenter.getClass().getSimpleName();
             File tmpFragmenterSettingsFile = new File(tmpDirectoryPath
                     + tmpClassName
@@ -201,7 +201,7 @@ public class ClusteringService {
         int tmpAlgorithmNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(this.clusterer.length,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         HashSet<String> tmpAlgorithmNamesSet = new HashSet<>(tmpAlgorithmNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        for (IFingerprintClustering tmpFragmenter : this.clusterer) {
+        for (IMortarClustering tmpFragmenter : this.clusterer) {
             //algorithm name should be singleton and must be persistable
             String tmpAlgName = tmpFragmenter.getClusteringName();
             if (!PreferenceUtil.isValidName(tmpAlgName) || !SingleTermPreference.isValidContent(tmpAlgName)) {

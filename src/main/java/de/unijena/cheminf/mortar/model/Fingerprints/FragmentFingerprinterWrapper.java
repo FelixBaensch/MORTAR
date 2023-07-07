@@ -1,8 +1,27 @@
+/*
+ * MORTAR - MOlecule fRagmenTAtion fRamework
+ * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ *
+ * Source code is available at <https://github.com/FelixBaensch/MORTAR>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package de.unijena.cheminf.mortar.model.Fingerprints;
 
 import de.unijena.cheminf.fragmentFingerprinter.FragmentFingerprinter;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.clustering.Art2aClusteringAlgorithm;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
@@ -18,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
+public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
     public static enum FingerprintTyp {
         BIT_FINGERPRINTS,
         COUNT_FINGERPRINTS;
@@ -35,9 +54,9 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
     private final List<Property> settings;
     private List<FragmentDataModel> fragmentDataModelList;
     private final HashMap<String, String> settingNameTooltipTextMap;
-    private final Logger logger = Logger.getLogger(FragmentFingerprintGenerator.class.getName());
+    private final Logger logger = Logger.getLogger(FragmentFingerprinterWrapper.class.getName());
 
-    public FragmentFingerprintGenerator() {
+    public FragmentFingerprinterWrapper() {
         int tmpNumberOfSettings = 3;
         this.settings = new ArrayList<>(tmpNumberOfSettings);
         int tmpInitialCapacityForSettingNameToolTipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
@@ -45,7 +64,7 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameToolTipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.fingerprintTyp = new SimpleEnumConstantNameProperty(this, "Fragment Fingerprint Typ",
-                FragmentFingerprintGenerator.COUNT_FINGERPRINTS_DEFAULT.name(), FragmentFingerprintGenerator.FingerprintTyp.class) {
+                FragmentFingerprinterWrapper.COUNT_FINGERPRINTS_DEFAULT.name(), FragmentFingerprinterWrapper.FingerprintTyp.class) {
             @Override
             public void set(String newValue) {
                 super.set(newValue);
@@ -83,7 +102,7 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
     }
     public void setFingerprintTyp(String aTypName){
         Objects.requireNonNull(aTypName, "Given option name is null.");
-        FragmentFingerprintGenerator.FingerprintTyp tmpConstant = FragmentFingerprintGenerator.FingerprintTyp.valueOf(aTypName);
+        FragmentFingerprinterWrapper.FingerprintTyp tmpConstant = FragmentFingerprinterWrapper.FingerprintTyp.valueOf(aTypName);
         this.setFingerprintTyp(tmpConstant);
     }
     public void setFingerprintTyp(FingerprintTyp aTyp) {
@@ -102,19 +121,19 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
 
     @Override
     public String getFingerprinterName() {
-        return FragmentFingerprintGenerator.FINGERPRINTER_NAME;
+        return FragmentFingerprinterWrapper.FINGERPRINTER_NAME;
     }
 
     @Override
-    public void restoreDefaultSettings() {
+    public void restoreDefaultSettings(int defaultFingerprintDimensionalityValue) { // TODO maybe add a parameter to the method
         this.fingerprintTyp.set(FingerprintTyp.COUNT_FINGERPRINTS.name());
-        this.fingerprintDimensionality.set(this.defaultFingerprintDimensionalityValue);
+        this.fingerprintDimensionality.set(defaultFingerprintDimensionalityValue);
         this.fingerprintFrequencyThreshold.set(this.DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD);
 
     }
     public int[][] getFragmentFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
-        int tmpMaximumDimensionalityNumber = getFingerprintDimensionality();
-        if(tmpMaximumDimensionalityNumber == aFragmentDataModelList.size()) {
+       int tmpMaximumFingerprintDimensionalityValue = getFingerprintDimensionality();
+        if(tmpMaximumFingerprintDimensionalityValue == aFragmentDataModelList.size()) {
             System.out.println("size full");
         } else {
             System.out.println("nicht full");
@@ -122,7 +141,7 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
        // this.setFingerprintDimensionality(tmpMaximumDimensionalityNumber);
         String tmpSortProperty = "absoluteFrequency";
         CollectionUtil.sortGivenFragmentListByPropertyAndSortType( aFragmentDataModelList,tmpSortProperty, "DESCENDING");
-        List<FragmentDataModel> tmpSubList = aFragmentDataModelList.subList(0,tmpMaximumDimensionalityNumber);
+        List<FragmentDataModel> tmpSubList = aFragmentDataModelList.subList(0,tmpMaximumFingerprintDimensionalityValue);
         System.out.println(tmpSubList.size() + "------sublist size ");
         System.out.println("hallllooooooooo");
         System.out.println(tmpSubList + "-------sublist");
@@ -149,8 +168,6 @@ public class FragmentFingerprintGenerator implements IMoleculeFingerprinter {
             tmpDataMatrix[tmpIterator] = tmpFragmentFingerprinter.getBitArray(tmpMoleculeFragmentsToGenerateBitFingerprints);
             tmpIterator++;
         }
-        System.out.println(java.util.Arrays.toString(tmpDataMatrix[39]));
-        System.out.println(tmpDataMatrix[39].length +"-------length 39");
         return tmpDataMatrix;
     }
 }

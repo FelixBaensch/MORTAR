@@ -3,15 +3,12 @@ package de.unijena.cheminf.mortar.model.clustering;
 import de.unijena.cheminf.clustering.art2a.Art2aClusteringTask;
 import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClustering;
 import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
-import de.unijena.cheminf.fragmentFingerprinter.IFragmentFingerprinter;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import org.apache.log4j.Logger;
 
@@ -26,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class Art2aClusteringAlgorithm implements IFingerprintClustering {
+public class Art2aClusteringAlgorithm implements IMortarClustering {
     public static enum PrecisionOption {
         DOUBLE_MACHINE_PRECISION,
         FLOAT_MACHINE_PRECISION;
@@ -173,7 +170,7 @@ public class Art2aClusteringAlgorithm implements IFingerprintClustering {
     }
 
     @Override
-    public IFingerprintClustering copy() {
+    public IMortarClustering copy() {
         Art2aClusteringAlgorithm tmpCopy = new Art2aClusteringAlgorithm();
         tmpCopy.setMachinePrecisionSetting(this.machinePrecisionSetting.get());
         tmpCopy.setMaximumNumberOfEpochs(this.maximumNumberOfEpochs.get());

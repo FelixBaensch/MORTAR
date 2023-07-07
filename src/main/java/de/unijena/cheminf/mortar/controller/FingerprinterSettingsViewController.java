@@ -3,7 +3,7 @@ package de.unijena.cheminf.mortar.controller;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.Fingerprints.IMoleculeFingerprinter;
+import de.unijena.cheminf.mortar.model.Fingerprints.IMortarFingerprinter;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
@@ -21,11 +21,13 @@ public class FingerprinterSettingsViewController {
     private SettingsView settingsView;
     private Stage fingerprintsSettingsViewStage;
     private Map<String, Map<String, Object>> recentProperties;
-    private IMoleculeFingerprinter[] fingerprinterTyp;
+    private IMortarFingerprinter[] fingerprinterTyp;
     private String selectedFingerprinterTypName;
+    private int dime;
 
-    public FingerprinterSettingsViewController(Stage aStage, IMoleculeFingerprinter[] anArrayOfClusteringAlgorithms, String aSelectedClusteringTypName) {
+    public FingerprinterSettingsViewController(Stage aStage, IMortarFingerprinter[] anArrayOfClusteringAlgorithms, String aSelectedClusteringTypName, int aNumber) {
         this.mainStage = aStage;
+        this.dime = aNumber;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(anArrayOfClusteringAlgorithms.length));
         this.fingerprinterTyp = anArrayOfClusteringAlgorithms;
         this.selectedFingerprinterTypName = aSelectedClusteringTypName;
@@ -47,7 +49,7 @@ public class FingerprinterSettingsViewController {
         InputStream tmpImageInputStream = FingerprinterSettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.fingerprintsSettingsViewStage.getIcons().add(new Image(tmpImageInputStream));
         this.addListener();
-        for(IMoleculeFingerprinter tmpClusteringAlgorithms : this.fingerprinterTyp) {
+        for(IMortarFingerprinter tmpClusteringAlgorithms : this.fingerprinterTyp) {
             HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpClusteringAlgorithms.settingsProperties().size()));
             this.recentProperties.put(tmpClusteringAlgorithms.getFingerprinterName(), tmpRecentProperties);
             Tab tmpTab = this.settingsView.addTab(this.fingerprintsSettingsViewStage, tmpClusteringAlgorithms.getFingerprinterName(), tmpClusteringAlgorithms.settingsProperties(),
@@ -73,14 +75,17 @@ public class FingerprinterSettingsViewController {
             for(int i = 0; i < this.fingerprinterTyp.length; i++) {
                 this.setRecentProperties(this.fingerprinterTyp[i], this.recentProperties.get(this.fingerprinterTyp[i].getFingerprinterName()));
             }
+            this.fingerprintsSettingsViewStage.close();
         });
         this.settingsView.getDefaultButton().setOnAction(event -> {
             for(int i = 0; i < this.fingerprinterTyp.length; i++) {
                 if(this.fingerprinterTyp[i].getFingerprinterName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
+                this.fingerprinterTyp[i].restoreDefaultSettings(this.dime);
             }
+            System.out.println(this.dime);
         });
     }
-    private void setRecentProperties(IMoleculeFingerprinter aFingerprinter, Map aRecentPropertiesMap) {
+    private void setRecentProperties(IMortarFingerprinter aFingerprinter, Map aRecentPropertiesMap) {
         for(Property tmpProperty : aFingerprinter.settingsProperties()) {
             if(aRecentPropertiesMap.containsKey(tmpProperty.getName())) {
                 tmpProperty.setValue(aRecentPropertiesMap.get(tmpProperty.getName()));

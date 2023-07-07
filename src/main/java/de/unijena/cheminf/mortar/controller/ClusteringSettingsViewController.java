@@ -3,7 +3,7 @@ package de.unijena.cheminf.mortar.controller;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.clustering.IFingerprintClustering;
+import de.unijena.cheminf.mortar.model.clustering.IMortarClustering;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
@@ -22,9 +22,9 @@ public class ClusteringSettingsViewController {
     private SettingsView settingsView;
     private Stage clusteringSettingsViewStage;
     private Map<String, Map<String, Object>> recentProperties;
-    private IFingerprintClustering[] clusteringTyp;
+    private IMortarClustering[] clusteringTyp;
     private String selectedClusteringTypName;
-    public ClusteringSettingsViewController(Stage aStage, IFingerprintClustering[] anArrayOfClusteringAlgorithms, String aSelectedClusteringTypName) {
+    public ClusteringSettingsViewController(Stage aStage, IMortarClustering[] anArrayOfClusteringAlgorithms, String aSelectedClusteringTypName) {
         this.mainStage = aStage;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(anArrayOfClusteringAlgorithms.length));
         this.clusteringTyp = anArrayOfClusteringAlgorithms;
@@ -47,7 +47,7 @@ public class ClusteringSettingsViewController {
         InputStream tmpImageInputStream = ClusteringSettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.clusteringSettingsViewStage.getIcons().add(new Image(tmpImageInputStream));
         this.addListener();
-        for(IFingerprintClustering tmpClusteringAlgorithms : this.clusteringTyp) {
+        for(IMortarClustering tmpClusteringAlgorithms : this.clusteringTyp) {
             HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpClusteringAlgorithms.settingsProperties().size()));
             this.recentProperties.put(tmpClusteringAlgorithms.getClusteringName(), tmpRecentProperties);
             Tab tmpTab = this.settingsView.addTab(this.clusteringSettingsViewStage, tmpClusteringAlgorithms.getClusteringName(), tmpClusteringAlgorithms.settingsProperties(),
@@ -83,7 +83,7 @@ public class ClusteringSettingsViewController {
             }
         });
     }
-    private void setRecentProperties(IFingerprintClustering aClusteringAlgorithm, Map aRecentPropertiesMap) {
+    private void setRecentProperties(IMortarClustering aClusteringAlgorithm, Map aRecentPropertiesMap) {
         for(Property tmpProperty : aClusteringAlgorithm.settingsProperties()) {
             if(aRecentPropertiesMap.containsKey(tmpProperty.getName())) {
                 tmpProperty.setValue(aRecentPropertiesMap.get(tmpProperty.getName()));

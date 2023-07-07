@@ -657,22 +657,19 @@ public class ClusteringViewController implements IViewToolController {
         }
         System.out.println(map + "--------map");
 
-        /*
         a.sort(Comparator.comparingInt(arr -> arr.length));
         Collections.reverse(a);
-
-         */
-
 
         representativesMoleculesDataModel= new ArrayList<>();
         XYChart.Series tmpSeries = new XYChart.Series();
         for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1  int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--  int i = 0; i<tmpNumberOfDetectedClusters.get(x); i++
-            int tmpClusterRepresentative = tmpRepresentatives.get(i); // dont sort
-            //int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i))); // sort
+          //  int tmpClusterRepresentative = tmpRepresentatives.get(i); // dont sort
+            int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i))); // sort
             System.out.println(map.get(a.get(i)) +"------------ map value");
             System.out.println(tmpRepresentatives.get(map.get(a.get(i))) +"--------rep indices");
             int t = map.get(a.get(i));
            // XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf("Cluster "+(t+1))); // sort
+         //   XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1)); // dont sort
             XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1)); // dont sort
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aClusteringView.getStructureDisplayImageView(),
