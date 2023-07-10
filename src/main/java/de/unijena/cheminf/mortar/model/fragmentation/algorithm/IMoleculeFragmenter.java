@@ -20,11 +20,6 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-/**
- * TODO:
- * -
- */
-
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
