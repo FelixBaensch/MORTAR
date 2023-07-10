@@ -28,7 +28,7 @@ import de.unijena.cheminf.mortar.model.util.FileUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
