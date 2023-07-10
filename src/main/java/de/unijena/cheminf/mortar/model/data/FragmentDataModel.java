@@ -21,7 +21,9 @@
 package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+
 import javafx.scene.image.ImageView;
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 

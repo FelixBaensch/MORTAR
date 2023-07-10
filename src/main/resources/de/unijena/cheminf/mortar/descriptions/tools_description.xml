@@ -50,5 +50,11 @@
         <author>Claudio Clemens et al</author>
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
+    <externalTool>
+        <name>spotless</name>
+        <version>6.19.0</version>
+        <author>DiffPlug</author>
+        <license>Apache License 2.0</license>
+    </externalTool>
 <!--TODO: to be continued-->
 </tools>

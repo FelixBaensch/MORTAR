@@ -27,10 +27,11 @@ package de.unijena.cheminf.mortar.preference;
  */
 
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

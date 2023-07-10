@@ -69,7 +69,7 @@ public final class FileUtil {
         //</editor-fold>
         File tmpFile = new File(aFilePathname);
         String tmpFilename = tmpFile.getName();
-        int tmpLastIndexOfDot = tmpFilename.lastIndexOf(".");
+        int tmpLastIndexOfDot = tmpFilename.lastIndexOf('.');
         if (tmpLastIndexOfDot == -1) {
             return "";
         }
