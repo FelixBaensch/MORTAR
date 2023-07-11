@@ -71,8 +71,8 @@ public class ClusteringService {
         this.setSelectedClusteringAlgorithmNameProperty(this.selectedClusteringAlgorithm.getClusteringName());
     }
     public IArt2aClusteringResult[] startClustering(int[][] aDataMatrix, int aNumberOfTasks) throws InterruptedException {
-        if(selectedClusteringAlgorithm.getClusteringName().equals("ART 2-A Clustering")) {  // ART 2-A Clustering
-            IArt2aClusteringResult[]tmpClusterResults =  this.art2aClustering.startArt2aClustering(aDataMatrix, aNumberOfTasks, this.selectedClusteringAlgorithm.getClusteringName());
+        if(this.selectedClusteringAlgorithm.getClusteringName().equals("ART 2-A Clustering")) {  // ART 2-A Clustering
+            IArt2aClusteringResult[] tmpClusterResults =  this.art2aClustering.startArt2aClustering(aDataMatrix, aNumberOfTasks, this.selectedClusteringAlgorithm.getClusteringName());
             return tmpClusterResults;
         } else {
             return null;

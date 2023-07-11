@@ -90,6 +90,26 @@ public class MainMenuBar extends MenuBar {
      */
     private MenuItem itemsExportToPDFMenuItem;
     /**
+     * MenuItem to export the fingerprint
+     */
+    private Menu fingerprintsExportMenu;
+    /**
+     * Menu to export count fingerprints
+     */
+    private Menu exportCountFingerprints;
+    /**
+     * Menu to export bit fingerprints
+     */
+    private Menu exportBitFingerprints;
+    /**
+     * MenuItem to export count fingerprints as csv file
+     */
+    private MenuItem exportCountFingerprintsAsCSV;
+    /**
+     * MenuItem to export bit fingerprints as csv file
+     */
+    private MenuItem exportBitFingerprintsAsCSV;
+    /**
      * MenuItem to exit app
      */
     private MenuItem exitMenuItem;
@@ -106,7 +126,7 @@ public class MainMenuBar extends MenuBar {
      */
     private Menu helpMenu;
     /**
-     * TODO
+     * Menu to choose the fingerprinter
      */
     private Menu fingerprinterMenu;
     /**
@@ -118,7 +138,7 @@ public class MainMenuBar extends MenuBar {
      */
     private MenuItem clusteringSettingsMenuItem;
     /**
-     * TODO
+     * MenuItem to open fingerprinter settings
      */
     private MenuItem fingerprinterSettingsMenuItem;
     /**
@@ -138,7 +158,7 @@ public class MainMenuBar extends MenuBar {
      */
     private Menu fragmentationAlgorithmMenu;
     /**
-     * TODO
+     * Menu to choose clustering algorithm
      */
     private Menu clusteringAlgorithmMenu;
     /**
@@ -193,6 +213,13 @@ public class MainMenuBar extends MenuBar {
         //components
         this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
         this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
+        //fingerprintsExportMenu
+        this.fingerprintsExportMenu = new Menu("Fingerprints"); // TODO
+        //components
+        this.exportCountFingerprints = new Menu("Count Fingerprints"); // TODO
+        this.exportBitFingerprints = new Menu("Bit Fingerprints"); // TODO
+        this.exportCountFingerprintsAsCSV = new MenuItem("CSV");
+        this.exportBitFingerprintsAsCSV = new MenuItem("CSV"); // TODO
         //</editor-fold>
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
         //settingsMenu
@@ -308,6 +335,12 @@ public class MainMenuBar extends MenuBar {
         this.itemsExportMenu.getItems().add(this.itemsExportToCSVMenuItem);
         this.itemsExportMenu.getItems().add(this.itemsExportToPDFMenuItem);
         //</editor-fold>
+        //<editor-fold desc="FingerprintsExportMenu" defaultstate="collapsed">
+        this.exportMenu.getItems().add(this.fingerprintsExportMenu);
+        this.fingerprintsExportMenu.getItems().add(this.exportCountFingerprints);
+        this.fingerprintsExportMenu.getItems().add(this.exportBitFingerprints);
+        this.exportCountFingerprints.getItems().add(this.exportCountFingerprintsAsCSV);
+        this.exportBitFingerprints.getItems().add(this.exportBitFingerprintsAsCSV);
     }
     //</editor-fold>
     //</editor-fold>
@@ -433,6 +466,46 @@ public class MainMenuBar extends MenuBar {
         return this.itemsExportToPDFMenuItem;
     }
     //</editor-fold>
+    //<editor-fold desc="getExportCountFingerprintsMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of export options to export count fingerprints
+     *
+     * @return the menu that should open a list of export options
+     */
+    public Menu getExportCountFingerprintsMenuItem() {
+        return this.exportCountFingerprints;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getExportBitFingerprintsMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of export options to export bit fingerprints
+     *
+     * @return the menu that should open a list of export options
+     */
+    public Menu getExportBitFingerprintsMenu() {
+        return this.exportBitFingerprints;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getExportCountFingerprintsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item to export the count fingerprints as csv file
+     *
+     * @return menu item that should export the count fingerprints as csv file
+     */
+    public MenuItem getExportCountFingerprintsAsCSV() {
+        return this.exportCountFingerprintsAsCSV;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getExportBitFingerprintsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item to export the bit fingerprints as csv file
+     *
+     * @return menu item that should export the bit fingerprints as csv file
+     */
+    public MenuItem getExportBitFingerprintsAsCSV() {
+        return this.exportBitFingerprintsAsCSV;
+    }
+    //</editor-fold>
     //<editor-fold desc="getExitMenuItem" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to shut down the application
@@ -475,9 +548,9 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getClusteringAlgorithmMenu" defaultstate="collapsed">
     /**
-     * TODO
+     * Returns the menu item that is supposed to choose the clustering algorithm
      *
-     * @return
+     * @return the menu item that should choose the clustering algorithm
      */
     public Menu getClusteringAlgorithmMenu() {
         return this.clusteringAlgorithmMenu;
@@ -485,8 +558,9 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFingerprinterMenu" defaultstate="collapsed">
     /**
-     * TODO
-     * @return
+     * Returns the menu item that is supposed to choose the fingerprinter
+     *
+     * @return the menu item that should choose the fingerprinter
      */
     public Menu getFingerprinterMenu() {
         return this.fingerprinterMenu;
@@ -494,8 +568,9 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFingerprinterSettingsMenuItem" defaultstate="collapsed">
     /**
-     * TODO
-     * @return
+     * Returns the menu item that is supposed to open the fingerprinter settings window
+     *
+     * @return the menu item that should open the fingerprinter settings window
      */
     public MenuItem getFingerprinterSettingsMenuItem() {
         return this.fingerprinterSettingsMenuItem;
@@ -503,8 +578,9 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getClusteringSettingsMenuItem" defaultstate="collapsed">
     /**
-     * TODO
-     * @return
+     * Returns the menu item that is supposed to open the clustering settings window
+     *
+     * @return the menu item that should open the clustering settings window
      */
     public MenuItem getClusteringSettingsMenuItem() {
         return this.clusteringSettingsMenuItem;

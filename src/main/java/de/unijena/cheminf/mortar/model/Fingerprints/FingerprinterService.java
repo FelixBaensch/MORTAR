@@ -138,9 +138,10 @@ public class FingerprinterService {
      * @param aFragmentationName current fingerprinter name
      * @return data matrix with generated fingerprints
      */
-    public int[][] getFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
+    public int[][] getFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName,
+                                   String aFingerprinterTypEnumName) {
         if(this.selectedFingerprinter.getFingerprinterName().equals(this.FRAGMENT_FINGERPRINTER_NAME)) {
-            return this.fragmentFingerprinterWrapper.getFragmentFingerprints(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName);
+            return this.fragmentFingerprinterWrapper.getFragmentFingerprints(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName, aFingerprinterTypEnumName);
         } else {
             return null;
         }
@@ -261,7 +262,6 @@ public class FingerprinterService {
     public void setMaximumFingerprintDimensionality(int aNumberOfMaxFragments) {
         this.fragmentFingerprinterWrapper.setFingerprintDimensionality(aNumberOfMaxFragments);
     }
-
     /**
      * Returns the fingerprint dimensionality
      *
@@ -269,6 +269,15 @@ public class FingerprinterService {
      */
     public int getMaximumFingerprintDimensionality(){
         return this.fragmentFingerprinterWrapper.getFingerprintDimensionality();
+    }
+
+    /**
+     * Return the typ of fingerprints
+     *
+     * @return typ name of the fingerprints (count or bit)
+     */
+    public String getFingerprintTypEnumName() {
+        return this.fragmentFingerprinterWrapper.getFingerprintTyp();
     }
     /**
      * Checks the available fragmenters and their settings for restrictions imposed by persistence. Throws an exception if

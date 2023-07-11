@@ -34,6 +34,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -64,28 +65,6 @@ import java.util.logging.Logger;
 
 public class ClusteringViewController implements IViewToolController {
     //<editor-fold desc="Enums" defaultstate="collapsed">
-    /*
-    public static enum VigilanceParameterButtonOption {
-        VIGILANCE_PARAMETER_BUTTON_0_1(Message.get("ClusteringView.vigilanceParameterButton.1")),
-        VIGILANCE_PARAMETER_BUTTON_0_2(Message.get("ClusteringView.vigilanceParameterButton.2")),
-        VIGILANCE_PARAMETER_BUTTON_0_3(Message.get("ClusteringView.vigilanceParameterButton.3")),
-        VIGILANCE_PARAMETER_BUTTON_0_4(Message.get("ClusteringView.vigilanceParameterButton.4")),
-        VIGILANCE_PARAMETER_BUTTON_0_5(Message.get("ClusteringView.vigilanceParameterButton.5")),
-        VIGILANCE_PARAMETER_BUTTON_0_6(Message.get("ClusteringView.vigilanceParameterButton.6")),
-        VIGILANCE_PARAMETER_BUTTON_0_7(Message.get("ClusteringView.vigilanceParameterButton.7")),
-        VIGILANCE_PARAMETER_BUTTON_0_8(Message.get("ClusteringView.vigilanceParameterButton.8")),
-        VIGILANCE_PARAMETER_BUTTON_0_9(Message.get("ClusteringView.vigilanceParameterButton.9"));
-
-        private final String displayVigilanceParameter;
-        VigilanceParameterButtonOption(String aDisplayName) {
-            this.displayVigilanceParameter = aDisplayName;
-        }
-        public String getDisplayName() {
-            return this.displayVigilanceParameter;
-        }
-    }
-
-     */
     /**
      * Enum for the available bar spacing width options.
      */
@@ -227,7 +206,6 @@ public class ClusteringViewController implements IViewToolController {
      * Setting for width of spaces between the histogram bars.
      */
     private final SimpleEnumConstantNameProperty barWidthSetting;
-    //private final SimpleEnumConstantNameProperty buttonSetting;
     /**
      * Setting for whether to display bar shadows.
      */
@@ -259,7 +237,6 @@ public class ClusteringViewController implements IViewToolController {
     private Scene histogramScene;
     private IArt2aClusteringResult[] clusteringResult;
     private OverviewViewController.DataSources dataSources;
-    private ToggleButton lastSelectedButton = null;
     private ViewToolsManager manager;
     /**
      * Width of molecule depictions displayed when the cursor hovers over a bar. Changes when histogram is resized.
@@ -394,7 +371,7 @@ public class ClusteringViewController implements IViewToolController {
     }
 
     public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResult, List<MoleculeDataModel> aMoleculeDataModel,
-                                   ViewToolsManager aManager, String name, String name1, OverviewViewController.DataSources dataSources ) throws NullPointerException {
+                                   ViewToolsManager aManager, String name, String name1, String aClusteringAlgorithmName, OverviewViewController.DataSources dataSources ) throws NullPointerException {
         //<editor-fold desc="Checks" defaultstate="collapsed">
         Objects.requireNonNull(aMainStage, "Main stage is null.");
         //</editor-fold>
@@ -424,7 +401,7 @@ public class ClusteringViewController implements IViewToolController {
         } else {
             ClusteringViewController.LOGGER.log(Level.WARNING, "Mortar_Logo_Icon1.png could not be imported.");
         }
-        this.clusteringView = new ClusteringView();
+        this.clusteringView = new ClusteringView(aClusteringAlgorithmName);
         //</editor-fold>
         //
         //<editor-fold desc="set setting values in view" defaultstate="collapsed>
@@ -441,48 +418,57 @@ public class ClusteringViewController implements IViewToolController {
             tmpCurrentlySetBarWidthOptionDisplayName =ClusteringViewController.DEFAULT_BAR_WIDTH.getDisplayName();
         }
         this.clusteringView.getBarWidthsComboBox().setValue(tmpCurrentlySetBarWidthOptionDisplayName);
-        /*
-        String tmpCurrentButtonName = null;
-        for(ClusteringViewController.VigilanceParameterButtonOption tmpVigilanceOptions : ClusteringViewController.VigilanceParameterButtonOption.values()) {
-            if(tmpVigilanceOptions.name().equals(this.buttonSetting.get())) {
-                tmpCurrentButtonName = tmpVigilanceOptions.getDisplayName();
-            }
-        }
-        if(Objects.isNull(tmpCurrentButtonName)) {
-            this.buttonSetting.set(ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.name());
-            tmpCurrentButtonName = ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.getDisplayName();
-        }
-
-         */
         //note: settings are updated for persistence in the listeners on the checkboxes added below
-        ArrayList<ToggleButton> tmpVigilanceParameterButtons= this.clusteringView.getButtons();
-        int i = 0;
-        for(ToggleButton tmpButton : tmpVigilanceParameterButtons) {
-            tmpButton.setText(String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters()));
-            i++;
+        if(aClusteringAlgorithmName.equals("ART 2-A Clustering")) { // TODO put in final class variable
+            ArrayList<ToggleButton> tmpVigilanceParameterButtons = this.clusteringView.getButtons();
+            int i = 0;
+            for (ToggleButton tmpButton : tmpVigilanceParameterButtons) {
+                String tmpDetectedClusterInString = String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters());
+                int tmpNumberSize = tmpDetectedClusterInString.length();
+                System.out.println(tmpNumberSize +"---------number size");
+                if(tmpNumberSize == 4) {
+                    System.out.println(tmpDetectedClusterInString.indexOf(1) +"-------index");
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.charAt(0)+ "," + tmpDetectedClusterInString.substring(1,2) + "K"));
+                }
+                else if (tmpNumberSize == 5) {
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.substring(0,1) + "," + tmpDetectedClusterInString.substring(1,2) +"K"));
+                }
+                else if(tmpNumberSize == 6) {
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.substring(0,2)+ "K"));
+                }
+                else if(tmpNumberSize == 7) {
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.charAt(0)+ "M"));
+                }
+                else {
+                    tmpButton.setText(String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters()));
+                }
+                tmpButton.setTooltip(new Tooltip("Number of detected clusters: " + this.clusteringResult[i].getNumberOfDetectedClusters()+"\n"
+                +"Number of epochs: " + this.clusteringResult[i].getNumberOfEpochs()));
+                i++;
+            }
+            tmpVigilanceParameterButtons.get(0).setSelected(true);
         }
-        tmpVigilanceParameterButtons.get(0).setSelected(true);
         this.clusteringView.getDisplayBarLabelsCheckBox().setSelected(this.displayBarLabelsSetting.get());
         this.clusteringView.getDisplayBarShadowsCheckBox().setSelected(this.displayBarShadowsSetting.get());
         this.clusteringView.getDisplayGridLinesCheckBox().setSelected(this.displayGridLinesSetting.get());
         //</editor-fold>
         //
         //<editor-fold desc="Initialise histogram with given settings and add listeners" defaultstate="collapsed">
-        //Button a = this.clusteringView.getVigilanceParameterButtons().get(tmpCurrentButtonName); // TODO
-       // String v = this.clusteringView.getVigilanceButtons().get(a);
-       // int test = Integer.parseInt(v);
         Double[] tmpHistogramHeightFactorAndCategoryGap = this.calculateBarSpacing(
                 aClusteringResult[0].getNumberOfDetectedClusters(),
-                this.getBarWidthOptionEnumConstantFromDisplayName((String)this.clusteringView.getBarWidthsComboBox().getValue())); // TODO aClusteringResult [0]
-
-        this.histogramChart = this.createHistogram(this.clusteringView, this.clusteringView.getDisplayBarLabelsCheckBox(), this.clusteringView.getDisplayBarShadowsCheckBox(),tmpHistogramHeightFactorAndCategoryGap[0],0);
+                this.getBarWidthOptionEnumConstantFromDisplayName((String)this.clusteringView.getBarWidthsComboBox().getValue()));
+        if(aClusteringAlgorithmName.equals("ART 2-A Clustering")) {
+            this.histogramChart = this.createHistogram(this.clusteringView, this.clusteringView.getDisplayBarLabelsCheckBox(), this.clusteringView.getDisplayBarShadowsCheckBox(), tmpHistogramHeightFactorAndCategoryGap[0], 0);
+        }
         this.histogramChart.setCategoryGap(tmpHistogramHeightFactorAndCategoryGap[1]);
         this.histogramScene = new Scene(
                 this.clusteringView,
                 GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setScene(this.histogramScene);
-        this.addListenersToHistogramView();
+        if(aClusteringAlgorithmName.equals("ART 2-A Clustering")) {
+            this.addListenersToHistogramView();
+        }
         this.histogramStage.show();
         //</editor-fold>
     }
@@ -596,15 +582,13 @@ public class ClusteringViewController implements IViewToolController {
             for(int i = 0; i < tmpClusteringResult.getNumberOfDetectedClusters(); i++) {
                 tmpClusterIndices.add(tmpClusteringResult.getClusterIndices(i));
                 tmpRepresentativesIndices.add(tmpClusteringResult.getClusterRepresentatives(i));
-                //tmpClusterRepresentatives.add(tmpClusteringResult.getClusterRepresentatives(i));
             }
             listOfLists.add(tmpClusterIndices);
             listOfListforRepresentatives.add(tmpRepresentativesIndices); // Alle clusterrepresentanten eines vigiliance parameter sind in einer Liste gespeichert, wobei dieses Liste in einer übergeordneten liste gespeichert ist
         }
 
-         a = listOfLists.get(x); // TODO 0 ersetzen durch ein Button property INFO a sollte alle Clusterindices von allen für den gegebenen vigilance parameter entstandene cluster
+         a = listOfLists.get(x);// TODO 0 ersetzen durch ein Button property INFO a sollte alle Clusterindices von allen für den gegebenen vigilance parameter entstandene cluster
         ArrayList<Integer> tmpRepresentatives = listOfListforRepresentatives.get(x);
-        System.out.println(tmpRepresentatives +"------rep");
         int maxLength = 0;
         int[] maxLengthArray = null;
 
@@ -650,12 +634,10 @@ public class ClusteringViewController implements IViewToolController {
                 this.numberAxis.setUpperBound(this.calculateXAxisUpperBoundWithSpaceForLabels((int) tmpMaxFrequency, tmpNewXAxisTick));
             }
         }
-        System.out.println("vor der sortierung");
         HashMap<int[], Integer> map = new HashMap<>();
         for(int i = 0; i<a.size(); i++) {
             map.put(a.get(i),i);
         }
-        System.out.println(map + "--------map");
 
         a.sort(Comparator.comparingInt(arr -> arr.length));
         Collections.reverse(a);
@@ -665,11 +647,6 @@ public class ClusteringViewController implements IViewToolController {
         for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1  int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--  int i = 0; i<tmpNumberOfDetectedClusters.get(x); i++
           //  int tmpClusterRepresentative = tmpRepresentatives.get(i); // dont sort
             int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i))); // sort
-            System.out.println(map.get(a.get(i)) +"------------ map value");
-            System.out.println(tmpRepresentatives.get(map.get(a.get(i))) +"--------rep indices");
-            int t = map.get(a.get(i));
-           // XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,String.valueOf("Cluster "+(t+1))); // sort
-         //   XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1)); // dont sort
             XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1)); // dont sort
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aClusteringView.getStructureDisplayImageView(),
@@ -941,23 +918,5 @@ public class ClusteringViewController implements IViewToolController {
         this.numberAxis = null;
         this.histogramChart = null;
         this.atomContainerForDisplayCache = null;
-    }
-    private void handleToggleButtonSelection(ToggleButton button) {
-        if (button.isSelected()) {
-            // Stilklasse des ausgewählten Buttons aktualisieren
-            button.getStyleClass().add("selected-button");
-
-            // Stilklasse des vorherigen Buttons entfernen
-            if (lastSelectedButton != null && lastSelectedButton != button) {
-                lastSelectedButton.getStyleClass().remove("selected-button");
-            }
-
-            // Den aktuellen Button als zuletzt ausgewählten Button festlegen
-            lastSelectedButton = button;
-        } else {
-            // Stilklasse entfernen, wenn der Button abgewählt wird
-            button.getStyleClass().remove("selected-button");
-            lastSelectedButton = null;
-        }
     }
 }

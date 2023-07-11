@@ -32,6 +32,7 @@ import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.Fingerprints.FingerprinterService;
+import de.unijena.cheminf.mortar.model.Fingerprints.FragmentFingerprinterWrapper;
 import de.unijena.cheminf.mortar.model.Fingerprints.IMortarFingerprinter;
 import de.unijena.cheminf.mortar.model.clustering.ClusteringService;
 import de.unijena.cheminf.mortar.model.clustering.IMortarClustering;
@@ -336,6 +337,14 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentsExportToSeparateSDFsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.exportFile(Exporter.ExportTypes.SD_FILE));
+        this.mainView.getMainMenuBar().getExportBitFingerprintsAsCSV().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.exportFile(Exporter.ExportTypes.BIT_FINGERPRINTS_EXPORT_CSV)
+        );
+        this.mainView.getMainMenuBar().getExportCountFingerprintsAsCSV().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.exportFile(Exporter.ExportTypes.COUNT_FINGERPRINTS_EXPORT_CSV)
+        );
         //items export to CSV
         this.mainView.getMainMenuBar().getItemsExportToCSVMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -719,6 +728,20 @@ public class MainViewController {
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.ITEMIZATION
                         );
+                    case BIT_FINGERPRINTS_EXPORT_CSV:
+                        if(fingerprints == null) {
+                            startFingerprinting("Bit fingerprints");
+                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
+                        } else {
+                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
+                        }
+                    case COUNT_FINGERPRINTS_EXPORT_CSV:
+                        if(fingerprints == null) {
+                            startFingerprinting("Count fingerprints");
+                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
+                        } else {
+                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
+                        }
                 }
                 return null;
             }
@@ -834,7 +857,7 @@ public class MainViewController {
     private void openClusteringView(IArt2aClusteringResult[] aClusteringResults) {
         this.viewToolsManager.openClusteringView(this.primaryStage,aClusteringResults, this.moleculeDataModelList, OverviewViewController.DataSources.CLUSTERING_VIEW,
                 Message.get("MainViewController.OverViewTitleForClusterRepresentatives.Title"),
-                Message.get("MainViewController.OverViewTitleForClusterMembers.Title"), this.viewToolsManager);
+                Message.get("MainViewController.OverViewTitleForClusterMembers.Title"),this.clusteringService.getSelectedClusteringAlgorithm().getClusteringName(), this.viewToolsManager);
     }
     //
 
@@ -1365,14 +1388,14 @@ public class MainViewController {
      *
      * @return fingerprints in a data matrix
      */
-    private int[][] startFingerprinting() {
+    private int[][] startFingerprinting(String aFingerprinterTypEnumName) {
         List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS);
         List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
         for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
             tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
         }
         this.fingerprints = this.fingerprinterService.getFingerprints(this.moleculeDataModelList, tmpFragmentsList,
-                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(), aFingerprinterTypEnumName);
         return this.fingerprints;
     }
     //
@@ -1454,7 +1477,8 @@ public class MainViewController {
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
         tmpClusteringButton.setOnAction(event -> {
             // fingerprinting first and then start clustering
-            this.startFingerprinting();
+            System.out.println(this.fingerprinterService.getFingerprintTypEnumName());
+            this.startFingerprinting(this.fingerprinterService.getFingerprintTypEnumName());
             this.startClustering(this.fingerprints);
         });
         if(tmpList.size() == 0){

@@ -1,14 +1,11 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.controller.ClusteringViewController;
-import de.unijena.cheminf.mortar.controller.HistogramViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.clustering.ClusteringService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -32,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ClusteringView extends AnchorPane {
+    public final String VIEW_STYLE_FOR_ART_2A_CLUSTERING = "ART 2-A Clustering";
     /**
      * Button to close view
      */
@@ -46,9 +44,6 @@ public class ClusteringView extends AnchorPane {
     private ToggleButton vigilanceParameter8Button;
     private ToggleButton vigilanceParameter9Button;
     private Button clusterRepresentativesButton;
-    private Button applyButton;
-    private TextField field;
-
     /**
      * ImageView to display the structures when the cursor hovers over a bar
      */
@@ -73,13 +68,16 @@ public class ClusteringView extends AnchorPane {
      * ComboBox to make the gap between the bars adjustable
      */
     private ComboBox barWidthsComboBox;
-    private ToggleGroup group;
+    /**
+     *
+     */
+    private ToggleGroup toggleGroup;
 
     /**
      * Constructor, layouts the view and all its components. Current settings need to be adjusted externally.
      *
      */
-    public ClusteringView() {
+    public ClusteringView(String aClusteringTypToStyleClusteringView) {
         super();
         this.clusteringViewScrollPane = new ScrollPane();
         this.clusteringViewScrollPane.setFitToHeight(true);
@@ -124,31 +122,65 @@ public class ClusteringView extends AnchorPane {
         tmpBorderPane.setCenter(tmpMainGrid);
         HBox tmpHBoxLeftSideControls = new HBox();
         // left side controls
-        this.vigilanceParameter1Button = new ToggleButton();
-        this.vigilanceParameter2Button = new ToggleButton();
-        this.vigilanceParameter3Button = new ToggleButton();
-        this.vigilanceParameter4Button = new ToggleButton();
-        this.vigilanceParameter5Button = new ToggleButton();
-        this.vigilanceParameter6Button = new ToggleButton();
-        this.vigilanceParameter7Button = new ToggleButton();
-        this.vigilanceParameter8Button = new ToggleButton();
-        this.vigilanceParameter9Button = new ToggleButton();
-       group  = new ToggleGroup();
-        this.vigilanceParameter1Button.setToggleGroup(group);
-        this.vigilanceParameter2Button.setToggleGroup(group);
-        this.vigilanceParameter3Button.setToggleGroup(group);
-        this.vigilanceParameter4Button.setToggleGroup(group);
-        this.vigilanceParameter5Button.setToggleGroup(group);
-        this.vigilanceParameter6Button.setToggleGroup(group);
-        this.vigilanceParameter7Button.setToggleGroup(group);
-        this.vigilanceParameter8Button.setToggleGroup(group);
-        this.vigilanceParameter9Button.setToggleGroup(group);
-
-
-
-
-
-        this.clusterRepresentativesButton = new Button("Representatives");
+        Label tmpLabel1 = new Label("0.1:");
+        Label tmpLabel2 = new Label("0.2:");
+        Label tmpLabel3 = new Label("0.3:");
+        Label tmpLabel4 = new Label("0.4:");
+        Label tmpLabel5 = new Label("0.5:");
+        Label tmpLabel6 = new Label("0.6:");
+        Label tmpLabel7 = new Label("0.7:");
+        Label tmpLabel8 = new Label("0.8:");
+        Label tmpLabel9 = new Label("0.9:");
+        Label tmpLabel = new Label("            ");
+        if(aClusteringTypToStyleClusteringView.equals(this.VIEW_STYLE_FOR_ART_2A_CLUSTERING)) {
+            this.vigilanceParameter1Button = new ToggleButton();
+            this.vigilanceParameter1Button.setPrefWidth(40);
+            this.vigilanceParameter1Button.setMinWidth(40);
+            this.vigilanceParameter1Button.setMaxWidth(40);
+            this.vigilanceParameter2Button = new ToggleButton();
+            this.vigilanceParameter2Button.setPrefWidth(40);
+            this.vigilanceParameter2Button.setMinWidth(40);
+            this.vigilanceParameter2Button.setMaxWidth(40);
+            this.vigilanceParameter3Button = new ToggleButton();
+            this.vigilanceParameter3Button.setPrefWidth(40);
+            this.vigilanceParameter3Button.setMinWidth(40);
+            this.vigilanceParameter3Button.setMaxWidth(40);
+            this.vigilanceParameter4Button = new ToggleButton();
+            this.vigilanceParameter4Button.setPrefWidth(40);
+            this.vigilanceParameter4Button.setMinWidth(40);
+            this.vigilanceParameter4Button.setMaxWidth(40);
+            this.vigilanceParameter5Button = new ToggleButton();
+            this.vigilanceParameter5Button.setPrefWidth(40);
+            this.vigilanceParameter5Button.setMinWidth(40);
+            this.vigilanceParameter5Button.setMaxWidth(40);
+            this.vigilanceParameter6Button = new ToggleButton();
+            this.vigilanceParameter6Button.setPrefWidth(40);
+            this.vigilanceParameter6Button.setMinWidth(40);
+            this.vigilanceParameter6Button.setMaxWidth(40);
+            this.vigilanceParameter7Button = new ToggleButton();
+            this.vigilanceParameter7Button.setPrefWidth(40);
+            this.vigilanceParameter7Button.setMinWidth(40);
+            this.vigilanceParameter7Button.setMaxWidth(40);
+            this.vigilanceParameter8Button = new ToggleButton();
+            this.vigilanceParameter8Button.setPrefWidth(40);
+            this.vigilanceParameter8Button.setMinWidth(40);
+            this.vigilanceParameter8Button.setMaxWidth(40);
+            this.vigilanceParameter9Button = new ToggleButton();
+            this.vigilanceParameter9Button.setPrefWidth(40);
+            this.vigilanceParameter9Button.setMinWidth(40);
+            this.vigilanceParameter9Button.setMaxWidth(40);
+            this.toggleGroup = new ToggleGroup();
+            this.vigilanceParameter1Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter2Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter3Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter4Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter5Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter6Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter7Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter8Button.setToggleGroup(this.toggleGroup);
+            this.vigilanceParameter9Button.setToggleGroup(this.toggleGroup);
+            this.clusterRepresentativesButton = new Button("Representatives");
+        }
         this.barWidthsComboBox = new ComboBox<>();
         for (ClusteringViewController.BarWidthOption tmpBarWidthOptionConstant : ClusteringViewController.BarWidthOption.values()) {
             this.barWidthsComboBox.getItems().add(tmpBarWidthOptionConstant.getDisplayName());
@@ -157,23 +189,34 @@ public class ClusteringView extends AnchorPane {
         tmpLeftSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         // grid positions
-        tmpLeftSideGrid.add(this.vigilanceParameter1Button, 0,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter2Button,1,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter3Button,2,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter4Button,3,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter5Button,4,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter6Button,5,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter7Button,6,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter8Button,7,0);
-        tmpLeftSideGrid.add(this.vigilanceParameter9Button,8,0);
-        tmpLeftSideGrid.add(this.clusterRepresentativesButton, 9,0);
-        tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
-        tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpHBoxLeftSideControls.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-        HBox.setHgrow(tmpHBoxLeftSideControls, Priority.ALWAYS);
-        tmpHBoxLeftSideControls.getChildren().add(tmpLeftSideGrid);
-        tmpMainHBoxControls.getChildren().add(tmpHBoxLeftSideControls);
-
+        if(aClusteringTypToStyleClusteringView.equals(this.VIEW_STYLE_FOR_ART_2A_CLUSTERING)) {
+            tmpLeftSideGrid.add(tmpLabel1, 0,0);
+            tmpLeftSideGrid.add(this.vigilanceParameter1Button, 1, 0);
+            tmpLeftSideGrid.add(tmpLabel2,2,0);
+            tmpLeftSideGrid.add(this.vigilanceParameter2Button, 3, 0);
+            tmpLeftSideGrid.add(tmpLabel3,4,0);
+            tmpLeftSideGrid.add(this.vigilanceParameter3Button, 5, 0);
+            tmpLeftSideGrid.add(tmpLabel4,6,0);
+            tmpLeftSideGrid.add(this.vigilanceParameter4Button, 7, 0);
+            tmpLeftSideGrid.add(tmpLabel5,8,0);
+            tmpLeftSideGrid.add(this.vigilanceParameter5Button, 9, 0);
+            tmpLeftSideGrid.add(tmpLabel6, 0,1);
+            tmpLeftSideGrid.add(this.vigilanceParameter6Button, 1, 1);
+            tmpLeftSideGrid.add(tmpLabel7, 2,1);
+            tmpLeftSideGrid.add(this.vigilanceParameter7Button, 3, 1);
+            tmpLeftSideGrid.add(tmpLabel8, 4,1);
+            tmpLeftSideGrid.add(this.vigilanceParameter8Button, 5, 1);
+            tmpLeftSideGrid.add(tmpLabel9, 6,1);
+            tmpLeftSideGrid.add(this.vigilanceParameter9Button, 7, 1);
+            tmpLeftSideGrid.add(tmpLabel,10,0);
+            tmpLeftSideGrid.add(this.clusterRepresentativesButton, 11, 0);
+            tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
+            tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+            tmpHBoxLeftSideControls.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+            HBox.setHgrow(tmpHBoxLeftSideControls, Priority.ALWAYS);
+            tmpHBoxLeftSideControls.getChildren().add(tmpLeftSideGrid);
+            tmpMainHBoxControls.getChildren().add(tmpHBoxLeftSideControls);
+        }
         this.structureDisplayImageView = new ImageView();
         this.structureDisplayImageView.setEffect(new DropShadow(10,2,3, Color.BLACK));
         this.structureDisplayImageView.setStyle("fx-padding: 50px; fx-margin: 50px");
@@ -287,22 +330,6 @@ public class ClusteringView extends AnchorPane {
     }
     public Button getCloseButton() {
         return this.closeButton;
-    }
-    public ToggleGroup getToggleButtonsGroups() {
-        return this.group;
-    }
-    public HashMap<String,ToggleButton> getVigilanceParameterButtons() {
-        HashMap<String,ToggleButton> tmpVigilanceParameterButtonToIndexMap = new HashMap<>(); // TODO add init value
-        tmpVigilanceParameterButtonToIndexMap.put("1",this.vigilanceParameter1Button);
-        tmpVigilanceParameterButtonToIndexMap.put("2",this.vigilanceParameter2Button);
-        tmpVigilanceParameterButtonToIndexMap.put("3",this.vigilanceParameter3Button);
-        tmpVigilanceParameterButtonToIndexMap.put("4",this.vigilanceParameter4Button);
-        tmpVigilanceParameterButtonToIndexMap.put("5",this.vigilanceParameter5Button);
-        tmpVigilanceParameterButtonToIndexMap.put("6",this.vigilanceParameter6Button);
-        tmpVigilanceParameterButtonToIndexMap.put("7",this.vigilanceParameter7Button);
-        tmpVigilanceParameterButtonToIndexMap.put("8",this.vigilanceParameter8Button);
-        tmpVigilanceParameterButtonToIndexMap.put("9",this.vigilanceParameter9Button);
-        return tmpVigilanceParameterButtonToIndexMap;
     }
     public ArrayList<ToggleButton> getButtons() {
         ArrayList<ToggleButton> tmpButtonsList = new ArrayList<>(9);

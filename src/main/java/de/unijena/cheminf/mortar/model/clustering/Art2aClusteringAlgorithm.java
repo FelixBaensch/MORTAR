@@ -206,7 +206,6 @@ public class Art2aClusteringAlgorithm implements IMortarClustering {
                 tmpART2aFloatClusteringTask.setSeed(tmpSeedValue);
                 tmpClusteringTask.add(tmpART2aFloatClusteringTask);
             }
-            System.out.println(tmpSimilarityParameter + "-----float similarity");
         } else {
             double[][] tmpDoubleDataMatrix = new double[aDataMatrix.length][aDataMatrix[0].length];
             for(int i = 0; i < aDataMatrix.length; i++) {
@@ -232,7 +231,7 @@ public class Art2aClusteringAlgorithm implements IMortarClustering {
         for (Future<IArt2aClusteringResult> tmpFuture : tmpFuturesList) {
             try {
                 IArt2aClusteringResult tmpClusteringResult = tmpFuture.get();
-                System.out.println(tmpClusteringResult.getVigilanceParameter());
+                tmpClusteringResult.getVigilanceParameter();
                 resultArray[i] = tmpFuture.get();
                 i++;
             } catch (RuntimeException anException) {
@@ -243,7 +242,7 @@ public class Art2aClusteringAlgorithm implements IMortarClustering {
         }
         tmpExecutorService.shutdown();
         Art2aClusteringAlgorithm.LOGGER.info("Clustering \"" + tmpClusteringName + "\" of " + aDataMatrix.length
-                + " molecules complete. It took");
+                + " molecules complete.");
         return resultArray;
 
 
