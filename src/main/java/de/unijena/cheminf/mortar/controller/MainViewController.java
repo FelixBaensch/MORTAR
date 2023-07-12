@@ -728,20 +728,14 @@ public class MainViewController {
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.ITEMIZATION
                         );
-                    case BIT_FINGERPRINTS_EXPORT_CSV:
-                        if(fingerprints == null) {
-                            startFingerprinting("Bit fingerprints");
-                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
-                        } else {
-                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
-                        }
                     case COUNT_FINGERPRINTS_EXPORT_CSV:
-                        if(fingerprints == null) {
-                            startFingerprinting("Count fingerprints");
-                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
-                        } else {
-                            return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
-                        }
+                        fingerprints = null;
+                        startFingerprinting("Count fingerprints");
+                        return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
+                    case BIT_FINGERPRINTS_EXPORT_CSV:
+                        fingerprints = null;
+                        startFingerprinting("Bit fingerprints");
+                        return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(), moleculeDataModelList);
                 }
                 return null;
             }

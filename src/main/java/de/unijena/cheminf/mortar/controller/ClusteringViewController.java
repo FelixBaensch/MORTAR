@@ -270,6 +270,7 @@ public class ClusteringViewController implements IViewToolController {
     private BarChart histogramChart;
     private String name;
     private String name1;
+    private String clusterIndexName;
     private IViewToolController[] viewToolController;
     /**
      * Atom container to depict the respective structure when the cursor hovers over a bar
@@ -650,7 +651,7 @@ public class ClusteringViewController implements IViewToolController {
             XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1)); // dont sort
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aClusteringView.getStructureDisplayImageView(),
-                    tmpClusterRepresentative, a.get(i));
+                    tmpClusterRepresentative, a.get(i), String.valueOf(" of cluster index "+(i+1)));
             tmpHistogramBarStackPane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);
             this.addFrequencyBarLabelToBarAndAddListenersToBarCheckBoxes(
                     aBarLabelCheckBox,
@@ -689,7 +690,7 @@ public class ClusteringViewController implements IViewToolController {
         }
         return tmpXAxisExtensionValue;
     }
-    private StackPane createStackPaneWithContextMenuAndStructureDisplayForBar(ImageView anImageView, int representatives, int[] molecules) {
+    private StackPane createStackPaneWithContextMenuAndStructureDisplayForBar(ImageView anImageView, int representatives, int[] molecules, String aClusterIndexName) {
         StackPane tmpNodePane = new StackPane();
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT);
         MenuItem tmpCopyStructureMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemStructure.text"));
@@ -744,7 +745,7 @@ public class ClusteringViewController implements IViewToolController {
 
             }
                System.out.println(clusterMolecules + "----------cluster molecules");
-                this.manager.openOverviewView(this.mainStage, this.dataSources, this.name1, clusterMolecules);
+                this.manager.openOverviewView(this.mainStage, this.dataSources, this.name1+aClusterIndexName, clusterMolecules);
            }
 
         };

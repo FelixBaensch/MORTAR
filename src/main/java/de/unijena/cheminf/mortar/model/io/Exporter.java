@@ -166,11 +166,13 @@ public class Exporter {
                 this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
                 break;
             case COUNT_FINGERPRINTS_EXPORT_CSV:
-                tmpFileName = "Count_" + "Fingerprints";
+                tmpFileName = "Count_" + "Fingerprints_Fragments_of" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                break;
             case BIT_FINGERPRINTS_EXPORT_CSV:
-                tmpFileName = "Bit_" + "Fingerprints";
+                tmpFileName = "Bit_" + "Fingerprints_Fragments_of" + tmpFragmentationName ;
                 this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                break;
         }
     }
     //
@@ -201,12 +203,21 @@ public class Exporter {
         }
         return new ArrayList<>(0);
     }
+    //
+    /**
+     * TODO
+     *
+     * @param aFingerprintMatrix
+     * @param aSeparator
+     * @param aMoleculeDataModelList
+     * @return
+     * @throws FileNotFoundException
+     */
     public List<String> exportCsvFingerprintFile(int[][] aFingerprintMatrix, String aSeparator, List<MoleculeDataModel> aMoleculeDataModelList) throws FileNotFoundException {
         this.createFingerprintCsvFile(this.file, aFingerprintMatrix, aSeparator, aMoleculeDataModelList);
         return new ArrayList<>(0);
     }
     //
-
     /**
      * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file.
      * Returns a list containing SMILES of the molecules that cause an error when exported
@@ -359,6 +370,7 @@ public class Exporter {
     }
     //
     /**
+     * TODO
      *
      * @param aFingerprintsMatrix
      */
@@ -376,7 +388,11 @@ public class Exporter {
             tmpCurrentFingerprint = aFingerprintsMatrix[i];
             tmpWriter.write(aMoleculeDataModelList.get(i).getName() + aSeparator);
             for(int j = 0; j < aFingerprintsMatrix[0].length; j++) {
-                tmpWriter.write(tmpCurrentFingerprint[j] + aSeparator);
+                if(j == (aFingerprintsMatrix[0].length-1)) {
+                    tmpWriter.write(String.valueOf(tmpCurrentFingerprint[j]));
+                } else {
+                    tmpWriter.write(String.valueOf(tmpCurrentFingerprint[j] + aSeparator));
+                }
             }
             tmpWriter.write("\n");
         }
@@ -1101,11 +1117,11 @@ public class Exporter {
          */
         PDB_FILE,
         /**
-         * enum value for count csv file
+         * enum value for count fingerprint csv file
          */
         COUNT_FINGERPRINTS_EXPORT_CSV,
         /**
-         * enum value for bit csv file
+         * enum value for bit fingerprint csv file
          */
         BIT_FINGERPRINTS_EXPORT_CSV
     }

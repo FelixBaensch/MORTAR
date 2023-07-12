@@ -142,13 +142,16 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
         String tmpCount = "Count fingerprints";
         String tmpBit = "Bit fingerprints";
         String tmpSortProperty = "absoluteFrequency";
-        CollectionUtil.sortGivenFragmentListByPropertyAndSortType( aFragmentDataModelList,tmpSortProperty, "DESCENDING");
+        CollectionUtil.sortGivenFragmentListByPropertyAndSortType(aFragmentDataModelList,tmpSortProperty, "DESCENDING");
         List<FragmentDataModel> tmpSubList = aFragmentDataModelList.subList(0,tmpMaximumFingerprintDimensionalityValue);
         int[][] tmpDataMatrix =  new int[aMoleculeDataModelList.size()][tmpSubList.size()];
         ArrayList<String> tmpKeyFragmentsToGenerateBitFingerprints = new ArrayList<>(tmpSubList.size());
+        System.out.println(this.fingerprintFrequencyThreshold.get() + "------------gesetzer fingerprint threshold");
         for(FragmentDataModel tmpFragmentDataModel : tmpSubList) {
+            if(tmpFragmentDataModel.getAbsoluteFrequency() >= this.fingerprintFrequencyThreshold.get())
             tmpKeyFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
         }
+        System.out.println(tmpKeyFragmentsToGenerateBitFingerprints.size() + "--------------lenght key fragment list");
         System.out.println(tmpKeyFragmentsToGenerateBitFingerprints + "------------key fragments");
         FragmentFingerprinter tmpFragmentFingerprinter = new FragmentFingerprinter(tmpKeyFragmentsToGenerateBitFingerprints);
         int tmpIterator = 0;
@@ -177,7 +180,7 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
             tmpIterator++;
         }
         System.out.println("fingerprints fertig");
-        System.out.println(java.util.Arrays.toString(tmpDataMatrix[9]));
+     //   System.out.println(java.util.Arrays.toString(tmpDataMatrix[9]));
         return tmpDataMatrix;
     }
 }
