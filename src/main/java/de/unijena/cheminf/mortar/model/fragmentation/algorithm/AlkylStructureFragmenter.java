@@ -49,6 +49,7 @@ import java.util.logging.Logger;
  * structures in MORTAR using the CDK.
  *
  * @author Maximilian Rottmann (maximilian.rottmann@studmail.w-hs.de)
+ * @version 1.1.1.0
  */
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
@@ -97,7 +98,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Public Static Finals">
+    //<editor-fold desc="Public Static Final Class Variables">
     /**
      * Name of the fragmenter.
      */
@@ -129,7 +130,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public static final int PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT = 1;
     //</editor-fold>
     //
-    //<editor-fold desc="Private Finals">
+    //<editor-fold desc="Private Final Class Variables">
     /**
      * A property that has a constant fragment hydrogen saturation setting.
      */
@@ -263,7 +264,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Get Settings">
+    //<editor-fold desc="Public Properties Get">
     /**
      * Returns a list of all available settings represented by properties for the given fragmentation algorithm.
      *
@@ -322,7 +323,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Set Settings">
+    //<editor-fold desc="Public Properties Set">
     /**
      * Sets the option for saturating free valences on returned fragment molecules.
      *
@@ -427,7 +428,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //</editor-fold>
     //
-    //<editor-fold desc="MORTAR Utilities">
+    //<editor-fold desc="Public Methods">
     /**
      * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
      * multi-threaded work where every thread needs its own fragmenter instance.
@@ -477,18 +478,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         //<editor-fold desc="Parameter Checks" defaultstate="collapsed">
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        IAtomContainer tmpClone = aMolecule.clone();
         //</editor-fold>
         //
-        //<editor-fold desc="Set Property and Arrays" defaultstate="collapsed">
+        //<editor-fold desc="Property and Arrays Set" defaultstate="collapsed">
         // Key: IndexProperty Value = IndexInt; Value: IAtom/IBond with IndexInt
-        IAtom[] tmpAtomArray = new IAtom[aMolecule.getAtomCount()];
-        IBond[] tmpBondArray = new IBond[aMolecule.getBondCount()];
+        IAtom[] tmpAtomArray = new IAtom[tmpClone.getAtomCount()];
+        IBond[] tmpBondArray = new IBond[tmpClone.getBondCount()];
         int tmpAlkylSFAtomIndexInt = 0;
         int tmpAlkylSFBondIndexInt = 0;
         String tmpAlkylSFAtomIndexProperty = "AlkylSFAtomIndex";
         String tmpAlkylSFBondIndexProperty = "AlkylSFBondIndex";
         IAtomContainerSet tmpFragments = new AtomContainerSet();
-        for (IAtom tmpAtom: aMolecule.atoms()) {
+        for (IAtom tmpAtom: tmpClone.atoms()) {
             if (!(tmpAtom == null)) {
                 tmpAtom.setProperty(tmpAlkylSFAtomIndexProperty, tmpAlkylSFAtomIndexInt);
                 tmpAtom.setFlag(CDKConstants.ISPLACED, true);
@@ -496,7 +498,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpAlkylSFAtomIndexInt ++;
             }
         }
-        for (IBond tmpBond: aMolecule.bonds()) {
+        for (IBond tmpBond: tmpClone.bonds()) {
             if (!(tmpBond == null)) {
                 tmpBond.setProperty(tmpAlkylSFBondIndexProperty, tmpAlkylSFBondIndexInt);
                 tmpBond.setFlag(CDKConstants.ISPLACED, true);
@@ -506,9 +508,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //</editor-fold>
         //
-        //<editor-fold desc="Ring System Detection">
+        //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
         try {
-            RingSearch ringSearch = new RingSearch(aMolecule);
+            RingSearch ringSearch = new RingSearch(tmpClone);
             List<IAtomContainer> tmpFusedList = ringSearch.fusedRingFragments();
             if (!tmpFusedList.isEmpty()) {
                 Iterator<IAtomContainer> tmpFusedIterator = tmpFusedList.iterator();
@@ -519,12 +521,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 for (IAtomContainer tmpContainer: tmpFusedSet.atomContainers()) {
                     for (IAtom tmpFusedAtom: tmpContainer.atoms()) {
                         int tmpAtomInteger = tmpFusedAtom.getProperty(tmpAlkylSFAtomIndexProperty);
-                        tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISINRING,true);
                         tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,false);
                     }
                     for (IBond tmpFusedBond: tmpContainer.bonds()) {
                         int tmpBondInteger = tmpFusedBond.getProperty(tmpAlkylSFBondIndexProperty);
-                        tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISINRING,true);
                         tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED, false);
                     }
                 }
@@ -537,24 +537,22 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet;
-            tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
+            tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(tmpClone);
             //molecule mapping
             //iterate over every atomcontainer from ConjPiSystemsDetector output
             for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
                 for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
                     int tmpAtomInteger = tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty);
-                    tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISCONJUGATED,true);
                     tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
                 for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
                     int tmpBondInteger = tmpConjBond.getProperty(tmpAlkylSFBondIndexProperty);
-                    tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISCONJUGATED,true);
                     tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + " Molecule ID: " + aMolecule.getID());
+                    anException + " Molecule ID: " + tmpClone.getID());
             throw new RuntimeException(anException);
         }
         //</editor-fold>
@@ -563,17 +561,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         CycleFinder tmpMCBCycleFinder = Cycles.mcb();
         IRingSet tmpMCBCyclesSet;
         try {
-            Cycles tmpMCBCycles = tmpMCBCycleFinder.find(aMolecule);
+            Cycles tmpMCBCycles = tmpMCBCycleFinder.find(tmpClone);
             tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
             for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
                 for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
                     int tmpAtomInteger = tmpSingleRingAtom.getProperty(tmpAlkylSFAtomIndexProperty);
-                    tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISINRING,true);
                     tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
                 for (IBond tmpSingleRingBond: tmpContainer.bonds()) {
                     int tmpBondInteger = tmpSingleRingBond.getProperty(tmpAlkylSFBondIndexProperty);
-                    tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISINRING,true);
                     tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
             }
@@ -586,41 +582,25 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         try {
             IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
             IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
-            //VISITED flag is set by ConjPiSysDetector, needs to be reset
-            for (IAtom tmpVisAtom : tmpAtomArray) {
-                tmpVisAtom.setFlag(CDKConstants.VISITED, false);
-            }
-            for (IBond tmpVisBond : tmpBondArray) {
-                tmpVisBond.setFlag(CDKConstants.VISITED, false);
-            }
             //atom extraction
             //superior performance compared to normal for iteration over Array length
             for (IAtom tmpAtom : tmpAtomArray) {
-                System.out.println(tmpAtom.getProperty(tmpAlkylSFAtomIndexProperty).toString() + ": " + Arrays.toString(tmpAtom.getFlags()));
-                if (!tmpAtom.getFlag(CDKConstants.VISITED)) {
-                    if (tmpAtom.getFlag(CDKConstants.ISPLACED)) {
-                        tmpChainFragmentationContainer.addAtom(tmpAtom);
-                        tmpAtom.setFlag(CDKConstants.VISITED, true);
-                    } else {
-                        tmpRingFragmentationContainer.addAtom(tmpAtom);
-                        tmpAtom.setFlag(CDKConstants.VISITED, true);
-                    }
+                if (tmpAtom.getFlag(CDKConstants.ISPLACED)) {
+                    tmpChainFragmentationContainer.addAtom(tmpAtom);
+                } else {
+                    tmpRingFragmentationContainer.addAtom(tmpAtom);
                 }
             }
             //bond extraction
             //superior performance compared to normal for iteration over Array length
             for (IBond tmpBond : tmpBondArray) {
-                if (!tmpBond.getFlag(CDKConstants.VISITED)) {
-                    if (tmpBond.getFlag(CDKConstants.ISPLACED)) {
-                        if (tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED)) {
-                            tmpChainFragmentationContainer.addBond(tmpBond);
-                            tmpBond.setFlag(CDKConstants.VISITED, true);
-                        }
+                if (tmpBond.getFlag(CDKConstants.ISPLACED)) {
+                    if ((tmpBond.getBegin().getFlag(CDKConstants.ISPLACED) && tmpBond.getEnd().getFlag(CDKConstants.ISPLACED))) {
+                        tmpChainFragmentationContainer.addBond(tmpBond);
                     }
-                    else if (!tmpBond.getFlag(CDKConstants.ISPLACED)) {
-                        tmpRingFragmentationContainer.addBond(tmpBond);
-                        tmpBond.setFlag(CDKConstants.VISITED, true);
-                    }
+                }
+                else {
+                    tmpRingFragmentationContainer.addBond(tmpBond);
                 }
             }
             //connectivity checking
@@ -648,7 +628,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             } catch (Exception e) {
                 AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Connectivity Checking failed");
                 throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + e.toString() +
-                        " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                        ": " + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             }
         } catch (Exception e) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, e + " Fragment Extraction failed");
