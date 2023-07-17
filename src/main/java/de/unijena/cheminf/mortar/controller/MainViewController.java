@@ -32,7 +32,6 @@ import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.Fingerprints.FingerprinterService;
-import de.unijena.cheminf.mortar.model.Fingerprints.FragmentFingerprinterWrapper;
 import de.unijena.cheminf.mortar.model.Fingerprints.IMortarFingerprinter;
 import de.unijena.cheminf.mortar.model.clustering.ClusteringService;
 import de.unijena.cheminf.mortar.model.clustering.IMortarClustering;
@@ -219,6 +218,14 @@ public class MainViewController {
      * TODO
      */
     private BooleanProperty isClusteringRunningProperty;
+    /**
+     * TODO
+     */
+    Button cancelClusteringButton;
+    /**
+     * TODO
+     */
+    Button clusteringButton;
     /**
      * Thread safe list to hold running threads to update StatusBar
      */
@@ -455,6 +462,9 @@ public class MainViewController {
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if (this.isFragmentationRunning) {
             this.interruptFragmentation();
+        }
+        if(this.isClusteringRunningProperty.get()) {
+            this.interruptClustering();
         }
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
@@ -1203,6 +1213,8 @@ public class MainViewController {
      */
     private void interruptClustering() {
         this.clusteringTask.cancel();
+        this.cancelClusteringButton.setVisible(false);
+        this.clusteringButton.setDisable(false);
         this.clusteringThread.interrupt();
     }
     //
@@ -1277,7 +1289,7 @@ public class MainViewController {
                             this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldTab, newTab) -> {
                                 if(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()) !=null) {
                                     if (tmpTabNameToFragmentsMap.containsKey(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle())) {
-                                        List<FragmentDataModel> a = tmpTabNameToFragmentsMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+                                        List<FragmentDataModel> tmpFragmentDataModelList = tmpTabNameToFragmentsMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
                                         this.fingerprinterService.setMaximumFingerprintDimensionality(tmpObservableFragments.size());
                                     }
                                 }
@@ -1329,10 +1341,12 @@ public class MainViewController {
         this.clusteringTask = new Task<>() {
             @Override
             protected IArt2aClusteringResult[] call() throws Exception {
-                IArt2aClusteringResult[] tmpClusteringResult = clusteringService.startClustering(aDataMatrix, 9); // TODO ask
+                IArt2aClusteringResult[] tmpClusteringResult = clusteringService.startClustering(aDataMatrix, settingsContainer.getNumberOfTasksForFragmentationSetting()); // TODO ask
                 return tmpClusteringResult;
             }
         };
+        this.clusteringButton.setDisable(true);
+        this.cancelClusteringButton.setVisible(true);
         this.clusteringTask.setOnSucceeded(event -> {
             Platform.runLater(() -> {
                 this.clusteringResult = null;
@@ -1348,17 +1362,23 @@ public class MainViewController {
                     this.updateStatusBar(this.clusteringThread,Message.get("Status.clusteringFailed"));
                 }
                 this.updateStatusBar(this.clusteringThread, Message.get("Status.clustered"));
+                this.clusteringButton.setDisable(false);
+                this.cancelClusteringButton.setVisible(false);
                 this.isClusteringRunningProperty.setValue(false);
                 this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");
                 this.openClusteringView(this.clusteringResult);
             });
         });
         this.clusteringTask.setOnCancelled(event -> { // TODO
-            this.updateStatusBar(this.clusteringThread, Message.get("Status.canceled"));
+            this.updateStatusBar(this.clusteringThread, Message.get("Status.clusteringCanceled"));
+            this.clusteringButton.setDisable(false);
+            this.cancelClusteringButton.setVisible(false);
             this.isClusteringRunningProperty.setValue(false);
         });
         this.clusteringTask.setOnFailed(event -> {
             this.updateStatusBar(this.clusteringThread, Message.get("Status.clusteringFailed"));
+            this.clusteringButton.setDisable(false);
+            this.cancelClusteringButton.setVisible(false);
             this.isImportRunningProperty.setValue(false);
             LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
         });
@@ -1396,7 +1416,7 @@ public class MainViewController {
 
     /**
      * Adds a tab for fragments and a tab for items (results of fragmentation)
-     *
+     *f
      * @param aFragmentationName
      */
     private void addFragmentationResultTabs(String aFragmentationName) {
@@ -1463,17 +1483,22 @@ public class MainViewController {
         tmpOpenOverviewViewButton.setTooltip(new Tooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
         Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
         tmpOpenHistogramViewButton.setTooltip(new Tooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
-        Button tmpClusteringButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showClusterViewButton.text"));
-        tmpClusteringButton.setTooltip(new Tooltip(Message.get("MainView.showClusterViewButton.tooltip")));
-        tmpViewButtonsHBox.getChildren().addAll(tmpClusteringButton,tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
+        this.clusteringButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showClusterViewButton.text"));
+        this.clusteringButton.setTooltip(new Tooltip(Message.get("MainView.showClusterViewButton.tooltip")));
+        this.cancelClusteringButton = GuiUtil.getButtonOfStandardSize("Cancel");
+        this.cancelClusteringButton.setVisible(false);
+        tmpViewButtonsHBox.getChildren().addAll(this.cancelClusteringButton,this.clusteringButton,tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
-        tmpClusteringButton.setOnAction(event -> {
+        this.clusteringButton.setOnAction(event -> {
             // fingerprinting first and then start clustering
             System.out.println(this.fingerprinterService.getFingerprintTypEnumName());
             this.startFingerprinting(this.fingerprinterService.getFingerprintTypEnumName());
             this.startClustering(this.fingerprints);
+        });
+        this.cancelClusteringButton.setOnAction(event -> {
+            this.interruptClustering();
         });
         if(tmpList.size() == 0){
             tmpOpenOverviewViewButton.setDisable(true);

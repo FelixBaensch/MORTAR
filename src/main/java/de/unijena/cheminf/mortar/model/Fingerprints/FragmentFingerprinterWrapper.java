@@ -148,8 +148,14 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
         ArrayList<String> tmpKeyFragmentsToGenerateBitFingerprints = new ArrayList<>(tmpSubList.size());
         System.out.println(this.fingerprintFrequencyThreshold.get() + "------------gesetzer fingerprint threshold");
         for(FragmentDataModel tmpFragmentDataModel : tmpSubList) {
-            if(tmpFragmentDataModel.getAbsoluteFrequency() >= this.fingerprintFrequencyThreshold.get())
-            tmpKeyFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
+            if(tmpFragmentDataModel.getAbsoluteFrequency() >= this.fingerprintFrequencyThreshold.get()) {
+                tmpKeyFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
+            }
+        }
+        if(tmpKeyFragmentsToGenerateBitFingerprints.isEmpty()) {
+            for(FragmentDataModel tmpFragmentDataModel : tmpSubList) {
+                tmpKeyFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
+            }
         }
         System.out.println(tmpKeyFragmentsToGenerateBitFingerprints.size() + "--------------lenght key fragment list");
         System.out.println(tmpKeyFragmentsToGenerateBitFingerprints + "------------key fragments");

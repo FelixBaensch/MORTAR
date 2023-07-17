@@ -17,7 +17,10 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -121,6 +124,7 @@ public class ClusteringView extends AnchorPane {
         tmpBorderPane.setBottom(tmpMainHBoxControls);
         tmpBorderPane.setCenter(tmpMainGrid);
         HBox tmpHBoxLeftSideControls = new HBox();
+        tmpHBoxLeftSideControls.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, null , null)));
         // left side controls
         Label tmpLabel1 = new Label("0.1:");
         Label tmpLabel2 = new Label("0.2:");
@@ -131,7 +135,6 @@ public class ClusteringView extends AnchorPane {
         Label tmpLabel7 = new Label("0.7:");
         Label tmpLabel8 = new Label("0.8:");
         Label tmpLabel9 = new Label("0.9:");
-        Label tmpLabel = new Label("            ");
         if(aClusteringTypToStyleClusteringView.equals(this.VIEW_STYLE_FOR_ART_2A_CLUSTERING)) {
             this.vigilanceParameter1Button = new ToggleButton();
             this.vigilanceParameter1Button.setPrefWidth(40);
@@ -179,8 +182,9 @@ public class ClusteringView extends AnchorPane {
             this.vigilanceParameter7Button.setToggleGroup(this.toggleGroup);
             this.vigilanceParameter8Button.setToggleGroup(this.toggleGroup);
             this.vigilanceParameter9Button.setToggleGroup(this.toggleGroup);
-            this.clusterRepresentativesButton = new Button("Representatives");
         }
+        HBox tmpCenterHBox = new HBox();
+        this.clusterRepresentativesButton = new Button("Representatives");
         this.barWidthsComboBox = new ComboBox<>();
         for (ClusteringViewController.BarWidthOption tmpBarWidthOptionConstant : ClusteringViewController.BarWidthOption.values()) {
             this.barWidthsComboBox.getItems().add(tmpBarWidthOptionConstant.getDisplayName());
@@ -188,6 +192,8 @@ public class ClusteringView extends AnchorPane {
         tmpLeftSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        tmpLeftSideGrid.setGridLinesVisible(true);
+
         // grid positions
         if(aClusteringTypToStyleClusteringView.equals(this.VIEW_STYLE_FOR_ART_2A_CLUSTERING)) {
             tmpLeftSideGrid.add(tmpLabel1, 0,0);
@@ -208,7 +214,6 @@ public class ClusteringView extends AnchorPane {
             tmpLeftSideGrid.add(this.vigilanceParameter8Button, 5, 1);
             tmpLeftSideGrid.add(tmpLabel9, 6,1);
             tmpLeftSideGrid.add(this.vigilanceParameter9Button, 7, 1);
-            tmpLeftSideGrid.add(tmpLabel,10,0);
             tmpLeftSideGrid.add(this.clusterRepresentativesButton, 11, 0);
             tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
             tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
@@ -217,6 +222,15 @@ public class ClusteringView extends AnchorPane {
             tmpHBoxLeftSideControls.getChildren().add(tmpLeftSideGrid);
             tmpMainHBoxControls.getChildren().add(tmpHBoxLeftSideControls);
         }
+        /*
+        tmpCenterHBox.setBorder(new Border(new BorderStroke(Color.GREEN, BorderStrokeStyle.SOLID, null , null)));
+        tmpCenterHBox.setAlignment(Pos.CENTER);
+        tmpCenterHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
+        tmpCenterHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        HBox.setHgrow(tmpCenterHBox, Priority.ALWAYS);
+        tmpMainHBoxControls.getChildren().add(tmpCenterHBox);
+        tmpCenterHBox.getChildren().add(this.clusterRepresentativesButton);
+        */
         this.structureDisplayImageView = new ImageView();
         this.structureDisplayImageView.setEffect(new DropShadow(10,2,3, Color.BLACK));
         this.structureDisplayImageView.setStyle("fx-padding: 50px; fx-margin: 50px");
@@ -232,6 +246,7 @@ public class ClusteringView extends AnchorPane {
         this.barStylingCheckBox = new CheckBox(Message.get("HistogramView.stylingCheckBox.text"));
         this.barStylingCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.stylingCheckBox.tooltip")));
         HBox tmpHBoxRightSideControls = new HBox();
+        tmpHBoxRightSideControls.setBorder(new Border(new BorderStroke(Color.RED, BorderStrokeStyle.SOLID, null , null)));
         tmpRightSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpRightSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE * 2);
         tmpRightSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
