@@ -29,18 +29,30 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import org.openscience.cdk.*;
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.Intractable;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
-import org.openscience.cdk.interfaces.*;
+import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
+import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IElement;
+import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,7 +65,7 @@ import java.util.logging.Logger;
  */
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
-    //<editor-fold desc="Public enums">
+    //<editor-fold desc="Public Enums">
     /**
      * Enum for options concerning maximum fragment length of carbohydrate chain created by fragmenter.
      */
@@ -80,19 +92,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public enum PreserveRingMaxSizeOption {
         /**
-         * Maximum ring size defined as cyclo-alkane chain Cyclo-Propane
+         * Maximum cyclo-alkane size defined as Cyclo-Propane
          */
         CYCLO_PROPANE,
         /**
-         * Maximum ring size defined as cyclo-alkane chain Cyclo-Butane
+         * Maximum cyclo-alkane size defined as Cyclo-Butane
          */
         CYCLO_BUTANE,
         /**
-         * Maximum ring size defined as cyclo-alkane chain Cyclo-Pentane
+         * Maximum cyclo-alkane size defined as Cyclo-Pentane
          */
         CYCLO_PENTANE,
         /**
-         * Maximum ring size defined as cyclo-alkane chain Cyclo-Hexane
+         * Maximum cyclo-alkane size defined as Cyclo-Hexane
          */
         CYCLO_HEXANE
     }
@@ -101,13 +113,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //<editor-fold desc="Public Static Final Class Variables">
     /**
      * Name of the fragmenter.
+     * ToDo: change name of fragmenter everywhere it is used
      */
-    public static final String ALGORITHM_NAME = "Alkyl structure";
-
+    public static final String ALGORITHM_NAME = "Alkyl Fragmenter";
     /**
-     * Default option for maximum fragment length of carbohydrate chain, set to Methane.
+     * Default option for maximum fragment length of carbohydrate chain, set to methane.
      */
-    public static final ChainFragmentLengthOption Chain_Fragment_LENGTH_OPTION_DEFAULT = ChainFragmentLengthOption.METHANE;
+    public static final ChainFragmentLengthOption CHAIN_FRAGMENT_LENGTH_OPTION = ChainFragmentLengthOption.METHANE;
     /**
      * Default option for spiro carbon dissection.
      */
@@ -119,7 +131,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Default option for maximum size of preserved rings.
      */
-    public static final PreserveRingMaxSizeOption Preserve_Ring_MAX_SIZE_OPTION_DEFAULT = PreserveRingMaxSizeOption.CYCLO_HEXANE;
+    public static final PreserveRingMaxSizeOption PRESERVE_RING_MAX_SIZE_OPTION = PreserveRingMaxSizeOption.CYCLO_HEXANE;
     /**
      * Default option for ring system preservation.
      */
@@ -128,6 +140,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default option for maximum rings contained in preserved ring system.
      */
     public static final int PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT = 1;
+    /**
+     * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
+     */
+    public static final String INTERNAL_ATOM_INDEX_PROPERTY_KEY = "ASF.ATOM_INDEX";
+    /**
+     * Key for an internal index property, used in uniquely identifying bonds during fragmentation.
+     */
+    public static final String INTERNAL_BOND_INDEX_PROPERTY_KEY = "ASF.Bond_INDEX";
     //</editor-fold>
     //
     //<editor-fold desc="Private Final Class Variables">
@@ -201,7 +221,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
         this.chainFragmentLengthSetting = new SimpleEnumConstantNameProperty(this, "Chain fragment length setting",
-                AlkylStructureFragmenter.Chain_Fragment_LENGTH_OPTION_DEFAULT.name(),
+                AlkylStructureFragmenter.CHAIN_FRAGMENT_LENGTH_OPTION.name(),
                 ChainFragmentLengthOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
@@ -228,7 +248,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settingNameTooltipTextMap.put(this.dissectRingsSetting.getName(),
                 Message.get("AlkylStructureFragmenter.dissectRingsSetting.tooltip"));
         this.preserveRingMaxSizeSetting = new SimpleEnumConstantNameProperty(this, "Preserve ring max size setting (preserves if Dissect rings setting is set false)",
-                AlkylStructureFragmenter.Preserve_Ring_MAX_SIZE_OPTION_DEFAULT.name(),
+                AlkylStructureFragmenter.PRESERVE_RING_MAX_SIZE_OPTION.name(),
                 PreserveRingMaxSizeOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
@@ -373,17 +393,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.chainFragmentLengthSetting.set(anOption.name());
     }
     /**
-     * Sets the bool option for spiro carbon dissection.
+     * Sets the boolean option for spiro carbon dissection.
      *
-     * @param aBoolean the bool option to use
+     * @param aBoolean the boolean option to use
      */
     public void setDissectSpiroCarbonSetting(boolean aBoolean) {
         this.dissectSpiroCarbonSetting.set(aBoolean);
     }
     /**
-     * Sets the bool option for ring dissection.
+     * Sets the boolean option for ring dissection.
      *
-     * @param aBoolean the bool option to use
+     * @param aBoolean the boolean option to use
      */
     public void setDissectRingsSetting(boolean aBoolean) {
         this.dissectRingsSetting.set(aBoolean);
@@ -411,9 +431,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.preserveRingMaxSizeSetting.set(anOption.name());
     }
     /**
-     * Sets bool option for ring system preservation.
+     * Sets boolean option for ring system preservation.
      *
-     * @param aBoolean the bool option to use
+     * @param aBoolean the boolean option to use
      */
     public void setPreserveRingSystemSetting(boolean aBoolean) {
         this.preserveRingSystemSetting.set(aBoolean);
@@ -453,10 +473,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
-        this.chainFragmentLengthSetting.set(AlkylStructureFragmenter.Chain_Fragment_LENGTH_OPTION_DEFAULT.name());
+        this.chainFragmentLengthSetting.set(AlkylStructureFragmenter.CHAIN_FRAGMENT_LENGTH_OPTION.name());
         this.dissectSpiroCarbonSetting.set(AlkylStructureFragmenter.DISSECT_SPIRO_CARBON_OPTION_DEFAULT);
         this.dissectRingsSetting.set(AlkylStructureFragmenter.DISSECT_RINGS_OPTION_DEFAULT);
-        this.preserveRingMaxSizeSetting.set(AlkylStructureFragmenter.Preserve_Ring_MAX_SIZE_OPTION_DEFAULT.name());
+        this.preserveRingMaxSizeSetting.set(AlkylStructureFragmenter.PRESERVE_RING_MAX_SIZE_OPTION.name());
         this.preserveRingSystemSetting.set(AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_OPTION_DEFAULT);
         this.preserveRingSystemMaxSetting.set(AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT);
     }
@@ -482,25 +502,22 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
         //
         //<editor-fold desc="Property and Arrays Set" defaultstate="collapsed">
-        // Key: IndexProperty Value = IndexInt; Value: IAtom/IBond with IndexInt
         IAtom[] tmpAtomArray = new IAtom[tmpClone.getAtomCount()];
         IBond[] tmpBondArray = new IBond[tmpClone.getBondCount()];
         int tmpAlkylSFAtomIndexInt = 0;
         int tmpAlkylSFBondIndexInt = 0;
-        String tmpAlkylSFAtomIndexProperty = "AlkylSFAtomIndex";
-        String tmpAlkylSFBondIndexProperty = "AlkylSFBondIndex";
         IAtomContainerSet tmpFragments = new AtomContainerSet();
         for (IAtom tmpAtom: tmpClone.atoms()) {
-            if (!(tmpAtom == null)) {
-                tmpAtom.setProperty(tmpAlkylSFAtomIndexProperty, tmpAlkylSFAtomIndexInt);
+            if (tmpAtom != null) {
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndexInt);
                 tmpAtom.setFlag(CDKConstants.ISPLACED, true);
                 tmpAtomArray[tmpAlkylSFAtomIndexInt] = tmpAtom;
                 tmpAlkylSFAtomIndexInt ++;
             }
         }
         for (IBond tmpBond: tmpClone.bonds()) {
-            if (!(tmpBond == null)) {
-                tmpBond.setProperty(tmpAlkylSFBondIndexProperty, tmpAlkylSFBondIndexInt);
+            if (tmpBond != null) {
+                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndexInt);
                 tmpBond.setFlag(CDKConstants.ISPLACED, true);
                 tmpBondArray[tmpAlkylSFBondIndexInt] = tmpBond;
                 tmpAlkylSFBondIndexInt ++;
@@ -510,21 +527,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
         try {
-            RingSearch ringSearch = new RingSearch(tmpClone);
-            List<IAtomContainer> tmpFusedList = ringSearch.fusedRingFragments();
+            RingSearch tmpRingSearch = new RingSearch(tmpClone);
+            List<IAtomContainer> tmpFusedList = tmpRingSearch.fusedRingFragments();
             if (!tmpFusedList.isEmpty()) {
-                Iterator<IAtomContainer> tmpFusedIterator = tmpFusedList.iterator();
-                IAtomContainerSet tmpFusedSet = new AtomContainerSet();
-                while (tmpFusedIterator.hasNext()) {
-                    tmpFusedSet.addAtomContainer(tmpFusedIterator.next());
-                }
-                for (IAtomContainer tmpContainer: tmpFusedSet.atomContainers()) {
-                    for (IAtom tmpFusedAtom: tmpContainer.atoms()) {
-                        int tmpAtomInteger = tmpFusedAtom.getProperty(tmpAlkylSFAtomIndexProperty);
+                for (int tmpFusedCount = 0; tmpFusedCount < tmpFusedList.size(); tmpFusedCount++) {
+                    for (IAtom tmpFusedAtom: tmpFusedList.get(tmpFusedCount).atoms()) {
+                        int tmpAtomInteger = tmpFusedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ATOM_INDEX_PROPERTY_KEY);
                         tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,false);
                     }
-                    for (IBond tmpFusedBond: tmpContainer.bonds()) {
-                        int tmpBondInteger = tmpFusedBond.getProperty(tmpAlkylSFBondIndexProperty);
+                    for (IBond tmpFusedBond: tmpFusedList.get(tmpFusedCount).bonds()) {
+                        int tmpBondInteger = tmpFusedBond.getProperty(AlkylStructureFragmenter.INTERNAL_BOND_INDEX_PROPERTY_KEY);
                         tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED, false);
                     }
                 }
@@ -542,11 +554,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //iterate over every atomcontainer from ConjPiSystemsDetector output
             for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
                 for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
-                    int tmpAtomInteger = tmpConjAtom.getProperty(tmpAlkylSFAtomIndexProperty);
+                    int tmpAtomInteger = tmpConjAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ATOM_INDEX_PROPERTY_KEY);
                     tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
                 for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
-                    int tmpBondInteger = tmpConjBond.getProperty(tmpAlkylSFBondIndexProperty);
+                    int tmpBondInteger = tmpConjBond.getProperty(AlkylStructureFragmenter.INTERNAL_BOND_INDEX_PROPERTY_KEY);
                     tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
             }
@@ -565,11 +577,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
             for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
                 for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
-                    int tmpAtomInteger = tmpSingleRingAtom.getProperty(tmpAlkylSFAtomIndexProperty);
+                    int tmpAtomInteger = tmpSingleRingAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ATOM_INDEX_PROPERTY_KEY);
                     tmpAtomArray[tmpAtomInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
                 for (IBond tmpSingleRingBond: tmpContainer.bonds()) {
-                    int tmpBondInteger = tmpSingleRingBond.getProperty(tmpAlkylSFBondIndexProperty);
+                    int tmpBondInteger = tmpSingleRingBond.getProperty(AlkylStructureFragmenter.INTERNAL_BOND_INDEX_PROPERTY_KEY);
                     tmpBondArray[tmpBondInteger].setFlag(CDKConstants.ISPLACED,false);
                 }
             }
@@ -639,7 +651,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Hydrogen Saturation" defaultstate="collapsed">
         List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(tmpFragments.getAtomContainerCount());
         try {
-            if (!tmpFragments.isEmpty() && !(tmpFragments == null)) {
+            if (!tmpFragments.isEmpty() && tmpFragments != null) {
                 for (IAtomContainer tmpAtomContainer: tmpFragments.atomContainers()) {
                     if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                         CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());

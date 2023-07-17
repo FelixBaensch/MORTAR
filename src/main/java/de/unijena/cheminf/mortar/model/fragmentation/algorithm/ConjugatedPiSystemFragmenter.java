@@ -5,14 +5,17 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleBooleanProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -173,10 +176,11 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        IAtomContainer tmpClone = aMolecule.clone();
         List<IAtomContainer> tmpFragments = new ArrayList<>(1);
         IAtomContainerSet tmpConjugatedAtomContainerSet;
         try {
-            tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(aMolecule);
+            tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(tmpClone);
             for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
                 if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                     CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
@@ -192,7 +196,7 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
             }
         } catch (Exception anException) {
             ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING,
-                    anException + " Molecule ID: " + aMolecule.getID());
+                    anException + " Molecule ID: " + tmpClone.getID());
             throw new RuntimeException(anException);
         }
         return tmpFragments;
