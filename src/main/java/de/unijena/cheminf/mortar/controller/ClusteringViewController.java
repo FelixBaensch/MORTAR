@@ -471,6 +471,8 @@ public class ClusteringViewController implements IViewToolController {
             this.addListenersToHistogramView();
         }
         this.histogramStage.show();
+        System.out.println(this.histogramStage.getWidth() + "------width");
+        System.out.println(this.histogramStage.getHeight() + "------height");
         //</editor-fold>
     }
     private Double[] calculateBarSpacing(int aNumberOfDisplayedFragments, ClusteringViewController.BarWidthOption aBarWidthOptionConstant) {

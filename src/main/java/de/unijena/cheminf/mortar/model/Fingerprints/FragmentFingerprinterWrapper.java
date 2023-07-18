@@ -157,8 +157,6 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
                 tmpKeyFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
             }
         }
-        System.out.println(tmpKeyFragmentsToGenerateBitFingerprints.size() + "--------------lenght key fragment list");
-        System.out.println(tmpKeyFragmentsToGenerateBitFingerprints + "------------key fragments");
         FragmentFingerprinter tmpFragmentFingerprinter = new FragmentFingerprinter(tmpKeyFragmentsToGenerateBitFingerprints);
         int tmpIterator = 0;
         for(MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
@@ -185,7 +183,6 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
             }
             tmpIterator++;
         }
-        System.out.println("fingerprints fertig");
      //   System.out.println(java.util.Arrays.toString(tmpDataMatrix[9]));
         return tmpDataMatrix;
     }

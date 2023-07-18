@@ -166,11 +166,11 @@ public class Exporter {
                 this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
                 break;
             case COUNT_FINGERPRINTS_EXPORT_CSV:
-                tmpFileName = "Count_" + "Fingerprints_Fragments_of" + tmpFragmentationName;
+                tmpFileName = "Count_" + "Fingerprints_Fragments_of_" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
                 break;
             case BIT_FINGERPRINTS_EXPORT_CSV:
-                tmpFileName = "Bit_" + "Fingerprints_Fragments_of" + tmpFragmentationName ;
+                tmpFileName = "Bit_" + "Fingerprints_Fragments_of_" + tmpFragmentationName ;
                 this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
                 break;
         }
@@ -381,7 +381,7 @@ public class Exporter {
         }
         PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
         StringBuilder tmpFingerprintFileCsvHeader = new StringBuilder();
-        tmpFingerprintFileCsvHeader.append("Molecule name" + aSeparator + "Fingerprints" +("\n"));
+        tmpFingerprintFileCsvHeader.append("Molecule name" + aSeparator + "Fingerprint" +("\n"));
         tmpWriter.write(tmpFingerprintFileCsvHeader.toString());
         int tmpCurrentFingerprint[];
         for(int i = 0; i < aFingerprintsMatrix.length; i++) {

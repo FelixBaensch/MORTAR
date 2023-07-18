@@ -155,6 +155,10 @@ public class MainViewController {
      */
     private FingerprinterService fingerprinterService;
     /**
+     * TODO
+     */
+    private int defaultFingerprintDimensionality;
+    /**
      * ViewToolsManager
      */
     private ViewToolsManager viewToolsManager;
@@ -286,6 +290,8 @@ public class MainViewController {
         this.primaryStage.show();
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
+        System.out.println(this.primaryStage.getHeight() +"-----heigzth");
+        System.out.println(this.primaryStage.getWidth()+ "-----width");
         InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.primaryStage.getIcons().add(new Image(tmpImageInputStream));
         //</editor-fold>
@@ -824,7 +830,7 @@ public class MainViewController {
      */
     public void openFingerprinterSettingsView() {
         FingerprinterSettingsViewController tmpFingerprinterSettingsViewController =
-                new FingerprinterSettingsViewController(this.primaryStage, this.fingerprinterService.getFingerprinter(), this.fingerprinterService.getSelectedFingerprinter().getFingerprinterName(), this.fingerprinterService.getMaximumFingerprintDimensionality());
+                new FingerprinterSettingsViewController(this.primaryStage, this.fingerprinterService.getFingerprinter(), this.fingerprinterService.getSelectedFingerprinter().getFingerprinterName(),this.defaultFingerprintDimensionality);
     }
     //
 
@@ -1283,6 +1289,8 @@ public class MainViewController {
                         long tmpEndTime = System.nanoTime();
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
                         this.fingerprinterService.setMaximumFingerprintDimensionality(tmpObservableFragments.size());
+                        this.defaultFingerprintDimensionality = tmpObservableFragments.size();
+                        System.out.println(this.defaultFingerprintDimensionality +"-----------mein default fp");
                         HashMap<String, List<FragmentDataModel>> tmpTabNameToFragmentsMap = new HashMap<>();
                         if(this.mainTabPane != null) {
                             tmpTabNameToFragmentsMap.put(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(), tmpObservableFragments);

@@ -82,7 +82,7 @@ public class FingerprinterSettingsViewController {
                 if(this.fingerprinterTyp[i].getFingerprinterName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
                 this.fingerprinterTyp[i].restoreDefaultSettings(this.dime);
             }
-            System.out.println(this.dime);
+            System.out.println(this.dime+ "----------default dimensionality fingerprints");
         });
     }
     private void setRecentProperties(IMortarFingerprinter aFingerprinter, Map aRecentPropertiesMap) {

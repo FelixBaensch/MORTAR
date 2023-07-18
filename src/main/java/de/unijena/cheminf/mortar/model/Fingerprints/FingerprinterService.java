@@ -257,7 +257,6 @@ public class FingerprinterService {
      * After fragmentation, sets the number of fragments as
      * fingerprint dimensionality in the settings.
      *
-     * @return int value for fingerprint dimensionality
      */
     public void setMaximumFingerprintDimensionality(int aNumberOfMaxFragments) {
         this.fragmentFingerprinterWrapper.setFingerprintDimensionality(aNumberOfMaxFragments);
