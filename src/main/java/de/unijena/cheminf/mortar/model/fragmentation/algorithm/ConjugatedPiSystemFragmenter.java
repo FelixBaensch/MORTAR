@@ -1,10 +1,32 @@
+/*
+ * MORTAR - MOlecule fRagmenTAtion fRamework
+ * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ *
+ * Source code is available at <https://github.com/FelixBaensch/MORTAR>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+
 import javafx.beans.property.Property;
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -23,14 +45,34 @@ import java.util.logging.Logger;
  * Java class implementing an algorithm in MORTAR for detection of conjugated pi systems using
  * a rarely used CDK functionality to test and validate its purpose.
  *
+ * ToDo: complete rework of fragmentation and pre-fragmentation
  * @author Maximilian Rottmann
+ * @version 1.1.1.0
  */
 public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
-    public static final String ALGORITHM_NAME = "ConjPiSys";
+    /**
+     * Name of the fragmenter, CPS stands for Conjugated Pi System.
+     */
+    public static final String ALGORITHM_NAME = "CPS Fragmenter";
+    /**
+     * A property that has a constant fragment hydrogen saturation setting.
+     */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+    /**
+     * All settings of this fragmenter, encapsulated in JavaFX properties for binding to GUI.
+     */
     private final List<Property> settings;
+    /**
+     * Map to store pairs of {@literal <setting name, tooltip text>}.
+     */
     private final HashMap<String, String> settingNameTooltipTextMap;
-    private final Logger logger = Logger.getLogger(ConjugatedPiSystemFragmenter.class.getName());
+    /**
+     * The logger responsible for this fragmenter.
+     */
+    private static final Logger logger = Logger.getLogger(ConjugatedPiSystemFragmenter.class.getName());
+    /**
+     * Constructor of this fragmenter class.
+     */
     public ConjugatedPiSystemFragmenter(){
         this.settingNameTooltipTextMap = new HashMap<>(4,0.75f);
         this.settings = new ArrayList<>(1);
@@ -53,75 +95,37 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("ConjugatedPiSystemFragmenter.fragmentSaturationSetting.tooltip"));
     }
-    /**
-     * Returns a list of all available settings represented by properties for the given fragmentation algorithm.
-     *
-     * @return list of settings represented by properties
-     */
+
     @Override
     public List<Property> settingsProperties() {
         return this.settings;
     }
 
-    /**
-     * Returns a map containing descriptive texts (values) for the settings with the given names (keys) to be used as
-     * tooltips in the GUI.
-     *
-     * @return map with tooltip texts
-     */
     @Override
     public Map<String, String> getSettingNameToTooltipTextMap() {
         return this.settingNameTooltipTextMap;
     }
 
-    /**
-     * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
-     * The given name must be unique among the available fragmentation algorithms!
-     *
-     * @return algorithm name
-     */
     @Override
     public String getFragmentationAlgorithmName() {
         return ConjugatedPiSystemFragmenter.ALGORITHM_NAME;
     }
 
-    /**
-     * Returns the currently set option for saturating free valences on returned fragment molecules.
-     *
-     * @return the set option
-     */
     @Override
     public String getFragmentSaturationSetting() {
         return this.fragmentSaturationSetting.get();
     }
 
-    /**
-     * Returns the property representing the setting for fragment saturation.
-     *
-     * @return setting property for fragment saturation
-     */
     @Override
     public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
     }
 
-    /**
-     * Returns the currently set fragment saturation option as the respective enum constant.
-     *
-     * @return fragment saturation setting enum constant
-     */
     @Override
     public FragmentSaturationOption getFragmentSaturationSettingConstant() {
         return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
     }
 
-    /**
-     * Sets the option for saturating free valences on returned fragment molecules.
-     *
-     * @param anOptionName constant name (use name()) from FragmentSaturationOption enum
-     * @throws NullPointerException     if the given name is null
-     * @throws IllegalArgumentException if the given string does not represent an enum constant
-     */
     @Override
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
@@ -130,24 +134,12 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         this.fragmentSaturationSetting.set(tmpConstant.name());
     }
 
-    /**
-     * Sets the option for saturating free valences on returned fragment molecules.
-     *
-     * @param anOption the saturation option to use
-     * @throws NullPointerException if the given option is null
-     */
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
         this.fragmentSaturationSetting.set(anOption.name());
     }
 
-    /**
-     * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
-     * multi-threaded work where every thread needs its own fragmenter instance.
-     *
-     * @return new fragmenter instance with the same settings
-     */
     @Override
     public IMoleculeFragmenter copy() {
         ConjugatedPiSystemFragmenter tmpCopy = new ConjugatedPiSystemFragmenter();
@@ -155,24 +147,12 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         return tmpCopy;
     }
 
-    /**
-     * Restore all settings of the fragmenter to their default values.
-     */
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
 
     }
-
-    /**
-     * Fragments a clone(!) of the given molecule according to the respective algorithm and returns the resulting fragments.
-     *
-     * @param aMolecule to fragment
-     * @return a list of fragments (the list may be empty if no fragments are extracted, but the fragments should not be!)
-     * @throws NullPointerException       if aMolecule is null
-     * @throws IllegalArgumentException   if the given molecule cannot be fragmented but should be filtered or preprocessed
-     * @throws CloneNotSupportedException if cloning the given molecule fails
-     */
+    //ToDo: rework with properties and arrays
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
