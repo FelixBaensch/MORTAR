@@ -20,17 +20,22 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
 import javafx.beans.property.Property;
 
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 
 import java.util.ArrayList;
@@ -45,15 +50,27 @@ import java.util.logging.Logger;
  * Java class implementing an algorithm in MORTAR for detection of conjugated pi systems using
  * a rarely used CDK functionality to test and validate its purpose.
  *
- * ToDo: complete rework of fragmentation and pre-fragmentation
  * @author Maximilian Rottmann
  * @version 1.1.1.0
  */
 public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
+    //
+    //<editor-fold desc="Public Static Final Class Variables">
     /**
      * Name of the fragmenter, CPS stands for Conjugated Pi System.
      */
     public static final String ALGORITHM_NAME = "CPS Fragmenter";
+    /**
+     * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
+     */
+    public static final String INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY = "CPSF.ATOM_INDEX";
+    /**
+     * Key for an internal index property, used in uniquely identifying bonds during fragmentation.
+     */
+    public static final String INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY = "CPSF.BOND_INDEX";
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private Final Class Variables">
     /**
      * A property that has a constant fragment hydrogen saturation setting.
      */
@@ -70,6 +87,9 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
      * The logger responsible for this fragmenter.
      */
     private static final Logger logger = Logger.getLogger(ConjugatedPiSystemFragmenter.class.getName());
+    //</editor-fold>
+    //
+    //<editor-fold desc="Class Constructor">
     /**
      * Constructor of this fragmenter class.
      */
@@ -95,7 +115,9 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("ConjugatedPiSystemFragmenter.fragmentSaturationSetting.tooltip"));
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public Properties Get">
     @Override
     public List<Property> settingsProperties() {
         return this.settings;
@@ -125,7 +147,9 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
     public FragmentSaturationOption getFragmentSaturationSettingConstant() {
         return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public Properties Set">
     @Override
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
@@ -139,7 +163,9 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(anOption, "Given saturation option is null.");
         this.fragmentSaturationSetting.set(anOption.name());
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public Methods">
     @Override
     public IMoleculeFragmenter copy() {
         ConjugatedPiSystemFragmenter tmpCopy = new ConjugatedPiSystemFragmenter();
@@ -152,89 +178,147 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
 
     }
-    //ToDo: rework with properties and arrays
+
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
-        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+
+        //<editor-fold desc="Molecule Cloning, Property and Arrays Set">
         IAtomContainer tmpClone = aMolecule.clone();
-        List<IAtomContainer> tmpFragments = new ArrayList<>(1);
-        IAtomContainerSet tmpConjugatedAtomContainerSet;
+        IAtom[] tmpAtomArray = new IAtom[tmpClone.getAtomCount()];
+        IBond[] tmpBondArray = new IBond[tmpClone.getBondCount()];
+        int tmpCPSFAtomIndex = 0;
+        int tmpCPSFBondIndex = 0;
+        for (IAtom tmpAtom: tmpClone.atoms()) {
+            if (tmpAtom != null) {
+                tmpAtom.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY, tmpCPSFAtomIndex);
+                tmpAtomArray[tmpCPSFAtomIndex] = tmpAtom;
+                tmpCPSFAtomIndex++;
+            }
+        }
+        for (IBond tmpBond: tmpClone.bonds()) {
+            if (tmpBond != null) {
+                tmpBond.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY, tmpCPSFBondIndex);
+                tmpBondArray[tmpCPSFBondIndex] = tmpBond;
+                tmpCPSFBondIndex++;
+            }
+        }
+        //</editor-fold>
+
+        //<editor-fold desc="Detection and Extraction">
+        IAtomContainer tmpFragments = new AtomContainer();
         try {
+            IAtomContainerSet tmpConjugatedAtomContainerSet;
             tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(tmpClone);
-            for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
-                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                    CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpAtomContainer.getBuilder());
-                    try {
-                        tmpAdder.addImplicitHydrogens(tmpAtomContainer);
-                    } catch (CDKException e) {
-                        throw new RuntimeException(e);
-                    }
-                    tmpFragments.add(tmpAtomContainer);
-                } else {
-                    tmpFragments.add(tmpAtomContainer);
+            for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
+                for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
+                    int tmpAtomInteger = tmpConjAtom.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY);
+                    tmpFragments.addAtom(tmpAtomArray[tmpAtomInteger]);
+                }
+                for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
+                    int tmpBondInteger = tmpConjBond.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY);
+                    tmpFragments.addBond(tmpBondArray[tmpBondInteger]);
                 }
             }
         } catch (Exception anException) {
             ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING,
-                    anException + " Molecule ID: " + tmpClone.getID());
-            throw new RuntimeException(anException);
+                    anException + " MoleculeID: " + tmpClone.getID(), anException);
+            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
+                    + tmpClone.getID() + " at conjugated pi systems detector: " + anException.toString());
         }
-        return tmpFragments;
+        //</editor-fold>
+
+        //<editor-fold desc="Connectivity Checking">
+        IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
+        try {
+            if (!tmpFragments.isEmpty()) {
+                if (!ConnectivityChecker.isConnected(tmpFragments)) {
+                    IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpFragments);
+                    for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
+                        tmpFragmentSet.addAtomContainer(tmpContainer);
+                    }
+                } else {
+                    tmpFragmentSet.addAtomContainer(tmpFragments);
+                }
+            }
+        } catch (Exception anException) {
+            ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + tmpClone.getID(), anException);
+            throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + anException.toString() +
+                    ": " + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        }
+        //</editor-fold>
+
+        //<editor-fold desc="Hydrogen Saturation">
+        List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
+        try {
+            if (!tmpFragmentSet.isEmpty() && tmpFragmentSet != null) {
+                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpFragmentSet.getAtomContainer(0).getBuilder());
+                for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                        try {
+                            tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                            tmpProcessedFragments.add(tmpAtomContainer);
+                        } catch (CDKException anException) {
+                            ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException
+                                    + " Unable to add Implicit Hydrogen at MoleculeID: " + tmpClone.getID());
+                            throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
+                                    "hydrogen saturation of molecule: " + tmpClone.getID() + ", " + anException.toString(), anException);
+                        }
+                    } else {
+                        tmpProcessedFragments.add(tmpAtomContainer);
+                    }
+                }
+            }
+        } catch (Exception anException) {
+            ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException
+                    + "Error during hydrogen saturation at MoleculeID: " + tmpClone.getID());
+            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
+                    + tmpClone.getID() + ", at hydrogen saturation: " + anException.toString(), anException);
+        }
+        //</editor-fold>
+
+        return tmpProcessedFragments;
     }
 
-    /**
-     * Returns true if the given molecule cannot be fragmented by the respective algorithm, even after preprocessing.
-     * If the molecule is null, true is returned and no exception thrown.
-     *
-     * @param aMolecule the molecule to check
-     * @return true if the given molecule is not acceptable as input for the fragmentation algorithm, even if it would be
-     * preprocessed
-     */
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
-        return false;
+        return Objects.isNull(aMolecule) || aMolecule.isEmpty();
     }
 
     /**
-     * Returns true if the given molecule can be fragmented by the respective algorithm after preprocessing. Returns
-     * false if the given molecule can be directly fragmented by the algorithm without preprocessing.
-     * Does not check whether the molecule should be filtered! But throws an exception if it is null.
+     * Method for determining if given molecule needs preprocessing.
+     * Always returns false, as no preprocessing is currently needed.
      *
      * @param aMolecule the molecule to check
-     * @return true if the molecule needs to be preprocessed, false if it can be fragmented directly
-     * @throws NullPointerException if the molecule is null
+     * @return currently always false
+     * @throws NullPointerException if the given molecule is null
      */
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
         return false;
     }
 
+    @Override
+    public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null");
+        boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
+        boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
+        return !tmpShouldBeFiltered && !tmpShouldBePreprocessed;
+    }
+
     /**
-     * Returns true only if the given molecule can be passed to the central fragmentation method without any preprocessing
-     * and without causing an exception. If 'false' is returned, check the methods for filtering and preprocessing.
+     * Method for applying special preprocessing steps before fragmenting the given molecule.
+     * Currently, no preprocessing applied as none is needed.
      *
-     * @param aMolecule the molecule to check
-     * @return true if the molecule can be directly fragmented
+     * @param aMolecule the molecule to preprocess
+     * @return aMolecule, unchanged molecule as no preprocessing is currently needed
      * @throws NullPointerException if the molecule is null
      */
     @Override
-    public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
-        return false;
+    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        return aMolecule;
     }
-
-    /**
-     * Applies the needed preprocessing for fragmentation to the given molecule. Throws an exception if the molecule
-     * should be filtered.
-     *
-     * @param aMolecule the molecule to preprocess
-     * @return a copy of the given molecule that has been preprocessed
-     * @throws NullPointerException       if the molecule is null
-     * @throws IllegalArgumentException   if the molecule should be filtered, i.e. it cannot be fragmented even after
-     *                                    preprocessing
-     * @throws CloneNotSupportedException if cloning the given molecule fails
-     */
-    @Override
-    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
-        return null;
-    }
+    //</editor-fold>
+    //
 }
