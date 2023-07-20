@@ -429,16 +429,16 @@ public class ClusteringViewController implements IViewToolController {
                 System.out.println(tmpNumberSize +"---------number size");
                 if(tmpNumberSize == 4) {
                     System.out.println(tmpDetectedClusterInString.indexOf(1) +"-------index");
-                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.charAt(0)+ "," + tmpDetectedClusterInString.substring(1,2) + "K"));
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.charAt(0)+ "." + tmpDetectedClusterInString.substring(1,2) + "k"));
                 }
                 else if (tmpNumberSize == 5) {
-                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.substring(0,1) + "," + tmpDetectedClusterInString.substring(1,2) +"K"));
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.substring(0,1) + "." + tmpDetectedClusterInString.substring(1,2) +"k"));
                 }
                 else if(tmpNumberSize == 6) {
-                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.substring(0,2)+ "K"));
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.substring(0,2)+ "k"));
                 }
                 else if(tmpNumberSize == 7) {
-                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.charAt(0)+ "M"));
+                    tmpButton.setText(String.valueOf(tmpDetectedClusterInString.charAt(0)+ "m"));
                 }
                 else {
                     tmpButton.setText(String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters()));
@@ -471,8 +471,8 @@ public class ClusteringViewController implements IViewToolController {
             this.addListenersToHistogramView();
         }
         this.histogramStage.show();
-        System.out.println(this.histogramStage.getWidth() + "------width");
-        System.out.println(this.histogramStage.getHeight() + "------height");
+        System.out.println(this.histogramChart.getWidth() + "------width histogram");
+        System.out.println(this.histogramChart.getHeight() + "------height histogram ");
         //</editor-fold>
     }
     private Double[] calculateBarSpacing(int aNumberOfDisplayedFragments, ClusteringViewController.BarWidthOption aBarWidthOptionConstant) {
