@@ -214,12 +214,12 @@ public class MainMenuBar extends MenuBar {
         this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
         this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
         //fingerprintsExportMenu
-        this.fingerprintsExportMenu = new Menu("Fingerprints"); // TODO
+        this.fingerprintsExportMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.FingerprintsExportMenu.text"));
         //components
-        this.exportCountFingerprints = new Menu("Count Fingerprints"); // TODO
-        this.exportBitFingerprints = new Menu("Bit Fingerprints"); // TODO
-        this.exportCountFingerprintsAsCSV = new MenuItem("CSV");
-        this.exportBitFingerprintsAsCSV = new MenuItem("CSV"); // TODO
+        this.exportCountFingerprints = new Menu(Message.get("MainView.menuBar.settingsMenu.CountFingerprintsExportMenu.text"));
+        this.exportBitFingerprints = new Menu(Message.get("MainView.menuBar.settingsMenu.BitFingerprintsExportMenu.text"));
+        this.exportCountFingerprintsAsCSV = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.exportBitFingerprintsAsCSV = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
         //</editor-fold>
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
         //settingsMenu

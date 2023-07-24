@@ -399,10 +399,13 @@ public class OverviewViewController implements IViewToolController {
                 this.withShowInMainViewOption = true;
             }
             case CLUSTERING_VIEW -> {
+                Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
+                if (aTabName.isBlank()) {
+                    OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
+                }
                 this.overviewViewTitle =  aTabName + " - " + Message.get("OverviewView.nameOfView") +
                         " - " + aMoleculeDataModelList.size() + " " + "Molecules";
-                this.withShowInMainViewOption = true;
-
+                this.withShowInMainViewOption = true; // TODO
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +

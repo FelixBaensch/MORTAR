@@ -205,16 +205,22 @@ public class Exporter {
     }
     //
     /**
-     * TODO
+     * Exports in a new Thread the fingerprints as a CSV file.
      *
-     * @param aFingerprintMatrix
-     * @param aSeparator
-     * @param aMoleculeDataModelList
-     * @return
-     * @throws FileNotFoundException
+     * @param aFingerprintMatrix matrix in which all fingerprints are stored
+     * @param aSeparator the separator for the csv file
+     * @param aMoleculeDataModelList List {@literal <}MoleculeDataModel {@literal >}
+     * @return List {@literal <}String {@literal >}
      */
-    public List<String> exportCsvFingerprintFile(int[][] aFingerprintMatrix, String aSeparator, List<MoleculeDataModel> aMoleculeDataModelList) throws FileNotFoundException {
-        this.createFingerprintCsvFile(this.file, aFingerprintMatrix, aSeparator, aMoleculeDataModelList);
+    public List<String> exportCsvFingerprintFile(int[][] aFingerprintMatrix, String aSeparator, List<MoleculeDataModel> aMoleculeDataModelList)  {
+        try {
+            if (this.file == null) {
+                return null;
+            }
+            this.createFingerprintCsvFile(this.file, aFingerprintMatrix, aSeparator, aMoleculeDataModelList);
+        } catch (Exception anException) {
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        }
         return new ArrayList<>(0);
     }
     //
@@ -338,10 +344,11 @@ public class Exporter {
     /**
      * Exports the fragmentation results as they are displayed on the fragments tab as a CSV file.
      *
+     * @param aCsvFile exported csv file
      * @param aList      a list of FragmentDataModel instances to export
      * @param aSeparator the separator for the csv file
-     * @throws FileNotFoundException
-     * @author Betül Sevindik
+     * @throws FileNotFoundException is thrown if the given file is not found
+     * @author Betuel Sevindik
      */
     private void createFragmentationTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, String aSeparator)
             throws FileNotFoundException {
@@ -370,9 +377,14 @@ public class Exporter {
     }
     //
     /**
-     * TODO
+     * Exports the selected fingerprint typ (count or bit) as CSV file
      *
-     * @param aFingerprintsMatrix
+     * @param aCsvFile exported csv file
+     * @param aFingerprintsMatrix fingerprints to export
+     * @param aSeparator the separator for the csv file
+     * @param aMoleculeDataModelList List {@literal <}MoleculeDataModel {@literal >} to extract the molecule names
+     * @throws FileNotFoundException is thrown if the given file is not found
+     * @author Betuel Sevindik
      */
     private void createFingerprintCsvFile(File aCsvFile,int[][] aFingerprintsMatrix, String aSeparator, List<MoleculeDataModel> aMoleculeDataModelList)
             throws FileNotFoundException {
@@ -385,6 +397,9 @@ public class Exporter {
         tmpWriter.write(tmpFingerprintFileCsvHeader.toString());
         int tmpCurrentFingerprint[];
         for(int i = 0; i < aFingerprintsMatrix.length; i++) {
+            if(Thread.currentThread().isInterrupted()){
+                return;
+            }
             tmpCurrentFingerprint = aFingerprintsMatrix[i];
             tmpWriter.write(aMoleculeDataModelList.get(i).getName() + aSeparator);
             for(int j = 0; j < aFingerprintsMatrix[0].length; j++) {

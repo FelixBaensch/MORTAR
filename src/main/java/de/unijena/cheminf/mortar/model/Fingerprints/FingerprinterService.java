@@ -55,7 +55,7 @@ import java.util.logging.Logger;
  * Service class for fingerprinting.
  *
  * @author Betuel Sevindik
- * @version 1.0.0.1
+ * @version 1.0.0.0
  *
  */
 public class FingerprinterService {
@@ -69,17 +69,31 @@ public class FingerprinterService {
      */
     public static final String FINGERPRINTER_SETTINGS_SUBFOLDER_NAME = "Fingerprinter_Settings";
     /**
-     * Array for the different fingerprinter available
+     * Logger of this class
      */
-    IMortarFingerprinter[] fingerprinter;
+    private static final Logger LOGGER = Logger.getLogger(FingerprinterService.class.getName());
+    //</editor-fold>
+    //
+    //<editor-fold desc="private final constants" defaultstate="collapsed">
+    /**
+     * Name of fragment fingerprinter
+     */
+    private final String FRAGMENT_FINGERPRINTER_NAME = "Fragment Fingerprinter";
+    //</editor-fold>
+    //
+    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    /**
+     * Array for the different available fingerprinter
+     */
+    private IMortarFingerprinter[] fingerprinter;
     /**
      * Fragment fingerprinter
      */
-    FragmentFingerprinterWrapper fragmentFingerprinterWrapper; // TODO
+    private FragmentFingerprinterWrapper fragmentFingerprinterWrapper;
     /**
      * Selected fingerprinter
      */
-    IMortarFingerprinter selectedFingerprinter;
+    private IMortarFingerprinter selectedFingerprinter;
     /**
      * SettingContainer to hold settings
      */
@@ -88,15 +102,9 @@ public class FingerprinterService {
      * Property of name of selected fingerprinter
      */
     private SimpleStringProperty selectedFingerprinterNameProperty;
-    /**
-     * Name of fragment fingerprinter
-     */
-    private final String FRAGMENT_FINGERPRINTER_NAME = "Fragment Fingerprinter";
-    /**
-     * Logger of this class
-     */
-    private static final Logger LOGGER = Logger.getLogger(FingerprinterService.class.getName());
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Constructors">
     /**
      * Constructor.
      *
@@ -127,25 +135,53 @@ public class FingerprinterService {
         if(Objects.isNull(this.selectedFingerprinter)) {
             this.selectedFingerprinter = this.fragmentFingerprinterWrapper;
         }
-        this.setSelectedFingerprinterNameProperty(this.selectedFingerprinter.getFingerprinterName()); // TODO why?
+        this.setSelectedFingerprinterNameProperty(this.selectedFingerprinter.getFingerprinterName());
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public methods" defaultstate="collapsed">
     /**
-     * Generates fingerprints, depending on which fingerprint is selected.
+     * Generates fingerprints to cluster, depending on which fingerprint is selected.
      *
      * @param aMoleculeDataModelList List {@literal <}MoleculeDataModel {@literal >}
      * @param aFragmentDataModelList List {@literal <}FragmentDataModel {@literal >}
-     * @param aFragmentationName current fingerprinter name
+     * @param aFragmentationName current fragmentation algorithm name
      * @return data matrix with generated fingerprints
      */
-    public int[][] getFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName,
-                                   String aFingerprinterTypEnumName) {
+    public int[][] getFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
         if(this.selectedFingerprinter.getFingerprinterName().equals(this.FRAGMENT_FINGERPRINTER_NAME)) {
-            return this.fragmentFingerprinterWrapper.getFragmentFingerprints(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName, aFingerprinterTypEnumName);
+            return this.fragmentFingerprinterWrapper.getFragmentFingerprints(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName);
         } else {
             return null;
         }
     }
+    //
+    /**
+     * Returns int value of the fingerprint dimensionality
+     *
+     * @return int value
+     */
+    public int getFingerprintDimensionalityValue() {
+        return this.fragmentFingerprinterWrapper.getFingerprintDimensionality();
+    }
+    /**
+     * Generates fingerprints to export, depending on which fingerprint is selected.
+     *
+     * @param aMoleculeDataModelList List {@literal <}MoleculeDataModel {@literal >}
+     * @param aFragmentDataModelList List {@literal <}FragmentDataModel {@literal >}
+     * @param aFragmentationName current fragmentation algorithm name
+     * @param aFingerprinterTypInString fingerprint typ name in string
+     * @return data matrix with generated fingerprints
+     */
+    public int[][] getFingerprintsToExport(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName,
+                                           String aFingerprinterTypInString) {
+        if(this.selectedFingerprinter.getFingerprinterName().equals(this.FRAGMENT_FINGERPRINTER_NAME)) {
+            return this.fragmentFingerprinterWrapper.getFragmentFingerprintsToExport(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName, aFingerprinterTypInString);
+        } else {
+            return null;
+        }
+    }
+    //
     /**
      * Persists settings of the fingerprinter in preference container files in a subfolder of the settings directory. The settings of the
      * fingerprinter are translated to matching preference objects. If a single setting or several cannot be persisted, it
@@ -191,7 +227,7 @@ public class FingerprinterService {
             }
         }
     }
-
+    //
     /**
      *  Reloads settings of the available fingerprinter. If something goes wrong, it is logged.
      */
@@ -218,13 +254,16 @@ public class FingerprinterService {
             }
         }
     }
+    //
     /**
      * Returns array of {@link IMortarFingerprinter}
+     *
      * @return fingerprinter
      */
     public IMortarFingerprinter[] getFingerprinter() {
         return this.fingerprinter;
     }
+    //
     /**
      * Returns selected {@link IMortarFingerprinter}
      *
@@ -233,14 +272,16 @@ public class FingerprinterService {
     public IMortarFingerprinter getSelectedFingerprinter() {
         return this.selectedFingerprinter;
     }
-
+    //
     /**
-     * TODO delte?
-     * @param aFingerprinterName
+     * Sets the name of the selected fingerprinter
+     *
+     * @param aFingerprinterName String for the name of the fingerprinter
      */
     public void setSelectedFingerprinterNameProperty(String aFingerprinterName) {
         this.selectedFingerprinterNameProperty.set(aFingerprinterName);
     }
+    //
     /**
      * Sets the selected fingerprinter
      *
@@ -253,23 +294,17 @@ public class FingerprinterService {
             }
         }
     }
+    //
     /**
      * After fragmentation, sets the number of fragments as
      * fingerprint dimensionality in the settings.
      *
+     * @param aNumberOfMaxFragments max number of the fragments
      */
     public void setMaximumFingerprintDimensionality(int aNumberOfMaxFragments) {
         this.fragmentFingerprinterWrapper.setFingerprintDimensionality(aNumberOfMaxFragments);
     }
-    /**
-     * Returns the fingerprint dimensionality
-     *
-     * @return int fingerprint dimensionality
-     */
-    public int getMaximumFingerprintDimensionality(){
-        return this.fragmentFingerprinterWrapper.getFingerprintDimensionality();
-    }
-
+    //
     /**
      * Return the typ of fingerprints
      *
@@ -278,8 +313,9 @@ public class FingerprinterService {
     public String getFingerprintTypEnumName() {
         return this.fragmentFingerprinterWrapper.getFingerprintTyp();
     }
+    //
     /**
-     * Checks the available fragmenters and their settings for restrictions imposed by persistence. Throws an exception if
+     * Checks the available fingerprinter and their settings for restrictions imposed by persistence. Throws an exception if
      * anything does not meet the requirements.
      */
     private void checkFingerprinters() throws Exception {
@@ -288,14 +324,14 @@ public class FingerprinterService {
         HashSet<String> tmpAlgorithmNamesSet = new HashSet<>(tmpAlgorithmNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (IMortarFingerprinter tmpFingerprinter : this.fingerprinter) {
             //algorithm name should be singleton and must be persistable
-            String tmpAlgName = tmpFingerprinter.getFingerprinterName();
-            if (!PreferenceUtil.isValidName(tmpAlgName) || !SingleTermPreference.isValidContent(tmpAlgName)) {
-                throw new Exception("Fingerprinter name " + tmpAlgName + " is invalid.");
+            String tmpFingerprinterName = tmpFingerprinter.getFingerprinterName();
+            if (!PreferenceUtil.isValidName(tmpFingerprinterName) || !SingleTermPreference.isValidContent(tmpFingerprinterName)) {
+                throw new Exception("Fingerprinter name " + tmpFingerprinterName + " is invalid.");
             }
-            if (tmpAlgorithmNamesSet.contains(tmpAlgName)) {
-                throw new Exception("Fingerprinter name " + tmpAlgName + " is used multiple times.");
+            if (tmpAlgorithmNamesSet.contains(tmpFingerprinterName)) {
+                throw new Exception("Fingerprinter name " + tmpFingerprinterName + " is used multiple times.");
             } else {
-                tmpAlgorithmNamesSet.add(tmpAlgName);
+                tmpAlgorithmNamesSet.add(tmpFingerprinterName);
             }
             //setting names must be singletons within the respective class
             //setting names and values must adhere to the preference input restrictions
@@ -332,6 +368,7 @@ public class FingerprinterService {
             }
         }
     }
+    //
     /**
      * Sets the values of the given properties according to the preferences in the given container with the same name.
      * If no matching preference for a given property is found, the value will remain in its default setting.
@@ -368,4 +405,5 @@ public class FingerprinterService {
             }
         }
     }
+    //</editor-fold>
 }

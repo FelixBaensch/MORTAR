@@ -86,7 +86,7 @@ public class ViewToolsManager {
      */
     private final OverviewViewController overviewViewController;
     /**
-     * TODO
+     * ClusteringViewController instance.
      */
     private final ClusteringViewController clusteringViewController;
     //</editor-fold>
@@ -129,11 +129,8 @@ public class ViewToolsManager {
     public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList) throws NullPointerException {
         this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList);
     }
-
     /**
-     * TODO
-     * @param aMainStage
-     * @param aClusteringResults
+     * See {@link ClusteringViewController#openClusteringView(Stage, IArt2aClusteringResult[], List, ViewToolsManager, String, String, String, OverviewViewController.DataSources)}.
      */
     public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResults, List<MoleculeDataModel> aMoleculeDataModelList, OverviewViewController.DataSources aDataSource,
                                    String aTabName, String name, String aClusteringAlgorithmName, ViewToolsManager manager) {
