@@ -211,6 +211,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Logger of this class.
      */
     private static final Logger logger = Logger.getLogger(AlkylStructureFragmenter.class.getName());
+    /**
+     * Internal Array to store and access atoms for mapping.
+     */
+    private IAtom[] atomArray;
+    /**
+     * Internal Array to store and access bonds for mapping.
+     */
+    private IBond[] bondArray;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -553,15 +561,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
-        IAtom[] tmpAtomArray = new IAtom[tmpClone.getAtomCount()];
-        IBond[] tmpBondArray = new IBond[tmpClone.getBondCount()];
+        this.atomArray = new IAtom[tmpClone.getAtomCount()];
+        this.bondArray = new IBond[tmpClone.getBondCount()];
         int tmpAlkylSFAtomIndex = 0;
         int tmpAlkylSFBondIndex = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
             if (tmpAtom != null) {
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
-                tmpAtomArray[tmpAlkylSFAtomIndex] = tmpAtom;
+                this.atomArray[tmpAlkylSFAtomIndex] = tmpAtom;
                 tmpAlkylSFAtomIndex ++;
             }
         }
@@ -569,82 +577,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (tmpBond != null) {
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndex);
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
-                tmpBondArray[tmpAlkylSFBondIndex] = tmpBond;
+                this.bondArray[tmpAlkylSFBondIndex] = tmpBond;
                 tmpAlkylSFBondIndex ++;
             }
         }
         //</editor-fold>
-        //
-        //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
-        try {
-            RingSearch tmpRingSearch = new RingSearch(tmpClone);
-            List<IAtomContainer> tmpFusedList = tmpRingSearch.fusedRingFragments();
-            if (!tmpFusedList.isEmpty()) {
-                for (int tmpFusedCount = 0; tmpFusedCount < tmpFusedList.size(); tmpFusedCount++) {
-                    for (IAtom tmpFusedAtom: tmpFusedList.get(tmpFusedCount).atoms()) {
-                        int tmpAtomInteger = tmpFusedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                        tmpAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                    }
-                    for (IBond tmpFusedBond: tmpFusedList.get(tmpFusedCount).bonds()) {
-                        int tmpBondInteger = tmpFusedBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                        tmpBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                    }
-                }
-            }
-        } catch (Exception anException) {
-            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString() + " MoleculeID: " + tmpClone.getID(), anException);
-            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + tmpClone.getID() + ", at fused ringsearch: " + anException.toString());
-        }
-        //</editor-fold>
-        //
-        //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
-        try {
-            IAtomContainerSet tmpConjugatedAtomContainerSet;
-            tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(tmpClone);
-            //molecule mapping
-            //iterate over every atomcontainer from ConjPiSystemsDetector output
-            for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
-                for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
-                    int tmpAtomInteger = tmpConjAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                    tmpAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                }
-                for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
-                    int tmpBondInteger = tmpConjBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                    tmpBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                }
-            }
-        } catch (Exception anException) {
-            AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + " MoleculeID: " + tmpClone.getID(), anException);
-            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + tmpClone.getID() + " at conjugated pi systems detector: " + anException.toString());
-        }
-        //</editor-fold>
-        //
-        //<editor-fold desc="CycleFinder (Single Rings)" defaultstate="collapsed">
-        CycleFinder tmpMCBCycleFinder = Cycles.mcb();
-        IRingSet tmpMCBCyclesSet;
-        try {
-            Cycles tmpMCBCycles = tmpMCBCycleFinder.find(tmpClone);
-            tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
-            for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
-                for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
-                    int tmpAtomInteger = tmpSingleRingAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                    tmpAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                }
-                for (IBond tmpSingleRingBond: tmpContainer.bonds()) {
-                    int tmpBondInteger = tmpSingleRingBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                    tmpBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                }
-            }
-        } catch (Exception anException) {
-            AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + " MoleculeID: " + tmpClone.getID(), anException);
-            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + tmpClone.getID() + ", at cyclefinder : " + anException.toString());
-        }
-        //</editor-fold>
+        markRings(tmpClone);
+        markConjugatedPiSystems(tmpClone);
         //
         //<editor-fold desc="Fragment Extraction" defaultstate="collapsed">
         IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
@@ -654,7 +593,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
             //atom extraction
             //superior performance compared to normal for iteration over Array length
-            for (IAtom tmpAtom : tmpAtomArray) {
+            for (IAtom tmpAtom : atomArray) {
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                     tmpChainFragmentationContainer.addAtom(tmpAtom);
                 } else {
@@ -663,7 +602,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             //bond extraction
             //superior performance compared to normal for iteration over Array length
-            for (IBond tmpBond : tmpBondArray) {
+            for (IBond tmpBond : bondArray) {
                 if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                     if (tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY))
                         if (tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
@@ -675,36 +614,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
             //</editor-fold>
-            //
-            //<editor-fold desc="Connectivity Checking">
-            try {
-                if (!tmpRingFragmentationContainer.isEmpty()) {
-                    if (!ConnectivityChecker.isConnected(tmpRingFragmentationContainer)) {
-                        IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpRingFragmentationContainer);
-                        for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                            tmpFragmentSet.addAtomContainer(tmpContainer);
-                        }
-                    } else {
-                        tmpFragmentSet.addAtomContainer(tmpRingFragmentationContainer);
-                    }
-                }
-                if (!tmpChainFragmentationContainer.isEmpty()) {
-                    if (!ConnectivityChecker.isConnected(tmpChainFragmentationContainer)) {
-                        IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpChainFragmentationContainer);
-                        for (IAtomContainer tmpContainer : tmpContainerSet.atomContainers()) {
-                            tmpFragmentSet.addAtomContainer(tmpContainer);
-                        }
-                    } else {
-                        tmpFragmentSet.addAtomContainer(tmpChainFragmentationContainer);
-                    }
-                }
-            } catch (Exception anException) {
-                AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + tmpClone.getID(), anException);
-                throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + anException.toString() +
-                        ": " + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+            IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer);
+            IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer);
+            if (!tmpRingAtomContainerSet.isEmpty() && tmpRingAtomContainerSet.getAtomContainerCount() > 0) {
+                tmpFragmentSet.add(tmpRingAtomContainerSet);
             }
-            //</editor-fold>
-            //
+            if (!tmpChainAtomContainerSet.isEmpty() && tmpChainAtomContainerSet.getAtomContainerCount() > 0) {
+                tmpFragmentSet.add(tmpChainAtomContainerSet);
+            }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + "extraction failed at molecule: " + tmpClone.getID(), anException);
@@ -719,18 +636,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (!tmpFragmentSet.isEmpty() && tmpFragmentSet != null) {
                 CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpFragmentSet.getAtomContainer(0).getBuilder());
                 for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
-                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                        try {
-                            tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                    if (tmpAtomContainer != null) {
+                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                            try {
+                                tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                                tmpProcessedFragments.add(tmpAtomContainer);
+                            } catch (CDKException anException) {
+                                AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
+                                        + " Unable to add Implicit Hydrogen at MoleculeID: " + tmpAtomContainer.getID());
+                                throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
+                                        "hydrogen saturation of molecule: " + tmpAtomContainer.getID() + ", " + anException.toString(), anException);
+                            }
+                        } else {
                             tmpProcessedFragments.add(tmpAtomContainer);
-                        } catch (CDKException anException) {
-                            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
-                                    + " Unable to add Implicit Hydrogen at MoleculeID: " + tmpClone.getID());
-                            throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
-                                    "hydrogen saturation of molecule: " + tmpClone.getID() + ", " + anException.toString(), anException);
                         }
-                    } else {
-                        tmpProcessedFragments.add(tmpAtomContainer);
                     }
                 }
             }
@@ -748,4 +667,119 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
     //</editor-fold>
     //
+    //<editor-fold desc="Private Methods">
+    /**
+     * Private method to mark all atoms and bonds of any rings in the given atomcontainer.
+     *
+     * @param anAtomContainer IAtomContainer to mark atoms and bonds in
+     */
+    private void markRings(IAtomContainer anAtomContainer) {
+        //
+        //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
+        try {
+            RingSearch tmpRingSearch = new RingSearch(anAtomContainer);
+            List<IAtomContainer> tmpFusedList = tmpRingSearch.fusedRingFragments();
+            if (!tmpFusedList.isEmpty()) {
+                for (int tmpFusedCount = 0; tmpFusedCount < tmpFusedList.size(); tmpFusedCount++) {
+                    for (IAtom tmpFusedAtom: tmpFusedList.get(tmpFusedCount).atoms()) {
+                        int tmpAtomInteger = tmpFusedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                        this.atomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                    }
+                    for (IBond tmpFusedBond: tmpFusedList.get(tmpFusedCount).bonds()) {
+                        int tmpBondInteger = tmpFusedBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+                        this.bondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                    }
+                }
+            }
+        } catch (Exception anException) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString() + " MoleculeID: " + anAtomContainer.getID(), anException);
+            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
+                    + anAtomContainer.getID() + ", at fused ringsearch: " + anException.toString());
+        }
+        //</editor-fold>
+        //
+        //<editor-fold desc="CycleFinder (Single Rings)" defaultstate="collapsed">
+        CycleFinder tmpMCBCycleFinder = Cycles.mcb();
+        IRingSet tmpMCBCyclesSet;
+        try {
+            Cycles tmpMCBCycles = tmpMCBCycleFinder.find(anAtomContainer);
+            tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
+            for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
+                for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
+                    int tmpAtomInteger = tmpSingleRingAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                    this.atomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                }
+                for (IBond tmpSingleRingBond: tmpContainer.bonds()) {
+                    int tmpBondInteger = tmpSingleRingBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+                    this.bondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                }
+            }
+        } catch (Exception anException) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING,
+                    anException + " MoleculeID: " + anAtomContainer.getID(), anException);
+            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
+                    + anAtomContainer.getID() + ", at cyclefinder : " + anException.toString());
+        }
+        //</editor-fold>
+        //
+    }
+
+    /**
+     * Private method to mark all atoms and bonds of any conjugated pi systems in the given atomcontainer.
+     *
+     * @param anAtomContainer IAtomContainer to mark atoms and bonds in
+     */
+    private void markConjugatedPiSystems(IAtomContainer anAtomContainer) {
+        //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
+        try {
+            IAtomContainerSet tmpConjugatedAtomContainerSet;
+            tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(anAtomContainer);
+            //molecule mapping
+            //iterate over every atomcontainer from ConjPiSystemsDetector output
+            for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
+                for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
+                    int tmpAtomInteger = tmpConjAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                    this.atomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                }
+                for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
+                    int tmpBondInteger = tmpConjBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+                    this.bondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                }
+            }
+        } catch (Exception anException) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING,
+                    anException + " MoleculeID: " + anAtomContainer.getID(), anException);
+            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
+                    + anAtomContainer.getID() + " at conjugated pi systems detector: " + anException.toString());
+        }
+        //</editor-fold>
+    }
+
+    /**
+     * Private method to check given atomcontainer for disconnected structures.
+     *
+     * @param anAtomContainer IAtomContainer to check
+     * @return IAtomContainerSet containing partitioned structures as single IAtomContainer
+     */
+    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer) {
+        try {
+            IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
+            if (!anAtomContainer.isEmpty()) {
+                if (!ConnectivityChecker.isConnected(anAtomContainer)) {
+                    IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
+                    for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
+                        tmpFragmentSet.addAtomContainer(tmpContainer);
+                    }
+                } else {
+                    tmpFragmentSet.addAtomContainer(anAtomContainer);
+                }
+            }
+            return tmpFragmentSet;
+        } catch (Exception anException) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + anAtomContainer.getID(), anException);
+            throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + anException.toString() +
+                    ": " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        }
+    }
+    //</editor-fold>
 }
