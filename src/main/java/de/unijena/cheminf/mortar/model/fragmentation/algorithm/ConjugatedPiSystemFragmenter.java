@@ -48,7 +48,8 @@ import java.util.logging.Logger;
 
 /**
  * Java class implementing an algorithm in MORTAR for detection of conjugated pi systems using
- * a rarely used CDK functionality to test and validate its purpose.
+ * the CDK functionality {@link org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector}
+ * to simply test and validate its purpose.
  *
  * @author Maximilian Rottmann
  * @version 1.1.1.0

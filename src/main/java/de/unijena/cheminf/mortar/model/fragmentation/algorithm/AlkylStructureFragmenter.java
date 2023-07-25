@@ -47,6 +47,7 @@ import org.openscience.cdk.interfaces.IElement;
 import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -496,16 +497,33 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
+        this.clearCache();
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
         boolean tmpShouldBeFiltered = true;
+        this.atomArray = new IAtom[aMolecule.getAtomCount()];
+        this.bondArray = new IBond[aMolecule.getBondCount()];
+        int tmpAlkylSFAtomIndex = 0;
+        int tmpAlkylSFBondIndex = 0;
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
                 if (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C) {
                     return true;
                 } else {
+                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
+                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
+                    this.atomArray[tmpAlkylSFAtomIndex] = tmpAtom;
+                    tmpAlkylSFAtomIndex ++;
                     tmpShouldBeFiltered = false;
+                }
+            }
+            for (IBond tmpBond: aMolecule.bonds()) {
+                if (tmpBond != null) {
+                    tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndex);
+                    tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
+                    this.bondArray[tmpAlkylSFBondIndex] = tmpBond;
+                    tmpAlkylSFBondIndex ++;
                 }
             }
             return tmpShouldBeFiltered;
@@ -561,6 +579,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
+        //in shouldBeFiltered?
+        /*
         this.atomArray = new IAtom[tmpClone.getAtomCount()];
         this.bondArray = new IBond[tmpClone.getBondCount()];
         int tmpAlkylSFAtomIndex = 0;
@@ -581,19 +601,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpAlkylSFBondIndex ++;
             }
         }
+        */
         //</editor-fold>
-        markRings(tmpClone);
-        markConjugatedPiSystems(tmpClone);
+        this.markRings(tmpClone);
+        this.markConjugatedPiSystems(tmpClone);
         //
         //<editor-fold desc="Fragment Extraction" defaultstate="collapsed">
         IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
         try {
+            //
             //<editor-fold desc="Extraction">
             IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
             IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
             //atom extraction
             //superior performance compared to normal for iteration over Array length
-            for (IAtom tmpAtom : atomArray) {
+            for (IAtom tmpAtom : this.atomArray) {
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                     tmpChainFragmentationContainer.addAtom(tmpAtom);
                 } else {
@@ -602,7 +624,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             //bond extraction
             //superior performance compared to normal for iteration over Array length
-            for (IBond tmpBond : bondArray) {
+            for (IBond tmpBond : this.bondArray) {
                 if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                     if (tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY))
                         if (tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
@@ -614,6 +636,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
             //</editor-fold>
+            //
+            //<editor-fold desc="Post-Extraction Processing">
             IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer);
             IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer);
             if (!tmpRingAtomContainerSet.isEmpty() && tmpRingAtomContainerSet.getAtomContainerCount() > 0) {
@@ -622,6 +646,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (!tmpChainAtomContainerSet.isEmpty() && tmpChainAtomContainerSet.getAtomContainerCount() > 0) {
                 tmpFragmentSet.add(tmpChainAtomContainerSet);
             }
+            List<IAtomContainer> tmpProcessedFragments;
+            try {
+                tmpProcessedFragments = this.saturateWithImplicitHydrogen(tmpFragmentSet);
+                return tmpProcessedFragments;
+            } catch (CDKException anException) {
+                AlkylStructureFragmenter.this.logger.log(Level.WARNING,
+                        anException + "saturation failed at molecule: " + tmpClone.getID(), anException);
+                throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
+                        + tmpClone.getID() + ", at fragment saturation: " + anException.toString());
+            }
+            //</editor-fold>
+            //
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + "extraction failed at molecule: " + tmpClone.getID(), anException);
@@ -630,38 +666,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //</editor-fold>
         //
-        //<editor-fold desc="Hydrogen Saturation" defaultstate="collapsed">
-        List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
-        try {
-            if (!tmpFragmentSet.isEmpty() && tmpFragmentSet != null) {
-                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpFragmentSet.getAtomContainer(0).getBuilder());
-                for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
-                    if (tmpAtomContainer != null) {
-                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                            try {
-                                tmpAdder.addImplicitHydrogens(tmpAtomContainer);
-                                tmpProcessedFragments.add(tmpAtomContainer);
-                            } catch (CDKException anException) {
-                                AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
-                                        + " Unable to add Implicit Hydrogen at MoleculeID: " + tmpAtomContainer.getID());
-                                throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
-                                        "hydrogen saturation of molecule: " + tmpAtomContainer.getID() + ", " + anException.toString(), anException);
-                            }
-                        } else {
-                            tmpProcessedFragments.add(tmpAtomContainer);
-                        }
-                    }
-                }
-            }
-        } catch (Exception anException) {
-            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
-                    + "Error during hydrogen saturation at MoleculeID: " + tmpClone.getID());
-            throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + tmpClone.getID() + ", at hydrogen saturation: " + anException.toString(), anException);
-        }
-        //</editor-fold>
-        //
-        return tmpProcessedFragments;
     }
     //</editor-fold>
 
@@ -762,6 +766,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @return IAtomContainerSet containing partitioned structures as single IAtomContainer
      */
     private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer) {
+        Objects.requireNonNull(anAtomContainer,"Given IAtomContainer is null.");
         try {
             IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
             if (!anAtomContainer.isEmpty()) {
@@ -780,6 +785,48 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + anException.toString() +
                     ": " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
+    }
+
+    /**
+     * Private method to saturate a given molecule with implicit hydrogens after fragmentation.
+     *
+     * @param anUnsaturatedACSet IAtomContainerSet whose atomcontainers are to be saturated
+     * @return List of processed atomcontainers, null if given Set is empty
+     * @throws CDKException if CDKHydrogenAdder throws an exception
+     */
+    private List<IAtomContainer> saturateWithImplicitHydrogen(IAtomContainerSet anUnsaturatedACSet) throws CDKException {
+        Objects.requireNonNull(anUnsaturatedACSet, "Given IAtomContainerSet is null.");
+        try {
+            List<IAtomContainer> tmpSaturatedFragments = new ArrayList<>(anUnsaturatedACSet.getAtomContainerCount());
+            if (!anUnsaturatedACSet.isEmpty() && !anUnsaturatedACSet.getAtomContainer(0).isEmpty()) {
+                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(anUnsaturatedACSet.getAtomContainer(0).getBuilder());
+                for (IAtomContainer tmpAtomContainer: anUnsaturatedACSet.atomContainers()) {
+                    if (tmpAtomContainer != null && !tmpAtomContainer.isEmpty()) {
+                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+                            tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                            tmpSaturatedFragments.add(tmpAtomContainer);
+                        } else {
+                            tmpSaturatedFragments.add(tmpAtomContainer);
+                        }
+                    }
+                }
+            }
+            return tmpSaturatedFragments;
+        } catch (CDKException anException) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
+                + " Unable to add Implicit Hydrogen");
+            throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
+                "hydrogen saturation of molecule, " + anException.toString(), anException);
+        }
+    }
+
+    /**
+     * Private method to reset class variables properly.
+     */
+    private void clearCache() {
+        this.atomArray = null;
+        this.bondArray = null;
     }
     //</editor-fold>
 }
