@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
@@ -65,92 +66,19 @@ import java.util.logging.Logger;
  *                  -future settings -> complex enums to attach values to dropdown
  *                  -preserveRingSystemMaxSetting restrictions (smaller 0 nonsense)
  *                  -pseudo atom handling (*-atoms)
+ *                  -for future fragmentation: properties for single rings, ring systems and conjugated pi systems
  * </p>
  *
  * @author Maximilian Rottmann (maximilian.rottmann@studmail.w-hs.de)
  * @version 1.1.1.0
  */
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
-    // for future settings, currently disabled, search for "Future Settings" in order to see every future option
-    //    //<editor-fold desc="Public Enums">
-    //    /**
-    //     * Enum for options concerning maximum fragment length of carbohydrate chain created by fragmenter.
-    //     */
-    //    public enum ChainFragmentLengthOption {
-    //        /**
-    //         * Maximum fragment length defined as alkane chain Methane
-    //         */
-    //        METHANE,
-    //        /**
-    //         * Maximum fragment length defined as alkane chain Ethane
-    //         */
-    //        ETHANE,
-    //        /**
-    //         * Maximum fragment length defined as alkane chain Propane
-    //         */
-    //        PROPANE,
-    //        /**
-    //         * Maximum fragment length defined as alkane chain Butane
-    //         */
-    //        BUTANE
-    //    }
-    //    /**
-    //     * Enum for maximum size options for rings to be preserved by the algorithm.
-    //     */
-    //    public enum PreserveRingMaxSizeOption {
-    //        /**
-    //         * Maximum cyclo-alkane size defined as Cyclo-Propane
-    //         */
-    //        CYCLO_PROPANE,
-    //        /**
-    //         * Maximum cyclo-alkane size defined as Cyclo-Butane
-    //         */
-    //        CYCLO_BUTANE,
-    //        /**
-    //         * Maximum cyclo-alkane size defined as Cyclo-Pentane
-    //         */
-    //        CYCLO_PENTANE,
-    //        /**
-    //         * Maximum cyclo-alkane size defined as Cyclo-Hexane
-    //         */
-    //        CYCLO_HEXANE
-    //    }
-    //    //</editor-fold>
     //
     //<editor-fold desc="Public Static Final Class Variables">
     /**
      * Name of the fragmenter.
      */
     public static final String ALGORITHM_NAME = "Alkyl Fragmenter";
-    // for future settings, currently disabled
-    //    //<editor-fold desc="Future Settings">
-    //    //
-    //    /**
-    //     * Default option for maximum fragment length of carbohydrate chain, set to methane.
-    //     */
-    //    public static final ChainFragmentLengthOption CHAIN_FRAGMENT_LENGTH_OPTION = ChainFragmentLengthOption.METHANE;
-    //    /**
-    //     * Default option for spiro carbon dissection.
-    //     */
-    //    public static final boolean DISSECT_SPIRO_CARBON_OPTION_DEFAULT = false;
-    //    /**
-    //     * Default option for ring dissection.
-    //     */
-    //    public static final boolean DISSECT_RINGS_OPTION_DEFAULT = false;
-    //    /**
-    //     * Default option for maximum size of preserved rings.
-    //     */
-    //    public static final PreserveRingMaxSizeOption PRESERVE_RING_MAX_SIZE_OPTION = PreserveRingMaxSizeOption.CYCLO_HEXANE;
-    //    /**
-    //     * Default option for ring system preservation.
-    //     */
-    //    public static final boolean PRESERVE_RING_SYSTEM_OPTION_DEFAULT = true;
-    //    /**
-    //     * Default option for maximum rings contained in preserved ring system.
-    //     */
-    //    public static final int PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT = 1;
-    //    //</editor-fold>
-    //
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
      */
@@ -164,7 +92,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * corresponding fragmentation array. It is further used during fragmentation.
      */
     public static final String INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY = "ASF.FRAGMENTATION_PLACEMENT";
-    //ToDo: for future fragmentation: properties for single rings, ring systems and conjugated pi systems
     //</editor-fold>
     //
     //<editor-fold desc="Private Class Variables">
@@ -172,34 +99,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * A property that has a constant fragment hydrogen saturation setting.
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
-    // for future Settings, currently disabled
-    //    //<editor-fold desc="Future Settings">
-    //    /**
-    //     * A property that has a constant name from the ChainFragmentLengthOption enum as value.
-    //     */
-    //    private final SimpleEnumConstantNameProperty chainFragmentLengthSetting;
-    //    /**
-    //     * Boolean property whether spiro carbons should be dissected.
-    //     */
-    //    private final SimpleBooleanProperty dissectSpiroCarbonSetting;
-    //    /**
-    //     * Boolean property whether rings should be dissected.
-    //     */
-    //    private final SimpleBooleanProperty dissectRingsSetting;
-    //    /**
-    //     * Enum property for maximum size of preserved rings.
-    //     */
-    //    private final SimpleEnumConstantNameProperty preserveRingMaxSizeSetting;
-    //    /**
-    //     * Boolean property whether ring systems should be preserved.
-    //     */
-    //    private final SimpleBooleanProperty preserveRingSystemSetting;
-    //    /**
-    //     * Integer property for maximum rings contained in preserved ring system.
-    //     */
-    //    private final SimpleIntegerProperty preserveRingSystemMaxSetting;
-    //    //</editor-fold>
-    //
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -249,74 +148,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         };
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
-        //
-        // <editor-fold desc="Future Settings">
-        //        this.chainFragmentLengthSetting = new SimpleEnumConstantNameProperty(this, "Chain fragment length setting",
-        //                AlkylStructureFragmenter.CHAIN_FRAGMENT_LENGTH_OPTION.name(),
-        //                ChainFragmentLengthOption.class) {
-        //            @Override
-        //            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
-        //                try {
-        //                    //call to super.set() for parameter checks
-        //                    super.set(newValue);
-        //                } catch (NullPointerException | IllegalArgumentException anException) {
-        //                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-        //                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set",
-        //                            anException.toString(), anException);
-        //                    //re-throws the exception to properly reset the binding
-        //                    throw anException;
-        //                }
-        //            }
-        //        };
-        //        this.settingNameTooltipTextMap.put(this.chainFragmentLengthSetting.getName(),
-        //                Message.get("AlkylStructureFragmenter.chainFragmentLengthSetting.tooltip"));
-        //        this.dissectSpiroCarbonSetting = new SimpleBooleanProperty(this, "Dissect spiro carbon setting",
-        //                AlkylStructureFragmenter.DISSECT_SPIRO_CARBON_OPTION_DEFAULT);
-        //        this.settingNameTooltipTextMap.put(this.dissectSpiroCarbonSetting.getName(),
-        //                Message.get("AlkylStructureFragmenter.dissectSpiroCarbonSetting.tooltip"));
-        //        this.dissectRingsSetting = new SimpleBooleanProperty(this, "Dissect rings setting",
-        //                AlkylStructureFragmenter.DISSECT_RINGS_OPTION_DEFAULT);
-        //        this.settingNameTooltipTextMap.put(this.dissectRingsSetting.getName(),
-        //                Message.get("AlkylStructureFragmenter.dissectRingsSetting.tooltip"));
-        //        this.preserveRingMaxSizeSetting = new SimpleEnumConstantNameProperty(this, "Preserve ring max size setting (preserves if Dissect rings setting is set false)",
-        //                AlkylStructureFragmenter.PRESERVE_RING_MAX_SIZE_OPTION.name(),
-        //                PreserveRingMaxSizeOption.class) {
-        //            @Override
-        //            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
-        //                try {
-        //                    super.set(newValue);
-        //                } catch (NullPointerException | IllegalArgumentException anException) {
-        //                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-        //                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
-        //                    //re-throws the exception to properly reset the binding
-        //                    throw anException;
-        //                }
-        //            }
-        //        };
-        //        this.settingNameTooltipTextMap.put(this.preserveRingMaxSizeSetting.getName(),
-        //                Message.get("AlkylStructureFragmenter.preserveRingMaxSizeSetting.tooltip"));
-        //        this.preserveRingSystemSetting = new SimpleBooleanProperty(this, "Preserve ring system setting (preserves if Dissect rings setting is set false)",
-        //                AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_OPTION_DEFAULT);
-        //        this.settingNameTooltipTextMap.put(this.preserveRingSystemSetting.getName(),
-        //                Message.get("AlkylStructureFragmenter.preserveRingSystemSetting.tooltip"));
-        //        this.preserveRingSystemMaxSetting = new SimpleIntegerProperty(this, "Preserve ring system up to maximum size",
-        //                AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT);
-        //        this.settingNameTooltipTextMap.put(this.preserveRingSystemMaxSetting.getName(),
-        //                Message.get("AlkylStructureFragmenter.preserveRingSystemMaxSetting.tooltip"));
-        //        //</editor-fold>
-        //
         this.settings = new ArrayList<Property>(1);
         this.settings.add(this.fragmentSaturationSetting);
-        // if future settings are to be enabled, check initCap of ArrayList
-        //        //<editor-fold desc="Future Settings">
-        //        this.settings.add(this.chainFragmentLengthSetting);
-        //        this.settings.add(this.dissectSpiroCarbonSetting);
-        //        this.settings.add(this.dissectRingsSetting);
-        //        this.settings.add(this.preserveRingMaxSizeSetting);
-        //        this.settings.add(this.preserveRingSystemSetting);
-        //        this.settings.add(this.preserveRingSystemMaxSetting);
-        //        //</editor-fold>
-        //
     }
     //</editor-fold>
     //
@@ -366,87 +199,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(anOption, "Given saturation option is null.");
         this.fragmentSaturationSetting.set(anOption.name());
     }
-    //
-    //    //<editor-fold desc="Future Settings, currently disabled">
-    //    /**
-    //     * Sets the enum option for maximum length of fragment chain.
-    //     *
-    //     * @param anOptionName the enum option name to use
-    //     * @throws NullPointerException if the given option is null
-    //     * @throws IllegalArgumentException if the given option does not exist
-    //     */
-    //    public void setChainFragmentLengthSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
-    //        Objects.requireNonNull(anOptionName, "Given option is null.");
-    //        //throws IllegalArgumentException if the given name does not match a constant name in the enum
-    //        ChainFragmentLengthOption tmpConstant = ChainFragmentLengthOption.valueOf(anOptionName);
-    //        this.setChainFragmentLengthSetting(tmpConstant);
-    //    }
-    //    /**
-    //     * Sets the option for maximum length of fragment chain.
-    //     *
-    //     * @param anOption the option to use
-    //     * @throws NullPointerException if given option is null
-    //     */
-    //    public void setChainFragmentLengthSetting(ChainFragmentLengthOption anOption) throws NullPointerException {
-    //        Objects.requireNonNull(anOption, "Given option is null.");
-    //        this.chainFragmentLengthSetting.set(anOption.name());
-    //    }
-    //    /**
-    //     * Sets the boolean option for spiro carbon dissection.
-    //     *
-    //     * @param aBoolean the boolean option to use
-    //     */
-    //    public void setDissectSpiroCarbonSetting(boolean aBoolean) {
-    //        this.dissectSpiroCarbonSetting.set(aBoolean);
-    //    }
-    //    /**
-    //     * Sets the boolean option for ring dissection.
-    //     *
-    //     * @param aBoolean the boolean option to use
-    //     */
-    //    public void setDissectRingsSetting(boolean aBoolean) {
-    //        this.dissectRingsSetting.set(aBoolean);
-    //    }
-    //    /**
-    //     * Sets the enum option for maximum size of preserved ring.
-    //     *
-    //     * @param anOptionName the enum option to use
-    //     * @throws NullPointerException if given option is null
-    //     * @throws IllegalArgumentException if given option does not exist
-    //     */
-    //    public void setPreserveRingMaxSizeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
-    //        Objects.requireNonNull(anOptionName, "Given option is null.");
-    //        PreserveRingMaxSizeOption tmpConstant = PreserveRingMaxSizeOption.valueOf(anOptionName);
-    //        this.setPreserveRingMaxSizeSetting(tmpConstant);
-    //    }
-    //    /**
-    //     * Sets the option for maximum size of preserved ring.
-    //     *
-    //     * @param anOption the option to use
-    //     * @throws NullPointerException if given option is null
-    //     */
-    //    public void setPreserveRingMaxSizeSetting(PreserveRingMaxSizeOption anOption) throws NullPointerException {
-    //        Objects.requireNonNull(anOption, "Given option name is null.");
-    //        this.preserveRingMaxSizeSetting.set(anOption.name());
-    //    }
-    //    /**
-    //     * Sets boolean option for ring system preservation.
-    //     *
-    //     * @param aBoolean the boolean option to use
-    //     */
-    //    public void setPreserveRingSystemSetting(boolean aBoolean) {
-    //        this.preserveRingSystemSetting.set(aBoolean);
-    //    }
-    //    /**
-    //     * Sets the maximum of rings contained in preserved system.
-    //     *
-    //     * @param anInt the int option to use
-    //     */
-    //    public void setPreserveRingSystemMaxSetting(int anInt) {
-    //        this.preserveRingSystemMaxSetting.set(anInt);
-    //    }
-    //    //</editor-fold>
-    //
     //</editor-fold>
     //
     //<editor-fold desc="Public Methods">
@@ -481,7 +233,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //        //</editor-fold>
         //
     }
-
+    //
     //<editor-fold desc="Pre-Fragmentation Tasks">
     /**
      * Returns true if the given molecule cannot be fragmented by the algorithm.
@@ -497,33 +249,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
-        this.clearCache();
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
         boolean tmpShouldBeFiltered = true;
-        this.atomArray = new IAtom[aMolecule.getAtomCount()];
-        this.bondArray = new IBond[aMolecule.getBondCount()];
-        int tmpAlkylSFAtomIndex = 0;
-        int tmpAlkylSFBondIndex = 0;
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
                 if (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C) {
                     return true;
                 } else {
-                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
-                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
-                    this.atomArray[tmpAlkylSFAtomIndex] = tmpAtom;
-                    tmpAlkylSFAtomIndex ++;
                     tmpShouldBeFiltered = false;
-                }
-            }
-            for (IBond tmpBond: aMolecule.bonds()) {
-                if (tmpBond != null) {
-                    tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndex);
-                    tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
-                    this.bondArray[tmpAlkylSFBondIndex] = tmpBond;
-                    tmpAlkylSFBondIndex ++;
                 }
             }
             return tmpShouldBeFiltered;
@@ -571,7 +306,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return aMolecule;
     }
     //</editor-fold>
-
+    //
     //<editor-fold desc="Fragmentation">
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
@@ -579,8 +314,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
-        //in shouldBeFiltered?
-        /*
+        this.clearCache();
         this.atomArray = new IAtom[tmpClone.getAtomCount()];
         this.bondArray = new IBond[tmpClone.getBondCount()];
         int tmpAlkylSFAtomIndex = 0;
@@ -601,55 +335,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpAlkylSFBondIndex ++;
             }
         }
-        */
         //</editor-fold>
         this.markRings(tmpClone);
         this.markConjugatedPiSystems(tmpClone);
-        //
         //<editor-fold desc="Fragment Extraction" defaultstate="collapsed">
-        IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
         try {
-            //
-            //<editor-fold desc="Extraction">
-            IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
-            IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
-            //atom extraction
-            //superior performance compared to normal for iteration over Array length
-            for (IAtom tmpAtom : this.atomArray) {
-                if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
-                    tmpChainFragmentationContainer.addAtom(tmpAtom);
-                } else {
-                    tmpRingFragmentationContainer.addAtom(tmpAtom);
-                }
-            }
-            //bond extraction
-            //superior performance compared to normal for iteration over Array length
-            for (IBond tmpBond : this.bondArray) {
-                if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
-                    if (tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY))
-                        if (tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
-                            tmpChainFragmentationContainer.addBond(tmpBond);
-                        }
-                }
-                else {
-                    tmpRingFragmentationContainer.addBond(tmpBond);
-                }
-            }
-            //</editor-fold>
+            IAtomContainerSet tmpFragmentSet = this.extractMolecules();
             //
             //<editor-fold desc="Post-Extraction Processing">
-            IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer);
-            IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer);
-            if (!tmpRingAtomContainerSet.isEmpty() && tmpRingAtomContainerSet.getAtomContainerCount() > 0) {
-                tmpFragmentSet.add(tmpRingAtomContainerSet);
-            }
-            if (!tmpChainAtomContainerSet.isEmpty() && tmpChainAtomContainerSet.getAtomContainerCount() > 0) {
-                tmpFragmentSet.add(tmpChainAtomContainerSet);
-            }
-            List<IAtomContainer> tmpProcessedFragments;
             try {
-                tmpProcessedFragments = this.saturateWithImplicitHydrogen(tmpFragmentSet);
-                return tmpProcessedFragments;
+                return this.saturateWithImplicitHydrogen(tmpFragmentSet);
             } catch (CDKException anException) {
                 AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                         anException + "saturation failed at molecule: " + tmpClone.getID(), anException);
@@ -668,10 +363,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
     }
     //</editor-fold>
-
+    //
     //</editor-fold>
     //
-    //<editor-fold desc="Private Methods">
+    //<editor-fold desc="Private Methods" defaultstate="collapsed">
     /**
      * Private method to mark all atoms and bonds of any rings in the given atomcontainer.
      *
@@ -820,6 +515,46 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 "hydrogen saturation of molecule, " + anException.toString(), anException);
         }
     }
+    private IAtomContainerSet extractMolecules() {
+        //
+        //<editor-fold desc="Extraction">
+        IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
+        IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
+        IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
+        //atom extraction
+        //superior performance compared to normal for iteration over Array length
+        for (IAtom tmpAtom : this.atomArray) {
+            if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
+                tmpChainFragmentationContainer.addAtom(tmpAtom);
+            } else {
+                tmpRingFragmentationContainer.addAtom(tmpAtom);
+            }
+        }
+        //bond extraction
+        //superior performance compared to normal for iteration over Array length
+        for (IBond tmpBond : this.bondArray) {
+            if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
+                if (tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY))
+                    if (tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
+                        tmpChainFragmentationContainer.addBond(tmpBond);
+                    }
+            }
+            else {
+                tmpRingFragmentationContainer.addBond(tmpBond);
+            }
+        }
+        //</editor-fold>
+        //
+        IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer);
+        IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer);
+        if (!tmpRingAtomContainerSet.isEmpty() && tmpRingAtomContainerSet.getAtomContainerCount() > 0) {
+            tmpExtractionSet.add(tmpRingAtomContainerSet);
+        }
+        if (!tmpChainAtomContainerSet.isEmpty() && tmpChainAtomContainerSet.getAtomContainerCount() > 0) {
+            tmpExtractionSet.add(tmpChainAtomContainerSet);
+        }
+        return tmpExtractionSet;
+    }
 
     /**
      * Private method to reset class variables properly.
@@ -829,4 +564,5 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.bondArray = null;
     }
     //</editor-fold>
+    //
 }
