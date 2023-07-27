@@ -1,5 +1,6 @@
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.clustering.art2a.exceptions.ConvergenceFailedException;
 import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -443,7 +444,9 @@ public class ClusteringViewController implements IViewToolController {
                 else {
                     tmpButton.setText(String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters()));
                 }
-                tmpButton.setTooltip(new Tooltip("Number of detected clusters: " + this.clusteringResult[i].getNumberOfDetectedClusters()+"\n"
+                String tmpFormattedVigilanceParameter =  String.format("%.1f", this.clusteringResult[i].getVigilanceParameter());
+                tmpButton.setTooltip(new Tooltip("Vigilance parameter: " + tmpFormattedVigilanceParameter+"\n"
+                        +"Number of detected clusters: " + this.clusteringResult[i].getNumberOfDetectedClusters()+"\n"
                 +"Number of epochs: " + this.clusteringResult[i].getNumberOfEpochs()));
                 i++;
             }
@@ -577,18 +580,18 @@ public class ClusteringViewController implements IViewToolController {
        // ArrayList<Integer> tmpClusterRepresentatives = new ArrayList<>();
         ArrayList<ArrayList<Integer>> listOfListforRepresentatives = new ArrayList<>();
 
-        for(IArt2aClusteringResult tmpClusteringResult : this.clusteringResult) {
-            tmpNumberOfDetectedClusters.add(tmpClusteringResult.getNumberOfDetectedClusters());
-            tmpNumberOfEpochs.add(tmpClusteringResult.getNumberOfEpochs());
-            ArrayList<int[]> tmpClusterIndices = new ArrayList<>();
-            ArrayList<Integer> tmpRepresentativesIndices = new ArrayList<>();
-            for(int i = 0; i < tmpClusteringResult.getNumberOfDetectedClusters(); i++) {
-                tmpClusterIndices.add(tmpClusteringResult.getClusterIndices(i));
-                tmpRepresentativesIndices.add(tmpClusteringResult.getClusterRepresentatives(i));
+            for (IArt2aClusteringResult tmpClusteringResult : this.clusteringResult) {
+                    tmpNumberOfDetectedClusters.add(tmpClusteringResult.getNumberOfDetectedClusters());
+                    tmpNumberOfEpochs.add(tmpClusteringResult.getNumberOfEpochs());
+                    ArrayList<int[]> tmpClusterIndices = new ArrayList<>();
+                    ArrayList<Integer> tmpRepresentativesIndices = new ArrayList<>();
+                    for (int i = 0; i < tmpClusteringResult.getNumberOfDetectedClusters(); i++) {
+                        tmpClusterIndices.add(tmpClusteringResult.getClusterIndices(i));
+                        tmpRepresentativesIndices.add(tmpClusteringResult.getClusterRepresentatives(i));
+                    }
+                    listOfLists.add(tmpClusterIndices);
+                    listOfListforRepresentatives.add(tmpRepresentativesIndices);
             }
-            listOfLists.add(tmpClusterIndices);
-            listOfListforRepresentatives.add(tmpRepresentativesIndices); // Alle clusterrepresentanten eines vigiliance parameter sind in einer Liste gespeichert, wobei dieses Liste in einer übergeordneten liste gespeichert ist
-        }
 
          a = listOfLists.get(x);// TODO 0 ersetzen durch ein Button property INFO a sollte alle Clusterindices von allen für den gegebenen vigilance parameter entstandene cluster
         ArrayList<Integer> tmpRepresentatives = listOfListforRepresentatives.get(x);

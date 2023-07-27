@@ -26,11 +26,13 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -429,15 +431,15 @@ public class Art2aClusteringAlgorithm implements IMortarClustering {
         tmpFuturesList = this.executorService.invokeAll(tmpClusteringTask);
         IArt2aClusteringResult[] tmpResultArray = new IArt2aClusteringResult[9];
         int tmpIterator = 0;
-        for (Future<IArt2aClusteringResult> tmpFuture : tmpFuturesList) {
-            IArt2aClusteringResult tmpClusteringResult = tmpFuture.get();
-            tmpClusteringResult.getVigilanceParameter();
-            tmpResultArray[tmpIterator] = tmpFuture.get();
-            tmpIterator++;
-        }
-        this.executorService.shutdown();
-        this.logger.info("Clustering \"" + tmpClusteringName + "\" of " + aDataMatrix.length
-                + " molecules complete.");
+            for (Future<IArt2aClusteringResult> tmpFuture : tmpFuturesList) {
+                IArt2aClusteringResult tmpClusteringResult = tmpFuture.get();
+                System.out.println(tmpClusteringResult.getVigilanceParameter() + "------vigilance parameter");
+                tmpResultArray[tmpIterator] = tmpFuture.get();
+                tmpIterator++;
+            }
+            this.executorService.shutdown();
+            this.logger.info("Clustering \"" + tmpClusteringName + "\" of " + aDataMatrix.length
+                    + " molecules complete.");
         return tmpResultArray;
     }
     //

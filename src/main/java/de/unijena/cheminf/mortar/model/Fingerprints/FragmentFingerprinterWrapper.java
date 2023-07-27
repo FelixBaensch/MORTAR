@@ -397,7 +397,7 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
      * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalFingerprintDimensionality(int anInteger) {
-        return !(anInteger <= 0);
+        return !(anInteger < 0);
     }
     //
     /**

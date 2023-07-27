@@ -294,8 +294,6 @@ public class MainViewController {
         this.primaryStage.show();
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        System.out.println(this.primaryStage.getHeight() +"-----heigzth");
-        System.out.println(this.primaryStage.getWidth()+ "-----width");
         InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.primaryStage.getIcons().add(new Image(tmpImageInputStream));
         //</editor-fold>
@@ -643,6 +641,8 @@ public class MainViewController {
             case FRAGMENT_PDF_FILE:
             case SINGLE_SD_FILE:
             case SD_FILE:
+            case COUNT_FINGERPRINTS_EXPORT_CSV:
+            case BIT_FINGERPRINTS_EXPORT_CSV:
                 if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS) == null ||
                         this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS).size() == 0 ||
                         ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
@@ -797,23 +797,20 @@ public class MainViewController {
             this.isExportRunningProperty.setValue(false);
             MainViewController.LOGGER.log(Level.WARNING, event.getSource().getException().toString(), event.getSource().getException());
             this.updateStatusBar(this.exporterThread, Message.get("Status.failed"));
-            System.out.println(this.fingerprinterService.getFingerprintDimensionalityValue() + "dimensionaliyt");
-            System.out.println(this.numberOfFragmentsAfterFragmentation +"-----fragment size");
             if(this.fingerprinterService.getFingerprintDimensionalityValue() > this.numberOfFragmentsAfterFragmentation) {
-                System.out.println("Fehlersfjsfkjsdjfksdf");
                 IllegalArgumentException tmpException = new IllegalArgumentException("An illegal fingerprint frequency threshold number was given: " + this.fingerprinterService.getFingerprintDimensionalityValue());
                 GuiUtil.guiExceptionAlert(Message.get("FragmentFingerprinterWrapper.Error.invalidFingerprintDimensionalityArgument.Title"),
                         Message.get("FragmentFingerprinterWrapper.Error.invalidFingerprintDimensionalityArgument.Header"),
                         tmpException.toString(),
                         tmpException);
-            } else {
+            }
+             else {
                 GuiUtil.guiMessageAlert(
                         Alert.AlertType.WARNING,
                         Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
                         Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                         null);
             }
-
         });
         this.exporterThread = new Thread(this.exportTask);
         this.exporterThread.setName(ThreadType.EXPORT_THREAD.getThreadName());
@@ -1308,7 +1305,6 @@ public class MainViewController {
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
                         this.fingerprinterService.setMaximumFingerprintDimensionality(tmpObservableFragments.size());
                         this.defaultFingerprintDimensionality = tmpObservableFragments.size();
-                        System.out.println(this.defaultFingerprintDimensionality +"-----------mein default fp");
                         HashMap<String, List<FragmentDataModel>> tmpTabNameToFragmentsMap = new HashMap<>();
                         if(this.mainTabPane != null) {
                             tmpTabNameToFragmentsMap.put(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(), tmpObservableFragments);
@@ -1538,6 +1534,7 @@ public class MainViewController {
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
         this.clusteringButton.setOnAction(event -> {
             // fingerprinting first and then start clustering
+            this.fingerprints = null;
             this.startFingerprinting();
             this.startClustering(this.fingerprints);
         });
@@ -1547,6 +1544,7 @@ public class MainViewController {
         if(tmpList.size() == 0){
             tmpOpenOverviewViewButton.setDisable(true);
             tmpOpenHistogramViewButton.setDisable(true);
+            this.clusteringButton.setDisable(true);
         }
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);

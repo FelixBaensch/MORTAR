@@ -293,6 +293,7 @@ public class MainMenuBar extends MenuBar {
         this.settingsMenu.getItems().add(this.fingerprinterMenu);
         //fingerprinterSettingsMenuItem
         this.settingsMenu.getItems().add(this.fingerprinterSettingsMenuItem);
+        this.fingerprinterSettingsMenuItem.setDisable(true);
         //</editor-fold>
         //<editor-fold desc="pipelineMenu" defaultstate="collapsed">
         this.getMenus().add(this.pipelineMenu);

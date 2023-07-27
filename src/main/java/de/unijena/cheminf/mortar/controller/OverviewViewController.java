@@ -253,6 +253,10 @@ public class OverviewViewController implements IViewToolController {
      * Boolean value to distinguish between drag from mouse click events.
      */
     private boolean dragFlag;
+    /**
+     * Boolean value to TODO
+     */
+    private boolean clusteringViewHighlightOption;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
@@ -293,6 +297,7 @@ public class OverviewViewController implements IViewToolController {
         this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         this.dragFlag = false;
+        this.clusteringViewHighlightOption = false;
     }
     //</editor-fold>
     //
@@ -405,7 +410,8 @@ public class OverviewViewController implements IViewToolController {
                 }
                 this.overviewViewTitle =  aTabName + " - " + Message.get("OverviewView.nameOfView") +
                         " - " + aMoleculeDataModelList.size() + " " + "Molecules";
-                this.withShowInMainViewOption = true; // TODO
+                this.withShowInMainViewOption = false;
+                this.clusteringViewHighlightOption = true;
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
@@ -783,7 +789,16 @@ public class OverviewViewController implements IViewToolController {
                                                 tmpImageHeight, true, true
                                         )
                                 );
-                            } else {
+                                // only for the clustering view
+                            } else if(this.clusteringViewHighlightOption && !this.withShowInMainViewOption) {
+                                tmpFinalContentNode = new ImageView(
+                                        DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                                tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                tmpImageHeight, true, true
+                                        )
+                                );
+                            }
+                            else {
                                 //highlighting first structure in parent molecules and item overview view
                                 StackPane tmpStackPane = new StackPane(
                                         new ImageView(

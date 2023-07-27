@@ -1,3 +1,23 @@
+/*
+ * MORTAR - MOlecule fRagmenTAtion fRamework
+ * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ *
+ * Source code is available at <https://github.com/FelixBaensch/MORTAR>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
@@ -15,22 +35,68 @@ import javafx.stage.Stage;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
+/**
+ * SettingsViewController
+ * controls {@link SettingsView} for clustering settings
+ *
+ * @author Betuel Sevindik
+ * @version 1.0.0.0
+ */
 public class ClusteringSettingsViewController {
-
+    //<editor-fold desc="private and private final class variables">
+    /**
+     * Main stage object of the application
+     */
     private final Stage mainStage;
+    /**
+     * SettingsView
+     */
     private SettingsView settingsView;
+    /**
+     * Stage for the SettingsView
+     */
     private Stage clusteringSettingsViewStage;
+    /**
+     * Map of maps to hold initial settings properties for each clustering algorithm
+     */
     private Map<String, Map<String, Object>> recentProperties;
-    private IMortarClustering[] clusteringTyp;
-    private String selectedClusteringTypName;
+    /**
+     * Array of {@link IMortarClustering} objects
+     */
+    private IMortarClustering[] clusteringAlgorithm;
+    /**
+     * Name of the selected clustering algorithm
+     */
+    private String selectedClusteringAlgorithmName;
+    //</editor-fold>
+    //
+    //<editor-fold desc="private static final class variables">
+    /**
+     * Logger of this class
+     */
+    private static final Logger LOGGER = Logger.getLogger(ClusteringSettingsViewController.class.getName());
+    //</editor-fold>
+    //
+    //<editor-fold desc="constructor">
+    /**
+     * Constructor
+     *
+     * @param aStage Stage
+     * @param anArrayOfClusteringAlgorithms IMortarClustering
+     * @param aSelectedClusteringTypName name of the selected clustering algorithm e.g. ART 2-A Clustering
+     */
     public ClusteringSettingsViewController(Stage aStage, IMortarClustering[] anArrayOfClusteringAlgorithms, String aSelectedClusteringTypName) {
         this.mainStage = aStage;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(anArrayOfClusteringAlgorithms.length));
-        this.clusteringTyp = anArrayOfClusteringAlgorithms;
-        this.selectedClusteringTypName = aSelectedClusteringTypName;
+        this.clusteringAlgorithm = anArrayOfClusteringAlgorithms;
+        this.selectedClusteringAlgorithmName = aSelectedClusteringTypName;
         this.openClusteringSettingsView();
     }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private methods">
     private void openClusteringSettingsView() {
         if(this.settingsView == null) {
             this.settingsView = new SettingsView();
@@ -47,42 +113,57 @@ public class ClusteringSettingsViewController {
         InputStream tmpImageInputStream = ClusteringSettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
         this.clusteringSettingsViewStage.getIcons().add(new Image(tmpImageInputStream));
         this.addListener();
-        for(IMortarClustering tmpClusteringAlgorithms : this.clusteringTyp) {
+        for(IMortarClustering tmpClusteringAlgorithms : this.clusteringAlgorithm) {
             HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpClusteringAlgorithms.settingsProperties().size()));
             this.recentProperties.put(tmpClusteringAlgorithms.getClusteringName(), tmpRecentProperties);
             Tab tmpTab = this.settingsView.addTab(this.clusteringSettingsViewStage, tmpClusteringAlgorithms.getClusteringName(), tmpClusteringAlgorithms.settingsProperties(),
                     tmpClusteringAlgorithms.getSettingNameToTooltipTextMap(), tmpRecentProperties);
-            if(tmpClusteringAlgorithms.getClusteringName().equals(this.selectedClusteringTypName)) { // TODO
+            if(tmpClusteringAlgorithms.getClusteringName().equals(this.selectedClusteringAlgorithmName)) {
                 this.settingsView.getSelectionModel().select(tmpTab);
             }
         }
     }
+    //
+    /**
+     * Adds listeners
+     */
     private void addListener() {
+        // clusteringSettingsViewStage lose request
         this.clusteringSettingsViewStage.setOnCloseRequest(event -> {
-            for(int i = 0; i < this.clusteringTyp.length; i++) {
-                if(this.clusteringTyp[i].getClusteringName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
-                    this.setRecentProperties(this.clusteringTyp[i],this.recentProperties.get(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
+            for(int i = 0; i < this.clusteringAlgorithm.length; i++) {
+                if(this.clusteringAlgorithm[i].getClusteringName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
+                    this.setRecentProperties(this.clusteringAlgorithm[i],this.recentProperties.get(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
                 }
             }
             this.clusteringSettingsViewStage.close();
         });
+        // applyButton
         this.settingsView.getApplyButton().setOnAction(event -> {
             this.clusteringSettingsViewStage.close();
         });
+        // cancelButton
         this.settingsView.getCancelButton().setOnAction(event -> {
-            for(int i = 0; i < this.clusteringTyp.length; i++) {
-                this.setRecentProperties(this.clusteringTyp[i], this.recentProperties.get(this.clusteringTyp[i].getClusteringName()));
+            for(int i = 0; i < this.clusteringAlgorithm.length; i++) {
+                this.setRecentProperties(this.clusteringAlgorithm[i], this.recentProperties.get(this.clusteringAlgorithm[i].getClusteringName()));
             }
            this.clusteringSettingsViewStage.close();
         });
+        //defaultButton
         this.settingsView.getDefaultButton().setOnAction(event -> {
-            for(int i = 0; i < this.clusteringTyp.length; i++) {
-                if(this.clusteringTyp[i].getClusteringName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
-                    this.clusteringTyp[i].restoreDefaultSettings();
+            for(int i = 0; i < this.clusteringAlgorithm.length; i++) {
+                if(this.clusteringAlgorithm[i].getClusteringName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
+                    this.clusteringAlgorithm[i].restoreDefaultSettings();
                 }
             }
         });
     }
+    //
+    /**
+     * Sets the properties of the given clustering alogrithm to the values of the 'recentPropertiesMap'
+     *
+     * @param aClusteringAlgorithm IMortarClustering
+     * @param aRecentPropertiesMap properties map
+     */
     private void setRecentProperties(IMortarClustering aClusteringAlgorithm, Map aRecentPropertiesMap) {
         for(Property tmpProperty : aClusteringAlgorithm.settingsProperties()) {
             if(aRecentPropertiesMap.containsKey(tmpProperty.getName())) {
@@ -90,5 +171,6 @@ public class ClusteringSettingsViewController {
             }
         }
     }
-
+    //</editor-fold>
+    //
 }
