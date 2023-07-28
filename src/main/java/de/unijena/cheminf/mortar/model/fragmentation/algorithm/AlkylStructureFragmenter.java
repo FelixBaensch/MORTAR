@@ -515,6 +515,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 "hydrogen saturation of molecule, " + anException.toString(), anException);
         }
     }
+
+    /**
+     * Private method to extract detected molecules via properties.
+     *
+     * @return IAtomContainerSet with extracted molecules
+     */
     private IAtomContainerSet extractMolecules() {
         //
         //<editor-fold desc="Extraction">
