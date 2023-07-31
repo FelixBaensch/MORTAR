@@ -24,14 +24,10 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
 import javafx.beans.property.Property;
-//needed for currently disabled Future Settings
-//import javafx.beans.property.SimpleBooleanProperty;
-//import javafx.beans.property.SimpleIntegerProperty;
 
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
@@ -62,8 +58,7 @@ import java.util.logging.Logger;
  * Java class implementing an algorithm for detection and fragmentation of alkyl
  * structures in MORTAR using the CDK.
  * <p>
- * TODO: 19.07.2023 -simplifying fragmentation into private methods
- *                  -future settings -> complex enums to attach values to dropdown
+ * TODO: 31.07.2023 -future settings -> complex enums to attach values to dropdown
  *                  -preserveRingSystemMaxSetting restrictions (smaller 0 nonsense)
  *                  -pseudo atom handling (*-atoms)
  *                  -for future fragmentation: properties for single rings, ring systems and conjugated pi systems
@@ -206,32 +201,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public IMoleculeFragmenter copy() {
         AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
-        //
-        //        //<editor-fold desc="Future Settings, currently disabled">
-        //        tmpCopy.setChainFragmentLengthSetting(this.chainFragmentLengthSetting.get());
-        //        tmpCopy.setDissectSpiroCarbonSetting(this.dissectSpiroCarbonSetting.get());
-        //        tmpCopy.setDissectRingsSetting(this.dissectRingsSetting.get());
-        //        tmpCopy.setPreserveRingMaxSizeSetting(this.preserveRingMaxSizeSetting.get());
-        //        tmpCopy.setPreserveRingSystemSetting(this.preserveRingSystemSetting.get());
-        //        tmpCopy.setPreserveRingSystemMaxSetting(this.preserveRingSystemMaxSetting.get());
-        //        //</editor-fold>
-        //
         return tmpCopy;
     }
 
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
-        //
-        //        //<editor-fold desc="Future Settings, currently disabled">
-        //        this.chainFragmentLengthSetting.set(AlkylStructureFragmenter.CHAIN_FRAGMENT_LENGTH_OPTION.name());
-        //        this.dissectSpiroCarbonSetting.set(AlkylStructureFragmenter.DISSECT_SPIRO_CARBON_OPTION_DEFAULT);
-        //        this.dissectRingsSetting.set(AlkylStructureFragmenter.DISSECT_RINGS_OPTION_DEFAULT);
-        //        this.preserveRingMaxSizeSetting.set(AlkylStructureFragmenter.PRESERVE_RING_MAX_SIZE_OPTION.name());
-        //        this.preserveRingSystemSetting.set(AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_OPTION_DEFAULT);
-        //        this.preserveRingSystemMaxSetting.set(AlkylStructureFragmenter.PRESERVE_RING_SYSTEM_MAX_OPTION_DEFAULT);
-        //        //</editor-fold>
-        //
     }
     //
     //<editor-fold desc="Pre-Fragmentation Tasks">
@@ -497,8 +472,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(anUnsaturatedACSet.getAtomContainer(0).getBuilder());
                 for (IAtomContainer tmpAtomContainer: anUnsaturatedACSet.atomContainers()) {
                     if (tmpAtomContainer != null && !tmpAtomContainer.isEmpty()) {
+                        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
                         if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
                             tmpAdder.addImplicitHydrogens(tmpAtomContainer);
                             tmpSaturatedFragments.add(tmpAtomContainer);
                         } else {

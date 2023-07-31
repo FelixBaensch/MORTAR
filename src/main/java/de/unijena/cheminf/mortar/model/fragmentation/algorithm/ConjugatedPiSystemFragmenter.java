@@ -37,6 +37,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -254,6 +255,7 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
             if (!tmpFragmentSet.isEmpty() && tmpFragmentSet != null) {
                 CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpFragmentSet.getAtomContainer(0).getBuilder());
                 for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
+                    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
                     if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                         try {
                             tmpAdder.addImplicitHydrogens(tmpAtomContainer);
@@ -282,7 +284,7 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
-        return Objects.isNull(aMolecule) || aMolecule.isEmpty();
+        return (Objects.isNull(aMolecule) || aMolecule.isEmpty());
     }
 
     /**

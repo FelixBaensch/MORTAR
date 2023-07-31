@@ -22,14 +22,24 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.io.MDLV3000Reader;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
+
+import java.io.File;
+import java.io.FileReader;
+
+import java.util.List;
 import java.util.Locale;
 
 /**
  * Class to test the correct working of
  * {@link de.unijena.cheminf.mortar.model.fragmentation.algorithm.ConjugatedPiSystemFragmenter}.
- * ToDo: -test fragmentation
  *
  * @author Maximilian Rottmann
  * @version 1.1.1.0
@@ -43,7 +53,7 @@ public class ConjugatedPiSystemFragmenterTest {
     public ConjugatedPiSystemFragmenterTest() {
         Locale.setDefault(new Locale("en", "GB"));
     }
-    //
+
     /**
      * Tests correct instantiation and basic settings retrieval.
      *
@@ -55,6 +65,32 @@ public class ConjugatedPiSystemFragmenterTest {
         System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
         for (Property tmpSetting: tmpFragmenter.settingsProperties()) {
             System.out.println(tmpSetting.getName());
+        }
+    }
+
+    /**
+     *  Method to test a default conjugated pi system fragmentation on the natural product CNP0421388
+     *  from the Coconut Database (@see <a href="https://coconut.naturalproducts.net/compound/coconut_id/CNP0421388">...</a>).
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void defaultFragmentationTest() throws Exception {
+        File tmpFile = new File("src/test/resources/TestCPSFStructure.mol");
+        try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader(tmpFile))) {
+            IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(new AtomContainer());
+            ConjugatedPiSystemFragmenter tmpFragmenter = new ConjugatedPiSystemFragmenter();
+            tmpFragmenter.setFragmentSaturationSetting(ConjugatedPiSystemFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+            Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
+            Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
+            Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
+            List<IAtomContainer> tmpFragmentList;
+            tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
+            SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Canonical);
+            for (IAtomContainer tmpFragment : tmpFragmentList) {
+                System.out.println(tmpGenerator.create(tmpFragment) + " "
+                        + tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
+            }
         }
     }
 }
