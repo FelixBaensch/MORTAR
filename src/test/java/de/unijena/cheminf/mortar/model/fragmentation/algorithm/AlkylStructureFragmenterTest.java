@@ -24,7 +24,6 @@ import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.MDLV2000Reader;
@@ -33,7 +32,6 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.File;
 import java.io.FileReader;
-
 import java.util.List;
 import java.util.Locale;
 

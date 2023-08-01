@@ -79,14 +79,22 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final String INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY = "ASF.ATOM_INDEX";
     /**
-     * Key for an internal index property, used in uniquely identifying bonds during fragmentation.
+     * Key for an internal index property used in uniquely identifying bonds during fragmentation.
      */
     public static final String INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY = "ASF.BOND_INDEX";
     /**
-     * Key for an internal boolean property, used in identifying whether an atom or bond has been placed in the
+     * Key for an internal boolean property used in identifying whether an atom or bond has been placed in the
      * corresponding fragmentation array. It is further used during fragmentation.
      */
     public static final String INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY = "ASF.FRAGMENTATION_PLACEMENT";
+    /**
+     * Key for an internal boolean property, used in identifying tertiary carbon atoms.
+     */
+    public static final String INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY = "ASF.TERTIARY_CARBON";
+    /**
+     * Key for an internal boolean property used in identifying quaternary carbon atoms.
+     */
+    public static final String INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY = "ASF.QUATERNARY_CARBON";
     //</editor-fold>
     //
     //<editor-fold desc="Private Class Variables">
@@ -297,7 +305,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         for (IAtom tmpAtom: tmpClone.atoms()) {
             if (tmpAtom != null) {
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, false);
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, false);
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
+                if (tmpAtom.getBondCount() == 3 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
+                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
+                } else if (tmpAtom.getBondCount() == 4 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
+                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, true);
+                }
                 this.atomArray[tmpAlkylSFAtomIndex] = tmpAtom;
                 tmpAlkylSFAtomIndex ++;
             }
@@ -502,11 +517,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
         IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
         IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
+        IAtomContainer tmpSingleCarbonContainer = new AtomContainer();
         //atom extraction
         //superior performance compared to normal for iteration over Array length
         for (IAtom tmpAtom : this.atomArray) {
             if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
-                tmpChainFragmentationContainer.addAtom(tmpAtom);
+                if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
+                    tmpSingleCarbonContainer.addAtom(tmpAtom);
+                } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
+                    tmpSingleCarbonContainer.addAtom(tmpAtom);
+                } else {
+                    tmpChainFragmentationContainer.addAtom(tmpAtom);
+                }
             } else {
                 tmpRingFragmentationContainer.addAtom(tmpAtom);
             }
@@ -515,10 +537,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //superior performance compared to normal for iteration over Array length
         for (IBond tmpBond : this.bondArray) {
             if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
-                if (tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY))
-                    if (tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
+                IAtom tmpBeginAtom = tmpBond.getBegin();
+                IAtom tmpEndAtom = tmpBond.getEnd();
+                boolean tmpIsBeginFragPlacement = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY);
+                boolean tmpIsEndFragPlacement = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY);
+                boolean tmpIsBeginTertiary = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
+                boolean tmpIsEndTertiary = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
+                boolean tmpIsBeginQuaternary = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
+                boolean tmpIsEndQuaternary = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
+                if (tmpIsBeginFragPlacement && tmpIsEndFragPlacement) {
+                    if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary)) {
                         tmpChainFragmentationContainer.addBond(tmpBond);
                     }
+                }
             }
             else {
                 tmpRingFragmentationContainer.addBond(tmpBond);
@@ -528,11 +559,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer);
         IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer);
+        IAtomContainerSet tmpSingleAtomContainerSet = checkConnectivity(tmpSingleCarbonContainer);
         if (!tmpRingAtomContainerSet.isEmpty() && tmpRingAtomContainerSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpRingAtomContainerSet);
         }
         if (!tmpChainAtomContainerSet.isEmpty() && tmpChainAtomContainerSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpChainAtomContainerSet);
+        }
+        if (!tmpSingleAtomContainerSet.isEmpty() && tmpSingleAtomContainerSet.getAtomContainerCount() > 0) {
+            tmpExtractionSet.add(tmpSingleAtomContainerSet);
         }
         return tmpExtractionSet;
     }
