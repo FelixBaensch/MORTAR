@@ -24,14 +24,14 @@ import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.MDLV2000Reader;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
-import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -73,9 +73,8 @@ public class AlkylStructureFragmenterTest {
      */
     @Test
     public void defaultFragmentationTest() throws Exception {
-        File tmpFile = new File("src/test/resources/TestASFStructure1.mol");
-        try (MDLV2000Reader tmpMDLReader = new MDLV2000Reader(new FileReader(tmpFile))) {
-            IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(new AtomContainer());
+        try (MDLV2000Reader tmpMDLReader = new MDLV2000Reader(new FileReader("src/test/resources/TestASFStructure1.mol"))) {
+            IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
             AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
             tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
             Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
@@ -84,10 +83,16 @@ public class AlkylStructureFragmenterTest {
             List<IAtomContainer> tmpFragmentList;
             tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
             SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Canonical);
+            List<String> tmpCheckList = new ArrayList<>();
+            List<String> tmpExpectedList = new ArrayList<>();
+            tmpExpectedList.add("C=CC=C1C=2C=CC=CC2CCC1");
+            tmpExpectedList.add("CCCC");
+            tmpExpectedList.add("CC(C)(C)C");
             for (IAtomContainer tmpFragment : tmpFragmentList) {
-                System.out.println(tmpGenerator.create(tmpFragment) + " "
-                        + tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
+                String tmpString = tmpGenerator.create(tmpFragment);
+                tmpCheckList.add(tmpString);
             }
+            Assertions.assertLinesMatch(tmpExpectedList, tmpCheckList);
         }
     }
 
