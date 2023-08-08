@@ -750,13 +750,13 @@ public class MainViewController {
                         );
                     case COUNT_FINGERPRINTS_EXPORT_CSV:
                         MainViewController.this.fingerprints = null;
-                        MainViewController.this.startFingerprintingToExport("Count Fingerprints");
+                        MainViewController.this.startFingerprintingToExport("Export count fingerprints");
                         return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(),
                                 MainViewController.this.moleculeDataModelList
                         );
                     case BIT_FINGERPRINTS_EXPORT_CSV:
                         MainViewController.this.fingerprints = null;
-                        MainViewController.this.startFingerprintingToExport("Bit Fingerprints");
+                        MainViewController.this.startFingerprintingToExport("Export bit fingerprints");
                         return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(),
                                 MainViewController.this.moleculeDataModelList
                         );

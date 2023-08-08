@@ -1,21 +1,36 @@
+/*
+ * MORTAR - MOlecule fRagmenTAtion fRamework
+ * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ *
+ * Source code is available at <https://github.com/FelixBaensch/MORTAR>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.clustering.art2a.exceptions.ConvergenceFailedException;
 import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
-import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.ClusteringView;
-import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
-import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
-import javafx.beans.binding.Bindings;
+
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -26,14 +41,11 @@ import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextFormatter;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
@@ -47,15 +59,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import javax.swing.text.View;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -308,15 +317,6 @@ public class ClusteringViewController implements IViewToolController {
         };
         this.settings.add(this.barWidthSetting);
         this.settings.add(this.displayBarLabelsSetting);
-        /*
-        this.buttonSetting = new SimpleEnumConstantNameProperty(this, "Buttons",ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.name(),ClusteringViewController.VigilanceParameterButtonOption.class) {
-            @Override
-            public void set(String newValue) {
-                super.set(newValue);
-            }
-        };
-
-         */
         this.displayBarShadowsSetting = new SimpleBooleanProperty(this,
                 //the name could be displayed but is not used for that currently
                 Message.get("HistogramView.displayBarShadowsSetting.name"),
@@ -360,8 +360,6 @@ public class ClusteringViewController implements IViewToolController {
         this.displayBarShadowsSetting.set(ClusteringViewController.DEFAULT_DISPLAY_BAR_SHADOWS_SETTING);
         this.displayGridLinesSetting.set(ClusteringViewController.DEFAULT_DISPLAY_GRID_LINES_SETTING);
         this.barWidthSetting.set(ClusteringViewController.DEFAULT_BAR_WIDTH.name());
-     //   this.buttonSetting.set(ClusteringViewController.DEFAULT_VIGILANCE_PARAMETER_BUTTON.name());
-
     }
 
     @Override
@@ -427,9 +425,7 @@ public class ClusteringViewController implements IViewToolController {
             for (ToggleButton tmpButton : tmpVigilanceParameterButtons) {
                 String tmpDetectedClusterInString = String.valueOf(this.clusteringResult[i].getNumberOfDetectedClusters());
                 int tmpNumberSize = tmpDetectedClusterInString.length();
-                System.out.println(tmpNumberSize +"---------number size");
                 if(tmpNumberSize == 4) {
-                    System.out.println(tmpDetectedClusterInString.indexOf(1) +"-------index");
                     tmpButton.setText(String.valueOf(tmpDetectedClusterInString.charAt(0)+ "." + tmpDetectedClusterInString.substring(1,2) + "k"));
                 }
                 else if (tmpNumberSize == 5) {
@@ -653,7 +649,7 @@ public class ClusteringViewController implements IViewToolController {
         for(int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--) {   // TODO cluster beginn at 1  int i = tmpNumberOfDetectedClusters.get(x)-1; i >=0; i--  int i = 0; i<tmpNumberOfDetectedClusters.get(x); i++
           //  int tmpClusterRepresentative = tmpRepresentatives.get(i); // dont sort
             int tmpClusterRepresentative = tmpRepresentatives.get(map.get(a.get(i))); // sort
-            XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1)); // dont sort
+            XYChart.Data<Number, String> tmpTestData = new XYChart.Data<>(a.get(i).length,"Cluster " + (i+1));
             StackPane tmpHistogramBarStackPane = this.createStackPaneWithContextMenuAndStructureDisplayForBar(
                     aClusteringView.getStructureDisplayImageView(),
                     tmpClusterRepresentative, a.get(i), String.valueOf(" of cluster index "+(i+1)));
@@ -742,14 +738,11 @@ public class ClusteringViewController implements IViewToolController {
         };
         EventHandler<MouseEvent> tmpMouseClickedOnBarEventHandler = event -> {
             if(event.getClickCount() == 2) {
-                System.out.println("Doppelcklick");
                 List<MoleculeDataModel> clusterMolecules = new ArrayList<>();
             for(int test :  molecules) {
-                System.out.println(test + "--------test");
                 clusterMolecules.add(this.moleculeDataModel.get(test));
 
             }
-               System.out.println(clusterMolecules + "----------cluster molecules");
                 this.manager.openOverviewView(this.mainStage, this.dataSources, this.name1+aClusterIndexName, clusterMolecules);
            }
 
@@ -916,7 +909,6 @@ public class ClusteringViewController implements IViewToolController {
         this.clusteringView = null;
         this.histogramStage = null;
         this.histogramScene = null;
-        this.clusteringResult = null;
         this.imageWidth = ClusteringViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH;
         this.imageHeight = ClusteringViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_HEIGHT;
         this.imageZoomFactor = ClusteringViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR;
@@ -924,5 +916,6 @@ public class ClusteringViewController implements IViewToolController {
         this.numberAxis = null;
         this.histogramChart = null;
         this.atomContainerForDisplayCache = null;
+        this.clusteringResult = null;
     }
 }

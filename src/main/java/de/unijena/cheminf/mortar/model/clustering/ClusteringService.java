@@ -223,16 +223,16 @@ public class ClusteringService {
                     Message.get("ClusteringService.Error.settingsPersistence"));
             return;
         }
-        for (IMortarClustering tmpFingerprinter : this.clusterer) {
-            if (Objects.isNull(tmpFingerprinter)) {
+        for (IMortarClustering tmpClusteringAlgorithm : this.clusterer) {
+            if (Objects.isNull(tmpClusteringAlgorithm)) {
                 continue;
             }
-            List<Property> tmpSettings = tmpFingerprinter.settingsProperties();
+            List<Property> tmpSettings = tmpClusteringAlgorithm.settingsProperties();
             if (Objects.isNull(tmpSettings)) {
                 continue;
             }
             String tmpFilePath = tmpDirectoryPath
-                    + tmpFingerprinter.getClass().getSimpleName()
+                    + tmpClusteringAlgorithm.getClass().getSimpleName()
                     + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
             try {
                 PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
@@ -249,7 +249,7 @@ public class ClusteringService {
     }
     //
     /**
-     * Reloads settings of the available fingerprinter. If something goes wrong, it is logged.
+     * Reloads settings of the available clustering algorithm. If something goes wrong, it is logged.
      */
     public void reloadClusteringSettings() {
         String tmpDirectoryPath = FileUtil.getSettingsDirPath()

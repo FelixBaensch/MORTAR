@@ -59,7 +59,7 @@ import java.util.ArrayList;
  * View to display clustering results
  *
  * @author Betuel Sevindik
- * @version 1.1.1.1
+ * @version 1.0.0.0
  *
  */
 public class ClusteringView extends AnchorPane {
@@ -158,7 +158,7 @@ public class ClusteringView extends AnchorPane {
     /**
      * Size of the HBox on the left side in the view
      */
-    private final double LEFT_SIDE_HBOX_SIZE = 420.0;
+    private final double LEFT_SIDE_HBOX_SIZE = 420.0;  //420.0
     /**
      * Label width on the left side view
      */

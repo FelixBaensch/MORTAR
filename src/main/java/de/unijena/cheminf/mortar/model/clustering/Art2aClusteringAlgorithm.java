@@ -380,10 +380,10 @@ public class Art2aClusteringAlgorithm implements IMortarClustering {
      * @param aDataMatrix with all generated fingerprints
      * @param aNumberOfTasks number of tasks
      * @param aClusteringName clustering name
-     * @return clustering results // TODO result wrapper class
+     * @return clustering results
      * @throws Exception is thrown if clustering failed
      */
-    public IArt2aClusteringResult[] startArt2aClustering(int[][] aDataMatrix, int aNumberOfTasks, String aClusteringName) throws Exception {
+    public IArt2aClusteringResult[] startArt2aClustering(int[][] aDataMatrix, int aNumberOfTasks, String aClusteringName) throws Exception { // TODO check arguments
         Objects.requireNonNull(aDataMatrix, "aDataMatrix is null");
         int tmpMaximumNumberOfEpochs = this.getMaximumNumberOfEpochs();
         double tmpLearningParameter = this.getLearningParameter();
@@ -428,18 +428,19 @@ public class Art2aClusteringAlgorithm implements IMortarClustering {
             }
         }
         List<Future<IArt2aClusteringResult>> tmpFuturesList;
+        long tmpStartTime = System.currentTimeMillis();
         tmpFuturesList = this.executorService.invokeAll(tmpClusteringTask);
         IArt2aClusteringResult[] tmpResultArray = new IArt2aClusteringResult[9];
         int tmpIterator = 0;
             for (Future<IArt2aClusteringResult> tmpFuture : tmpFuturesList) {
                 IArt2aClusteringResult tmpClusteringResult = tmpFuture.get();
-                System.out.println(tmpClusteringResult.getVigilanceParameter() + "------vigilance parameter");
                 tmpResultArray[tmpIterator] = tmpFuture.get();
                 tmpIterator++;
             }
             this.executorService.shutdown();
+            long tmpEndTime = System.currentTimeMillis();
             this.logger.info("Clustering \"" + tmpClusteringName + "\" of " + aDataMatrix.length
-                    + " molecules complete.");
+                    + " molecules complete."+" It took " + (tmpEndTime - tmpStartTime) + " ms.");
         return tmpResultArray;
     }
     //
@@ -452,7 +453,7 @@ public class Art2aClusteringAlgorithm implements IMortarClustering {
             if (!this.executorService.awaitTermination(600, TimeUnit.MILLISECONDS)) {
                 this.executorService.shutdownNow();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException anException) {
             this.executorService.shutdownNow();
         }
     }
