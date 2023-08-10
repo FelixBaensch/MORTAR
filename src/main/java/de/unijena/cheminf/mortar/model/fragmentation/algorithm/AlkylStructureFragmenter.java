@@ -29,8 +29,11 @@ import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
 import javafx.beans.property.Property;
 
+import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.Bond;
+import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.CycleFinder;
@@ -75,6 +78,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final String ALGORITHM_NAME = "Alkyl Fragmenter";
     /**
+     *
+     */
+    public static final int MAX_CHAIN_LENGTH_SETTING_DEFAULT = 0;
+    //<editor-fold desc="Property Keys">
+    /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
      */
     public static final String INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY = "ASF.ATOM_INDEX";
@@ -96,12 +104,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final String INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY = "ASF.QUATERNARY_CARBON";
     //</editor-fold>
+    //</editor-fold>
     //
     //<editor-fold desc="Private Class Variables">
     /**
      * A property that has a constant fragment hydrogen saturation setting.
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+    /**
+     * A Property that has a constant carbon side chain setting:
+     */
+    private final SimpleIntegerProperty maxChainLengthSetting;
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -129,12 +142,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        int tmpSettingsNameTooltipNumber = 1;
+        int tmpSettingsNameTooltipNumber = 2;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNameTooltipNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacitySettingsNameTooltipHashMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment Saturation Setting",
+        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
@@ -151,8 +164,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         };
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
-        this.settings = new ArrayList<Property>(1);
+        this.maxChainLengthSetting = new SimpleIntegerProperty(this, "Carbon side chains maximum length setting",
+                AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT) {
+            @Override
+            public void set(int newValue) {
+                super.set(newValue);
+            }
+        };
+        this.settingNameTooltipTextMap.put(this.maxChainLengthSetting.getName(),
+                Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
+        this.settings = new ArrayList<Property>(2);
         this.settings.add(this.fragmentSaturationSetting);
+        this.settings.add(this.maxChainLengthSetting);
     }
     //</editor-fold>
     //
@@ -202,6 +225,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(anOption, "Given saturation option is null.");
         this.fragmentSaturationSetting.set(anOption.name());
     }
+
+    /**
+     * Set method for setting defining maximum side chain length.
+     *
+     * @param aValue the given integer value for chain length
+     */
+    public void setMaxChainLengthSetting(int aValue) throws NullPointerException{
+        Objects.requireNonNull(aValue, "Given chain length is null");
+        this.maxChainLengthSetting.set(aValue);
+    }
+
     //</editor-fold>
     //
     //<editor-fold desc="Public Methods">
@@ -215,6 +249,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
     }
     //
     //<editor-fold desc="Pre-Fragmentation Tasks">
@@ -450,18 +485,75 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param anAtomContainer IAtomContainer to check
      * @return IAtomContainerSet containing partitioned structures as single IAtomContainer
      */
-    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer) {
+    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer, boolean anIsChainContainer) {
         Objects.requireNonNull(anAtomContainer,"Given IAtomContainer is null.");
         try {
             IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
             if (!anAtomContainer.isEmpty()) {
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
-                    IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
-                    for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                        tmpFragmentSet.addAtomContainer(tmpContainer);
+                    if (anIsChainContainer) {
+                        switch (this.maxChainLengthSetting.get()) {
+                            default:
+                                //if no case matches, assume closest int value
+                            case 0:
+                                //no restrictions applied
+                                IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
+                                for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
+                                    tmpFragmentSet.addAtomContainer(tmpContainer);
+                                }
+                            case 1:
+
+                            case 2:
+
+                            case 3:
+
+                            case 4:
+
+                            case 5:
+
+                            case 6:
+
+                            case 7:
+
+                            case 8:
+
+                            case 9:
+                        }
+                    } else {
+                        IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
+                        for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
+                            tmpFragmentSet.addAtomContainer(tmpContainer);
+                        }
                     }
                 } else {
-                    tmpFragmentSet.addAtomContainer(anAtomContainer);
+                    if (anIsChainContainer) {
+                        switch (this.maxChainLengthSetting.get()) {
+                            default:
+                                //if no case matches, assume closest int value
+                            case 0:
+                                //no restrictions applied
+                                tmpFragmentSet.addAtomContainer(anAtomContainer);
+                            case 1:
+
+                            case 2:
+
+                            case 3:
+
+                            case 4:
+
+                            case 5:
+
+                            case 6:
+
+                            case 7:
+
+                            case 8:
+
+                            case 9:
+                        }
+                    } else {
+                        tmpFragmentSet.addAtomContainer(anAtomContainer);
+                    }
                 }
             }
             return tmpFragmentSet;
@@ -476,7 +568,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Private method to saturate a given molecule with implicit hydrogens after fragmentation.
      *
      * @param anUnsaturatedACSet IAtomContainerSet whose atomcontainers are to be saturated
-     * @return List of processed atomcontainers, null if given Set is empty
+     * @return List of processed atomcontainers, @null if given Set is empty
      * @throws CDKException if CDKHydrogenAdder throws an exception
      */
     private List<IAtomContainer> saturateWithImplicitHydrogen(IAtomContainerSet anUnsaturatedACSet) throws CDKException {
@@ -524,8 +616,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
                     tmpSingleCarbonContainer.addAtom(tmpAtom);
+                    for (int i = 0; i < 3; i++) {
+                        PseudoAtom tmpPseudoAtom = new PseudoAtom();
+                        tmpSingleCarbonContainer.addAtom(tmpPseudoAtom);
+                        tmpSingleCarbonContainer.addBond(new Bond(tmpAtom, tmpPseudoAtom));
+                    }
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
                     tmpSingleCarbonContainer.addAtom(tmpAtom);
+                    for (int i = 0; i < 4; i++) {
+                        PseudoAtom tmpPseudoAtom = new PseudoAtom();
+                        tmpSingleCarbonContainer.addAtom(tmpPseudoAtom);
+                        tmpSingleCarbonContainer.addBond(new Bond(tmpAtom, tmpPseudoAtom));
+                    }
                 } else {
                     tmpChainFragmentationContainer.addAtom(tmpAtom);
                 }
@@ -557,9 +659,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //</editor-fold>
         //
-        IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer);
-        IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer);
-        IAtomContainerSet tmpSingleAtomContainerSet = checkConnectivity(tmpSingleCarbonContainer);
+        IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer, false);
+        IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer, true);
+        IAtomContainerSet tmpSingleAtomContainerSet = checkConnectivity(tmpSingleCarbonContainer, false);
         if (!tmpRingAtomContainerSet.isEmpty() && tmpRingAtomContainerSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpRingAtomContainerSet);
         }

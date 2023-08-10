@@ -60,10 +60,14 @@ public class AlkylStructureFragmenterTest {
     @Test
     public void basicTest() throws Exception {
         AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
-        System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
+        List<String> tmpCheckList = new ArrayList<>();
+        List<String> tmpExpectList = new ArrayList<>();
+        tmpExpectList.add("Fragment saturation setting");
+        tmpExpectList.add("Carbon side chains maximum length setting");
         for (Property tmpSetting: tmpFragmenter.settingsProperties()) {
-            System.out.println(tmpSetting.getName());
+            tmpCheckList.add(tmpSetting.getName());
         }
+        Assertions.assertLinesMatch(tmpExpectList, tmpCheckList);
     }
 
     /**
@@ -90,6 +94,7 @@ public class AlkylStructureFragmenterTest {
             tmpExpectedList.add("CC(C)(C)C");
             for (IAtomContainer tmpFragment : tmpFragmentList) {
                 String tmpString = tmpGenerator.create(tmpFragment);
+                System.out.println(tmpString);
                 tmpCheckList.add(tmpString);
             }
             Assertions.assertLinesMatch(tmpExpectedList, tmpCheckList);

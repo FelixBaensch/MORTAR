@@ -98,7 +98,7 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
     public ConjugatedPiSystemFragmenter(){
         this.settingNameTooltipTextMap = new HashMap<>(4,0.75f);
         this.settings = new ArrayList<>(1);
-        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment Saturation Setting",
+        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {

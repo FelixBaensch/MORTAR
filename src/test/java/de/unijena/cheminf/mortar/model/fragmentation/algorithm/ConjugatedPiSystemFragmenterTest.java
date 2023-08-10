@@ -31,6 +31,7 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -59,10 +60,13 @@ public class ConjugatedPiSystemFragmenterTest {
     @Test
     public void basicTest() throws Exception {
         ConjugatedPiSystemFragmenter tmpFragmenter = new ConjugatedPiSystemFragmenter();
-        System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
+        List<String> tmpCheckList = new ArrayList<>();
+        List<String> tmpExpectList = new ArrayList<>();
+        tmpExpectList.add("Fragment saturation setting");
         for (Property tmpSetting: tmpFragmenter.settingsProperties()) {
-            System.out.println(tmpSetting.getName());
+            tmpCheckList.add(tmpSetting.getName());
         }
+        Assertions.assertLinesMatch(tmpExpectList, tmpCheckList);
     }
 
     /**
