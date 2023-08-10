@@ -75,7 +75,7 @@ public final class BasicDefinitions {
     /**
      * Possible SMILES file separators used to separate SMILES code from ID
      */
-    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {"\t", ";", ",", " "};
+    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {"|", "\t", ";", ",", " "};
     //</editor-fold>
     //
     // <editor-fold defaultstate="collapsed" desc="Buffer">
