@@ -484,17 +484,19 @@ public class Importer {
             while (!Thread.currentThread().isInterrupted()
                     && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
                 //trying to parse as SMILES code
-                boolean tmpContainsParsableSmilesCode = false;
+                boolean tmpContainsParsableSmilesCode;
                 try {
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 2);
                     if (!tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isEmpty()) {
                         tmpMolecule = tmpSmilesParser.parseSmiles(tmpProcessedLineArray[tmpSmilesCodeExpectedPosition]);
                         tmpContainsParsableSmilesCode = true;
                         tmpSmilesFileParsableLinesCounter++;
+                    } else {
+                        tmpContainsParsableSmilesCode = false;
                     }
                 } catch (InvalidSmilesException | IndexOutOfBoundsException anException) {
                     //case: invalid line or SMILES code
-                    //tmpContainsParsableSmilesCode stays false
+                    tmpContainsParsableSmilesCode = false;
                 }
                 if (!tmpContainsParsableSmilesCode) {
                     int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter;
