@@ -28,8 +28,8 @@ import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
 import javafx.beans.property.Property;
-
 import javafx.beans.property.SimpleIntegerProperty;
+
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.Bond;
@@ -78,7 +78,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final String ALGORITHM_NAME = "Alkyl Fragmenter";
     /**
-     *
+     * Default value for maximum length of carbon side chains.
      */
     public static final int MAX_CHAIN_LENGTH_SETTING_DEFAULT = 0;
     //<editor-fold desc="Property Keys">
@@ -168,7 +168,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT) {
             @Override
             public void set(int newValue) {
-                super.set(newValue);
+                try {
+                    //AlkylStructureFragmenter.this.maxChainLengthSetting.set(AlkylStructureFragmenter.this.getMaxChainLengthSetting());
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
             }
         };
         this.settingNameTooltipTextMap.put(this.maxChainLengthSetting.getName(),
@@ -198,6 +205,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public String getFragmentSaturationSetting() {
         return this.fragmentSaturationSetting.get();
+    }
+
+    public int getMaxChainLengthSetting() {
+        return this.maxChainLengthSetting.get();
     }
 
     @Override
@@ -492,6 +503,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (!anAtomContainer.isEmpty()) {
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
                     if (anIsChainContainer) {
+                        System.out.println("disconnected chain in checkConnectivity");
                         switch (this.maxChainLengthSetting.get()) {
                             default:
                                 //if no case matches, assume closest int value
@@ -504,7 +516,29 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             case 1:
 
                             case 2:
-
+                                int tmpCounter = 0;
+                                IAtomContainer tmpFragmentContainer = new AtomContainer();
+                                IAtom tmpOldAtom = null;
+                                for (IAtom tmpNewAtom: anAtomContainer.atoms()) {
+                                    if (tmpCounter == 1) {
+                                        if (tmpOldAtom != null) {
+                                            tmpFragmentContainer.addAtom(tmpNewAtom);
+                                            IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
+                                            tmpFragmentContainer.addBond(tmpBond);
+                                            tmpFragmentSet.addAtomContainer(tmpFragmentContainer);
+                                        }
+                                    } else if (tmpCounter == 0){
+                                        tmpFragmentContainer.addAtom(tmpNewAtom);
+                                    } else {
+                                        if (tmpOldAtom != null) {
+                                            tmpFragmentContainer.addAtom(tmpNewAtom);
+                                            IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
+                                            tmpFragmentContainer.addBond(tmpBond);
+                                        }
+                                    }
+                                    tmpOldAtom = tmpNewAtom;
+                                    tmpCounter++;
+                                }
                             case 3:
 
                             case 4:
@@ -527,35 +561,54 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 } else {
                     if (anIsChainContainer) {
-                        switch (this.maxChainLengthSetting.get()) {
-                            default:
-                                //if no case matches, assume closest int value
-                            case 0:
-                                //no restrictions applied
-                                tmpFragmentSet.addAtomContainer(anAtomContainer);
-                            case 1:
-
-                            case 2:
-
-                            case 3:
-
-                            case 4:
-
-                            case 5:
-
-                            case 6:
-
-                            case 7:
-
-                            case 8:
-
-                            case 9:
+                        System.out.println("connected chain in checkConnectivity");
+                        int tmpMockUpForTest = 2;
+                        if (tmpMockUpForTest == 2
+                                //this.maxChainLengthSetting.get() == 2
+                        ) {
+                            System.out.println("if connected chain: 2");
+                            int tmpCounter = 0;
+                            IAtomContainer tmpFragmentContainer = new AtomContainer();
+                            IAtom tmpOldAtom = null;
+                            for (IAtom tmpNewAtom: anAtomContainer.atoms()) {
+                                boolean tmpBoolean = false;
+                                if (tmpCounter == 1) {
+                                    if (tmpOldAtom != null) {
+                                        System.out.println("if if " + tmpCounter);
+                                        tmpFragmentContainer.addAtom(tmpNewAtom);
+                                        IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
+                                        tmpFragmentContainer.addBond(tmpBond);
+                                        tmpFragmentSet.addAtomContainer(tmpFragmentContainer);
+                                        //tmpFragmentContainer.removeAllElements();
+                                        //tmpCounter = 0;
+                                        //tmpBoolean = true;
+                                    }
+                                } else if (tmpCounter == 0){
+                                    System.out.println("1. else " + tmpCounter);
+                                    tmpFragmentContainer.addAtom(tmpNewAtom);
+                                } else {
+                                    if (tmpOldAtom != null) {
+                                        System.out.println("2. else " + tmpCounter);
+                                        tmpFragmentContainer.addAtom(tmpNewAtom);
+                                        IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
+                                        tmpFragmentContainer.addBond(tmpBond);
+                                    }
+                                }
+                                if (!tmpBoolean) {
+                                    tmpOldAtom = tmpNewAtom;
+                                }
+                                System.out.println("before ++ " + tmpCounter);
+                                tmpCounter++;
+                            }
                         }
+
                     } else {
+                        System.out.println("FragmentSet add Input");
                         tmpFragmentSet.addAtomContainer(anAtomContainer);
                     }
                 }
             }
+            System.out.println(tmpFragmentSet.getAtomContainerCount());
             return tmpFragmentSet;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + anAtomContainer.getID(), anException);
