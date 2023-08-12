@@ -496,119 +496,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param anAtomContainer IAtomContainer to check
      * @return IAtomContainerSet containing partitioned structures as single IAtomContainer
      */
-    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer, boolean anIsChainContainer) {
+    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer) {
         Objects.requireNonNull(anAtomContainer,"Given IAtomContainer is null.");
         try {
             IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
             if (!anAtomContainer.isEmpty()) {
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
-                    if (anIsChainContainer) {
-                        System.out.println("disconnected chain in checkConnectivity");
-                        switch (this.maxChainLengthSetting.get()) {
-                            default:
-                                //if no case matches, assume closest int value
-                            case 0:
-                                //no restrictions applied
-                                IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
-                                for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                                    tmpFragmentSet.addAtomContainer(tmpContainer);
-                                }
-                            case 1:
-
-                            case 2:
-                                int tmpCounter = 0;
-                                IAtomContainer tmpFragmentContainer = new AtomContainer();
-                                IAtom tmpOldAtom = null;
-                                for (IAtom tmpNewAtom: anAtomContainer.atoms()) {
-                                    if (tmpCounter == 1) {
-                                        if (tmpOldAtom != null) {
-                                            tmpFragmentContainer.addAtom(tmpNewAtom);
-                                            IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
-                                            tmpFragmentContainer.addBond(tmpBond);
-                                            tmpFragmentSet.addAtomContainer(tmpFragmentContainer);
-                                        }
-                                    } else if (tmpCounter == 0){
-                                        tmpFragmentContainer.addAtom(tmpNewAtom);
-                                    } else {
-                                        if (tmpOldAtom != null) {
-                                            tmpFragmentContainer.addAtom(tmpNewAtom);
-                                            IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
-                                            tmpFragmentContainer.addBond(tmpBond);
-                                        }
-                                    }
-                                    tmpOldAtom = tmpNewAtom;
-                                    tmpCounter++;
-                                }
-                            case 3:
-
-                            case 4:
-
-                            case 5:
-
-                            case 6:
-
-                            case 7:
-
-                            case 8:
-
-                            case 9:
-                        }
-                    } else {
-                        IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
-                        for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                            tmpFragmentSet.addAtomContainer(tmpContainer);
-                        }
+                    IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
+                    for (IAtomContainer tmpContainer : tmpContainerSet.atomContainers()) {
+                        tmpFragmentSet.addAtomContainer(tmpContainer);
                     }
                 } else {
-                    if (anIsChainContainer) {
-                        System.out.println("connected chain in checkConnectivity");
-                        int tmpMockUpForTest = 2;
-                        if (tmpMockUpForTest == 2
-                                //this.maxChainLengthSetting.get() == 2
-                        ) {
-                            System.out.println("if connected chain: 2");
-                            int tmpCounter = 0;
-                            IAtomContainer tmpFragmentContainer = new AtomContainer();
-                            IAtom tmpOldAtom = null;
-                            for (IAtom tmpNewAtom: anAtomContainer.atoms()) {
-                                boolean tmpBoolean = false;
-                                if (tmpCounter == 1) {
-                                    if (tmpOldAtom != null) {
-                                        System.out.println("if if " + tmpCounter);
-                                        tmpFragmentContainer.addAtom(tmpNewAtom);
-                                        IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
-                                        tmpFragmentContainer.addBond(tmpBond);
-                                        tmpFragmentSet.addAtomContainer(tmpFragmentContainer);
-                                        //tmpFragmentContainer.removeAllElements();
-                                        //tmpCounter = 0;
-                                        //tmpBoolean = true;
-                                    }
-                                } else if (tmpCounter == 0){
-                                    System.out.println("1. else " + tmpCounter);
-                                    tmpFragmentContainer.addAtom(tmpNewAtom);
-                                } else {
-                                    if (tmpOldAtom != null) {
-                                        System.out.println("2. else " + tmpCounter);
-                                        tmpFragmentContainer.addAtom(tmpNewAtom);
-                                        IBond tmpBond = new Bond(tmpOldAtom, tmpNewAtom);
-                                        tmpFragmentContainer.addBond(tmpBond);
-                                    }
-                                }
-                                if (!tmpBoolean) {
-                                    tmpOldAtom = tmpNewAtom;
-                                }
-                                System.out.println("before ++ " + tmpCounter);
-                                tmpCounter++;
-                            }
-                        }
-
-                    } else {
-                        System.out.println("FragmentSet add Input");
-                        tmpFragmentSet.addAtomContainer(anAtomContainer);
-                    }
+                    tmpFragmentSet.addAtomContainer(anAtomContainer);
                 }
             }
-            System.out.println(tmpFragmentSet.getAtomContainerCount());
             return tmpFragmentSet;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + anAtomContainer.getID(), anException);
@@ -656,7 +557,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @return IAtomContainerSet with extracted molecules
      */
-    private IAtomContainerSet extractMolecules() {
+    private IAtomContainerSet extractMolecules() throws CloneNotSupportedException {
         //
         //<editor-fold desc="Extraction">
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
@@ -712,17 +613,51 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //</editor-fold>
         //
-        IAtomContainerSet tmpRingAtomContainerSet = checkConnectivity(tmpRingFragmentationContainer, false);
-        IAtomContainerSet tmpChainAtomContainerSet = checkConnectivity(tmpChainFragmentationContainer, true);
-        IAtomContainerSet tmpSingleAtomContainerSet = checkConnectivity(tmpSingleCarbonContainer, false);
-        if (!tmpRingAtomContainerSet.isEmpty() && tmpRingAtomContainerSet.getAtomContainerCount() > 0) {
-            tmpExtractionSet.add(tmpRingAtomContainerSet);
+        IAtomContainerSet tmpRingACSet = this.checkConnectivity(tmpRingFragmentationContainer);
+        IAtomContainerSet tmpSingleACSet = this.checkConnectivity(tmpSingleCarbonContainer);
+        if (!tmpRingACSet.isEmpty() && tmpRingACSet.getAtomContainerCount() > 0) {
+            tmpExtractionSet.add(tmpRingACSet);
         }
-        if (!tmpChainAtomContainerSet.isEmpty() && tmpChainAtomContainerSet.getAtomContainerCount() > 0) {
-            tmpExtractionSet.add(tmpChainAtomContainerSet);
+        if (!tmpSingleACSet.isEmpty() && tmpSingleACSet.getAtomContainerCount() > 0) {
+            tmpExtractionSet.add(tmpSingleACSet);
         }
-        if (!tmpSingleAtomContainerSet.isEmpty() && tmpSingleAtomContainerSet.getAtomContainerCount() > 0) {
-            tmpExtractionSet.add(tmpSingleAtomContainerSet);
+        //remnants after ring, conj. system and tertiary/quartenary carbon extractions
+        //expected to be only linear carbohydrates
+        IAtomContainerSet tmpChainACSet = this.checkConnectivity(tmpChainFragmentationContainer);
+        //ACSet for dissected chains
+        IAtomContainerSet tmpDissectedChainACSet = new AtomContainerSet();
+        //switch for setting, mockup until setting functional
+        int tmpMockUpInteger = 2;
+        switch (tmpMockUpInteger) {
+            default:
+                for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
+                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer, tmpMockUpInteger)));
+                }
+                break;
+            case 0:
+                //no restrictions applied
+                tmpDissectedChainACSet.add(tmpChainACSet);
+                break;
+            case 1:
+                //single methane molecules
+                IAtomContainer tmpDissectedAC = new AtomContainer();
+                for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
+                    tmpAtomContainer.removeAllBonds();
+                    tmpDissectedAC.add(tmpAtomContainer);
+                }
+                tmpDissectedChainACSet.add(this.checkConnectivity(tmpDissectedAC));
+                break;
+                /* model case:
+            case 2:
+                for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
+                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer, 2)));
+                }
+                break;
+                */
+
+        }
+        if (!tmpDissectedChainACSet.isEmpty() && tmpDissectedChainACSet.getAtomContainerCount() > 0) {
+            tmpExtractionSet.add(tmpDissectedChainACSet);
         }
         return tmpExtractionSet;
     }
@@ -733,6 +668,31 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     private void clearCache() {
         this.atomArray = null;
         this.bondArray = null;
+    }
+
+    /**
+     * Private Method to dissect given AtomContainer (containing linear carbon chain) into separate molecules with given length and remnants if
+     * molecule is too small for given length.
+     *
+     * @param anAC AtomContainer to be dissected
+     * @param aLength Given maximum length of molecule
+     * @return AtomContainer with separate dissected molecules
+     */
+    private IAtomContainer dissectLinearChain(IAtomContainer anAC, int aLength) {
+        IAtomContainer tmpReturnAC = new AtomContainer();
+        //starts at 1 for usability, see aLength: 1on1 translation of input to counter
+        int tmpCounter = 1;
+        for (IBond tmpBond : anAC.bonds()) {
+            if (tmpCounter == aLength) {
+                tmpCounter = 1;
+            } else {
+                tmpReturnAC.addAtom(tmpBond.getBegin());
+                tmpReturnAC.addAtom(tmpBond.getEnd());
+                tmpReturnAC.addBond(tmpBond);
+                tmpCounter++;
+            }
+        }
+        return tmpReturnAC;
     }
     //</editor-fold>
     //
