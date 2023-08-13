@@ -81,6 +81,7 @@ public class AlkylStructureFragmenterTest {
             IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
             AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
             tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+            tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
             Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
             Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
             Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
@@ -88,16 +89,23 @@ public class AlkylStructureFragmenterTest {
             tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
             SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Canonical);
             List<String> tmpCheckList = new ArrayList<>();
+            //list of expected molecules after fragmentation
             List<String> tmpExpectedList = new ArrayList<>();
+            tmpExpectedList.add("CC");
+            tmpExpectedList.add("*C(*)*");
+            tmpExpectedList.add("*C(*)(*)*");
             tmpExpectedList.add("C=CC=C1C=2C=CC=CC2CCC1");
-            tmpExpectedList.add("CCCC");
-            tmpExpectedList.add("CC(C)(C)C");
+            tmpExpectedList.add("C");
+            tmpExpectedList.add("C");
+            tmpExpectedList.add("C");
+            tmpExpectedList.add("C");
+            tmpExpectedList.add("C");
             for (IAtomContainer tmpFragment : tmpFragmentList) {
                 String tmpString = tmpGenerator.create(tmpFragment);
                 System.out.println(tmpString);
                 tmpCheckList.add(tmpString);
             }
-            //Assertions.assertLinesMatch(tmpExpectedList, tmpCheckList);
+            Assertions.assertLinesMatch(tmpExpectedList, tmpCheckList);
         }
     }
 

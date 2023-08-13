@@ -112,7 +112,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
     /**
-     * A Property that has a constant carbon side chain setting:
+     * A Property that has a constant carbon side chain setting.
      */
     private final SimpleIntegerProperty maxChainLengthSetting;
     /**
@@ -165,19 +165,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
         this.maxChainLengthSetting = new SimpleIntegerProperty(this, "Carbon side chains maximum length setting",
-                AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT) {
-            @Override
-            public void set(int newValue) {
-                try {
-                    //AlkylStructureFragmenter.this.maxChainLengthSetting.set(AlkylStructureFragmenter.this.getMaxChainLengthSetting());
-                } catch (NullPointerException | IllegalArgumentException anException) {
-                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
-                    //re-throws the exception to properly reset the binding
-                    throw anException;
-                }
-            }
-        };
+                AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
         this.settings = new ArrayList<Property>(2);
@@ -207,6 +195,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return this.fragmentSaturationSetting.get();
     }
 
+    /**
+     * Public get method for maximum chain length setting.
+     *
+     * @return integer value of maxChainLengthSetting
+     */
     public int getMaxChainLengthSetting() {
         return this.maxChainLengthSetting.get();
     }
@@ -242,7 +235,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @param aValue the given integer value for chain length
      */
-    public void setMaxChainLengthSetting(int aValue) throws NullPointerException{
+    public void setMaxChainLengthSetting(int aValue) throws NullPointerException {
         Objects.requireNonNull(aValue, "Given chain length is null");
         this.maxChainLengthSetting.set(aValue);
     }
@@ -254,6 +247,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public IMoleculeFragmenter copy() {
         AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
+        tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
         return tmpCopy;
     }
 
@@ -626,12 +620,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainerSet tmpChainACSet = this.checkConnectivity(tmpChainFragmentationContainer);
         //ACSet for dissected chains
         IAtomContainerSet tmpDissectedChainACSet = new AtomContainerSet();
-        //switch for setting, mockup until setting functional
-        int tmpMockUpInteger = 2;
-        switch (tmpMockUpInteger) {
+        int tmpMaxChainLengthInteger = this.getMaxChainLengthSetting();
+        switch (tmpMaxChainLengthInteger) {
             default:
                 for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
-                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer, tmpMockUpInteger)));
+                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer, tmpMaxChainLengthInteger)));
                 }
                 break;
             case 0:
