@@ -24,13 +24,16 @@ import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.io.MDLV2000Reader;
+import org.openscience.cdk.io.IChemObjectReader;
+import org.openscience.cdk.io.MDLV3000Reader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -77,8 +80,18 @@ public class AlkylStructureFragmenterTest {
      */
     @Test
     public void defaultFragmentationTest() throws Exception {
-        try (MDLV2000Reader tmpMDLReader = new MDLV2000Reader(new FileReader("src/test/resources/TestASFStructure1.mol"))) {
+        try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader("src/test/resources/TestASFStructure1.mol"), IChemObjectReader.Mode.RELAXED)) {
             IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
+            //IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+            //IteratingSDFReader tmpIterSDFReader = new IteratingSDFReader(new FileReader("testfile"))
+            if (tmpOriginalMolecule != null) {
+                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpOriginalMolecule);
+                for (IAtom tmpAtom: tmpOriginalMolecule.atoms()) {
+                    if (tmpAtom.getMaxBondOrder() == null) {
+                        System.out.println(tmpAtom.getIndex());
+                    }
+                }
+            }
             AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
             tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
             tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
@@ -91,18 +104,18 @@ public class AlkylStructureFragmenterTest {
             List<String> tmpCheckList = new ArrayList<>();
             //list of expected molecules after fragmentation
             List<String> tmpExpectedList = new ArrayList<>();
-            tmpExpectedList.add("CC");
+            tmpExpectedList.add("C=CC=C1C=2C=CC=CC2CCC1");
             tmpExpectedList.add("*C(*)*");
             tmpExpectedList.add("*C(*)(*)*");
-            tmpExpectedList.add("C=CC=C1C=2C=CC=CC2CCC1");
             tmpExpectedList.add("C");
+            tmpExpectedList.add("CC");
             tmpExpectedList.add("C");
             tmpExpectedList.add("C");
             tmpExpectedList.add("C");
             tmpExpectedList.add("C");
             for (IAtomContainer tmpFragment : tmpFragmentList) {
                 String tmpString = tmpGenerator.create(tmpFragment);
-                System.out.println(tmpString);
+                //System.out.println(tmpString);
                 tmpCheckList.add(tmpString);
             }
             Assertions.assertLinesMatch(tmpExpectedList, tmpCheckList);
