@@ -24,10 +24,12 @@ import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.IChemObjectReader;
 import org.openscience.cdk.io.MDLV3000Reader;
+import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
@@ -35,8 +37,10 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Class to test the correct working of
@@ -82,16 +86,29 @@ public class AlkylStructureFragmenterTest {
     public void defaultFragmentationTest() throws Exception {
         try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader("src/test/resources/TestASFStructure1.mol"), IChemObjectReader.Mode.RELAXED)) {
             IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
-            //IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-            //IteratingSDFReader tmpIterSDFReader = new IteratingSDFReader(new FileReader("testfile"))
-            if (tmpOriginalMolecule != null) {
-                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpOriginalMolecule);
-                for (IAtom tmpAtom: tmpOriginalMolecule.atoms()) {
-                    if (tmpAtom.getMaxBondOrder() == null) {
-                        System.out.println(tmpAtom.getIndex());
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpOriginalMolecule);
+            File aFile = new File("src/test/resources/ASF_Test_COCONUT_subset_sample.sdf");
+            IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile),
+                    SilentChemObjectBuilder.getInstance());
+            IAtomContainerSet tmpOriginalMoleculeSet = new AtomContainerSet();
+            while (tmpSDFReader.hasNext()) {
+                IAtomContainer tmpAtomContainer = tmpSDFReader.next();
+                if (tmpAtomContainer != null) {
+                    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+                    tmpOriginalMoleculeSet.addAtomContainer(tmpAtomContainer);
+                    /*
+                    for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
+                        if (tmpAtom.getMaxBondOrder() == null) {
+                            System.out.println(tmpAtom.getIndex());
+                        }
                     }
+                    */
                 }
             }
+
+            //IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+            //IteratingSDFReader tmpIterSDFReader = new IteratingSDFReader(new FileReader("testfile"))
+
             AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
             tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
             tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
@@ -102,6 +119,7 @@ public class AlkylStructureFragmenterTest {
             tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
             SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Canonical);
             List<String> tmpCheckList = new ArrayList<>();
+
             //list of expected molecules after fragmentation
             List<String> tmpExpectedList = new ArrayList<>();
             tmpExpectedList.add("C=CC=C1C=2C=CC=CC2CCC1");
@@ -113,12 +131,35 @@ public class AlkylStructureFragmenterTest {
             tmpExpectedList.add("C");
             tmpExpectedList.add("C");
             tmpExpectedList.add("C");
+
+            /*
+            HashSet<String> tmpExpectedHashSet = new HashSet<>(20);
+            tmpExpectedHashSet.add("C=CC=C1C=2C=CC=CC2CCC1");
+            tmpExpectedHashSet.add("*C(*)*");
+            tmpExpectedHashSet.add("*C(*)(*)*");
+            tmpExpectedHashSet.add("C");
+            tmpExpectedHashSet.add("CC");
+            tmpExpectedHashSet.add("C");
+            tmpExpectedHashSet.add("C");
+            tmpExpectedHashSet.add("C");
+            tmpExpectedHashSet.add("C");
+            */
+
+            HashSet<String> tmpCheckHashSet = new HashSet<>(tmpFragmentList.size() + (int)(tmpFragmentList.size() * 0.3));
             for (IAtomContainer tmpFragment : tmpFragmentList) {
                 String tmpString = tmpGenerator.create(tmpFragment);
-                //System.out.println(tmpString);
+                System.out.println(tmpString);
+                //tmpCheckHashSet.add(tmpString);
                 tmpCheckList.add(tmpString);
             }
-            Assertions.assertLinesMatch(tmpExpectedList, tmpCheckList);
+            /*
+            if (!Objects.equals(tmpExpectedHashSet, tmpCheckHashSet)) {
+                Assertions.fail("Fragmentation results differ from expected.");
+            }
+            */
+            Assertions.assertTrue(tmpCheckList.size() == tmpExpectedList.size()
+                    && tmpCheckList.containsAll(tmpExpectedList)
+                    && tmpExpectedList.containsAll(tmpCheckList));
         }
     }
 

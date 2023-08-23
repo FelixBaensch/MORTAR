@@ -51,6 +51,7 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -135,6 +136,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Internal Array to store and access bonds for mapping.
      */
     private IBond[] bondArray;
+    //test purposes
+    //private double fragmentationStart;
+    //private double fragmentationEnd;
+
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -336,6 +341,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         //
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
+        //this.fragmentationStart = System.nanoTime();
         IAtomContainer tmpClone = aMolecule.clone();
         this.clearCache();
         this.atomArray = new IAtom[tmpClone.getAtomCount()];
@@ -537,6 +543,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
             }
+
+            //this.fragmentationEnd = System.nanoTime();
+            //System.out.println(this.fragmentationEnd - this.fragmentationStart);
+
             return tmpSaturatedFragments;
         } catch (CDKException anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
@@ -615,31 +625,32 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         if (!tmpSingleACSet.isEmpty() && tmpSingleACSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpSingleACSet);
         }
-        //remnants after ring, conj. system and tertiary/quartenary carbon extractions
+        //remnants after ring, conj. system and tertiary/quaternary carbon extractions
         //expected to be only linear carbohydrates
         IAtomContainerSet tmpChainACSet = this.checkConnectivity(tmpChainFragmentationContainer);
         //ACSet for dissected chains
         IAtomContainerSet tmpDissectedChainACSet = new AtomContainerSet();
         int tmpMaxChainLengthInteger = this.getMaxChainLengthSetting();
         switch (tmpMaxChainLengthInteger) {
-            default:
-                for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
-                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer, tmpMaxChainLengthInteger)));
+            default -> {
+                //restrictions > 1
+                for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
+                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer,
+                            tmpMaxChainLengthInteger)));
                 }
-                break;
-            case 0:
+            }
+            case 0 ->
                 //no restrictions applied
-                tmpDissectedChainACSet.add(tmpChainACSet);
-                break;
-            case 1:
+                    tmpDissectedChainACSet.add(tmpChainACSet);
+            case 1 -> {
                 //single methane molecules
                 IAtomContainer tmpDissectedAC = new AtomContainer();
-                for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
+                for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
                     tmpAtomContainer.removeAllBonds();
                     tmpDissectedAC.add(tmpAtomContainer);
                 }
                 tmpDissectedChainACSet.add(this.checkConnectivity(tmpDissectedAC));
-                break;
+            }
                 /* model case:
             case 2:
                 for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
@@ -675,15 +686,23 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainer tmpReturnAC = new AtomContainer();
         //starts at 1 for usability, see aLength: 1on1 translation of input to counter
         int tmpCounter = 1;
-        for (IBond tmpBond : anAC.bonds()) {
+        Iterator<IBond> tmpBondIterator = anAC.bonds().iterator();
+        while (tmpBondIterator.hasNext()) {
+            IBond tmpBond = tmpBondIterator.next();
             if (tmpCounter == aLength) {
+                if (!tmpBondIterator.hasNext()) {
+                    tmpReturnAC.addAtom(tmpBond.getEnd());
+                }
                 tmpCounter = 1;
             } else {
-                tmpReturnAC.addAtom(tmpBond.getBegin());
-                tmpReturnAC.addAtom(tmpBond.getEnd());
+                IAtom tmpBeginAtom = tmpBond.getBegin();
+                IAtom tmpEndAtom = tmpBond.getEnd();
+                tmpReturnAC.addAtom(tmpBeginAtom);
+                tmpReturnAC.addAtom(tmpEndAtom);
                 tmpReturnAC.addBond(tmpBond);
                 tmpCounter++;
             }
+
         }
         return tmpReturnAC;
     }
