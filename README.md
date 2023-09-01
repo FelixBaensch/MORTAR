@@ -4,9 +4,14 @@
 [![GitHub issues](https://img.shields.io/github/issues/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/issues/)
 [![GitHub contributors](https://img.shields.io/github/contributors/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/graphs/contributors/)
 [![GitHub release](https://img.shields.io/github/release/FelixBaensch/MORTAR.svg)](https://github.com/FelixBaensch/MORTAR/releases/)
+[![build](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml/badge.svg)](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FelixBaensch_MORTAR&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FelixBaensch_MORTAR)
 
 ![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_cut.png)
 # MOlecule fRagmenTAtion fRamework (MORTAR)
+
+<br>[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/overall?id=FelixBaensch_MORTAR)
+
 
 ## Contents of this document
 * [Description](#Description)
