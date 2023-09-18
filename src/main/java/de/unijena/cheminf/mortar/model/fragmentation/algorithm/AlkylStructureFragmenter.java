@@ -702,7 +702,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpReturnAC.addBond(tmpBond);
                 tmpCounter++;
             }
-
         }
         return tmpReturnAC;
     }
