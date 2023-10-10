@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;

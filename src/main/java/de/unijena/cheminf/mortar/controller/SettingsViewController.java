@@ -25,6 +25,7 @@ import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;

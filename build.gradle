@@ -3,6 +3,7 @@ import java.util.regex.Matcher
 plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'com.diffplug.spotless' version '6.19.0'
 }
 
 group 'de.unijena.cheminf'
@@ -161,6 +162,37 @@ distributions {
             from 'AdoptOpenJDK'
             into('tutorial'){
                 from 'Tutorial'
+            }
+        }
+    }
+}
+
+spotless {
+    java {
+        target fileTree('.') {
+            include '**/*.java'
+            //exclude all classes that were just copied into this project
+            exclude '**/deglycosylation/**', '**/scaffoldGenerator/**', '**/cdk/**'
+        }
+        toggleOffOn() //all code in between spotless:off / spotless:on will be ignored
+        licenseHeaderFile('License-header/License-header.txt')
+        encoding 'UTF-8'
+        cleanthat()
+        importOrder('com', 'de', 'javafx', 'org', 'javax', 'java')
+        removeUnusedImports()
+        indentWithSpaces(4) // doesn't really seem to work...
+        trimTrailingWhitespace()
+        endWithNewline()
+        //eclipse() //not optimal, because indents with tabs..
+        //googleJavaFormat() //not optimal, because indents with two spaces...
+        //palantirJavaFormat() //not optimal, because unnecessary line breaks in head of for loop and corrupts editor folds
+        //prettier() //needs npm installed, unsuitable...
+        //clangFormat() //also needs an installation...
+        custom 'Refuse wildcard imports', {
+            // Wildcard imports can't be resolved by spotless itself.
+            // This will require the developer themselves to adhere to best practices.
+            if (it =~ /\nimport .*\*;/) {
+                throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.")
             }
         }
     }

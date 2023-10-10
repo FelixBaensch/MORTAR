@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+
 import javafx.scene.control.Alert;
 
 import java.io.File;
@@ -36,10 +37,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-import java.util.logging.LogManager;
 import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 /**

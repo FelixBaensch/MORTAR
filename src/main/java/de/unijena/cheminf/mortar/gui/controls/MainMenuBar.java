@@ -22,6 +22,7 @@ package de.unijena.cheminf.mortar.gui.controls;
 
 import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.message.Message;
+
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
