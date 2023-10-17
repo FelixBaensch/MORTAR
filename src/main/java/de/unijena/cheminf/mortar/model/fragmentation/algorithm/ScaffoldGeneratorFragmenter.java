@@ -1048,7 +1048,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             /*Generate Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.name()) ||
                     this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDECHAINS.name())) {
-                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())? true : false;
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
                 tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 /*Add SideChain Property*/
                 for(IAtomContainer tmpSideChain : tmpSideChainList) {
@@ -1100,7 +1100,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
             /*Generate the scaffold only*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCAFFOLD_ONLY.name())) {
-                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())? true : false;
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
                 IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 //Set Scaffold Property
                 tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
@@ -1108,7 +1108,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 tmpReturnList.add(tmpScaffold);
             }
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.RING_DISSECTION.name())) {
-                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())? true : false;
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
                 IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                         ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
