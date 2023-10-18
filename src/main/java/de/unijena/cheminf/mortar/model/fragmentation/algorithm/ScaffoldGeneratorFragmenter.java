@@ -25,7 +25,6 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
-import de.unijena.cheminf.scaffoldGenerator.ScaffoldGenerator;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -37,6 +36,7 @@ import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.scaffold.ScaffoldGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +47,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Wrapper class that makes the <a href="https://github.com/Julian-Z98/ScaffoldGenerator">ScaffoldGenerator</a>
+ * Wrapper class that makes the <a href="https://github.com/cdk/cdk-scaffold">CDK Scaffold module</a> functionality
  * available in MORTAR.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
@@ -193,7 +193,12 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         /**
          * {@link ScaffoldGenerator#getScaffold(IAtomContainer, boolean)} is used.
          */
-        SCAFFOLD_ONLY;
+        SCAFFOLD_ONLY,
+
+        /**
+         * {@link ScaffoldGenerator#getRings(IAtomContainer, boolean)} is used.
+         */
+        RING_DISSECTION;
     }
     //</editor-fold>
     //
@@ -1043,12 +1048,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             /*Generate Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.name()) ||
                     this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDECHAINS.name())) {
-                /*Sidechains without saturation*/
-                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION.name())) {
-                    tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, false);
-                } else { /*Sidechains with saturation*/
-                    tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, true);
-                }
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+                tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 /*Add SideChain Property*/
                 for(IAtomContainer tmpSideChain : tmpSideChainList) {
                     tmpSideChain.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
@@ -1099,19 +1100,24 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
             /*Generate the scaffold only*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCAFFOLD_ONLY.name())) {
-                /*Scaffold without saturation*/
-                if(this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION.name())) {
-                    IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, false);
-                    //Set Scaffold Property
-                    tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
-                    tmpReturnList.add(tmpScaffold);
-                } else { /*Scaffold with saturation*/
-                    IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, true);
-                    //Set Scaffold Property
-                    tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
-                    tmpReturnList.add(tmpScaffold);
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+                IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
+                //Set Scaffold Property
+                tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                tmpReturnList.add(tmpScaffold);
+            }
+            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.RING_DISSECTION.name())) {
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+                IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
+                tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                tmpReturnList.add(tmpScaffold);
+                List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.getRings(tmpMoleculeClone, tmpSaturateWithHydrogen);
+                for(IAtomContainer tmpFragment : tmpFragmentList) {
+                    tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_PARENT_SCAFFOLD_VALUE);
+                    tmpReturnList.add(tmpFragment);
                 }
             }
         } catch (Exception anException) {
