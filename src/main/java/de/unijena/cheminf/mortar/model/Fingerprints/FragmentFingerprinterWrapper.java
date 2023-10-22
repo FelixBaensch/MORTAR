@@ -61,6 +61,16 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
          */
         COUNT_FINGERPRINTS;
     }
+    public static enum FrequencyType {
+        /**
+         * Fragment frequency
+         */
+        FRAGMENT_FREQUENCY,
+        /**
+         * Molecule frequency
+         */
+        MOLECULE_FREQUENCY;
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public static final constants">
@@ -69,9 +79,13 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
      */
     public static final String FINGERPRINTER_NAME = "Fragment Fingerprinter";
     /**
-     * Default fingerprint typ
+     * Default fingerprint type
      */
     public static final FingerprintTyp COUNT_FINGERPRINTS_DEFAULT = FingerprintTyp.COUNT_FINGERPRINTS;
+    /**
+     * Default frequency type
+     */
+    public static final FrequencyType FREQUENCY_TYPE_DEFAULT = FrequencyType.FRAGMENT_FREQUENCY;
     /**
      * Default fingerprint frequency threshold value
      */
@@ -91,9 +105,13 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
     //
     //<editor-fold desc="Private final class variables">
     /**
-     * A property that has a constant name from FingerprinterTyp enum as value
+     * A property that has a constant name from FingerprinterType enum as value
      */
-    private final SimpleEnumConstantNameProperty fingerprintTyp;
+    private final SimpleEnumConstantNameProperty fingerprintType;
+    /**
+     * A property that has a constant name from frequenyType enum as value
+     */
+    private final SimpleEnumConstantNameProperty frequencyType;
     /**
      * Property wrapping the 'Fragment fingerprinter dimensionality' setting of the fragment fingerprinter
      */
@@ -121,22 +139,31 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public FragmentFingerprinterWrapper() {
-        int tmpNumberOfSettings = 3;
+        int tmpNumberOfSettings = 4;
         this.settings = new ArrayList<>(tmpNumberOfSettings);
         int tmpInitialCapacityForSettingNameToolTipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameToolTipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.fingerprintTyp = new SimpleEnumConstantNameProperty(this, "Fragment Fingerprint Typ",
+        this.fingerprintType = new SimpleEnumConstantNameProperty(this, "Fragment fingerprint type",
                 FragmentFingerprinterWrapper.COUNT_FINGERPRINTS_DEFAULT.name(), FragmentFingerprinterWrapper.FingerprintTyp.class) {
             @Override
             public void set(String newValue) {
                 super.set(newValue);
             }
         };
-        this.settings.add(this.fingerprintTyp);
-        this.settingNameTooltipTextMap.put(this.fingerprintTyp.getName(), Message.get("FragmentFingerprinterWrapper.fingerprintTyp.tooltip"));
-        this.fingerprintDimensionality = new SimpleIntegerProperty(this, "Fragment Fingerprint Dimensionality") {
+        this.settings.add(this.fingerprintType);
+        this.settingNameTooltipTextMap.put(this.fingerprintType.getName(), Message.get("FragmentFingerprinterWrapper.fingerprintTyp.tooltip"));
+        this.frequencyType = new SimpleEnumConstantNameProperty(this, "Frequency type",
+                FragmentFingerprinterWrapper.FREQUENCY_TYPE_DEFAULT.name(), FragmentFingerprinterWrapper.FrequencyType.class) {
+            @Override
+            public void set(String newValue) {
+                super.set(newValue);
+            }
+        };
+        this.settings.add(this.frequencyType);
+        this.settingNameTooltipTextMap.put(this.frequencyType.getName(), Message.get("FragmentFingerprinterWrapper.fingerprintFrequencyType.toolip"));
+        this.fingerprintDimensionality = new SimpleIntegerProperty(this, "Fragment fingerprint dimensionality") {
             @Override
             public void set(int newValue) throws IllegalArgumentException {
                 if(FragmentFingerprinterWrapper.this.isLegalFingerprintDimensionality(newValue)) {
@@ -155,7 +182,7 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
         };
         this.settings.add(this.fingerprintDimensionality);
         this.settingNameTooltipTextMap.put(this.fingerprintDimensionality.getName(), Message.get("FragmentFingerprinterWrapper.fingerprintDimensionality.tooltip"));
-        this.fingerprintFrequencyThreshold = new SimpleIntegerProperty(this, "Fragment Fingerprint Frequency Threshold", this.DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD){
+        this.fingerprintFrequencyThreshold = new SimpleIntegerProperty(this, "Fragment fingerprint frequency threshold", this.DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD){
             @Override
             public void set(int newValue) throws IllegalArgumentException {
                 if(FragmentFingerprinterWrapper.this.isLegalFingerprintFrequencyThreshold(newValue)) {
@@ -179,12 +206,21 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
     //
     //<editor-fold desc="Public properties get">
     /**
-     * Returns the string representation of the currently set option for the fingerprint typ
+     * Returns the string representation of the currently set option for the fingerprint type
      *
      * @return enum constant name of the set option
      */
-    public String getFingerprintTyp() {
-        return this.fingerprintTyp.get();
+    public String getFingerprintType() {
+        return this.fingerprintType.get();
+    }
+
+    /**
+     * Returns the string representation of the currently set option for the frequency type
+     *
+     * @return enum constant name of the set option 
+     */
+    public String getFrequencyType() {
+        return this.frequencyType.get();
     }
     //
     /**
@@ -247,7 +283,7 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
      */
     @Override
     public void restoreDefaultSettings(int aDefaultFingerprintDimensionalityValue) {
-        this.fingerprintTyp.set(FingerprintTyp.COUNT_FINGERPRINTS.name());
+        this.fingerprintType.set(FingerprintTyp.COUNT_FINGERPRINTS.name());
         this.fingerprintDimensionality.set(aDefaultFingerprintDimensionalityValue);
         this.fingerprintFrequencyThreshold.set(this.DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD);
     }
@@ -262,7 +298,7 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
      * @param aFragmentationName name of the fragmentation algorithm
      * @return int matrix containing all generated fragment fingerprints
      */
-    public int[][] getFragmentFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
+    public int[][] getFragmentFingerprintsToCluster(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
         int tmpMaximumFingerprintDimensionalityValue = this.getFingerprintDimensionality();
         String tmpSortProperty = "absoluteFrequency";
         if(tmpMaximumFingerprintDimensionalityValue > aFragmentDataModelList.size()) {
@@ -298,14 +334,14 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
                 }
                 List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
                 for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
-                    if (this.getFingerprintTyp().equals(FragmentFingerprinterWrapper.FingerprintTyp.BIT_FINGERPRINTS.name())) {
+                    if (this.getFingerprintType().equals(FragmentFingerprinterWrapper.FingerprintTyp.BIT_FINGERPRINTS.name())) {
                         tmpMoleculeFragmentsToGenerateBitFingerprints.add(tmpFragmentDataModel.getUniqueSmiles());
                     } else {
                         tmpFragmentSmilesToFrequencyMapToGenerateCountFingerprints.put(tmpFragmentDataModel.getUniqueSmiles(),
                                 tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()));
                     }
                 }
-                if (this.getFingerprintTyp().equals(FragmentFingerprinterWrapper.FingerprintTyp.BIT_FINGERPRINTS.name())) {
+                if (this.getFingerprintType().equals(FragmentFingerprinterWrapper.FingerprintTyp.BIT_FINGERPRINTS.name())) {
                     tmpFragmentFingerprinter.getBitFingerprint(tmpMoleculeFragmentsToGenerateBitFingerprints);
                     tmpDataMatrix[tmpIterator] = tmpFragmentFingerprinter.getBitArray(tmpMoleculeFragmentsToGenerateBitFingerprints);
                 } else {

@@ -150,7 +150,7 @@ public class FingerprinterService {
      */
     public int[][] getFingerprints(List<MoleculeDataModel> aMoleculeDataModelList, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName) {
         if(this.selectedFingerprinter.getFingerprinterName().equals(this.FRAGMENT_FINGERPRINTER_NAME)) {
-            return this.fragmentFingerprinterWrapper.getFragmentFingerprints(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName);
+            return this.fragmentFingerprinterWrapper.getFragmentFingerprintsToCluster(aMoleculeDataModelList, aFragmentDataModelList, aFragmentationName);
         } else {
             return null;
         }
@@ -311,7 +311,7 @@ public class FingerprinterService {
      * @return typ name of the fingerprints (count or bit)
      */
     public String getFingerprintTypEnumName() {
-        return this.fragmentFingerprinterWrapper.getFingerprintTyp();
+        return this.fragmentFingerprinterWrapper.getFingerprintType();
     }
     //
     /**
