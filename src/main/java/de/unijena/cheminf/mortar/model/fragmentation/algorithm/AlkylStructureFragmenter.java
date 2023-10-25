@@ -20,6 +20,15 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+//<editor-fold desc="Future Development">
+/*
+TODO: 31.07.2023 -future settings -> complex enums to attach values to dropdown
+                    -preserveRingSystemMaxSetting restrictions (smaller 0 nonsense)
+                    -pseudo atom handling (*-atoms)
+                    -for future fragmentation: properties for single rings, ring systems and conjugated pi systems
+*/
+//</editor-fold>
+
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
@@ -61,12 +70,6 @@ import java.util.logging.Logger;
 /**
  * Java class implementing an algorithm for detection and fragmentation of alkyl
  * structures in MORTAR using the CDK.
- * <p>
- * TODO: 31.07.2023 -future settings -> complex enums to attach values to dropdown
- *                  -preserveRingSystemMaxSetting restrictions (smaller 0 nonsense)
- *                  -pseudo atom handling (*-atoms)
- *                  -for future fragmentation: properties for single rings, ring systems and conjugated pi systems
- * </p>
  *
  * @author Maximilian Rottmann (maximilian.rottmann@studmail.w-hs.de)
  * @version 1.1.1.0
@@ -376,7 +379,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.markConjugatedPiSystems(tmpClone);
         //<editor-fold desc="Fragment Extraction" defaultstate="collapsed">
         try {
-            IAtomContainerSet tmpFragmentSet = this.extractMolecules();
+            IAtomContainerSet tmpFragmentSet = this.extractFragments();
             //
             //<editor-fold desc="Post-Extraction Processing">
             try {
@@ -408,7 +411,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @param anAtomContainer IAtomContainer to mark atoms and bonds in
      */
-    private void markRings(IAtomContainer anAtomContainer) {
+    private void markRings(IAtomContainer anAtomContainer) throws IllegalArgumentException {
         //
         //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
         try {
@@ -464,7 +467,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @param anAtomContainer IAtomContainer to mark atoms and bonds in
      */
-    private void markConjugatedPiSystems(IAtomContainer anAtomContainer) {
+    private void markConjugatedPiSystems(IAtomContainer anAtomContainer) throws IllegalArgumentException{
         //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet;
@@ -496,7 +499,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param anAtomContainer IAtomContainer to check
      * @return IAtomContainerSet containing partitioned structures as single IAtomContainer
      */
-    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer) {
+    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer) throws IllegalArgumentException{
         Objects.requireNonNull(anAtomContainer,"Given IAtomContainer is null.");
         try {
             IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
@@ -543,10 +546,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
             }
-
-            //this.fragmentationEnd = System.nanoTime();
-            //System.out.println(this.fragmentationEnd - this.fragmentationStart);
-
             return tmpSaturatedFragments;
         } catch (CDKException anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
@@ -561,7 +560,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @return IAtomContainerSet with extracted molecules
      */
-    private IAtomContainerSet extractMolecules() throws CloneNotSupportedException {
+    private IAtomContainerSet extractFragments() throws CloneNotSupportedException {
         //
         //<editor-fold desc="Extraction">
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
@@ -651,14 +650,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
                 tmpDissectedChainACSet.add(this.checkConnectivity(tmpDissectedAC));
             }
-                /* model case:
-            case 2:
-                for (IAtomContainer tmpAtomContainer: tmpChainACSet.atomContainers()) {
-                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer, 2)));
-                }
-                break;
-                */
-
         }
         if (!tmpDissectedChainACSet.isEmpty() && tmpDissectedChainACSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpDissectedChainACSet);
