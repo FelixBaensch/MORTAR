@@ -284,6 +284,7 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
     @Override
     public void restoreDefaultSettings(int aDefaultFingerprintDimensionalityValue) {
         this.fingerprintType.set(FingerprintTyp.COUNT_FINGERPRINTS.name());
+        this.frequencyType.set(FrequencyType.FRAGMENT_FREQUENCY.name());
         this.fingerprintDimensionality.set(aDefaultFingerprintDimensionalityValue);
         this.fingerprintFrequencyThreshold.set(this.DEFAULT_FINGERPRINT_FREQUENCY_THRESHOLD);
     }
@@ -433,7 +434,7 @@ public class FragmentFingerprinterWrapper implements IMortarFingerprinter {
      * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalFingerprintDimensionality(int anInteger) {
-        return !(anInteger < 0);
+        return !(anInteger < 0); // TODO
     }
     //
     /**
