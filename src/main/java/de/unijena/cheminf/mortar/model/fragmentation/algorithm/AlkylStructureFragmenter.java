@@ -22,10 +22,11 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 //<editor-fold desc="Future Development">
 /*
-TODO: 31.07.2023 -future settings -> complex enums to attach values to dropdown
-                    -preserveRingSystemMaxSetting restrictions (smaller 0 nonsense)
-                    -pseudo atom handling (*-atoms)
-                    -for future fragmentation: properties for single rings, ring systems and conjugated pi systems
+TODO: 26.10.2023
+    -preserveRingSystemMaxSetting restrictions (smaller 0 nonsense)
+    -complete pseudo atom handling (*-atoms)
+    -for future fragmentation: properties for single rings, ring systems and conjugated pi systems
+    -some dbs may be definable as tertiary/quaternary carbons in some configurations (atom & bond handling!)
 */
 //</editor-fold>
 
@@ -139,10 +140,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Internal Array to store and access bonds for mapping.
      */
     private IBond[] bondArray;
-    //test purposes
-    //private double fragmentationStart;
-    //private double fragmentationEnd;
-
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -243,8 +240,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @param aValue the given integer value for chain length
      */
-    public void setMaxChainLengthSetting(int aValue) throws NullPointerException {
-        Objects.requireNonNull(aValue, "Given chain length is null");
+    public void setMaxChainLengthSetting(int aValue) throws IllegalArgumentException{
+        if (aValue < 0) {
+            throw new IllegalArgumentException("Given chain length cannot be negative.");
+        }
         this.maxChainLengthSetting.set(aValue);
     }
 
@@ -268,8 +267,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //<editor-fold desc="Pre-Fragmentation Tasks">
     /**
      * Returns true if the given molecule cannot be fragmented by the algorithm.
-     * If the molecule is null: true is returned, no exception thrown and fragmentation is skipped for the given molecule.
-     *
+     * If the molecule is null: true is returned and therefore the molecule is filtered out.
      * <p>
      *     Checks the given IAtomContainer aMolecule for non-carbon and non-hydrogen atoms and returns true if
      *     non-conforming atoms are found, otherwise false is returned and the molecule can be fragmented.
@@ -283,19 +281,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
-        boolean tmpShouldBeFiltered = true;
         try {
             for (IAtom tmpAtom : aMolecule.atoms()) {
                 if (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C) {
                     return true;
-                } else {
-                    tmpShouldBeFiltered = false;
                 }
             }
-            return tmpShouldBeFiltered;
+            return false;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + " Molecule ID: " + aMolecule.getID());
+                    anException + " Molecule ID: " + aMolecule.getID(), anException);
             return true;
         }
     }
@@ -346,6 +341,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         //this.fragmentationStart = System.nanoTime();
         IAtomContainer tmpClone = aMolecule.clone();
+        try {
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
+        } catch (CDKException aCDKEception) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING,
+                    aCDKEception + " Molecule ID: " + aMolecule.getID(), aCDKEception);
+            throw new IllegalArgumentException();
+        }
         this.clearCache();
         this.atomArray = new IAtom[tmpClone.getAtomCount()];
         this.bondArray = new IBond[tmpClone.getBondCount()];
@@ -363,7 +365,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, true);
                 }
                 this.atomArray[tmpAlkylSFAtomIndex] = tmpAtom;
-                tmpAlkylSFAtomIndex ++;
+                tmpAlkylSFAtomIndex++;
             }
         }
         for (IBond tmpBond: tmpClone.bonds()) {
@@ -371,30 +373,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndex);
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
                 this.bondArray[tmpAlkylSFBondIndex] = tmpBond;
-                tmpAlkylSFBondIndex ++;
+                tmpAlkylSFBondIndex++;
             }
         }
         //</editor-fold>
         this.markRings(tmpClone);
         this.markConjugatedPiSystems(tmpClone);
-        //<editor-fold desc="Fragment Extraction" defaultstate="collapsed">
+        //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
             IAtomContainerSet tmpFragmentSet = this.extractFragments();
-            //
-            //<editor-fold desc="Post-Extraction Processing">
-            try {
-                return this.saturateWithImplicitHydrogen(tmpFragmentSet);
-            } catch (CDKException anException) {
-                AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                        anException + "saturation failed at molecule: " + tmpClone.getID(), anException);
-                throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                        + tmpClone.getID() + ", at fragment saturation: " + anException.toString());
-            }
-            //</editor-fold>
-            //
+            return this.saturateWithImplicitHydrogen(tmpFragmentSet);
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + "extraction failed at molecule: " + tmpClone.getID(), anException);
+                    anException + "extraction or saturation failed at molecule: " + tmpClone.getID(), anException);
             throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
                     + tmpClone.getID() + ", at fragment extraction: " + anException.toString());
         }
@@ -549,7 +540,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return tmpSaturatedFragments;
         } catch (CDKException anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException
-                + " Unable to add Implicit Hydrogen");
+                + " Unable to add Implicit Hydrogen", anException);
             throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
                 "hydrogen saturation of molecule, " + anException.toString(), anException);
         }

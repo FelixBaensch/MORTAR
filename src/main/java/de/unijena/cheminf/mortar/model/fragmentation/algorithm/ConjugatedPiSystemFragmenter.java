@@ -89,6 +89,8 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
      * The logger responsible for this fragmenter.
      */
     private static final Logger logger = Logger.getLogger(ConjugatedPiSystemFragmenter.class.getName());
+    private IAtom[] atomArray;
+    private IBond[] bondArray;
     //</editor-fold>
     //
     //<editor-fold desc="Class Constructor">
@@ -186,21 +188,22 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
 
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set">
         IAtomContainer tmpClone = aMolecule.clone();
-        IAtom[] tmpAtomArray = new IAtom[tmpClone.getAtomCount()];
-        IBond[] tmpBondArray = new IBond[tmpClone.getBondCount()];
+        this.clearCache();
+        this.atomArray = new IAtom[tmpClone.getAtomCount()];
+        this.bondArray = new IBond[tmpClone.getBondCount()];
         int tmpCPSFAtomIndex = 0;
         int tmpCPSFBondIndex = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
             if (tmpAtom != null) {
                 tmpAtom.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY, tmpCPSFAtomIndex);
-                tmpAtomArray[tmpCPSFAtomIndex] = tmpAtom;
+                atomArray[tmpCPSFAtomIndex] = tmpAtom;
                 tmpCPSFAtomIndex++;
             }
         }
         for (IBond tmpBond: tmpClone.bonds()) {
             if (tmpBond != null) {
                 tmpBond.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY, tmpCPSFBondIndex);
-                tmpBondArray[tmpCPSFBondIndex] = tmpBond;
+                bondArray[tmpCPSFBondIndex] = tmpBond;
                 tmpCPSFBondIndex++;
             }
         }
@@ -214,11 +217,11 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
             for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
                 for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
                     int tmpAtomInteger = tmpConjAtom.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY);
-                    tmpFragments.addAtom(tmpAtomArray[tmpAtomInteger]);
+                    tmpFragments.addAtom(atomArray[tmpAtomInteger]);
                 }
                 for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
                     int tmpBondInteger = tmpConjBond.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY);
-                    tmpFragments.addBond(tmpBondArray[tmpBondInteger]);
+                    tmpFragments.addBond(bondArray[tmpBondInteger]);
                 }
             }
         } catch (Exception anException) {
@@ -323,5 +326,9 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         return aMolecule;
     }
     //</editor-fold>
+    private void clearCache(){
+        this.atomArray = null;
+        this.bondArray = null;
+    }
     //
 }
