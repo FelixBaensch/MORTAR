@@ -20,7 +20,7 @@
 
 package de.unijena.cheminf.mortar.model.Fingerprints;
 
-import de.unijena.cheminf.fragmentFingerprinter.FragmentFingerprinter;
+import de.unijena.cheminf.fragment.fingerprint.FragmentFingerprinter;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
