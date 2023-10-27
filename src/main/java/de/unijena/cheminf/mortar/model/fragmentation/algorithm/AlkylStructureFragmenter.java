@@ -209,6 +209,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return this.maxChainLengthSetting.get();
     }
 
+    /**
+     * Public get method for maximum chain length setting property.
+     *
+     * @return SimpleIntegerProperty maxChainLengthSetting
+     */
+    public SimpleIntegerProperty getMaxChainLengthSettingProperty() {
+        return this.maxChainLengthSetting;
+    }
+
     @Override
     public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
@@ -339,13 +348,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         //
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
-        //this.fragmentationStart = System.nanoTime();
         IAtomContainer tmpClone = aMolecule.clone();
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
-        } catch (CDKException aCDKEception) {
+        } catch (CDKException aCDKException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    aCDKEception + " Molecule ID: " + aMolecule.getID(), aCDKEception);
+                    aCDKException + " Molecule ID: " + aMolecule.getID(), aCDKException);
             throw new IllegalArgumentException();
         }
         this.clearCache();
@@ -377,12 +385,22 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         }
         //</editor-fold>
+        //
+        //<editor-fold desc="Detection Steps" defaultstate="collapsed">
         this.markRings(tmpClone);
         this.markConjugatedPiSystems(tmpClone);
+        //</editor-fold>
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
             IAtomContainerSet tmpFragmentSet = this.extractFragments();
-            return this.saturateWithImplicitHydrogen(tmpFragmentSet);
+            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                return this.saturateWithImplicitHydrogen(tmpFragmentSet);
+            }
+            ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
+            for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
+                tmpFragmentList.add(tmpAtomContainer);
+            }
+            return tmpFragmentList;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + "extraction or saturation failed at molecule: " + tmpClone.getID(), anException);
@@ -528,12 +546,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 for (IAtomContainer tmpAtomContainer: anUnsaturatedACSet.atomContainers()) {
                     if (tmpAtomContainer != null && !tmpAtomContainer.isEmpty()) {
                         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
-                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
-                            tmpAdder.addImplicitHydrogens(tmpAtomContainer);
-                            tmpSaturatedFragments.add(tmpAtomContainer);
-                        } else {
-                            tmpSaturatedFragments.add(tmpAtomContainer);
-                        }
+                        tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                        tmpSaturatedFragments.add(tmpAtomContainer);
                     }
                 }
             }

@@ -196,14 +196,14 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         for (IAtom tmpAtom: tmpClone.atoms()) {
             if (tmpAtom != null) {
                 tmpAtom.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY, tmpCPSFAtomIndex);
-                atomArray[tmpCPSFAtomIndex] = tmpAtom;
+                this.atomArray[tmpCPSFAtomIndex] = tmpAtom;
                 tmpCPSFAtomIndex++;
             }
         }
         for (IBond tmpBond: tmpClone.bonds()) {
             if (tmpBond != null) {
                 tmpBond.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY, tmpCPSFBondIndex);
-                bondArray[tmpCPSFBondIndex] = tmpBond;
+                this.bondArray[tmpCPSFBondIndex] = tmpBond;
                 tmpCPSFBondIndex++;
             }
         }
@@ -217,11 +217,11 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
             for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
                 for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
                     int tmpAtomInteger = tmpConjAtom.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY);
-                    tmpFragments.addAtom(atomArray[tmpAtomInteger]);
+                    tmpFragments.addAtom(this.atomArray[tmpAtomInteger]);
                 }
                 for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
                     int tmpBondInteger = tmpConjBond.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY);
-                    tmpFragments.addBond(bondArray[tmpBondInteger]);
+                    tmpFragments.addBond(this.bondArray[tmpBondInteger]);
                 }
             }
         } catch (Exception anException) {
@@ -262,16 +262,14 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
                     if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
                         try {
                             tmpAdder.addImplicitHydrogens(tmpAtomContainer);
-                            tmpProcessedFragments.add(tmpAtomContainer);
                         } catch (CDKException anException) {
                             ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException
                                     + " Unable to add Implicit Hydrogen at MoleculeID: " + tmpClone.getID());
                             throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
                                     "hydrogen saturation of molecule: " + tmpClone.getID() + ", " + anException.toString(), anException);
                         }
-                    } else {
-                        tmpProcessedFragments.add(tmpAtomContainer);
                     }
+                    tmpProcessedFragments.add(tmpAtomContainer);
                 }
             }
         } catch (Exception anException) {
