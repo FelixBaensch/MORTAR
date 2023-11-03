@@ -71,6 +71,7 @@ public class AlkylStructureFragmenterTest {
         List<String> tmpCheckList = new ArrayList<>();
         List<String> tmpExpectList = new ArrayList<>();
         tmpExpectList.add("Fragment saturation setting");
+        tmpExpectList.add("Restrict length of hydrocarbon side chains setting");
         tmpExpectList.add("Carbon side chains maximum length setting");
         for (Property tmpSetting: tmpFragmenter.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());

@@ -38,6 +38,7 @@ import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
 import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
 import org.openscience.cdk.AtomContainer;
@@ -86,6 +87,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default value for maximum length of carbon side chains.
      */
     public static final int MAX_CHAIN_LENGTH_SETTING_DEFAULT = 0;
+    /**
+     * Default boolean value for restriction of further side chain dissection.
+     */
+    public static final boolean RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT = false;
     //<editor-fold desc="Property Keys">
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
@@ -117,6 +122,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
     /**
+     * A property that has a constant boolean value determining whether fragment size should be restricted.
+     */
+    private final SimpleBooleanProperty restrictMaxChainLengthSetting;
+    /**
      * A Property that has a constant carbon side chain setting.
      */
     private final SimpleIntegerProperty maxChainLengthSetting;
@@ -147,7 +156,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        int tmpSettingsNameTooltipNumber = 2;
+        int tmpSettingsNameTooltipNumber = 3;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNameTooltipNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -169,12 +178,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         };
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
+        this.restrictMaxChainLengthSetting = new SimpleBooleanProperty(this, "Restrict length of hydrocarbon side chains setting",
+                AlkylStructureFragmenter.RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.restrictMaxChainLengthSetting.getName(),
+                Message.get("AlkylStructureFragmenter.restrictMaxChainLengthSetting.tooltip"));
         this.maxChainLengthSetting = new SimpleIntegerProperty(this, "Carbon side chains maximum length setting",
                 AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
-        this.settings = new ArrayList<Property>(2);
+        this.settings = new ArrayList<Property>(3);
         this.settings.add(this.fragmentSaturationSetting);
+        this.settings.add(this.restrictMaxChainLengthSetting);
         this.settings.add(this.maxChainLengthSetting);
     }
     //</editor-fold>
@@ -245,9 +259,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
+     *
+     * @param aBoolean
+     * @throws NullPointerException
+     */
+    public void setRestrictMaxChainLengthSetting(boolean aBoolean) throws NullPointerException{
+        Objects.requireNonNull(aBoolean, "Given boolean is null.");
+        this.restrictMaxChainLengthSetting.set(aBoolean);
+    }
+    /**
      * Set method for setting defining maximum side chain length.
      *
      * @param aValue the given integer value for chain length
+     * @throws IllegalArgumentException
      */
     public void setMaxChainLengthSetting(int aValue) throws IllegalArgumentException{
         if (aValue < 0) {
@@ -263,6 +287,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public IMoleculeFragmenter copy() {
         AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
+        tmpCopy.setRestrictMaxChainLengthSetting(this.restrictMaxChainLengthSetting.get());
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
         return tmpCopy;
     }
@@ -270,6 +295,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.restrictMaxChainLengthSetting.set(AlkylStructureFragmenter.RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
     }
     //
@@ -508,7 +534,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param anAtomContainer IAtomContainer to check
      * @return IAtomContainerSet containing partitioned structures as single IAtomContainer
      */
-    private IAtomContainerSet checkConnectivity(IAtomContainer anAtomContainer) throws IllegalArgumentException{
+    private IAtomContainerSet separateDisconnectedStructures(IAtomContainer anAtomContainer) throws IllegalArgumentException{
         Objects.requireNonNull(anAtomContainer,"Given IAtomContainer is null.");
         try {
             IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
@@ -565,7 +591,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @return IAtomContainerSet with extracted molecules
      */
-    private IAtomContainerSet extractFragments() throws CloneNotSupportedException {
+    private IAtomContainerSet extractFragments() throws CloneNotSupportedException, IllegalArgumentException {
         //
         //<editor-fold desc="Extraction">
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
@@ -621,8 +647,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //</editor-fold>
         //
-        IAtomContainerSet tmpRingACSet = this.checkConnectivity(tmpRingFragmentationContainer);
-        IAtomContainerSet tmpSingleACSet = this.checkConnectivity(tmpSingleCarbonContainer);
+        IAtomContainerSet tmpRingACSet = this.separateDisconnectedStructures(tmpRingFragmentationContainer);
+        IAtomContainerSet tmpSingleACSet = this.separateDisconnectedStructures(tmpSingleCarbonContainer);
         if (!tmpRingACSet.isEmpty() && tmpRingACSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpRingACSet);
         }
@@ -631,30 +657,37 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //remnants after ring, conj. system and tertiary/quaternary carbon extractions
         //expected to be only linear carbohydrates
-        IAtomContainerSet tmpChainACSet = this.checkConnectivity(tmpChainFragmentationContainer);
+        IAtomContainerSet tmpChainACSet = this.separateDisconnectedStructures(tmpChainFragmentationContainer);
         //ACSet for dissected chains
         IAtomContainerSet tmpDissectedChainACSet = new AtomContainerSet();
         int tmpMaxChainLengthInteger = this.getMaxChainLengthSetting();
-        switch (tmpMaxChainLengthInteger) {
-            default -> {
-                //restrictions > 1
-                for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
-                    tmpDissectedChainACSet.add(this.checkConnectivity(this.dissectLinearChain(tmpAtomContainer,
-                            tmpMaxChainLengthInteger)));
+        if (this.restrictMaxChainLengthSetting.get()) {
+            switch (tmpMaxChainLengthInteger) {
+                default -> {
+                    //restrictions > 1
+                    for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
+                        tmpDissectedChainACSet.add(this.separateDisconnectedStructures(this.dissectLinearChain(tmpAtomContainer,
+                                tmpMaxChainLengthInteger)));
+                    }
+                }
+                case 0 -> {
+                    //if int maxChainLength gives 0 throw IllegalArgumentException
+                    //not happy with how this works, preferably a gui warning would be nice
+                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, "Illegal restriction argument", new IllegalArgumentException());
+                }
+                case 1 -> {
+                    //single methane molecules
+                    IAtomContainer tmpDissectedAC = new AtomContainer();
+                    for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
+                        tmpAtomContainer.removeAllBonds();
+                        tmpDissectedAC.add(tmpAtomContainer);
+                    }
+                    tmpDissectedChainACSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                 }
             }
-            case 0 ->
-                //no restrictions applied
-                    tmpDissectedChainACSet.add(tmpChainACSet);
-            case 1 -> {
-                //single methane molecules
-                IAtomContainer tmpDissectedAC = new AtomContainer();
-                for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
-                    tmpAtomContainer.removeAllBonds();
-                    tmpDissectedAC.add(tmpAtomContainer);
-                }
-                tmpDissectedChainACSet.add(this.checkConnectivity(tmpDissectedAC));
-            }
+        } else {
+            //no restrictions applied
+            tmpDissectedChainACSet.add(tmpChainACSet);
         }
         if (!tmpDissectedChainACSet.isEmpty() && tmpDissectedChainACSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpDissectedChainACSet);
@@ -669,7 +702,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.atomArray = null;
         this.bondArray = null;
     }
-
     /**
      * Private Method to dissect given AtomContainer (containing linear carbon chain) into separate molecules with given length and remnants if
      * molecule is too small for given length.
