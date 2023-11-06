@@ -25,6 +25,7 @@ import javafx.beans.property.Property;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.IChemObjectReader;
@@ -37,6 +38,7 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,13 +53,30 @@ import java.util.Locale;
  * @version 1.1.1.0
  */
 public class AlkylStructureFragmenterTest {
-
+    public final File testStructureFile = new File("src/test/resources/ASF_Test_COCONUT_subset_sample.sdf");
+    public final IteratingSDFReader testStructureSDFReader = new IteratingSDFReader(new FileReader(testStructureFile), new SilentChemObjectBuilder());
+    private AtomContainerSet testStructuresACSet = new AtomContainerSet();
     /**
      * Constructor that sets the default locale to british english, which is needed for correct functioning of the
      * fragmenter as the settings tooltips are imported from the message.properties file.
      */
-    public AlkylStructureFragmenterTest() {
+    public AlkylStructureFragmenterTest() throws FileNotFoundException {
+        this.testStructuresACSet = this.readTestStructureToACSet(this.testStructureSDFReader);
         Locale.setDefault(new Locale("en", "GB"));
+    }
+
+    private AtomContainerSet readTestStructureToACSet(IteratingSDFReader aSDFReader) {
+        AtomContainerSet tmpACSet = new AtomContainerSet();
+        while (aSDFReader.hasNext()) {
+            IAtomContainer tmpAtomContainer = aSDFReader.next();
+            try {
+                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+            } catch (CDKException aCDKException) {
+                throw new RuntimeException(aCDKException);
+            }
+            tmpACSet.addAtomContainer(tmpAtomContainer);
+        }
+        return tmpACSet;
     }
 
     /**
@@ -66,7 +85,7 @@ public class AlkylStructureFragmenterTest {
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void basicTest() throws Exception {
+    public void basicSettingsTest() throws Exception {
         AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
         List<String> tmpCheckList = new ArrayList<>();
         List<String> tmpExpectList = new ArrayList<>();
@@ -79,6 +98,30 @@ public class AlkylStructureFragmenterTest {
         Assertions.assertLinesMatch(tmpExpectList, tmpCheckList);
     }
 
+    @Test
+    public void markRingsTest() {
+
+    }
+    @Test
+    public void markConjugatedPiSystemsTest() {
+
+    }
+    @Test
+    public void saturateWithImplicitHydrogenTest() {
+
+    }
+    @Test
+    public void separateDisconnectedStructuresTest() {
+
+    }
+    @Test
+    public void extractFragmentsTest() {
+
+    }
+    @Test
+    public void dissectLinearChainTest() {
+
+    }
     /**
      *  Method to test a default alkyl structure fragmentation on a concept molecule.
      *
@@ -86,6 +129,18 @@ public class AlkylStructureFragmenterTest {
      */
     @Test
     public void defaultFragmentationTest() throws Exception {
+        AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
+        tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        tmpFragmenter.setRestrictMaxChainLengthSetting(AlkylStructureFragmenter.RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+
+        for (IAtomContainer tmpAtomContainer :
+                this.testStructuresACSet.atomContainers()) {
+            Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpAtomContainer));
+            Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpAtomContainer));
+            Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpAtomContainer));
+
+        }
         try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader("src/test/resources/TestASFStructure1.mol"), IChemObjectReader.Mode.RELAXED)) {
             IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpOriginalMolecule);
@@ -98,20 +153,9 @@ public class AlkylStructureFragmenterTest {
                 if (tmpAtomContainer != null) {
                     AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
                     tmpOriginalMoleculeSet.addAtomContainer(tmpAtomContainer);
-                    /*
-                    for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-                        if (tmpAtom.getMaxBondOrder() == null) {
-                            System.out.println(tmpAtom.getIndex());
-                        }
-                    }
-                    */
                 }
             }
 
-            //IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-            //IteratingSDFReader tmpIterSDFReader = new IteratingSDFReader(new FileReader("testfile"))
-
-            AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
             tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
             tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
             Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
