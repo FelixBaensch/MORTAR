@@ -131,7 +131,7 @@ public class AlkylStructureFragmenterTest {
     public void defaultFragmentationTest() throws Exception {
         AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
         tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
-        tmpFragmenter.setRestrictMaxChainLengthSetting(AlkylStructureFragmenter.RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        tmpFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
 
         for (IAtomContainer tmpAtomContainer :
@@ -158,9 +158,11 @@ public class AlkylStructureFragmenterTest {
 
             tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
             tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+            //extract to unit tests, keep tmpFragmenter settings
             Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
             Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
             Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
+            //
             List<IAtomContainer> tmpFragmentList;
             tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
             SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Canonical);

@@ -88,9 +88,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final int MAX_CHAIN_LENGTH_SETTING_DEFAULT = 0;
     /**
-     * Default boolean value for restriction of further side chain dissection.
+     * Default boolean value for determination of further side chain dissection.
      */
-    public static final boolean RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT = false;
+    public static final boolean FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT = false;
     //<editor-fold desc="Property Keys">
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
@@ -122,9 +122,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
     /**
-     * A property that has a constant boolean value determining whether fragment size should be restricted.
+     * A property that has a constant boolean value determining whether side chains should be fragmented.
      */
-    private final SimpleBooleanProperty restrictMaxChainLengthSetting;
+    private final SimpleBooleanProperty fragmentSideChainsSetting;
     /**
      * A Property that has a constant carbon side chain setting.
      */
@@ -178,17 +178,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         };
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
-        this.restrictMaxChainLengthSetting = new SimpleBooleanProperty(this, "Restrict length of hydrocarbon side chains setting",
-                AlkylStructureFragmenter.RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        this.settingNameTooltipTextMap.put(this.restrictMaxChainLengthSetting.getName(),
-                Message.get("AlkylStructureFragmenter.restrictMaxChainLengthSetting.tooltip"));
+        this.fragmentSideChainsSetting = new SimpleBooleanProperty(this, "Fragmentation of hydrocarbon side chains setting",
+                AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.fragmentSideChainsSetting.getName(),
+                Message.get("AlkylStructureFragmenter.fragmentSideChainsSetting.tooltip"));
         this.maxChainLengthSetting = new SimpleIntegerProperty(this, "Carbon side chains maximum length setting",
                 AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
         this.settings = new ArrayList<Property>(3);
         this.settings.add(this.fragmentSaturationSetting);
-        this.settings.add(this.restrictMaxChainLengthSetting);
+        this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
     }
     //</editor-fold>
@@ -263,9 +263,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param aBoolean
      * @throws NullPointerException
      */
-    public void setRestrictMaxChainLengthSetting(boolean aBoolean) throws NullPointerException{
+    public void setFragmentSideChainsSetting(boolean aBoolean) throws NullPointerException{
         Objects.requireNonNull(aBoolean, "Given boolean is null.");
-        this.restrictMaxChainLengthSetting.set(aBoolean);
+        this.fragmentSideChainsSetting.set(aBoolean);
     }
     /**
      * Set method for setting defining maximum side chain length.
@@ -287,7 +287,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public IMoleculeFragmenter copy() {
         AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
-        tmpCopy.setRestrictMaxChainLengthSetting(this.restrictMaxChainLengthSetting.get());
+        tmpCopy.setFragmentSideChainsSetting(this.fragmentSideChainsSetting.get());
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
         return tmpCopy;
     }
@@ -295,7 +295,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
-        this.restrictMaxChainLengthSetting.set(AlkylStructureFragmenter.RESTRICT_MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.fragmentSideChainsSetting.set(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
     }
     //
@@ -661,9 +661,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //ACSet for dissected chains
         IAtomContainerSet tmpDissectedChainACSet = new AtomContainerSet();
         int tmpMaxChainLengthInteger = this.getMaxChainLengthSetting();
-        if (this.restrictMaxChainLengthSetting.get()) {
+        if (this.fragmentSideChainsSetting.get()) {
+            //check maxchainlength
             switch (tmpMaxChainLengthInteger) {
                 default -> {
+                    //down
                     //restrictions > 1
                     for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
                         tmpDissectedChainACSet.add(this.separateDisconnectedStructures(this.dissectLinearChain(tmpAtomContainer,
