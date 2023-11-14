@@ -24,10 +24,10 @@ import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.IChemObjectReader;
 import org.openscience.cdk.io.MDLV3000Reader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
@@ -37,11 +37,9 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -53,19 +51,41 @@ import java.util.Locale;
  * @version 1.1.1.0
  */
 public class AlkylStructureFragmenterTest {
-    public final File testStructureFile = new File("src/test/resources/ASF_Test_COCONUT_subset_sample.sdf");
-    public final IteratingSDFReader testStructureSDFReader = new IteratingSDFReader(new FileReader(testStructureFile), new SilentChemObjectBuilder());
+    /**
+     * File containing the structure data for the expected fragments of structures used in this test.
+     */
+    public final File testExpectedFragmentsFile = new File("src/test/resources/ASF_Expected_Fragments.sdf");
+    /**
+     * IteratingSDFReader for the structure data file testExpectedFragmentsFile.
+     */
+    public final IteratingSDFReader testExpectedSDFReader = new IteratingSDFReader(new FileReader(this.testExpectedFragmentsFile), new SilentChemObjectBuilder());
+    /**
+     * File containing the structure data of the structures used in this test.
+     */
+    public final File testStructuresFile = new File("src/test/resources/ASF_Test_Structures.sdf");
+    /**
+     * IteratingSDFReader for the structure data file testStructuresFile.
+     */
+    public final IteratingSDFReader testStructuresSDFReader = new IteratingSDFReader(new FileReader(this.testStructuresFile), new SilentChemObjectBuilder());
+    /**
+     * Private AtomContainerSet containing the expected structures as AtomContainers.
+     */
     private AtomContainerSet testStructuresACSet = new AtomContainerSet();
+    /**
+     * Private AlkylStructureFragmenter used in this test, currently without special parameters.
+     */
+    private AlkylStructureFragmenter basicAlkylStructureFragmenter;
     /**
      * Constructor that sets the default locale to british english, which is needed for correct functioning of the
      * fragmenter as the settings tooltips are imported from the message.properties file.
      */
     public AlkylStructureFragmenterTest() throws FileNotFoundException {
-        this.testStructuresACSet = this.readTestStructureToACSet(this.testStructureSDFReader);
+        this.testStructuresACSet = this.readStructureToACSet(this.testStructuresSDFReader);
         Locale.setDefault(new Locale("en", "GB"));
+        this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
     }
 
-    private AtomContainerSet readTestStructureToACSet(IteratingSDFReader aSDFReader) {
+    private AtomContainerSet readStructureToACSet(IteratingSDFReader aSDFReader) {
         AtomContainerSet tmpACSet = new AtomContainerSet();
         while (aSDFReader.hasNext()) {
             IAtomContainer tmpAtomContainer = aSDFReader.next();
@@ -80,19 +100,35 @@ public class AlkylStructureFragmenterTest {
     }
 
     /**
+     * Utility method generating SMILES notation strings for a given AtomContainerSet.
+     *
+     * @param anAtomContainerSet given AtomContainerSet
+     * @return List containing the generated Strings
+     * @throws CDKException if SmilesGenerator is unable to generate String from structure
+     */
+    private List<String> generateSMILESFromACSet(AtomContainerSet anAtomContainerSet) throws CDKException {
+        SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Canonical);
+        List<String> tmpSmilesList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
+        for (IAtomContainer tmpAtomContainer :
+                anAtomContainerSet.atomContainers()) {
+            tmpSmilesList.add(tmpSmilesGenerator.create(tmpAtomContainer));
+        }
+        return tmpSmilesList;
+    }
+
+    /**
      * Tests correct instantiation and basic settings retrieval.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void basicSettingsTest() throws Exception {
-        AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
         List<String> tmpCheckList = new ArrayList<>();
         List<String> tmpExpectList = new ArrayList<>();
         tmpExpectList.add("Fragment saturation setting");
-        tmpExpectList.add("Restrict length of hydrocarbon side chains setting");
+        tmpExpectList.add("Fragmentation of hydrocarbon side chains setting");
         tmpExpectList.add("Carbon side chains maximum length setting");
-        for (Property tmpSetting: tmpFragmenter.settingsProperties()) {
+        for (Property tmpSetting: this.basicAlkylStructureFragmenter.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());
         }
         Assertions.assertLinesMatch(tmpExpectList, tmpCheckList);
@@ -100,27 +136,27 @@ public class AlkylStructureFragmenterTest {
 
     @Test
     public void markRingsTest() {
-
+        //ToDo: find way to compare structures without extracting tested substructures
     }
     @Test
     public void markConjugatedPiSystemsTest() {
-
+        //ToDo: find way to compare structures without extracting tested substructures
     }
     @Test
     public void saturateWithImplicitHydrogenTest() {
-
+        //ToDo: generate test structures with open valences to be saturated
     }
     @Test
     public void separateDisconnectedStructuresTest() {
-
+        //ToDo: generate disconnected structures in one AtomContainer
     }
     @Test
     public void extractFragmentsTest() {
-
+        //ToDo: generate structures with marked substructures (mark with code)
     }
     @Test
     public void dissectLinearChainTest() {
-
+        //ToDo: generate/choose linear structure to test linear dissection
     }
     /**
      *  Method to test a default alkyl structure fragmentation on a concept molecule.
@@ -129,21 +165,20 @@ public class AlkylStructureFragmenterTest {
      */
     @Test
     public void defaultFragmentationTest() throws Exception {
-        AlkylStructureFragmenter tmpFragmenter = new AlkylStructureFragmenter();
-        tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
-        tmpFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
-        tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
 
         for (IAtomContainer tmpAtomContainer :
                 this.testStructuresACSet.atomContainers()) {
-            Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpAtomContainer));
-            Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpAtomContainer));
-            Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpAtomContainer));
-
+            Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBeFiltered(tmpAtomContainer));
+            Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBePreprocessed(tmpAtomContainer));
+            Assertions.assertTrue(this.basicAlkylStructureFragmenter.canBeFragmented(tmpAtomContainer));
         }
         try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader("src/test/resources/TestASFStructure1.mol"), IChemObjectReader.Mode.RELAXED)) {
             IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpOriginalMolecule);
+            /*
             File aFile = new File("src/test/resources/ASF_Test_COCONUT_subset_sample.sdf");
             IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile),
                     SilentChemObjectBuilder.getInstance());
@@ -155,16 +190,17 @@ public class AlkylStructureFragmenterTest {
                     tmpOriginalMoleculeSet.addAtomContainer(tmpAtomContainer);
                 }
             }
+            */
 
-            tmpFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
-            tmpFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+            this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+            this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
             //extract to unit tests, keep tmpFragmenter settings
-            Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
-            Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
-            Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
+            Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBeFiltered(tmpOriginalMolecule));
+            Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
+            Assertions.assertTrue(this.basicAlkylStructureFragmenter.canBeFragmented(tmpOriginalMolecule));
             //
             List<IAtomContainer> tmpFragmentList;
-            tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
+            tmpFragmentList = this.basicAlkylStructureFragmenter.fragmentMolecule(tmpOriginalMolecule);
             SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Canonical);
             List<String> tmpCheckList = new ArrayList<>();
 
@@ -179,32 +215,11 @@ public class AlkylStructureFragmenterTest {
             tmpExpectedList.add("C");
             tmpExpectedList.add("C");
             tmpExpectedList.add("C");
-
-            /*
-            HashSet<String> tmpExpectedHashSet = new HashSet<>(20);
-            tmpExpectedHashSet.add("C=CC=C1C=2C=CC=CC2CCC1");
-            tmpExpectedHashSet.add("*C(*)*");
-            tmpExpectedHashSet.add("*C(*)(*)*");
-            tmpExpectedHashSet.add("C");
-            tmpExpectedHashSet.add("CC");
-            tmpExpectedHashSet.add("C");
-            tmpExpectedHashSet.add("C");
-            tmpExpectedHashSet.add("C");
-            tmpExpectedHashSet.add("C");
-            */
-
-            HashSet<String> tmpCheckHashSet = new HashSet<>(tmpFragmentList.size() + (int)(tmpFragmentList.size() * 0.3));
             for (IAtomContainer tmpFragment : tmpFragmentList) {
                 String tmpString = tmpGenerator.create(tmpFragment);
                 System.out.println(tmpString);
-                //tmpCheckHashSet.add(tmpString);
                 tmpCheckList.add(tmpString);
             }
-            /*
-            if (!Objects.equals(tmpExpectedHashSet, tmpCheckHashSet)) {
-                Assertions.fail("Fragmentation results differ from expected.");
-            }
-            */
             Assertions.assertTrue(tmpCheckList.size() == tmpExpectedList.size()
                     && tmpCheckList.containsAll(tmpExpectedList)
                     && tmpExpectedList.containsAll(tmpCheckList));
