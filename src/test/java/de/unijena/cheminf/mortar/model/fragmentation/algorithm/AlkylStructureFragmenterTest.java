@@ -24,10 +24,10 @@ import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.IChemObjectReader;
 import org.openscience.cdk.io.MDLV3000Reader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
@@ -39,6 +39,8 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -70,31 +72,45 @@ public class AlkylStructureFragmenterTest {
     /**
      * Private AtomContainerSet containing the expected structures as AtomContainers.
      */
-    private AtomContainerSet testStructuresACSet = new AtomContainerSet();
+    private AtomContainerSet testStructuresACSet;
+    /**
+     * Private List containing test structures.
+     */
+    private List<IAtomContainer> testStructuresList;
     /**
      * Private AlkylStructureFragmenter used in this test, currently without special parameters.
      */
-    private AlkylStructureFragmenter basicAlkylStructureFragmenter;
+    private final AlkylStructureFragmenter basicAlkylStructureFragmenter;
     /**
      * Constructor that sets the default locale to british english, which is needed for correct functioning of the
      * fragmenter as the settings tooltips are imported from the message.properties file.
      */
     public AlkylStructureFragmenterTest() throws FileNotFoundException {
-        this.testStructuresACSet = this.readStructureToACSet(this.testStructuresSDFReader);
+        this.testStructuresACSet = this.readStructureToACSet(this.testStructuresFile);
+        this.testStructuresList = new ArrayList<IAtomContainer>(this.testStructuresACSet.getAtomContainerCount());
+        for (IAtomContainer tmpAtomContainer :
+                this.testStructuresACSet.atomContainers()) {
+            this.testStructuresList.add(tmpAtomContainer);
+        }
         Locale.setDefault(new Locale("en", "GB"));
         this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
     }
 
-    private AtomContainerSet readStructureToACSet(IteratingSDFReader aSDFReader) {
+    private AtomContainerSet readStructureToACSet(File aFile) throws FileNotFoundException {
+        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileReader(aFile), new SilentChemObjectBuilder());
         AtomContainerSet tmpACSet = new AtomContainerSet();
-        while (aSDFReader.hasNext()) {
-            IAtomContainer tmpAtomContainer = aSDFReader.next();
+        String tmpIndexString = "ASFTest.AtomContainerIndex";
+        int tmpIndex = 0;
+        while (tmpSDFReader.hasNext()) {
+            IAtomContainer tmpAtomContainer = tmpSDFReader.next();
+            tmpAtomContainer.setProperty(tmpIndexString, tmpIndex);
             try {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
             } catch (CDKException aCDKException) {
                 throw new RuntimeException(aCDKException);
             }
             tmpACSet.addAtomContainer(tmpAtomContainer);
+            tmpIndex++;
         }
         return tmpACSet;
     }
@@ -102,17 +118,14 @@ public class AlkylStructureFragmenterTest {
     /**
      * Utility method generating SMILES notation strings for a given AtomContainerSet.
      *
-     * @param anAtomContainerSet given AtomContainerSet
+     * @param anAtomContainer given AtomContainerSet
      * @return List containing the generated Strings
      * @throws CDKException if SmilesGenerator is unable to generate String from structure
      */
-    private List<String> generateSMILESFromACSet(AtomContainerSet anAtomContainerSet) throws CDKException {
+    private List<String> generateSMILESFromACSet(IAtomContainer anAtomContainer) throws CDKException {
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Canonical);
-        List<String> tmpSmilesList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
-        for (IAtomContainer tmpAtomContainer :
-                anAtomContainerSet.atomContainers()) {
-            tmpSmilesList.add(tmpSmilesGenerator.create(tmpAtomContainer));
-        }
+        List<String> tmpSmilesList = new ArrayList<>(anAtomContainer.getAtomCount());
+        tmpSmilesList.add(tmpSmilesGenerator.create(anAtomContainer));
         return tmpSmilesList;
     }
 
@@ -133,29 +146,102 @@ public class AlkylStructureFragmenterTest {
         }
         Assertions.assertLinesMatch(tmpExpectList, tmpCheckList);
     }
-
+    /**
+     * Test method for AlkylStructureFragmenter.markRings().
+     *
+     * @throws NoSuchMethodException if method reflection returns null
+     * @throws InvocationTargetException if target method cannot be invoked
+     * @throws IllegalAccessException if method cannot be accessed
+     */
     @Test
-    public void markRingsTest() {
+    public void markRingsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        IAtomContainer tmpRingsAC = this.testStructuresList.get(0);
+        Method tmpMarkRings = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("markRings", IAtomContainer.class);
+        tmpMarkRings.setAccessible(true);
+        //problem: marking on local(ASF) private variables
+        tmpMarkRings.invoke(this.basicAlkylStructureFragmenter, tmpRingsAC);
         //ToDo: find way to compare structures without extracting tested substructures
     }
+    /**
+     * Test method for AlkylStructureFragmenter.markConjugatedPiSystems().
+     *
+     * @throws NoSuchMethodException if method reflection returns null
+     * @throws InvocationTargetException if target method cannot be invoked
+     * @throws IllegalAccessException if method cannot be accessed
+     */
     @Test
-    public void markConjugatedPiSystemsTest() {
+    public void markConjugatedPiSystemsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        IAtomContainer tmpConjugatedAC = this.testStructuresList.get(0);
+        Method tmpMarkConjugated = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("markConjugatedPiSystems", IAtomContainer.class);
+        tmpMarkConjugated.setAccessible(true);
+        //problem: marking on local(ASF) private variables
+        tmpMarkConjugated.invoke(this.basicAlkylStructureFragmenter, tmpConjugatedAC);
         //ToDo: find way to compare structures without extracting tested substructures
     }
+    /**
+     * Test method for AlkylStructureFragmenter.saturateWithImplicitHydrogen().
+     *
+     * @throws NoSuchMethodException if method reflection returns null
+     * @throws InvocationTargetException if target method cannot be invoked
+     * @throws IllegalAccessException if method cannot be accessed
+     */
     @Test
-    public void saturateWithImplicitHydrogenTest() {
+    public void saturateWithImplicitHydrogenTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        IAtomContainerSet tmpSaturateACSet = new AtomContainerSet();
+        tmpSaturateACSet.addAtomContainer(this.testStructuresList.get(0));
+        Method tmpSaturate = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("saturateWithImplicitHydrogen", IAtomContainerSet.class);
+        tmpSaturate.setAccessible(true);
+        //problem?
+        List<IAtomContainer> tmpACList = (List<IAtomContainer>) tmpSaturate.invoke(this.basicAlkylStructureFragmenter, tmpSaturateACSet);
         //ToDo: generate test structures with open valences to be saturated
     }
+    /**
+     * Test method for AlkylStructureFragmenter.separateDisconnectedStructures().
+     *
+     * @throws NoSuchMethodException if method reflection returns null
+     * @throws InvocationTargetException if target method cannot be invoked
+     * @throws IllegalAccessException if method cannot be accessed
+     */
     @Test
-    public void separateDisconnectedStructuresTest() {
+    public void separateDisconnectedStructuresTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        IAtomContainer tmpDisconnectedAC = this.testStructuresList.get(0);
+        Method tmpSeparateDisconnectedAC = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("separateDisconnectedStructures", IAtomContainer.class);
+        tmpSeparateDisconnectedAC.setAccessible(true);
+        IAtomContainerSet tmpDisconnectedACSet = (IAtomContainerSet) tmpSeparateDisconnectedAC.invoke(this.basicAlkylStructureFragmenter, tmpDisconnectedAC);
         //ToDo: generate disconnected structures in one AtomContainer
     }
+    /**
+     * Test method for AlkylStructureFragmenter.extractFragments().
+     *
+     * @throws NoSuchMethodException if method reflection returns null
+     * @throws InvocationTargetException if target method cannot be invoked
+     * @throws IllegalAccessException if method cannot be accessed
+     */
     @Test
-    public void extractFragmentsTest() {
+    public void extractFragmentsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        //problem: no way to take input AC as they are local(ASF) private variables
+        IAtomContainer tmpDisconnectedAC = this.testStructuresList.get(0);
+        Method tmpExtractFragments = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("extractFragments");
+        tmpExtractFragments.setAccessible(true);
+        IAtomContainerSet tmpExtractedACSet = (IAtomContainerSet) tmpExtractFragments.invoke(this.basicAlkylStructureFragmenter);
         //ToDo: generate structures with marked substructures (mark with code)
     }
+    /**
+     * Test method for AlkylStructureFragmenter.dissectLinearChain().
+     *
+     * @throws NoSuchMethodException if method reflection returns null
+     * @throws InvocationTargetException if target method cannot be invoked
+     * @throws IllegalAccessException if method cannot be accessed
+     */
     @Test
-    public void dissectLinearChainTest() {
+    public void dissectLinearChainTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        //get linear test structure from ACList
+        IAtomContainer tmpDissectLinearChainAC = this.testStructuresList.get(0);//correct index needed
+        Method tmpDissectMethod = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("dissectLinearChain", IAtomContainer.class, int.class);
+        tmpDissectMethod.setAccessible(true);
+        IAtomContainer tmpNoRestrictAC = (IAtomContainer) tmpDissectMethod.invoke(this.basicAlkylStructureFragmenter, tmpDissectLinearChainAC, 0);
+        //dissect test structure with different settings
+        //compare with expected fragments
         //ToDo: generate/choose linear structure to test linear dissection
     }
     /**
