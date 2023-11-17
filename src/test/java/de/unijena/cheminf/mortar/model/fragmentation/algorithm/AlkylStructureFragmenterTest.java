@@ -52,7 +52,7 @@ import java.util.Locale;
  * @author Maximilian Rottmann
  * @version 1.1.1.0
  */
-public class AlkylStructureFragmenterTest {
+public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
      * File containing the structure data for the expected fragments of structures used in this test.
      */
@@ -80,7 +80,7 @@ public class AlkylStructureFragmenterTest {
     /**
      * Private AlkylStructureFragmenter used in this test, currently without special parameters.
      */
-    private final AlkylStructureFragmenter basicAlkylStructureFragmenter;
+    private final AlkylStructureFragmenter basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
     /**
      * Constructor that sets the default locale to british english, which is needed for correct functioning of the
      * fragmenter as the settings tooltips are imported from the message.properties file.
@@ -93,7 +93,7 @@ public class AlkylStructureFragmenterTest {
             this.testStructuresList.add(tmpAtomContainer);
         }
         Locale.setDefault(new Locale("en", "GB"));
-        this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
+        //this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
     }
 
     private AtomContainerSet readStructureToACSet(File aFile) throws FileNotFoundException {
@@ -156,10 +156,14 @@ public class AlkylStructureFragmenterTest {
     @Test
     public void markRingsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         IAtomContainer tmpRingsAC = this.testStructuresList.get(0);
-        Method tmpMarkRings = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("markRings", IAtomContainer.class);
-        tmpMarkRings.setAccessible(true);
+        //Method tmpMarkRings = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("markRings", IAtomContainer.class);
+        //tmpMarkRings.setAccessible(true);
+        //tmpMarkRings.invoke(this.basicAlkylStructureFragmenter, tmpRingsAC);
+
+        //protected methods & variables -> test class extends origin class
         //problem: marking on local(ASF) private variables
-        tmpMarkRings.invoke(this.basicAlkylStructureFragmenter, tmpRingsAC);
+        //ToDo: write test structure in fragmenter arrays; create array for comparison with expected markings
+        this.basicAlkylStructureFragmenter.markRings(tmpRingsAC);
         //ToDo: find way to compare structures without extracting tested substructures
     }
     /**

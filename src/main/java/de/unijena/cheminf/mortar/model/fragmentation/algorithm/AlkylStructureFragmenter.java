@@ -144,11 +144,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Internal Array to store and access atoms for mapping.
      */
-    private IAtom[] atomArray;
+    protected IAtom[] atomArray;
     /**
      * Internal Array to store and access bonds for mapping.
      */
-    private IBond[] bondArray;
+    protected IBond[] bondArray;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -442,11 +442,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
     //<editor-fold desc="Private Methods" defaultstate="collapsed">
     /**
-     * Private method to mark all atoms and bonds of any rings in the given atomcontainer.
+     * Protected method to mark all atoms and bonds of any rings in the given atomcontainer.
      *
      * @param anAtomContainer IAtomContainer to mark atoms and bonds in
      */
-    private void markRings(IAtomContainer anAtomContainer) throws IllegalArgumentException {
+    protected void markRings(IAtomContainer anAtomContainer) throws IllegalArgumentException {
         //
         //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
         try {
@@ -498,11 +498,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
-     * Private method to mark all atoms and bonds of any conjugated pi systems in the given atomcontainer.
+     * Protected method to mark all atoms and bonds of any conjugated pi systems in the given atomcontainer.
      *
      * @param anAtomContainer IAtomContainer to mark atoms and bonds in
      */
-    private void markConjugatedPiSystems(IAtomContainer anAtomContainer) throws IllegalArgumentException{
+    protected void markConjugatedPiSystems(IAtomContainer anAtomContainer) throws IllegalArgumentException{
         //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet;
@@ -529,12 +529,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
-     * Private method to check given atomcontainer for disconnected structures.
+     * Protected method to check given atomcontainer for disconnected structures.
      *
      * @param anAtomContainer IAtomContainer to check
      * @return IAtomContainerSet containing partitioned structures as single IAtomContainer
      */
-    private IAtomContainerSet separateDisconnectedStructures(IAtomContainer anAtomContainer) throws IllegalArgumentException{
+    protected IAtomContainerSet separateDisconnectedStructures(IAtomContainer anAtomContainer) throws IllegalArgumentException{
         Objects.requireNonNull(anAtomContainer,"Given IAtomContainer is null.");
         try {
             IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
@@ -557,13 +557,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
-     * Private method to saturate a given molecule with implicit hydrogens after fragmentation.
+     * Protected method to saturate a given molecule with implicit hydrogens after fragmentation.
      *
      * @param anUnsaturatedACSet IAtomContainerSet whose atomcontainers are to be saturated
      * @return List of processed atomcontainers, @null if given Set is empty
      * @throws CDKException if CDKHydrogenAdder throws an exception
      */
-    private List<IAtomContainer> saturateWithImplicitHydrogen(IAtomContainerSet anUnsaturatedACSet) throws CDKException {
+    protected List<IAtomContainer> saturateWithImplicitHydrogen(IAtomContainerSet anUnsaturatedACSet) throws CDKException {
         Objects.requireNonNull(anUnsaturatedACSet, "Given IAtomContainerSet is null.");
         try {
             List<IAtomContainer> tmpSaturatedFragments = new ArrayList<>(anUnsaturatedACSet.getAtomContainerCount());
@@ -587,11 +587,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
-     * Private method to extract detected molecules via properties.
+     * Protected method to extract detected molecules via properties.
      *
      * @return IAtomContainerSet with extracted molecules
      */
-    private IAtomContainerSet extractFragments() throws CloneNotSupportedException, IllegalArgumentException {
+    protected IAtomContainerSet extractFragments() throws CloneNotSupportedException, IllegalArgumentException {
         //
         //<editor-fold desc="Extraction">
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
@@ -698,21 +698,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
-     * Private method to reset class variables properly.
+     * Protected method to reset class variables properly.
      */
-    private void clearCache() {
+    protected void clearCache() {
         this.atomArray = null;
         this.bondArray = null;
     }
     /**
-     * Private Method to dissect given AtomContainer (containing linear carbon chain) into separate molecules with given length and remnants if
+     * Protected Method to dissect given AtomContainer (containing linear carbon chain) into separate molecules with given length and remnants if
      * molecule is too small for given length.
      *
      * @param anAC AtomContainer to be dissected
      * @param aLength Given maximum length of molecule
      * @return AtomContainer with separate dissected molecules
      */
-    private IAtomContainer dissectLinearChain(IAtomContainer anAC, int aLength) {
+    protected IAtomContainer dissectLinearChain(IAtomContainer anAC, int aLength) {
         IAtomContainer tmpReturnAC = new AtomContainer();
         //starts at 1 for usability, see aLength: 1on1 translation of input to counter
         int tmpCounter = 1;
