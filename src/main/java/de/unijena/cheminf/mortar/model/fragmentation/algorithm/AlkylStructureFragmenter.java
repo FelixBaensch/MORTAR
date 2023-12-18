@@ -385,31 +385,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.clearCache();
         this.atomArray = new IAtom[tmpClone.getAtomCount()];
         this.bondArray = new IBond[tmpClone.getBondCount()];
-        int tmpAlkylSFAtomIndex = 0;
-        int tmpAlkylSFBondIndex = 0;
-        for (IAtom tmpAtom: tmpClone.atoms()) {
-            if (tmpAtom != null) {
-                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
-                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, false);
-                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, false);
-                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
-                if (tmpAtom.getBondCount() == 3 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
-                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
-                } else if (tmpAtom.getBondCount() == 4 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
-                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, true);
-                }
-                this.atomArray[tmpAlkylSFAtomIndex] = tmpAtom;
-                tmpAlkylSFAtomIndex++;
-            }
-        }
-        for (IBond tmpBond: tmpClone.bonds()) {
-            if (tmpBond != null) {
-                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndex);
-                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
-                this.bondArray[tmpAlkylSFBondIndex] = tmpBond;
-                tmpAlkylSFBondIndex++;
-            }
-        }
+        this.atomArray = this.fillAtomArray(tmpClone, this.atomArray);
+        this.bondArray = this.fillBondArray(tmpClone, this.bondArray);
         //</editor-fold>
         //
         //<editor-fold desc="Detection Steps" defaultstate="collapsed">
@@ -441,6 +418,43 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //</editor-fold>
     //
     //<editor-fold desc="Private Methods" defaultstate="collapsed">
+    protected IAtom[] fillAtomArray(IAtomContainer aClone, IAtom[] anAtomArray) {
+        int tmpAlkylSFAtomIndex = 0;
+        for (IAtom tmpAtom: aClone.atoms()) {
+            if (tmpAtom != null) {
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, false);
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, false);
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
+                if (tmpAtom.getBondCount() == 3 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
+                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
+                } else if (tmpAtom.getBondCount() == 4 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
+                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, true);
+                }
+                anAtomArray[tmpAlkylSFAtomIndex] = tmpAtom;
+                tmpAlkylSFAtomIndex++;
+            }
+        }
+        return anAtomArray;
+    }
+    protected IBond[] fillBondArray(IAtomContainer aClone, IBond[] aBondArray) {
+        int tmpAlkylSFBondIndex = 0;
+        for (IBond tmpBond: aClone.bonds()) {
+            if (tmpBond != null) {
+                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndex);
+                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
+                aBondArray[tmpAlkylSFBondIndex] = tmpBond;
+                tmpAlkylSFBondIndex++;
+            }
+        }
+        return aBondArray;
+    }
+    protected IAtom[] getAtomArray() {
+        return this.atomArray;
+    }
+    protected IBond[] getBondArray() {
+        return this.bondArray;
+    }
     /**
      * Protected method to mark all atoms and bonds of any rings in the given atomcontainer.
      *

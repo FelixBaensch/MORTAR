@@ -26,8 +26,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.IChemObjectReader;
 import org.openscience.cdk.io.MDLV3000Reader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
@@ -81,6 +83,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * Private AlkylStructureFragmenter used in this test, currently without special parameters.
      */
     private final AlkylStructureFragmenter basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
+    private IAtom[] testAtomArray;
+    private IBond[] testBondArray;
+
     /**
      * Constructor that sets the default locale to british english, which is needed for correct functioning of the
      * fragmenter as the settings tooltips are imported from the message.properties file.
@@ -156,9 +161,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     @Test
     public void markRingsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         IAtomContainer tmpRingsAC = this.testStructuresList.get(0);
-        //Method tmpMarkRings = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("markRings", IAtomContainer.class);
-        //tmpMarkRings.setAccessible(true);
-        //tmpMarkRings.invoke(this.basicAlkylStructureFragmenter, tmpRingsAC);
+
 
         //protected methods & variables -> test class extends origin class
         //problem: marking on local(ASF) private variables
