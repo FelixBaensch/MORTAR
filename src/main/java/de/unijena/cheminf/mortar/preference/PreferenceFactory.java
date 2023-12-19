@@ -44,6 +44,15 @@ public final class PreferenceFactory {
     private static final Logger LOGGER = Logger.getLogger(PreferenceFactory.class.getName());
     //</editor-fold>
     //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private PreferenceFactory() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
      * (Re-)instantiates a new IPreference object of the class associated with the given PreferenceType constant name

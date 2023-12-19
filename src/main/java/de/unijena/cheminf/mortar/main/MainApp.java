@@ -53,6 +53,14 @@ public class MainApp extends Application {
     public static final String SKIP_JAVA_VERSION_CHECK_CMD_ARG_NAME = "-skipJavaVersionCheck";
     //
     /**
+     * Parameter-less constructor that calls super().
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    public MainApp() {
+        super();
+    }
+    //
+    /**
      * Calls start(Stage) of Application class.
      *
      * @param args the command line arguments

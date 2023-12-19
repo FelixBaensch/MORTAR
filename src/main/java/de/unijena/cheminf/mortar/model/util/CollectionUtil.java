@@ -33,6 +33,15 @@ import java.util.List;
  * @version 1.0.1.0
  */
 public final class CollectionUtil {
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private CollectionUtil() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="public static methods" defaultstate="collapsed">
     //TODO: check parameters, change params to enum values (and bools?), throw exceptions!
     /**

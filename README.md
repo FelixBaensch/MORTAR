@@ -33,9 +33,9 @@ molecular fragmentation and substructure analysis. The Java/JavaFX rich-client a
 functions for visualising the fragmentation results of individual compounds or entire compound sets. With several 
 views and analysis functions, MORTAR supports the interpretation of fragmentation results. In addition to three 
 currently integrated methods for fragmentation and substructure analysis - 
-<a href="https://github.com/zielesny/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
+<a href="https://github.com/JonasSchaub/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
 <a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a>, 
-and <a href="https://github.com/Julian-Z98/ScaffoldGenerator">Scaffold Generator</a> - MORTAR allows straightforward integration of 
+and <a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a> - MORTAR allows straightforward integration of 
 additional fragmentation algorithms with automatic generation of settings 
 menus. All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
 The scientific article describing MORTAR can be found here: 
@@ -116,14 +116,14 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", 
 **Needs to be pre-installed:**
 * Java Development Kit (JDK) version 17.0.4 or higher
     * [Adoptium Open JDK](https://adoptium.net) (as one possible source of the JDK)
-* Gradle version 7.3
+* Gradle version 8.5
     * [Gradle Build Tool](https://gradle.org)
 
 **Managed by Gradle:**
-* JavaFX version 17.0.2
+* JavaFX version 21.0.1
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
-* Chemistry Development Kit (CDK) version 2.8
+* Chemistry Development Kit (CDK) version 2.9
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
 * JUnit version 5.9.3
@@ -132,7 +132,7 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", 
 * LibrePDF OpenPDF version 1.3.26
   * [OpenPDF GitHub repository](https://github.com/LibrePDF/OpenPDF)
   * License: GNU Lesser General Public License 2.1
-* Spotless version 6.19
+* Spotless version 6.23
   * [Spotless GitHub repository](https://github.com/diffplug/spotless)
   * License: Apache-2.0 license
 
@@ -169,7 +169,7 @@ fragmentation (Baensch et al. 2023)).
 * [Steinbeck C, Han Y, Kuhn S, Horlacher O, Luttmann E, Willighagen EL. The Chemistry Development Kit (CDK): An Open-Source Java Library for Chemo- and Bioinformatics. J Chem Inform Comput Sci. 2003;43(2):493-500.](https://dx.doi.org/10.1021%2Fci025584y)
 * [Steinbeck C, Hoppe C, Kuhn S, Floris M, Guha R, Willighagen EL. Recent Developments of the Chemistry Development Kit (CDK) - An Open-Source Java Library for Chemo- and Bioinformatics. Curr Pharm Des. 2006; 12(17):2111-2120.](https://doi.org/10.2174/138161206777585274)
 * [May JW and Steinbeck C. Efficient ring perception for the Chemistry Development Kit. J. Cheminform. 2014; 6:3.](https://dx.doi.org/10.1186%2F1758-2946-6-3)
-* [Willighagen EL, Mayfield JW, Alvarsson J, Berg A, Carlsson L, Jeliazkova N, Kuhn S, Pluska T, Rojas-Chertó M, Spjuth O, Torrance G, Evelo CT, Guha R, Steinbeck C, The Chemistry Development Kit (CDK) v2.0: atom typing, depiction, molecular formulas, and substructure searching. J Cheminform. 2017; 9:33.](https://doi.org/10.1186/s13321-017-0220-4)
+* [Willighagen EL, Mayfield JW, Alvarsson J, Berg A, Carlsson L, Jeliazkova N, Kuhn S, Pluskal T, Rojas-Chertó M, Spjuth O, Torrance G, Evelo CT, Guha R, Steinbeck C, The Chemistry Development Kit (CDK) v2.0: atom typing, depiction, molecular formulas, and substructure searching. J Cheminform. 2017; 9:33.](https://doi.org/10.1186/s13321-017-0220-4)
 * [Groovy Cheminformatics with the Chemistry Development Kit](https://github.com/egonw/cdkbook)
 
 ## Acknowledgements

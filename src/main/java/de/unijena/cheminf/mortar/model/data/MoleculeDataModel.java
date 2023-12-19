@@ -56,9 +56,6 @@ public class MoleculeDataModel {
      */
     private String uniqueSmiles;
     //
-    /**
-     * Property whether the molecule is selected or not.
-     */
     private BooleanProperty selection;
     //
     /**
@@ -192,7 +189,7 @@ public class MoleculeDataModel {
      * @return BooleanProperty
      */
     public BooleanProperty selectionProperty(){
-        return selection;
+        return this.selection;
     }
     //
     /**

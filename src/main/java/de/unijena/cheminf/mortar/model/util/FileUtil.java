@@ -35,7 +35,6 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public final class FileUtil {
-
     //<editor-fold desc="Private static class variables" defaultstate="collapsed">
     /**
      * Cache String for app dir path
@@ -48,6 +47,15 @@ public final class FileUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(FileUtil.class.getName());
+    //</editor-fold>
+    //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private FileUtil() {
+    }
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">

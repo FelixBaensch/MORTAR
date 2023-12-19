@@ -124,44 +124,21 @@ public class SettingsContainer {
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
-    /**
-     * Property of rows per page setting.
-     */
+
     private SimpleIntegerProperty rowsPerPageSetting;
 
-    /**
-     * Property of number of fragmentation tasks setting.
-     */
     private SimpleIntegerProperty numberOfTasksForFragmentationSetting;
 
-    /**
-     * Property of recent directory.
-     */
     private SimpleStringProperty recentDirectoryPathSetting;
 
-    /**
-     * Property of implicit hydrogens setting.
-     */
     private SimpleBooleanProperty addImplicitHydrogensAtImportSetting;
 
-    /**
-     * Property of keep atom container setting.
-     */
     private SimpleBooleanProperty keepAtomContainerInDataModelSetting;
 
-    /**
-     * Property of always MDL V3000 format setting.
-     */
     private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
 
-    /**
-     * Property of csv export separator setting.
-     */
     private SimpleStringProperty csvExportSeparatorSetting;
 
-    /**
-     * Property of keep last fragment setting.
-     */
     private SimpleBooleanProperty keepLastFragmentSetting;
 
     /**

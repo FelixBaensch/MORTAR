@@ -45,12 +45,20 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class DepictionUtil {
-
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
     /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(DepictionUtil.class.getName());
+    //</editor-fold>
+    //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private DepictionUtil() {
+    }
     //</editor-fold>
     //
     //<editor-fold desc="public static methods" defaultstate="collapsed">

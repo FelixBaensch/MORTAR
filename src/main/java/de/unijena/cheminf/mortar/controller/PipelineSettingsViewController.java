@@ -58,9 +58,6 @@ import java.util.logging.Logger;
 public class PipelineSettingsViewController {
 
     //<editor-fold desc="private final class variables" defaultstate="collapsed">
-    /**
-     * Name of the pipeline as configure in the dialog
-     */
     private final StringProperty pipelineName;
     /**
      * Stage of the MainView
@@ -360,7 +357,7 @@ public class PipelineSettingsViewController {
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns StringProperty for the pipeline name
+     * Returns StringProperty for the pipeline name as configured in the dialog.
      *
      * @return StringProperty
      */

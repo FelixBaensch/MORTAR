@@ -278,43 +278,21 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
-    /**
-     * Property wrapping the 'scaffold mode' setting of the SF.
-     */
+
     private final SimpleEnumConstantNameProperty scaffoldModeSetting;
 
-    /**
-     * Property wrapping the 'determine aromaticity' setting of the SF.
-     */
     private final SimpleBooleanProperty determineAromaticitySetting;
 
-    /**
-     * Property wrapping the 'smiles generator' setting of the SF.
-     */
     private final SimpleEnumConstantNameProperty smilesGeneratorSetting;
 
-    /**
-     * Property wrapping the 'rule seven applied' setting of the SF.
-     */
     private final SimpleBooleanProperty ruleSevenAppliedSetting;
 
-    /**
-     * Property wrapping the 'retain only hybridisations at aromatic bonds setting' setting of the SF.
-     */
     private final SimpleBooleanProperty retainOnlyHybridisationsAtAromaticBondsSetting;
 
-    /**
-     * Property that has a constant name from SideChainOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty sideChainSetting;
-    /**
-     * Property that has a constant name from FragmentationTypeOption enum as value.
-     */
+
     private final SimpleEnumConstantNameProperty fragmentationTypeSetting;
 
-    /**
-     * A property that has a constant name from the CycleFinderOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty cycleFinderSetting;
 
     /**
@@ -322,9 +300,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
-    /**
-     * A property that has a constant name from the ElectronDonationModelOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty electronDonationModelSetting;
 
     /**
@@ -730,6 +705,26 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Public properties get">
     /**
+     * Returns the boolean value of the Scaffold Generator setting whether hybridisations
+     * should only be retained at aromatic bonds (true) or all bonds (false).
+     *
+     * @return true if hybridisations should only be retained at aromatic bonds
+     */
+    public boolean getRetainOnlyHybridisationsAtAromaticBondsSetting() {
+        return this.retainOnlyHybridisationsAtAromaticBondsSetting.get();
+    }
+
+    /**
+     * Returns the property object of the Scaffold Generator setting whether hybridisations
+     * should only be retained at aromatic bonds (true) or all bonds (false).
+     *
+     * @return property object wrapping boolean value if hybridisations should only be retained at aromatic bonds
+     */
+    public SimpleBooleanProperty retainOnlyHybridisationsAtAromaticBondsSetting() {
+        return this.retainOnlyHybridisationsAtAromaticBondsSetting;
+    }
+
+    /**
      * Returns the string representation of the currently set option for the sidechain.
      *
      * @return enum constant name of the set option
@@ -740,6 +735,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the sidechain setting that can be used to configure this setting.
+     * Property that has a constant name from SideChainOption enum as value.
      *
      * @return property object of the returned sidechain setting
      */
@@ -767,6 +763,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the fragmentation type setting that can be used to configure this setting.
+     * Property that has a constant name from FragmentationTypeOption enum as value.
      *
      * @return property object of the returned fragmentation type setting
      */
@@ -935,6 +932,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the cycle finder setting that can be used to configure this setting.
+     * A property that has a constant name from the CycleFinderOption enum as value.
      *
      * @return property object of the cycle finder setting
      */
