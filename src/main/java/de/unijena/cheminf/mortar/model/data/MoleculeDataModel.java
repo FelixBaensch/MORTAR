@@ -24,6 +24,7 @@ import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
@@ -113,8 +114,10 @@ public class MoleculeDataModel {
         this.properties = aPropertyMap;
         this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
-        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
-        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
+        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
     }
     //
     /**
