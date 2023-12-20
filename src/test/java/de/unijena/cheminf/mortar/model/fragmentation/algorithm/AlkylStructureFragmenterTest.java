@@ -90,15 +90,15 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * Constructor that sets the default locale to british english, which is needed for correct functioning of the
      * fragmenter as the settings tooltips are imported from the message.properties file.
      */
-    public AlkylStructureFragmenterTest() throws FileNotFoundException {
+    public AlkylStructureFragmenterTest() throws FileNotFoundException
+    {
         this.testStructuresACSet = this.readStructureToACSet(this.testStructuresFile);
-        this.testStructuresList = new ArrayList<IAtomContainer>(this.testStructuresACSet.getAtomContainerCount());
+        this.testStructuresList = new ArrayList<>(this.testStructuresACSet.getAtomContainerCount());
         for (IAtomContainer tmpAtomContainer :
                 this.testStructuresACSet.atomContainers()) {
             this.testStructuresList.add(tmpAtomContainer);
         }
         Locale.setDefault(new Locale("en", "GB"));
-        //this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
     }
 
     private AtomContainerSet readStructureToACSet(File aFile) throws FileNotFoundException {
@@ -161,12 +161,14 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     @Test
     public void markRingsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         IAtomContainer tmpRingsAC = this.testStructuresList.get(0);
+        this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpRingsAC);
+        this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpRingsAC);
 
 
         //protected methods & variables -> test class extends origin class
         //problem: marking on local(ASF) private variables
         //ToDo: write test structure in fragmenter arrays; create array for comparison with expected markings
-        this.basicAlkylStructureFragmenter.markRings(tmpRingsAC);
+        this.basicAlkylStructureFragmenter.markRings(tmpRingsAC, this.testAtomArray, this.testBondArray);
         //ToDo: find way to compare structures without extracting tested substructures
     }
     /**
