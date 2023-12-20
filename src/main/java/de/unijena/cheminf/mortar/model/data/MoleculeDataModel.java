@@ -56,9 +56,6 @@ public class MoleculeDataModel {
      */
     private String uniqueSmiles;
     //
-    /**
-     * Property whether the molecule is selected or not.
-     */
     private BooleanProperty selection;
     //
     /**
@@ -116,8 +113,10 @@ public class MoleculeDataModel {
         this.properties = aPropertyMap;
         this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
-        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
-        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
+        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
     }
     //
     /**
@@ -192,7 +191,7 @@ public class MoleculeDataModel {
      * @return BooleanProperty
      */
     public BooleanProperty selectionProperty(){
-        return selection;
+        return this.selection;
     }
     //
     /**

@@ -72,6 +72,16 @@ public abstract class BasePreference implements IPreference {
     protected String guid;
     //</editor-fold>
     //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Protected parameter-less constructor that simply calls super() (Object class default constructor).
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    protected BasePreference() {
+        super();
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public abstract methods">
     @Override
     public abstract IPreference clone() throws CloneNotSupportedException;

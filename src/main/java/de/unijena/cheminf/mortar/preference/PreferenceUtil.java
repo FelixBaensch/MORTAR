@@ -47,6 +47,15 @@ public final class PreferenceUtil {
     private static final Logger LOGGER = Logger.getLogger(PreferenceUtil.class.getName());
     //</editor-fold>
     //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private PreferenceUtil() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
      * Tests whether the given string would be allowed as name of a new preference object.

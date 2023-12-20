@@ -29,6 +29,15 @@ import java.util.regex.Pattern;
  * @version 1.0.0.0
  */
 public final class BasicDefinitions {
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private BasicDefinitions() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Minimum system requirements">
     /**
      * Minimum java version to run MORTAR

@@ -81,6 +81,15 @@ public class GuiUtil {
     private static final Logger LOGGER = Logger.getLogger(GuiUtil.class.getName());
     //</editor-fold>
     //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private GuiUtil() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
      * Creates and shows an alert with arbitrary alert type.

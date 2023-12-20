@@ -140,14 +140,9 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     private SugarRemovalUtility sugarRUInstance;
     //</editor-fold>
     //<editor-fold desc="Private final variables">
-    /**
-     * A property that has a constant name from SRUFragmenterReturnedFragmentsOption enum as value.
-     */
+
     private final SimpleEnumConstantNameProperty returnedFragmentsSetting;
 
-    /**
-     * A property that has a constant name from SugarTypeToRemoveOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty sugarTypeToRemoveSetting;
 
     /**
@@ -155,65 +150,28 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
-    /**
-     * Property wrapping the 'detect circular sugars only with glycosidic bond' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
 
-    /**
-     * Property wrapping the 'remove only terminal sugars' setting of the SRU.
-     */
     private final SimpleBooleanProperty removeOnlyTerminalSugarsSetting;
 
-    /**
-     * Property wrapping the 'preservation mode' setting of the SRU; has a constant from the
-     * SugarRemovalUtility.PreservationModeOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty preservationModeSetting;
 
-    /**
-     * Property wrapping the 'preservation mode threshold' setting of the SRU.
-     */
     private final SimpleIntegerProperty preservationModeThresholdSetting;
 
-    /**
-     * Property wrapping the 'detect circular sugars only with enough exocyclic oxygen atoms' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting;
 
-    /**
-     * Property wrapping the 'exocyclic oxygen atoms to atoms in ring ratio threshold' setting of the SRU.
-     */
     private final SimpleDoubleProperty exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting;
 
-    /**
-     * Property wrapping the 'detect linear sugars in rings' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectLinearSugarsInRingsSetting;
 
-    /**
-     * Property wrapping the 'linear sugar candidates minimum size' setting of the SRU.
-     */
     private final SimpleIntegerProperty linearSugarCandidateMinimumSizeSetting;
 
-    /**
-     * Property wrapping the 'linear sugar candidates maximum size' setting of the SRU.
-     */
     private final SimpleIntegerProperty linearSugarCandidateMaximumSizeSetting;
 
-    /**
-     * Property wrapping the 'detect linear acidic sugars' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectLinearAcidicSugarsSetting;
 
-    /**
-     * Property wrapping the 'detect spiro rings as circular sugars' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectSpiroRingsAsCircularSugarsSetting;
 
-    /**
-     * Property wrapping the 'detect circular sugars with keto groups' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectCircularSugarsWithKetoGroupsSetting;
 
     /**
@@ -502,6 +460,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the returned fragments setting that can be used to configure this setting.
+     * A property that has a constant name from SRUFragmenterReturnedFragmentsOption enum as value.
      *
      * @return property object of the returned fragments setting
      */
@@ -529,6 +488,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the sugar type to remove setting that can be used to configure this setting.
+     * A property that has a constant name from SugarTypeToRemoveOption enum as value.
      *
      * @return property object of the sugar type to remove setting
      */
@@ -593,7 +553,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the preservation mode setting that can be used to configure this setting.
-     *
+     * It has a constant from the SugarRemovalUtility.PreservationModeOption enum as value.
      * @return property object of the preservation mode setting
      */
     public SimpleEnumConstantNameProperty preservationModeSettingProperty() {
