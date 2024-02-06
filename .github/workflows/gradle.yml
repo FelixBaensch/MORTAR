@@ -9,9 +9,9 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ "master", "dev-jonas", "production", "efgf-artifact-integration" ]
+    branches: [ "master", "dev-jonas", "production" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "production" ]
 
 permissions:
   contents: read
