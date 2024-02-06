@@ -82,10 +82,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         FULL_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.NO_GENERALIZATION),
 
         /**
-         * Return only the marked atoms of a functional group, no environment. The EFGF mode for generalization is
-         * associated but the returned FG need additional processing to only return the marked atoms.
+         * Return only the marked atoms of a functional group, no environment.
          */
-        NO_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.DEFAULT);
+        NO_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.ONLY_MARKED_ATOMS);
 
         /**
          * The ErtlFunctionalGroupsFinder mode to use in the respective cases.
@@ -811,13 +810,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         List<IAtomContainer> tmpNonFGFragments = null;
         try {
             //generate FG fragments using EFGF
-            if (this.environmentModeSetting.get().equals(FGEnvOption.NO_ENVIRONMENT.name())) {
-                //extract only marked atoms, use implemented utility method from EFGFUtilities
-                tmpFunctionalGroupFragments = ErtlFunctionalGroupsFinderUtility.findMarkedAtoms(tmpMoleculeClone);
-            } else {
-                //generalization or full environment, can both be handled by EFGF alone
-                tmpFunctionalGroupFragments = this.ertlFGFInstance.find(tmpMoleculeClone, false);
-            }
+            tmpFunctionalGroupFragments = this.ertlFGFInstance.find(tmpMoleculeClone, false);
             if (!tmpFunctionalGroupFragments.isEmpty()) {
                 for (IAtomContainer tmpFunctionalGroup : tmpFunctionalGroupFragments) {
                     //post-processing FG fragments
@@ -930,10 +923,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             return aMolecule.clone();
         }
         IAtomContainer tmpPreprocessedMolecule = aMolecule.clone();
-        if (ErtlFunctionalGroupsFinderUtility.isStructureUnconnected(tmpPreprocessedMolecule)) {
+        if (ErtlFunctionalGroupsFinder.isStructureUnconnected(tmpPreprocessedMolecule)) {
             tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.selectBiggestUnconnectedComponent(tmpPreprocessedMolecule);
         }
-        if (ErtlFunctionalGroupsFinderUtility.isMoleculeCharged(tmpPreprocessedMolecule)) {
+        if (ErtlFunctionalGroupsFinder.containsChargedAtom(tmpPreprocessedMolecule)) {
             try {
                 ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpPreprocessedMolecule);
             } catch (CDKException anException) {
