@@ -6,6 +6,7 @@
 [![GitHub release](https://img.shields.io/github/release/FelixBaensch/MORTAR.svg)](https://github.com/FelixBaensch/MORTAR/releases/)
 [![build](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml/badge.svg)](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FelixBaensch_MORTAR&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FelixBaensch_MORTAR)
+[![Software Article - JChemInf](https://img.shields.io/badge/Software_Article-JChemInf-blue)](https://doi.org/10.1186/s13321-022-00674-9)
 
 ![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_cut.png)
 # MOlecule fRagmenTAtion fRamework (MORTAR)
@@ -43,15 +44,15 @@ The scientific article describing MORTAR can be found here:
 
 ## Contents of this repository
 ### Sources
-The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/src">"src"</a> subfolder contains all source code packages including JUnit tests.
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/main/src">"src"</a> subfolder contains all source code packages including JUnit tests.
 
 ### Tutorial
-The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/Tutorial">"Tutorial" folder</a> contains a PDF document 
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/main/Tutorial">"Tutorial" folder</a> contains a PDF document 
 with a detailed tutorial on how to install and use MORTAR, together with
 a test data set. 
 
 ### Images
-The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/Images">"Images" folder</a> contains the MORTAR logo and 
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/main/Images">"Images" folder</a> contains the MORTAR logo and 
 icon as image files that were created by <a href="https://github.com/Kohulan">Kohulan Rajan</a>.
 If you are using MORTAR for your own projects, feel free to acknowledge it by using the logo in your presentations etc.
 
@@ -68,7 +69,7 @@ executable, start, and follow the instructions to install MORTAR. Note that the 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
 located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.1.1.0\bin" or the path specified at 
-installation). To start MORTAR, double click the created shortcut. MORTAR can be uninstalled by the provided 
+installation). To start MORTAR, double-click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>
 As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
@@ -93,7 +94,7 @@ execute the JAR from the command-line using</p>
 
 <p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.1.1.0.jar</code></p>
 
-A JDK or JRE of version 17.0.4 or higher needs to be installed on your system and linked to the "java" command. 
+A JDK or JRE of version 17.0.4 or higher (v21.0.1 for the upcoming release) needs to be installed on your system and linked to the "java" command. 
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.<br>
 
 <p>Please note that MORTAR only supports x64 (on all three platforms) and AArch64 (on macOS and Linux) architectures in general. 
@@ -106,15 +107,15 @@ have to be made there to run Java GUI applications.
 ### Source code
 This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
 clone the repository and open it in a Gradle-supporting IDE (e.g. IntelliJ) as a Gradle project and execute the 
-build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 17.0.4 
+build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 21.0.1 
 or higher must also be pre-installed and set as project JDK / project compiler.
 The Gradle build process is configured to include a specific Java Runtime Environment (JRE) in the "install" folder.
-For this to work, you need to create an "AdoptOpenJDK\jdk-17.0.4_8_jre\" folder and put the JRE with the specified version 
-into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", "conf", "legal", "lib", etc.).
+For this to work, you need to create an "AdoptOpenJDK\jdk-21.0.1_12_jre\" folder and put the JRE with the specified version 
+into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be "bin", "conf", "legal", "lib", etc.).
 
 ## Dependencies
 **Needs to be pre-installed:**
-* Java Development Kit (JDK) version 17.0.4 or higher
+* Java Development Kit (JDK) version 21.0.1 or higher
     * [Adoptium Open JDK](https://adoptium.net) (as one possible source of the JDK)
 * Gradle version 8.5
     * [Gradle Build Tool](https://gradle.org)
