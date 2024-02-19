@@ -291,14 +291,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
-    /**
-     * A property that has a constant name from the FGEnvOption enum as value.
-     */
+    //note: since Java 21, the javadoc build complains about "double comments" when there is a comment
+    // for the get method of the property and the private property itself as well
     private final SimpleEnumConstantNameProperty environmentModeSetting;
 
-    /**
-     * A property that has a constant name from the ElectronDonationModelOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty electronDonationModelSetting;
 
     /**
@@ -306,19 +302,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
-    /**
-     * A property that has a constant name from the EFGFFragmenterReturnedFragmentsOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty returnedFragmentsSetting;
 
-    /**
-     * A property that has a constant name from the CycleFinderOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty cycleFinderSetting;
 
-    /**
-     * A property that has a boolean as value saying whether single-atom molecules should be filtered from inputs.
-     */
     private final SimpleBooleanProperty filterSingleAtomsSetting;
 
     /**

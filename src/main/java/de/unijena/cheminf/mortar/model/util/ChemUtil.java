@@ -61,6 +61,15 @@ public final class ChemUtil {
      */
     private static final Logger LOGGER = Logger.getLogger(ChemUtil.class.getName());
     //</editor-fold>
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private ChemUtil() {
+    }
+    //</editor-fold>
+    //
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**

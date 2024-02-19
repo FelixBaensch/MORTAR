@@ -116,6 +116,15 @@ public final class LogUtil {
     private static ArrayList<Exception> storedExceptions;
     //</editor-fold>
     //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private LogUtil() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public static synchronized methods">
     /**
      * Configures the root logger called by all other loggers in the application not to print to console but to write

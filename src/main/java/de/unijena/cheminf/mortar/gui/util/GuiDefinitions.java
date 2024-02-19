@@ -31,6 +31,14 @@ import javafx.scene.input.KeyCombination;
  * @version 1.0.0.0
  */
 public final class GuiDefinitions {
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private GuiDefinitions() {
+    }
+    //</editor-fold>
 
     /**
      * Value for the GUI insets
