@@ -1,6 +1,0 @@
-SMILES String;NAME
-INVALID;Nona-2,6-dienal
-CC(C)(C)O;tert-Butanol
-O=C1OC2(O)C(=C1C)CC3(C)C(C(=O)CCC3C)C2;Istanbulin A
-INVALID;Acetic acid
-[O-][N+](=NO)C(CO)C(C)C;Valdiazen
