@@ -9,7 +9,7 @@
 [![Software Article - JChemInf](https://img.shields.io/badge/Software_Article-JChemInf-blue)](https://doi.org/10.1186/s13321-022-00674-9)
 [![Tutorial - Online](https://img.shields.io/badge/Tutorial-Online-2ea44f)](https://felixbaensch.github.io/MORTAR/Tutorial/MORTAR_Tutorial.pdf)
 
-![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_cut.png)
+![MORTAR_logo](.\Images\Mortar_Logo1_cut.png)
 # MOlecule fRagmenTAtion fRamework (MORTAR)
 See the GitHub repository here: [https://github.com/FelixBaensch/MORTAR](https://github.com/FelixBaensch/MORTAR)
 <br>
