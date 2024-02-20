@@ -20,11 +20,6 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-/**
- * TODO:
- * -
- */
-
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
@@ -38,7 +33,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
@@ -82,10 +76,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         FULL_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.NO_GENERALIZATION),
 
         /**
-         * Return only the marked atoms of a functional group, no environment. The EFGF mode for generalization is
-         * associated but the returned FG need additional processing to only return the marked atoms.
+         * Return only the marked atoms of a functional group, no environment.
          */
-        NO_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.DEFAULT);
+        NO_ENVIRONMENT(ErtlFunctionalGroupsFinder.Mode.ONLY_MARKED_ATOMS);
 
         /**
          * The ErtlFunctionalGroupsFinder mode to use in the respective cases.
@@ -251,6 +244,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public static final boolean FILTER_SINGLE_ATOMS_OPTION_DEFAULT = true;
 
     /**
+     * Default option for whether input restrictions (no metal, metalloids, pseudo atoms, charges or unconnected structures) should be applied.
+     */
+    public static final boolean APPLY_INPUT_RESTRICTIONS_OPTION_DEFAULT = false;
+
+    /**
      * Cycle finder algorithm that is used should the set option cause an IntractableException.
      */
     public static final CycleFinder AUXILIARY_CYCLE_FINDER = Cycles.cdkAromaticSet();
@@ -291,6 +289,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
+
     //note: since Java 21, the javadoc build complains about "double comments" when there is a comment
     // for the get method of the property and the private property itself as well
     private final SimpleEnumConstantNameProperty environmentModeSetting;
@@ -307,6 +306,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     private final SimpleEnumConstantNameProperty cycleFinderSetting;
 
     private final SimpleBooleanProperty filterSingleAtomsSetting;
+
+    private final SimpleBooleanProperty applyInputRestrictionsSetting;
 
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
@@ -329,7 +330,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public ErtlFunctionalGroupsFinderFragmenter() {
-        int tmpNumberOfSettingsForTooltipMapSize= 6;
+        int tmpNumberOfSettingsForTooltipMapSize= 7;
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -446,13 +447,18 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT);
         this.settingNameTooltipTextMap.put(this.filterSingleAtomsSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.filterSingleAtomsSetting.tooltip"));
-        this.settings = new ArrayList<Property>(6);
+        this.applyInputRestrictionsSetting = new SimpleBooleanProperty(this, "Apply input restrictions setting",
+                ErtlFunctionalGroupsFinderFragmenter.APPLY_INPUT_RESTRICTIONS_OPTION_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.applyInputRestrictionsSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.applyInputRestrictionsSetting.tooltip"));
+        this.settings = new ArrayList<Property>(7);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.electronDonationModelSetting);
         this.settings.add(this.cycleFinderSetting);
         this.settings.add(this.environmentModeSetting);
         this.settings.add(this.returnedFragmentsSetting);
         this.settings.add(this.filterSingleAtomsSetting);
+        this.settings.add(this.applyInputRestrictionsSetting);
     }
     //</editor-fold>
     //
@@ -584,6 +590,24 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public SimpleBooleanProperty filterSingleAtomsSettingProperty() {
         return this.filterSingleAtomsSetting;
     }
+
+    /**
+     * Returns the boolean value of the apply strict input restrictions setting.
+     *
+     * @return true if strict input restrictions are applied to the input molecules
+     */
+    public boolean getApplyInputRestrictionsSetting() {
+        return this.applyInputRestrictionsSetting.get();
+    }
+
+    /**
+     * Returns the property object of the apply strict input restrictions setting that can be used to configure this setting.
+     *
+     * @return property object of the apply strict input restrictions setting
+     */
+    public SimpleBooleanProperty applyInputRestrictionsSettingProperty() {
+        return this.applyInputRestrictionsSetting;
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public properties set">
@@ -706,6 +730,17 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     public void setFilterSingleAtomsSetting(boolean aBoolean) {
         this.filterSingleAtomsSetting.set(aBoolean);
     }
+
+    /**
+     * Sets the apply strict input restrictions setting. If true, molecules containing metal, metalloid, or pseudo atoms,
+     * formal charges, or multiple unconnected parts are filtered from the input
+     * molecules and no functional groups are determined for them.
+     *
+     * @param aBoolean true if strict input restrictions should be applied; false otherwise
+     */
+    public void setApplyInputRestrictionsSetting(boolean aBoolean) {
+        this.applyInputRestrictionsSetting.set(aBoolean);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
@@ -764,6 +799,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
         tmpCopy.setReturnedFragmentsSetting(this.returnedFragmentsSetting.get());
         tmpCopy.setFilterSingleAtomsSetting(this.filterSingleAtomsSetting.get());
+        tmpCopy.setApplyInputRestrictionsSetting(this.applyInputRestrictionsSetting.get());
         return tmpCopy;
     }
 
@@ -780,6 +816,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
         this.returnedFragmentsSetting.set(ErtlFunctionalGroupsFinderFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name());
         this.filterSingleAtomsSetting.set(ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT);
+        this.applyInputRestrictionsSetting.set(ErtlFunctionalGroupsFinderFragmenter.APPLY_INPUT_RESTRICTIONS_OPTION_DEFAULT);
     }
 
     @Override
@@ -793,13 +830,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         }
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
-        try {
-            ErtlFunctionalGroupsFinderUtility.perceiveAtomTypesAndConfigureAtoms(tmpMoleculeClone);
-            ErtlFunctionalGroupsFinderUtility.applyAromaticityDetection(tmpMoleculeClone, this.aromaticityModelInstance);
-        } catch (CDKException anException) {
-            this.logger.log(Level.WARNING, anException.toString(), anException);
-            throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
-        }
+        //throws IllegalArgumentException if anything goes wrong
+        ErtlFunctionalGroupsFinder.applyPreprocessing(tmpMoleculeClone, this.aromaticityModelInstance);
         int tmpInitialCapacityForIdToAtomMap = CollectionUtil.calculateInitialHashCollectionCapacity(tmpMoleculeClone.getAtomCount(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(tmpInitialCapacityForIdToAtomMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (int i = 0; i < tmpMoleculeClone.getAtomCount(); i++) {
@@ -811,13 +843,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         List<IAtomContainer> tmpNonFGFragments = null;
         try {
             //generate FG fragments using EFGF
-            if (this.environmentModeSetting.get().equals(FGEnvOption.NO_ENVIRONMENT.name())) {
-                //extract only marked atoms, use implemented utility method from EFGFUtilities
-                tmpFunctionalGroupFragments = ErtlFunctionalGroupsFinderUtility.findMarkedAtoms(tmpMoleculeClone);
-            } else {
-                //generalization or full environment, can both be handled by EFGF alone
-                tmpFunctionalGroupFragments = this.ertlFGFInstance.find(tmpMoleculeClone, false);
-            }
+            tmpFunctionalGroupFragments = this.ertlFGFInstance.find(tmpMoleculeClone, false, this.applyInputRestrictionsSetting.get());
             if (!tmpFunctionalGroupFragments.isEmpty()) {
                 for (IAtomContainer tmpFunctionalGroup : tmpFunctionalGroupFragments) {
                     //post-processing FG fragments
@@ -896,15 +922,19 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
-        //throws NullpointerException if molecule is null
-        return ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(aMolecule, this.filterSingleAtomsSetting.get());
+        if (this.filterSingleAtomsSetting.get() && ErtlFunctionalGroupsFinderUtility.isAtomOrBondCountZero(aMolecule)) {
+            return true;
+        }
+        if (this.applyInputRestrictionsSetting.get()) {
+            return !ErtlFunctionalGroupsFinder.isValidInputMoleculeWithRestrictionsTurnedOn(aMolecule);
+        }
+        return false;
     }
 
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        //throws NullpointerException if molecule is null
-        return ErtlFunctionalGroupsFinderUtility.shouldBePreprocessed(aMolecule);
+        return false;
     }
 
     @Override
@@ -912,11 +942,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
-        if (tmpShouldBeFiltered || tmpShouldBePreprocessed) {
-            return false;
-        }
-        //throws NullpointerException if molecule is null
-        return ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule, this.filterSingleAtomsSetting.get());
+        return !(tmpShouldBeFiltered || tmpShouldBePreprocessed);
     }
 
     @Override
@@ -926,19 +952,22 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         }
+        return aMolecule.clone();
+        //Deprecated!
+        /*
         if (!this.shouldBePreprocessed(aMolecule)) {
             return aMolecule.clone();
         }
         IAtomContainer tmpPreprocessedMolecule = aMolecule.clone();
-        if (ErtlFunctionalGroupsFinderUtility.isStructureUnconnected(tmpPreprocessedMolecule)) {
+        if (ErtlFunctionalGroupsFinder.isStructureUnconnected(tmpPreprocessedMolecule)) {
             tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.selectBiggestUnconnectedComponent(tmpPreprocessedMolecule);
         }
-        if (ErtlFunctionalGroupsFinderUtility.isMoleculeCharged(tmpPreprocessedMolecule)) {
+        if (ErtlFunctionalGroupsFinder.containsChargedAtom(tmpPreprocessedMolecule)) {
             try {
                 ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpPreprocessedMolecule);
             } catch (CDKException anException) {
                 this.logger.log(Level.WARNING, anException.toString(), anException);
-                throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
+                throw new IllegalArgumentException("Unexpected error at charge neutralization: " + anException.toString());
             }
         }
         if (Objects.isNull(tmpPreprocessedMolecule)) {
@@ -946,6 +975,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         } else {
             return tmpPreprocessedMolecule;
         }
+        */
     }
     //</editor-fold>
     //

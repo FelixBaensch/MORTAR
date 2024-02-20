@@ -1173,6 +1173,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         if (!this.shouldBePreprocessed(aMolecule)) {
             return aMolecule.clone();
         }
+        //Todo I (Jonas) would like to remove any preprocessing done by the fragmenters as soon as possible, i.e. as soon as we have central preprocessing functionalities available
         if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
             if (!tmpIsConnected) {
