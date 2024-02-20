@@ -194,12 +194,12 @@ public interface IMoleculeFragmenter {
     public boolean shouldBeFiltered(IAtomContainer aMolecule);
 
     /**
-     * Returns true if the given molecule can be fragmented by the respective algorithm after preprocessing. Returns
-     * false if the given molecule can be directly fragmented by the algorithm without preprocessing.
-     * Does not check whether the molecule should be filtered! But throws an exception if it is null.
+     * Returns true if the given molecule can be fragmented by the respective algorithm *after preprocessing*.
+     * Does not check whether the molecule should be filtered! It is advised to check via shouldBeFiltered() whether
+     * the given molecule should be discarded anyway before calling this function.
      *
      * @param aMolecule the molecule to check
-     * @return true if the molecule needs to be preprocessed, false if it can be fragmented directly
+     * @return true if the molecule needs to be preprocessed
      * @throws NullPointerException if the molecule is null
      */
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException;

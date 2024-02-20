@@ -928,22 +928,19 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
-        //throws NullpointerException if molecule is null
         if (this.filterSingleAtomsSetting.get() && ErtlFunctionalGroupsFinderUtility.isAtomOrBondCountZero(aMolecule)) {
             return true;
         }
         if (this.applyInputRestrictionsSetting.get()) {
-            return ErtlFunctionalGroupsFinderUtility.shouldBeFiltered(aMolecule, this.filterSingleAtomsSetting.get());
-        } else {
-            return false;
+            return !ErtlFunctionalGroupsFinder.isValidInputMoleculeWithRestrictionsTurnedOn(aMolecule);
         }
+        return false;
     }
 
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        //throws NullpointerException if molecule is null
-        return ErtlFunctionalGroupsFinderUtility.shouldBePreprocessed(aMolecule);
+        return false;
     }
 
     @Override
@@ -951,11 +948,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
-        if (tmpShouldBeFiltered || tmpShouldBePreprocessed) {
-            return false;
-        }
-        //throws NullpointerException if molecule is null
-        return ErtlFunctionalGroupsFinderUtility.isValidArgumentForFindMethod(aMolecule, this.filterSingleAtomsSetting.get());
+        return !(tmpShouldBeFiltered || tmpShouldBePreprocessed);
     }
 
     @Override
@@ -965,6 +958,9 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         }
+        return aMolecule.clone();
+        //Deprecated!
+        /*
         if (!this.shouldBePreprocessed(aMolecule)) {
             return aMolecule.clone();
         }
@@ -977,7 +973,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpPreprocessedMolecule);
             } catch (CDKException anException) {
                 this.logger.log(Level.WARNING, anException.toString(), anException);
-                throw new IllegalArgumentException("Unexpected error at aromaticity detection: " + anException.toString());
+                throw new IllegalArgumentException("Unexpected error at charge neutralization: " + anException.toString());
             }
         }
         if (Objects.isNull(tmpPreprocessedMolecule)) {
@@ -985,6 +981,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         } else {
             return tmpPreprocessedMolecule;
         }
+        */
     }
     //</editor-fold>
     //
