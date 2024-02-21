@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
@@ -25,7 +30,6 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
-import de.unijena.cheminf.scaffoldGenerator.ScaffoldGenerator;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -37,6 +41,7 @@ import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.scaffold.ScaffoldGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +52,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Wrapper class that makes the <a href="https://github.com/Julian-Z98/ScaffoldGenerator">ScaffoldGenerator</a>
+ * Wrapper class that makes the <a href="https://github.com/cdk/cdk-scaffold">CDK Scaffold module</a> functionality
  * available in MORTAR.
  *
  * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
@@ -193,7 +198,12 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         /**
          * {@link ScaffoldGenerator#getScaffold(IAtomContainer, boolean)} is used.
          */
-        SCAFFOLD_ONLY;
+        SCAFFOLD_ONLY,
+
+        /**
+         * {@link ScaffoldGenerator#getRings(IAtomContainer, boolean)} is used.
+         */
+        RING_DISSECTION;
     }
     //</editor-fold>
     //
@@ -273,43 +283,21 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
-    /**
-     * Property wrapping the 'scaffold mode' setting of the SF.
-     */
+
     private final SimpleEnumConstantNameProperty scaffoldModeSetting;
 
-    /**
-     * Property wrapping the 'determine aromaticity' setting of the SF.
-     */
     private final SimpleBooleanProperty determineAromaticitySetting;
 
-    /**
-     * Property wrapping the 'smiles generator' setting of the SF.
-     */
     private final SimpleEnumConstantNameProperty smilesGeneratorSetting;
 
-    /**
-     * Property wrapping the 'rule seven applied' setting of the SF.
-     */
     private final SimpleBooleanProperty ruleSevenAppliedSetting;
 
-    /**
-     * Property wrapping the 'retain only hybridisations at aromatic bonds setting' setting of the SF.
-     */
     private final SimpleBooleanProperty retainOnlyHybridisationsAtAromaticBondsSetting;
 
-    /**
-     * Property that has a constant name from SideChainOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty sideChainSetting;
-    /**
-     * Property that has a constant name from FragmentationTypeOption enum as value.
-     */
+
     private final SimpleEnumConstantNameProperty fragmentationTypeSetting;
 
-    /**
-     * A property that has a constant name from the CycleFinderOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty cycleFinderSetting;
 
     /**
@@ -317,9 +305,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
-    /**
-     * A property that has a constant name from the ElectronDonationModelOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty electronDonationModelSetting;
 
     /**
@@ -725,6 +710,26 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Public properties get">
     /**
+     * Returns the boolean value of the Scaffold Generator setting whether hybridisations
+     * should only be retained at aromatic bonds (true) or all bonds (false).
+     *
+     * @return true if hybridisations should only be retained at aromatic bonds
+     */
+    public boolean getRetainOnlyHybridisationsAtAromaticBondsSetting() {
+        return this.retainOnlyHybridisationsAtAromaticBondsSetting.get();
+    }
+
+    /**
+     * Returns the property object of the Scaffold Generator setting whether hybridisations
+     * should only be retained at aromatic bonds (true) or all bonds (false).
+     *
+     * @return property object wrapping boolean value if hybridisations should only be retained at aromatic bonds
+     */
+    public SimpleBooleanProperty retainOnlyHybridisationsAtAromaticBondsSetting() {
+        return this.retainOnlyHybridisationsAtAromaticBondsSetting;
+    }
+
+    /**
      * Returns the string representation of the currently set option for the sidechain.
      *
      * @return enum constant name of the set option
@@ -735,6 +740,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the sidechain setting that can be used to configure this setting.
+     * Property that has a constant name from SideChainOption enum as value.
      *
      * @return property object of the returned sidechain setting
      */
@@ -762,6 +768,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the fragmentation type setting that can be used to configure this setting.
+     * Property that has a constant name from FragmentationTypeOption enum as value.
      *
      * @return property object of the returned fragmentation type setting
      */
@@ -930,6 +937,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the cycle finder setting that can be used to configure this setting.
+     * A property that has a constant name from the CycleFinderOption enum as value.
      *
      * @return property object of the cycle finder setting
      */
@@ -1043,12 +1051,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             /*Generate Sidechains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDECHAINS.name()) ||
                     this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDECHAINS.name())) {
-                /*Sidechains without saturation*/
-                if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION.name())) {
-                    tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, false);
-                } else { /*Sidechains with saturation*/
-                    tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, true);
-                }
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+                tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 /*Add SideChain Property*/
                 for(IAtomContainer tmpSideChain : tmpSideChainList) {
                     tmpSideChain.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
@@ -1099,19 +1103,24 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             }
             /*Generate the scaffold only*/
             if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCAFFOLD_ONLY.name())) {
-                /*Scaffold without saturation*/
-                if(this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION.name())) {
-                    IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, false);
-                    //Set Scaffold Property
-                    tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
-                    tmpReturnList.add(tmpScaffold);
-                } else { /*Scaffold with saturation*/
-                    IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, true);
-                    //Set Scaffold Property
-                    tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
-                    tmpReturnList.add(tmpScaffold);
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+                IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
+                //Set Scaffold Property
+                tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                tmpReturnList.add(tmpScaffold);
+            }
+            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.RING_DISSECTION.name())) {
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+                IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
+                tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                        ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
+                tmpReturnList.add(tmpScaffold);
+                List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.getRings(tmpMoleculeClone, tmpSaturateWithHydrogen);
+                for(IAtomContainer tmpFragment : tmpFragmentList) {
+                    tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
+                            ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_PARENT_SCAFFOLD_VALUE);
+                    tmpReturnList.add(tmpFragment);
                 }
             }
         } catch (Exception anException) {
