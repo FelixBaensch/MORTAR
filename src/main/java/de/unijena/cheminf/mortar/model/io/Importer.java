@@ -515,21 +515,15 @@ public class Importer {
             while (!Thread.currentThread().isInterrupted()
                     && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
                 //trying to parse as SMILES code
-                boolean tmpContainsParsableSmilesCode;
                 try {
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 2);
-                    if (!tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isEmpty()) {
-                        tmpMolecule = tmpSmilesParser.parseSmiles(tmpProcessedLineArray[tmpSmilesCodeExpectedPosition]);
-                        tmpContainsParsableSmilesCode = true;
-                        tmpSmilesFileParsableLinesCounter++;
-                    } else {
-                        tmpContainsParsableSmilesCode = false;
-                    }
-                } catch (InvalidSmilesException | IndexOutOfBoundsException anException) {
-                    //case: invalid line or SMILES code
-                    tmpContainsParsableSmilesCode = false;
+                    String tmpSmiles = tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isBlank() ? null :
+                            tmpProcessedLineArray[tmpSmilesCodeExpectedPosition];
+                    //throws exception if SMILES string is null, goes to catch block
+                    tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmiles);
+                    tmpSmilesFileParsableLinesCounter++;
                 }
-                if (!tmpContainsParsableSmilesCode) {
+                catch (InvalidSmilesException | IndexOutOfBoundsException | NullPointerException anException) {
                     int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter;
                     Importer.LOGGER.info("Contains no parsable SMILES string: line " + tmpIndexInFile
                             + " (index).");
