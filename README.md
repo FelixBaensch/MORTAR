@@ -1,12 +1,20 @@
 [![DOI](https://zenodo.org/badge/220207097.svg)](https://zenodo.org/badge/latestdoi/220207097)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-blue.svg)](https://GitHub.com/FelixBaensch/MORTAR/graphs/commit-activity)
 [![GitHub issues](https://img.shields.io/github/issues/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/issues/)
 [![GitHub contributors](https://img.shields.io/github/contributors/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/graphs/contributors/)
 [![GitHub release](https://img.shields.io/github/release/FelixBaensch/MORTAR.svg)](https://github.com/FelixBaensch/MORTAR/releases/)
+[![build](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml/badge.svg)](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FelixBaensch_MORTAR&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FelixBaensch_MORTAR)
+[![Software Article - JChemInf](https://img.shields.io/badge/Software_Article-JChemInf-blue)](https://doi.org/10.1186/s13321-022-00674-9)
+[![Tutorial - Tutorial folder](https://img.shields.io/badge/Tutorial-Tutorial_folder-2ea44f)](https://github.com/FelixBaensch/MORTAR/tree/main/Tutorial)
+[![Tutorial - Online](https://img.shields.io/badge/Tutorial-Online-2ea44f)](https://felixbaensch.github.io/MORTAR/Tutorial/MORTAR_Tutorial.pdf)
 
-![MORTAR_logo](./src/main/resources/de/unijena/cheminf/mortar/images/Mortar_Logo1_cut.png)
+![MORTAR_logo](./Images/Mortar_Logo1_cut.png)
 # MOlecule fRagmenTAtion fRamework (MORTAR)
+
+<br>[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/overall?id=FelixBaensch_MORTAR)
+
 
 ## Contents of this document
 * [Description](#Description)
@@ -28,9 +36,9 @@ molecular fragmentation and substructure analysis. The Java/JavaFX rich-client a
 functions for visualising the fragmentation results of individual compounds or entire compound sets. With several 
 views and analysis functions, MORTAR supports the interpretation of fragmentation results. In addition to three 
 currently integrated methods for fragmentation and substructure analysis - 
-<a href="https://github.com/zielesny/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
+<a href="https://github.com/JonasSchaub/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
 <a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a>, 
-and <a href="https://github.com/Julian-Z98/ScaffoldGenerator">Scaffold Generator</a> - MORTAR allows straightforward integration of 
+and <a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a> - MORTAR allows straightforward integration of 
 additional fragmentation algorithms with automatic generation of settings 
 menus. All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
 The scientific article describing MORTAR can be found here: 
@@ -38,15 +46,15 @@ The scientific article describing MORTAR can be found here:
 
 ## Contents of this repository
 ### Sources
-The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/src">"src"</a> subfolder contains all source code packages including JUnit tests.
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/main/src">"src"</a> subfolder contains all source code packages including JUnit tests.
 
 ### Tutorial
-The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/Tutorial">"Tutorial" folder</a> contains a PDF document 
-with a detailed tutorial on how to install and use MORTAR, together with
-a test data set. 
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/main/Tutorial">"Tutorial" folder</a> contains a PDF document 
+with a detailed tutorial on how to install and use MORTAR, together with a test data set. 
+<br>The tutorial PDF document is also available [online](https://felixbaensch.github.io/MORTAR/Tutorial/MORTAR_Tutorial.pdf).
 
 ### Images
-The <a href="https://github.com/FelixBaensch/MORTAR/tree/master/Images">"Images" folder</a> contains the MORTAR logo and 
+The <a href="https://github.com/FelixBaensch/MORTAR/tree/main/Images">"Images" folder</a> contains the MORTAR logo and 
 icon as image files that were created by <a href="https://github.com/Kohulan">Kohulan Rajan</a>.
 If you are using MORTAR for your own projects, feel free to acknowledge it by using the logo in your presentations etc.
 
@@ -63,7 +71,7 @@ executable, start, and follow the instructions to install MORTAR. Note that the 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
 located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.1.1.0\bin" or the path specified at 
-installation). To start MORTAR, double click the created shortcut. MORTAR can be uninstalled by the provided 
+installation). To start MORTAR, double-click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>
 As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
@@ -88,7 +96,7 @@ execute the JAR from the command-line using</p>
 
 <p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.1.1.0.jar</code></p>
 
-A JDK or JRE of version 17.0.4 or higher needs to be installed on your system and linked to the "java" command. 
+A JDK or JRE of version 17.0.4 or higher (v21.0.1 for the upcoming release) needs to be installed on your system and linked to the "java" command. 
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.<br>
 
 <p>Please note that MORTAR only supports x64 (on all three platforms) and AArch64 (on macOS and Linux) architectures in general. 
@@ -101,24 +109,24 @@ have to be made there to run Java GUI applications.
 ### Source code
 This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
 clone the repository and open it in a Gradle-supporting IDE (e.g. IntelliJ) as a Gradle project and execute the 
-build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 17.0.4 
+build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 21.0.1 
 or higher must also be pre-installed and set as project JDK / project compiler.
 The Gradle build process is configured to include a specific Java Runtime Environment (JRE) in the "install" folder.
-For this to work, you need to create an "AdoptOpenJDK\jdk-17.0.4_8_jre\" folder and put the JRE with the specified version 
-into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", "conf", "legal", "lib", etc.).
+For this to work, you need to create an "AdoptOpenJDK\jdk-21.0.1_12_jre\" folder and put the JRE with the specified version 
+into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be "bin", "conf", "legal", "lib", etc.).
 
 ## Dependencies
 **Needs to be pre-installed:**
-* Java Development Kit (JDK) version 17.0.4 or higher
+* Java Development Kit (JDK) version 21.0.1 or higher
     * [Adoptium Open JDK](https://adoptium.net) (as one possible source of the JDK)
-* Gradle version 7.3
+* Gradle version 8.5
     * [Gradle Build Tool](https://gradle.org)
 
 **Managed by Gradle:**
-* JavaFX version 17.0.2
+* JavaFX version 21.0.1
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
-* Chemistry Development Kit (CDK) version 2.8
+* Chemistry Development Kit (CDK) version 2.9
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
 * JUnit version 5.9.3
@@ -127,7 +135,7 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-17.0.4_8_jre\" need to be "bin", 
 * LibrePDF OpenPDF version 1.3.26
   * [OpenPDF GitHub repository](https://github.com/LibrePDF/OpenPDF)
   * License: GNU Lesser General Public License 2.1
-* Spotless version 6.19
+* Spotless version 6.23
   * [Spotless GitHub repository](https://github.com/diffplug/spotless)
   * License: Apache-2.0 license
 
@@ -164,7 +172,7 @@ fragmentation (Baensch et al. 2023)).
 * [Steinbeck C, Han Y, Kuhn S, Horlacher O, Luttmann E, Willighagen EL. The Chemistry Development Kit (CDK): An Open-Source Java Library for Chemo- and Bioinformatics. J Chem Inform Comput Sci. 2003;43(2):493-500.](https://dx.doi.org/10.1021%2Fci025584y)
 * [Steinbeck C, Hoppe C, Kuhn S, Floris M, Guha R, Willighagen EL. Recent Developments of the Chemistry Development Kit (CDK) - An Open-Source Java Library for Chemo- and Bioinformatics. Curr Pharm Des. 2006; 12(17):2111-2120.](https://doi.org/10.2174/138161206777585274)
 * [May JW and Steinbeck C. Efficient ring perception for the Chemistry Development Kit. J. Cheminform. 2014; 6:3.](https://dx.doi.org/10.1186%2F1758-2946-6-3)
-* [Willighagen EL, Mayfield JW, Alvarsson J, Berg A, Carlsson L, Jeliazkova N, Kuhn S, Pluska T, Rojas-Chertó M, Spjuth O, Torrance G, Evelo CT, Guha R, Steinbeck C, The Chemistry Development Kit (CDK) v2.0: atom typing, depiction, molecular formulas, and substructure searching. J Cheminform. 2017; 9:33.](https://doi.org/10.1186/s13321-017-0220-4)
+* [Willighagen EL, Mayfield JW, Alvarsson J, Berg A, Carlsson L, Jeliazkova N, Kuhn S, Pluskal T, Rojas-Chertó M, Spjuth O, Torrance G, Evelo CT, Guha R, Steinbeck C, The Chemistry Development Kit (CDK) v2.0: atom typing, depiction, molecular formulas, and substructure searching. J Cheminform. 2017; 9:33.](https://doi.org/10.1186/s13321-017-0220-4)
 * [Groovy Cheminformatics with the Chemistry Development Kit](https://github.com/egonw/cdkbook)
 
 ## Acknowledgements
