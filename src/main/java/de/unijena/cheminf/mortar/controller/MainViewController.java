@@ -514,8 +514,10 @@ public class MainViewController {
                     tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
                     this.moleculeDataModelList.add(tmpMoleculeDataModel);
                 }
-                MainViewController.LOGGER.log(Level.INFO, "Imported " + tmpAtomContainerSet.getAtomContainerCount() + " molecules from file: " + tmpImporter.getFileName()
-                        + " " + tmpExceptionCount + " molecules could not be parsed into the internal data model.");
+                MainViewController.LOGGER.log(Level.INFO, "Successfully imported " + tmpAtomContainerSet.getAtomContainerCount()
+                        + " molecules from file: " + tmpImporter.getFileName() + "; " + tmpExceptionCount
+                        + " molecules could not be parsed into the internal data model (SMILES code generation failed). " +
+                        "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.");
                 this.updateStatusBar(this.importerThread, Message.get("Status.imported"));
                 this.isImportRunningProperty.setValue(false);
                 this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");

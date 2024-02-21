@@ -109,8 +109,9 @@ public class Importer {
         Objects.requireNonNull(aSettingsContainer, "Given settings container is null.");
         this.settingsContainer = aSettingsContainer;
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
-        if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
+        if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         this.fileName = null;
     }
@@ -136,6 +137,7 @@ public class Importer {
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         String tmpFilePath = aFile.getPath();
         String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
@@ -191,6 +193,7 @@ public class Importer {
         if(!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpFileChooser.setInitialDirectory(tmpRecentDirectory);
         File tmpFile = null;
@@ -280,7 +283,7 @@ public class Importer {
                 }
                 // molecule just could not be read and has therefore been skipped, restore skip setting for next iteration
                 tmpSDFReader.setSkip(false);
-                Importer.LOGGER.info("Import failed for structure:\t" + tmpCounter + " (index of structure in file).");
+                Importer.LOGGER.log(Level.WARNING, "Import failed for structure:\t" + tmpCounter + " (index of structure in file).");
                 tmpCounter++;
             }
             IAtomContainer tmpAtomContainer = tmpSDFReader.next();
@@ -295,7 +298,7 @@ public class Importer {
         }
         int tmpFailedImportsCount = tmpCounter - tmpAtomContainerSet.getAtomContainerCount();
         if (tmpFailedImportsCount > 0) {
-            Importer.LOGGER.warning("The import from SD file failed for a total of " + tmpFailedImportsCount +
+            Importer.LOGGER.log(Level.WARNING, "The import from SD file failed for a total of " + tmpFailedImportsCount +
                     " structure(s).");
         }
         return tmpAtomContainerSet;
@@ -385,7 +388,7 @@ public class Importer {
         }
         /* note: Things like assigning bond orders and atom types here is redundant if the atom containers
         are discarded after molecule set import and molecular information only represented by SMILES codes in
-        the molecule data models. Nevertheless it is done here to ensure that the generated SMILES codes are correct.
+        the molecule data models. Nevertheless, it is done here to ensure that the generated SMILES codes are correct.
          */
         int tmpExceptionsCounter = 0;
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
@@ -407,7 +410,7 @@ public class Importer {
                 tmpExceptionsCounter++;
             }
         }
-        Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. " + tmpExceptionsCounter + " exceptions occurred.");
+        Importer.LOGGER.log(Level.WARNING, "Imported and preprocessed molecule set. " + tmpExceptionsCounter + " exceptions occurred while processing.");
     }
     //</editor-fold>
     //
