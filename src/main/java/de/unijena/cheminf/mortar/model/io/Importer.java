@@ -257,6 +257,8 @@ public class Importer {
     /**
      * Imports an SD file. If no name can be detected for a structure, the file name extended with the index of the
      * structure in the file is used as name of the structure.
+     * NOTE: if multiple erroneous entries in a row are there in the input file, they are skipped together and not
+     * logged individually!
      *
      * @param aFile sdf
      * @return the imported molecules in an IAtomContainerSet
@@ -264,26 +266,29 @@ public class Importer {
      */
     private IAtomContainerSet importSDFile(File aFile) throws FileNotFoundException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile),
-                SilentChemObjectBuilder.getInstance());
+        /*the IteratingSDFReader is not set to skip erroneous input molecules in its constructor to be able to log them*/
+        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile), SilentChemObjectBuilder.getInstance());
         int tmpCounter = 0;
-        while(!Thread.currentThread().isInterrupted()){
+        while (!Thread.currentThread().isInterrupted()) {
+            //end of file or encountered erroneous entry
             if (!tmpSDFReader.hasNext()) {
+                //skip if it is an erroneous entry
                 tmpSDFReader.setSkip(true);
                 if (!tmpSDFReader.hasNext()) {
-                    // there is no next
+                    // there is no next, end of file!
                     break;
                 }
-                // molecule just could not be read and has therefore been skipped
+                // molecule just could not be read and has therefore been skipped, restore skip setting for next iteration
                 tmpSDFReader.setSkip(false);
                 Importer.LOGGER.info("Import failed for structure:\t" + tmpCounter + " (index of structure in file).");
                 tmpCounter++;
             }
             IAtomContainer tmpAtomContainer = tmpSDFReader.next();
             String tmpName = this.findMoleculeName(tmpAtomContainer);
-            if(tmpName == null || tmpName.isBlank())
+            if(tmpName == null || tmpName.isBlank()) {
                 // the counter here equals the index of the structure in the file
                 tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
+            }
             tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
             tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
             tmpCounter++;
