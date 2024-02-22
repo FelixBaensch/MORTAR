@@ -421,8 +421,10 @@ public class Importer {
     //
     //<editor-fold desc="protected methods" defaultstate="collapsed">
     /**
-     * Imports a SMILES file. This method is able to parse different types of SMILES files, e.g. with and without header
-     * or with only one column or two (SMILES and name/ID, which is in which column is detected).
+     * Imports a SMILES file. This method is able to parse differently formatted SMILES files, e.g. with and without
+     * header or with one or two columns (SMILES and name/ID). If no name can be detected for a structure, the structure
+     * is assigned the name of the file extended with the index of the structure in the file as name.
+     * <br>
      * Protected and not private for testing in class ImporterTest.
      *
      * @param aFile a SMILES codes-containing *.txt or *.smi file
@@ -433,22 +435,23 @@ public class Importer {
     protected IAtomContainerSet importSMILESFile(File aFile) throws IOException {
         try (
                 FileReader tmpSmilesFileReader = new FileReader(aFile);
-                BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader, BasicDefinitions.BUFFER_SIZE)
+                BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader,
+                        BasicDefinitions.BUFFER_SIZE)
         ) {
             IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-            //AtomContainer to save the parsed SMILES in
+            // AtomContainer to save the parsed SMILES in
             IAtomContainer tmpMolecule = new AtomContainer();
             SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             String tmpSmilesFileNextLine = "";
             String tmpSmilesFileDeterminedSeparator = "";
-            String[] tmpProcessedLineArray;
+            String[] tmpProcessedLineArray = null;
             int tmpSmilesCodeExpectedPosition = 0;
             int tmpIDExpectedPosition = 0;
             int tmpSmilesFileParsableLinesCounter = 0;
             int tmpSmilesFileInvalidLinesCounter = 0;
-            //marking the BufferedReader to reset the reader after checking the format and determining the separator
+            // marking the BufferedReader to reset the reader after checking the format and determining the separator
             tmpSmilesFileBufferedReader.mark(BasicDefinitions.BUFFER_SIZE);
-            //as potential headline the first line should be avoided for separator determination
+            // as potential headline the first line should be avoided for separator determination
             String tmpSmilesFileFirstLine = tmpSmilesFileBufferedReader.readLine();
             /*  first block
                 Checking for parsable SMILES code and saving the determined separator (if one is used).
@@ -459,7 +462,7 @@ public class Importer {
             findSeparatorLoop:
             while (!Thread.currentThread().isInterrupted() && tmpFilesLine <= 3) {
                 if ((tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) == null) {
-                    //if the file's end is reached at this point, the first line is used to determine the separator
+                    // if the file's end is reached at this point, the first line is used to determine the separator
                     if (tmpSmilesFileFirstLine != null || !tmpSmilesFileFirstLine.isEmpty()) {
                         tmpSmilesFileNextLine = tmpSmilesFileFirstLine;
                         tmpSmilesFileFirstLine = null;
@@ -468,7 +471,8 @@ public class Importer {
                     }
                 }
                 for (String tmpSeparator : BasicDefinitions.POSSIBLE_SMILES_FILE_SEPARATORS) {
-                    //maximum of two array elements expected, otherwise the separator or the line itself are assumed to be invalid
+                    // maximum of two array elements expected, otherwise the separator or the line itself are assumed
+                    // to be invalid
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator, 3);
                     if (tmpProcessedLineArray.length > 2) {
                         continue;
@@ -486,9 +490,8 @@ public class Importer {
                                 if (tmpProcessedLineArray.length > 1) {
                                     if (tmpSmilesCodeExpectedPosition == 0) {
                                         tmpIDExpectedPosition = 1;
-                                    } else {
-                                        tmpIDExpectedPosition = 0;
                                     }
+                                    // else: tmpIDExpectedPosition = 0;
                                 }
                                 break findSeparatorLoop;
                             }
@@ -506,20 +509,24 @@ public class Importer {
             tmpSmilesFileBufferedReader.reset();
             tmpSmilesFileBufferedReader.mark(0);    //to avoid the memory of unnecessary data
             /*  second block
-                Reading the file line by line and adding an AtomContainer to the AtomContainerSet for each line with parsable SMILES code
+                Reading the file line by line and adding an AtomContainer to the AtomContainerSet for each line with
+                parsable SMILES code
              */
-            while (!Thread.currentThread().isInterrupted() && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
+            while (!Thread.currentThread().isInterrupted()
+                    && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
                 //trying to parse as SMILES code
                 try {
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 2);
-                    if (!tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isEmpty()) {
-                        tmpMolecule = tmpSmilesParser.parseSmiles(tmpProcessedLineArray[tmpSmilesCodeExpectedPosition]);
-                        tmpSmilesFileParsableLinesCounter++;
-                    } else {
-                        tmpSmilesFileInvalidLinesCounter++;
-                        continue;
-                    }
-                } catch (InvalidSmilesException | IndexOutOfBoundsException anException) {  //case: invalid line or SMILES code
+                    String tmpSmiles = tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isBlank() ? null :
+                            tmpProcessedLineArray[tmpSmilesCodeExpectedPosition];
+                    //throws exception if SMILES string is null, goes to catch block
+                    tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmiles);
+                    tmpSmilesFileParsableLinesCounter++;
+                }
+                catch (InvalidSmilesException | IndexOutOfBoundsException | NullPointerException anException) {
+                    int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter;
+                    Importer.LOGGER.info("Contains no parsable SMILES string: line " + tmpIndexInFile
+                            + " (index).");
                     tmpSmilesFileInvalidLinesCounter++;
                     continue;
                 }
@@ -528,14 +535,17 @@ public class Importer {
                 if (tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].isEmpty()) {
                     tmpName = tmpProcessedLineArray[tmpIDExpectedPosition];
                 } else {
-                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpSmilesFileParsableLinesCounter;
+                    int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter - 1;
+                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpIndexInFile;
                 }
                 tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
                 //adding tmpMolecule to the AtomContainerSet
                 tmpAtomContainerSet.addAtomContainer(tmpMolecule);
             }
-            Importer.LOGGER.log(Level.INFO, "\tSmilesFile ParsableLinesCounter:\t" + tmpSmilesFileParsableLinesCounter +
-                    "\n\tSmilesFile InvalidLinesCounter:\t\t" + tmpSmilesFileInvalidLinesCounter);
+            if (tmpSmilesFileInvalidLinesCounter > 0) {
+                Importer.LOGGER.info("\tSmilesFile ParsableLinesCount:\t" + tmpSmilesFileParsableLinesCounter +
+                        "\n\tSmilesFile InvalidLinesCount:\t" + tmpSmilesFileInvalidLinesCounter);
+            }
             return tmpAtomContainerSet;
         }
     }
