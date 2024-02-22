@@ -30,9 +30,9 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
+
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Locale;
