@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: MORTAR
-version: 1.0.6.0
+version: 1.1.1.0
 message: "If you use this software, please cite it as below."
 type: software
 authors:
@@ -26,9 +26,9 @@ authors:
     given-names: "Achim"    
     orcid: "https://orcid.org/0000-0003-0722-4229"
 doi: "10.5281/zenodo.6984804"
-date-released: 2022-11-09
+date-released: 2023-06-27
 url: "https://github.com/FelixBaensch/MORTAR"
-license: GPL-3.0
+license: MIT
 references:
   - authors:
       - family-names: "Baensch"
@@ -52,9 +52,11 @@ references:
       - family-names: "Zielesny"
         given-names: "Achim"
         orcid: "https://orcid.org/0000-0003-0722-4229"
-    doi: "10.26434/chemrxiv-2022-zgg8s"
-    journal: "ChemRxiv"
-    scope: "Cite this preprint if you want to reference the general concepts of the software."
-    title: "MORTAR - A Rich Client Application for in silico Molecule Fragmentation"
+    doi: "10.1186/s13321-022-00674-9"
+    journal: "J Cheminform"
+    scope: "Cite this article if you want to reference the general concepts of the software."
+    title: "MORTAR: a rich client application for in silico molecule fragmentation"
     type: article
-    year: 2022
+    year: 2023
+    volume: 15
+    issue: 1

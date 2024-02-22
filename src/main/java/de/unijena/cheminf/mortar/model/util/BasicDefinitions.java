@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.util;
@@ -29,6 +34,15 @@ import java.util.regex.Pattern;
  * @version 1.0.0.0
  */
 public final class BasicDefinitions {
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private BasicDefinitions() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Minimum system requirements">
     /**
      * Minimum java version to run MORTAR
@@ -75,7 +89,7 @@ public final class BasicDefinitions {
     /**
      * Possible SMILES file separators used to separate SMILES code from ID
      */
-    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {"\t", ";", ",", " "};
+    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {"|", "\t", ";", ",", " "};
     //</editor-fold>
     //
     // <editor-fold defaultstate="collapsed" desc="Buffer">
@@ -144,7 +158,7 @@ public final class BasicDefinitions {
     /**
      * Version of application
      */
-    public static final String MORTAR_VERSION = "1.0.6.0";
+    public static final String MORTAR_VERSION = "1.1.1.0";
     //</editor-fold>
     //
     //<editor-fold desc="GitHub repository url">
@@ -186,5 +200,9 @@ public final class BasicDefinitions {
      * Default distance between image and text
      */
     public static final int DEFAULT_IMAGE_TEXT_DISTANCE = 15;
+    /**
+     * Default load factor for HashMap and HashSet instances, defined based on default value given in the Java documentation.
+     */
+    public static final float DEFAULT_HASH_COLLECTION_LOAD_FACTOR = 0.75f;
     //</editor-fold>
 }

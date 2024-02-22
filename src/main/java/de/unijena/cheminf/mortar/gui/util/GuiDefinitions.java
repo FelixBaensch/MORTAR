@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.gui.util;
@@ -31,6 +36,14 @@ import javafx.scene.input.KeyCombination;
  * @version 1.0.0.0
  */
 public final class GuiDefinitions {
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private GuiDefinitions() {
+    }
+    //</editor-fold>
 
     /**
      * Value for the GUI insets
@@ -113,50 +126,6 @@ public final class GuiDefinitions {
      */
     public static final double GUI_COPY_IMAGE_IMAGE_HEIGHT = 1000.0;
     /**
-     * Width of grid lines of the structure grid pane in overview view
-     */
-    public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH = 8.0;
-    /**
-     * Minimum value for the width of structure images displayed in the overview view
-     */
-    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH = 30.0;
-    /**
-     * Minimum value for the height of structure images displayed in the overview view
-     */
-    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = 20.0;
-    /**
-     * Width of columns and rows per page label of the overview view
-     */
-    public static final double OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH = 10.0;
-    /**
-     * Default value for columns of structure images per overview view page
-     */
-    public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT = 5;
-    /**
-     * Default value for rows of structure images per overview view page
-     */
-    public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT = 5;
-    /**
-     * Minimum value for the width of the enlarged structure view
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE = 250.0;
-    /**
-     * Minimum value for the height of the enlarged structure view
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
-    /**
-     * Initial width of the enlarged structure view's scene
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH = 500.0;
-    /**
-     * Initial height of the enlarged structure view's scene
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT = 400.0;
-    /**
-     * Ratio of width and height of the enlarged structure view's structure image to the one of its parent stack pane
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO = 0.9;
-    /**
      * KeyCodeCombination for Control + C
      */
     public static final KeyCodeCombination KEY_CODE_COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
@@ -173,93 +142,13 @@ public final class GuiDefinitions {
      */
     public static final int DOUBLE_CLICK_DELAY = 250;
     /**
-     * Value for the width of the image corresponding to the structure of the fragments
-     */
-    public static final double GUI_IMAGE_WIDTH = 250.0;
-    /**
-     * Value for the height of the image corresponding to the structure of the fragments
-     */
-    public static final double GUI_IMAGE_HEIGHT = 150.0;
-    /**
-     * Image zoom factor value
-     */
-    public static final double GUI_IMAGE_ZOOM_FACTOR = 3.0;
-    /**
      * Value for the not scrollable histogram
      */
     public static final double GUI_NOT_SCROLLABLE_HEIGHT = 651.0;
     /**
-     * Value for the bar widths
-     */
-    public static final double GUI_BAR_WIDTH = 30.0;
-    /**
      * Value for the width of the textField
      */
     public static final double GUI_TEXT_FIELD_WIDTH = 50.0;
-    /**
-     * Value for the small bar gap
-     */
-    public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.5416;
-    /**
-     * Value fpr the medium bar gap
-     */
-    public static final double GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST = 5.0;
-    /**
-     * Value for the large bar gap
-     */
-    public static final double GUI_HISTOGRAM_LARGE_BAR_GAP_CONST = 6.5384;
-    /**
-     * Value for the small bar width
-     */
-    public static final double GUI_HISTOGRAM_SMALL_BAR_WIDTH = 15;
-    /**
-     * Value for the medium bar width
-     */
-    public static final double GUI_HISTOGRAM_MEDIUM_BAR_WIDTH = 20;
-    /***
-     * Value for the large bar width
-     */
-    public static final double GUI_HISTOGRAM_LARGE_BAR_WIDTH = 30;
-    /**
-     * Value for the small histogram growth factor
-     */
-    public static final double GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE = 27;
-    /**
-     * Value for the medium histogram growth factor
-     */
-    public static final double GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE = 37;
-    /**
-     * Value for the large histogram growth factor
-     */
-    public static final double GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE = 50;
-    /**
-     * Value of the bar label sizes
-     */
-    public static final double GUI_BAR_LABEL_SIZE = 10.0;
-    /**
-     * Default SMILES length
-     */
-    public static final int HISTOGRAM_DEFAULT_SMILES_LENGTH = 25;
-    /**
-     * Default fragment frequency
-     */
-    public static  final int HISTOGRAM_DEFAULT_FRAGMENT_FREQUENCY = 30;
-    /**
-     * Value of tickLabel length
-     */
-    public static  final double HISTOGRAM_TICK_LABEL_LENGTH = 15.0;
-    /**
-     * Value of tickLabel gap
-     */
-    public static final double HISTOGRAM_TICK_LABEL_GAP = 10.0;
-    /**
-     * Value for the width of the Copy SMILES context menu
-     */
-    public static final double HISTOGRAM_CONTEXTMENU_LABEL = 10.0;
-    /**
-     * Renewed width of the context menu
-     */
-    public static final double HISTOGRAM_CONTEXTMENU_LABEL_NEW = 50.0;
     /**
      * Width for the text field in the pagination control box
      */

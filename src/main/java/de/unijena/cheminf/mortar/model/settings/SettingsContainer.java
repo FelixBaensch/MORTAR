@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.settings;
@@ -28,6 +33,7 @@ package de.unijena.cheminf.mortar.model.settings;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
@@ -37,6 +43,7 @@ import de.unijena.cheminf.mortar.preference.PreferenceUtil;
 import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
 import de.unijena.cheminf.mortar.preference.SingleNumberPreference;
 import de.unijena.cheminf.mortar.preference.SingleTermPreference;
+
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -122,44 +129,21 @@ public class SettingsContainer {
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
-    /**
-     * Property of rows per page setting.
-     */
+
     private SimpleIntegerProperty rowsPerPageSetting;
 
-    /**
-     * Property of number of fragmentation tasks setting.
-     */
     private SimpleIntegerProperty numberOfTasksForFragmentationSetting;
 
-    /**
-     * Property of recent directory.
-     */
     private SimpleStringProperty recentDirectoryPathSetting;
 
-    /**
-     * Property of implicit hydrogens setting.
-     */
     private SimpleBooleanProperty addImplicitHydrogensAtImportSetting;
 
-    /**
-     * Property of keep atom container setting.
-     */
     private SimpleBooleanProperty keepAtomContainerInDataModelSetting;
 
-    /**
-     * Property of always MDL V3000 format setting.
-     */
     private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
 
-    /**
-     * Property of csv export separator setting.
-     */
     private SimpleStringProperty csvExportSeparatorSetting;
 
-    /**
-     * Property of keep last fragment setting.
-     */
     private SimpleBooleanProperty keepLastFragmentSetting;
 
     /**
@@ -609,7 +593,11 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        this.settingNameTooltipTextMap = new HashMap<String, String>(10, 0.9f);
+        int tmpNumberOfSettings = 8;
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                tmpNumberOfSettings,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameTooltipTextMap = new HashMap<String, String>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 "Rows per page setting",
                 SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT) {
@@ -752,15 +740,16 @@ public class SettingsContainer {
         //setting names and values must adhere to the preference input restrictions
         //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
         List<Property> tmpSettingsList = this.settings;
-        HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingsList.size() + 6, 1.0f);
+        int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpSettingsList.size(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        HashSet<String> tmpSettingNamesSet = new HashSet<>(tmpSettingNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (Property tmpSetting : tmpSettingsList) {
             if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
                 throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");
             }
-            if (tmpSettingNames.contains(tmpSetting.getName())) {
+            if (tmpSettingNamesSet.contains(tmpSetting.getName())) {
                 throw new Exception("Setting name " + tmpSetting.getName() + " is used multiple times.");
             } else {
-                tmpSettingNames.add(tmpSetting.getName());
+                tmpSettingNamesSet.add(tmpSetting.getName());
             }
             if (tmpSetting instanceof SimpleBooleanProperty) {
                 //nothing to do here, booleans cannot have invalid values

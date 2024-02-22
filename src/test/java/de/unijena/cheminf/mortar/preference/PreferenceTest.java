@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
@@ -26,15 +31,16 @@ package de.unijena.cheminf.mortar.preference;
  * - implement preference name test (?)
  */
 
+import de.unijena.cheminf.mortar.model.util.FileUtil;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
-
-import de.unijena.cheminf.mortar.model.util.FileUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * Test class for preferences.
@@ -59,7 +65,7 @@ public class PreferenceTest {
     public void testBooleanPreference() throws Exception {
         BooleanPreference tmpPreference = new BooleanPreference("MORTAR is cool", false);
         tmpPreference.setContent(true);
-        Assert.assertTrue(tmpPreference.getContent());
+        Assertions.assertTrue(tmpPreference.getContent());
         this.testPreferenceBasics(tmpPreference);
     }
     //
@@ -82,7 +88,7 @@ public class PreferenceTest {
                 Color.PINK.getBlue(),
                 Color.PINK.getAlpha());
         this.testPreferenceBasics(tmpPreference2);
-        Assert.assertArrayEquals(tmpPreference.getComponents(), tmpPreference2.getComponents(), 0);
+        Assertions.assertArrayEquals(tmpPreference.getComponents(), tmpPreference2.getComponents(), 0);
     }
     //
     /**
@@ -140,9 +146,9 @@ public class PreferenceTest {
         IPreference tmpPreference = PreferenceFactory.reinitializePreference(tmpReader.readLine(), tmpReader);
         tmpWriter.close();
         tmpReader.close();
-        Assert.assertTrue(aPreference.getContentRepresentative().equals(tmpPreference.getContentRepresentative()));
-        Assert.assertEquals(aPreference.getName(), tmpPreference.getName());
-        Assert.assertEquals(aPreference.getGUID(), tmpPreference.getGUID());
-        Assert.assertEquals(aPreference.toString(), tmpPreference.toString());
+        Assertions.assertTrue(aPreference.getContentRepresentative().equals(tmpPreference.getContentRepresentative()));
+        Assertions.assertEquals(aPreference.getName(), tmpPreference.getName());
+        Assertions.assertEquals(aPreference.getGUID(), tmpPreference.getGUID());
+        Assertions.assertEquals(aPreference.toString(), tmpPreference.toString());
     }
 }

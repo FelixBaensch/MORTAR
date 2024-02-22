@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
@@ -28,12 +33,16 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -136,14 +145,9 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     private SugarRemovalUtility sugarRUInstance;
     //</editor-fold>
     //<editor-fold desc="Private final variables">
-    /**
-     * A property that has a constant name from SRUFragmenterReturnedFragmentsOption enum as value.
-     */
+
     private final SimpleEnumConstantNameProperty returnedFragmentsSetting;
 
-    /**
-     * A property that has a constant name from SugarTypeToRemoveOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty sugarTypeToRemoveSetting;
 
     /**
@@ -151,65 +155,28 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      */
     private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
 
-    /**
-     * Property wrapping the 'detect circular sugars only with glycosidic bond' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
 
-    /**
-     * Property wrapping the 'remove only terminal sugars' setting of the SRU.
-     */
     private final SimpleBooleanProperty removeOnlyTerminalSugarsSetting;
 
-    /**
-     * Property wrapping the 'preservation mode' setting of the SRU; has a constant from the
-     * SugarRemovalUtility.PreservationModeOption enum as value.
-     */
     private final SimpleEnumConstantNameProperty preservationModeSetting;
 
-    /**
-     * Property wrapping the 'preservation mode threshold' setting of the SRU.
-     */
     private final SimpleIntegerProperty preservationModeThresholdSetting;
 
-    /**
-     * Property wrapping the 'detect circular sugars only with enough exocyclic oxygen atoms' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting;
 
-    /**
-     * Property wrapping the 'exocyclic oxygen atoms to atoms in ring ratio threshold' setting of the SRU.
-     */
     private final SimpleDoubleProperty exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting;
 
-    /**
-     * Property wrapping the 'detect linear sugars in rings' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectLinearSugarsInRingsSetting;
 
-    /**
-     * Property wrapping the 'linear sugar candidates minimum size' setting of the SRU.
-     */
     private final SimpleIntegerProperty linearSugarCandidateMinimumSizeSetting;
 
-    /**
-     * Property wrapping the 'linear sugar candidates maximum size' setting of the SRU.
-     */
     private final SimpleIntegerProperty linearSugarCandidateMaximumSizeSetting;
 
-    /**
-     * Property wrapping the 'detect linear acidic sugars' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectLinearAcidicSugarsSetting;
 
-    /**
-     * Property wrapping the 'detect spiro rings as circular sugars' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectSpiroRingsAsCircularSugarsSetting;
 
-    /**
-     * Property wrapping the 'detect circular sugars with keto groups' setting of the SRU.
-     */
     private final SimpleBooleanProperty detectCircularSugarsWithKetoGroupsSetting;
 
     /**
@@ -234,8 +201,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      */
     public SugarRemovalUtilityFragmenter() {
         this.sugarRUInstance = new SugarRemovalUtility(SilentChemObjectBuilder.getInstance());
-        this.settings = new ArrayList<>(15);
-        this.settingNameTooltipTextMap = new HashMap<>(20, 0.9f);
+        int tmpNumberOfSettings = 15;
+        this.settings = new ArrayList<>(tmpNumberOfSettings);
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                tmpNumberOfSettings,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",
                 SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name(), SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.class) {
             @Override
@@ -494,6 +465,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the returned fragments setting that can be used to configure this setting.
+     * A property that has a constant name from SRUFragmenterReturnedFragmentsOption enum as value.
      *
      * @return property object of the returned fragments setting
      */
@@ -521,6 +493,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the sugar type to remove setting that can be used to configure this setting.
+     * A property that has a constant name from SugarTypeToRemoveOption enum as value.
      *
      * @return property object of the sugar type to remove setting
      */
@@ -585,7 +558,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     /**
      * Returns the property object of the preservation mode setting that can be used to configure this setting.
-     *
+     * It has a constant from the SugarRemovalUtility.PreservationModeOption enum as value.
      * @return property object of the preservation mode setting
      */
     public SimpleEnumConstantNameProperty preservationModeSettingProperty() {
@@ -1205,6 +1178,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         if (!this.shouldBePreprocessed(aMolecule)) {
             return aMolecule.clone();
         }
+        //Todo I (Jonas) would like to remove any preprocessing done by the fragmenters as soon as possible, i.e. as soon as we have central preprocessing functionalities available
         if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
             if (!tmpIsConnected) {

@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.data;
@@ -23,15 +28,13 @@ package de.unijena.cheminf.mortar.model.data;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.ImageView;
-import org.openscience.cdk.aromaticity.Kekulization;
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.HashMap;
 import java.util.List;
@@ -58,9 +61,6 @@ public class MoleculeDataModel {
      */
     private String uniqueSmiles;
     //
-    /**
-     * Property whether the molecule is selected or not.
-     */
     private BooleanProperty selection;
     //
     /**
@@ -118,8 +118,10 @@ public class MoleculeDataModel {
         this.properties = aPropertyMap;
         this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
-        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
-        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
+        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
     }
     //
     /**
@@ -147,30 +149,25 @@ public class MoleculeDataModel {
     //
     /**
      * Returns IAtomContainer which represents the molecule. Depending on the preference, the atom container is saved
-     * as class variable. If it is re-created from the SMILES code, bond types and atom types are assigned to it (the
-     * former through kekulization). Aromaticity flags are set if there is aromaticity information present in the
+     * as class variable. If it is re-created from the SMILES code, it is attempted(!) to assign bond types and atom types
+     * to it (the former through kekulization). Aromaticity flags are set if there is aromaticity information present in the
      * SMILES code.
      *
      * @return IAtomContainer atom container of the molecule
-     * @throws CDKException if SMILES parsing, kekulization, or atom type matching fails
+     * @throws CDKException if SMILES parsing fails
      */
     public IAtomContainer getAtomContainer() throws CDKException {
         if(this.atomContainer != null){
             return this.atomContainer;
         }
         IAtomContainer tmpAtomContainer;
-        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        tmpSmiPar.kekulise(false);
         try{
-            tmpAtomContainer = tmpSmiPar.parseSmiles(this.uniqueSmiles);
-            Kekulization.kekulize(tmpAtomContainer);
+            tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, true, true);
         } catch (CDKException aCdkException){
-            SmilesParser tmpSmiPar2 = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            tmpSmiPar2.kekulise(false);
-            tmpAtomContainer = tmpSmiPar2.parseSmiles(this.uniqueSmiles);
+            //no logging, this happens too often, e.g. for fragments of aromatic rings
+            tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, false, false);
         }
         tmpAtomContainer.addProperties(this.properties);
-        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
         if(this.keepAtomContainer){
             this.atomContainer = tmpAtomContainer;
         }
@@ -199,7 +196,7 @@ public class MoleculeDataModel {
      * @return BooleanProperty
      */
     public BooleanProperty selectionProperty(){
-        return selection;
+        return this.selection;
     }
     //
     /**

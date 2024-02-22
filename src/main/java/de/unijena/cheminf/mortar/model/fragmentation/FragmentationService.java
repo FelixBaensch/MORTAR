@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.fragmentation;
@@ -31,6 +36,7 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtili
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
@@ -40,12 +46,14 @@ import de.unijena.cheminf.mortar.preference.PreferenceUtil;
 import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
 import de.unijena.cheminf.mortar.preference.SingleNumberPreference;
 import de.unijena.cheminf.mortar.preference.SingleTermPreference;
+
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Alert;
+
 import org.openscience.cdk.exception.CDKException;
 
 import java.io.File;
@@ -72,7 +80,7 @@ import java.util.logging.Logger;
  * Service class for fragmentation, single and in a pipeline.
  *
  * @author Jonas Schaub, Felix Baensch
- * @version 1.0.0.0
+ * @version 1.0.0.1
  */
 public class FragmentationService {
     //<editor-fold desc="public static final constants">
@@ -746,7 +754,7 @@ public class FragmentationService {
                         anException);
                 return;
             }
-            IMoleculeFragmenter[] tmpFragmenterArray = new IMoleculeFragmenter[tmpPipelineSize];
+            List<IMoleculeFragmenter> tmpFragmenterList = new ArrayList(tmpPipelineSize);
             for (int i = 0; i < tmpPipelineSize; i++) {
                 String tmpPath = tmpFragmentationServiceSettingsPath + FragmentationService.PIPELINE_FRAGMENTER_FILE_NAME_PREFIX + i + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
                 File tmpFragmenterFile = new File(tmpPath);
@@ -756,7 +764,7 @@ public class FragmentationService {
                         String tmpFragmenterClassName = tmpFragmenterSettingsContainer.getPreferences(FragmentationService.PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME)[0].getContentRepresentative();
                         IMoleculeFragmenter tmpFragmenter = this.createNewFragmenterObjectByAlgorithmName(tmpFragmenterClassName);
                         this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpFragmenterSettingsContainer);
-                        tmpFragmenterArray[i] = tmpFragmenter;
+                        tmpFragmenterList.add(tmpFragmenter);
                     } catch (Exception anException) {
                         FragmentationService.LOGGER.log(Level.WARNING, "FragmentationService settings reload failed: " + anException.toString(), anException);
                         GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -766,10 +774,12 @@ public class FragmentationService {
                         continue;
                     }
                 } else {
-                    FragmentationService.LOGGER.log(Level.WARNING, "Unable to reload pipeline fragmenter " + i + " : No respective file available.");
+                    FragmentationService.LOGGER.log(Level.WARNING, "Unable to reload pipeline fragmenter " + i
+                            + " : No respective file available. Will be skipped.");
                     continue;
                 }
             }
+            IMoleculeFragmenter[] tmpFragmenterArray = tmpFragmenterList.toArray(new IMoleculeFragmenter[tmpFragmenterList.size()]);
             this.setPipelineFragmenter(tmpFragmenterArray);
         } else {
             FragmentationService.LOGGER.log(Level.WARNING, "File containing persisted FragmentationService settings not found.");
@@ -789,6 +799,15 @@ public class FragmentationService {
         } catch (InterruptedException e) {
             this.executorService.shutdownNow();
         }
+    }
+
+    /**
+     * Clears all cached variables like existingFragmentations and fragments
+     */
+    public void clearCache(){
+        this.existingFragmentations = new LinkedList<String>();;
+        this.fragments = null;
+        this.currentFragmentationName = null;
     }
     //</editor-fold>
     //
@@ -1054,23 +1073,26 @@ public class FragmentationService {
      * anything does not meet the requirements.
      */
     private void checkFragmenters() throws Exception {
-        HashSet<String> tmpAlgorithmNames = new HashSet<>(this.fragmenters.length + 6, 1.0f);
+        int tmpAlgorithmNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(this.fragmenters.length,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        HashSet<String> tmpAlgorithmNamesSet = new HashSet<>(tmpAlgorithmNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             //algorithm name should be singleton and must be persistable
             String tmpAlgName = tmpFragmenter.getFragmentationAlgorithmName();
             if (!PreferenceUtil.isValidName(tmpAlgName) || !SingleTermPreference.isValidContent(tmpAlgName)) {
                 throw new Exception("Algorithm name " + tmpAlgName + " is invalid.");
             }
-            if (tmpAlgorithmNames.contains(tmpAlgName)) {
+            if (tmpAlgorithmNamesSet.contains(tmpAlgName)) {
                 throw new Exception("Algorithm name " + tmpAlgName + " is used multiple times.");
             } else {
-                tmpAlgorithmNames.add(tmpAlgName);
+                tmpAlgorithmNamesSet.add(tmpAlgName);
             }
             //setting names must be singletons within the respective class
             //setting names and values must adhere to the preference input restrictions
             //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
             List<Property> tmpSettingsList = tmpFragmenter.settingsProperties();
-            HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingsList.size() + 6, 1.0f);
+            int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpSettingsList.size(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+            HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
             for (Property tmpSetting : tmpSettingsList) {
                 if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
                     throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");

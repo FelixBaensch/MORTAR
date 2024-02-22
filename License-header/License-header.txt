@@ -23,38 +23,3 @@
  * SOFTWARE.
  */
 
-package de.unijena.cheminf.mortar.preference;
-
-/**
- * Preference types for fast determination of a preference class without using reflection or 'instanceof'.<br>
- * NOTE: All newly added enum constants must also be added in the PreferenceFactory.reinitializePreference() method.
- *
- * @author Jonas Schaub
- * @version 1.0.0.0
- */
-public enum PreferenceType {
-    /**
-     * Constant associated with class BooleanPreference.
-     */
-    BOOLEAN,
-
-    /**
-     * Constant associated with class RGBColorPreference.
-     */
-    RGB_COLOR,
-
-    /**
-     * Constant associated with class SingleIntegerPreference.
-     */
-    SINGLE_INTEGER,
-
-    /**
-     * Constant associated with class SingleNumberPreference.
-     */
-    SINGLE_NUMBER,
-
-    /**
-     * Constant associated with class SingleTermPreference.
-     */
-    SINGLE_TERM;
-}

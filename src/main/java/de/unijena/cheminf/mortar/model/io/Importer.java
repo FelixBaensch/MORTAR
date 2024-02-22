@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.io;
@@ -25,8 +30,10 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.ChemFile;
@@ -107,8 +114,9 @@ public class Importer {
         Objects.requireNonNull(aSettingsContainer, "Given settings container is null.");
         this.settingsContainer = aSettingsContainer;
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
-        if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
+        if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         this.fileName = null;
     }
@@ -134,6 +142,7 @@ public class Importer {
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         String tmpFilePath = aFile.getPath();
         String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
@@ -189,6 +198,7 @@ public class Importer {
         if(!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpFileChooser.setInitialDirectory(tmpRecentDirectory);
         File tmpFile = null;
@@ -253,7 +263,10 @@ public class Importer {
     }
     //
     /**
-     * Imports an SD file.
+     * Imports an SD file. If no name can be detected for a structure, the file name extended with the index of the
+     * structure in the file is used as name of the structure.
+     * NOTE: if multiple erroneous entries in a row are there in the input file, they are skipped together and not
+     * logged individually!
      *
      * @param aFile sdf
      * @return the imported molecules in an IAtomContainerSet
@@ -261,17 +274,37 @@ public class Importer {
      */
     private IAtomContainerSet importSDFile(File aFile) throws FileNotFoundException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile),
-                SilentChemObjectBuilder.getInstance());
+        /*the IteratingSDFReader is not set to skip erroneous input molecules in its constructor to be able to log them*/
+        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile), SilentChemObjectBuilder.getInstance());
         int tmpCounter = 0;
-        while(!Thread.currentThread().isInterrupted() && tmpSDFReader.hasNext()){
+        while (!Thread.currentThread().isInterrupted()) {
+            //end of file or encountered erroneous entry
+            if (!tmpSDFReader.hasNext()) {
+                //skip if it is an erroneous entry
+                tmpSDFReader.setSkip(true);
+                if (!tmpSDFReader.hasNext()) {
+                    // there is no next, end of file!
+                    break;
+                }
+                // molecule just could not be read and has therefore been skipped, restore skip setting for next iteration
+                tmpSDFReader.setSkip(false);
+                Importer.LOGGER.log(Level.WARNING, "Import failed for structure:\t" + tmpCounter + " (index of structure in file).");
+                tmpCounter++;
+            }
             IAtomContainer tmpAtomContainer = tmpSDFReader.next();
             String tmpName = this.findMoleculeName(tmpAtomContainer);
-            if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
+            if(tmpName == null || tmpName.isBlank()) {
+                // the counter here equals the index of the structure in the file
                 tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
+            }
             tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
             tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
             tmpCounter++;
+        }
+        int tmpFailedImportsCount = tmpCounter - tmpAtomContainerSet.getAtomContainerCount();
+        if (tmpFailedImportsCount > 0) {
+            Importer.LOGGER.log(Level.WARNING, "The import from SD file failed for a total of " + tmpFailedImportsCount +
+                    " structure(s).");
         }
         return tmpAtomContainerSet;
     }
@@ -360,7 +393,7 @@ public class Importer {
         }
         /* note: Things like assigning bond orders and atom types here is redundant if the atom containers
         are discarded after molecule set import and molecular information only represented by SMILES codes in
-        the molecule data models. Nevertheless it is done here to ensure that the generated SMILES codes are correct.
+        the molecule data models. Nevertheless, it is done here to ensure that the generated SMILES codes are correct.
          */
         int tmpExceptionsCounter = 0;
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
@@ -382,18 +415,20 @@ public class Importer {
                 tmpExceptionsCounter++;
             }
         }
-        Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. " + tmpExceptionsCounter + " exceptions occurred.");
+        Importer.LOGGER.log(Level.WARNING, "Imported and preprocessed molecule set. " + tmpExceptionsCounter + " exceptions occurred while processing.");
     }
     //</editor-fold>
     //
     //<editor-fold desc="protected methods" defaultstate="collapsed">
     /**
-     * Imports a SMILES file. This method is able to parse different types of SMILES files, e.g. with and without header
-     * and with up to three columns (SMILES and name/ID and an additional third column). The method identifies the used
+     * Imports a SMILES file. This method is able to parse differently formatted SMILES files, e.g. with and without header
+     * and with up to three columns (SMILES, name/ID and an additional third column). The method identifies the used
      * format by reading the first three lines of the file and then applying the detected format on all further lines.
-     * SMILES and name/ID string are expected to be in the first two columns. Files that do not fit to the expected
-     * format or lack a parseable SMILES string in the first three lines are classified as not being a SMILES file and
-     * an exception gets thrown.
+     * SMILES and name/ID strings are expected to be in the first two columns. Files that do not fit to the expected
+     * format or lack a parsable SMILES string in the first three lines are classified as not being a SMILES file and
+     * an exception gets thrown. If no name can be detected for a structure, the structure
+     * is assigned the name of the file extended with the index of the structure in the file as name.
+     * <br>
      * Protected and not private for testing in class ImporterTest.
      *
      * @param aFile a SMILES codes-containing *.txt or *.smi file
@@ -404,22 +439,23 @@ public class Importer {
     protected IAtomContainerSet importSMILESFile(File aFile) throws IOException {
         try (
                 FileReader tmpSmilesFileReader = new FileReader(aFile);
-                BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader, BasicDefinitions.BUFFER_SIZE)
+                BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader,
+                        BasicDefinitions.BUFFER_SIZE)
         ) {
             IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-            //AtomContainer to save the parsed SMILES in
+            // AtomContainer to save the parsed SMILES in
             IAtomContainer tmpMolecule = new AtomContainer();
             SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             String tmpSmilesFileNextLine = "";
             String tmpSmilesFileDeterminedSeparator = "";
-            String[] tmpProcessedLineArray;
+            String[] tmpProcessedLineArray = null;
             int tmpSmilesCodeExpectedPosition = 0;
             int tmpIDExpectedPosition = 0;
             int tmpSmilesFileParsableLinesCounter = 0;
             int tmpSmilesFileInvalidLinesCounter = 0;
-            //marking the BufferedReader to reset the reader after checking the format and determining the separator
+            // marking the BufferedReader to reset the reader after checking the format and determining the separator
             tmpSmilesFileBufferedReader.mark(BasicDefinitions.BUFFER_SIZE);
-            //as potential headline the first line should be avoided for separator determination
+            // as potential headline the first line should be avoided for separator determination
             String tmpSmilesFileFirstLine = tmpSmilesFileBufferedReader.readLine();
             /*  first block
                 Checking for parsable SMILES code and saving the determined separator (if one is used).
@@ -430,7 +466,7 @@ public class Importer {
             findSeparatorLoop:
             while (!Thread.currentThread().isInterrupted() && tmpFilesLine <= 3) {
                 if ((tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) == null) {
-                    //if the file's end is reached at this point, the first line is used to determine the separator
+                    // if the file's end is reached at this point, the first line is used to determine the separator
                     if (tmpSmilesFileFirstLine != null || !tmpSmilesFileFirstLine.isEmpty()) {
                         tmpSmilesFileNextLine = tmpSmilesFileFirstLine;
                         tmpSmilesFileFirstLine = null;
@@ -457,9 +493,8 @@ public class Importer {
                                 if (tmpProcessedLineArray.length > 1) {
                                     if (tmpSmilesCodeExpectedPosition == 0) {
                                         tmpIDExpectedPosition = 1;
-                                    } else {
-                                        tmpIDExpectedPosition = 0;
                                     }
+                                    // else: tmpIDExpectedPosition = 0;
                                 }
                                 break findSeparatorLoop;
                             }
@@ -477,20 +512,24 @@ public class Importer {
             tmpSmilesFileBufferedReader.reset();
             tmpSmilesFileBufferedReader.mark(0);    //to avoid the memory of unnecessary data
             /*  second block
-                Reading the file line by line and adding an AtomContainer to the AtomContainerSet for each line with parsable SMILES code
+                Reading the file line by line and adding an AtomContainer to the AtomContainerSet for each line with
+                parsable SMILES code
              */
-            while (!Thread.currentThread().isInterrupted() && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
+            while (!Thread.currentThread().isInterrupted()
+                    && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
                 //trying to parse as SMILES code
                 try {
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 3);
-                    if (!tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isEmpty()) {
-                        tmpMolecule = tmpSmilesParser.parseSmiles(tmpProcessedLineArray[tmpSmilesCodeExpectedPosition]);
-                        tmpSmilesFileParsableLinesCounter++;
-                    } else {
-                        tmpSmilesFileInvalidLinesCounter++;
-                        continue;
-                    }
-                } catch (InvalidSmilesException | IndexOutOfBoundsException anException) {  //case: invalid line or SMILES code
+                    String tmpSmiles = tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isBlank() ? null :
+                            tmpProcessedLineArray[tmpSmilesCodeExpectedPosition];
+                    //throws exception if SMILES string is null, goes to catch block
+                    tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmiles);
+                    tmpSmilesFileParsableLinesCounter++;
+                }
+                catch (InvalidSmilesException | IndexOutOfBoundsException | NullPointerException anException) {
+                    int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter;
+                    Importer.LOGGER.info("Contains no parsable SMILES string: line " + tmpIndexInFile
+                            + " (index).");
                     tmpSmilesFileInvalidLinesCounter++;
                     continue;
                 }
@@ -499,14 +538,17 @@ public class Importer {
                 if (tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].isEmpty()) {
                     tmpName = tmpProcessedLineArray[tmpIDExpectedPosition];
                 } else {
-                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpSmilesFileParsableLinesCounter;
+                    int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter - 1;
+                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpIndexInFile;
                 }
                 tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
                 //adding tmpMolecule to the AtomContainerSet
                 tmpAtomContainerSet.addAtomContainer(tmpMolecule);
             }
-            Importer.LOGGER.log(Level.INFO, "\tSmilesFile ParsableLinesCounter:\t" + tmpSmilesFileParsableLinesCounter +
-                    "\n\tSmilesFile InvalidLinesCounter:\t\t" + tmpSmilesFileInvalidLinesCounter);
+            if (tmpSmilesFileInvalidLinesCounter > 0) {
+                Importer.LOGGER.info("\tSmilesFile ParsableLinesCount:\t" + tmpSmilesFileParsableLinesCounter +
+                        "\n\tSmilesFile InvalidLinesCount:\t" + tmpSmilesFileInvalidLinesCounter);
+            }
             return tmpAtomContainerSet;
         }
     }

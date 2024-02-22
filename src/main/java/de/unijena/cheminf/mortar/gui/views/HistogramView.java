@@ -1,30 +1,36 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.controller.HistogramViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
 
-import javafx.geometry.Pos;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -44,10 +50,10 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.paint.Color;
 
 /**
- * View for the frequency histogram
+ * View for the frequency histogram.
  *
- * @author Betuel Sevindik
- * @version 1.0.0.0
+ * @author Betuel Sevindik, Jonas Schaub
+ * @version 1.0.1.0
  */
 public class HistogramView extends AnchorPane {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -62,66 +68,78 @@ public class HistogramView extends AnchorPane {
     /**
      * Text field for creating a new histogram with the given number of fragments
      */
-    private TextField fragmentTextField;
+    private TextField displayedFragmentsNumberTextField;
     /**
-     * ImageView to display the structures
+     * Label for the displayed fragments number text field
      */
-    private ImageView imageStructure;
+    private Label displayedFragmentsNumberLabel;
     /**
-     * Text field for creating a new histogram with the given SMILES length
+     * ImageView to display the structures when the cursor hovers over a bar
      */
-    private TextField smilesField;
+    private ImageView structureDisplayImageView;
     /**
-     * Checkbox to make bar labels adjustable
+     * Text field for defining the maximum SMILES length to display fully on the y-axis.
      */
-    private CheckBox checkbox;
+    private TextField maximumSMILESLengthTextField;
     /**
-     * CheckBox to display histogram gridlines
+     * Label for the maximum SMILES length text field.
      */
-    private CheckBox gridLinesCheckBox;
+    private Label maximumSMILESLengthLabel;
     /**
-     * Label to show the highest number of fragments
+     * Checkbox to choose to show or hide the bar labels that display the exact frequency.
      */
-    private Label defaultFragmentLabel;
+    private CheckBox displayBarLabelsCheckBox;
+    /**
+     * CheckBox to display or hide histogram gridlines
+     */
+    private CheckBox displayGridLinesCheckBox;
     /**
      * ScrollPane to make histogram scrollable
      */
-    private ScrollPane scrollPane;
+    private ScrollPane histogramScrollPane;
     /**
      * ComboBox to make the gap between the bars adjustable
      */
-    private ComboBox comboBox;
+    private ComboBox barWidthsComboBox;
+    /**
+     * Label for the bar widths combo box.
+     */
+    private Label barWidthsLabel;
     /**
      * CheckBox to scale the X-axis logarithmically
      */
-    private CheckBox logarithmicScale;
+    private CheckBox logarithmicScale; //TODO: currently unused
     /**
-     * CheckBox to add the bar shadow
+     * CheckBox to show or hide the bar shadows
      */
-    private CheckBox stylingCheckBox;
+    private CheckBox barStylingCheckBox;
     /**
-     * CheckBox to make the display of tick labels adjustable
-     *
+     * CheckBox to show or hide the SMILES labels on the y-axis
      */
-    private CheckBox smilesTickLabel;
+    private CheckBox displaySMILESonYaxisCheckBox;
     /**
      * ComboBox to choose which frequency is used
      */
-    private ComboBox chooseDataComoBox;
+    private ComboBox frequencyComboBox;
+    /**
+     * Label for the frequency combo box.
+     */
+    private Label frequencyLabel;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor, layouts the view and all its components. Current settings need to be adjusted externally.
      *
-     * @param aMaxFragmentNumber indicates the maximum number of fragments available
+     * @param aMaxFragmentNumber indicates the maximum number of fragments available for display; is included in some
+     *                           tooltips
      */
-    public HistogramView(int aMaxFragmentNumber){
+    public HistogramView(int aMaxFragmentNumber) {
         super();
-        this.scrollPane = new ScrollPane();
-        this.scrollPane.setFitToHeight(true);
-        this.scrollPane.setFitToWidth(true);
-        this.scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        this.scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        this.histogramScrollPane = new ScrollPane();
+        this.histogramScrollPane.setFitToHeight(true);
+        this.histogramScrollPane.setFitToWidth(true);
+        this.histogramScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        this.histogramScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         //borderPane
         BorderPane tmpBorderPane = new BorderPane();
         HistogramView.setTopAnchor(tmpBorderPane, 0.0);
@@ -160,47 +178,46 @@ public class HistogramView extends AnchorPane {
         tmpBorderPane.setCenter(tmpMainGrid);
         HBox tmpHBoxLeftSideControls = new HBox();
         // left side controls
-        this.fragmentTextField = new TextField();
-        this.fragmentTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
-        this.fragmentTextField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " "+aMaxFragmentNumber));
+        this.displayedFragmentsNumberTextField = new TextField();
+        this.displayedFragmentsNumberTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
+        this.displayedFragmentsNumberTextField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
         this.applyButton = new Button(Message.get("HistogramView.refreshButton.text"));
         this.applyButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.smilesField = new TextField();
-        this.smilesField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
-        this.smilesField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
-        Label tmpSmilesLabel = new Label(Message.get("HistogramView.smilesLabel.text"));
-        tmpSmilesLabel.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
-        this.defaultFragmentLabel = new Label();
-        this.defaultFragmentLabel.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " "+aMaxFragmentNumber));
-        this.comboBox = new ComboBox<>();
-        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item1.text"));
-        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item2.text"));
-        this.comboBox.getItems().add(Message.get("HistogramView.comboBox.item3.text"));
-        this.comboBox.setValue(Message.get("HistogramView.comboBox.item3.text"));
-        this.comboBox.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
-        Label tmpGapSettingsLabel = new Label(Message.get("HistogramView.gapSettingLabel.text"));
-        tmpGapSettingsLabel.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
-        Label tmpChooseFrequencyLabel = new Label(Message.get("HistogramView.chooseDataComboBox.text"));
-        tmpChooseFrequencyLabel.setTooltip(new Tooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
-        this.chooseDataComoBox = new ComboBox<>();
-        this.chooseDataComoBox.getItems().add(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"));
-        this.chooseDataComoBox.getItems().add(Message.get("HistogramView.chooseDataComboBoxMoleculeFrequency.text"));
-        this.chooseDataComoBox.setValue(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"));
-        this.chooseDataComoBox.setTooltip(new Tooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
+        this.maximumSMILESLengthTextField = new TextField();
+        this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
+        this.maximumSMILESLengthTextField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
+        this.maximumSMILESLengthLabel = new Label(Message.get("HistogramView.smilesLabel.text"));
+        this.maximumSMILESLengthLabel.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
+        this.displayedFragmentsNumberLabel = new Label(Message.get("HistogramView.displayedFragmentsTextFieldLabel.text"));
+        this.displayedFragmentsNumberLabel.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
+        this.barWidthsComboBox = new ComboBox<>();
+        for (HistogramViewController.BarWidthOption tmpBarWidthOptionConstant : HistogramViewController.BarWidthOption.values()) {
+            this.barWidthsComboBox.getItems().add(tmpBarWidthOptionConstant.getDisplayName());
+        }
+        this.barWidthsComboBox.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
+        this.barWidthsLabel = new Label(Message.get("HistogramView.gapSettingLabel.text"));
+        this.barWidthsLabel.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
+        this.frequencyLabel = new Label(Message.get("HistogramView.chooseDataComboBox.text"));
+        this.frequencyLabel.setTooltip(new Tooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
+        this.frequencyComboBox = new ComboBox<>();
+        for (HistogramViewController.FrequencyOption tmpFrequencyOptionConstant : HistogramViewController.FrequencyOption.values()) {
+            this.frequencyComboBox.getItems().add(tmpFrequencyOptionConstant.getDisplayName());
+        }
+        this.frequencyComboBox.setTooltip(new Tooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
         tmpLeftSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         // grid positions
-        tmpLeftSideGrid.add(tmpGapSettingsLabel, 0,0);
-        tmpLeftSideGrid.add(tmpChooseFrequencyLabel,0,1);
-        tmpLeftSideGrid.add(this.comboBox,1,0);
-        tmpLeftSideGrid.add(this.chooseDataComoBox,1,1);
-        tmpLeftSideGrid.add(tmpSmilesLabel,2,0);
-        tmpLeftSideGrid.add(this.defaultFragmentLabel,2,1);
-        tmpLeftSideGrid.add(this.smilesField,3,0);
-        tmpLeftSideGrid.add(this.fragmentTextField,3,1);
+        tmpLeftSideGrid.add(this.barWidthsLabel, 0,0);
+        tmpLeftSideGrid.add(this.frequencyLabel,0,1);
+        tmpLeftSideGrid.add(this.barWidthsComboBox,1,0);
+        tmpLeftSideGrid.add(this.frequencyComboBox,1,1);
+        tmpLeftSideGrid.add(this.maximumSMILESLengthLabel,2,0);
+        tmpLeftSideGrid.add(this.displayedFragmentsNumberLabel,2,1);
+        tmpLeftSideGrid.add(this.maximumSMILESLengthTextField,3,0);
+        tmpLeftSideGrid.add(this.displayedFragmentsNumberTextField,3,1);
         tmpLeftSideGrid.add(this.applyButton,4,1);
         tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
         tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
@@ -208,33 +225,33 @@ public class HistogramView extends AnchorPane {
         HBox.setHgrow(tmpHBoxLeftSideControls, Priority.ALWAYS);
         tmpHBoxLeftSideControls.getChildren().add(tmpLeftSideGrid);
         tmpMainHBoxControls.getChildren().add(tmpHBoxLeftSideControls);
-        this.imageStructure = new ImageView();
-        this.imageStructure.setEffect(new DropShadow(10,2,3, Color.BLACK));
-        this.imageStructure.setStyle("fx-padding: 50px; fx-margin: 50px");
+        this.structureDisplayImageView = new ImageView();
+        this.structureDisplayImageView.setEffect(new DropShadow(10,2,3, Color.BLACK));
+        this.structureDisplayImageView.setStyle("fx-padding: 50px; fx-margin: 50px");
         // right side controls
         this.closeButton = new Button(Message.get("HistogramView.cancelButton.text"));
         this.closeButton.setTooltip(new Tooltip(Message.get("HistogramView.cancelButton.toolTip")));
         this.closeButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.checkbox = new CheckBox(Message.get("HistogramView.checkBox.text"));
-        this.checkbox.setTooltip(new Tooltip(Message.get("HistogramView.checkBox.toolTip")));
-        this.gridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));
-        this.gridLinesCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxGridlines.toolTip")));
+        this.displayBarLabelsCheckBox = new CheckBox(Message.get("HistogramView.checkBox.text"));
+        this.displayBarLabelsCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBox.toolTip")));
+        this.displayGridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));
+        this.displayGridLinesCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxGridlines.toolTip")));
         this.logarithmicScale = new CheckBox(Message.get("HistogramView.checkBoxLogarithmicScale.text"));
         this.logarithmicScale.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxLogarithmicScale.toolTip")));
-        this.stylingCheckBox = new CheckBox(Message.get("HistogramView.stylingCheckBox.text"));
-        this.stylingCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.stylingCheckBox.tooltip")));
-        this.smilesTickLabel = new CheckBox(Message.get("HistogramView.checkBoxSmilesTickLabel.text"));
-        this.smilesTickLabel.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxSmilesTickLabel.toolTip")));
+        this.barStylingCheckBox = new CheckBox(Message.get("HistogramView.stylingCheckBox.text"));
+        this.barStylingCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.stylingCheckBox.tooltip")));
+        this.displaySMILESonYaxisCheckBox = new CheckBox(Message.get("HistogramView.checkBoxSmilesTickLabel.text"));
+        this.displaySMILESonYaxisCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxSmilesTickLabel.toolTip")));
         HBox tmpHBoxRightSideControls = new HBox();
         tmpRightSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
-        tmpRightSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE*2);
+        tmpRightSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE * 2);
         tmpRightSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         // grid positions
-        tmpRightSideGrid.add(this.checkbox,0,0);
-        tmpRightSideGrid.add(this.stylingCheckBox,0,1);
-        tmpRightSideGrid.add(this.gridLinesCheckBox,1,0);
-        tmpRightSideGrid.add(this.smilesTickLabel,1,1);
+        tmpRightSideGrid.add(this.displayBarLabelsCheckBox,0,0);
+        tmpRightSideGrid.add(this.barStylingCheckBox,0,1);
+        tmpRightSideGrid.add(this.displayGridLinesCheckBox,1,0);
+        tmpRightSideGrid.add(this.displaySMILESonYaxisCheckBox,1,1);
         tmpRightSideGrid.add(this.closeButton,2,1);
         tmpHBoxRightSideControls.getChildren().add(tmpRightSideGrid);
         tmpHBoxRightSideControls.setAlignment(Pos.CENTER_RIGHT);
@@ -243,150 +260,144 @@ public class HistogramView extends AnchorPane {
         HBox.setHgrow(tmpHBoxRightSideControls, Priority.ALWAYS);
         tmpMainHBoxControls.getChildren().add(tmpHBoxRightSideControls);
         // main grid
-        tmpMainGrid.add(this.scrollPane,0,0,4,4);
-        tmpMainGrid.add(this.imageStructure,2,2);
+        tmpMainGrid.add(this.histogramScrollPane,0,0,4,4);
+        tmpMainGrid.add(this.structureDisplayImageView,2,2);
         this.getChildren().add(tmpBorderPane);
     }
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns cancelButton to close view
+     * Returns button for closing the view
      *
-     * @return Button to close histogram view
+     * @return button for closing histogram view
      */
     public Button getCloseButton() {
         return this.closeButton;
     }
     //
     /**
-     * Returns a Button to display a new histogram with according fragments and SMILES length
+     * Returns a button for generating a new histogram with updated fragment number, bar width, frequency, and SMILES length.
      *
-     * @return Button which takes over the changes in the histogram
+     * @return button for applying updated settings to histogram
      */
     public Button getApplyButton() {
         return this.applyButton;
     }
     //
     /**
-     * Returns a String to get the fragment count
+     * Returns content of displayed fragments number text field, i.e. string representation of the number of fragments to
+     * display.
      *
-     * @return String new number of fragments to be displayed in the histogram
+     * @return String number of fragments to be displayed in the histogram
      */
-    public String getFragmentTextField() {return this.fragmentTextField.getText();}
+    public String getDisplayedFragmentsNumberTextFieldContent() {return this.displayedFragmentsNumberTextField.getText();}
     //
     /**
-     * Returns the SMILES TextField which is deactivated if it is empty
+     * Returns the text field where the maximum SMILES string length to display is entered.
      *
-     * @return TextField for deactivation
+     * @return maximum SMILES length text field
      */
-    public TextField getSmilesTextField() {
-        return this.smilesField;
+    public TextField getMaximumSMILESLengthTextField() {
+        return this.maximumSMILESLengthTextField;
     }
     //
     /**
-     * Returns the fragment TextField which is deactivated if it is empty
+     * Returns the text field where the number of fragments to display is entered.
      *
-     * @return TextField for deactivation
+     * @return displayed fragments number text field
      */
-    public TextField getFrequencyTextField() {
-        return this.fragmentTextField;
+    public TextField getDisplayedFragmentsNumberTextField() {
+        return this.displayedFragmentsNumberTextField;
     }
     //
     /**
-     * Returns a String to get the SMILES length
+     * Returns content of maximum SMILES length text field, i.e. string representation of the maximum SMILES length
+     * that should be displayed.
      *
-     * @return String corresponds to the SMiles length entered
+     * @return String maximum SMILES length
      */
-    public String getSmilesField() {return this.smilesField.getText();}
+    public String getMaximumSMILESLengthTextFieldContent() {return this.maximumSMILESLengthTextField.getText();}
     //
     /**
-     * Returns a ImageView to enable the display of the structures
+     * Returns an ImageView to enable the display of the structures when the cursor hovers over a bar.
      *
      * @return ImageView shows the different structures when hovering over the histogram
      */
-    public ImageView getImageStructure() {
-        return this.imageStructure;
+    public ImageView getStructureDisplayImageView() {
+        return this.structureDisplayImageView;
     }
     //
     /**
-     * Returns a CheckBox to label the histogram
+     * Returns the display bar labels check box, i.e. the frequency labels on the right-hand side of the bars.
      *
-     * @return CheckBox to Labelling the bars with frequencies
+     * @return CheckBox for choosing whether to label the bars with frequencies
      */
-    public CheckBox getCheckbox() {
-        return this.checkbox;
+    public CheckBox getDisplayBarLabelsCheckBox() {
+        return this.displayBarLabelsCheckBox;
     }
     //
     /**
-     * Returns a CheckBox to display the histogram gridlines
+     * Returns the display grid lines check box.
      *
-     * @return CheckBox to set the grid lines in the histogram
+     * @return CheckBox to show or display the grid lines in the histogram
      */
-    public CheckBox getGridLinesCheckBox() {
-        return this.gridLinesCheckBox;
+    public CheckBox getDisplayGridLinesCheckBox() {
+        return this.displayGridLinesCheckBox;
     }
     //
+    //TODO currently unused
     /**
      * Returns a CheckBox to make the number axis logarithmically
      *
      * @return CheckBox for logarithmic number axis
      */
-    public CheckBox getLogarithmicScale(){
+    /*public CheckBox getLogarithmicScale(){
         return this.logarithmicScale;
-    }
+    }*/
     //
     /**
-     * Returns a CheckBox to add bar shadows
+     * Returns the display bar shadows check box.
      *
-     * @return CheckBox
+     * @return CheckBox for displaying or hiding bar shadows
      */
-    public CheckBox getStylingCheckBox() {
-        return this.stylingCheckBox;
+    public CheckBox getDisplayBarShadowsCheckBox() {
+        return this.barStylingCheckBox;
     }
     //
     /**
-     * Returns a Label to show the maximum number of fragments
-     *
-     * @return Label for display the maximum frequency in the histogram
-     */
-    public Label getDefaultFragmentLabel() {
-        return this.defaultFragmentLabel;
-    }
-    //
-    /**
-     * Returns a ScrollPane in which the histogram is to be displayed
+     * Returns a ScrollPane in which the histogram is to be displayed.
      *
      * @return ScrollPane to make histogram scrollable
      */
-    public ScrollPane getScrollPane() {
-        return this.scrollPane;
+    public ScrollPane getHistogramScrollPane() {
+        return this.histogramScrollPane;
     }
     //
     /**
-     * Returns a ComoBox containing 3 options for different gap sizes between the bars
+     * Returns combo box for setting bar width of the histogram.
      *
-     * @return ComboBox
+     * @return ComboBox for setting bar widths
      */
-    public ComboBox getComboBox() {
-        return this.comboBox;
+    public ComboBox getBarWidthsComboBox() {
+        return this.barWidthsComboBox;
     }
     //
     /**
-     * Returns a CheckBox to deactivate the tick labels on the Y-axis
+     * Returns check box for displaying or hiding SMILES labels on the y-axis of the histogram.
      *
-     * @return CheckBox
+     * @return CheckBox for displaying or hiding SMILES labels on y-axis
      */
-    public CheckBox getSmilesTickLabel() {
-        return this.smilesTickLabel;
+    public CheckBox getDisplaySmilesOnYAxisCheckBox() {
+        return this.displaySMILESonYaxisCheckBox;
     }
     //
     /**
-     * Returns a ComboBox to choose which frequency is used
+     * Returns a combo box for choosing which frequency of the fragments to display.
      *
-     * @return ComboBox
+     * @return ComboBox for choosing frequency type to display
      */
-    public ComboBox getChooseDataComoBox() {
-        return this.chooseDataComoBox;
+    public ComboBox getFrequencyComboBox() {
+        return this.frequencyComboBox;
     }
     //</editor-fold>
 }

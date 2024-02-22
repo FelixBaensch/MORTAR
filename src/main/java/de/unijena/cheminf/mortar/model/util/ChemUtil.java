@@ -1,30 +1,37 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
+
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
@@ -32,6 +39,7 @@ import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.LonePairElectronChecker;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -39,6 +47,7 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -57,6 +66,15 @@ public final class ChemUtil {
      */
     private static final Logger LOGGER = Logger.getLogger(ChemUtil.class.getName());
     //</editor-fold>
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private ChemUtil() {
+    }
+    //</editor-fold>
+    //
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
@@ -86,6 +104,51 @@ public final class ChemUtil {
             ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "; molecule name: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
         }
         return tmpSmiles;
+    }
+
+    /**
+     * Returns an IAtomContainer instance which represents the molecule parsed from the SMILES string. Bond types and
+     * atom types are assigned to it (the former through kekulization) if required. Aromaticity flags are set only if
+     * there is aromaticity information present in the SMILES code, no aromaticity perception is performed here.
+     *
+     * @param aSmilesCode SMILES representation
+     * @param shouldBeKekulized whether explicit bond orders should be assigned or "aromatic bond" can be used if present;
+     *                          does not affect aromaticity flags
+     * @param shouldAtomTypesBePerceived whether atom types should be perceived and configured
+     * @return IAtomContainer atom container of the molecule
+     * @throws InvalidSmilesException if the given SMILES is invalid
+     * @throws CDKException if kekulization or atom type matching fails
+     */
+    public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode, boolean shouldBeKekulized, boolean shouldAtomTypesBePerceived)
+            throws InvalidSmilesException, CDKException {
+        //no checks because .parseSmiles() checks and throws InvalidSmilesException if the SMILES cannot be parsed
+        IAtomContainer tmpAtomContainer;
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        tmpSmiPar.kekulise(false);
+        //throws InvalidSmilesException
+        tmpAtomContainer = tmpSmiPar.parseSmiles(aSmilesCode);
+        if (shouldBeKekulized) {
+            //throws CDKException
+            Kekulization.kekulize(tmpAtomContainer);
+        }
+        if (shouldAtomTypesBePerceived) {
+            //throws CDKException
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+        }
+        return tmpAtomContainer;
+    }
+
+    /**
+     * Call to {@link #parseSmilesToAtomContainer(String, boolean, boolean)} with kekulization and atom type perception
+     * set to true.
+     *
+     * @param aSmilesCode SMILES representation
+     * @return IAtomContainer atom container of the molecule
+     * @throws InvalidSmilesException if the given SMILES is invalid
+     * @throws CDKException if kekulization or atom type matching fails
+     */
+    public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode) throws InvalidSmilesException, CDKException {
+        return ChemUtil.parseSmilesToAtomContainer(aSmilesCode, true, true);
     }
 
     /**

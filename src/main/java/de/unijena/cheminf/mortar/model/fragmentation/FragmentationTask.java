@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.fragmentation;
@@ -24,6 +29,8 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -106,8 +113,6 @@ public class FragmentationTask implements Callable<Integer> {
     @Override
     public Integer call() throws Exception{
         for (MoleculeDataModel tmpMolecule : this.moleculesList) {
-            HashMap<String, List<FragmentDataModel>> tmpFragmentsMapOfMolecule = null;
-            HashMap<String, HashMap<String, Integer>> tmpFragmentFrequenciesMapOfMolecule = null;
             try{
                 IAtomContainer tmpAtomContainer;
                 try{
@@ -117,11 +122,9 @@ public class FragmentationTask implements Callable<Integer> {
                     FragmentationTask.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMolecule.getName(), anException);
                     continue;
                 }
-                tmpFragmentsMapOfMolecule = tmpMolecule.getAllFragments();
-                tmpFragmentFrequenciesMapOfMolecule = tmpMolecule.getFragmentFrequencies();
-                if(this.fragmenter.shouldBeFiltered(tmpAtomContainer)){
-                    tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
-                    tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
+                if(this.fragmenter.shouldBeFiltered(tmpAtomContainer)){ //returns true if the molecule can not be fragmented, so it gets empty lists and maps for this fragmentation
+                    tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
+                    tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                     continue;
                 }
                 if(this.fragmenter.shouldBePreprocessed(tmpAtomContainer)){
@@ -133,57 +136,48 @@ public class FragmentationTask implements Callable<Integer> {
                 } catch (NullPointerException | IllegalArgumentException | CloneNotSupportedException anException) {
                     FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     this.exceptionsCounter++;
-                    tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
-                    tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
+                    tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
+                    tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                     continue;
                 }
-                tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(tmpFragmentsList.size()));
-                tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(tmpFragmentsList.size()));
+                List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpFragmentsList.size());
+                HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size()));
                 for(IAtomContainer tmpFragment : tmpFragmentsList){
                     String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
                     if (tmpSmiles == null) {
                         this.exceptionsCounter++;
                         continue;
                     }
-                    FragmentDataModel tmpFragmentDataModel;
-                    try{
-                        if(this.fragmentsHashTable.containsKey(tmpSmiles)){
-                            tmpFragmentDataModel = this.fragmentsHashTable.get(tmpSmiles);
-                        }
-                        else{
-                            tmpFragmentDataModel = new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
-//                            tmpFragmentDataModel = new FragmentDataModel(tmpFragment);
-                            this.fragmentsHashTable.put(tmpSmiles, tmpFragmentDataModel);
-                        }
+                    FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
+                    FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel); // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
+                    if(tmpFragmentDataModel == null){
+                        tmpFragmentDataModel = tmpNewFragmentDataModel;
+                    }
+                    LOCK.lock();
+                    tmpFragmentDataModel.incrementAbsoluteFrequency();
+                    LOCK.unlock();
+                    tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
+                    if(tmpFragmentsOfMolList.contains(tmpFragmentDataModel)){
+                        tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
+                    }
+                    else{
                         LOCK.lock();
-                        tmpFragmentDataModel.incrementAbsoluteFrequency();
+                        tmpFragmentDataModel.incrementMoleculeFrequency();
                         LOCK.unlock();
-                        if(!tmpFragmentDataModel.getParentMolecules().contains(tmpMolecule)){
-                            tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
-                        }
-                        if(tmpMolecule.getFragmentsOfSpecificAlgorithm(this.fragmentationName).stream().anyMatch(f -> f.getUniqueSmiles().equals(tmpSmiles))){
-                            tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).replace(tmpSmiles, tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).get(tmpSmiles) + 1);
-                        }
-                        else{
-                            LOCK.lock();
-                            tmpFragmentDataModel.incrementMoleculeFrequency();
-                            LOCK.unlock();
-                            tmpFragmentFrequenciesMapOfMolecule.get(this.fragmentationName).put(tmpSmiles, 1);
-                            tmpFragmentsMapOfMolecule.get(this.fragmentationName).add(tmpFragmentDataModel);
-                        }
-                    } catch (Exception anException) {
-                        FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                        this.exceptionsCounter++;
+                        tmpFragmentsOfMolList.add(tmpFragmentDataModel);
+                        tmpFragmentFrequenciesOfMoleculeMap.put(tmpSmiles, 1);
                     }
                 }
+                tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, tmpFragmentFrequenciesOfMoleculeMap);
+                tmpMolecule.getAllFragments().put(this.fragmentationName, tmpFragmentsOfMolList);
             } catch(Exception anException){
                 this.exceptionsCounter++;
                 FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                if (tmpFragmentsMapOfMolecule != null && !tmpFragmentsMapOfMolecule.containsKey(this.fragmentationName)) {
-                    tmpFragmentsMapOfMolecule.put(this.fragmentationName, new ArrayList<>(0));
+                if (tmpMolecule.getAllFragments() != null && !tmpMolecule.getAllFragments().containsKey(this.fragmentationName)) {
+                    tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
                 }
-                if (tmpFragmentFrequenciesMapOfMolecule != null && !tmpFragmentFrequenciesMapOfMolecule.containsKey(this.fragmentationName)) {
-                    tmpFragmentFrequenciesMapOfMolecule.put(this.fragmentationName, new HashMap<>(0));
+                if (tmpMolecule.getFragmentFrequencies() != null && !tmpMolecule.getFragmentFrequencies().containsKey(this.fragmentationName)) {
+                    tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                 }
             }
             if(Thread.currentThread().isInterrupted()){

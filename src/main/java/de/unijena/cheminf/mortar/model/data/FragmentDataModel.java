@@ -1,34 +1,41 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2022  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+
 import javafx.scene.image.ImageView;
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,7 +70,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * List of parent molecules, which contains this fragment
      */
-    private List<MoleculeDataModel> parentMolecules;
+    private Set<MoleculeDataModel> parentMolecules;
     //
     /**
      * First or random parent molecule which contains this fragment
@@ -76,7 +83,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     private static final Logger LOGGER = Logger.getLogger(FragmentDataModel.class.getName());
     //
     /**
-     * Constructor, sets absolute frequency to 1. Molecular information is taken from the given unique SMILES code. The
+     * Constructor, sets absolute frequency to 0. Molecular information is taken from the given unique SMILES code. The
      * data is not kept as atom container.
      *
      * @param aUniqueSmiles unique SMILES code
@@ -90,11 +97,11 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = new LinkedList<>();
+        this.parentMolecules = ConcurrentHashMap.newKeySet(); // sounds weird but to set the number of the total molecule set kills the performance
     }
     //
     /**
-     * Constructor, sets absolute frequency to 1. Retains the given data as atom container.
+     * Constructor, sets absolute frequency to 0. Retains the given data as atom container.
      *
      * @param anAtomContainer AtomContainer of the molecule
      * @throws NullPointerException if given SMILES string is null
@@ -105,7 +112,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = new LinkedList<>();
+        this.parentMolecules = ConcurrentHashMap.newKeySet(); // sounds weird but to set the number of the total molecule set kills the performance
     }
     //
     /**
@@ -159,7 +166,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Returns list of parent molecules which contains this fragment
      * @return list of parent molecules
      */
-    public List<MoleculeDataModel> getParentMolecules(){
+    public Set<MoleculeDataModel> getParentMolecules(){
         return this.parentMolecules;
     }
     //
@@ -173,7 +180,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.get(0);
+            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
         }
         return this.parentMolecule;
     }
@@ -189,7 +196,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.get(0);
+            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
         }
         try {
             IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
@@ -210,7 +217,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-           this.parentMolecule = this.parentMolecules.get(0);
+           this.parentMolecule = this.parentMolecules.stream().findFirst().get();
         }
         return this.parentMolecule.getName();
     }
