@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
@@ -35,6 +36,10 @@ import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
 import de.unijena.cheminf.mortar.gui.views.MainView;
 import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.Fingerprints.FingerprinterService;
+import de.unijena.cheminf.mortar.model.Fingerprints.IMortarFingerprinter;
+import de.unijena.cheminf.mortar.model.clustering.ClusteringService;
+import de.unijena.cheminf.mortar.model.clustering.IMortarClustering;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
@@ -133,13 +138,37 @@ public class MainViewController {
      */
     private MoleculesDataTableView moleculesDataTableView;
     /**
+     * Wrapper array to hold the clustering results for visualisation the results in ClusteringView as histogram
+     */
+    private IArt2aClusteringResult[] clusteringResult;
+    /**
      * SettingsContainer
      */
     private SettingsContainer settingsContainer;
     /**
+     * Data matrix with generated fingerprints
+     */
+    private int[][] fingerprints;
+    /**
      * FragmentationService
      */
     private FragmentationService fragmentationService;
+    /**
+     * ClusteringService
+     */
+    private ClusteringService clusteringService;
+    /**
+     * FingerprinterService
+     */
+    private FingerprinterService fingerprinterService;
+    /**
+     * Default fingerprint dimensionality
+     */
+    private int defaultFingerprintDimensionality;
+    /**
+     * Number of fragments after fragmentation
+     */
+    private int numberOfFragmentsAfterFragmentation;
     /**
      * ViewToolsManager
      */
@@ -193,6 +222,26 @@ public class MainViewController {
      */
     private BooleanProperty isExportRunningProperty;
     /**
+     * Clustering thread
+     */
+    private Thread clusteringThread;
+    /**
+     * Task for clustering fingerprints
+     */
+    private Task<IArt2aClusteringResult[]> clusteringTask;
+    /**
+     * BooleanProperty whether clustering is running
+     */
+    private BooleanProperty isClusteringRunningProperty;
+    /**
+     * Button to cancel running clustering process
+     */
+    Button cancelClusteringButton;
+    /**
+     * Button to start clustering process
+     */
+    Button clusteringButton;
+    /**
      * Thread safe list to hold running threads to update StatusBar
      */
     private CopyOnWriteArrayList<Thread> threadList;
@@ -235,6 +284,10 @@ public class MainViewController {
         this.fragmentationService = new FragmentationService(this.settingsContainer);
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
+        this.clusteringService = new ClusteringService(this.settingsContainer);
+        this.clusteringService.reloadClusteringSettings();
+        this.fingerprinterService = new FingerprinterService(this.settingsContainer);
+        this.fingerprinterService.reloadFingerprinterSettings();
         this.viewToolsManager = new ViewToolsManager();
         this.viewToolsManager.reloadViewToolsSettings();
         //<editor-fold desc="show MainView inside of primaryStage" defaultstate="collapsed">
@@ -253,10 +306,13 @@ public class MainViewController {
         //</editor-fold>
         this.isImportRunningProperty = new SimpleBooleanProperty(false);
         this.isExportRunningProperty = new SimpleBooleanProperty(false);
+        this.isClusteringRunningProperty = new SimpleBooleanProperty(false);
         this.mapOfFragmentDataModelLists = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(5));
         this.threadList = new CopyOnWriteArrayList();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
+        this.addClusteringAlgorithmCheckMenuItems();
+        this.addFingerprinterCheckMenuItems();
     }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
@@ -303,6 +359,14 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentsExportToSeparateSDFsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.exportFile(Exporter.ExportTypes.SD_FILE));
+        this.mainView.getMainMenuBar().getExportBitFingerprintsAsCSV().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.exportFile(Exporter.ExportTypes.BIT_FINGERPRINTS_EXPORT_CSV)
+        );
+        this.mainView.getMainMenuBar().getExportCountFingerprintsAsCSV().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.exportFile(Exporter.ExportTypes.COUNT_FINGERPRINTS_EXPORT_CSV)
+        );
         //items export to CSV
         this.mainView.getMainMenuBar().getItemsExportToCSVMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -315,6 +379,14 @@ public class MainViewController {
         this.mainView.getMainMenuBar().getFragmentationSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
                 anEvent -> this.openFragmentationSettingsView()
+        );
+        this.mainView.getMainMenuBar().getClusteringSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openClusteringSettingsView()
+        );
+        this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.openFingerprinterSettingsView()
         );
         this.mainView.getMainMenuBar().getGlobalSettingsMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -373,8 +445,10 @@ public class MainViewController {
                 }
                 if (newValue.getId().equals(TabNames.MOLECULES.toString())) {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                    this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(true);
                 } else {
                     this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                    this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(false);
                 }
                 if (newValue.getId().equals(TabNames.ITEMIZATION.toString())) {
                     this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
@@ -398,9 +472,14 @@ public class MainViewController {
         this.settingsContainer.preserveSettings();
         this.viewToolsManager.persistViewToolsSettings();
         this.fragmentationService.persistFragmenterSettings();
+        this.fingerprinterService.persistFingerprinterSettings();
+        this.clusteringService.persistClusteringSettings();
         this.fragmentationService.persistSelectedFragmenterAndPipeline();
         if (this.isFragmentationRunning) {
             this.interruptFragmentation();
+        }
+        if(this.isClusteringRunningProperty.get()) {
+            this.interruptClustering();
         }
         MainViewController.LOGGER.info(BasicDefinitions.MORTAR_SESSION_END);
         Platform.exit();
@@ -469,6 +548,9 @@ public class MainViewController {
         if (this.isExportRunningProperty.get()) {
             this.interruptExport();
         }
+        if(this.isClusteringRunningProperty.get()) {
+            this.interruptClustering();
+        }
         this.clearGuiAndCollections();
         this.importTask = new Task<>() {
             @Override
@@ -499,6 +581,7 @@ public class MainViewController {
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+                this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(true);
                 this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() +
                         " " + Message.get((tmpAtomContainerSet.getAtomContainerCount() == 1 ? "Title.molecule" : "Title.molecules")));
@@ -567,6 +650,8 @@ public class MainViewController {
             case FRAGMENT_PDF_FILE:
             case SINGLE_SD_FILE:
             case SD_FILE:
+            case COUNT_FINGERPRINTS_EXPORT_CSV:
+            case BIT_FINGERPRINTS_EXPORT_CSV:
                 if (this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS) == null ||
                         this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS).size() == 0 ||
                         ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
@@ -672,6 +757,18 @@ public class MainViewController {
                                 ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.ITEMIZATION
                         );
+                    case COUNT_FINGERPRINTS_EXPORT_CSV:
+                        MainViewController.this.fingerprints = null;
+                        MainViewController.this.startFingerprintingToExport("Export count fingerprints");
+                        return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(),
+                                MainViewController.this.moleculeDataModelList
+                        );
+                    case BIT_FINGERPRINTS_EXPORT_CSV:
+                        MainViewController.this.fingerprints = null;
+                        MainViewController.this.startFingerprintingToExport("Export bit fingerprints");
+                        return tmpExporter.exportCsvFingerprintFile(fingerprints, settingsContainer.getCsvExportSeparatorSetting(),
+                                MainViewController.this.moleculeDataModelList
+                        );
                 }
                 return null;
             }
@@ -709,12 +806,20 @@ public class MainViewController {
             this.isExportRunningProperty.setValue(false);
             MainViewController.LOGGER.log(Level.WARNING, event.getSource().getException().toString(), event.getSource().getException());
             this.updateStatusBar(this.exporterThread, Message.get("Status.failed"));
-            GuiUtil.guiMessageAlert(
-                    Alert.AlertType.WARNING,
-                    Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
-                    Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
-                    null);
-
+            if(this.fingerprinterService.getFingerprintDimensionalityValue() > this.numberOfFragmentsAfterFragmentation) {
+                IllegalArgumentException tmpException = new IllegalArgumentException("An illegal fingerprint frequency threshold number was given: " + this.fingerprinterService.getFingerprintDimensionalityValue());
+                GuiUtil.guiExceptionAlert(Message.get("FragmentFingerprinterWrapper.Error.invalidFingerprintDimensionalityArgument.Title"),
+                        Message.get("FragmentFingerprinterWrapper.Error.invalidFingerprintDimensionalityArgument.Header"),
+                        tmpException.toString(),
+                        tmpException);
+            }
+             else {
+                GuiUtil.guiMessageAlert(
+                        Alert.AlertType.WARNING,
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.title"),
+                        Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
+                        null);
+            }
         });
         this.exporterThread = new Thread(this.exportTask);
         this.exporterThread.setName(ThreadType.EXPORT_THREAD.getThreadName());
@@ -733,6 +838,24 @@ public class MainViewController {
     private void openFragmentationSettingsView() {
         FragmentationSettingsViewController tmpFragmentationSettingsViewController =
                 new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+    }
+    //
+
+    /**
+     * Opens settings view for ClusteringSettings
+     */
+    private void openClusteringSettingsView() {
+        ClusteringSettingsViewController tmpClusteringSettingsViewController =
+                new ClusteringSettingsViewController(this.primaryStage, this.clusteringService.getClusterer(), this.clusteringService.getSelectedClusteringAlgorithm().getClusteringName());
+    }
+    //
+
+    /**
+     * Opens settings for FingerprinterSettings
+     */
+    public void openFingerprinterSettingsView() {
+        FingerprinterSettingsViewController tmpFingerprinterSettingsViewController =
+                new FingerprinterSettingsViewController(this.primaryStage, this.fingerprinterService.getFingerprinter(), this.fingerprinterService.getSelectedFingerprinter().getFingerprinterName(),this.defaultFingerprintDimensionality);
     }
     //
 
@@ -762,6 +885,18 @@ public class MainViewController {
     //
 
     /**
+     * Opens ClusteringView
+     *
+     * @param aClusteringResults array storing clustering results for all vigilance parameters
+     */
+    private void openClusteringView(IArt2aClusteringResult[] aClusteringResults) {
+        this.viewToolsManager.openClusteringView(this.primaryStage,aClusteringResults, this.moleculeDataModelList, OverviewViewController.DataSources.CLUSTERING_VIEW,
+                Message.get("MainViewController.OverViewTitleForClusterRepresentatives.Title"),
+                Message.get("MainViewController.OverViewTitleForClusterMembers.Title"),this.clusteringService.getSelectedClusteringAlgorithm().getClusteringName(), this.viewToolsManager);
+    }
+    //
+
+    /**
      * Adds CheckMenuItems for fragmentation algorithms to MainMenuBar
      */
     private void addFragmentationAlgorithmCheckMenuItems() {
@@ -778,6 +913,50 @@ public class MainViewController {
             if (tmpToggleGroup.getSelectedToggle() != null) {
                 this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
                 this.fragmentationService.setSelectedFragmenterNameProperty(((RadioMenuItem) newValue).getText());
+            }
+        });
+    }
+    //
+
+    /**
+     * Adds CheckMenuItems for clustering algorithms to MainMenuBar
+     */
+    private void addClusteringAlgorithmCheckMenuItems() {
+        ToggleGroup tmpToggleGroup = new ToggleGroup();
+        for(IMortarClustering tmpClusteringAlgorithm : this.clusteringService.getClusterer()) {
+            RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpClusteringAlgorithm.getClusteringName());
+            tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
+            this.mainView.getMainMenuBar().getClusteringAlgorithmMenu().getItems().add(tmpRadioMenuItem);
+            if(!Objects.isNull(this.clusteringService.getSelectedClusteringAlgorithm()) && tmpClusteringAlgorithm.getClusteringName().equals(this.clusteringService.getSelectedClusteringAlgorithm().getClusteringName())) {
+                tmpToggleGroup.selectToggle(tmpRadioMenuItem);
+            }
+        }
+        tmpToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if(tmpToggleGroup.getSelectedToggle() != null) {
+                this.clusteringService.setSelectedClusteringAlgorithm(((RadioMenuItem) newValue).getText());
+                this.clusteringService.setSelectedClusteringAlgorithmNameProperty(((RadioMenuItem) newValue).getText());
+            }
+        });
+    }
+    //
+
+    /**
+     * Adds CheckMenuItems for fingerprinter to MainMenuBar
+     */
+    public void addFingerprinterCheckMenuItems() {
+        ToggleGroup tmpToggleGroup = new ToggleGroup();
+        for(IMortarFingerprinter tmpFingerprinter : this.fingerprinterService.getFingerprinter()) {
+            RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFingerprinter.getFingerprinterName());
+            tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
+            this.mainView.getMainMenuBar().getFingerprinterMenu().getItems().add(tmpRadioMenuItem);
+            if(!Objects.isNull(this.fingerprinterService.getSelectedFingerprinter()) && tmpFingerprinter.getFingerprinterName().equals(this.fingerprinterService.getSelectedFingerprinter().getFingerprinterName())) {
+                tmpToggleGroup.selectToggle(tmpRadioMenuItem);
+            }
+        }
+        tmpToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if(tmpToggleGroup.getSelectedToggle() != null) {
+                this.fingerprinterService.setSelectedFingerprinter(((RadioMenuItem) newValue).getText());
+                this.fingerprinterService.setSelectedFingerprinterNameProperty(((RadioMenuItem) newValue).getText());
             }
         });
     }
@@ -1061,6 +1240,17 @@ public class MainViewController {
     //
 
     /**
+     * Cancels clustering task and interrupts the corresponding thread
+     */
+    private void interruptClustering() {
+        this.clusteringTask.cancel(true);
+        this.cancelClusteringButton.setVisible(false);
+        this.clusteringButton.setDisable(false);
+        this.clusteringThread.interrupt();
+    }
+    //
+
+    /**
      * Starts fragmentation for only one algorithm
      */
     private void startFragmentation() {
@@ -1086,19 +1276,18 @@ public class MainViewController {
                 @Override
                 protected Void call() throws Exception {
                     if (isPipelining) {
-                            MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
+                           fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
                                     tmpNumberOfCores);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
                     } else {
-                        MainViewController.this.fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
+                        fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
                                 tmpNumberOfCores);
                     }
                     return null;
                 }
-
                 @Override
                 public boolean cancel(boolean anInterruptThread) {
-                    MainViewController.this.fragmentationService.abortExecutor();
+                    fragmentationService.abortExecutor();
                     return super.cancel(anInterruptThread);
                 }
             };
@@ -1117,11 +1306,26 @@ public class MainViewController {
                         this.updateStatusBar(this.fragmentationThread, Message.get("Status.finished"));
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                         this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
+                        this.mainView.getMainMenuBar().getFingerprinterSettingsMenuItem().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
                         LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
+                        this.fingerprinterService.setMaximumFingerprintDimensionality(tmpObservableFragments.size());
+                        this.defaultFingerprintDimensionality = tmpObservableFragments.size();
+                        HashMap<String, List<FragmentDataModel>> tmpTabNameToFragmentsMap = new HashMap<>();
+                        if(this.mainTabPane != null) {
+                            tmpTabNameToFragmentsMap.put(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(), tmpObservableFragments);
+                            this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldTab, newTab) -> {
+                                if(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()) !=null) {
+                                    if (tmpTabNameToFragmentsMap.containsKey(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle())) {
+                                        List<FragmentDataModel> tmpFragmentDataModelList = tmpTabNameToFragmentsMap.get(((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+                                        this.fingerprinterService.setMaximumFingerprintDimensionality(tmpObservableFragments.size());
+                                    }
+                                }
+                            });
+                        }
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
@@ -1160,8 +1364,109 @@ public class MainViewController {
     //
 
     /**
-     * Adds a tab for fragments and a tab for items (results of fragmentation)
+     * Starts the clustering process
      *
+     * @param aDataMatrix to be clustered
+     */
+    private void startClustering(int[][] aDataMatrix) {
+         this.clusteringTask = new Task<>() {
+            @Override
+            protected IArt2aClusteringResult[] call() throws Exception {
+                IArt2aClusteringResult[] tmpClusteringResult = clusteringService.startClustering(aDataMatrix, settingsContainer.getNumberOfTasksForFragmentationSetting());
+                return tmpClusteringResult;
+            }
+            @Override
+             public boolean cancel(boolean anInterruptThread) {
+                 clusteringService.getArt2aClusteringInstance().abortExecutor();
+                 return super.cancel(anInterruptThread);
+             }
+        };
+            this.clusteringButton.setDisable(true);
+            this.cancelClusteringButton.setVisible(true);
+            this.clusteringTask.setOnSucceeded(event -> {
+                Platform.runLater(() -> {
+                    this.clusteringResult = null;
+                    try {
+                        this.clusteringResult = clusteringTask.get();
+                    } catch (InterruptedException | ExecutionException anException) {
+                        MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                        GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                                Message.get("Clustering.ClusteringExceptionAlert.Header"),
+                                Message.get("Clustering.ClusteringExceptionAlert.Text") + "\n" + FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
+                                anException);
+                        this.updateStatusBar(this.clusteringThread, Message.get("Status.clusteringFailed"));
+                    }
+                    this.updateStatusBar(this.clusteringThread, Message.get("Status.clustered"));
+                    this.clusteringButton.setDisable(false);
+                    this.cancelClusteringButton.setVisible(false);
+                    this.isClusteringRunningProperty.setValue(false);
+                    this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");
+                    this.openClusteringView(this.clusteringResult);
+                });
+            });
+            this.clusteringTask.setOnCancelled(event -> {
+                this.updateStatusBar(this.clusteringThread, Message.get("Status.clusteringCanceled"));
+                this.clusteringButton.setDisable(false);
+                this.cancelClusteringButton.setVisible(false);
+                this.isClusteringRunningProperty.setValue(false);
+            });
+            this.clusteringTask.setOnFailed(event -> {
+                this.updateStatusBar(this.clusteringThread, Message.get("Status.clusteringFailed"));
+                this.clusteringButton.setDisable(false);
+                this.cancelClusteringButton.setVisible(false);
+                this.isImportRunningProperty.setValue(false);
+                LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
+            });
+            this.clusteringThread = new Thread(clusteringTask);
+            this.clusteringThread.setName(ThreadType.CLUSTERING_THREAD.getThreadName());
+            this.clusteringThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            this.clusteringThread.setDaemon(false);
+            this.clusteringThread.setPriority(Thread.currentThread().getPriority() - 2); //magic number
+            this.isClusteringRunningProperty.setValue(true);
+            this.updateStatusBar(this.clusteringThread, Message.get("Status.clustering"));
+            this.clusteringThread.start();
+    }
+    //
+
+    /**
+     * Starts generating fingerprints to cluster them afterwards
+     *
+     * @return fingerprints in a data matrix
+     */
+    private int[][] startFingerprinting() {
+        List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS);
+        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
+        for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
+            tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
+        }
+        this.fingerprints = this.fingerprinterService.getFingerprints(this.moleculeDataModelList, tmpFragmentsList,
+                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+        return this.fingerprints;
+    }
+    //
+
+    /**
+     * Start generating fingerprint to export them afterwards
+     *
+     * @param aFingerprinterTypName fingerprint typ name
+     * @return fingerprints in a data matrix
+     */
+    private int[][] startFingerprintingToExport(String aFingerprinterTypName) {
+        List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmenterByTabId(TabNames.FRAGMENTS);
+        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
+        for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
+            tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
+        }
+        this.numberOfFragmentsAfterFragmentation = tmpFragmentsList.size();
+        this.fingerprints = this.fingerprinterService.getFingerprintsToExport(this.moleculeDataModelList, tmpFragmentsList,
+                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(), aFingerprinterTypName);
+        return this.fingerprints;
+    }
+    //
+
+    /**
+     * Adds a tab for fragments and a tab for items (results of fragmentation)
+     *f
      * @param aFragmentationName
      */
     private void addFragmentationResultTabs(String aFragmentationName) {
@@ -1228,13 +1533,27 @@ public class MainViewController {
         tmpOpenOverviewViewButton.setTooltip(new Tooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
         Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
         tmpOpenHistogramViewButton.setTooltip(new Tooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
-        tmpViewButtonsHBox.getChildren().addAll(tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
+        this.clusteringButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showClusterViewButton.text"));
+        this.clusteringButton.setTooltip(new Tooltip(Message.get("MainView.showClusterViewButton.tooltip")));
+        this.cancelClusteringButton = GuiUtil.getButtonOfStandardSize("Cancel");
+        this.cancelClusteringButton.setVisible(false);
+        tmpViewButtonsHBox.getChildren().addAll(this.cancelClusteringButton,this.clusteringButton,tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
+        this.clusteringButton.setOnAction(event -> {
+            // fingerprinting first and then start clustering
+            this.fingerprints = null;
+            this.startFingerprinting();
+            this.startClustering(this.fingerprints);
+        });
+        this.cancelClusteringButton.setOnAction(event -> {
+            this.interruptClustering();
+        });
         if(tmpList.size() == 0){
             tmpOpenOverviewViewButton.setDisable(true);
             tmpOpenHistogramViewButton.setDisable(true);
+            this.clusteringButton.setDisable(true);
         }
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
@@ -1339,6 +1658,7 @@ public class MainViewController {
         this.mapOfFragmentDataModelLists.clear();
         this.moleculesDataTableView = null;
         this.mainTabPane.getTabs().clear();
+        this.fingerprints = null;
     }
     //
 
@@ -1401,6 +1721,8 @@ public class MainViewController {
                 return Message.get("Status.importing");
             case EXPORT_THREAD:
                 return Message.get("Status.exporting");
+            case CLUSTERING_THREAD:
+                return Message.get("Status.clustering");
             default:
                 return "Could not find message";
         }
@@ -1424,7 +1746,11 @@ public class MainViewController {
         /**
          * enum value for export thread
          */
-        EXPORT_THREAD("Export_Thread");
+        EXPORT_THREAD("Export_Thread"),
+        /**
+         * enum value for clustering thread
+         */
+        CLUSTERING_THREAD("Clustering_Thread");
 
         private String threadName;
 

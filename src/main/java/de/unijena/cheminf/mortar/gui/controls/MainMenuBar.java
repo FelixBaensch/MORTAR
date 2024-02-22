@@ -96,6 +96,26 @@ public class MainMenuBar extends MenuBar {
      */
     private MenuItem itemsExportToPDFMenuItem;
     /**
+     * MenuItem to export the fingerprint
+     */
+    private Menu fingerprintsExportMenu;
+    /**
+     * Menu to export count fingerprints
+     */
+    private Menu exportCountFingerprints;
+    /**
+     * Menu to export bit fingerprints
+     */
+    private Menu exportBitFingerprints;
+    /**
+     * MenuItem to export count fingerprints as csv file
+     */
+    private MenuItem exportCountFingerprintsAsCSV;
+    /**
+     * MenuItem to export bit fingerprints as csv file
+     */
+    private MenuItem exportBitFingerprintsAsCSV;
+    /**
      * MenuItem to exit app
      */
     private MenuItem exitMenuItem;
@@ -112,9 +132,21 @@ public class MainMenuBar extends MenuBar {
      */
     private Menu helpMenu;
     /**
+     * Menu to choose the fingerprinter
+     */
+    private Menu fingerprinterMenu;
+    /**
      * MenuItem to open fragmentation settings
      */
     private MenuItem fragmentationSettingsMenuItem;
+    /**
+     * MenuItem to open clustering settings
+     */
+    private MenuItem clusteringSettingsMenuItem;
+    /**
+     * MenuItem to open fingerprinter settings
+     */
+    private MenuItem fingerprinterSettingsMenuItem;
     /**
      * MenuItem to open global settings
      */
@@ -131,6 +163,10 @@ public class MainMenuBar extends MenuBar {
      * Menu to choose fragmentation algorithm
      */
     private Menu fragmentationAlgorithmMenu;
+    /**
+     * Menu to choose clustering algorithm
+     */
+    private Menu clusteringAlgorithmMenu;
     /**
      * MenuItem to cancel molecule import, only visible if import is running
      */
@@ -183,6 +219,13 @@ public class MainMenuBar extends MenuBar {
         //components
         this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
         this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
+        //fingerprintsExportMenu
+        this.fingerprintsExportMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.FingerprintsExportMenu.text"));
+        //components
+        this.exportCountFingerprints = new Menu(Message.get("MainView.menuBar.settingsMenu.CountFingerprintsExportMenu.text"));
+        this.exportBitFingerprints = new Menu(Message.get("MainView.menuBar.settingsMenu.BitFingerprintsExportMenu.text"));
+        this.exportCountFingerprintsAsCSV = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.exportBitFingerprintsAsCSV = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
         //</editor-fold>
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
         //settingsMenu
@@ -190,6 +233,10 @@ public class MainMenuBar extends MenuBar {
         this.globalSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.globalSettingsMenuItem.text"));
         this.fragmentationAlgorithmMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.fragmentationAlgorithmMenuItem.text"));
         this.fragmentationSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.fragmentationSettingsMenuItem.text"));
+        this.clusteringAlgorithmMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.clusteringAlgorithmMenuItem.text"));
+        this.clusteringSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.clusteringSettingsMenuItem.text"));
+        this.fingerprinterMenu = new Menu(Message.get("MainView.menuBar.settingsMenu.fingerprinterMenuItem.text"));
+        this.fingerprinterSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.settingsMenu.fingerprinterSettingsMenuItem.text"));
         //pipelineMenu
         this.pipelineMenu = new Menu(Message.get("MainView.menuBar.pipelineMenu.text"));
         this.pipelineSettingsMenuItem = new MenuItem(Message.get("MainView.menuBar.pipelineMenu.pipelineSettingsMenuItem.text"));
@@ -240,6 +287,19 @@ public class MainMenuBar extends MenuBar {
         this.settingsMenu.getItems().add(this.fragmentationAlgorithmMenu);
         //fragmentationSettingsMenuItem
         this.settingsMenu.getItems().add(this.fragmentationSettingsMenuItem);
+        //separator
+        this.settingsMenu.getItems().add(new SeparatorMenuItem());
+        //clusteringAlgorithmMenu
+        this.settingsMenu.getItems().add(this.clusteringAlgorithmMenu);
+        //clusteringSettingsMenuItem
+        this.settingsMenu.getItems().add(this.clusteringSettingsMenuItem);
+        //separator
+        this.settingsMenu.getItems().add(new SeparatorMenuItem());
+        //fingerprinterMenu
+        this.settingsMenu.getItems().add(this.fingerprinterMenu);
+        //fingerprinterSettingsMenuItem
+        this.settingsMenu.getItems().add(this.fingerprinterSettingsMenuItem);
+        this.fingerprinterSettingsMenuItem.setDisable(true);
         //</editor-fold>
         //<editor-fold desc="pipelineMenu" defaultstate="collapsed">
         this.getMenus().add(this.pipelineMenu);
@@ -282,6 +342,12 @@ public class MainMenuBar extends MenuBar {
         this.itemsExportMenu.getItems().add(this.itemsExportToCSVMenuItem);
         this.itemsExportMenu.getItems().add(this.itemsExportToPDFMenuItem);
         //</editor-fold>
+        //<editor-fold desc="FingerprintsExportMenu" defaultstate="collapsed">
+        this.exportMenu.getItems().add(this.fingerprintsExportMenu);
+        this.fingerprintsExportMenu.getItems().add(this.exportCountFingerprints);
+        this.fingerprintsExportMenu.getItems().add(this.exportBitFingerprints);
+        this.exportCountFingerprints.getItems().add(this.exportCountFingerprintsAsCSV);
+        this.exportBitFingerprints.getItems().add(this.exportBitFingerprintsAsCSV);
     }
     //</editor-fold>
     //</editor-fold>
@@ -407,6 +473,46 @@ public class MainMenuBar extends MenuBar {
         return this.itemsExportToPDFMenuItem;
     }
     //</editor-fold>
+    //<editor-fold desc="getExportCountFingerprintsMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of export options to export count fingerprints
+     *
+     * @return the menu that should open a list of export options
+     */
+    public Menu getExportCountFingerprintsMenuItem() {
+        return this.exportCountFingerprints;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getExportBitFingerprintsMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of export options to export bit fingerprints
+     *
+     * @return the menu that should open a list of export options
+     */
+    public Menu getExportBitFingerprintsMenu() {
+        return this.exportBitFingerprints;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getExportCountFingerprintsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item to export the count fingerprints as csv file
+     *
+     * @return menu item that should export the count fingerprints as csv file
+     */
+    public MenuItem getExportCountFingerprintsAsCSV() {
+        return this.exportCountFingerprintsAsCSV;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getExportBitFingerprintsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item to export the bit fingerprints as csv file
+     *
+     * @return menu item that should export the bit fingerprints as csv file
+     */
+    public MenuItem getExportBitFingerprintsAsCSV() {
+        return this.exportBitFingerprintsAsCSV;
+    }
+    //</editor-fold>
     //<editor-fold desc="getExitMenuItem" defaultstate="collapsed">
     /**
      * Returns the menu item that is supposed to shut down the application
@@ -445,6 +551,46 @@ public class MainMenuBar extends MenuBar {
      */
     public MenuItem getFragmentationSettingsMenuItem() {
         return this.fragmentationSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getClusteringAlgorithmMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to choose the clustering algorithm
+     *
+     * @return the menu item that should choose the clustering algorithm
+     */
+    public Menu getClusteringAlgorithmMenu() {
+        return this.clusteringAlgorithmMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFingerprinterMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to choose the fingerprinter
+     *
+     * @return the menu item that should choose the fingerprinter
+     */
+    public Menu getFingerprinterMenu() {
+        return this.fingerprinterMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getFingerprinterSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the fingerprinter settings window
+     *
+     * @return the menu item that should open the fingerprinter settings window
+     */
+    public MenuItem getFingerprinterSettingsMenuItem() {
+        return this.fingerprinterSettingsMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getClusteringSettingsMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to open the clustering settings window
+     *
+     * @return the menu item that should open the clustering settings window
+     */
+    public MenuItem getClusteringSettingsMenuItem() {
+        return this.clusteringSettingsMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getPipelineSettingsMenuItem" defaultstate="collapsed">

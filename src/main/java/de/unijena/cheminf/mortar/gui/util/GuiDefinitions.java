@@ -56,11 +56,11 @@ public final class GuiDefinitions {
     /**
      * Value for the width of the main view
      */
-    public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 1024.0;
+    public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 1037.0;
     /**
      * Value for the height of the main view
      */
-    public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 768.0;
+    public static final double GUI_MAIN_VIEW_HEIGHT_VALUE = 770.0;
     /**
      * Value for the width of a button
      */

@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
@@ -90,6 +91,10 @@ public class ViewToolsManager {
      * OverviewViewController instance.
      */
     private final OverviewViewController overviewViewController;
+    /**
+     * ClusteringViewController instance.
+     */
+    private final ClusteringViewController clusteringViewController;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -98,11 +103,13 @@ public class ViewToolsManager {
      * Opens a GUI exception alert if they are not.
      */
     public ViewToolsManager() {
-        this.viewToolsArray = new IViewToolController[2];
+        this.viewToolsArray = new IViewToolController[3];
         this.histogramViewController = new HistogramViewController();
         this.viewToolsArray[0] = this.histogramViewController;
         this.overviewViewController = new OverviewViewController();
         this.viewToolsArray[1] = this.overviewViewController;
+        this.clusteringViewController = new ClusteringViewController();
+        this.viewToolsArray[2] = this.clusteringViewController;
         try {
             this.checkViewTools();
         } catch (Exception anException) {
@@ -133,6 +140,14 @@ public class ViewToolsManager {
      */
     public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList) throws NullPointerException {
         this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList);
+    }
+    /**
+     * See {@link ClusteringViewController#openClusteringView(Stage, IArt2aClusteringResult[], List, ViewToolsManager, String, String, String, OverviewViewController.DataSources)}.
+     */
+    public void openClusteringView(Stage aMainStage, IArt2aClusteringResult[] aClusteringResults, List<MoleculeDataModel> aMoleculeDataModelList, OverviewViewController.DataSources aDataSource,
+                                   String aTabName, String name, String aClusteringAlgorithmName, ViewToolsManager manager) {
+        this.clusteringViewController.openClusteringView(aMainStage, aClusteringResults, aMoleculeDataModelList,manager,aTabName,
+                name, aClusteringAlgorithmName, aDataSource);
     }
     /**
      * See {@link OverviewViewController#initializeAndShowOverviewView(Stage, OverviewViewController.DataSources, String, List)}.

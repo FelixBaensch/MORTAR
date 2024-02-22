@@ -174,6 +174,14 @@ public class Exporter {
                 tmpFileName = "Items_" + tmpFragmentationName;
                 this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
                 break;
+            case COUNT_FINGERPRINTS_EXPORT_CSV:
+                tmpFileName = "Count_" + "Fingerprints_Fragments_of_" + tmpFragmentationName;
+                this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                break;
+            case BIT_FINGERPRINTS_EXPORT_CSV:
+                tmpFileName = "Bit_" + "Fingerprints_Fragments_of_" + tmpFragmentationName ;
+                this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                break;
         }
     }
     //
@@ -205,7 +213,26 @@ public class Exporter {
         return new ArrayList<>(0);
     }
     //
-
+    /**
+     * Exports in a new Thread the fingerprints as a CSV file.
+     *
+     * @param aFingerprintMatrix matrix in which all fingerprints are stored
+     * @param aSeparator the separator for the csv file
+     * @param aMoleculeDataModelList List {@literal <}MoleculeDataModel {@literal >}
+     * @return List {@literal <}String {@literal >}
+     */
+    public List<String> exportCsvFingerprintFile(int[][] aFingerprintMatrix, String aSeparator, List<MoleculeDataModel> aMoleculeDataModelList)  {
+        try {
+            if (this.file == null) {
+                return null;
+            }
+            this.createFingerprintCsvFile(this.file, aFingerprintMatrix, aSeparator, aMoleculeDataModelList);
+        } catch (Exception anException) {
+            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        }
+        return new ArrayList<>(0);
+    }
+    //
     /**
      * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file.
      * Returns a list containing SMILES of the molecules that cause an error when exported
@@ -326,10 +353,11 @@ public class Exporter {
     /**
      * Exports the fragmentation results as they are displayed on the fragments tab as a CSV file.
      *
+     * @param aCsvFile exported csv file
      * @param aList      a list of FragmentDataModel instances to export
      * @param aSeparator the separator for the csv file
-     * @throws FileNotFoundException
-     * @author Betül Sevindik
+     * @throws FileNotFoundException is thrown if the given file is not found
+     * @author Betuel Sevindik
      */
     private void createFragmentationTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, String aSeparator)
             throws FileNotFoundException {
@@ -353,6 +381,44 @@ public class Exporter {
                     tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
                     tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
                     tmpFragmentDataModel.getMoleculePercentage());
+        }
+        tmpWriter.close();
+    }
+    //
+    /**
+     * Exports the selected fingerprint typ (count or bit) as CSV file
+     *
+     * @param aCsvFile exported csv file
+     * @param aFingerprintsMatrix fingerprints to export
+     * @param aSeparator the separator for the csv file
+     * @param aMoleculeDataModelList List {@literal <}MoleculeDataModel {@literal >} to extract the molecule names
+     * @throws FileNotFoundException is thrown if the given file is not found
+     * @author Betuel Sevindik
+     */
+    private void createFingerprintCsvFile(File aCsvFile,int[][] aFingerprintsMatrix, String aSeparator, List<MoleculeDataModel> aMoleculeDataModelList)
+            throws FileNotFoundException {
+        if (aCsvFile == null) {
+            return;
+        }
+        PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
+        StringBuilder tmpFingerprintFileCsvHeader = new StringBuilder();
+        tmpFingerprintFileCsvHeader.append("Molecule name" + aSeparator + "Fingerprint" +("\n"));
+        tmpWriter.write(tmpFingerprintFileCsvHeader.toString());
+        int tmpCurrentFingerprint[];
+        for(int i = 0; i < aFingerprintsMatrix.length; i++) {
+            if(Thread.currentThread().isInterrupted()){
+                return;
+            }
+            tmpCurrentFingerprint = aFingerprintsMatrix[i];
+            tmpWriter.write(aMoleculeDataModelList.get(i).getName() + aSeparator);
+            for(int j = 0; j < aFingerprintsMatrix[0].length; j++) {
+                if(j == (aFingerprintsMatrix[0].length-1)) {
+                    tmpWriter.write(String.valueOf(tmpCurrentFingerprint[j]));
+                } else {
+                    tmpWriter.write(String.valueOf(tmpCurrentFingerprint[j] + aSeparator));
+                }
+            }
+            tmpWriter.write("\n");
         }
         tmpWriter.close();
     }
@@ -1073,7 +1139,15 @@ public class Exporter {
         /**
          * enum value for pdb file
          */
-        PDB_FILE
+        PDB_FILE,
+        /**
+         * enum value for count fingerprint csv file
+         */
+        COUNT_FINGERPRINTS_EXPORT_CSV,
+        /**
+         * enum value for bit fingerprint csv file
+         */
+        BIT_FINGERPRINTS_EXPORT_CSV
     }
     //</editor-fold>
 }

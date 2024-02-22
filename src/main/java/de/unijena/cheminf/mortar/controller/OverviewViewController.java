@@ -118,6 +118,10 @@ public class OverviewViewController implements IViewToolController {
          */
         ITEM_WITH_FRAGMENTS_SAMPLE,
         /**
+         * Enum value for parent molecules in clustering view as data source.
+         */
+        CLUSTERING_VIEW,
+        /**
          * Enum value for any other data source.
          */
         ANY;
@@ -256,6 +260,10 @@ public class OverviewViewController implements IViewToolController {
      * Boolean value to distinguish between drag from mouse click events.
      */
     private boolean dragFlag;
+    /**
+     * Boolean value to TODO
+     */
+    private boolean clusteringViewHighlightOption;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
@@ -296,6 +304,7 @@ public class OverviewViewController implements IViewToolController {
         this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         this.dragFlag = false;
+        this.clusteringViewHighlightOption = false;
     }
     //</editor-fold>
     //
@@ -400,6 +409,16 @@ public class OverviewViewController implements IViewToolController {
                                 ? "OverviewView.titleOfView.molecule" : "OverviewView.titleOfView.fragment")
                                 + (aMoleculeDataModelList.size() != 1 ? "s" : ""));
                 this.withShowInMainViewOption = true;
+            }
+            case CLUSTERING_VIEW -> {
+                Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
+                if (aTabName.isBlank()) {
+                    OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
+                }
+                this.overviewViewTitle =  aTabName + " - " + Message.get("OverviewView.nameOfView") +
+                        " - " + aMoleculeDataModelList.size() + " " + "Molecules";
+                this.withShowInMainViewOption = false;
+                this.clusteringViewHighlightOption = true;
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
@@ -777,7 +796,16 @@ public class OverviewViewController implements IViewToolController {
                                                 tmpImageHeight, true, true
                                         )
                                 );
-                            } else {
+                                // only for the clustering view
+                            } else if(this.clusteringViewHighlightOption && !this.withShowInMainViewOption) {
+                                tmpFinalContentNode = new ImageView(
+                                        DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                                tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                tmpImageHeight, true, true
+                                        )
+                                );
+                            }
+                            else {
                                 //highlighting first structure in parent molecules and item overview view
                                 StackPane tmpStackPane = new StackPane(
                                         new ImageView(
