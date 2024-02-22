@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/220207097.svg)](https://zenodo.org/badge/latestdoi/220207097)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-blue.svg)](https://GitHub.com/FelixBaensch/MORTAR/graphs/commit-activity)
 [![GitHub issues](https://img.shields.io/github/issues/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/issues/)
 [![GitHub contributors](https://img.shields.io/github/contributors/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/graphs/contributors/)
@@ -7,9 +7,10 @@
 [![build](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml/badge.svg)](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FelixBaensch_MORTAR&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FelixBaensch_MORTAR)
 [![Software Article - JChemInf](https://img.shields.io/badge/Software_Article-JChemInf-blue)](https://doi.org/10.1186/s13321-022-00674-9)
+[![Tutorial - Tutorial folder](https://img.shields.io/badge/Tutorial-Tutorial_folder-2ea44f)](https://github.com/FelixBaensch/MORTAR/tree/main/Tutorial)
 [![Tutorial - Online](https://img.shields.io/badge/Tutorial-Online-2ea44f)](https://felixbaensch.github.io/MORTAR/Tutorial/MORTAR_Tutorial.pdf)
 
-![MORTAR_logo](.\Images\Mortar_Logo1_cut.png)
+![MORTAR_logo](./Images/Mortar_Logo1_cut.png)
 # MOlecule fRagmenTAtion fRamework (MORTAR)
 See the GitHub repository here: [https://github.com/FelixBaensch/MORTAR](https://github.com/FelixBaensch/MORTAR)
 <br>

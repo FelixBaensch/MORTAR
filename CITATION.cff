@@ -28,7 +28,7 @@ authors:
 doi: "10.5281/zenodo.6984804"
 date-released: 2023-06-27
 url: "https://github.com/FelixBaensch/MORTAR"
-license: GPL-3.0
+license: MIT
 references:
   - authors:
       - family-names: "Baensch"
