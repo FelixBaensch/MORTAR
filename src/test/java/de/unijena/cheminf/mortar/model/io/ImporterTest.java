@@ -165,13 +165,15 @@ public class ImporterTest extends Importer {
         tmpURL = this.getClass().getResource("SMILESTestFileSix.smi");
         tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
         Assertions.assertEquals(50, tmpMolSet.getAtomContainerCount());
-        //Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
     }
 
     @Test
     public void test() throws Exception {
         //TODO this is the problem because the parsing does not fail here, only the first part up to \t is parsed successfully!
         ChemUtil.parseSmilesToAtomContainer("CCCCOCCC\tlfdsklhfdfvdbgvb");
+        //Same here:
+        ChemUtil.parseSmilesToAtomContainer("CCCCOCCC lfdsklhfdfvdbgvb");
     }
 
 }

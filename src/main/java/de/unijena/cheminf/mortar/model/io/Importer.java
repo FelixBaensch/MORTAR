@@ -474,7 +474,7 @@ public class Importer {
                 and the file is assumed to be no SMILES file -> return null
              */
             findSeparatorLoop:
-            while (!Thread.currentThread().isInterrupted() && tmpLineInFileCounter <= Importer.MAXIMUM_LINE_NUMBER_TO_CHECK_IN_SMILES_FILES) {
+            while (!Thread.currentThread().isInterrupted() && tmpLineInFileCounter < Importer.MAXIMUM_LINE_NUMBER_TO_CHECK_IN_SMILES_FILES) {
                 tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine();
                 tmpLineInFileCounter++;
                 if (tmpSmilesFileNextLine == null) {
@@ -489,6 +489,7 @@ public class Importer {
                 for (String tmpSeparator : BasicDefinitions.POSSIBLE_SMILES_FILE_SEPARATORS) {
                     //maximum of two array elements expected, otherwise the separator or the line itself are assumed to be invalid
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator, 4);
+                    //todo remove?
                     if (tmpProcessedLineArray.length > 3) {
                         continue;
                     }
