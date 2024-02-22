@@ -38,7 +38,7 @@ import java.nio.file.Paths;
 import java.util.Locale;
 
 /**
- * Test class for the ImportSMILESFile() method of the Importer class.
+ * Test class for the Importer class.
  *
  * @author Samuel Behr
  * @version 1.0.0.0
@@ -87,7 +87,8 @@ public class ImporterTest extends Importer {
         - including blank lines
          */
         URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
-        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        IAtomContainerSet tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
 
         /*
         Expected output:    5 parsable lines
@@ -99,7 +100,9 @@ public class ImporterTest extends Importer {
         - used separator: "\t"
          */
         tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
-        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        Assertions.assertEquals(5, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("CNP0337481", tmpMolSet.getAtomContainer(4).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
 
         /*
         Expected output:    3 parsable lines
@@ -110,7 +113,9 @@ public class ImporterTest extends Importer {
         - two lines with invalid SMILES code
          */
         tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
-        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("Valdiazen", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
 
         /*
         Expected output:    1 parsable lines
@@ -121,7 +126,9 @@ public class ImporterTest extends Importer {
         - used separator: " "
          */
         tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
-        this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        Assertions.assertEquals(1, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("CNP0356547", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
 
         /*
         Expected output:    2 parsable lines
@@ -141,9 +148,31 @@ public class ImporterTest extends Importer {
         int i = 0;
         for (IAtomContainer tmpAtomContainer :
                 tmpAtomContainerSet.atomContainers()) {
-            Assertions.assertEquals(ChemUtil.createUniqueSmiles(tmpAtomContainer), tmpTestFileFiveSmiles[i]);
-            Assertions.assertEquals(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), tmpTestFileFiveIDs[i]);
+            Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer));
+            Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             i++;
         }
+
+        /*
+        Expected output:    50 parsable lines
+                            1 invalid lines (header)
+        Test file's specifications:
+        - 51 lines, 50 with structures, 1 header line
+        - ID second in line
+        - used separator: " "
+        - multiple garbage columns after the first 2
+         */
+        tmpURL = this.getClass().getResource("SMILESTestFileSix.smi");
+        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        Assertions.assertEquals(50, tmpMolSet.getAtomContainerCount());
+        //Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
     }
+
+    @Test
+    public void test() throws Exception {
+        //TODO this is the problem because the parsing does not fail here, only the first part up to \t is parsed successfully!
+        ChemUtil.parseSmilesToAtomContainer("CCCCOCCC\tlfdsklhfdfvdbgvb");
+    }
+
 }
+
