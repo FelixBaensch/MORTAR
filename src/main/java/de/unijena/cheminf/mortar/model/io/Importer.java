@@ -70,6 +70,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -186,9 +187,7 @@ public class Importer {
     public String getFileName(){
         return this.fileName;
     }
-    //</editor-fold>
     //
-    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      * Opens a file chooser and loads the chosen file.
      *
@@ -227,7 +226,9 @@ public class Importer {
             return tmpFile;
         }
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      * Imports a mol file as AtomContainer and adds the first line of the mol file (name of the
      * molecule in most cases) as "name-property". MDL v2000 and v3000 MOL files are accepted and the used format
@@ -490,12 +491,15 @@ public class Importer {
                     //maximum of two array elements expected, otherwise the separator or the line itself are assumed to be invalid
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator, 4);
                     //todo remove?
-                    if (tmpProcessedLineArray.length > 3) {
-                        continue;
-                    }
+//                    if (tmpProcessedLineArray.length > 3) {
+//                        continue;
+//                    }
                     int tmpColumnIndex = 0;
                     for (String tmpNextElementOfLine : tmpProcessedLineArray) {
                         if (tmpNextElementOfLine.isEmpty() || tmpColumnIndex > 2) {
+                            continue;
+                        }
+                        if (!Importer.containsOnlySMILESValidCharacters(tmpNextElementOfLine) || tmpNextElementOfLine.isEmpty() || tmpNextElementOfLine.equals("ID")) {
                             continue;
                         }
                         try {
@@ -568,6 +572,17 @@ public class Importer {
             Importer.LOGGER.log(Level.SEVERE, tmpMessage);
             throw new IOException(tmpMessage);
         }
+    }
+    //
+    /**
+     * TODO: clean-up and doc. Does this actually belong here?
+     * @param aPotentialSMILESString the string to test
+     * @return true if the input string contains only characters defined in the SMILES format
+     */
+    protected static boolean containsOnlySMILESValidCharacters(String aPotentialSMILESString) {
+        Pattern pattern = Pattern.compile("^[*0-9a-zA-Z\\[\\]%\\-=#%:.()/\\\\]+$");
+        Matcher matcher = pattern.matcher(aPotentialSMILESString);
+        return matcher.find();
     }
     //</editor-fold>
 }

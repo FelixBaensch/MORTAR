@@ -26,6 +26,7 @@
 package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import org.junit.jupiter.api.Assertions;
@@ -89,6 +90,8 @@ public class ImporterTest extends Importer {
         URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
         IAtomContainerSet tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
         Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+
 
         /*
         Expected output:    5 parsable lines
@@ -173,8 +176,19 @@ public class ImporterTest extends Importer {
         //TODO this is the problem because the parsing does not fail here, only the first part up to \t is parsed successfully!
         ChemUtil.parseSmilesToAtomContainer("CCCCOCCC\tlfdsklhfdfvdbgvb");
         //Same here:
-        ChemUtil.parseSmilesToAtomContainer("CCCCOCCC lfdsklhfdfvdbgvb");
+        System.out.println(ChemUtil.parseSmilesToAtomContainer("CCCCOCCC lfdsklhfdfvdbgvb").getTitle());
+        //output: lfdsklhfdfvdbgvb
+        // the remaining string is parsed as a title!
     }
 
+    @Test
+    public void containsOnlySMILESValidCharactersTest() throws Exception {
+        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters("CCCCOCCC\tlfdsklhfdfvdbgvb"));
+        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters("CCCCOCCC lfdsklhfdfvdbgvb"));
+        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters(""));
+        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters("\t"));
+        for (String tmpSeparator : BasicDefinitions.POSSIBLE_SMILES_FILE_SEPARATORS) {
+            Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters(tmpSeparator), "was true for " + tmpSeparator);
+        }
+    }
 }
-
