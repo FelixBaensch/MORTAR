@@ -580,7 +580,7 @@ public class Importer {
      * @return true if the input string contains only characters defined in the SMILES format
      */
     protected static boolean containsOnlySMILESValidCharacters(String aPotentialSMILESString) {
-        Pattern pattern = Pattern.compile("^[*0-9a-zA-Z\\[\\]%\\-+@=#%:.()/\\\\]+$");
+        Pattern pattern = Pattern.compile("^[*0-9a-zA-Z\\[\\]\\-+@=#%:.()/\\\\]+$");
         Matcher matcher = pattern.matcher(aPotentialSMILESString);
         return matcher.find();
     }
