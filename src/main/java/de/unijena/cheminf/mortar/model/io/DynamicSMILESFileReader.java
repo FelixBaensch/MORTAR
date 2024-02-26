@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -40,6 +41,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -55,7 +59,7 @@ public class DynamicSMILESFileReader {
      * Possible SMILES file separators used to separate SMILES code from ID. Ordered so that non-whitespace characters
      * are tested first.
      */
-    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {",", ";", " ", "\t"};
+    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {"\n", ",", ";", " ", "\t"};
     //
     /**
      * Maximum number of lines starting from the first one to check for valid SMILES strings in a SMILES file when trying to determine
@@ -66,9 +70,15 @@ public class DynamicSMILESFileReader {
     /**
      *
      */
+    public static final ArrayList<String> PARSABLE_STRING_EXCEPTIONS = new ArrayList<>(List.of(new String[]{"ID"}));
+    //
+    /**
+     *
+     */
     private static final Logger LOGGER = Logger.getLogger(DynamicSMILESFileReader.class.getName());
     //
     /**
+     * Checking for parsable SMILES code and saving the determined separator character and SMILES code and ID column positions.
      *
      * @param aFile
      * @return
@@ -83,58 +93,59 @@ public class DynamicSMILESFileReader {
             // AtomContainer to save the parsed SMILES in
             IAtomContainer tmpMolecule = tmpBuilder.newAtomContainer();
             SmilesParser tmpSmilesParser = new SmilesParser(tmpBuilder);
-            String tmpSmilesFileNextLine = "";
             String tmpSmilesFileDeterminedSeparator = null;
-            String[] tmpProcessedLineArray = null;
             int tmpSmilesCodeExpectedPosition = -1;
             int tmpIDExpectedPosition = -1;
-            int tmpLineInFileCounter = -1;
-            // marking the BufferedReader to reset the reader after checking the format and determining the separator
-            tmpSmilesFileBufferedReader.mark(BasicDefinitions.BUFFER_SIZE);
-            // as potential headline, the first line should be avoided for separator determination
-            String tmpSmilesFileFirstLine = tmpSmilesFileBufferedReader.readLine();
-            tmpLineInFileCounter++;
-            /*
-                Checking for parsable SMILES code and saving the determined separator character and SMILES code and ID column positions.
-                If no parsable SMILES code is found in the second and third line of the file, tmpMolecule stays empty
-                and the file is assumed to be no SMILES file -> return null
-             */
+            int tmpCurrentLineInFileCounter = -1;
+            String tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine();
+            //current line read is 0th line
+            tmpCurrentLineInFileCounter++;
+            // as potential headline, the first (0th) line should be avoided for separator determination
+            String tmpSmilesFileFirstLine = tmpSmilesFileCurrentLine;
             findSeparatorLoop:
-            while (!Thread.currentThread().isInterrupted() && tmpLineInFileCounter < DynamicSMILESFileReader.MAXIMUM_LINE_NUMBER_TO_CHECK_IN_SMILES_FILES) {
-                tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine();
-                tmpLineInFileCounter++;
-                if (tmpSmilesFileNextLine == null) {
+            while (!Thread.currentThread().isInterrupted() && tmpCurrentLineInFileCounter < DynamicSMILESFileReader.MAXIMUM_LINE_NUMBER_TO_CHECK_IN_SMILES_FILES) {
+                tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine();
+                tmpCurrentLineInFileCounter++;
+                if (Objects.isNull(tmpSmilesFileCurrentLine)) {
                     // if the file's end is reached at this point, the skipped first line is tried out to determine the separator as a last resort
-                    if (tmpSmilesFileFirstLine != null || !tmpSmilesFileFirstLine.isEmpty()) {
-                        tmpSmilesFileNextLine = tmpSmilesFileFirstLine;
+                    // it must contain a SMILES code, so not a headline, for this to work
+                    if (!Objects.isNull(tmpSmilesFileFirstLine) || !tmpSmilesFileFirstLine.isEmpty()) {
+                        tmpSmilesFileCurrentLine = tmpSmilesFileFirstLine;
+                        // to indicate that the potential headline has been analysed
                         tmpSmilesFileFirstLine = null;
                     } else {
+                        // first line is empty
                         break;
                     }
                 }
+                //todo what if the there is only one column and no separator?
                 for (String tmpSeparator : DynamicSMILESFileReader.POSSIBLE_SMILES_FILE_SEPARATORS) {
-                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator);
+                    String[] tmpProcessedLineArray = tmpSmilesFileCurrentLine.split(tmpSeparator, 3);
                     int tmpColumnIndex = 0;
                     for (String tmpNextElementOfLine : tmpProcessedLineArray) {
-                        if (tmpNextElementOfLine.isEmpty() || tmpColumnIndex > 2) {
-                            continue;
+                        if (
+                                tmpNextElementOfLine.trim().isEmpty()
+                                || !DynamicSMILESFileReader.containsOnlySMILESValidCharacters(tmpNextElementOfLine)
+                                || DynamicSMILESFileReader.PARSABLE_STRING_EXCEPTIONS.contains(tmpNextElementOfLine)
+                        ) {
+                            continue; //... to try next element in row
                         }
-                        if (!DynamicSMILESFileReader.containsOnlySMILESValidCharacters(tmpNextElementOfLine) || tmpNextElementOfLine.isEmpty() || tmpNextElementOfLine.equals("ID")) {
-                            continue;
+                        // check only the first two columns
+                        if (tmpColumnIndex > 1) {
+                            break; //... try next separator
                         }
                         try {
+                            //if parsing fails goes to catch block below
                             tmpMolecule = tmpSmilesParser.parseSmiles(tmpNextElementOfLine);
                             if (!tmpMolecule.isEmpty()) {
                                 tmpSmilesFileDeterminedSeparator = tmpSeparator;
                                 tmpSmilesCodeExpectedPosition = tmpColumnIndex;
                                 if (tmpProcessedLineArray.length > 1) {
-                                    if (tmpSmilesCodeExpectedPosition == 0) {
-                                        tmpIDExpectedPosition = 1;
-                                    } else {
-                                        tmpIDExpectedPosition = 0;
-                                    }
+                                    tmpIDExpectedPosition = tmpSmilesCodeExpectedPosition == 0 ? 1 : 0;
                                 }
                                 break findSeparatorLoop;
+                            } else {
+                                tmpColumnIndex++;
                             }
                         } catch (InvalidSmilesException anException) {
                             tmpColumnIndex++;
@@ -150,14 +161,14 @@ public class DynamicSMILESFileReader {
                 tmpHasHeaderLine = false;
             } else {
                 try {
-                    tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmilesFileFirstLine.split(tmpSmilesFileDeterminedSeparator)[tmpSmilesCodeExpectedPosition]);
-                    tmpHasHeaderLine = tmpMolecule == null? false : true;
-                } catch (InvalidSmilesException anException) {
+                    tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmilesFileFirstLine.split(tmpSmilesFileDeterminedSeparator, 3)[tmpSmilesCodeExpectedPosition]);
                     tmpHasHeaderLine = false;
+                } catch (InvalidSmilesException anException) {
+                    tmpHasHeaderLine = true;
                 }
             }
             if (tmpIDExpectedPosition == -1) {
-                return new DynamicSMILESFileFormat(tmpSmilesFileDeterminedSeparator.charAt(0), tmpSmilesCodeExpectedPosition, tmpHasHeaderLine);
+                return new DynamicSMILESFileFormat(tmpHasHeaderLine);
             } else {
                 return new DynamicSMILESFileFormat(tmpSmilesFileDeterminedSeparator.charAt(0), tmpSmilesCodeExpectedPosition, tmpHasHeaderLine, tmpIDExpectedPosition);
             }
@@ -183,25 +194,25 @@ public class DynamicSMILESFileReader {
             IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
             IChemObjectBuilder tmpBuilder = SilentChemObjectBuilder.getInstance();
             // AtomContainer to save the parsed SMILES in
-            IAtomContainer tmpMolecule = tmpBuilder.newAtomContainer();
+            IAtomContainer tmpMolecule;
             SmilesParser tmpSmilesParser = new SmilesParser(tmpBuilder);
-            String tmpSmilesFileNextLine = "";
+            String tmpSmilesFileCurrentLine;
             String tmpSmilesFileDeterminedSeparator = aFormat.getSeparatorChar().toString();
-            String[] tmpProcessedLineArray = null;
+            String[] tmpProcessedLineArray;
             int tmpSmilesCodeExpectedPosition = aFormat.getSMILESCodeColumnPosition();
-            int tmpIDExpectedPosition = aFormat.getIdColumnPosition();
+            int tmpIDExpectedPosition = aFormat.getIDColumnPosition();
             int tmpSmilesFileParsableLinesCounter = 0;
             int tmpSmilesFileInvalidLinesCounter = 0;
             int tmpLineInFileCounter = -1;
-            // marking the BufferedReader to reset the reader after checking the format and determining the separator
-            tmpSmilesFileBufferedReader.mark(BasicDefinitions.BUFFER_SIZE);
-            // as potential headline, the first line should be avoided for separator determination
-            String tmpSmilesFileFirstLine = tmpSmilesFileBufferedReader.readLine();
-            tmpLineInFileCounter++;
-            while (!Thread.currentThread().isInterrupted() && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
+            if (aFormat.hasHeaderLine()) {
+                tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine();
+                tmpLineInFileCounter++;
+            }
+            while (!Thread.currentThread().isInterrupted() && (tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine()) != null) {
+                tmpLineInFileCounter++;
                 //trying to parse as SMILES code
                 try {
-                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 3);
+                    tmpProcessedLineArray = tmpSmilesFileCurrentLine.split(tmpSmilesFileDeterminedSeparator, 3);
                     String tmpSmiles = tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isBlank() ? null :
                             tmpProcessedLineArray[tmpSmilesCodeExpectedPosition];
                     //throws exception if SMILES string is null, goes to catch block
@@ -220,8 +231,7 @@ public class DynamicSMILESFileReader {
                 if (tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].isEmpty()) {
                     tmpName = tmpProcessedLineArray[tmpIDExpectedPosition];
                 } else {
-                    int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter - 1;
-                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpIndexInFile;
+                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpLineInFileCounter;
                 }
                 tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
                 //adding tmpMolecule to the AtomContainerSet

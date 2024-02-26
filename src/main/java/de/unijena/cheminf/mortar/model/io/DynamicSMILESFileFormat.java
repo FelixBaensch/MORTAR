@@ -41,8 +41,8 @@ public class DynamicSMILESFileFormat {
 
     private final int idColumnPosition;
 
-    public DynamicSMILESFileFormat(Character aSeparatorChar, int aSMILESCodeColumnPosition, boolean aHasHeaderLine) {
-        this(aSeparatorChar, aSMILESCodeColumnPosition, aHasHeaderLine, -1);
+    public DynamicSMILESFileFormat(boolean aHasHeaderLine) {
+        this('\n', 0, aHasHeaderLine, -1);
     }
 
     public DynamicSMILESFileFormat(Character aSeparatorChar, int aSMILESCodeColumnPosition, boolean aHasHeaderLine, int anIDColumnPosition) {
@@ -69,7 +69,7 @@ public class DynamicSMILESFileFormat {
         return this.hasIDColumn;
     }
 
-    public int getIdColumnPosition() {
+    public int getIDColumnPosition() {
         return this.idColumnPosition;
     }
 }
