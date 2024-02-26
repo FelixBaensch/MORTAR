@@ -41,7 +41,7 @@ import java.util.Locale;
 /**
  * Test class for the Importer class.
  *
- * @author Samuel Behr
+ * @author Samuel Behr, Jonas Schaub
  * @version 1.0.0.0
  */
 public class ImporterTest extends Importer {

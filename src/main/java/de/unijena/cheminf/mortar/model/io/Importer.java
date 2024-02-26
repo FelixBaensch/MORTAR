@@ -490,10 +490,6 @@ public class Importer {
                 for (String tmpSeparator : BasicDefinitions.POSSIBLE_SMILES_FILE_SEPARATORS) {
                     //maximum of two array elements expected, otherwise the separator or the line itself are assumed to be invalid
                     tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator, 4);
-                    //todo remove?
-//                    if (tmpProcessedLineArray.length > 3) {
-//                        continue;
-//                    }
                     int tmpColumnIndex = 0;
                     for (String tmpNextElementOfLine : tmpProcessedLineArray) {
                         if (tmpNextElementOfLine.isEmpty() || tmpColumnIndex > 2) {
