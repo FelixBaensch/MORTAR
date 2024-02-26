@@ -25,9 +25,8 @@
 
 package de.unijena.cheminf.mortar.model.io;
 
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -36,31 +35,14 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.Locale;
 
 /**
- * Test class for the Importer class.
+ * Test class for the DynamicSMILESFileReader class.
  *
  * @author Samuel Behr, Jonas Schaub
  * @version 1.0.0.0
  */
-public class ImporterTest extends Importer {
-
-    /**
-     * Static initializer to set default locale to british english which is important for the correct functioning of
-     * the settings container because tooltips for its settings are imported from the message.properties file.
-     */
-    static {
-        Locale.setDefault(new Locale("en", "GB"));
-    }
-    //
-    /**
-     * Constructor, calls super() with a new SettingsContainer instance.
-     */
-    public ImporterTest() {
-        super(new SettingsContainer());
-    }
-    //
+public class DynamicSMILESFileReaderTest extends DynamicSMILESFileReader {
     /**
      * The ImportSMILESFile() method expects one parsable SMILES code per line of the file and
      * an optional second element, which is interpreted as the molecule's ID or name and is
@@ -88,9 +70,13 @@ public class ImporterTest extends Importer {
         - including blank lines
          */
         URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
-        IAtomContainerSet tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
+        //Assertions.assertTrue(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertFalse(tmpFormat.hasIDColumn());
+        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
         Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("SMILESTestFileOne0", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
 
 
         /*
@@ -103,7 +89,8 @@ public class ImporterTest extends Importer {
         - used separator: "\t"
          */
         tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
-        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
         Assertions.assertEquals(5, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("CNP0337481", tmpMolSet.getAtomContainer(4).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
 
@@ -116,7 +103,8 @@ public class ImporterTest extends Importer {
         - two lines with invalid SMILES code
          */
         tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
-        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
         Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("Valdiazen", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
 
@@ -129,7 +117,8 @@ public class ImporterTest extends Importer {
         - used separator: " "
          */
         tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
-        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
         Assertions.assertEquals(1, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("CNP0356547", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
 
@@ -144,13 +133,14 @@ public class ImporterTest extends Importer {
         - used separator: "\t"
          */
         tmpURL = this.getClass().getResource("SMILESTestFileFive.txt");
-        IAtomContainerSet tmpAtomContainerSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
         //
         String[] tmpTestFileFiveSmiles = new String[] {"OC=1C=C(O)C=C(C1)C=2OC=3C=CC=CC3C2", "OC=1C=C(O)C(=C(C1)C(C)C(O)C)C"};
         String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
         int i = 0;
         for (IAtomContainer tmpAtomContainer :
-                tmpAtomContainerSet.atomContainers()) {
+                tmpMolSet.atomContainers()) {
             Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer));
             Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             i++;
@@ -166,7 +156,8 @@ public class ImporterTest extends Importer {
         - multiple garbage columns after the first 2
          */
         tmpURL = this.getClass().getResource("SMILESTestFileSix.smi");
-        tmpMolSet = this.importSMILESFile(Paths.get(tmpURL.toURI()).toFile());
+        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
+        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
         Assertions.assertEquals(50, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
     }
@@ -183,12 +174,12 @@ public class ImporterTest extends Importer {
 
     @Test
     public void containsOnlySMILESValidCharactersTest() throws Exception {
-        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters("CCCCOCCC\tlfdsklhfdfvdbgvb"));
-        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters("CCCCOCCC lfdsklhfdfvdbgvb"));
-        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters(""));
-        Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters("\t"));
-        for (String tmpSeparator : BasicDefinitions.POSSIBLE_SMILES_FILE_SEPARATORS) {
-            Assertions.assertFalse(Importer.containsOnlySMILESValidCharacters(tmpSeparator), "was true for " + tmpSeparator);
+        Assertions.assertFalse(DynamicSMILESFileReader.containsOnlySMILESValidCharacters("CCCCOCCC\tlfdsklhfdfvdbgvb"));
+        Assertions.assertFalse(DynamicSMILESFileReader.containsOnlySMILESValidCharacters("CCCCOCCC lfdsklhfdfvdbgvb"));
+        Assertions.assertFalse(DynamicSMILESFileReader.containsOnlySMILESValidCharacters(""));
+        Assertions.assertFalse(DynamicSMILESFileReader.containsOnlySMILESValidCharacters("\t"));
+        for (String tmpSeparator : DynamicSMILESFileReader.POSSIBLE_SMILES_FILE_SEPARATORS) {
+            Assertions.assertFalse(DynamicSMILESFileReader.containsOnlySMILESValidCharacters(tmpSeparator), "was true for " + tmpSeparator);
         }
     }
 }

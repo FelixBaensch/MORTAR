@@ -85,11 +85,6 @@ public final class BasicDefinitions {
      * Factor by which to trim the log-file folder
      */
     public static final double FACTOR_TO_TRIM_LOG_FILE_FOLDER = 0.2;
-
-    /**
-     * Possible SMILES file separators used to separate SMILES code from ID.
-     */
-    public static final String[] POSSIBLE_SMILES_FILE_SEPARATORS = {";", ",", " ", "\t"};
     //</editor-fold>
     //
     // <editor-fold defaultstate="collapsed" desc="Buffer">
