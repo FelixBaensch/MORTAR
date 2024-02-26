@@ -41,7 +41,7 @@ import java.nio.file.Paths;
  * @author Samuel Behr, Jonas Schaub
  * @version 1.0.0.0
  */
-public class DynamicSMILESFileReaderTest extends DynamicSMILESFileReader {
+public class DynamicSMILESFileReaderTest {
     /**
      * The ImportSMILESFile() method expects one parsable SMILES code per line of the file and
      * an optional second element, which is interpreted as the molecule's ID or name and is

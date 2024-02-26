@@ -70,12 +70,16 @@ public class DynamicSMILESFileReader {
     /**
      *
      */
-    public static final ArrayList<String> PARSABLE_STRING_EXCEPTIONS = new ArrayList<>(List.of(new String[]{"ID"}));
+    public static final List<String> PARSABLE_STRING_EXCEPTIONS = new ArrayList<>(List.of(new String[]{"ID"}));
     //
     /**
      *
      */
     private static final Logger LOGGER = Logger.getLogger(DynamicSMILESFileReader.class.getName());
+    //
+    private DynamicSMILESFileReader() {
+
+    }
     //
     /**
      * Checking for parsable SMILES code and saving the determined separator character and SMILES code and ID column positions.
@@ -118,7 +122,6 @@ public class DynamicSMILESFileReader {
                         break;
                     }
                 }
-                //todo what if the there is only one column and no separator?
                 for (String tmpSeparator : DynamicSMILESFileReader.POSSIBLE_SMILES_FILE_SEPARATORS) {
                     String[] tmpProcessedLineArray = tmpSmilesFileCurrentLine.split(tmpSeparator, 3);
                     int tmpColumnIndex = 0;
@@ -170,7 +173,7 @@ public class DynamicSMILESFileReader {
             if (tmpIDExpectedPosition == -1) {
                 return new DynamicSMILESFileFormat(tmpHasHeaderLine);
             } else {
-                return new DynamicSMILESFileFormat(tmpSmilesFileDeterminedSeparator.charAt(0), tmpSmilesCodeExpectedPosition, tmpHasHeaderLine, tmpIDExpectedPosition);
+                return new DynamicSMILESFileFormat(tmpHasHeaderLine, tmpSmilesFileDeterminedSeparator.charAt(0), tmpSmilesCodeExpectedPosition, tmpIDExpectedPosition);
             }
         } catch (FileNotFoundException anException) {
             String tmpMessage = "File " + aFile.getPath() + " could not be found";
