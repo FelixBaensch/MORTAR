@@ -309,23 +309,27 @@ public class Importer {
     //
     /**
      * Imports a SMILES file. This method is able to parse differently formatted SMILES files, e.g. with and without header
-     * and with up to three columns (SMILES, name/ID and an additional third column). The method identifies the used
+     * and with one up to many columns (SMILES, name/ID, and additional columns). The method identifies the used
      * format by reading the first three lines of the file and then applying the detected format on all further lines.
      * SMILES and name/ID strings are expected to be in the first two columns. Files that do not fit to the expected
-     * format or lack a parsable SMILES string in the first three lines are classified as not being a SMILES file and
+     * format or lack a parsable SMILES string in the first ten lines are classified as not being a SMILES file and
      * an exception gets thrown. If no name can be detected for a structure, the structure
      * is assigned the name of the file extended with the index of the structure in the file as name.
-     * <br>
-     * Protected and not private for testing in class ImporterTest.
      *
      * @param aFile a SMILES codes-containing *.txt or *.smi file
      * @return the imported molecules in an IAtomContainerSet
      * @throws IOException if the given file does not fit to the expected format of a SMILES file
-     * @author Samuel Behr
+     * @author Samuel Behr, Jonas Schaub
      */
     private IAtomContainerSet importSMILESFile(File aFile) throws IOException {
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(aFile);
-        return DynamicSMILESFileReader.readFile(aFile, tmpFormat);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpAtomContainerSet = tmpReader.readFile(aFile, tmpFormat);
+        if (tmpReader.getSkippedLinesCounter() > 0) {
+            Importer.LOGGER.log(Level.WARNING, "The import from SMILES file failed for a total of "
+                    + tmpReader.getSkippedLinesCounter() + " structures.");
+        }
+        return tmpAtomContainerSet;
     }
     //
     // Currently out of use! Needs more work before it can be made available. See importMoleculeFile() and loadFile()

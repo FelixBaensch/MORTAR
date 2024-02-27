@@ -40,7 +40,7 @@ import java.nio.file.Paths;
  * Test class for the DynamicSMILESFileReader class.
  *
  * @author Samuel Behr, Jonas Schaub
- * @version 1.0.0.0
+ * @version 2.0.0.0
  */
 public class DynamicSMILESFileReaderTest {
     /**
@@ -78,7 +78,7 @@ public class DynamicSMILESFileReaderTest {
         Assertions.assertTrue(tmpFormat.hasHeaderLine());
         Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
         Assertions.assertFalse(tmpFormat.hasIDColumn());
-        Assertions.assertEquals('\n', tmpFormat.getSeparatorChar());
+        Assertions.assertEquals(DynamicSMILESFileFormat.PLACEHOLDER_SEPARATOR_CHAR, tmpFormat.getSeparatorChar());
     }
     //
     /**
@@ -95,9 +95,11 @@ public class DynamicSMILESFileReaderTest {
         URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
-        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals(2, tmpReader.getSkippedLinesCounter());
     }
     //
     /**
@@ -135,9 +137,11 @@ public class DynamicSMILESFileReaderTest {
         URL tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
-        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         Assertions.assertEquals(5, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("CNP0337481", tmpMolSet.getAtomContainer(4).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
     //
     /**
@@ -175,10 +179,12 @@ public class DynamicSMILESFileReaderTest {
         URL tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
-        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("Istanbulin A", tmpMolSet.getAtomContainer(1).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals("Valdiazen", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals(2, tmpReader.getSkippedLinesCounter());
     }
     //
     /**
@@ -214,9 +220,11 @@ public class DynamicSMILESFileReaderTest {
         URL tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
-        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         Assertions.assertEquals(1, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("CNP0356547", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
     //
     /**
@@ -256,7 +264,8 @@ public class DynamicSMILESFileReaderTest {
         URL tmpURL = this.getClass().getResource("SMILESTestFileFive.txt");
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
-        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         String[] tmpTestFileFiveSmiles = new String[] {"OC=1C=C(O)C=C(C1)C=2OC=3C=CC=CC3C2", "OC=1C=C(O)C(=C(C1)C(C)C(O)C)C"};
         String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
         int i = 0;
@@ -265,6 +274,7 @@ public class DynamicSMILESFileReaderTest {
             Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             i++;
         }
+        Assertions.assertEquals(1, tmpReader.getSkippedLinesCounter());
     }
     //
     /**
@@ -302,8 +312,10 @@ public class DynamicSMILESFileReaderTest {
         URL tmpURL = this.getClass().getResource("SMILESTestFileSix.smi");
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
-        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         Assertions.assertEquals(50, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
 }
