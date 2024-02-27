@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
+import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
 
@@ -43,160 +44,12 @@ import java.nio.file.Paths;
  */
 public class DynamicSMILESFileReaderTest {
     /**
-     * The ImportSMILESFile() method expects one parsable SMILES code per line of the file and
-     * an optional second element, which is interpreted as the molecule's ID or name and is
-     * separated from the SMILES code by one of the tokens tab, semicolon, comma or space.
-     * After finding this structure in the file's second or third line (skipping the first line
-     * as potential headline), the file is declared to be a SMILES file and read from the first
-     * line till the last line, ignoring blank lines as well as lines with invalid SMILES code
-     * or invalid structure. If the second or third line is found to be null, the first line is
-     * not skipped at the first part.
-     * <br>NOTE: The importer logs on the console and the results have to be manually checked against what is
-     * given here in the code comments!
+     * Test containsOnlySMILESValidCharacters() for false-positives, e.g. two tab-separated strings, some of which can
+     * be interpreted by the CDK SmilesParser (it only parses the first part up to the first whitespace character and
+     * does not throw an error but interprets the rest as title of the structure).
      *
      * @throws Exception if anything goes wrong
-     * @author Samuel Behr
      */
-    @Test
-    public void ImportSMILESFileTest() throws Exception{
-        /*
-        Expected output:    3 parsable lines
-                            3 invalid lines
-        Test file's specifications:
-        - .txt file
-        - with headline
-        - SMILES code only (no ID or name)
-        - including blank lines
-         */
-        URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
-        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
-        Assertions.assertTrue(tmpFormat.hasHeaderLine());
-        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
-        Assertions.assertFalse(tmpFormat.hasIDColumn());
-        Assertions.assertEquals('\n', tmpFormat.getSeparatorChar());
-        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
-        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-
-
-        /*
-        Expected output:    5 parsable lines
-                            0 invalid lines
-        Test file's specifications:
-        - .smi file
-        - no headline
-        - ID first in line
-        - used separator: "\t"
-         */
-        tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
-        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
-        Assertions.assertFalse(tmpFormat.hasHeaderLine());
-        Assertions.assertEquals(0, tmpFormat.getIDColumnPosition());
-        Assertions.assertEquals(1, tmpFormat.getSMILESCodeColumnPosition());
-        Assertions.assertTrue(tmpFormat.hasIDColumn());
-        Assertions.assertEquals('\t', tmpFormat.getSeparatorChar());
-        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
-        Assertions.assertEquals(5, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("CNP0337481", tmpMolSet.getAtomContainer(4).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-
-        /*
-        Expected output:    3 parsable lines
-                            3 invalid lines
-        Test file's specifications:
-        - "NAME" second in line and containing spaces
-        - used separator: ";"
-        - two lines with invalid SMILES code
-         */
-        tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
-        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
-        Assertions.assertTrue(tmpFormat.hasHeaderLine());
-        Assertions.assertEquals(1, tmpFormat.getIDColumnPosition());
-        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
-        Assertions.assertTrue(tmpFormat.hasIDColumn());
-        Assertions.assertEquals(';', tmpFormat.getSeparatorChar());
-        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
-        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("Valdiazen", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-
-        /*
-        Expected output:    1 parsable lines
-                            0 invalid lines
-        Test file's specifications:
-        - one single line only
-        - ID first in line
-        - used separator: " "
-         */
-        tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
-        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
-        Assertions.assertFalse(tmpFormat.hasHeaderLine());
-        Assertions.assertEquals(0, tmpFormat.getIDColumnPosition());
-        Assertions.assertEquals(1, tmpFormat.getSMILESCodeColumnPosition());
-        Assertions.assertTrue(tmpFormat.hasIDColumn());
-        Assertions.assertEquals(' ', tmpFormat.getSeparatorChar());
-        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
-        Assertions.assertEquals(1, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("CNP0356547", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-
-        /*
-        Expected output:    2 parsable lines
-                            2 invalid lines
-        Test file's specifications:
-        - headline and blank line first
-        - three elements per line
-        - SMILES first in line, ID second and a neglectable third element
-        - third element in line
-        - used separator: "\t"
-         */
-        tmpURL = this.getClass().getResource("SMILESTestFileFive.txt");
-        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
-        Assertions.assertTrue(tmpFormat.hasHeaderLine());
-        Assertions.assertEquals(1, tmpFormat.getIDColumnPosition());
-        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
-        Assertions.assertTrue(tmpFormat.hasIDColumn());
-        Assertions.assertEquals('\t', tmpFormat.getSeparatorChar());
-        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
-        //
-        String[] tmpTestFileFiveSmiles = new String[] {"OC=1C=C(O)C=C(C1)C=2OC=3C=CC=CC3C2", "OC=1C=C(O)C(=C(C1)C(C)C(O)C)C"};
-        String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
-        int i = 0;
-        for (IAtomContainer tmpAtomContainer :
-                tmpMolSet.atomContainers()) {
-            Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer));
-            Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-            i++;
-        }
-
-        /*
-        Expected output:    50 parsable lines
-                            1 invalid lines (header)
-        Test file's specifications:
-        - 51 lines, 50 with structures, 1 header line
-        - ID second in line
-        - used separator: " "
-        - multiple garbage columns after the first 2
-         */
-        tmpURL = this.getClass().getResource("SMILESTestFileSix.smi");
-        tmpFormat = DynamicSMILESFileReader.detectFormat(Paths.get(tmpURL.toURI()).toFile());
-        Assertions.assertTrue(tmpFormat.hasHeaderLine());
-        Assertions.assertEquals(1, tmpFormat.getIDColumnPosition());
-        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
-        Assertions.assertTrue(tmpFormat.hasIDColumn());
-        Assertions.assertEquals(' ', tmpFormat.getSeparatorChar());
-        tmpMolSet = DynamicSMILESFileReader.readFile(Paths.get(tmpURL.toURI()).toFile(), tmpFormat);
-        Assertions.assertEquals(50, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-    }
-
-    @Test
-    public void test() throws Exception {
-        //TODO this is the problem because the parsing does not fail here, only the first part up to \t is parsed successfully!
-        ChemUtil.parseSmilesToAtomContainer("CCCCOCCC\tlfdsklhfdfvdbgvb");
-        //Same here:
-        System.out.println(ChemUtil.parseSmilesToAtomContainer("CCCCOCCC lfdsklhfdfvdbgvb").getTitle());
-        //output: lfdsklhfdfvdbgvb
-        // the remaining string is parsed as a title!
-    }
-
     @Test
     public void containsOnlySMILESValidCharactersTest() throws Exception {
         Assertions.assertFalse(DynamicSMILESFileReader.containsOnlySMILESValidCharacters("CCCCOCCC\tlfdsklhfdfvdbgvb"));
@@ -206,5 +59,251 @@ public class DynamicSMILESFileReaderTest {
         for (String tmpSeparator : DynamicSMILESFileReader.POSSIBLE_SMILES_FILE_SEPARATORS) {
             Assertions.assertFalse(DynamicSMILESFileReader.containsOnlySMILESValidCharacters(tmpSeparator), "was true for " + tmpSeparator);
         }
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - .txt file
+     * - with headline
+     * - SMILES code column only (no ID or name)
+     * - including some blank lines between
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFormatDetectionOnOneColumnFileWithBlankLinesAndHeadlineTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        Assertions.assertTrue(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertFalse(tmpFormat.hasIDColumn());
+        Assertions.assertEquals('\n', tmpFormat.getSeparatorChar());
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - .txt file
+     * - with headline
+     * - SMILES code column only (no ID or name)
+     * - including some blank lines between
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFileImportOnOneColumnFileWithBlankLinesAndHeadlineTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileOne.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - .smi file
+     * - no headline
+     * - ID first in line
+     * - used separator: "\t"
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFormatDetectionOnTwoColumnFileTabSeparatedAndNoHeadlineTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        Assertions.assertFalse(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(0, tmpFormat.getIDColumnPosition());
+        Assertions.assertEquals(1, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertTrue(tmpFormat.hasIDColumn());
+        Assertions.assertEquals('\t', tmpFormat.getSeparatorChar());
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - .smi file
+     * - no headline
+     * - ID first in line
+     * - used separator: "\t"
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFileImportOnTwoColumnFileTabSeparatedAndNoHeadlineTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(5, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("CNP0337481", tmpMolSet.getAtomContainer(4).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - Headline
+     * - "NAME" second in line and containing spaces
+     * - used separator: ";"
+     * - two lines with invalid SMILES code
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFormatDetectionOnTwoColumnFileSemicolonSeparatedWithHeadlineTwoInvalidLinesTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        Assertions.assertTrue(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(1, tmpFormat.getIDColumnPosition());
+        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertTrue(tmpFormat.hasIDColumn());
+        Assertions.assertEquals(';', tmpFormat.getSeparatorChar());
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - Headline
+     * - "NAME" second in line and containing spaces
+     * - used separator: ";"
+     * - two lines with invalid SMILES code
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFileImportOnTwoColumnFileSemicolonSeparatedWithHeadlineTwoInvalidLinesTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("Istanbulin A", tmpMolSet.getAtomContainer(1).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("Valdiazen", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - one single line only
+     * - ID first in line
+     * - used separator: " "
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFormatDetectionOnTwoColumnFileSpaceSeparatedWithOnlyOneLineTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        Assertions.assertFalse(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(0, tmpFormat.getIDColumnPosition());
+        Assertions.assertEquals(1, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertTrue(tmpFormat.hasIDColumn());
+        Assertions.assertEquals(' ', tmpFormat.getSeparatorChar());
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - one single line only
+     * - ID first in line
+     * - used separator: " "
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFileImportOnTwoColumnFileSpaceSeparatedWithOnlyOneLineTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileFour.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(1, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("CNP0356547", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - headline and blank line first
+     * - three elements per line
+     * - SMILES first in line, ID second and a neglectable third element
+     * - third element in line
+     * - used separator: "\t"
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFormatDetectionOnThreeColumnFileWithHeadlineTabSeparatedTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileFive.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        Assertions.assertTrue(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(1, tmpFormat.getIDColumnPosition());
+        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertTrue(tmpFormat.hasIDColumn());
+        Assertions.assertEquals('\t', tmpFormat.getSeparatorChar());
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - headline and blank line first
+     * - three elements per line
+     * - SMILES first in line, ID second and a neglectable third element
+     * - third element in line
+     * - used separator: "\t"
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFileImportOnThreeColumnFileWithHeadlineTabSeparatedTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileFive.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        String[] tmpTestFileFiveSmiles = new String[] {"OC=1C=C(O)C=C(C1)C=2OC=3C=CC=CC3C2", "OC=1C=C(O)C(=C(C1)C(C)C(O)C)C"};
+        String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
+        int i = 0;
+        for (IAtomContainer tmpAtomContainer : tmpMolSet.atomContainers()) {
+            Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer));
+            Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+            i++;
+        }
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - 51 lines, 50 with structures, 1 header line
+     * - ID second in line
+     * - used separator: " "
+     * - multiple garbage columns after the first 2
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFormatDetectionOnCOCONUTFileWithMultipleColumnsTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileSix.smi");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        Assertions.assertTrue(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(1, tmpFormat.getIDColumnPosition());
+        Assertions.assertEquals(0, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertTrue(tmpFormat.hasIDColumn());
+        Assertions.assertEquals(' ', tmpFormat.getSeparatorChar());
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - 51 lines, 50 with structures, 1 header line
+     * - ID second in line
+     * - used separator: " "
+     * - multiple garbage columns after the first 2
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFileImportOnCOCONUTFileWithMultipleColumnsTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileSix.smi");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        IAtomContainerSet tmpMolSet = DynamicSMILESFileReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(50, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
     }
 }
