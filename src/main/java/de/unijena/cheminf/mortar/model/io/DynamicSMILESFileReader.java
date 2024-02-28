@@ -158,7 +158,7 @@ public class DynamicSMILESFileReader {
                         && !DynamicSMILESFileReader.PARSABLE_SMILES_EXCEPTIONS.contains(tmpSmilesFileCurrentLine)) {
                     try {
                         //if parsing fails goes to catch block below
-                        tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmilesFileCurrentLine);
+                        tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmilesFileCurrentLine.trim());
                         if (!tmpMolecule.isEmpty()) {
                             //success, SMILES column is identified
                             tmpSmilesCodeExpectedPosition = 0;
@@ -184,7 +184,7 @@ public class DynamicSMILESFileReader {
                         }
                         try {
                             //if parsing fails goes to catch block below
-                            tmpMolecule = tmpSmilesParser.parseSmiles(tmpNextElementOfLine);
+                            tmpMolecule = tmpSmilesParser.parseSmiles(tmpNextElementOfLine.trim());
                             if (!tmpMolecule.isEmpty()) {
                                 //success, separator and SMILES column are identified
                                 tmpSmilesFileDeterminedSeparator = tmpSeparator;
@@ -270,9 +270,9 @@ public class DynamicSMILESFileReader {
                     if (aFormat.hasIDColumn()) {
                         tmpProcessedLineArray = tmpSmilesFileCurrentLine.split(tmpSmilesFileDeterminedSeparator, 3);
                         tmpSmiles = tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isBlank() ? null :
-                                tmpProcessedLineArray[tmpSmilesCodeExpectedPosition];
+                                tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].trim();
                     } else {
-                        tmpSmiles = tmpSmilesFileCurrentLine;
+                        tmpSmiles = tmpSmilesFileCurrentLine.trim();
                     }
                     if (!tmpSmiles.isEmpty()) {
                         //throws exception if SMILES string is null, goes to catch block
@@ -287,9 +287,6 @@ public class DynamicSMILESFileReader {
                     continue;
                 }
                 //setting the name of the atom container
-                if (aFormat.hasIDColumn()) {
-
-                }
                 String tmpName = "";
                 if (aFormat.hasIDColumn() && tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].isEmpty()) {
                     tmpName = tmpProcessedLineArray[tmpIDExpectedPosition];
