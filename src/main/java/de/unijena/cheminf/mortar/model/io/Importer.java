@@ -159,6 +159,7 @@ public class Importer {
                 break;*/
             case ".smi":
             case ".txt":
+            case ".csv":
                 tmpImportedMoleculesSet = this.importSMILESFile(aFile);
                 break;
             default:
@@ -189,7 +190,7 @@ public class Importer {
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
         //to make PDB available, add "*.pdb" here
-        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt"));
+        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt", "*.csv"));
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if(!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
@@ -316,7 +317,7 @@ public class Importer {
      * an exception gets thrown. If no name can be detected for a structure, the structure
      * is assigned the name of the file extended with the index of the structure in the file as name.
      *
-     * @param aFile a SMILES codes-containing *.txt or *.smi file
+     * @param aFile a SMILES codes-containing *.txt, *.csv, or *.smi file
      * @return the imported molecules in an IAtomContainerSet
      * @throws IOException if the given file does not fit to the expected format of a SMILES file
      * @author Samuel Behr, Jonas Schaub
