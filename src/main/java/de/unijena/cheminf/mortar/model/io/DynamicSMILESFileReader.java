@@ -310,7 +310,20 @@ public class DynamicSMILESFileReader {
     //<editor-fold desc="Package private methods">
     /**
      * Check the given String for characters that are not defined in SMILES encoding. The allowed characters are
-     * 0-9, a-z, A-Z, *, [, ], -, +, @, =, $, %, :, ., (, ), /, \. Whitespace characters are not allowed.
+     * 0-9 (rings, hydrogen counts, charge counts, or isotopes),
+     * a-z, A-Z (element symbols),
+     * * (wildcard atoms),
+     * [, ] (inorganic atoms or explicit environments),
+     * -, + (charges or - for explicit single bonds),
+     * @ (tetrahedral stereochemistry),
+     * =, #, $ (bonds up to quadruple),
+     * % (multi-digit ring numbers),
+     * : (tautomer bond),
+     * . (disconnected parts),
+     * (, ) (branches),
+     * /, \ (cis/trans stereochemistry).
+     *
+     * All other characters, including whitespace characters, are not allowed.
      *
      * @param aPotentialSMILESString the string to test
      * @return true if the input string contains only characters defined in the SMILES format
