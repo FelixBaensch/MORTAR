@@ -99,6 +99,7 @@ public class DynamicSMILESFileReaderTest {
         IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
         Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("SMILESTestFileOne5", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(2, tmpReader.getSkippedLinesCounter());
     }
     //

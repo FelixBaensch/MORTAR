@@ -255,7 +255,6 @@ public class DynamicSMILESFileReader {
             int tmpSmilesCodeExpectedPosition = aFormat.getSMILESCodeColumnPosition();
             int tmpIDExpectedPosition = aFormat.getIDColumnPosition();
             this.skippedLinesCounter = 0;
-            int tmpSmilesFileInvalidLinesCounter = 0;
             int tmpLineInFileCounter = -1;
             if (aFormat.hasHeaderLine()) {
                 tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine();
@@ -276,13 +275,12 @@ public class DynamicSMILESFileReader {
                     if (!tmpSmiles.isEmpty()) {
                         //throws exception if SMILES string is null, goes to catch block
                         tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmiles);
-                        this.skippedLinesCounter++;
                     } else {
-                        tmpSmilesFileInvalidLinesCounter++;
-                        continue;
+                        throw new InvalidSmilesException("String is empty");
                     }
                 } catch (InvalidSmilesException | IndexOutOfBoundsException | NullPointerException anException) {
-                    tmpSmilesFileInvalidLinesCounter++;
+                    this.skippedLinesCounter++;
+                    DynamicSMILESFileReader.LOGGER.log(Level.WARNING, "Import failed for structure in line (starting at 0):\t" + tmpLineInFileCounter);
                     continue;
                 }
                 //setting the name of the atom container
@@ -293,10 +291,8 @@ public class DynamicSMILESFileReader {
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpLineInFileCounter;
                 }
                 tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-                //adding tmpMolecule to the AtomContainerSet
                 tmpAtomContainerSet.addAtomContainer(tmpMolecule);
             }
-            this.skippedLinesCounter = tmpSmilesFileInvalidLinesCounter;
             return tmpAtomContainerSet;
         } catch (FileNotFoundException anException) {
             String tmpMessage = "File " + aFile.getPath() + " could not be found";

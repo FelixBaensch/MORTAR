@@ -323,6 +323,7 @@ public class Importer {
     private IAtomContainerSet importSMILESFile(File aFile) throws IOException {
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(aFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        // checks whether thread has been interrupted, logs faulty structures, and assigns names like the other methods
         IAtomContainerSet tmpAtomContainerSet = tmpReader.readFile(aFile, tmpFormat);
         if (tmpReader.getSkippedLinesCounter() > 0) {
             Importer.LOGGER.log(Level.WARNING, "The import from SMILES file failed for a total of "
