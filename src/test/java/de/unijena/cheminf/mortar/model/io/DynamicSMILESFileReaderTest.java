@@ -319,4 +319,49 @@ public class DynamicSMILESFileReaderTest {
         Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
+    //
+    /**
+     * Test file's specifications:
+     * - 37 lines
+     * - no headline
+     * - no faulty lines
+     * - ID first in line, SMILES second
+     * - used separator: tab
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFormatDetectionOnChEBIFileTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileSeven.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        Assertions.assertTrue(tmpFormat.hasIDColumn());
+        Assertions.assertFalse(tmpFormat.hasHeaderLine());
+        Assertions.assertEquals(1, tmpFormat.getSMILESCodeColumnPosition());
+        Assertions.assertEquals(0, tmpFormat.getIDColumnPosition());
+        Assertions.assertEquals('\t', tmpFormat.getSeparatorChar());
+    }
+    //
+    /**
+     * Test file's specifications:
+     * - 37 lines
+     * - no headline
+     * - no faulty lines
+     * - ID first in line, SMILES second
+     * - used separator: tab
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void smilesFileImportOnChEBIFileTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileSeven.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(37, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals("cmnpd_id_10213", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("cmnpd_id_11687", tmpMolSet.getAtomContainer(36).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
+    }
 }

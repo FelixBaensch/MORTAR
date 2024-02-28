@@ -176,6 +176,7 @@ public class DynamicSMILESFileReader {
                         if (tmpNextElementOfLine.trim().isEmpty()
                                 || !DynamicSMILESFileReader.containsOnlySMILESValidCharacters(tmpNextElementOfLine)
                                 || DynamicSMILESFileReader.PARSABLE_SMILES_EXCEPTIONS.contains(tmpNextElementOfLine)) {
+                            tmpColumnIndex++;
                             continue; //... to try next element in row
                         }
                         // check only the first two columns, see comment above
