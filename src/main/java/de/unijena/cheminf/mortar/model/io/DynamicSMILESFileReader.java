@@ -62,7 +62,7 @@ public class DynamicSMILESFileReader {
      * Possible SMILES file separators used to separate SMILES code from ID. Ordered so that non-whitespace characters
      * are tested first.
      */
-    public static final Set<String> POSSIBLE_SMILES_FILE_SEPARATORS = Set.of(new String[]{",", ";", " ", "\t"});
+    public static final Set<String> POSSIBLE_SMILES_FILE_SEPARATORS = Set.of(",", ";", " ", "\t");
     //
     /**
      * Maximum number of lines starting from the first one to check for valid SMILES strings in a SMILES file when
@@ -74,7 +74,7 @@ public class DynamicSMILESFileReader {
      * Strings that can be parsed by CDK SmilesParser as SMILES codes but should be ignored when detecting the file structure,
      * e.g. "ID" is a likely column name but could be parsed into Iodine-Deuterium as a SMILES code.
      */
-    public static final Set<String> PARSABLE_SMILES_EXCEPTIONS = Set.of(new String[]{"ID"});
+    public static final Set<String> PARSABLE_SMILES_EXCEPTIONS = Set.of("ID");
     //</editor-fold>
     //
     //<editor-fold desc="Private static class constants">
@@ -140,7 +140,7 @@ public class DynamicSMILESFileReader {
             int tmpIDExpectedPosition = DynamicSMILESFileFormat.PLACEHOLDER_ID_COLUMN_POSITION;
             int tmpCurrentLineInFileCounter = -1;
             String tmpSmilesFileCurrentLine;
-            String tmpSmilesFileFirstLine = null;
+            String tmpSmilesFileFirstLine = "";
             findSeparatorLoop:
             while (!Thread.currentThread().isInterrupted() && tmpCurrentLineInFileCounter < DynamicSMILESFileReader.MAXIMUM_LINE_NUMBER_TO_CHECK_IN_SMILES_FILES) {
                 tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine();
@@ -208,9 +208,9 @@ public class DynamicSMILESFileReader {
             boolean tmpHasHeaderLine;
             try {
                 if (tmpIDExpectedPosition == -1) {
-                    tmpSmilesParser.parseSmiles(tmpSmilesFileFirstLine);
+                    tmpSmilesParser.parseSmiles(tmpSmilesFileFirstLine.trim());
                 } else {
-                    tmpSmilesParser.parseSmiles(tmpSmilesFileFirstLine.split(tmpSmilesFileDeterminedSeparator, 3)[tmpSmilesCodeExpectedPosition]);
+                    tmpSmilesParser.parseSmiles(tmpSmilesFileFirstLine.trim().split(tmpSmilesFileDeterminedSeparator, 3)[tmpSmilesCodeExpectedPosition]);
                 }
                 tmpHasHeaderLine = false;
             } catch (InvalidSmilesException anException) {
@@ -244,7 +244,6 @@ public class DynamicSMILESFileReader {
                 FileReader tmpSmilesFileReader = new FileReader(aFile);
                 BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader, BasicDefinitions.BUFFER_SIZE)
         ) {
-            this.skippedLinesCounter = 0;
             IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
             IChemObjectBuilder tmpBuilder = SilentChemObjectBuilder.getInstance();
             // AtomContainer to save the parsed SMILES in
@@ -255,7 +254,7 @@ public class DynamicSMILESFileReader {
             String[] tmpProcessedLineArray = new String[0];
             int tmpSmilesCodeExpectedPosition = aFormat.getSMILESCodeColumnPosition();
             int tmpIDExpectedPosition = aFormat.getIDColumnPosition();
-            int tmpSmilesFileParsableLinesCounter = 0;
+            this.skippedLinesCounter = 0;
             int tmpSmilesFileInvalidLinesCounter = 0;
             int tmpLineInFileCounter = -1;
             if (aFormat.hasHeaderLine()) {
@@ -277,7 +276,7 @@ public class DynamicSMILESFileReader {
                     if (!tmpSmiles.isEmpty()) {
                         //throws exception if SMILES string is null, goes to catch block
                         tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmiles);
-                        tmpSmilesFileParsableLinesCounter++;
+                        this.skippedLinesCounter++;
                     } else {
                         tmpSmilesFileInvalidLinesCounter++;
                         continue;

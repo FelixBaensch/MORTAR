@@ -157,9 +157,7 @@ public class Importer {
             /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
                 break;*/
-            case ".smi":
-            case ".txt":
-            case ".csv":
+            case ".smi", ".txt", ".csv":
                 tmpImportedMoleculesSet = this.importSMILESFile(aFile);
                 break;
             default:
