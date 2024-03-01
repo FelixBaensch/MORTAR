@@ -39,7 +39,6 @@ import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.FormatFactory;
@@ -53,7 +52,6 @@ import org.openscience.cdk.io.formats.MDLV3000Format;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.io.setting.IOSetting;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
@@ -159,8 +157,7 @@ public class Importer {
             /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
                 break;*/
-            case ".smi":
-            case ".txt":
+            case ".smi", ".txt", ".csv":
                 tmpImportedMoleculesSet = this.importSMILESFile(aFile);
                 break;
             default:
@@ -178,9 +175,7 @@ public class Importer {
     public String getFileName(){
         return this.fileName;
     }
-    //</editor-fold>
     //
-    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      * Opens a file chooser and loads the chosen file.
      *
@@ -193,7 +188,7 @@ public class Importer {
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
         //to make PDB available, add "*.pdb" here
-        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt"));
+        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt", "*.csv"));
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if(!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
@@ -219,7 +214,9 @@ public class Importer {
             return tmpFile;
         }
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
      * Imports a mol file as AtomContainer and adds the first line of the mol file (name of the
      * molecule in most cases) as "name-property". MDL v2000 and v3000 MOL files are accepted and the used format
@@ -305,6 +302,32 @@ public class Importer {
         if (tmpFailedImportsCount > 0) {
             Importer.LOGGER.log(Level.WARNING, "The import from SD file failed for a total of " + tmpFailedImportsCount +
                     " structure(s).");
+        }
+        return tmpAtomContainerSet;
+    }
+    //
+    /**
+     * Imports a SMILES file. This method is able to parse differently formatted SMILES files, e.g. with and without header
+     * and with one up to many columns (SMILES, name/ID, and additional columns). The method identifies the used
+     * format by reading the first three lines of the file and then applying the detected format on all further lines.
+     * SMILES and name/ID strings are expected to be in the first two columns. Files that do not fit to the expected
+     * format or lack a parsable SMILES string in the first ten lines are classified as not being a SMILES file and
+     * an exception gets thrown. If no name can be detected for a structure, the structure
+     * is assigned the name of the file extended with the index of the structure in the file as name.
+     *
+     * @param aFile a SMILES codes-containing *.txt, *.csv, or *.smi file
+     * @return the imported molecules in an IAtomContainerSet
+     * @throws IOException if the given file does not fit to the expected format of a SMILES file
+     * @author Samuel Behr, Jonas Schaub
+     */
+    private IAtomContainerSet importSMILESFile(File aFile) throws IOException {
+        DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(aFile);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        // checks whether thread has been interrupted, logs faulty structures, and assigns names like the other methods
+        IAtomContainerSet tmpAtomContainerSet = tmpReader.readFile(aFile, tmpFormat);
+        if (tmpReader.getSkippedLinesCounter() > 0) {
+            Importer.LOGGER.log(Level.WARNING, "The import from SMILES file failed for a total of "
+                    + tmpReader.getSkippedLinesCounter() + " structures.");
         }
         return tmpAtomContainerSet;
     }
@@ -415,139 +438,7 @@ public class Importer {
                 tmpExceptionsCounter++;
             }
         }
-        Importer.LOGGER.log(Level.WARNING, "Imported and preprocessed molecule set. " + tmpExceptionsCounter + " exceptions occurred while processing.");
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="protected methods" defaultstate="collapsed">
-    /**
-     * Imports a SMILES file. This method is able to parse differently formatted SMILES files, e.g. with and without
-     * header or with one or two columns (SMILES and name/ID). If no name can be detected for a structure, the structure
-     * is assigned the name of the file extended with the index of the structure in the file as name.
-     * <br>
-     * Protected and not private for testing in class ImporterTest.
-     *
-     * @param aFile a SMILES codes-containing *.txt or *.smi file
-     * @return the imported molecules in an IAtomContainerSet
-     * @throws IOException if the given file does not fit to the expected format of a SMILES file
-     * @author Samuel Behr
-     */
-    protected IAtomContainerSet importSMILESFile(File aFile) throws IOException {
-        try (
-                FileReader tmpSmilesFileReader = new FileReader(aFile);
-                BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader,
-                        BasicDefinitions.BUFFER_SIZE)
-        ) {
-            IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-            // AtomContainer to save the parsed SMILES in
-            IAtomContainer tmpMolecule = new AtomContainer();
-            SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            String tmpSmilesFileNextLine = "";
-            String tmpSmilesFileDeterminedSeparator = "";
-            String[] tmpProcessedLineArray = null;
-            int tmpSmilesCodeExpectedPosition = 0;
-            int tmpIDExpectedPosition = 0;
-            int tmpSmilesFileParsableLinesCounter = 0;
-            int tmpSmilesFileInvalidLinesCounter = 0;
-            // marking the BufferedReader to reset the reader after checking the format and determining the separator
-            tmpSmilesFileBufferedReader.mark(BasicDefinitions.BUFFER_SIZE);
-            // as potential headline the first line should be avoided for separator determination
-            String tmpSmilesFileFirstLine = tmpSmilesFileBufferedReader.readLine();
-            /*  first block
-                Checking for parsable SMILES code and saving the determined separator (if one is used).
-                If no parsable SMILES code is found in the second and third line of the file, tmpMolecule stays empty
-                and the file is assumed to be no SMILES file -> return null
-             */
-            int tmpFilesLine = 2;
-            findSeparatorLoop:
-            while (!Thread.currentThread().isInterrupted() && tmpFilesLine <= 3) {
-                if ((tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) == null) {
-                    // if the file's end is reached at this point, the first line is used to determine the separator
-                    if (tmpSmilesFileFirstLine != null || !tmpSmilesFileFirstLine.isEmpty()) {
-                        tmpSmilesFileNextLine = tmpSmilesFileFirstLine;
-                        tmpSmilesFileFirstLine = null;
-                    } else {
-                        break;
-                    }
-                }
-                for (String tmpSeparator : BasicDefinitions.POSSIBLE_SMILES_FILE_SEPARATORS) {
-                    // maximum of two array elements expected, otherwise the separator or the line itself are assumed
-                    // to be invalid
-                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSeparator, 3);
-                    if (tmpProcessedLineArray.length > 2) {
-                        continue;
-                    }
-                    int tmpIndex = 0;
-                    for (String tmpNextElementOfLine : tmpProcessedLineArray) {
-                        if (tmpNextElementOfLine.isEmpty()) {
-                            continue;
-                        }
-                        try {
-                            tmpMolecule = tmpSmilesParser.parseSmiles(tmpNextElementOfLine);
-                            if (!tmpMolecule.isEmpty()) {
-                                tmpSmilesFileDeterminedSeparator = tmpSeparator;
-                                tmpSmilesCodeExpectedPosition = tmpIndex;
-                                if (tmpProcessedLineArray.length > 1) {
-                                    if (tmpSmilesCodeExpectedPosition == 0) {
-                                        tmpIDExpectedPosition = 1;
-                                    }
-                                    // else: tmpIDExpectedPosition = 0;
-                                }
-                                break findSeparatorLoop;
-                            }
-                        } catch (InvalidSmilesException anException) {
-                            tmpIndex++;
-                        }
-                    }
-                }
-                tmpFilesLine++;
-            }
-            if (tmpMolecule.isEmpty()) {
-                throw new IOException("Chosen file does not fit to the expected format of a SMILES file.");
-            }
-            //resetting the BufferedReader to the first line of the file
-            tmpSmilesFileBufferedReader.reset();
-            tmpSmilesFileBufferedReader.mark(0);    //to avoid the memory of unnecessary data
-            /*  second block
-                Reading the file line by line and adding an AtomContainer to the AtomContainerSet for each line with
-                parsable SMILES code
-             */
-            while (!Thread.currentThread().isInterrupted()
-                    && (tmpSmilesFileNextLine = tmpSmilesFileBufferedReader.readLine()) != null) {
-                //trying to parse as SMILES code
-                try {
-                    tmpProcessedLineArray = tmpSmilesFileNextLine.split(tmpSmilesFileDeterminedSeparator, 2);
-                    String tmpSmiles = tmpProcessedLineArray[tmpSmilesCodeExpectedPosition].isBlank() ? null :
-                            tmpProcessedLineArray[tmpSmilesCodeExpectedPosition];
-                    //throws exception if SMILES string is null, goes to catch block
-                    tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmiles);
-                    tmpSmilesFileParsableLinesCounter++;
-                }
-                catch (InvalidSmilesException | IndexOutOfBoundsException | NullPointerException anException) {
-                    int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter;
-                    Importer.LOGGER.info("Contains no parsable SMILES string: line " + tmpIndexInFile
-                            + " (index).");
-                    tmpSmilesFileInvalidLinesCounter++;
-                    continue;
-                }
-                //setting the name of the atom container
-                String tmpName = "";
-                if (tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].isEmpty()) {
-                    tmpName = tmpProcessedLineArray[tmpIDExpectedPosition];
-                } else {
-                    int tmpIndexInFile = tmpSmilesFileParsableLinesCounter + tmpSmilesFileInvalidLinesCounter - 1;
-                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpIndexInFile;
-                }
-                tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-                //adding tmpMolecule to the AtomContainerSet
-                tmpAtomContainerSet.addAtomContainer(tmpMolecule);
-            }
-            if (tmpSmilesFileInvalidLinesCounter > 0) {
-                Importer.LOGGER.info("\tSmilesFile ParsableLinesCount:\t" + tmpSmilesFileParsableLinesCounter +
-                        "\n\tSmilesFile InvalidLinesCount:\t" + tmpSmilesFileInvalidLinesCounter);
-            }
-            return tmpAtomContainerSet;
-        }
+        Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. " + tmpExceptionsCounter + " exceptions occurred while processing.");
     }
     //</editor-fold>
 }
