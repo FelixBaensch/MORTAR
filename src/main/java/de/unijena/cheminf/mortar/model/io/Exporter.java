@@ -255,7 +255,7 @@ public class Exporter {
      * @param aFragmentationName     name of fragmentation
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
      * @param generate2dAtomCoordinates boolean value whether to generate 2D coordinates
-     * @param isSingleExport         boolean if fragments should be exported in one file or seperated, one file each fragment
+     * @param isSingleExport         boolean if fragments should be exported in one file or separated, one file each fragment
      * @return List {@literal <}String {@literal >}
      */
     public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates, boolean isSingleExport) {
@@ -294,33 +294,32 @@ public class Exporter {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
             return;
         }
-        PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
-        StringBuilder tmpCsvHeader = new StringBuilder();
-        tmpCsvHeader.append(Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
-                Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
-                Message.get("Exporter.itemsTab.csvHeader.smilesOfFragmentsAndFrequency") + "\n");
-        tmpWriter.write(tmpCsvHeader.toString());
-        for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
-            if(Thread.currentThread().isInterrupted()){
-                return;
-            }
-            tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
-            if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
-                continue;
-            }
-            List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
-            for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
-                if(Thread.currentThread().isInterrupted() ||
-                        !tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)
-                ){
+        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+            StringBuilder tmpCsvHeader = new StringBuilder();
+            tmpCsvHeader.append(Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.smilesOfFragmentsAndFrequency"));
+            tmpWriter.write(tmpCsvHeader.toString());
+            for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+                if(Thread.currentThread().isInterrupted()){
                     return;
                 }
-                tmpWriter.append(aSeparator);
-                tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
+                tmpWriter.printf("\n%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
+                if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+                    continue;
+                }
+                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
+                for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
+                    if(Thread.currentThread().isInterrupted() ||
+                            !tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)
+                    ){
+                        return;
+                    }
+                    tmpWriter.append(aSeparator);
+                    tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
+                }
             }
-            tmpWriter.append("\n");
         }
-        tmpWriter.close();
     }
     //
     /**
@@ -336,25 +335,25 @@ public class Exporter {
         if (aCsvFile == null || aList == null) {
             return;
         }
-        PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
-        StringBuilder tmpFragmentationCsvHeader = new StringBuilder();
-        tmpFragmentationCsvHeader.append(Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.frequency") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.percentage") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage") + ("\n"));
-        tmpWriter.write(tmpFragmentationCsvHeader.toString());
-        for (MoleculeDataModel tmpDataModel : aList) {
-            if(Thread.currentThread().isInterrupted()){
-                return;
+        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+            StringBuilder tmpFragmentationCsvHeader = new StringBuilder();
+            tmpFragmentationCsvHeader.append(Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.frequency") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.percentage") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage"));
+            tmpWriter.write(tmpFragmentationCsvHeader.toString());
+            for (MoleculeDataModel tmpDataModel : aList) {
+                if(Thread.currentThread().isInterrupted()){
+                    return;
+                }
+                FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
+                tmpWriter.printf("\n%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f",
+                        tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
+                        tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
+                        tmpFragmentDataModel.getMoleculePercentage());
             }
-            FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-            tmpWriter.printf("%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f\n",
-                    tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
-                    tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
-                    tmpFragmentDataModel.getMoleculePercentage());
         }
-        tmpWriter.close();
     }
     //
     /**

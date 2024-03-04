@@ -402,11 +402,15 @@ public class FragmentationService {
         for(String tmpKey : tmpKeySet){
             tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
         }
-        for(String tmpKey : tmpKeySet){
-            this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
-            this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+        if (tmpFragmentAmount != 0) {
+            for (String tmpKey : tmpKeySet) {
+                this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+                this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+            }
+        } else {
+            FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
-        LOGGER.info("Number of different fragments extracted: " +  this.fragments.size());
+        FragmentationService.LOGGER.info("Number of different fragments extracted: " +  this.fragments.size());
      }
     //
     /**
@@ -522,9 +526,13 @@ public class FragmentationService {
         for(String tmpKey : tmpKeySet){
             tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
         }
-        for(String tmpKey : tmpKeySet){
-            this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
-            this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+        if (tmpFragmentAmount != 0) {
+            for (String tmpKey : tmpKeySet) {
+                this.fragments.get(tmpKey).setAbsolutePercentage(1.0 * this.fragments.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+                this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+            }
+        } else {
+            FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
     }
     //
@@ -797,7 +805,9 @@ public class FragmentationService {
                 this.executorService.shutdownNow();
             }
         } catch (InterruptedException e) {
+            FragmentationService.LOGGER.log(Level.WARNING, "Interrupted!", e);
             this.executorService.shutdownNow();
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -1006,7 +1016,8 @@ public class FragmentationService {
                     //errors in execution will be thrown by get() and are checked in the calling method/thread
                 }
             } catch (CancellationException | InterruptedException aCancellationOrInterruptionException) {
-                FragmentationService.LOGGER.log(Level.INFO, aCancellationOrInterruptionException.toString(), aCancellationOrInterruptionException);
+                FragmentationService.LOGGER.log(Level.WARNING, aCancellationOrInterruptionException.toString(), aCancellationOrInterruptionException);
+                Thread.currentThread().interrupt();
                 //continue;
             }
         }
@@ -1015,9 +1026,13 @@ public class FragmentationService {
         for(String tmpKey : tmpKeySet){
             tmpFragmentAmount += tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency();
         }
-        for(String tmpKey : tmpKeySet){
-            tmpFragmentHashtable.get(tmpKey).setAbsolutePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
-            tmpFragmentHashtable.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+        if (tmpFragmentAmount != 0) {
+            for(String tmpKey : tmpKeySet){
+                tmpFragmentHashtable.get(tmpKey).setAbsolutePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+                tmpFragmentHashtable.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
+            }
+        } else {
+            FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
         if(tmpExceptionsCounter > 0){
             FragmentationService.LOGGER.log(Level.SEVERE, "Fragmentation \"" + tmpFragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");

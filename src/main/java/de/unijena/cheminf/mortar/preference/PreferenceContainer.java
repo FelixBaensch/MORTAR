@@ -187,8 +187,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * method denies read access to the file
      */
     public PreferenceContainer(File aFile) throws IOException, SecurityException {
-        BufferedReader tmpReader = this.constructDecompressedBufferedReaderForContainerFile(aFile.getPath());
-        try {
+        try (BufferedReader tmpReader = this.constructDecompressedBufferedReaderForContainerFile(aFile.getPath())) {
             this.containerFile = aFile;
             //Can throw IOException
             String tmpVersion = tmpReader.readLine();
@@ -202,10 +201,8 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
                 default:
                     throw new Exception("Invalid version.");
             }
-            tmpReader.close();
         } catch (Exception anException) {
             PreferenceContainer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            tmpReader.close();
             throw new IOException("Preference container can not be instantiated from given reader.");
         }
     }
@@ -729,8 +726,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * denies read access to the file or directory
      */
     public void writeRepresentationTo(String aFilePathname) throws IOException, SecurityException {
-        PrintWriter tmpPrintWriter = this.constructCompressedPrintWriterForContainerFile(aFilePathname);
-        try {
+        try (PrintWriter tmpPrintWriter = this.constructCompressedPrintWriterForContainerFile(aFilePathname)) {
             tmpPrintWriter.println(PreferenceContainer.VERSION);
             tmpPrintWriter.println(this.guid);
             tmpPrintWriter.println(this.timeStamp);
@@ -744,10 +740,8 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
                 tmpPreference.writeRepresentation(tmpPrintWriter);
             }
             tmpPrintWriter.println(PreferenceContainer.CONTAINER_END);
-            tmpPrintWriter.close();
         } catch (Exception anException) {
             PreferenceContainer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            tmpPrintWriter.close();
             throw new IOException("Project object can not be written to file.");
         }
     }
@@ -870,9 +864,10 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
     private boolean addWithoutChecks(IPreference aPreference) {
         this.preferenceMasterMap.put(aPreference.getGUID(), aPreference);
         PreferenceType tmpType = aPreference.getType();
+        boolean tmpDidAdditionToPreferenceTypeMapFail = false;
         if (this.preferenceTypeMap.containsKey(tmpType)) {
             ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceTypeMap.get(tmpType);
-            tmpSet.add(aPreference);
+            tmpDidAdditionToPreferenceTypeMapFail = !tmpSet.add(aPreference);
         } else {
             ConcurrentSkipListSet<IPreference> tmpNewSet = new ConcurrentSkipListSet<>();
             tmpNewSet.add(aPreference);
@@ -880,15 +875,16 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         }
         this.preferenceNameWrapperSet.add(new StringSortWrapper<>(aPreference, aPreference.getName()));
         String tmpName = aPreference.getName();
+        boolean tmpDidAdditionToPreferenceNameMapFail = false;
         if (this.preferenceNameMap.containsKey(tmpName)) {
             ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceNameMap.get(tmpName);
-            tmpSet.add(aPreference);
+            tmpDidAdditionToPreferenceNameMapFail = !tmpSet.add(aPreference);
         } else {
             ConcurrentSkipListSet<IPreference> tmpNewSet = new ConcurrentSkipListSet<>();
             tmpNewSet.add(aPreference);
             this.preferenceNameMap.put(tmpName, tmpNewSet);
         }
-        return true;
+        return !(tmpDidAdditionToPreferenceTypeMapFail || tmpDidAdditionToPreferenceNameMapFail);
     }
 
     /**

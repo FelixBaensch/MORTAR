@@ -64,6 +64,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -202,6 +203,7 @@ public class Importer {
            if (tmpFile != null) {
                this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent());
            }
+           return tmpFile;
         } catch (Exception anException){
            Importer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
            GuiUtil.guiExceptionAlert(
@@ -210,8 +212,7 @@ public class Importer {
                    Message.get("Importer.FileImportExceptionAlert.Text") + "\n" +
                            FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
                    anException);
-        } finally {
-            return tmpFile;
+           return null;
         }
     }
     //</editor-fold>
@@ -388,15 +389,22 @@ public class Importer {
         String tmpName = anAtomContainer.getTitle();
         Set<String> keySet = (Set<String>)(Set<?>)anAtomContainer.getProperties().keySet();
         if(tmpName == null  && keySet.stream().anyMatch(k -> (k.toLowerCase().contains("name")) && !k.equalsIgnoreCase("Database_Name"))){
-            String key = keySet.stream().filter(k -> k.toLowerCase().contains("name")).findFirst().get();
-            tmpName = anAtomContainer.getProperty(key);
+            Optional<String> tmpKeyOptional = keySet.stream().filter(k -> k.toLowerCase().contains("name")).findFirst();
+            if (tmpKeyOptional.isPresent()) {
+                String key = tmpKeyOptional.get();
+                tmpName = anAtomContainer.getProperty(key);
+            }
         }
         if((tmpName == null || tmpName.equalsIgnoreCase("None")) && keySet.stream().anyMatch(k -> k.toLowerCase().contains("id"))){
-            String key = keySet.stream().filter(k -> k.toLowerCase().contains("id")).findFirst().get();
-            tmpName = anAtomContainer.getProperty(key);
+            Optional<String> tmpKeyOptional = keySet.stream().filter(k -> k.toLowerCase().contains("id")).findFirst();
+            if (tmpKeyOptional.isPresent()) {
+                String key = tmpKeyOptional.get();
+                tmpName = anAtomContainer.getProperty(key);
+            }
         }
-        if(tmpName != null && (tmpName.equalsIgnoreCase("None")))
+        if(tmpName != null && (tmpName.equalsIgnoreCase("None"))) {
             tmpName = null;
+        }
         return tmpName;
     }
     //

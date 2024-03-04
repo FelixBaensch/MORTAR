@@ -179,8 +179,8 @@ public class FragmentDataModel extends MoleculeDataModel {
         if(this.parentMolecules.size() < 1){
             return null;
         }
-        if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
+        if (this.parentMolecule == null) {
+            this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
         }
         return this.parentMolecule;
     }
@@ -196,7 +196,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
+            this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
         }
         try {
             IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
@@ -217,7 +217,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             return null;
         }
         if(this.parentMolecule == null){
-           this.parentMolecule = this.parentMolecules.stream().findFirst().get();
+           this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
         }
         return this.parentMolecule.getName();
     }

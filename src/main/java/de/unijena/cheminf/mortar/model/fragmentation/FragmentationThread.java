@@ -132,9 +132,13 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
         for(String tmpKey : tmpKeySet){
             tmpFragmentAmount += tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency();
         }
-        for(String tmpKey : tmpKeySet){
-            tmpFragmentHashtable.get(tmpKey).setAbsolutePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
-            tmpFragmentHashtable.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getMoleculeFrequency() / this.molecules.size());
+        if (tmpFragmentAmount != 0) {
+            for (String tmpKey : tmpKeySet) {
+                tmpFragmentHashtable.get(tmpKey).setAbsolutePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getAbsoluteFrequency() / tmpFragmentAmount);
+                tmpFragmentHashtable.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getMoleculeFrequency() / this.molecules.size());
+            }
+        } else {
+            FragmentationThread.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
         if(tmpExceptionsCounter > 0){
             FragmentationThread.LOGGER.log(Level.SEVERE, "Fragmentation \"" + this.fragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");

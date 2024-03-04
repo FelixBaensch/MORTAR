@@ -1158,7 +1158,7 @@ public class HistogramViewController implements IViewToolController {
      * @return an upper limit for the x-axis that leaves enough room for the frequency labels
      */
     private int calculateXAxisUpperBoundWithSpaceForLabels(int aMaxValue, int aTickValue) {
-        int tmpTickNumber = (int) Math.round(aMaxValue / aTickValue);
+        int tmpTickNumber = Math.round((float) aMaxValue / aTickValue);
         int tmpXAxisExtensionValue;
         if ((aTickValue * tmpTickNumber) > aMaxValue) {
             tmpXAxisExtensionValue = (aTickValue * tmpTickNumber) + aTickValue;
