@@ -195,6 +195,11 @@ public class FragmentationService {
      * Logger
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentationService.class.getName());
+    //
+    /**
+     * Logging message for the case that the sum of absolute frequencies of fragments was 0 and percentages could therefore not be calculated.
+     */
+    private static final String LOG_MESSAGE_SUM_OF_FREQUENCIES_ZERO = "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.";
     //</editor-fold>
     //
     //<editor-fold desc="Constructors">
@@ -410,7 +415,7 @@ public class FragmentationService {
         } else {
             FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
-        FragmentationService.LOGGER.info("Number of different fragments extracted: " +  this.fragments.size());
+        FragmentationService.LOGGER.log(Level.INFO, "Number of different fragments extracted: {0}",  this.fragments.size());
      }
     //
     /**

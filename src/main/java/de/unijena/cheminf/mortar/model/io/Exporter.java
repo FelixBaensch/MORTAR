@@ -348,9 +348,9 @@ public class Exporter {
                     return;
                 }
                 FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-                tmpWriter.printf("\n%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f",
-                        tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
-                        tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
+                tmpWriter.printf("\n%s%s%d%s%.4f%s%d%s%.4f",
+                        tmpFragmentDataModel.getUniqueSmiles(), aSeparator, tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
+                        tmpFragmentDataModel.getAbsolutePercentage(), aSeparator, tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
                         tmpFragmentDataModel.getMoleculePercentage());
             }
         }
