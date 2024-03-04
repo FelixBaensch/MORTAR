@@ -413,7 +413,7 @@ public class FragmentationService {
                 this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
             }
         } else {
-            FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
+            FragmentationService.LOGGER.log(Level.WARNING, FragmentationService.LOG_MESSAGE_SUM_OF_FREQUENCIES_ZERO);
         }
         FragmentationService.LOGGER.log(Level.INFO, "Number of different fragments extracted: {0}",  this.fragments.size());
      }
@@ -537,7 +537,7 @@ public class FragmentationService {
                 this.fragments.get(tmpKey).setMoleculePercentage(1.0 * this.fragments.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
             }
         } else {
-            FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
+            FragmentationService.LOGGER.log(Level.WARNING, FragmentationService.LOG_MESSAGE_SUM_OF_FREQUENCIES_ZERO);
         }
     }
     //
@@ -1037,7 +1037,7 @@ public class FragmentationService {
                 tmpFragmentHashtable.get(tmpKey).setMoleculePercentage(1.0 * tmpFragmentHashtable.get(tmpKey).getMoleculeFrequency() / aListOfMolecules.size());
             }
         } else {
-            FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
+            FragmentationService.LOGGER.log(Level.WARNING, FragmentationService.LOG_MESSAGE_SUM_OF_FREQUENCIES_ZERO);
         }
         if(tmpExceptionsCounter > 0){
             FragmentationService.LOGGER.log(Level.SEVERE, "Fragmentation \"" + tmpFragmentationName + "\" caused " + tmpExceptionsCounter + " exceptions");

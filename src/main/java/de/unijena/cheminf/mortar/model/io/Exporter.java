@@ -348,7 +348,7 @@ public class Exporter {
                     return;
                 }
                 FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-                tmpWriter.printf("\n%s%s%d%s%.4f%s%d%s%.4f",
+                tmpWriter.printf("%n%s%s%d%s%.4f%s%d%s%.4f",
                         tmpFragmentDataModel.getUniqueSmiles(), aSeparator, tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
                         tmpFragmentDataModel.getAbsolutePercentage(), aSeparator, tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
                         tmpFragmentDataModel.getMoleculePercentage());
