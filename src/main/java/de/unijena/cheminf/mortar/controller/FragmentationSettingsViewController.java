@@ -169,7 +169,7 @@ public class FragmentationSettingsViewController {
      * @param aFragmenter IMoleculeFragmenter
      * @param aRecentPropertiesMap Map
      */
-    private void setRecentProperties(IMoleculeFragmenter aFragmenter, Map aRecentPropertiesMap){
+    private void setRecentProperties(IMoleculeFragmenter aFragmenter, Map<String, Object> aRecentPropertiesMap){
         for (Property tmpProperty : aFragmenter.settingsProperties()) {
             if(aRecentPropertiesMap.containsKey(tmpProperty.getName())){
                 tmpProperty.setValue(aRecentPropertiesMap.get(tmpProperty.getName()));
