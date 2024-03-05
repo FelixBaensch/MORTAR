@@ -156,28 +156,6 @@ public final class BasicDefinitions {
     public static final String MORTAR_VERSION = "1.1.1.0";
     //</editor-fold>
     //
-    //<editor-fold desc="GitHub repository url">
-    /**
-     * URL which links to GitHub repository of MORTAR
-     */
-    public static final String GITHUB_REPOSITORY_URL = "https://github.com/FelixBaensch/MORTAR";
-    //</editor-fold>
-    //
-    //<editor-fold desc="MORTAR tutorial url">
-    /**
-     * URL which links to MORTAR tutorial on GitHub repository of MORTAR
-     */
-    public static final String MORTAR_TUTORIAL_URL = "https://github.com/FelixBaensch/MORTAR/blob/master/Tutorial/MORTAR_Tutorial.pdf";
-    //</editor-fold>
-    //
-    //<editor-fold desc="MORTAR tutorial url">
-    /**
-     * File path to the tutorial file in the root directory
-     * Note: Does not work when started from IDE, only in built version started from batch file
-     */
-    public static final String MORTAR_TUTORIAL_RELATIVE_FILE_PATH = "../tutorial/MORTAR_Tutorial.pdf";
-    //</editor-fold>
-    //
     //<editor-fold desc="Model constants and magic numbers">
     /**
      * Default initial capacity for fragment maps

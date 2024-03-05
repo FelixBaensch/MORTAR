@@ -25,12 +25,12 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.AboutView;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 
 import javafx.application.Platform;
@@ -80,7 +80,7 @@ public class AboutViewController {
      */
     private Stage mainStage;
     /**
-     * View to controll
+     * View to control
      */
     private AboutView aboutView;
     /**
@@ -88,13 +88,13 @@ public class AboutViewController {
      */
     private Stage aboutViewStage;
     /**
-     * path to xml file which contains information about external tools
-     */
-    private String toolsXmlFileName = "de/unijena/cheminf/mortar/descriptions/tools_description.xml";
-    /**
      * ObservableList to show properties of ExternalTools
      */
     private ObservableList<ExternalTool> toolObservableList;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final Configuration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -102,16 +102,27 @@ public class AboutViewController {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(AboutViewController.class.getName());
+    //
+    /**
+     * Name of logo icon.
+     */
+    private static final String MORTAR_LOGO_ICON_FILE_NAME = "Mortar_Logo_Icon1.png";
+    /**
+     * name of xml file which contains information about external tools.
+     */
+    private static final String TOOLS_XML_FILE_NAME = "tools_description.xml";
     //</editor-fold>
     //
     /**
      * Constructor
      *
      * @param aStage Stage
+     * @throws IOException if configuration properties cannot be imported
      */
-    public AboutViewController(Stage aStage){
+    public AboutViewController(Stage aStage) throws IOException {
         this.mainStage = aStage;
         this.toolObservableList = FXCollections.observableArrayList();
+        this.configuration = Configuration.getInstance();
         this.showAboutView();
     }
     //
@@ -131,7 +142,8 @@ public class AboutViewController {
         this.aboutViewStage.setTitle(Message.get("AboutView.title.text"));
         this.aboutViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.aboutViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        InputStream tmpImageInputStream = AboutViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
+        File tmpIconFile = new File(this.configuration.getProperty("mortar.imagesFolder"), AboutViewController.MORTAR_LOGO_ICON_FILE_NAME);
+        InputStream tmpImageInputStream = this.getClass().getClassLoader().getResourceAsStream(tmpIconFile.getPath());
         this.aboutViewStage.getIcons().add(new Image(tmpImageInputStream));
         Platform.runLater(()->{
             this.addListeners();
@@ -182,7 +194,7 @@ public class AboutViewController {
             else
                 throw new SecurityException("OS name " + tmpOS + " unknown.");
         } catch (IOException anException) {
-            LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             throw new SecurityException("Could not open directory path");
         }
     }
@@ -194,9 +206,9 @@ public class AboutViewController {
      */
     private void openGitHubRepositoryInDefaultBrowser(){
         try{
-            Desktop.getDesktop().browse(new URI(BasicDefinitions.GITHUB_REPOSITORY_URL));
+            Desktop.getDesktop().browse(new URI(this.configuration.getProperty("mortar.github.repository.url")));
         } catch (IOException | URISyntaxException anException) {
-            LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             throw new SecurityException("Could not open directory path");
         }
     }
@@ -207,14 +219,14 @@ public class AboutViewController {
     private void openTutorialInDefaultPdfViewer() {
         //Note: Does not work when started from IDE, only in built version started from JAR
         try {
-            Desktop.getDesktop().open(new File(BasicDefinitions.MORTAR_TUTORIAL_RELATIVE_FILE_PATH));
+            Desktop.getDesktop().open(new File(this.configuration.getProperty("mortar.tutorial.relativeFilePath")));
         } catch (IOException | IllegalArgumentException anException) {
             LOGGER.log(Level.SEVERE, anException.toString(), anException);
             Hyperlink tmpLinkToTutorial = new Hyperlink(Message.get("AboutView.tutorialButton.alert.hyperlink.text"));
-            tmpLinkToTutorial.setTooltip(new Tooltip(BasicDefinitions.MORTAR_TUTORIAL_URL));
+            tmpLinkToTutorial.setTooltip(new Tooltip(this.configuration.getProperty("mortar.tutorial.url")));
             tmpLinkToTutorial.setOnAction(event -> {
                 try {
-                    Desktop.getDesktop().browse(new URI(BasicDefinitions.MORTAR_TUTORIAL_URL));
+                    Desktop.getDesktop().browse(new URI(this.configuration.getProperty("mortar.tutorial.url")));
                 } catch (IOException | URISyntaxException e) {
                     LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     throw new SecurityException("Could not open URI");
@@ -235,9 +247,10 @@ public class AboutViewController {
             // process XML securely, avoid attacks like XML External Entities (XXE)
             tmpDocumentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             DocumentBuilder tmpDocBuilder = tmpDocumentBuilderFactory.newDocumentBuilder();
-            Document tmpDoc = tmpDocBuilder.parse(getClass().getClassLoader().getResourceAsStream(this.toolsXmlFileName));
-            if(tmpDoc == null){
-                throw new FileNotFoundException("File not found " + this.toolsXmlFileName);
+            File tmpToolsXMLFile = new File(this.configuration.getProperty("mortar.descriptionsFolder"), AboutViewController.TOOLS_XML_FILE_NAME);
+            Document tmpDoc = tmpDocBuilder.parse(this.getClass().getClassLoader().getResourceAsStream(tmpToolsXMLFile.getPath()));
+            if (tmpDoc == null) {
+                throw new FileNotFoundException("File not found " + this.TOOLS_XML_FILE_NAME);
             }
             // optional, but recommended
             // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
