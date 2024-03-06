@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.util;
 import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+
 import javafx.scene.control.TableColumn;
 
 import java.util.List;
@@ -62,7 +63,7 @@ public final class CollectionUtil {
             FragmentDataModel f2;
             DataModelPropertiesForTableView property = DataModelPropertiesForTableView.fromString(aProperty);
             if(property == null){
-                throw new IllegalArgumentException("Property is not part of the data model properties that are displayed in the TableViews.");
+                throw new IllegalArgumentException("Property is not part of the data model properties that are displayed in the TableViews: " + aProperty);
             }
             switch (property) {
                 case DataModelPropertiesForTableView.ABSOLUTE_FREQUENCY:
