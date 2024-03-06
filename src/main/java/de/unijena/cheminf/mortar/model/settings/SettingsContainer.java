@@ -76,6 +76,10 @@ public class SettingsContainer {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(SettingsContainer.class.getName());
+    /**
+     * Name of the settings container file that persists the global settings.
+     */
+    public static final String SETTINGS_CONTAINER_FILE_NAME = "MORTAR_Settings";
     //</editor-fold>
     //
     //<editor-fold desc="public static final constants" defaultstate="collapsed">
@@ -500,7 +504,7 @@ public class SettingsContainer {
             return;
         }
         String tmpPreferenceContainerFilePathName = tmpSettingsDirectoryPathName
-                + BasicDefinitions.SETTINGS_CONTAINER_FILE_NAME
+                + SettingsContainer.SETTINGS_CONTAINER_FILE_NAME
                 + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
         List<Property> tmpSettings = new ArrayList<>(6);
         tmpSettings.addAll(this.settings);
@@ -526,7 +530,7 @@ public class SettingsContainer {
         String tmpSettingsDirectoryPathName = FileUtil.getSettingsDirPath();
         File tmpSettingsDirectoryFile = new File(tmpSettingsDirectoryPathName);
         String tmpPreferenceContainerFilePathName = tmpSettingsDirectoryPathName
-                + BasicDefinitions.SETTINGS_CONTAINER_FILE_NAME
+                + SettingsContainer.SETTINGS_CONTAINER_FILE_NAME
                 + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
         File tmpPreferenceContainerFile = new File(tmpPreferenceContainerFilePathName);
         if (!tmpSettingsDirectoryFile.exists()) {

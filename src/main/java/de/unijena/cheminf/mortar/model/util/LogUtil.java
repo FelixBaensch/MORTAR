@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 
@@ -60,12 +62,29 @@ public final class LogUtil {
      * Root logger
      */
     private static final Logger ROOT_LOGGER = LogManager.getLogManager().getLogger("");
-
     /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
-
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private static final IConfiguration CONFIGURATION;
+    static {
+        try {
+            CONFIGURATION = Configuration.getInstance();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    /**
+     * Name for Log files
+     */
+    private static final String LOG_FILE_NAME = "MORTAR_Log";
+    /**
+     * Name extension (denoting the file type) of log files
+     */
+    private static final String LOG_FILE_NAME_EXTENSION = ".txt";
     /**
      * Uncaught exception handler to be used in MORTAR. IMPORTANT: Threads running parallel to the JavaFX GUI thread
      * must be assigned this uncaught exception handler manually. BUT this handler tries to display an exception
@@ -154,16 +173,16 @@ public final class LogUtil {
             //Messages of levels INFO, WARNING and SEVERE will be logged only
             LogUtil.ROOT_LOGGER.setLevel(Level.INFO);
             String tmpLoggingDirectoryPathName = FileUtil.getAppDirPath() + File.separator
-                    + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator;
+                    + LogUtil.CONFIGURATION.getProperty("mortar.logDirectory.name") + File.separator;
             File tmpLoggingDirectoryFile = new File(tmpLoggingDirectoryPathName);
             //If the directories do not exist already they are created
             if (!tmpLoggingDirectoryFile.exists()) {
                 FileUtil.createDirectory(tmpLoggingDirectoryFile.getAbsolutePath());
             }
-            String tmpLogFilePathName = tmpLoggingDirectoryPathName + BasicDefinitions.LOG_FILE_NAME
+            String tmpLogFilePathName = tmpLoggingDirectoryPathName + LogUtil.LOG_FILE_NAME
                     + "_"
                     + FileUtil.getTimeStampFileNameExtension();
-            String tmpFinalLogFilePathName = FileUtil.getNonExistingFilePath(tmpLogFilePathName, BasicDefinitions.LOG_FILE_NAME_EXTENSION);
+            String tmpFinalLogFilePathName = FileUtil.getNonExistingFilePath(tmpLogFilePathName, LogUtil.LOG_FILE_NAME_EXTENSION);
             File tmpLogFile = new File(tmpFinalLogFilePathName);
             boolean tmpFileWasCreated = FileUtil.createEmptyFile(tmpLogFile.getAbsolutePath());
             if (!tmpFileWasCreated) {
@@ -241,7 +260,8 @@ public final class LogUtil {
      * @author Samuel Behr
      */
     public static void manageLogFilesFolderIfExists() {
-        Path tmpLogFileDirectory = Paths.get(FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY);
+        Path tmpLogFileDirectory = Paths.get(FileUtil.getAppDirPath() + File.separator +
+                LogUtil.CONFIGURATION.getProperty("mortar.logDirectory.name") + File.separator);
         if (!(Files.exists(tmpLogFileDirectory) && Files.isDirectory(tmpLogFileDirectory))) {
             return;
         }
@@ -312,9 +332,9 @@ public final class LogUtil {
      *
      * @return path (String) to log file directory
      */
-    public static String getLogFileDirectoryPath(){
+    public static String getLogFileDirectoryPath() {
         return FileUtil.getAppDirPath() + File.separator
-                + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator;
+                + LogUtil.CONFIGURATION.getProperty("mortar.logDirectory.name") + File.separator;
 
     }
 

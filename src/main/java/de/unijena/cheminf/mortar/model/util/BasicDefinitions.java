@@ -28,7 +28,7 @@ package de.unijena.cheminf.mortar.model.util;
 import java.util.regex.Pattern;
 
 /**
- * Basic definitions of the model or application
+ * Basic definitions of the model or application.
  *
  * @author Jonas Schaub, Achim Zielesny
  * @version 1.0.0.0
@@ -47,7 +47,7 @@ public final class BasicDefinitions {
     /**
      * Minimum java version to run MORTAR
      */
-    public static final String MINIMUM_JAVA_VERSION = "17.0.4";
+    public static final String MINIMUM_JAVA_VERSION = "21.0.1";
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Basic patterns and formats">
@@ -55,32 +55,26 @@ public final class BasicDefinitions {
      * Regex pattern for non-word or non-numeric characters
      */
     public static final Pattern NON_WORDNUMERIC_CHARACTER_PATTERN = Pattern.compile("[^a-zA-Z0-9]");
-
     /**
      * Standard timestamp format
      */
     public static final String STANDARD_TIMESTAMP_FORMAT = "yyyy/MM/dd - HH:mm:ss";
-
     /**
      * Timestamp format for filename extensions
      */
     public static final String FILENAME_TIMESTAMP_FORMAT = "uuuu_MM_dd_HH_mm";
-
     /**
      * Upper limit of bytes used in the log-file folder for entering the managing routine
      */
     public static final int LIMIT_OF_BYTES_USED_BY_LOG_FILES = 1000000;
-
     /**
      * Upper limit of files stored in the log-file folder for entering the managing routine
      */
     public static final int UPPER_LIMIT_OF_LOG_FILES = 64;
-
     /**
      * Lower limit of files stored in the log-file folder for entering the managing routine
      */
     public static final int LOWER_LIMIT_OF_LOG_FILES = 32;
-
     /**
      * Factor by which to trim the log-file folder
      */
@@ -97,42 +91,8 @@ public final class BasicDefinitions {
     //
     //<editor-fold defaultstate="collapsed" desc="System and directories">
     /**
-     * Vendor name of application to include in data directory path
-     */
-    public static final String MORTAR_VENDOR = "MORTAR";
-
-    /**
-     * Directory name for MORTAR data
-     */
-    public static final String MORTAR_DATA_DIRECTORY = "MORTAR_Data";
-
-    /**
-     * Directory name for storing log files
-     */
-    public static final String LOG_FILES_DIRECTORY = "Logs";
-
-    /**
-     * Name for Log files
-     */
-    public static final String LOG_FILE_NAME = "MORTAR_Log";
-
-    /**
-     * Name extension (denoting the file type) of log files
-     */
-    public static final String LOG_FILE_NAME_EXTENSION = ".txt";
-
-    /**
-     * Name of the folder where all settings (global, fragmenter, pipeline) are persisted.
-     */
-    public static final String SETTINGS_CONTAINER_FILE_DIRECTORY = "Settings";
-
-    /**
-     * Name of the settings container file that persists the global settings.
-     */
-    public static final String SETTINGS_CONTAINER_FILE_NAME = "MORTAR_Settings";
-
-    /**
      * Note, the file extension (.txt or .gzip) defines whether the preference container file is compressed or not.
+     * For the moment, we are not using compression here in MORTAR.
      */
     public static final String PREFERENCE_CONTAINER_FILE_EXTENSION = ".txt";
     //</editor-fold>
@@ -142,7 +102,6 @@ public final class BasicDefinitions {
      * MORTAR session start log entry
      */
     public static final String MORTAR_SESSION_START_FORMAT = "MORTAR %s session start";
-
     /**
      * MORTAR session end log entry
      */

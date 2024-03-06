@@ -28,8 +28,8 @@ package de.unijena.cheminf.mortar.model.io;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.LogUtil;
 
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -210,7 +210,7 @@ public class Importer {
                    Message.get("Error.ExceptionAlert.Title"),
                    Message.get("Importer.FileImportExceptionAlert.Header"),
                    Message.get("Importer.FileImportExceptionAlert.Text") + "\n" +
-                           FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator,
+                           LogUtil.getLogFileDirectoryPath(),
                    anException);
            return null;
         }

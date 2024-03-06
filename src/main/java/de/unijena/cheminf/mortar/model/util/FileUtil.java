@@ -25,7 +25,11 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
+
 import java.io.File;
+import java.io.IOException;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -52,6 +56,18 @@ public final class FileUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(FileUtil.class.getName());
+    //
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private static final IConfiguration CONFIGURATION;
+    static {
+        try {
+            CONFIGURATION = Configuration.getInstance();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Protected constructor">
@@ -246,7 +262,7 @@ public final class FileUtil {
             throw new SecurityException("AppData (Windows) or user home directory path " + tmpAppDir + " is either no directory or does not exist.");
         if (tmpOS.contains("MAC"))
             tmpAppDir += File.separator + "Library" + File.separator + "Application Support";
-        tmpAppDir += File.separator + BasicDefinitions.MORTAR_VENDOR + File.separator + BasicDefinitions.MORTAR_DATA_DIRECTORY;
+        tmpAppDir += File.separator + FileUtil.CONFIGURATION.getProperty("mortar.vendor.name") + File.separator + FileUtil.CONFIGURATION.getProperty("mortar.dataDirectory.name");
         tmpAppDirFile = new File(tmpAppDir);
         boolean tmpSuccessful = true;
         if(!tmpAppDirFile.exists())
@@ -265,7 +281,7 @@ public final class FileUtil {
      * path cannot be determined or data directory cannot be created
      */
     public static String getSettingsDirPath() throws SecurityException {
-        return FileUtil.getAppDirPath() + File.separator + BasicDefinitions.SETTINGS_CONTAINER_FILE_DIRECTORY + File.separator;
+        return FileUtil.getAppDirPath() + File.separator + FileUtil.CONFIGURATION.getProperty("mortar.settingsDirectory.name") + File.separator;
     }
 
     /**
