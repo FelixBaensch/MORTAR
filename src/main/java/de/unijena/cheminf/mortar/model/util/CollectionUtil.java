@@ -55,7 +55,7 @@ public final class CollectionUtil {
      *
      * @param aList List
      * @param aProperty String
-     * @param aSortType String
+     * @param aSortType TableColumn.SortType
      */
     public static void sortGivenFragmentListByPropertyAndSortType(List<? extends MoleculeDataModel> aList, String aProperty, TableColumn.SortType aSortType) {
         aList.sort((m1, m2) -> {
