@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import javafx.scene.control.TableColumn;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,70 +57,66 @@ public final class CollectionUtil {
      * @param aProperty String
      * @param aSortType String
      */
-    public static void sortGivenFragmentListByPropertyAndSortType(List<? extends MoleculeDataModel> aList, String aProperty, String aSortType) {
-        Collections.sort(aList, (m1, m2) -> {
+    public static void sortGivenFragmentListByPropertyAndSortType(List<? extends MoleculeDataModel> aList, String aProperty, TableColumn.SortType aSortType) {
+        aList.sort((m1, m2) -> {
             FragmentDataModel f1;
             FragmentDataModel f2;
             switch (aProperty) {
                 case "absoluteFrequency":
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
-                    switch (aSortType) {
-                        case "ASCENDING":
-                            return (Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency()));
-                        case "DESCENDING":
-                            return (f1.getAbsoluteFrequency() > f2.getAbsoluteFrequency() ? -1 : (f1.getAbsoluteFrequency() == f2.getAbsoluteFrequency() ? 0 : 1));
-                    }
+                    return switch (aSortType) {
+                        case TableColumn.SortType.ASCENDING ->
+                                (Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency()));
+                        case TableColumn.SortType.DESCENDING ->
+                                (Integer.compare(f2.getAbsoluteFrequency(), f1.getAbsoluteFrequency()));
+                    };
                 case "absolutePercentage":
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
-                    switch (aSortType) {
-                        case "ASCENDING":
-                            return (Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage()));
-                        case "DESCENDING":
-                            return (f1.getAbsolutePercentage() > f2.getAbsolutePercentage() ? -1 : (f1.getAbsolutePercentage() == f2.getAbsolutePercentage() ? 0 : 1));
-                    }
+                    return switch (aSortType) {
+                        case TableColumn.SortType.ASCENDING ->
+                                (Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage()));
+                        case TableColumn.SortType.DESCENDING ->
+                                (Double.compare(f2.getAbsolutePercentage(), f1.getAbsolutePercentage()));
+                    };
                 case "moleculeFrequency":
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
-                    switch (aSortType) {
-                        case "ASCENDING":
-                            return (Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency()));
-                        case "DESCENDING":
-                            return (f1.getMoleculeFrequency() > f2.getMoleculeFrequency() ? -1 : (f1.getMoleculeFrequency() == f2.getMoleculeFrequency() ? 0 : 1));
-                    }
+                    return switch (aSortType) {
+                        case TableColumn.SortType.ASCENDING ->
+                                (Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency()));
+                        case TableColumn.SortType.DESCENDING ->
+                                (Integer.compare(f2.getMoleculeFrequency(), f1.getMoleculeFrequency()));
+                    };
                 case "moleculePercentage":
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
-                    switch (aSortType) {
-                        case "ASCENDING":
-                            return (Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage()));
-                        case "DESCENDING":
-                            return (f1.getMoleculePercentage() > f2.getMoleculePercentage() ? -1 : (f1.getMoleculePercentage() == f2.getMoleculePercentage() ? 0 : 1));
-                    }
+                    return switch (aSortType) {
+                        case TableColumn.SortType.ASCENDING ->
+                                (Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage()));
+                        case TableColumn.SortType.DESCENDING ->
+                                (Double.compare(f2.getMoleculePercentage(), f1.getMoleculePercentage()));
+                    };
                 case "name":
-                    switch (aSortType) {
-                        case "ASCENDING":
-                            return m1.getName().compareTo(m2.getName());
-                        case "DESCENDING":
-                            return m2.getName().compareTo(m1.getName());
-                    }
+                    return switch (aSortType) {
+                        case TableColumn.SortType.ASCENDING -> m1.getName().compareTo(m2.getName());
+                        case TableColumn.SortType.DESCENDING -> m2.getName().compareTo(m1.getName());
+                    };
                 case "uniqueSmiles":
-                    switch (aSortType) {
-                        case "ASCENDING":
-                            return m1.getUniqueSmiles().compareTo(m2.getUniqueSmiles());
-                        case "DESCENDING":
-                            return m2.getUniqueSmiles().compareTo(m1.getUniqueSmiles());
-                    }
+                    return switch (aSortType) {
+                        case TableColumn.SortType.ASCENDING -> m1.getUniqueSmiles().compareTo(m2.getUniqueSmiles());
+                        case TableColumn.SortType.DESCENDING -> m2.getUniqueSmiles().compareTo(m1.getUniqueSmiles());
+                    };
                 case "parentMoleculeName":
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
-                    switch (aSortType) {
-                        case "ASCENDING":
-                            return f1.getParentMoleculeName().compareTo(f2.getParentMoleculeName());
-                        case "DESCENDING":
-                            return f2.getParentMoleculeName().compareTo(f1.getParentMoleculeName());
-                    }
+                    return switch (aSortType) {
+                        case TableColumn.SortType.ASCENDING ->
+                                f1.getParentMoleculeName().compareTo(f2.getParentMoleculeName());
+                        case TableColumn.SortType.DESCENDING ->
+                                f2.getParentMoleculeName().compareTo(f1.getParentMoleculeName());
+                    };
             }
             return 0;
         });
