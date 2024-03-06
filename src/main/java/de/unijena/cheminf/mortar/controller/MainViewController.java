@@ -88,7 +88,6 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -218,10 +217,9 @@ public class MainViewController {
      * @param aConfiguration configuration class reading from properties file
      * @throws IllegalArgumentException given application directory is either no directory or does not exist
      * @throws NullPointerException if one param is null
-     * @throws IOException if properties cannot be read
      */
     public MainViewController(Stage aStage, MainView aMainView, String anAppDir, IConfiguration aConfiguration)
-            throws IllegalArgumentException, NullPointerException, IOException {
+            throws IllegalArgumentException, NullPointerException {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
         Objects.requireNonNull(aMainView, "aMainView (instance of MainView) is null");
@@ -353,11 +351,7 @@ public class MainViewController {
         );
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> {
-            try {
-                new AboutViewController(this.primaryStage, this.configuration);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            new AboutViewController(this.primaryStage, this.configuration);
         });
         this.scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             GridTabForTableView tmpGrid = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem());

@@ -120,7 +120,7 @@ public class PipelineSettingsViewController {
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      *
      * @param aMainStage Stage of the MainView
      * @param aFragmentationService FragmentationService

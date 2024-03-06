@@ -107,9 +107,8 @@ public class AboutViewController {
      *
      * @param aStage Stage
      * @param aConfiguration configuration class reading from properties file
-     * @throws IOException if configuration properties cannot be imported
      */
-    public AboutViewController(Stage aStage, IConfiguration aConfiguration) throws IOException {
+    public AboutViewController(Stage aStage, IConfiguration aConfiguration) {
         this.mainStage = aStage;
         this.toolObservableList = FXCollections.observableArrayList();
         this.configuration = aConfiguration;
