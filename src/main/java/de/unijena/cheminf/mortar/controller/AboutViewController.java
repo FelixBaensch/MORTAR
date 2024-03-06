@@ -25,7 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -59,7 +59,6 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
@@ -73,7 +72,6 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class AboutViewController {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Main Stage / parent Stage
@@ -94,7 +92,7 @@ public class AboutViewController {
     /**
      * Configuration class to read resource file paths from.
      */
-    private final Configuration configuration;
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -114,15 +112,16 @@ public class AboutViewController {
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      *
      * @param aStage Stage
+     * @param aConfiguration configuration class reading from properties file
      * @throws IOException if configuration properties cannot be imported
      */
-    public AboutViewController(Stage aStage) throws IOException {
+    public AboutViewController(Stage aStage, IConfiguration aConfiguration) throws IOException {
         this.mainStage = aStage;
         this.toolObservableList = FXCollections.observableArrayList();
-        this.configuration = Configuration.getInstance();
+        this.configuration = aConfiguration;
         this.showAboutView();
     }
     //
@@ -142,9 +141,9 @@ public class AboutViewController {
         this.aboutViewStage.setTitle(Message.get("AboutView.title.text"));
         this.aboutViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.aboutViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        File tmpIconFile = new File(this.configuration.getProperty("mortar.imagesFolder"), AboutViewController.MORTAR_LOGO_ICON_FILE_NAME);
-        InputStream tmpImageInputStream = this.getClass().getClassLoader().getResourceAsStream(tmpIconFile.getPath());
-        this.aboutViewStage.getIcons().add(new Image(tmpImageInputStream));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder") + AboutViewController.MORTAR_LOGO_ICON_FILE_NAME).toExternalForm();
+        this.aboutViewStage.getIcons().add(new Image(tmpIconURL));
         Platform.runLater(()->{
             this.addListeners();
             this.getExternalToolInfosFromXml();
@@ -247,10 +246,10 @@ public class AboutViewController {
             // process XML securely, avoid attacks like XML External Entities (XXE)
             tmpDocumentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             DocumentBuilder tmpDocBuilder = tmpDocumentBuilderFactory.newDocumentBuilder();
-            File tmpToolsXMLFile = new File(this.configuration.getProperty("mortar.descriptionsFolder"), AboutViewController.TOOLS_XML_FILE_NAME);
-            Document tmpDoc = tmpDocBuilder.parse(this.getClass().getClassLoader().getResourceAsStream(tmpToolsXMLFile.getPath()));
+            Document tmpDoc = tmpDocBuilder.parse(this.getClass().getClassLoader().getResource(
+                    this.configuration.getProperty("mortar.descriptionsFolder") + AboutViewController.TOOLS_XML_FILE_NAME).toExternalForm());
             if (tmpDoc == null) {
-                throw new FileNotFoundException("File not found " + this.TOOLS_XML_FILE_NAME);
+                throw new FileNotFoundException("File not found " + AboutViewController.TOOLS_XML_FILE_NAME);
             }
             // optional, but recommended
             // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work

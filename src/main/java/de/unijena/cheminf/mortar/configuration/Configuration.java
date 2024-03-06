@@ -34,10 +34,10 @@ import java.util.Properties;
 /**
  * Thread-safe singleton class for reading configuration properties file, e.g. for paths to resource folders.
  *
- * @author Jonas Schaub#
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
-public class Configuration {
+public class Configuration implements IConfiguration {
     /**
      * Single instance of this class.
      */
@@ -65,7 +65,7 @@ public class Configuration {
                 //throws IOException if an error occurs when reading from the input stream
                 this.properties.load(tmpInputStream);
             } else {
-                // extends IOException
+                //extends IOException
                 throw new FileNotFoundException(String.format("property file '%s' not found in the classpath", Configuration.PROPERTIES_FILE_PATH));
             }
         }
@@ -84,13 +84,7 @@ public class Configuration {
         return Configuration.instance;
     }
     //
-    /**
-     * Returns the string value associated with the key in the configurations properties file.
-     *
-     * @param aKey key defined in the configuration properties file
-     * @return property value associated with the given key
-     * @throws MissingResourceException if no associated value could be found for the given key
-     */
+    @Override
     public String getProperty(String aKey) throws MissingResourceException {
         String tmpProperty = this.properties.getProperty(aKey).trim();
         if (tmpProperty == null) {

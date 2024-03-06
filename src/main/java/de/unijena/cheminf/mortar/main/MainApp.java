@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.main;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.controller.MainViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.MainView;
@@ -131,14 +132,14 @@ public class MainApp extends Application {
             String tmpAppDir = FileUtil.getAppDirPath();
             //</editor-fold>
             MainView tmpMainView = new MainView();
-            MainViewController tmpMainViewController = new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir);
+            new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir, Configuration.getInstance());
         } catch (Exception | OutOfMemoryError anException){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             if (anException instanceof OutOfMemoryError) {
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),
                         anException.getMessage(),
-                        new Exception(((OutOfMemoryError) anException).toString()));
+                        new Exception(anException.toString()));
             } else {
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),

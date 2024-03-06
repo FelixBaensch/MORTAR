@@ -23,10 +23,23 @@
  * SOFTWARE.
  */
 
-/*hides empty cells and rows in the MORTAR data tables*/
-.table-row-cell:empty {
-    -fx-background-color: white;
-}
-.table-row-cell:empty .table-cell {
-    -fx-border-width: 0px;
+package de.unijena.cheminf.mortar.configuration;
+
+import java.util.MissingResourceException;
+
+/**
+ * Interface for classes reading configuration properties files, e.g. for paths to resource folders.
+ *
+ * @author Jonas Schaub
+ * @version 1.0.0.0
+ */
+public interface IConfiguration {
+    /**
+     * Returns the string value associated with the key in the configurations properties file.
+     *
+     * @param aKey key defined in the configuration properties file
+     * @return property value associated with the given key
+     * @throws MissingResourceException if no associated value could be found for the given key
+     */
+    public String getProperty(String aKey) throws MissingResourceException;
 }

@@ -25,7 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
@@ -89,7 +89,6 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -200,7 +199,7 @@ public class MainViewController {
     /**
      * Configuration class to read resource file paths from.
      */
-    private final Configuration configuration;
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="private static final variables" defaultstate="collapsed">
@@ -225,21 +224,24 @@ public class MainViewController {
      * @param aStage    Stage
      * @param aMainView MainView
      * @param anAppDir  String path to app dir
+     * @param aConfiguration configuration class reading from properties file
      * @throws IllegalArgumentException given application directory is either no directory or does not exist
      * @throws NullPointerException if one param is null
      * @throws IOException if properties cannot be read
      */
-    public MainViewController(Stage aStage, MainView aMainView, String anAppDir) throws IllegalArgumentException, NullPointerException, IOException {
+    public MainViewController(Stage aStage, MainView aMainView, String anAppDir, IConfiguration aConfiguration)
+            throws IllegalArgumentException, NullPointerException, IOException {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aStage, "aStage (instance of Stage) is null");
         Objects.requireNonNull(aMainView, "aMainView (instance of MainView) is null");
         Objects.requireNonNull(aMainView, "anAppDir (instance of String) is null");
+        Objects.requireNonNull(aConfiguration, "aConfiguration (instance of IConfiguration) is null");
         File tmpAppDirFile = new File(anAppDir);
         if (!tmpAppDirFile.isDirectory() || !tmpAppDirFile.exists()) {
             throw new IllegalArgumentException("The given application directory is either no directory or does not exist");
         }
         //</editor-fold>
-        this.configuration = Configuration.getInstance();
+        this.configuration = aConfiguration;
         this.moleculeDataModelList = FXCollections.observableArrayList(param -> new Observable[]{param.selectionProperty()});
         this.primaryStage = aStage;
         this.mainView = aMainView;
@@ -255,16 +257,17 @@ public class MainViewController {
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
         GuiUtil.guiBindControlSizeToParentPane(this.mainView.getMainCenterPane(), this.mainTabPane);
         this.scene = new Scene(this.mainView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
-        this.scene.getStylesheets().add(this.getClass().getClassLoader().getResource(this.configuration.getProperty("mortar.styleFolder") + MainViewController.STYLE_SHEET_FILE_NAME).toExternalForm());
-        this.scene.getStylesheets().add("");
+        String tmpStyleSheetURL = this.getClass().getClassLoader().getResource(this.configuration.getProperty(
+                "mortar.styleFolder") + MainViewController.STYLE_SHEET_FILE_NAME).toExternalForm();
+        this.scene.getStylesheets().add(tmpStyleSheetURL);
         this.primaryStage.setTitle(Message.get("Title.text"));
         this.primaryStage.setScene(this.scene);
         this.primaryStage.show();
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        File tmpIconFile = new File(this.configuration.getProperty("mortar.imagesFolder"), MainViewController.MORTAR_LOGO_ICON_FILE_NAME);
-        InputStream tmpImageInputStream = this.getClass().getClassLoader().getResourceAsStream(tmpIconFile.getPath());
-        this.primaryStage.getIcons().add(new Image(tmpImageInputStream));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder") + MainViewController.MORTAR_LOGO_ICON_FILE_NAME).toExternalForm();
+        this.primaryStage.getIcons().add(new Image(tmpIconURL));
         //</editor-fold>
         this.isImportRunningProperty = new SimpleBooleanProperty(false);
         this.isExportRunningProperty = new SimpleBooleanProperty(false);
@@ -359,7 +362,7 @@ public class MainViewController {
         this.primaryStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
         this.mainView.getMainMenuBar().getAboutViewMenuItem().setOnAction(actionEvent -> {
             try {
-                new AboutViewController(this.primaryStage);
+                new AboutViewController(this.primaryStage, this.configuration);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
