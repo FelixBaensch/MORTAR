@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -56,7 +57,6 @@ import java.util.List;
  * @version 1.0.1.0
  */
 public class MoleculesDataTableView extends TableView implements IDataTableView {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * TableColumn for selection state of the molecule
@@ -86,14 +86,25 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
      * MenuItem of ContextMenu to copy selected cell to clipboard
      */
     private MenuItem copyMenuItem;
+    /**
+     * Boolean value to suppress going through all table rows and check selection status when the checx for selecting all
+     * rows was used.
+     */
     private boolean selectionAllCheckBoxAction;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public MoleculesDataTableView(){
+    public MoleculesDataTableView(IConfiguration aConfiguration){
         super();
+        this.configuration = aConfiguration;
         this.setEditable(true);
         this.getSelectionModel().setCellSelectionEnabled(true);
         //-selectionColumn
@@ -141,7 +152,10 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.setContextMenu(this.contextMenu);
         //-copyMenuItem
         this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
+        this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
     }
     //

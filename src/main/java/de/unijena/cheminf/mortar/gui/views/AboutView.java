@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
+import de.unijena.cheminf.mortar.controller.AboutViewController;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
@@ -65,43 +67,49 @@ import java.io.InputStream;
  * @version 1.0.0.0
  */
 public class AboutView extends AnchorPane {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * TableView to show ExternalTool properties
      */
-    private TableView<ExternalTool> tableView;
+    private final TableView<ExternalTool> tableView;
     /**
      * Button to open log file directory
      */
-    private Button logFileButton;
+    private final Button logFileButton;
     /**
      * Button to open GitHub repository
      */
-    private Button gitHubButton;
+    private final Button gitHubButton;
     /**
      * Button to close this view
      */
-    private Button closeButton;
+    private final Button closeButton;
     /**
      * Button to open tutorial pdf
      */
-    private Button tutorialButton;
+    private final Button tutorialButton;
     /**
      * ImageView for application logo
      */
-    private ImageView logoImageView;
+    private final ImageView logoImageView;
     /**
      * GridPane to align information and logo
      */
-    private GridPane gridPane;
+    private final GridPane gridPane;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public AboutView(){
+    public AboutView(IConfiguration aConfiguration) {
         super();
+        this.configuration = aConfiguration;
         //borderPane
         BorderPane borderPane = new BorderPane();
         AboutView.setTopAnchor(borderPane, 0.0);
@@ -163,7 +171,7 @@ public class AboutView extends AnchorPane {
         this.gridPane.setVgap(GuiDefinitions.GUI_SPACING_VALUE);
         this.gridPane.setHgap(GuiDefinitions.GUI_SPACING_VALUE);
         this.gridPane.setAlignment(Pos.TOP_LEFT);
-        tmpSplitPane.getItems().add(0, this.gridPane);
+        tmpSplitPane.getItems().addFirst(this.gridPane);
         //text
         //-title
         Text tmpAppTitle = new Text(Message.get("AboutView.appTitle.text"));
@@ -197,9 +205,11 @@ public class AboutView extends AnchorPane {
         tmpTitledPaneAcknowledgement.setExpanded(false);
         this.gridPane.add(tmpTitledPaneAcknowledgement,0,5);
         //-image
-        InputStream tmpImageInputStream = AboutView.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
+        String tmpLogoURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.name")).toExternalForm();
         Double tmpImageSize = 495.3125; // magic number, do not touch
-        Image tmpLogo = new Image(tmpImageInputStream,tmpImageSize,tmpImageSize/1.414, true,true );
+        Image tmpLogo = new Image(tmpLogoURL,tmpImageSize,tmpImageSize/1.414, true,true );
         this.logoImageView = new ImageView(tmpLogo);
         this.gridPane.add(this.logoImageView, 1,0, 1, 6);
         GridPane.setHalignment(this.logoImageView, HPos.CENTER);
@@ -334,7 +344,7 @@ public class AboutView extends AnchorPane {
      *
      * @param anImage Image to set as logo
      */
-    public void setLogoImageView(Image anImage){
+    public void setLogoImageViewImage(Image anImage){
         this.logoImageView.setImage(anImage);
     }
     //</editor-fold>

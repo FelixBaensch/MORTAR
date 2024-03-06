@@ -25,12 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-/**
- * TODO:
- * - add export functionality to overview view
- * - extract enlarged structure view, so that it can also be used in other places
- */
-
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -180,6 +175,10 @@ public class OverviewViewController implements IViewToolController {
     //
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    /**
      * Integer property that holds the number of rows of structure images to be displayed per page.
      */
     private final SimpleIntegerProperty rowsPerPageSetting;
@@ -261,8 +260,11 @@ public class OverviewViewController implements IViewToolController {
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor, initialises all settings with their default values. Does *not* open the view.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public OverviewViewController() {
+    public OverviewViewController(IConfiguration aConfiguration) {
+        this.configuration = aConfiguration;
         this.settings = new ArrayList<>(2);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
@@ -436,14 +438,10 @@ public class OverviewViewController implements IViewToolController {
         this.overviewViewStage.initModality(Modality.WINDOW_MODAL);
         this.overviewViewStage.initOwner(this.mainStage);
         this.overviewViewStage.setTitle(this.overviewViewTitle);
-        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
-                "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
-        );
-        if (tmpImageInputStream != null) {
-            this.overviewViewStage.getIcons().add(new Image(tmpImageInputStream));
-        } else {
-            OverviewViewController.LOGGER.log(Level.WARNING, "MORTAR icon could not be imported.");
-        }
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.overviewViewStage.getIcons().add(new Image(tmpIconURL));
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //
@@ -1001,15 +999,20 @@ public class OverviewViewController implements IViewToolController {
         ContextMenu tmpContextMenu = new ContextMenu();
         //copyImageMenuItem
         MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
-        try {
-            tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-        } catch (NullPointerException anException) {
-            OverviewViewController.LOGGER.log(Level.WARNING, "Copy icon could not be imported.");
-        }
         //copySmilesMenuItem
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
         //copyNameMenuItem
         MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        try {
+            String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
+                    this.configuration.getProperty("mortar.imagesFolder")
+                            + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
+            tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+            tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+            tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        } catch (NullPointerException anException) {
+            OverviewViewController.LOGGER.log(Level.WARNING, "Copy icon could not be imported.");
+        }
         //adding Listeners to MenuItems
         //copyImageMenuItem listener
         tmpCopyImageMenuItem.setOnAction((ActionEvent anActionEvent) -> {
@@ -1230,14 +1233,10 @@ public class OverviewViewController implements IViewToolController {
         tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
         tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
         tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
-        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
-                "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
-        );
-        if (tmpImageInputStream != null) {
-            tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
-        } else {
-            OverviewViewController.LOGGER.log(Level.WARNING, "MORTAR icon could not be imported");
-        }
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
         tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
         //

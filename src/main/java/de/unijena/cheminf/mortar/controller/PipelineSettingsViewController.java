@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.PipelineSettingsView;
 import de.unijena.cheminf.mortar.message.Message;
@@ -61,13 +62,16 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class PipelineSettingsViewController {
-
     //<editor-fold desc="private final class variables" defaultstate="collapsed">
     private final StringProperty pipelineName;
     /**
      * Stage of the MainView
      */
     private final Stage mainStage;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -123,8 +127,9 @@ public class PipelineSettingsViewController {
      * @param aFragmentationService FragmentationService
      * @param isMoleculeDataLoaded boolean whether molecule data is loaded
      * @param isFragmentationRunning boolean whether fragmentation is running
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public PipelineSettingsViewController(Stage aMainStage, FragmentationService aFragmentationService, boolean isMoleculeDataLoaded, boolean isFragmentationRunning){
+    public PipelineSettingsViewController(Stage aMainStage, FragmentationService aFragmentationService, boolean isMoleculeDataLoaded, boolean isFragmentationRunning, IConfiguration aConfiguration){
         this.mainStage = aMainStage;
         this.algorithmCounter = 0;
         this.fragmentationService = aFragmentationService;
@@ -135,6 +140,7 @@ public class PipelineSettingsViewController {
         this.isFragmentationStarted = false;
         this.isMoleculeDataLoaded = isMoleculeDataLoaded;
         this.isFragmentationRunning = isFragmentationRunning;
+        this.configuration = aConfiguration;
         this.showPipelineSettingsView();
     }
     //
@@ -153,8 +159,10 @@ public class PipelineSettingsViewController {
         this.pipelineSettingsViewStage.setTitle(Message.get("PipelineSettingsView.title.text"));
         this.pipelineSettingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.pipelineSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        InputStream tmpImageInputStream = PipelineSettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
-        this.pipelineSettingsViewStage.getIcons().add(new Image(tmpImageInputStream));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.pipelineSettingsViewStage.getIcons().add(new Image(tmpIconURL));
         Platform.runLater(()->{
             this.pipelineSettingsView.addGrid(this.pipelineSettingsViewStage);
             this.addListenerAndBindings();
@@ -238,7 +246,10 @@ public class PipelineSettingsViewController {
         });
         Button tmpFragmenterSettingsButton = new Button();
         tmpFragmenterSettingsButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.settingButton.toolTip")));
-        tmpFragmenterSettingsButton.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/settings_gear_icon_16x16.png")));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.icon.gear.name")).toExternalForm();
+        tmpFragmenterSettingsButton.setGraphic(new ImageView(new Image(tmpIconURL)));
         tmpFragmenterSettingsButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpFragmenterSettingsButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpFragmenterSettingsButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
@@ -249,7 +260,7 @@ public class PipelineSettingsViewController {
             IMoleculeFragmenter[] tmpArray = new IMoleculeFragmenter[1];
             tmpArray[0] = this.fragmenterList.get(tmpFragmenterListIndex);
             FragmentationSettingsViewController tmpFragmentationSettingsViewController
-                    = new FragmentationSettingsViewController(this.pipelineSettingsViewStage, tmpArray, this.fragmenterList.get(tmpFragmenterListIndex).getFragmentationAlgorithmName());
+                    = new FragmentationSettingsViewController(this.pipelineSettingsViewStage, tmpArray, this.fragmenterList.get(tmpFragmenterListIndex).getFragmentationAlgorithmName(), this.configuration);
         });
         Label tmpLabel = new Label(String.valueOf(++this.algorithmCounter));
         //remove removeButton from upper Row

@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
@@ -90,18 +91,25 @@ public class ViewToolsManager {
      * OverviewViewController instance.
      */
     private final OverviewViewController overviewViewController;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
     /**
      * Constructor that initialises the view tool instances and checks whether they are all valid (see {@link #checkViewTools()}).
      * Opens a GUI exception alert if they are not.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public ViewToolsManager() {
+    public ViewToolsManager(IConfiguration aConfiguration) {
+        this.configuration = aConfiguration;
         this.viewToolsArray = new IViewToolController[2];
-        this.histogramViewController = new HistogramViewController();
+        this.histogramViewController = new HistogramViewController(this.configuration);
         this.viewToolsArray[0] = this.histogramViewController;
-        this.overviewViewController = new OverviewViewController();
+        this.overviewViewController = new OverviewViewController(this.configuration);
         this.viewToolsArray[1] = this.overviewViewController;
         try {
             this.checkViewTools();

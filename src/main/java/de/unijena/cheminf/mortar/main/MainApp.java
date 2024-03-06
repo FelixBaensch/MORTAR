@@ -131,7 +131,7 @@ public class MainApp extends Application {
             //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
             String tmpAppDir = FileUtil.getAppDirPath();
             //</editor-fold>
-            MainView tmpMainView = new MainView();
+            MainView tmpMainView = new MainView(Configuration.getInstance());
             new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir, Configuration.getInstance());
         } catch (Exception | OutOfMemoryError anException){
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);

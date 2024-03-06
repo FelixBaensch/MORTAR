@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
@@ -62,6 +63,10 @@ public class SettingsViewController {
      */
     private final Stage mainStage;
     /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    /**
      * Stage for the SettingsView
      */
     private Stage settingsViewStage;
@@ -88,11 +93,13 @@ public class SettingsViewController {
      *
      * @param aStage Parent stage
      * @param aSettingsContainer SettingsContainer
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public SettingsViewController(Stage aStage, SettingsContainer aSettingsContainer){
+    public SettingsViewController(Stage aStage, SettingsContainer aSettingsContainer, IConfiguration aConfiguration) {
         this.mainStage = aStage;
         this.settingsContainer = aSettingsContainer;
         this.recentSettingsContainer = aSettingsContainer;
+        this.configuration = aConfiguration;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(this.settingsContainer.settingsProperties().size()));
         this.showSettingsView();
     }
@@ -112,8 +119,10 @@ public class SettingsViewController {
         this.settingsViewStage.setTitle(Message.get("SettingsView.title.default.text"));
         this.settingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.settingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        InputStream tmpImageInputStream = SettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
-        this.settingsViewStage.getIcons().add(new Image(tmpImageInputStream));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.settingsViewStage.getIcons().add(new Image(tmpIconURL));
         Platform.runLater(()->{
             this.addListeners();
             this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title.text"),

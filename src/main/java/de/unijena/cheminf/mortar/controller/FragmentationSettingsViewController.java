@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
@@ -38,7 +39,6 @@ import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -51,7 +51,6 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class FragmentationSettingsViewController {
-
     //<editor-fold desc="private and private final class variables">
     /**
      * Main stage object of the application
@@ -78,23 +77,28 @@ public class FragmentationSettingsViewController {
      */
     private String selectedFragmenterName;
     /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    /**
      * Logger
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentationSettingsViewController.class.getName());
     //</editor-fold>
-
     /**
      * Constructor
      *
      * @param aStage Stage
      * @param anArrayOfFragmenters IMoleculeFragmenter[]
      * @param aSelectedFragmenterAlgorithmName String
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName){
+    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName, IConfiguration aConfiguration){
         this.mainStage = aStage;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(anArrayOfFragmenters.length));
         this.fragmenters = anArrayOfFragmenters;
         this.selectedFragmenterName = aSelectedFragmenterAlgorithmName;
+        this.configuration = aConfiguration;
         this.openFragmentationSettingsView();
     }
     //
@@ -113,8 +117,10 @@ public class FragmentationSettingsViewController {
         this.fragmentationSettingsViewStage.setTitle(Message.get("FragmentationSettingsView.title.text"));
         this.fragmentationSettingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.fragmentationSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        InputStream tmpImageInputStream = FragmentationSettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
-        this.fragmentationSettingsViewStage.getIcons().add(new Image(tmpImageInputStream));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.fragmentationSettingsViewStage.getIcons().add(new Image(tmpIconURL));
         //
         this.addListener();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {

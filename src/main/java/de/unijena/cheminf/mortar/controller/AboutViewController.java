@@ -100,15 +100,6 @@ public class AboutViewController {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(AboutViewController.class.getName());
-    //
-    /**
-     * Name of logo icon.
-     */
-    private static final String MORTAR_LOGO_ICON_FILE_NAME = "Mortar_Logo_Icon1.png";
-    /**
-     * name of xml file which contains information about external tools.
-     */
-    private static final String TOOLS_XML_FILE_NAME = "tools_description.xml";
     //</editor-fold>
     //
     /**
@@ -131,7 +122,7 @@ public class AboutViewController {
      */
     private void showAboutView(){
         if(this.aboutView == null){
-            this.aboutView = new AboutView();
+            this.aboutView = new AboutView(this.configuration);
         }
         this.aboutViewStage = new Stage();
         Scene tmpScene = new Scene(this.aboutView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
@@ -142,7 +133,7 @@ public class AboutViewController {
         this.aboutViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.aboutViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         String tmpIconURL = this.getClass().getClassLoader().getResource(
-                this.configuration.getProperty("mortar.imagesFolder") + AboutViewController.MORTAR_LOGO_ICON_FILE_NAME).toExternalForm();
+                this.configuration.getProperty("mortar.imagesFolder") + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
         this.aboutViewStage.getIcons().add(new Image(tmpIconURL));
         Platform.runLater(()->{
             this.addListeners();
@@ -237,7 +228,7 @@ public class AboutViewController {
     }
     //
     /**
-     * Reads xml file (tools_description.xml in resources) which contains information about the used external tools
+     * Reads xml file (tools_description.xml in resources) which contains information about the used external tools.
      */
     private void getExternalToolInfosFromXml(){
         DocumentBuilderFactory tmpDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -247,9 +238,10 @@ public class AboutViewController {
             tmpDocumentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             DocumentBuilder tmpDocBuilder = tmpDocumentBuilderFactory.newDocumentBuilder();
             Document tmpDoc = tmpDocBuilder.parse(this.getClass().getClassLoader().getResource(
-                    this.configuration.getProperty("mortar.descriptionsFolder") + AboutViewController.TOOLS_XML_FILE_NAME).toExternalForm());
+                    this.configuration.getProperty("mortar.descriptionsFolder")
+                            + this.configuration.getProperty("mortar.tools.description.name")).toExternalForm());
             if (tmpDoc == null) {
-                throw new FileNotFoundException("File not found " + AboutViewController.TOOLS_XML_FILE_NAME);
+                throw new FileNotFoundException("Tools description XML file not found.");
             }
             // optional, but recommended
             // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work

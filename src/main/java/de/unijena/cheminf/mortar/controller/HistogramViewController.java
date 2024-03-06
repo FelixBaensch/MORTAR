@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.HistogramView;
@@ -277,6 +278,10 @@ public class HistogramViewController implements IViewToolController {
     //
     //<editor-fold desc="private final class variables" defaultstate="collapsed">
     /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    /**
      * Setting for number of displayed fragments.
      */
     private final SimpleIntegerProperty displayedFragmentsNumberSetting;
@@ -368,8 +373,11 @@ public class HistogramViewController implements IViewToolController {
     //<editor-fold desc="Constructors" defaultstate="collapsed">
     /**
      * Constructor, initialises all settings with their default values. Does *not* open the view.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public HistogramViewController()  {
+    public HistogramViewController(IConfiguration aConfiguration) {
+        this.configuration = aConfiguration;
         this.settings = new ArrayList<>(8);
         this.displayedFragmentsNumberSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
@@ -554,12 +562,10 @@ public class HistogramViewController implements IViewToolController {
         this.histogramStage.setTitle(Message.get("HistogramView.title"));
         this.histogramStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.histogramStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        InputStream tmpImageInputStream = HistogramViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
-        if (!Objects.isNull(tmpImageInputStream)) {
-            this.histogramStage.getIcons().add(new Image(tmpImageInputStream));
-        } else {
-            HistogramViewController.LOGGER.log(Level.WARNING, "Mortar_Logo_Icon1.png could not be imported.");
-        }
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.histogramStage.getIcons().add(new Image(tmpIconURL));
         this.histogramView = new HistogramView(this.fragmentListCopy.size());
         //</editor-fold>
         //
@@ -933,8 +939,11 @@ public class HistogramViewController implements IViewToolController {
         ContextMenu tmpContextMenu = new ContextMenu();
         tmpContextMenu.getItems().addAll(tmpCopySmilesMenuItem, tmpCopyStructureMenuItem);
         try {
-            tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-            tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+            String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
+                    this.configuration.getProperty("mortar.imagesFolder")
+                            + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
+            tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+            tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         } catch(NullPointerException | IllegalArgumentException anException) {
             HistogramViewController.LOGGER.log(Level.WARNING, "Copy icon for context menus could not be imported.");
         }

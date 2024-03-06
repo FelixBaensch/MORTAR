@@ -207,15 +207,6 @@ public class MainViewController {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(MainViewController.class.getName());
-    /**
-     * Path to css style sheet
-     */
-    private static final String STYLE_SHEET_FILE_NAME = "StyleSheet.css";
-    //
-    /**
-     * Name of logo icon.
-     */
-    private static final String MORTAR_LOGO_ICON_FILE_NAME = "Mortar_Logo_Icon1.png";
     //</editor-fold>
     //
     /**
@@ -250,15 +241,16 @@ public class MainViewController {
         this.fragmentationService = new FragmentationService(this.settingsContainer);
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
-        this.viewToolsManager = new ViewToolsManager();
+        this.viewToolsManager = new ViewToolsManager(this.configuration);
         this.viewToolsManager.reloadViewToolsSettings();
         //<editor-fold desc="show MainView inside primaryStage" defaultstate="collapsed">
         this.mainTabPane = new TabPane();
         this.mainView.getMainCenterPane().getChildren().add(this.mainTabPane);
         GuiUtil.guiBindControlSizeToParentPane(this.mainView.getMainCenterPane(), this.mainTabPane);
         this.scene = new Scene(this.mainView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
-        String tmpStyleSheetURL = this.getClass().getClassLoader().getResource(this.configuration.getProperty(
-                "mortar.styleFolder") + MainViewController.STYLE_SHEET_FILE_NAME).toExternalForm();
+        String tmpStyleSheetURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.styleFolder")
+                        + this.configuration.getProperty("mortar.stylesheet.name")).toExternalForm();
         this.scene.getStylesheets().add(tmpStyleSheetURL);
         this.primaryStage.setTitle(Message.get("Title.text"));
         this.primaryStage.setScene(this.scene);
@@ -266,7 +258,7 @@ public class MainViewController {
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         String tmpIconURL = this.getClass().getClassLoader().getResource(
-                this.configuration.getProperty("mortar.imagesFolder") + MainViewController.MORTAR_LOGO_ICON_FILE_NAME).toExternalForm();
+                this.configuration.getProperty("mortar.imagesFolder") + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
         this.primaryStage.getIcons().add(new Image(tmpIconURL));
         //</editor-fold>
         this.isImportRunningProperty = new SimpleBooleanProperty(false);
@@ -732,7 +724,10 @@ public class MainViewController {
      * Opens settings view for fragmentation settings.
      */
     private void openFragmentationSettingsView() {
-        new FragmentationSettingsViewController(this.primaryStage, this.fragmentationService.getFragmenters(), this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+        new FragmentationSettingsViewController(this.primaryStage,
+                this.fragmentationService.getFragmenters(),
+                this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName(),
+                this.configuration);
     }
     //
     /**
@@ -740,7 +735,7 @@ public class MainViewController {
      */
     private void openPipelineSettingsView() {
         PipelineSettingsViewController tmpPipelineSettingsViewController =
-                new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, !this.moleculeDataModelList.isEmpty(), this.isFragmentationRunning);
+                new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, !this.moleculeDataModelList.isEmpty(), this.isFragmentationRunning, this.configuration);
         if (tmpPipelineSettingsViewController.isFragmentationStarted()) {
             this.startFragmentation(tmpPipelineSettingsViewController.isFragmentationStarted());
         }
@@ -783,7 +778,7 @@ public class MainViewController {
      * Opens settings view for global settings.
      */
     private void openGlobalSettingsView() {
-        SettingsViewController tmpSettingsViewController = new SettingsViewController(this.primaryStage, this.settingsContainer);
+        SettingsViewController tmpSettingsViewController = new SettingsViewController(this.primaryStage, this.settingsContainer, this.configuration);
         Platform.runLater(() -> {
             if (tmpSettingsViewController.hasRowsPerPageChanged()) {
                 for (Tab tmpTab : this.mainTabPane.getTabs()) {
@@ -943,7 +938,7 @@ public class MainViewController {
      * Opens molecules tab.
      */
     private void openMoleculesTab() {
-        this.moleculesDataTableView = new MoleculesDataTableView();
+        this.moleculesDataTableView = new MoleculesDataTableView(this.configuration);
         this.moleculesDataTableView.setItemsList(this.moleculeDataModelList);
         GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.MOLECULES.name(), this.moleculesDataTableView);
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
@@ -1168,7 +1163,7 @@ public class MainViewController {
      * @return Tab
      */
     private Tab createFragmentsTab(String aFragmentationName){
-        FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView();
+        FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView(this.configuration);
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         ObservableList<MoleculeDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
@@ -1251,8 +1246,8 @@ public class MainViewController {
      * @return Tab
      */
     private Tab createItemsTab(String aFragmentationName){
-       int tmpAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.moleculeDataModelList, aFragmentationName);
-        ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName);
+        int tmpAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.moleculeDataModelList, aFragmentationName);
+        ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(tmpAmount, aFragmentationName, this.configuration);
         tmpItemizationDataTableView.setItemsList(
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).toList());
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);

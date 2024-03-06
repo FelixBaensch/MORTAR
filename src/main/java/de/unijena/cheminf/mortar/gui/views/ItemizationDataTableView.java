@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
@@ -55,7 +56,6 @@ import java.util.List;
  *
  */
 public class ItemizationDataTableView extends TableView implements IDataTableView{
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * TableColumn for name of the molecule
@@ -90,16 +90,22 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      * MenuItem of ContextMenu to open an overview view with the item and its fragments
      */
     private MenuItem overviewViewMenuItem;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      *
      * @param anItemAmount max amount of fragments to be displayed in fragment
      * @param aFragmentationName String of fragmentation name used as title
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public ItemizationDataTableView(int anItemAmount, String aFragmentationName){
+    public ItemizationDataTableView(int anItemAmount, String aFragmentationName, IConfiguration aConfiguration) {
         super();
+        this.configuration = aConfiguration;
         this.setEditable(false);
         this.fragmentationName = aFragmentationName;
         this.getSelectionModel().setCellSelectionEnabled(true);
@@ -139,7 +145,10 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.setContextMenu(this.contextMenu);
         //-copyMenuItem
         this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
+        this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
         //-separatorMenuItem
         this.contextMenu.getItems().add(new SeparatorMenuItem());
