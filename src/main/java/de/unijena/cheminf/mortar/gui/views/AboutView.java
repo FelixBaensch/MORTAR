@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
-import de.unijena.cheminf.mortar.controller.AboutViewController;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.message.Message;
@@ -58,7 +57,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
-import java.io.InputStream;
 
 /**
  * "About" window view.

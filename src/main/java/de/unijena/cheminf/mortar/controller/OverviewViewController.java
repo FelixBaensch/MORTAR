@@ -74,7 +74,6 @@ import javafx.stage.WindowEvent;
 
 import org.openscience.cdk.exception.CDKException;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
