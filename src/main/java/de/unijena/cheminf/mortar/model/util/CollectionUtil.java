@@ -25,18 +25,18 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import javafx.scene.control.TableColumn;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Util class for collections.
  *
  * @author Felix Baensch, Jonas Schaub
- * @version 1.0.1.0
+ * @version 1.0.2.0
  */
 public final class CollectionUtil {
     //<editor-fold desc="Protected constructor">
@@ -49,7 +49,6 @@ public final class CollectionUtil {
     //</editor-fold>
     //
     //<editor-fold desc="public static methods" defaultstate="collapsed">
-    //TODO: check parameters, change params to enum values (and bools?), throw exceptions!
     /**
      * Sorts given list by property and sort type.
      *
@@ -61,8 +60,12 @@ public final class CollectionUtil {
         aList.sort((m1, m2) -> {
             FragmentDataModel f1;
             FragmentDataModel f2;
-            switch (aProperty) {
-                case "absoluteFrequency":
+            DataModelPropertiesForTableView property = DataModelPropertiesForTableView.fromString(aProperty);
+            if(property == null){
+                throw new IllegalArgumentException("Property is not part of the data model properties that are displayed in the TableViews.");
+            }
+            switch (property) {
+                case DataModelPropertiesForTableView.ABSOLUTE_FREQUENCY:
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
                     return switch (aSortType) {
@@ -71,7 +74,7 @@ public final class CollectionUtil {
                         case TableColumn.SortType.DESCENDING ->
                                 (Integer.compare(f2.getAbsoluteFrequency(), f1.getAbsoluteFrequency()));
                     };
-                case "absolutePercentage":
+                case ABSOLUTE_PERCENTAGE:
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
                     return switch (aSortType) {
@@ -80,7 +83,7 @@ public final class CollectionUtil {
                         case TableColumn.SortType.DESCENDING ->
                                 (Double.compare(f2.getAbsolutePercentage(), f1.getAbsolutePercentage()));
                     };
-                case "moleculeFrequency":
+                case MOLECULE_FREQUENCY:
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
                     return switch (aSortType) {
@@ -89,7 +92,7 @@ public final class CollectionUtil {
                         case TableColumn.SortType.DESCENDING ->
                                 (Integer.compare(f2.getMoleculeFrequency(), f1.getMoleculeFrequency()));
                     };
-                case "moleculePercentage":
+                case MOLECULE_PERCENTAGE:
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
                     return switch (aSortType) {
@@ -98,17 +101,17 @@ public final class CollectionUtil {
                         case TableColumn.SortType.DESCENDING ->
                                 (Double.compare(f2.getMoleculePercentage(), f1.getMoleculePercentage()));
                     };
-                case "name":
+                case NAME:
                     return switch (aSortType) {
                         case TableColumn.SortType.ASCENDING -> m1.getName().compareTo(m2.getName());
                         case TableColumn.SortType.DESCENDING -> m2.getName().compareTo(m1.getName());
                     };
-                case "uniqueSmiles":
+                case UNIQUE_SMILES:
                     return switch (aSortType) {
                         case TableColumn.SortType.ASCENDING -> m1.getUniqueSmiles().compareTo(m2.getUniqueSmiles());
                         case TableColumn.SortType.DESCENDING -> m2.getUniqueSmiles().compareTo(m1.getUniqueSmiles());
                     };
-                case "parentMoleculeName":
+                case PARENT_MOLECULE_NAME:
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
                     return switch (aSortType) {
