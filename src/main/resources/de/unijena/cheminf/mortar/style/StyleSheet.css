@@ -30,3 +30,6 @@
 .table-row-cell:empty .table-cell {
     -fx-border-width: 0px;
 }
+.root{
+    -fx-font-size: 9pt;
+}
