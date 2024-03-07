@@ -59,7 +59,8 @@ public final class CollectionUtil {
      *                  {@link SimpleEnumConstantNameProperty} but not handled in this method the list will not be sorted.
      * @param ascending {@code true} to sort the list in ascending order, {@code false} for descending order.
      * @throws IllegalArgumentException If the specified property is not part of the Molecule-/FragmentDataModel
-     * properties displayed in the TableViews.
+     * properties displayed in the TableViews. Or if the specified property does not correspond to the specified
+     * Molecule-/FragmentDataModel object.
      */
     public static void sortGivenFragmentListByPropertyAndSortType(List<? extends MoleculeDataModel> aList, String aProperty, boolean ascending) {
         aList.sort((m1, m2) -> {
@@ -69,52 +70,56 @@ public final class CollectionUtil {
             if(property == null){
                 throw new IllegalArgumentException("Property is not part of the data model properties that are displayed in the TableViews: " + aProperty);
             }
-            switch (property) {
-                case DataModelPropertiesForTableView.ABSOLUTE_FREQUENCY:
-                    f1 = (FragmentDataModel) m1;
-                    f2 = (FragmentDataModel) m2;
-                    if (ascending)
-                        return Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency());
-                    else
-                        return Integer.compare(f2.getAbsoluteFrequency(), f1.getAbsoluteFrequency());
-                case ABSOLUTE_PERCENTAGE:
-                    f1 = (FragmentDataModel) m1;
-                    f2 = (FragmentDataModel) m2;
-                    if (ascending)
-                        return Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage());
-                    else
-                        return Double.compare(f2.getAbsolutePercentage(), f1.getAbsolutePercentage());
-                case MOLECULE_FREQUENCY:
-                    f1 = (FragmentDataModel) m1;
-                    f2 = (FragmentDataModel) m2;
-                    if (ascending)
-                        return Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency());
-                    else
-                        return Integer.compare(f2.getMoleculeFrequency(), f1.getMoleculeFrequency());
-                case MOLECULE_PERCENTAGE:
-                    f1 = (FragmentDataModel) m1;
-                    f2 = (FragmentDataModel) m2;
-                    if (ascending)
-                        return Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage());
-                    else
-                        return Double.compare(f2.getMoleculePercentage(), f1.getMoleculePercentage());
-                case NAME:
-                    if (ascending)
-                        return m1.getName().compareTo(m2.getName());
-                    else
-                        return m2.getName().compareTo(m1.getName());
-                case UNIQUE_SMILES:
-                    if (ascending)
-                        return m1.getUniqueSmiles().compareTo(m2.getUniqueSmiles());
-                    else
-                        return m2.getUniqueSmiles().compareTo(m1.getUniqueSmiles());
-                case PARENT_MOLECULE_NAME:
-                    f1 = (FragmentDataModel) m1;
-                    f2 = (FragmentDataModel) m2;
-                    if (ascending)
-                        return f1.getParentMoleculeName().compareTo(f2.getParentMoleculeName());
-                    else
-                        return f2.getParentMoleculeName().compareTo(f1.getParentMoleculeName());
+            try {
+                switch (property) {
+                    case DataModelPropertiesForTableView.ABSOLUTE_FREQUENCY:
+                        f1 = (FragmentDataModel) m1;
+                        f2 = (FragmentDataModel) m2;
+                        if (ascending)
+                            return Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency());
+                        else
+                            return Integer.compare(f2.getAbsoluteFrequency(), f1.getAbsoluteFrequency());
+                    case ABSOLUTE_PERCENTAGE:
+                        f1 = (FragmentDataModel) m1;
+                        f2 = (FragmentDataModel) m2;
+                        if (ascending)
+                            return Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage());
+                        else
+                            return Double.compare(f2.getAbsolutePercentage(), f1.getAbsolutePercentage());
+                    case MOLECULE_FREQUENCY:
+                        f1 = (FragmentDataModel) m1;
+                        f2 = (FragmentDataModel) m2;
+                        if (ascending)
+                            return Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency());
+                        else
+                            return Integer.compare(f2.getMoleculeFrequency(), f1.getMoleculeFrequency());
+                    case MOLECULE_PERCENTAGE:
+                        f1 = (FragmentDataModel) m1;
+                        f2 = (FragmentDataModel) m2;
+                        if (ascending)
+                            return Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage());
+                        else
+                            return Double.compare(f2.getMoleculePercentage(), f1.getMoleculePercentage());
+                    case NAME:
+                        if (ascending)
+                            return m1.getName().compareTo(m2.getName());
+                        else
+                            return m2.getName().compareTo(m1.getName());
+                    case UNIQUE_SMILES:
+                        if (ascending)
+                            return m1.getUniqueSmiles().compareTo(m2.getUniqueSmiles());
+                        else
+                            return m2.getUniqueSmiles().compareTo(m1.getUniqueSmiles());
+                    case PARENT_MOLECULE_NAME:
+                        f1 = (FragmentDataModel) m1;
+                        f2 = (FragmentDataModel) m2;
+                        if (ascending)
+                            return f1.getParentMoleculeName().compareTo(f2.getParentMoleculeName());
+                        else
+                            return f2.getParentMoleculeName().compareTo(f1.getParentMoleculeName());
+                }
+            } catch (ClassCastException anException) {
+                throw new IllegalArgumentException("The specified property does not match the specified data model object.");
             }
             return 0;
         });
