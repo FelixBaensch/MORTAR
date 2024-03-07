@@ -54,7 +54,9 @@ public final class CollectionUtil {
      * otherwise in descending order.
      *
      * @param aList List of Molecule-/FragmentDataModel objects to be sorted.
-     * @param aProperty String property of Molecule-/FragmentDataModel by which to sort the list.
+     * @param aProperty String property of Molecule-/FragmentDataModel by which to sort the list. Property must be part
+     *                  of {@link SimpleEnumConstantNameProperty}. If the property is part of
+     *                  {@link SimpleEnumConstantNameProperty} but not handled in this method the list will not be sorted.
      * @param ascending {@code true} to sort the list in ascending order, {@code false} for descending order.
      * @throws IllegalArgumentException If the specified property is not part of the Molecule-/FragmentDataModel
      * properties displayed in the TableViews.
@@ -75,7 +77,6 @@ public final class CollectionUtil {
                         return Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency());
                     else
                         return Integer.compare(f2.getAbsoluteFrequency(), f1.getAbsoluteFrequency());
-
                 case ABSOLUTE_PERCENTAGE:
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
@@ -83,7 +84,6 @@ public final class CollectionUtil {
                         return Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage());
                     else
                         return Double.compare(f2.getAbsolutePercentage(), f1.getAbsolutePercentage());
-
                 case MOLECULE_FREQUENCY:
                     f1 = (FragmentDataModel) m1;
                     f2 = (FragmentDataModel) m2;
