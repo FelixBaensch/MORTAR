@@ -29,8 +29,6 @@ import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 
-import javafx.scene.control.TableColumn;
-
 import java.util.List;
 
 /**
