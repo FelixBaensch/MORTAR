@@ -49,11 +49,15 @@ public final class CollectionUtil {
     //
     //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
-     * Sorts given list by property and sort type.
+     * Sorts a given list of Molecule-/FragmentDataModel objects according to the specified property and
+     * the sort type specified by a Boolean. If true, the list is sorted in ascending order,
+     * otherwise in descending order.
      *
-     * @param aList List
-     * @param aProperty String
-     * @param ascending boolean whether sort type is ascending or descending
+     * @param aList List of Molecule-/FragmentDataModel objects to be sorted.
+     * @param aProperty String property of Molecule-/FragmentDataModel by which to sort the list.
+     * @param ascending {@code true} to sort the list in ascending order, {@code false} for descending order.
+     * @throws IllegalArgumentException If the specified property is not part of the Molecule-/FragmentDataModel
+     * properties displayed in the TableViews.
      */
     public static void sortGivenFragmentListByPropertyAndSortType(List<? extends MoleculeDataModel> aList, String aProperty, boolean ascending) {
         aList.sort((m1, m2) -> {
