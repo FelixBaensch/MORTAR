@@ -245,18 +245,10 @@ public class OverviewView extends AnchorPane {
                 aRowsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
         this.rowsPerPageTextField.setTooltip(tmpRowsPerPageTooltip);
         //
-        this.applyButton = new Button(Message.get("OverviewView.applyButton.text"));
-        this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.applyButton.text"));
         this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
         //
-        this.defaultButton = new Button(Message.get("OverviewView.defaultButton.text"));
-        this.defaultButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.defaultButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.defaultButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.defaultButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.defaultButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.defaultButton.text"));
         this.defaultButton.setTooltip(new Tooltip(Message.get("OverviewView.defaultButton.tooltip")));
         //
         this.bottomLeftHBox.getChildren().addAll(
@@ -278,11 +270,7 @@ public class OverviewView extends AnchorPane {
         this.bottomRightHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         this.bottomRightHBox.setAlignment(Pos.CENTER_RIGHT);
         //
-        this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
-        this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.closeButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.closeButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.closeButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setTooltip(new Tooltip(Message.get("OverviewView.closeButton.tooltip")));
         //
         this.bottomRightHBox.getChildren().add(this.closeButton);

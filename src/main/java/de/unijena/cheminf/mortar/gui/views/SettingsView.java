@@ -104,7 +104,7 @@ public class SettingsView extends AnchorPane {
         this.hBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
         this.borderPane.setBottom(hBoxButtonsHBox);
         //-left side
-        this.defaultButton = new Button(Message.get("SettingsView.defaultButton.text"));
+        this.defaultButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.defaultButton.text"));
         this.defaultButton.setTooltip(new Tooltip(Message.get("SettingsView.defaultButton.toolTip")));
         this.hBoxLeftSideButtons = new HBox();
         this.hBoxLeftSideButtons.getChildren().add(this.defaultButton);
@@ -115,9 +115,9 @@ public class SettingsView extends AnchorPane {
         this.hBoxButtonsHBox.getChildren().add(this.hBoxLeftSideButtons);
         //-right side
         this.hBoxRightSideButtons = new HBox();
-        this.cancelButton = new Button(Message.get("SettingsView.cancelButton.text"));
+        this.cancelButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.cancelButton.text"));
         this.cancelButton.setTooltip(new Tooltip(Message.get("SettingsView.cancelButton.toolTip")));
-        this.applyButton = new Button(Message.get("SettingsView.applyButton.text"));
+        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.applyButton.text"));
         this.applyButton.setTooltip(new Tooltip(Message.get("SettingsView.applyButton.toolTip")));
         this.hBoxRightSideButtons.getChildren().addAll(this.applyButton, this.cancelButton);
         this.hBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);

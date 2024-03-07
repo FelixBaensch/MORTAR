@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.controller.HistogramViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 
 import javafx.geometry.Insets;
@@ -181,10 +182,8 @@ public class HistogramView extends AnchorPane {
         this.displayedFragmentsNumberTextField = new TextField();
         this.displayedFragmentsNumberTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.displayedFragmentsNumberTextField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
-        this.applyButton = new Button(Message.get("HistogramView.refreshButton.text"));
+        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.refreshButton.text"));
         this.applyButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
-        this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.maximumSMILESLengthTextField = new TextField();
         this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.maximumSMILESLengthTextField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
@@ -229,10 +228,8 @@ public class HistogramView extends AnchorPane {
         this.structureDisplayImageView.setEffect(new DropShadow(10,2,3, Color.BLACK));
         this.structureDisplayImageView.setStyle("fx-padding: 50px; fx-margin: 50px");
         // right side controls
-        this.closeButton = new Button(Message.get("HistogramView.cancelButton.text"));
+        this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.cancelButton.text"));
         this.closeButton.setTooltip(new Tooltip(Message.get("HistogramView.cancelButton.toolTip")));
-        this.closeButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.displayBarLabelsCheckBox = new CheckBox(Message.get("HistogramView.checkBox.text"));
         this.displayBarLabelsCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBox.toolTip")));
         this.displayGridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));

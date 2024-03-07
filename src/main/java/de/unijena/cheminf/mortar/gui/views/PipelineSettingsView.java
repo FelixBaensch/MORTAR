@@ -26,6 +26,7 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 
 import javafx.geometry.HPos;
@@ -103,7 +104,7 @@ public class PipelineSettingsView extends AnchorPane {
         tmpHBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
         this.borderPane.setBottom(tmpHBoxButtonsHBox);
         //-left side
-        this.defaultButton = new Button(Message.get("PipelineSettingsView.defaultButton.text"));
+        this.defaultButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.defaultButton.text"));
         this.defaultButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.defaultButton.tooltip")));
         HBox tmpHBoxLeftSideButtons = new HBox();
         tmpHBoxLeftSideButtons.getChildren().add(this.defaultButton);
@@ -114,11 +115,11 @@ public class PipelineSettingsView extends AnchorPane {
         tmpHBoxButtonsHBox.getChildren().add(tmpHBoxLeftSideButtons); //Do not delete
         //-right side
         HBox tmpHBoxRightSideButtons = new HBox();
-        this.cancelButton = new Button(Message.get("PipelineSettingsView.cancelButton.text"));
+        this.cancelButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.cancelButton.text"));
         this.cancelButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.cancelButton.toolTip")));
-        this.fragmentButton = new Button(Message.get("PipelineSettingsView.fragmentButton.text"));
+        this.fragmentButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.fragmentButton.text"));
         this.fragmentButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.fragmentButton.toolTip")));
-        this.applyButton = new Button(Message.get("PipelineSettingsView.applyButton.text"));
+        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.applyButton.text"));
         this.applyButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.applyButton.toolTip")));
         tmpHBoxRightSideButtons.getChildren().addAll(this.fragmentButton, this.applyButton, this.cancelButton);
         tmpHBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);

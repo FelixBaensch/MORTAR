@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 
@@ -121,11 +122,11 @@ public class AboutView extends AnchorPane {
         hBoxButtonsHBox.prefWidthProperty().bind(this.widthProperty());
         hBoxButtonsHBox.maxWidthProperty().bind(this.widthProperty());
         //-left side
-        this.logFileButton = new Button(Message.get("AboutView.logFileButton.text"));
+        this.logFileButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.logFileButton.text"));
         this.logFileButton.setTooltip(new Tooltip(Message.get("AboutView.logFileButton.tooltip")));
-        this.gitHubButton = new Button(Message.get("AboutView.gitHubButton.text"));
+        this.gitHubButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.gitHubButton.text"));
         this.gitHubButton.setTooltip(new Tooltip(Message.get("AboutView.gitHubButton.tooltip")));
-        this.tutorialButton = new Button(Message.get("AboutView.tutorialButton.text"));
+        this.tutorialButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.tutorialButton.text"));
         this.tutorialButton.setTooltip(new Tooltip(Message.get("AboutView.tutorialButton.tooltip")));
         HBox hBoxLeftSideButtons = new HBox();
         hBoxLeftSideButtons.getChildren().addAll(this.logFileButton, this.gitHubButton, this.tutorialButton);
@@ -135,7 +136,7 @@ public class AboutView extends AnchorPane {
         HBox.setHgrow(hBoxLeftSideButtons, Priority.ALWAYS);
         hBoxButtonsHBox.getChildren().add(hBoxLeftSideButtons);
         //-right side
-        this.closeButton = new Button(Message.get("AboutView.closeButton.text"));
+        this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.closeButton.text"));
         HBox hBoxRightSideButtons = new HBox();
         hBoxRightSideButtons.getChildren().addAll(this.closeButton);
         hBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
