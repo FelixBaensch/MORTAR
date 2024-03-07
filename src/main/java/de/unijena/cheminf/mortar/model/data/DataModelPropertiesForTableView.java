@@ -59,7 +59,15 @@ public enum DataModelPropertiesForTableView {
     /**
      * Enum for moleculePercentage property
      */
-    MOLECULE_PERCENTAGE ("moleculePercentage");
+    MOLECULE_PERCENTAGE ("moleculePercentage"),
+    /**
+     * Enum for structure property
+     */
+    STRUCTURE("structure"),
+    /**
+     * Enum for parent molecule structure property
+     */
+    PARENT_MOLECULE_STRUCTURE("parentMoleculeStructure");
     //
     /**
      * String representation
