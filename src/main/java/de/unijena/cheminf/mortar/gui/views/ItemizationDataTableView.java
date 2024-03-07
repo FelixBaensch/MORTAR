@@ -99,11 +99,10 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     /**
      * Constructor.
      *
-     * @param anItemAmount max amount of fragments to be displayed in fragment
      * @param aFragmentationName String of fragmentation name used as title
      * @param aConfiguration configuration instance to read resource file paths from
      */
-    public ItemizationDataTableView(int anItemAmount, String aFragmentationName, IConfiguration aConfiguration) {
+    public ItemizationDataTableView(String aFragmentationName, IConfiguration aConfiguration) {
         super();
         this.configuration = aConfiguration;
         this.setEditable(false);
