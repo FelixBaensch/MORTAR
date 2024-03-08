@@ -55,8 +55,8 @@ public final class CollectionUtil {
      *
      * @param aList List of Molecule-/FragmentDataModel objects to be sorted.
      * @param aProperty String property of Molecule-/FragmentDataModel by which to sort the list. Property must be part
-     *                  of {@link SimpleEnumConstantNameProperty}. If the property is part of
-     *                  {@link SimpleEnumConstantNameProperty} but not handled in this method the list will not be sorted.
+     *                  of {@link DataModelPropertiesForTableView}. If the property is part of
+     *                  {@link DataModelPropertiesForTableView} but not handled in this method the list will not be sorted.
      * @param ascending {@code true} to sort the list in ascending order, {@code false} for descending order.
      * @throws IllegalArgumentException If the specified property is not part of the Molecule-/FragmentDataModel
      * properties displayed in the TableViews. Or if the specified property does not correspond to the specified
