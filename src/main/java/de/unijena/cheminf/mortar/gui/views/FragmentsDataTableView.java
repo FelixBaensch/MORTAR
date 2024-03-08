@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -129,7 +130,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
         this.structureColumn.setSortable(false);
-        this.structureColumn.setCellValueFactory(new PropertyValueFactory("structure"));
+        this.structureColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.STRUCTURE.getText()));
         this.structureColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.structureColumn);
         //-smilesColumn
@@ -141,7 +142,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.smilesColumn.setResizable(true);
         this.smilesColumn.setEditable(false);
         this.smilesColumn.setSortable(true);
-        this.smilesColumn.setCellValueFactory(new PropertyValueFactory("uniqueSmiles"));
+        this.smilesColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.UNIQUE_SMILES.getText()));
         this.smilesColumn.setCellFactory(tableColumn ->{
             TableCell<FragmentDataModel, String> tmpCell = new TableCell<>();
             Text tmpText = new Text();
@@ -166,7 +167,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.parentMolColumn.setResizable(true);
         this.parentMolColumn.setEditable(false);
         this.parentMolColumn.setSortable(false);
-        this.parentMolColumn.setCellValueFactory(new PropertyValueFactory("parentMoleculeStructure"));
+        this.parentMolColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.PARENT_MOLECULE_STRUCTURE.getText()));
         this.parentMolColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.parentMolColumn);
         //-parentMolNameColumn
@@ -180,7 +181,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.parentMolNameColumn.setResizable(true);
         this.parentMolNameColumn.setEditable(false);
         this.parentMolNameColumn.setSortable(true);
-        this.parentMolNameColumn.setCellValueFactory(new PropertyValueFactory("parentMoleculeName"));
+        this.parentMolNameColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.PARENT_MOLECULE_NAME.getText()));
         this.parentMolNameColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.parentMolNameColumn);
         //-frequencyColumn
@@ -192,7 +193,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.frequencyColumn.setResizable(true);
         this.frequencyColumn.setEditable(false);
         this.frequencyColumn.setSortable(true);
-        this.frequencyColumn.setCellValueFactory(new PropertyValueFactory("absoluteFrequency"));
+        this.frequencyColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.ABSOLUTE_FREQUENCY.getText()));
         this.frequencyColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.frequencyColumn);
         //-percentageColumn
@@ -204,7 +205,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.percentageColumn.setResizable(true);
         this.percentageColumn.setEditable(false);
         this.percentageColumn.setSortable(true);
-        this.percentageColumn.setCellValueFactory(new PropertyValueFactory("absolutePercentage"));
+        this.percentageColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.ABSOLUTE_PERCENTAGE.getText()));
         this.percentageColumn.setCellFactory(tc -> new TableCell<>(){
             @Override
             protected void updateItem(Double value, boolean empty){
@@ -227,7 +228,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculeFrequencyColumn.setResizable(true);
         this.moleculeFrequencyColumn.setEditable(false);
         this.moleculeFrequencyColumn.setSortable(true);
-        this.moleculeFrequencyColumn.setCellValueFactory(new PropertyValueFactory("moleculeFrequency"));
+        this.moleculeFrequencyColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.MOLECULE_FREQUENCY.getText()));
         this.moleculeFrequencyColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.moleculeFrequencyColumn);
         //-percentageColumn
@@ -239,7 +240,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculePercentageColumn.setResizable(true);
         this.moleculePercentageColumn.setEditable(false);
         this.moleculePercentageColumn.setSortable(true);
-        this.moleculePercentageColumn.setCellValueFactory(new PropertyValueFactory("moleculePercentage"));
+        this.moleculePercentageColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.MOLECULE_PERCENTAGE.getText()));
         this.moleculePercentageColumn.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double value, boolean empty) {
