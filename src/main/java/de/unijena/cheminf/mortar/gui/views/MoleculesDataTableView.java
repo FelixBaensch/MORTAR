@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
@@ -131,7 +132,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(true);
-        this.nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        this.nameColumn.setCellValueFactory(new PropertyValueFactory<>(DataModelPropertiesForTableView.NAME.getText()));
         this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         //-structureColumn
@@ -143,7 +144,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);
         this.structureColumn.setSortable(false);
-        this.structureColumn.setCellValueFactory(new PropertyValueFactory("structure"));
+        this.structureColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.STRUCTURE.getText()));
         this.structureColumn.setStyle("-fx-alignment: CENTER");
         //
         this.getColumns().addAll(this.selectionColumn, this.nameColumn, this.structureColumn);

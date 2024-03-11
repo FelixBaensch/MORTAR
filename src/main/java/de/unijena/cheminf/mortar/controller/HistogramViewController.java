@@ -695,7 +695,7 @@ public class HistogramViewController implements IViewToolController {
         //if false, the "molecule frequency" is used for sorting instead
         boolean tmpSortByFragmentFrequency = this.displayFrequencySetting.get().equals(FrequencyOption.ABSOLUTE_FREQUENCY.name());
         String tmpSortProperty = (tmpSortByFragmentFrequency ? "absoluteFrequency" : "moleculeFrequency");
-        CollectionUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, tmpSortProperty, "ASCENDING");
+        CollectionUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, tmpSortProperty, true); // true to sort the list in ascending order
         for (FragmentDataModel tmpFragmentDataModel : this.fragmentListCopy) {
             if (tmpFragmentDataModel.getUniqueSmiles().length() > aSmilesLength) {
                 tmpNewSmiles = Message.get("HistogramView.smilesTooLong") + " (" + tmpFragmentListIndexDecreasing + ")";

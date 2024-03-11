@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -114,7 +115,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.nameColumn.setResizable(true);
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(true);
-        this.nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        this.nameColumn.setCellValueFactory(new PropertyValueFactory<>(DataModelPropertiesForTableView.NAME.getText()));
         this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         this.nameColumn.prefWidthProperty().bind(
@@ -126,7 +127,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.moleculeStructureColumn.setResizable(true);
         this.moleculeStructureColumn.setEditable(false);
         this.moleculeStructureColumn.setSortable(false);
-        this.moleculeStructureColumn.setCellValueFactory(new PropertyValueFactory("structure"));
+        this.moleculeStructureColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.STRUCTURE.getText()));
         this.moleculeStructureColumn.setStyle("-fx-alignment: CENTER");
         this.moleculeStructureColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.3) //magic number
