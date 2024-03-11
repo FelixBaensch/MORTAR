@@ -775,9 +775,9 @@ public class MainViewController {
         Platform.runLater(() -> {
             if (tmpSettingsViewController.hasRowsPerPageChanged()) {
                 for (Tab tmpTab : this.mainTabPane.getTabs()) {
+                    // type of generic not given because it does not matter here, only the size of the items list
                     TableView tmpTableView = ((GridTabForTableView) tmpTab).getTableView();
-                    int tmpListSize = 0;
-                    tmpListSize = ((IDataTableView) tmpTableView).getItemsList().size();
+                    int tmpListSize = ((IDataTableView) tmpTableView).getItemsList().size();
                     int tmpPageIndex = ((GridTabForTableView) tmpTab).getPagination().getCurrentPageIndex();
                     int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
                     int tmpPageCount = tmpListSize / tmpRowsPerPage;
@@ -906,6 +906,7 @@ public class MainViewController {
             int tmpNewPageIndex = tmpIndexOfMoleculeDataModelToReturnTo / this.settingsContainer.getRowsPerPageSetting();
             ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getPagination()
                     .setCurrentPageIndex(tmpNewPageIndex);
+            // unnecessary to provide generic type
             TableView tmpSelectedTabTableView = ((GridTabForTableView) this.mainTabPane.getSelectionModel()
                     .getSelectedItem()).getTableView();
             if (tmpSelectedTabTableView.getClass() == MoleculesDataTableView.class) {
@@ -935,19 +936,8 @@ public class MainViewController {
         this.moleculesDataTableView.setItemsList(this.moleculeDataModelList);
         GridTabForTableView tmpMoleculesTab = new GridTabForTableView(Message.get("MainTabPane.moleculesTab.title"), TabNames.MOLECULES.name(), this.moleculesDataTableView);
         this.mainTabPane.getTabs().add(tmpMoleculesTab);
-        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
-        if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
-            tmpPageCount++;
-        }
-        if(this.moleculeDataModelList.isEmpty()){
-            tmpPageCount = 1;
-        }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
+        Pagination tmpPagination = this.createPaginationWithSuitablePageCount(this.moleculeDataModelList.size());
         tmpPagination.setPageFactory((pageIndex) -> this.moleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer));
-        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpMoleculesTab.addPaginationToGridPane(tmpPagination);
         HBox tmpFragmentationButtonsHBox = new HBox();
         tmpFragmentationButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
@@ -998,6 +988,7 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView);
             }
         });
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         this.moleculesDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
          });
@@ -1006,6 +997,30 @@ public class MainViewController {
                 ((MoleculeDataModel) tmpObject).setStructureImageWidth(this.moleculesDataTableView.getStructureColumn().getWidth());
             }
         });
+    }
+    //
+    /**
+     * Creates a new JavaFx pagination control that is configured with a suitable page count for the given number
+     * of molecules/fragments taking into account the rows per page setting. Also sets the MORTAR custom pagination skin
+     * as skin of the new pagination instance and configures its growth behavior. The page factory is *NOT* set.
+     *
+     * @param aListSize number of molecules/fragments to display
+     * @return configured pagination control instance
+     */
+    private Pagination createPaginationWithSuitablePageCount(int aListSize) {
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
+        int tmpPageCount = aListSize / tmpRowsPerPage;
+        if (aListSize % tmpRowsPerPage > 0) {
+            tmpPageCount++;
+        }
+        if (aListSize == 0) {
+            tmpPageCount = 1;
+        }
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
+        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
+        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
+        return tmpPagination;
     }
     //
     /**
@@ -1157,19 +1172,8 @@ public class MainViewController {
             tmpMoleculeDataModel.setStructureImageWidth(tmpFragmentsDataTableView.getStructureColumn().getWidth());
         }
         tmpFragmentsDataTableView.setItemsList(tmpList);
-        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int tmpPageCount = tmpList.size() / tmpRowsPerPage;
-        if (tmpList.size() % tmpRowsPerPage > 0) {
-            tmpPageCount++;
-        }
-        if (tmpList.isEmpty()) {
-            tmpPageCount = 1;
-        }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
+        Pagination tmpPagination = this.createPaginationWithSuitablePageCount(tmpList.size());
         tmpPagination.setPageFactory((pageIndex) -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer));
-        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpFragmentsTab.addPaginationToGridPane(tmpPagination);
         Button tmpExportCsvButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCSV.txt"));
         tmpExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCSV.tooltip")));
@@ -1204,6 +1208,7 @@ public class MainViewController {
             tmpOpenOverviewViewButton.setDisable(true);
             tmpOpenHistogramViewButton.setDisable(true);
         }
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
@@ -1237,19 +1242,8 @@ public class MainViewController {
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).toList());
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
-        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int tmpPageCount = this.moleculeDataModelList.size() / tmpRowsPerPage;
-        if (this.moleculeDataModelList.size() % tmpRowsPerPage > 0) {
-            tmpPageCount++;
-        }
-        if(this.moleculeDataModelList.isEmpty()){
-            tmpPageCount = 1;
-        }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
+        Pagination tmpPagination = this.createPaginationWithSuitablePageCount(this.moleculeDataModelList.size());
         tmpPagination.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
-        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
         tmpItemizationTab.addPaginationToGridPane(tmpPagination);
         Button tmpItemizationTabExportPDfButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
         tmpItemizationTabExportPDfButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.pdfButton.tooltip")));
@@ -1277,6 +1271,7 @@ public class MainViewController {
         tmpViewButtonsHBox.getChildren().add(tmpOpenHistogramViewButton);
         tmpItemizationTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
+        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> {
             GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage);
         });
