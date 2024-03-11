@@ -449,7 +449,7 @@ public class OverviewViewController implements IViewToolController {
         if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get()) > 0) {
             tmpPageCount++;
         }
-        if(this.moleculeDataModelList.size() == 0){
+        if(this.moleculeDataModelList.isEmpty()){
             tmpPageCount = 1;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
@@ -556,20 +556,18 @@ public class OverviewViewController implements IViewToolController {
                                     TimeUnit.MILLISECONDS
                             );
                         }
-                    } else if (aMouseEvent.getClickCount() > 1) {
-                        if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()
+                    } else if (aMouseEvent.getClickCount() > 1
+                                && this.scheduledFuture != null
+                                && !this.scheduledFuture.isCancelled()
                                 && !this.scheduledFuture.isDone()) {
-                            //terminating the scheduled single-click action
-                            this.scheduledFuture.cancel(false);
-                            //check whether it is the same structure
-                            if (this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent)
-                                    == this.cachedIndexOfStructureInMoleculeDataModelList) {
-                                //double-click action
-                                if (this.withShowInMainViewOption) {
-                                    this.returnToStructureEventOccurred = true;
-                                    this.closeOverviewViewEvent();
-                                }
-                            }
+                        //terminating the scheduled single-click action
+                        this.scheduledFuture.cancel(false);
+                        //check whether it is the same structure
+                        if (this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent)
+                                == this.cachedIndexOfStructureInMoleculeDataModelList
+                                && (this.withShowInMainViewOption)) {
+                            this.returnToStructureEventOccurred = true;
+                            this.closeOverviewViewEvent();
                         }
                     }
                 }
@@ -610,20 +608,16 @@ public class OverviewViewController implements IViewToolController {
         //
         //focused property change listener for columns per page text field
         this.overviewView.getColumnsPerPageTextField().focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue) {
-                if (this.overviewView.getColumnsPerPageTextField().getText().isBlank()
-                        || Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText()) == 0) {
-                    this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting.get()));
-                }
+            if (!newValue && (this.overviewView.getColumnsPerPageTextField().getText().isBlank()
+                        || Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText()) == 0)) {
+                this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting.get()));
             }
         });
         //focused property change listener for rows per page text field
         this.overviewView.getRowsPerPageTextField().focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue) {
-                if (this.overviewView.getRowsPerPageTextField().getText().isBlank()
-                        || Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText()) == 0) {
-                    this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting.get()));
-                }
+            if (!newValue && (this.overviewView.getRowsPerPageTextField().getText().isBlank()
+                        || Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText()) == 0)) {
+                this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting.get()));
             }
         });
         //
@@ -805,7 +799,7 @@ public class OverviewViewController implements IViewToolController {
                                                     : ""));
                                 } else {
                                     tmpFinalContentNode.setStyle(
-                                            "-fx-effect: dropshadow(gaussian, rgba(100, 100, 100, 0.8), " +
+                                            "-fx-effect: dropshadow(gaussian, rgba(100, 100, 100, 0.6), " +
                                                     OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH +
                                                     ", 0, 0, 0)" +
                                             ((tmpFinalContentNode.getClass() == StackPane.class)
