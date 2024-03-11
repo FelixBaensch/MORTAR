@@ -110,11 +110,7 @@ public class OverviewViewController implements IViewToolController {
         /**
          * Enum value for an item of an items tab as data source.
          */
-        ITEM_WITH_FRAGMENTS_SAMPLE,
-        /**
-         * Enum value for any other data source.
-         */
-        ANY;
+        ITEM_WITH_FRAGMENTS_SAMPLE;
     }
     //</editor-fold>
     //
@@ -232,8 +228,13 @@ public class OverviewViewController implements IViewToolController {
      * Boolean value saying whether the option to show a specific structure in the main view via double-click or context menu
      * should be available. The value depends on the given data source.
      */
-    //TODO: separate this into two variables? One for highlighting the first structure, one for being able to jump to structures in the main view?
     private boolean withShowInMainViewOption;
+    /**
+     * Boolean value saying whether the first structure in the overview should be highlighted, e.g. because it is
+     * a fragment and all other structures are its parents or because it is the parent structure and all other structures
+     * are its fragments.
+     */
+    private boolean withFirstStructureHighlight;
     /**
      * Boolean value whether an event to return to a specific structure in the MainView occurred.
      */
@@ -251,7 +252,7 @@ public class OverviewViewController implements IViewToolController {
      */
     private ScheduledFuture<?> scheduledFuture;
     /**
-     * Boolean value to distinguish between drag from mouse click events.
+     * Boolean value to distinguish between drag and mouse click events.
      */
     private boolean dragFlag;
     //</editor-fold>
@@ -401,6 +402,7 @@ public class OverviewViewController implements IViewToolController {
                                 ? "OverviewView.titleOfView.molecule" : "OverviewView.titleOfView.fragment")
                                 + (aMoleculeDataModelList.size() != 1 ? "s" : ""));
                 this.withShowInMainViewOption = true;
+                this.withFirstStructureHighlight = false;
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
@@ -409,6 +411,7 @@ public class OverviewViewController implements IViewToolController {
                         Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.molecule"
                                 : "OverviewView.titleOfView.molecules"));
                 this.withShowInMainViewOption = false;
+                this.withFirstStructureHighlight = true;
             }
             case ITEM_WITH_FRAGMENTS_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
@@ -417,12 +420,10 @@ public class OverviewViewController implements IViewToolController {
                         Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.fragment"
                                 : "OverviewView.titleOfView.fragments"));
                 this.withShowInMainViewOption = false;
-            }
-            case ANY -> {
-                this.setOverviewViewTitleForDefaultOrAnyDataSource(aTabName, aMoleculeDataModelList.size());
+                this.withFirstStructureHighlight = true;
             }
             default -> {
-                this.setOverviewViewTitleForDefaultOrAnyDataSource(aTabName, aMoleculeDataModelList.size());
+                this.setOverviewViewTitleForDefaultDataSource(aTabName, aMoleculeDataModelList.size());
             }
         }
         this.mainStage = aMainStage;
@@ -478,7 +479,7 @@ public class OverviewViewController implements IViewToolController {
      * @param aTabName given title for the overview view, derived from the tab name where it was opened
      * @throws NullPointerException if tab name is null
      */
-    private void setOverviewViewTitleForDefaultOrAnyDataSource(String aTabName, int aMoleculeDataModelListSize)
+    private void setOverviewViewTitleForDefaultDataSource(String aTabName, int aMoleculeDataModelListSize)
             throws NullPointerException {
         Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
         if (aTabName.isBlank()) {
@@ -490,6 +491,7 @@ public class OverviewViewController implements IViewToolController {
                 Message.get(((aMoleculeDataModelListSize - 1 == 1) ? "OverviewView.titleOfView.molecule"
                         : "OverviewView.titleOfView.molecules"));
         this.withShowInMainViewOption = false;
+        this.withFirstStructureHighlight = false;
     }
     /**
      * Adds listeners and event handlers to elements of the overview view.
@@ -687,6 +689,7 @@ public class OverviewViewController implements IViewToolController {
         this.moleculeDataModelList = null;
         this.createStructureImages = false;
         this.withShowInMainViewOption = false;
+        this.withFirstStructureHighlight = false;
         if (!this.returnToStructureEventOccurred) {
             this.resetCachedIndexOfStructureInMoleculeDataModelList();
         }
@@ -767,7 +770,7 @@ public class OverviewViewController implements IViewToolController {
                             }
                             //depiction of structure image
                             final Node tmpFinalContentNode;
-                            if (!(tmpIterator == 0 && !this.withShowInMainViewOption)) {
+                            if (!(tmpIterator == 0 && this.withFirstStructureHighlight)) {
                                 tmpFinalContentNode = new ImageView(
                                         DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                 tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
