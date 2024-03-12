@@ -271,7 +271,7 @@ public class FragmentationService {
         this.existingFragmentations.add(tmpFragmentationName);
         this.currentFragmentationName = tmpFragmentationName;
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
-        LOGGER.info("Number of different fragments extracted: " +  this.fragments.size());
+        FragmentationService.LOGGER.info(String.format("Number of different fragments extracted: %d", this.fragments.size()));
     }
     //
     /**

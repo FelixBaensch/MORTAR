@@ -790,7 +790,7 @@ public class MainViewController {
                     ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
                     ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
-                    GuiUtil.setImageStructureHeight(((GridTabForTableView) tmpTab).getTableView(), ((GridTabForTableView) tmpTab).getTableView().getHeight(), this.settingsContainer);
+                    GuiUtil.setImageStructureHeight(((GridTabForTableView) tmpTab).getTableView(), ((GridTabForTableView) tmpTab).getTableView().getHeight(), this.settingsContainer.getRowsPerPageSetting());
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
                 }
             }

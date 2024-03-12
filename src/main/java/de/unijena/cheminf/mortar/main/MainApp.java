@@ -79,14 +79,14 @@ public class MainApp extends Application {
     public void start(Stage aPrimaryStage) {
         try{
             //<editor-fold defaultstate="collapsed" desc="setting default locale">
-            Locale.setDefault(new Locale("en", "GB"));
+            Locale.setDefault(Locale.of("en", "GB"));
             Logger.getLogger(Main.class.getName()).info(Locale.getDefault().toString());
             //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Check Java version">
             String tmpJavaVersion = System.getProperty("java.version");
             List<String> tmpCMDArgs = this.getParameters().getRaw();
             boolean tmpSkipJavaVersionCheck = false;
-            if (tmpCMDArgs.size() > 0) {
+            if (!tmpCMDArgs.isEmpty()) {
                 for (String tmpArg : tmpCMDArgs) {
                     if (tmpArg.equals(MainApp.SKIP_JAVA_VERSION_CHECK_CMD_ARG_NAME)) {
                         tmpSkipJavaVersionCheck = true;
@@ -94,26 +94,29 @@ public class MainApp extends Application {
                     }
                 }
             }
-            if (!tmpSkipJavaVersionCheck) {
-                if (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0) {
-                    Logger.getLogger(Main.class.getName()).log(Level.WARNING, "Java version lower than minimum: " + tmpJavaVersion);
-                    String tmpContentText = String.format(Message.get("Error.InvalidJavaVersion.Content"), BasicDefinitions.MINIMUM_JAVA_VERSION, tmpJavaVersion);
-                    if (GuiUtil.guiConfirmationAlert(Message.get("Error.InvalidJavaVersion.Title"), Message.get("Error.InvalidJavaVersion.Header"), tmpContentText) == ButtonType.CANCEL) {
-                        System.exit(0);
-                    } //else: The user ignores the fact that their Java version is insufficient
-                }
+            if (!tmpSkipJavaVersionCheck && (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0)) {
+                Logger.getLogger(Main.class.getName()).log(Level.WARNING, "Java version lower than minimum: {0}", tmpJavaVersion);
+                String tmpContentText = String.format(
+                        Message.get("Error.InvalidJavaVersion.Content"),
+                        BasicDefinitions.MINIMUM_JAVA_VERSION,
+                        tmpJavaVersion);
+                if (GuiUtil.guiConfirmationAlert(
+                        Message.get("Error.InvalidJavaVersion.Title"),
+                        Message.get("Error.InvalidJavaVersion.Header"),
+                        tmpContentText) == ButtonType.CANCEL) {
+                    System.exit(0);
+                } //else: The user ignores the fact that their Java version is insufficient
             }
             //</editor-fold>
             //<editor-fold desc="Check single instance" defaultstate="collapsed">
             boolean tmpLCKFilePresent = LogUtil.checkForLCKFileInLogDir();
-            if (tmpLCKFilePresent) {
-                if (GuiUtil.guiConfirmationAlert(
+            if (tmpLCKFilePresent && (GuiUtil.guiConfirmationAlert(
                         Message.get("Error.SecondInstance.Title"),
                         Message.get("Error.SecondInstance.Header"),
-                        Message.get("Error.SecondInstance.Content")) == ButtonType.CANCEL) {
+                        Message.get("Error.SecondInstance.Content")) == ButtonType.CANCEL)) {
                     System.exit(0);
-                } //else: user wants to continue despite the possible second instance;
-                // this means that all existing .lck files will be removed below with LogUtil.manageLogFilesFolderIfExists()
+                    //else: user wants to continue despite the possible second instance;
+                    // this means that all existing .lck files will be removed below with LogUtil.manageLogFilesFolderIfExists()
             } //else: single MORTAR instance running
             //</editor-fold>
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">

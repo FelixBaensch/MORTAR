@@ -26,7 +26,10 @@
 package de.unijena.cheminf.mortar.model.data;
 
 /**
- * Enum for the data model properties that are displayed in the TableViews
+ * Enum for the data model properties that are displayed in the TableViews. Note that the textual representations are
+ * used to find the respective property of the data classes that should be used to fill a specific column in the table
+ * views, e.g. "name" textual representation of NAME is used in the MoleculesDatatableView as property for the cell value
+ * factory of the names column, so that MoleculeDataModel.getName() is invoked to fill the cells of this column.
  *
  * @author Felix Baensch
  * @version 1.0.0.0

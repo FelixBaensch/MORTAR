@@ -41,20 +41,19 @@ import javafx.scene.layout.FlowPane;
  * @version 1.0.0.0
  */
 public class StatusBar extends FlowPane {
-
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
      * Label to show status message
      */
-    private Label statusLabel;
+    private final Label statusLabel;
     /**
      * ProgressBar
      */
-    private ProgressBar progressBar;
+    private final ProgressBar progressBar;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      */
     public StatusBar(){
         super();
@@ -73,7 +72,7 @@ public class StatusBar extends FlowPane {
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * Returns statusLabel
+     * Returns statusLabel.
      * @return Label
      */
     public Label getStatusLabel() {
@@ -81,7 +80,7 @@ public class StatusBar extends FlowPane {
     }
     //
     /**
-     * Returns the progressBar
+     * Returns the progressBar.
      * @return ProgressBar
      */
     public ProgressBar getProgressBar() {

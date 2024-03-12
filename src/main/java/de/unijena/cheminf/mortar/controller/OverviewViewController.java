@@ -746,7 +746,7 @@ public class OverviewViewController implements IViewToolController {
             //check if the limits for the image dimensions are being exceeded
             if ((tmpImageHeight >= OverviewViewController.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT)
                     && (tmpImageWidth >= OverviewViewController.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH)) {
-                //optional setting for change in usage of shadow effect
+                //optional setting for change in usage of shadow effect - deprecated
                 boolean tmpDrawImagesWithShadow = true;
                 //main loop for generation of the page content
                 generationOfStructureImagesLoop:

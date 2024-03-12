@@ -113,7 +113,7 @@ public class ViewToolsManager {
         this.viewToolsArray[1] = this.overviewViewController;
         try {
             this.checkViewTools();
-        } catch (Exception anException) {
+        } catch (IOException anException) {
             ViewToolsManager.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
@@ -210,13 +210,14 @@ public class ViewToolsManager {
                 PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
                 tmpPrefContainer.writeRepresentation();
             } catch (NullPointerException | IllegalArgumentException | IOException | SecurityException anException) {
-                ViewToolsManager.LOGGER.log(Level.WARNING, "View tools settings persistence went wrong, exception: "
-                        + anException.toString(), anException);
+                ViewToolsManager.LOGGER.log(Level.WARNING,
+                        String.format("View tools settings persistence went wrong, exception: %s", anException.toString()),
+                        anException);
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),
                         Message.get("ViewToolsManager.Error.settingsPersistence"),
                         anException);
-                continue;
+                //continue;
             }
         }
     }
@@ -236,14 +237,15 @@ public class ViewToolsManager {
                 try {
                     tmpContainer = new PreferenceContainer(tmpViewToolsSettingsFile);
                 } catch (IllegalArgumentException | IOException anException) {
-                    ViewToolsManager.LOGGER.log(Level.WARNING, "Unable to reload settings of view tool "
-                            + tmpClassName + " : " + anException.toString(), anException);
+                    ViewToolsManager.LOGGER.log(Level.WARNING,
+                            String.format("Unable to reload settings of view tool %s: %s", tmpClassName, anException.toString()),
+                            anException);
                     continue;
                 }
                 this.updatePropertiesFromPreferences(tmpViewTool.settingsProperties(), tmpContainer);
             } else {
                 //settings will remain in default
-                ViewToolsManager.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpClassName + " available.");
+                ViewToolsManager.LOGGER.log(Level.WARNING, "No persisted settings for {0} available.", tmpClassName);
             }
         }
     }
@@ -274,7 +276,7 @@ public class ViewToolsManager {
                         tmpSettingProperty.setValue(tmpStringPreference.getContent());
                     } else {
                         //setting will remain in default
-                        ViewToolsManager.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
+                        ViewToolsManager.LOGGER.log(Level.WARNING, "Setting {0} is of unknown type.", tmpPropertyName);
                     }
                 } catch (ClassCastException | IllegalArgumentException anException) {
                     //setting will remain in default
@@ -282,24 +284,24 @@ public class ViewToolsManager {
                 }
             } else {
                 //setting will remain in default
-                ViewToolsManager.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
+                ViewToolsManager.LOGGER.log(Level.WARNING, "No persisted settings for {0} available.", tmpPropertyName);
             }
         }
     }
     /**
-     * Checks the available view tools and their settings for restrictions imposed by persistence. Throws an exception if
+     * Checks the available view tools and their settings for restrictions imposed by persistence. Throws an IOException if
      * anything does not meet the requirements.
      */
-    private void checkViewTools() throws Exception {
+    private void checkViewTools() throws IOException {
         HashSet<String> tmpViewToolNames = new HashSet<>((int)(this.viewToolsArray.length * 1.5), 0.75f);
         for (IViewToolController tmpViewTool : this.viewToolsArray) {
             //view tool name should be singleton and must be persistable
             String tmpViewToolName = tmpViewTool.getViewToolNameForDisplay();
             if (!PreferenceUtil.isValidName(tmpViewToolName) || !SingleTermPreference.isValidContent(tmpViewToolName)) {
-                throw new Exception("View tool name " + tmpViewToolName + " is invalid.");
+                throw new IOException(String.format("View tool name %s is invalid.", tmpViewToolName));
             }
             if (tmpViewToolNames.contains(tmpViewToolName)) {
-                throw new Exception("View tool name " + tmpViewToolName + " is used multiple times.");
+                throw new IOException(String.format("View tool name %s is used multiple times.", tmpViewToolName));
             } else {
                 tmpViewToolNames.add(tmpViewToolName);
             }
@@ -310,10 +312,10 @@ public class ViewToolsManager {
             HashSet<String> tmpSettingNames = new HashSet<>((int) (tmpSettingsList.size() * 1.5), 0.75f);
             for (Property tmpSetting : tmpSettingsList) {
                 if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
-                    throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");
+                    throw new IOException(String.format("Setting %s has an invalid name.", tmpSetting.getName()));
                 }
                 if (tmpSettingNames.contains(tmpSetting.getName())) {
-                    throw new Exception("Setting name " + tmpSetting.getName() + " is used multiple times.");
+                    throw new IOException(String.format("Setting name %s is used multiple times.", tmpSetting.getName()));
                 } else {
                     tmpSettingNames.add(tmpSetting.getName());
                 }
@@ -321,18 +323,18 @@ public class ViewToolsManager {
                     //nothing to do here, booleans cannot have invalid values
                 } else if (tmpSetting instanceof SimpleIntegerProperty) {
                     if (!SingleIntegerPreference.isValidContent(Integer.toString(((SimpleIntegerProperty) tmpSetting).get()))) {
-                        throw new Exception("Setting value " + ((SimpleIntegerProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                        throw new IOException(String.format("Setting value %d of setting name %s is invalid.", ((SimpleIntegerProperty) tmpSetting).get(), tmpSetting.getName()));
                     }
                 } else if (tmpSetting instanceof SimpleDoubleProperty) {
                     if (!SingleNumberPreference.isValidContent(((SimpleDoubleProperty) tmpSetting).get())) {
-                        throw new Exception("Setting value " + ((SimpleDoubleProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                        throw new IOException(String.format("Setting value %d of setting name %s is invalid.", ((SimpleDoubleProperty) tmpSetting).get(), tmpSetting.getName()));
                     }
                 } else if (tmpSetting instanceof SimpleEnumConstantNameProperty || tmpSetting instanceof SimpleStringProperty) {
                     if (!SingleTermPreference.isValidContent(((SimpleStringProperty) tmpSetting).get())) {
-                        throw new Exception("Setting value " + ((SimpleStringProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                        throw new IOException(String.format("Setting value %s of setting name %s is invalid.", ((SimpleStringProperty) tmpSetting).get(), tmpSetting.getName()));
                     }
                 } else {
-                    throw new Exception("Setting " + tmpSetting.getName() + " is of an invalid type.");
+                    throw new IOException(String.format("Setting %s is of an invalid type.", tmpSetting.getName()));
                 }
             }
         }

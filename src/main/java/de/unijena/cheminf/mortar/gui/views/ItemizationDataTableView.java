@@ -159,7 +159,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     * Creates and returns an itemization tableview page
+     * Creates and returns an itemization tableview page.
      *
      * @param aPageIndex integer value for the page index
      * @param aFragmentationName String for unique name of fragmentation job
@@ -173,7 +173,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         int tmpItemAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.itemsList.subList(fromIndex, toIndex), aFragmentationName);
         this.resetFragmentStructureColumns(tmpItemAmount);
         List<MoleculeDataModel> tmpList = this.itemsList.subList(fromIndex, toIndex);
-        for(MoleculeDataModel tmpMoleculeDataModel : tmpList){
+        for (MoleculeDataModel tmpMoleculeDataModel : tmpList) {
             tmpMoleculeDataModel.setStructureImageWidth(this.moleculeStructureColumn.getWidth());
         }
         this.setItems(FXCollections.observableArrayList(this.itemsList.subList(fromIndex, toIndex)));
@@ -183,14 +183,14 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     //
     /**
      * Adds a change listener to the height property of table view which sets the height for structure images to
-     * each MoleculeDataModel object of the items list and refreshes the table view
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     * each MoleculeDataModel object of the items list and refreshes the table view.
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0).
      *
      * @param aSettingsContainer SettingsContainer
      */
     public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
-            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(),aSettingsContainer);
+            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(),aSettingsContainer.getRowsPerPageSetting());
             this.refresh();
         });
     }
@@ -204,7 +204,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      */
     private void resetFragmentStructureColumns(int anItemAmount) {
         this.fragmentStructureColumn.getColumns().clear();
-        for(int i = 0; i < anItemAmount; i++){
+        for (int i = 0; i < anItemAmount; i++) {
             int tmpIndex = i;
             TableColumn<MoleculeDataModel, ImageView> tmpColumn = new TableColumn<>("Fragment " + (i + 1)); //+1 to avoid 0 in GUI
             tmpColumn.setResizable(true);
@@ -212,13 +212,14 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
             tmpColumn.setSortable(false);
             tmpColumn.setStyle( "-fx-alignment: CENTER;");
             tmpColumn.setCellValueFactory(cellData -> Bindings.createObjectBinding(() -> {
-                if(!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)){
+                if (!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)) {
                     return null;
                 }
-                if(tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size())
+                if (tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size()) {
                     return null;
+                }
                 FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).get(tmpIndex);
-                if(!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)){
+                if (!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)) {
                     return null;
                 }
                 String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
@@ -232,7 +233,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns TableColumn for the 2D structure of the molecule
+     * Returns TableColumn for the 2D structure of the molecule.
      *
      * @return TableColumn for 2D structure
      */
@@ -241,7 +242,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     }
     //
     /**
-     * Returns name of fragmentation
+     * Returns name of fragmentation.
      *
      * @return String
      */
@@ -250,14 +251,14 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     }
     //
     /**
-     * Returns list of items shown in TableView
+     * Returns list of items shown in TableView.
      *
      * @return List {@literal <}MoleculeDataModel {@literal >}
      */
     public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
     //
     /**
-     * Returns MenuItem to copy selected cell
+     * Returns MenuItem to copy selected cell.
      *
      * @return MenuItem
      */
@@ -266,7 +267,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     }
     //
     /**
-     * Returns MenuItem to open an overview view of an item and its fragments
+     * Returns MenuItem to open an overview view of an item and its fragments.
      *
      * @return MenuItem
      */
@@ -275,7 +276,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     }
     //
     /**
-     * Sets items to list
+     * Sets items to list.
      *
      * @param aListOfFragments List {@literal <}MoleculeDataModel {@literal >}
      */

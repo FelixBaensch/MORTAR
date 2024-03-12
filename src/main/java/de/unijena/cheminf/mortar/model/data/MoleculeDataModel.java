@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  * @version 1.0.1.0
  */
 public class MoleculeDataModel {
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    //<editor-fold desc="private (final) class variables" defaultstate="collapsed">
     /**
      * Name of molecule.
      */
@@ -59,9 +59,9 @@ public class MoleculeDataModel {
     /**
      * Unique SMILES code of molecule.
      */
-    private String uniqueSmiles;
+    private final String uniqueSmiles;
     //
-    private BooleanProperty selection;
+    private final BooleanProperty selection;
     //
     /**
      * Boolean, whether to keep the atom container of the molecule.
@@ -77,31 +77,34 @@ public class MoleculeDataModel {
      * Fragments map containing names of fragmentations done to the molecule as keys and lists of
      * {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that resulted from these fragmentations
      * as values.
+     * HashMap<FragmentationAlgorithmName, List<Fragments>>
      */
-    private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
+    private final HashMap<String, List<FragmentDataModel>> fragments;
     //
     /**
      * Fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique SMILES
      * representations of the fragments and values are the frequencies of the respective fragments in the molecule.
+     * HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
      */
-    private HashMap<String, HashMap<String, Integer>> fragmentFrequencies; // HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
+    private final HashMap<String, HashMap<String, Integer>> fragmentFrequencies;
     //
     /**
      * Property map of this molecule.
      */
-    private Map<Object, Object> properties;
+    private final Map<Object, Object> properties;
     //
     /**
-     * Height value for image of structure
+     * Height value for image of structure.
      */
     private double structureImageHeight;
     //
     /**
-     * Width value for image of structure
+     * Width value for image of structure.
      */
     private double structureImageWidth;
     //</editor-fold>
     //
+    //<editor-fold desc="constructors">
     /**
      * Constructor for MoleculeDataModel. Molecular information is taken from the given unique SMILES code. The data
      * is not kept as atom container.
@@ -135,15 +138,22 @@ public class MoleculeDataModel {
         this.keepAtomContainer = true;
         this.atomContainer = anAtomContainer;
     }
+    //</editor-fold>
     //
-    //<editor-fold desc="public properties">
+    //<editor-fold desc="public properties get/set">
     /**
-     * Returns name (String) of the molecule, if it is null, "NoName" will be returned
+     * Returns name (String) of the molecule. If it is null, "NoName" will be returned.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in MoleculesDataTableView, the
+     * CellValueFactory of the name column is set to a PropertyValueFactory that uses "name" as
+     * property string to invoke this method; same usage in ItemizationDataTableView; see also
+     * DataModelPropertiesForTableView enum).
+     *
      * @return String name of molecule
      */
-    public String getName(){
-        if(this.name == null || this.name.isEmpty())
+    public String getName() {
+        if (this.name == null || this.name.isEmpty()) {
             this.name = "NoName";
+        }
         return this.name;
     }
     //
@@ -157,7 +167,7 @@ public class MoleculeDataModel {
      * @throws CDKException if SMILES parsing fails
      */
     public IAtomContainer getAtomContainer() throws CDKException {
-        if(this.atomContainer != null){
+        if (this.atomContainer != null) {
             return this.atomContainer;
         }
         IAtomContainer tmpAtomContainer;
@@ -168,14 +178,14 @@ public class MoleculeDataModel {
             tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, false, false);
         }
         tmpAtomContainer.addProperties(this.properties);
-        if(this.keepAtomContainer){
+        if (this.keepAtomContainer) {
             this.atomContainer = tmpAtomContainer;
         }
         return tmpAtomContainer;
     }
     //
     /**
-     * Returns unique SMILES
+     * Returns unique SMILES.
      *
      * @return String uniqueSmiles
      */
@@ -255,7 +265,12 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Creates and returns an ImageView of this molecule as 2D structure
+     * Creates and returns an ImageView of this molecule as 2D structure.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in MoleculesDataTableView, the
+     * CellValueFactory of the structure column is set to a PropertyValueFactory that uses "name" as
+     * property string to invoke this method; same usage in ItemizationDataTableView molecule structure column; see also
+     * DataModelPropertiesForTableView enum).
+     *
      * @return ImageView
      */
     public ImageView getStructure() {
@@ -301,7 +316,8 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Sets given String as name of this molecule
+     * Sets given String as name of this molecule.
+     *
      * @param aName String
      */
     public void setName(String aName){
@@ -309,7 +325,8 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Sets selection state of this molecule depending on the specified boolean
+     * Sets selection state of this molecule depending on the specified boolean.
+     *
      * @param aValue boolean
      */
     public void setSelection(boolean aValue){
@@ -317,7 +334,8 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Sets whether the molecule's atom container should be kept. If not, the atom container is set to null
+     * Sets whether the molecule's atom container should be kept. If not, the atom container is set to null.
+     *
      * @param aValue boolean
      */
     public void setKeepAtomContainer(boolean aValue){
@@ -333,7 +351,7 @@ public class MoleculeDataModel {
      * @return height of image
      */
     public double getStructureImageHeight() {
-        if(this.structureImageHeight == 0.0) {
+        if (this.structureImageHeight == 0.0) {
             return BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT;
         } else {
             return this.structureImageHeight;
@@ -347,7 +365,7 @@ public class MoleculeDataModel {
      * @return width of image
      */
     public double getStructureImageWidth() {
-        if(this.structureImageWidth == 0.0) {
+        if (this.structureImageWidth == 0.0) {
             return BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT;
         } else {
             return this.structureImageWidth;
@@ -355,7 +373,7 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Sets the height of the image of the molecular structure
+     * Sets the height of the image of the molecular structure.
      *
      * @param aStructureImageHeight double
      */
@@ -364,7 +382,7 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Sets the width of the image of the molecular structure
+     * Sets the width of the image of the molecular structure.
      *
      * @param aStructureImageWidth double
      */

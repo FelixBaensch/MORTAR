@@ -32,7 +32,6 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
 import javafx.scene.control.Alert;
@@ -224,10 +223,10 @@ public class GuiUtil {
      * @param tmpRowsPerPage int
      */
     public static void sortTableViewGlobally(SortEvent<TableView> anEvent, Pagination tmpPagination, int tmpRowsPerPage){
-        if(anEvent == null || anEvent.getSource().getSortOrder().size() == 0)
+        if(anEvent == null || anEvent.getSource().getSortOrder().isEmpty())
             return;
-        String tmpSortProp = ((PropertyValueFactory)((TableColumn) anEvent.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
-        TableColumn.SortType tmpSortType = ((TableColumn) anEvent.getSource().getSortOrder().get(0)).getSortType();
+        String tmpSortProp = ((PropertyValueFactory)((TableColumn) anEvent.getSource().getSortOrder().getFirst()).cellValueFactoryProperty().getValue()).getProperty().toString();
+        TableColumn.SortType tmpSortType = ((TableColumn) anEvent.getSource().getSortOrder().getFirst()).getSortType();
         CollectionUtil.sortGivenFragmentListByPropertyAndSortType(((IDataTableView)anEvent.getSource()).getItemsList(), tmpSortProp, tmpSortType == TableColumn.SortType.ASCENDING);
         int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((IDataTableView)anEvent.getSource()).getItemsList().size());
@@ -252,7 +251,7 @@ public class GuiUtil {
      * @return GUI input pattern for integer values
      */
     public static Pattern getIntegerPattern(){
-        return Pattern.compile("-?(([1-9][0-9]*)|0)?");
+        return Pattern.compile("-?(([1-9]\\d*)|0)?");
     }
     //
     /**
@@ -261,7 +260,7 @@ public class GuiUtil {
      * @return GUI input pattern for positive integer values
      */
     public static Pattern getPositiveIntegerInclZeroPattern(){
-        return Pattern.compile("[0-9]*");
+        return Pattern.compile("\\d*");
     }
     //
     /**
@@ -270,7 +269,7 @@ public class GuiUtil {
      * @return GUI input pattern for double values
      */
     public static Pattern getDoublePattern(){
-        return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
+        return Pattern.compile("-?(([1-9]\\d*)|0)?(\\.\\d*)?");
     }
     //
     /**
@@ -290,7 +289,6 @@ public class GuiUtil {
     }
     //
     /**
-     *
      * Method that creates an Integer filter to prevent the entry of unwanted
      * characters such as Strings or special characters and also 0 for first entry.
      *
@@ -437,58 +435,58 @@ public class GuiUtil {
     //
     /**
      * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView.
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0).
      *
      * @param aTableView TableView
      * @param aHeight double
-     * @param aSettingsContainer SettingsContainer
+     * @param aRowsPerPage int
      */
-    public static void setImageStructureHeight(TableView aTableView, double aHeight, SettingsContainer aSettingsContainer){
+    public static void setImageStructureHeight(TableView aTableView, double aHeight, int aRowsPerPage){
         double tmpHeight =
                 (aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                        / aSettingsContainer.getRowsPerPageSetting();
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
+                        / aRowsPerPage;
+        if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
             tmpHeight =
                     (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                            / aSettingsContainer.getRowsPerPageSetting();
+                            / aRowsPerPage;
         }
-        if(tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT){
+        if (tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT) {
             tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
         }
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+        if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
+            for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
                 String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
-                if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
+                if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)) {
                     continue;
                 }
-                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
+                for (FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)) {
                     tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
                 }
             }
-        }
-        else{
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+        } else {
+            for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
             }
         }
     }
     //
     /**
-     * Returns the largest number of fragments of one molecule found in the given list for the given fragmentation name
+     * Returns the largest number of fragments of one molecule found in the given list for the given fragmentation name.
      *
      * @param aListOfMolecules List of MoleculeDataModels
      * @param aFragmentationName String for the fragmentation name
      * @return largest number of fragments of one molecule
      */
     public static int getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(List<MoleculeDataModel> aListOfMolecules, String aFragmentationName){
-        int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
+        //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
+        int tmpAmount = 0;
         for (int i = 0; i < aListOfMolecules.size(); i++) {
-            if(!aListOfMolecules.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+            if (!aListOfMolecules.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                 continue;
             }
             HashMap<String, Integer> tmpCurrentFragmentsMap = aListOfMolecules.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
-            if (tmpCurrentFragmentsMap == null) { //redundant, see if clause above
+            if (tmpCurrentFragmentsMap == null) { //redundant, see if-clause above
                 continue;
             }
             int tmpNrOfFragmentsOfCurrentMolecule = tmpCurrentFragmentsMap.size();
