@@ -40,6 +40,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -82,6 +83,7 @@ public class MainApp extends Application {
             Locale.setDefault(Locale.of("en", "GB"));
             Logger.getLogger(Main.class.getName()).info(Locale.getDefault().toString());
             //</editor-fold>
+            //
             //<editor-fold defaultstate="collapsed" desc="Check Java version">
             String tmpJavaVersion = System.getProperty("java.version");
             List<String> tmpCMDArgs = this.getParameters().getRaw();
@@ -108,6 +110,19 @@ public class MainApp extends Application {
                 } //else: The user ignores the fact that their Java version is insufficient
             }
             //</editor-fold>
+            //
+            //<editor-fold desc="Checking for configuration file">
+            try {
+                Configuration.getInstance();
+            } catch (IOException anIOException) {
+                GuiUtil.guiExceptionAlert(Message.get("Error.Notification.Title"),
+                        Message.get("Error.NoConfigFile.Header"),
+                        String.format(Message.get("Error.NoConfigFile.Content"), Configuration.PROPERTIES_FILE_PATH),
+                        anIOException);
+                System.exit(-1);
+            }
+            //</editor-fold>
+            //
             //<editor-fold desc="Check single instance" defaultstate="collapsed">
             boolean tmpLCKFilePresent = LogUtil.checkForLCKFileInLogDir();
             if (tmpLCKFilePresent && (GuiUtil.guiConfirmationAlert(
@@ -119,6 +134,7 @@ public class MainApp extends Application {
                     // this means that all existing .lck files will be removed below with LogUtil.manageLogFilesFolderIfExists()
             } //else: single MORTAR instance running
             //</editor-fold>
+            //
             //<editor-fold defaultstate="collapsed" desc="Configure logging environment and log session start">
             LogUtil.manageLogFilesFolderIfExists();
             boolean tmpWasLoggingInitializationSuccessful = LogUtil.initializeLoggingEnvironment();
@@ -130,10 +146,12 @@ public class MainApp extends Application {
             //Start new logging session
             Logger.getLogger(Main.class.getName()).info(String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
             Logger.getLogger(Main.class.getName()).info(String.format("Started with Java version %s.", tmpJavaVersion));
-            // </editor-fold>
+            //</editor-fold>
+            //
             //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
             String tmpAppDir = FileUtil.getAppDirPath();
             //</editor-fold>
+            //
             MainView tmpMainView = new MainView(Configuration.getInstance());
             new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir, Configuration.getInstance());
         } catch (Exception | OutOfMemoryError anException){

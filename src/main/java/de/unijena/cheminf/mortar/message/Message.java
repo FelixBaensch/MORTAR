@@ -32,13 +32,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Message
+ * Message.
  *
  * @author Felix Baensch, Jonas Schaub
  * @version 1.0.0.0
  */
 public class Message {
-
     //<editor-fold defaultstate="collapsed" desc="Public static final class constants">
     /**
      * Logger of this class.
@@ -63,7 +62,7 @@ public class Message {
     //
     //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
-     * Private constructor
+     * Private constructor.
      */
     private Message(){
     }
@@ -71,7 +70,7 @@ public class Message {
     //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
     /**
-     * Return resource string for key
+     * Return resource string for key.
      *
      * @param aKey Key
      * @return Resource string for key

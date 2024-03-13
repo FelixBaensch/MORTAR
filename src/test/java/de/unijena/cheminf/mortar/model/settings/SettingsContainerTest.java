@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.model.settings;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
@@ -41,6 +43,13 @@ import java.util.Locale;
  */
 public class SettingsContainerTest {
     /**
+     * Constructor to initialize locale and configuration.
+     */
+    public SettingsContainerTest() throws Exception {
+        Locale.setDefault(new Locale("en", "GB"));
+        Configuration.getInstance();
+    }
+    /**
      * Tests the basic functionalities of SettingsContainer. These are instantiation, restoring default settings,
      * getting the settings, changing the settings, persisting the settings, and reloading them.
      *
@@ -48,7 +57,6 @@ public class SettingsContainerTest {
      */
     @Test
     public void testSettingsContainerBasics() throws Exception {
-        Locale.setDefault(new Locale("en", "GB"));
         String tmpCsvExportSeparatorTest = ";";
         //if there is a persisted settings container file already on the machine, it is loaded into the new SettingsContainer object
         SettingsContainer tmpSettingsContainer = new SettingsContainer();

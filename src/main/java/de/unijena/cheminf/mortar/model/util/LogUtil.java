@@ -59,7 +59,7 @@ import java.util.logging.SimpleFormatter;
 public final class LogUtil {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
-     * Root logger
+     * Root logger.
      */
     private static final Logger ROOT_LOGGER = LogManager.getLogManager().getLogger("");
     /**
@@ -73,8 +73,10 @@ public final class LogUtil {
     static {
         try {
             CONFIGURATION = Configuration.getInstance();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException anIOException) {
+            //when MORTAR is run via MainApp.start(), the correct initialization of Configuration is checked there before
+            // LogUtil is accessed and this static initializer called
+            throw new NullPointerException("Configuration could not be initialized");
         }
     }
     /**
@@ -186,10 +188,10 @@ public final class LogUtil {
             File tmpLogFile = new File(tmpFinalLogFilePathName);
             boolean tmpFileWasCreated = FileUtil.createEmptyFile(tmpLogFile.getAbsolutePath());
             if (!tmpFileWasCreated) {
-                throw new Exception("Log file " + tmpFinalLogFilePathName + " could not be created.");
+                throw new IOException("Log file " + tmpFinalLogFilePathName + " could not be created.");
             }
             if (!tmpLogFile.isFile() || !tmpLogFile.canWrite()) {
-                throw new Exception("The designated log file " + tmpFinalLogFilePathName + " is not a file or can not be written to.");
+                throw new IOException("The designated log file " + tmpFinalLogFilePathName + " is not a file or can not be written to.");
             }
             LogUtil.logFile = tmpLogFile;
             LogUtil.fileHandler = new FileHandler(tmpFinalLogFilePathName, true);

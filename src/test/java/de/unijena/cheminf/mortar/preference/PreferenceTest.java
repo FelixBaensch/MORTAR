@@ -25,12 +25,7 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - implement comparing test (?)
- * - implement preference name test (?)
- */
-
+import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 
 import org.junit.jupiter.api.Assertions;
@@ -41,6 +36,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.util.Locale;
 
 /**
  * Test class for preferences.
@@ -49,11 +45,12 @@ import java.io.PrintWriter;
  * @version 1.0.0.0
  */
 public class PreferenceTest {
-
     /**
-     * Constructor (empty)
+     * Constructor to initialize locale and configuration.
      */
-    public PreferenceTest() {
+    public PreferenceTest() throws Exception {
+        Locale.setDefault(new Locale("en", "GB"));
+        Configuration.getInstance();
     }
     //
     /**

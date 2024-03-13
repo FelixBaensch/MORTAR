@@ -51,7 +51,7 @@ public class Configuration implements IConfiguration {
     /**
      * Path to the configuration properties file to read.
      */
-    private static final String PROPERTIES_FILE_PATH = "de/unijena/cheminf/mortar/configuration/MORTAR_configuration.properties";
+    public static final String PROPERTIES_FILE_PATH = "de/unijena/cheminf/mortar/configuration/MORTAR_configuration.properties";
     //
     /**
      * Private constructor that creates the single instance.

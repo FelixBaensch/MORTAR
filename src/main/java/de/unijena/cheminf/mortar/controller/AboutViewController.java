@@ -230,8 +230,8 @@ public class AboutViewController {
      * Reads xml file (tools_description.xml in resources) which contains information about the used external tools.
      */
     private void getExternalToolInfosFromXml(){
-        DocumentBuilderFactory tmpDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
-        try{
+        try {
+            DocumentBuilderFactory tmpDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
             // optional, but recommended
             // process XML securely, avoid attacks like XML External Entities (XXE)
             tmpDocumentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -259,7 +259,7 @@ public class AboutViewController {
                 }
             }
         } catch (ParserConfigurationException | IOException | SAXException anException) {
-            LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
         }
     }
     //</editor-fold>

@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.preference;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -45,12 +46,12 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class PreferenceContainerTest {
-
     /**
-     * Constructor (empty).
+     * Constructor to initialize locale and configuration.
      */
-    public PreferenceContainerTest() {
-
+    public PreferenceContainerTest() throws Exception {
+        Locale.setDefault(new Locale("en", "GB"));
+        Configuration.getInstance();
     }
     //
     /**

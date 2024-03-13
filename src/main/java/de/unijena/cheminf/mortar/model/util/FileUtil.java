@@ -38,7 +38,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * File utility
+ * File utility.
  *
  * @author Achim Zielesny, Jonas Schaub, Felix Baensch
  * @version 1.0.0.0
@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 public final class FileUtil {
     //<editor-fold desc="Private static class variables" defaultstate="collapsed">
     /**
-     * Cache String for app dir path
+     * Cache String for app dir path.
      */
     private static String appDirPath = null;
     //</editor-fold>
@@ -64,13 +64,15 @@ public final class FileUtil {
     static {
         try {
             CONFIGURATION = Configuration.getInstance();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException anIOException) {
+            //when MORTAR is run via MainApp.start(), the correct initialization of Configuration is checked there before
+            // FileUtil is accessed and this static initializer called
+            throw new NullPointerException("Configuration could not be initialized");
         }
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -109,7 +111,7 @@ public final class FileUtil {
     /**
      * Returns the name of the file without the file extension.
      *
-     * @param aFile whose name should ne return without extension
+     * @param aFile whose name should be returned without extension
      * @return file name without extension
      * @throws NullPointerException if given file is 'null'
      */
@@ -117,11 +119,11 @@ public final class FileUtil {
         //<editor-fold defaultstate="collapsed" desc="Checks">
         Objects.requireNonNull(aFile, "Given file is 'null'.");
         //</editor-fold>
-        return aFile.getName().replaceFirst("[.][^.]+$", ""); //cuts the
+        return aFile.getName().replaceFirst("[.][^.]+$", "");
     }
 
     /**
-     * Deletes single file
+     * Deletes single file.
      *
      * @param aFilePathname Full pathname of file to be deleted (may be null
      * then false is returned)
@@ -186,7 +188,7 @@ public final class FileUtil {
     }
 
     /**
-     * Creates directory and all non-existent ancestor directories if necessary
+     * Creates directory and all non-existent ancestor directories if necessary.
      *
      * @param aDirectoryPath Full directory path to be created
      * @return true: Directory already existed or was successfully created,
@@ -213,7 +215,7 @@ public final class FileUtil {
     }
 
     /**
-     * Creates empty file
+     * Creates empty file.
      *
      * @param aFilePathname Full file pathname
      * @return True: Empty file was created, false: Otherwise
@@ -244,7 +246,7 @@ public final class FileUtil {
      * path cannot be determined or data directory cannot be created
      */
     public static String getAppDirPath() throws SecurityException {
-        if(FileUtil.appDirPath != null){
+        if (FileUtil.appDirPath != null) {
             return FileUtil.appDirPath;
         }
         String tmpAppDir;
