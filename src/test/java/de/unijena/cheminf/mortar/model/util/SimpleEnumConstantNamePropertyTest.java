@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -37,10 +38,8 @@ import org.junit.jupiter.api.Test;
  * @version 1.0.0.0
  */
 public class SimpleEnumConstantNamePropertyTest {
-
     /**
-     * Basic test for retrieval of associated enum, currently set option, and available options. All are printed to
-     * console.
+     * Basic test for retrieval of associated enum, currently set option, and available options.
      *
      * @throws Exception if anything goes wrong
      */
@@ -49,16 +48,14 @@ public class SimpleEnumConstantNamePropertyTest {
         SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(this, "testProp",
                 IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION.name(),
                 IMoleculeFragmenter.FragmentSaturationOption.class);
-        System.out.println("Associated enum: " + tmpEnumProperty.getAssociatedEnum());
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.class, tmpEnumProperty.getAssociatedEnum());
+        Assertions.assertEquals("HYDROGEN_SATURATION", tmpEnumProperty.get());
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION, tmpEnumProperty.getEnumValue());
         Enum[] tmpAvailableOptions = tmpEnumProperty.getAssociatedEnumConstants();
-        System.out.println("Currently set option: " + tmpEnumProperty.get());
-        tmpEnumProperty.getEnumValue();
-        System.out.println("Available options: ");
         for (Enum tmpOption : tmpAvailableOptions) {
-            System.out.println("\t" + tmpOption.name());
-            tmpEnumProperty.setEnumValue(tmpOption);
-            tmpEnumProperty.set(tmpOption.name());
+            Assertions.assertDoesNotThrow(() -> {IMoleculeFragmenter.FragmentSaturationOption.valueOf(tmpOption.name());});
+            Assertions.assertDoesNotThrow(() -> {tmpEnumProperty.setEnumValue(tmpOption);});
+            Assertions.assertDoesNotThrow(() -> {tmpEnumProperty.set(tmpOption.name());});
         }
     }
-
 }
