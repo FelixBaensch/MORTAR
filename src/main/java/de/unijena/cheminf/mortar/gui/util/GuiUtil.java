@@ -251,7 +251,7 @@ public class GuiUtil {
      * @return GUI input pattern for integer values
      */
     public static Pattern getIntegerPattern(){
-        return Pattern.compile("-?(([1-9]\\d*)|0)?");
+        return Pattern.compile("-?(([1-9][0-9]*)|0)?");
     }
     //
     /**
@@ -260,7 +260,7 @@ public class GuiUtil {
      * @return GUI input pattern for positive integer values
      */
     public static Pattern getPositiveIntegerInclZeroPattern(){
-        return Pattern.compile("\\d*");
+        return Pattern.compile("[0-9]*");
     }
     //
     /**
@@ -269,7 +269,7 @@ public class GuiUtil {
      * @return GUI input pattern for double values
      */
     public static Pattern getDoublePattern(){
-        return Pattern.compile("-?(([1-9]\\d*)|0)?(\\.\\d*)?");
+        return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
     }
     //
     /**
