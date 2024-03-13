@@ -44,7 +44,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Util class for depiction
+ * Util class for depiction.
  *
  * @author Felix Baensch, Jonas Schaub
  * @version 1.0.0.0
@@ -76,7 +76,7 @@ public class DepictionUtil {
      * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImage(IAtomContainer anAtomContainer, double aWidth, double aHeight) {
-        return depictImageWithZoom(anAtomContainer, 1.0, aWidth, aHeight);
+        return DepictionUtil.depictImageWithZoom(anAtomContainer, 1.0, aWidth, aHeight);
     }
     //
     /**
@@ -87,7 +87,7 @@ public class DepictionUtil {
      * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithHeight(IAtomContainer anAtomContainer, double aHeight) {
-        return depictImageWithZoom(anAtomContainer, 1.0, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, aHeight);
+        return DepictionUtil.depictImageWithZoom(anAtomContainer, 1.0, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, aHeight);
     }
     //
     /**
@@ -98,7 +98,7 @@ public class DepictionUtil {
      * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithWidth(IAtomContainer anAtomContainer, double aWidth) {
-        return depictImageWithZoom(anAtomContainer, 1.0, aWidth, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
+        return DepictionUtil.depictImageWithZoom(anAtomContainer, 1.0, aWidth, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
     //
     /**
@@ -109,7 +109,7 @@ public class DepictionUtil {
      * @return Image of 2D structure of IAtomContainer
      */
     public static Image depictImageWithZoom(IAtomContainer anAtomContainer, double aZoom){
-        return depictImageWithZoom(anAtomContainer, aZoom, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
+        return DepictionUtil.depictImageWithZoom(anAtomContainer, aZoom, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT);
     }
     /**
      * Creates and returns an Image of the AtomContainer with any zoom factor and given width and height.

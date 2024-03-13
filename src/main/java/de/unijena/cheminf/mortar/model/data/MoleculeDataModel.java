@@ -77,16 +77,16 @@ public class MoleculeDataModel {
      * Fragments map containing names of fragmentations done to the molecule as keys and lists of
      * {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that resulted from these fragmentations
      * as values.
-     * HashMap<FragmentationAlgorithmName, List<Fragments>>
+     * Map<FragmentationAlgorithmName, List<Fragments>>
      */
-    private final HashMap<String, List<FragmentDataModel>> fragments;
+    private final Map<String, List<FragmentDataModel>> fragments;
     //
     /**
      * Fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique SMILES
      * representations of the fragments and values are the frequencies of the respective fragments in the molecule.
-     * HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
+     * Map<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
      */
-    private final HashMap<String, HashMap<String, Integer>> fragmentFrequencies;
+    private final Map<String, Map<String, Integer>> fragmentFrequencies;
     //
     /**
      * Property map of this molecule.
@@ -214,9 +214,9 @@ public class MoleculeDataModel {
      * the molecule and as values lists of {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that
      * resulted from these fragmentations.
      *
-     * @return HashMap {@literal <}fragmentationName, List {@literal <}FragmentDataModel {@literal >>}
+     * @return Map {@literal <}fragmentationName, List {@literal <}FragmentDataModel {@literal >>}
      */
-    public HashMap<String, List<FragmentDataModel>> getAllFragments(){
+    public Map<String, List<FragmentDataModel>> getAllFragments(){
         return this.fragments;
     }
     //
@@ -235,9 +235,9 @@ public class MoleculeDataModel {
      * done to the molecule and as values maps that in turn contain as keys unique SMILES representations of fragments
      * that resulted from the respective fragmentation and as objects the frequencies of the specific fragment in the molecule.
      *
-     * @return HashMap {@literal <}fragmentationName, HashMap {@literal <}uniqueSmiles, frequency {@literal >>}
+     * @return Map {@literal <}fragmentationName, Map {@literal <}uniqueSmiles, frequency {@literal >>}
      */
-    public HashMap<String, HashMap<String, Integer>> getFragmentFrequencies(){
+    public Map<String, Map<String, Integer>> getFragmentFrequencies(){
         return this.fragmentFrequencies;
     }
     //
@@ -246,9 +246,9 @@ public class MoleculeDataModel {
      * SMILES representations of the fragments and values are the frequencies of the respective fragments in the molecule.
      *
      * @param aKey String specifies fragmentation or fragmentation algorithm
-     * @return HashMap {@literal <}uniqueSmiles, frequency {@literal >}
+     * @return Map {@literal <}uniqueSmiles, frequency {@literal >}
      */
-    public HashMap<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
+    public Map<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
         Objects.requireNonNull(aKey, "Key must not be null");
         return this.fragmentFrequencies.get(aKey);
     }
@@ -300,15 +300,17 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Returns property map of this molecule
+     * Returns property map of this molecule.
+     *
      * @return property map
      */
-    public Map getProperties() {
+    public Map<Object, Object> getProperties() {
         return this.properties;
     }
     //
     /**
-     * Returns whether the atom container of the molecule should be kept or not
+     * Returns whether the atom container of the molecule should be kept or not.
+     *
      * @return boolean keepAtomContainer
      */
     public boolean isKeepAtomContainer(){
@@ -339,7 +341,8 @@ public class MoleculeDataModel {
      * @param aValue boolean
      */
     public void setKeepAtomContainer(boolean aValue){
-        if(!(this.keepAtomContainer = aValue)){
+        this.keepAtomContainer = aValue;
+        if(!(this.keepAtomContainer)){
             this.atomContainer = null;
         }
     }

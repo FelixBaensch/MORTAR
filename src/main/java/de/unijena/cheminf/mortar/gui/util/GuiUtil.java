@@ -63,8 +63,8 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
@@ -485,7 +485,7 @@ public class GuiUtil {
             if (!aListOfMolecules.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                 continue;
             }
-            HashMap<String, Integer> tmpCurrentFragmentsMap = aListOfMolecules.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
+            Map<String, Integer> tmpCurrentFragmentsMap = aListOfMolecules.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
             if (tmpCurrentFragmentsMap == null) { //redundant, see if-clause above
                 continue;
             }
