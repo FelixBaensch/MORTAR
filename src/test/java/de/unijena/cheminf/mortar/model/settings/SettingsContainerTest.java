@@ -62,7 +62,7 @@ public class SettingsContainerTest {
         SettingsContainer tmpSettingsContainer = new SettingsContainer();
         //restoring to default because a previous settings file with altered settings may have been imported (see below)
         tmpSettingsContainer.restoreDefaultSettings();
-        List<Property> tmpPropertiesList = tmpSettingsContainer.settingsProperties();
+        List<Property<?>> tmpPropertiesList = tmpSettingsContainer.settingsProperties();
         System.out.println();
         for (Property tmpProp : tmpPropertiesList) {
             //recent directory path setting is not included because it is an internal setting

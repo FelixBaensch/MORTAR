@@ -317,7 +317,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
      */
-    private final List<Property> settings;
+    private final List<Property<?>> settings;
 
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
@@ -456,7 +456,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderFragmenter.APPLY_INPUT_RESTRICTIONS_OPTION_DEFAULT);
         this.settingNameTooltipTextMap.put(this.applyInputRestrictionsSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.applyInputRestrictionsSetting.tooltip"));
-        this.settings = new ArrayList<Property>(7);
+        this.settings = new ArrayList<>(7);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.electronDonationModelSetting);
         this.settings.add(this.cycleFinderSetting);
@@ -752,7 +752,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //without the empty line, the code folding does not work properly here...
 
     @Override
-    public List<Property> settingsProperties() {
+    public List<Property<?>> settingsProperties() {
         return this.settings;
     }
 

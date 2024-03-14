@@ -49,6 +49,7 @@ import java.util.logging.Logger;
  * @author Felix Baensch, Jonas Schaub
  * @version 1.0.0.0
  */
+@Deprecated
 public class FragmentationThread implements Callable<Hashtable<String, FragmentDataModel>> {
 
     /**

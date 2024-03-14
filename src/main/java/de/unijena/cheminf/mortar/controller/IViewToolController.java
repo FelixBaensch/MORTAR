@@ -44,7 +44,7 @@ public interface IViewToolController {
      *
      * @return list of settings represented by properties
      */
-    public List<Property> settingsProperties();
+    public List<Property<?>> settingsProperties();
     /**
      * Returns a view tool name that can be displayed in the GUI, e.g. in the views menu.
      *

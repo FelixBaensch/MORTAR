@@ -105,7 +105,7 @@ public interface IMoleculeFragmenter {
      *
      * @return list of settings represented by properties
      */
-    public List<Property> settingsProperties();
+    public List<Property<?>> settingsProperties();
 
     /**
      * Returns a map containing descriptive texts (values) for the settings with the given names (keys) to be used as

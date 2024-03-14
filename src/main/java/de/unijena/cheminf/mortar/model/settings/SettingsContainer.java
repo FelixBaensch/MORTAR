@@ -154,7 +154,7 @@ public class SettingsContainer {
      * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
      * for internal use, not intended to be changed by the user via this dialogue.
      */
-    private List<Property> settings;
+    private List<Property<?>> settings;
 
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
@@ -195,7 +195,7 @@ public class SettingsContainer {
      *
      * @return list of settings as properties
      */
-    public List<Property> settingsProperties() {
+    public List<Property<?>> settingsProperties() {
         return this.settings;
     }
 
@@ -506,7 +506,7 @@ public class SettingsContainer {
         String tmpPreferenceContainerFilePathName = tmpSettingsDirectoryPathName
                 + SettingsContainer.SETTINGS_CONTAINER_FILE_NAME
                 + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
-        List<Property> tmpSettings = new ArrayList<>(6);
+        List<Property<?>> tmpSettings = new ArrayList<>(6);
         tmpSettings.addAll(this.settings);
         tmpSettings.add(this.recentDirectoryPathSetting);
         try {
@@ -723,7 +723,7 @@ public class SettingsContainer {
             }
         };
         this.settingNameTooltipTextMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.tooltip"));
-        this.settings = new ArrayList<Property>(6);
+        this.settings = new ArrayList<>(6);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
@@ -743,7 +743,7 @@ public class SettingsContainer {
         //setting names must be singletons
         //setting names and values must adhere to the preference input restrictions
         //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
-        List<Property> tmpSettingsList = this.settings;
+        List<Property<?>> tmpSettingsList = this.settings;
         int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpSettingsList.size(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         HashSet<String> tmpSettingNamesSet = new HashSet<>(tmpSettingNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (Property tmpSetting : tmpSettingsList) {

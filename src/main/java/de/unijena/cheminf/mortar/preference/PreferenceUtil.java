@@ -85,7 +85,7 @@ public final class PreferenceUtil {
      * @throws NullPointerException if a given argument is null
      * @throws IllegalArgumentException if the given file path name is invalid
      */
-    public static PreferenceContainer translateJavaFxPropertiesToPreferences(List<Property> aPropertiesList, String aContainerFilePathname) throws NullPointerException, IllegalArgumentException {
+    public static PreferenceContainer translateJavaFxPropertiesToPreferences(List<Property<?>> aPropertiesList, String aContainerFilePathname) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(aPropertiesList);
         Objects.requireNonNull(aContainerFilePathname);
         if (!PreferenceContainer.isValidContainerFilePathname(aContainerFilePathname)) {

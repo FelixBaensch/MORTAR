@@ -310,7 +310,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
      */
-    private final List<Property> settings;
+    private final List<Property<?>> settings;
 
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
@@ -959,7 +959,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     //without the empty line, the code folding does not work properly here...
 
     @Override
-    public List<Property> settingsProperties() {
+    public List<Property<?>> settingsProperties() {
         return this.settings;
     }
 

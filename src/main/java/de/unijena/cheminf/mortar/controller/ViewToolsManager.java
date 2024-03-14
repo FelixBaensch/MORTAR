@@ -199,7 +199,7 @@ public class ViewToolsManager {
             if (Objects.isNull(tmpViewTool)) {
                 continue;
             }
-            List<Property> tmpSettings = tmpViewTool.settingsProperties();
+            List<Property<?>> tmpSettings = tmpViewTool.settingsProperties();
             if (Objects.isNull(tmpSettings)) {
                 continue;
             }
@@ -256,7 +256,7 @@ public class ViewToolsManager {
      * Sets the values of the given properties according to the preferences in the given container with the same name.
      * If no matching preference for a given property is found, the value will remain in its default setting.
      */
-    private void updatePropertiesFromPreferences(List<Property> aPropertiesList, PreferenceContainer aPreferenceContainer) {
+    private void updatePropertiesFromPreferences(List<Property<?>> aPropertiesList, PreferenceContainer aPreferenceContainer) {
         for (Property tmpSettingProperty : aPropertiesList) {
             String tmpPropertyName = tmpSettingProperty.getName();
             if (aPreferenceContainer.containsPreferenceName(tmpPropertyName)) {
@@ -308,7 +308,7 @@ public class ViewToolsManager {
             //setting names must be singletons within the respective class
             //setting names and values must adhere to the preference input restrictions
             //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
-            List<Property> tmpSettingsList = tmpViewTool.settingsProperties();
+            List<Property<?>> tmpSettingsList = tmpViewTool.settingsProperties();
             HashSet<String> tmpSettingNames = new HashSet<>((int) (tmpSettingsList.size() * 1.5), 0.75f);
             for (Property tmpSetting : tmpSettingsList) {
                 if (!PreferenceUtil.isValidName(tmpSetting.getName())) {

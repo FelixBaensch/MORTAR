@@ -315,7 +315,7 @@ public class HistogramViewController implements IViewToolController {
     /**
      * All settings of this view tool, encapsulated in JavaFX properties for binding in GUI and persistence.
      */
-    private final List<Property> settings;
+    private final List<Property<?>> settings;
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -490,7 +490,7 @@ public class HistogramViewController implements IViewToolController {
      * </p>
      */
     @Override
-    public List<Property> settingsProperties() {
+    public List<Property<?>> settingsProperties() {
         //note: see comments in constructor for how the setting values are transferred in both directions (GUI <-> Properties)
         return this.settings;
     }

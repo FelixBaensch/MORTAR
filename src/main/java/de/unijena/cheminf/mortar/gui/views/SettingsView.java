@@ -139,7 +139,7 @@ public class SettingsView extends AnchorPane {
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      * @return Tab
      */
-    public Tab addTab(Stage aStage, String aLabel, List<Property> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
+    public Tab addTab(Stage aStage, String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         tmpTab.setId(aLabel);
@@ -180,7 +180,7 @@ public class SettingsView extends AnchorPane {
      * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      */
-    private void addPropertyItems(GridPane aGridPane, List<Property> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
+    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
         int tmpRowIndex = 0;
         for(Property tmpProperty : aPropertiesList){
             RowConstraints tmpRow = new RowConstraints();
