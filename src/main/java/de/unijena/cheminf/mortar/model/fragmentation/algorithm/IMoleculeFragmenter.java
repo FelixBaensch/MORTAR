@@ -70,9 +70,9 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public interface IMoleculeFragmenter {
-    //<editor-fold desc="FragmentSaturationOption enum">
+    //<editor-fold desc="Enum FragmentSaturationOption">
     /**
-     * Enumeration of different ways to saturate free valences of returned fragment molecules
+     * Enumeration of different ways to saturate free valences of returned fragment molecules.
      */
     public static enum FragmentSaturationOption {
         /**
@@ -86,6 +86,85 @@ public interface IMoleculeFragmenter {
         HYDROGEN_SATURATION;
     }
     //</editor-fold>
+    //
+    //<editor-fold desc="Enum ElectronDonationModelOption">
+    /**
+     * Enum for available electron donation models that combined with a cycle finder algorithm is used to define an
+     * aromaticity model to use. Utility for defining the options in a GUI. The electron
+     * donation model specified in the constant name is used and a cycle finder algorithm set via the respective option.
+     */
+    public static enum ElectronDonationModelOption {
+        /**
+         * Daylight electron donation model.
+         */
+        DAYLIGHT,
+
+        /**
+         * CDK electron donation model.
+         */
+        CDK,
+
+        /**
+         * CDK electron donation model that additionally allows exocyclic bonds to contribute electrons to the aromatic system.
+         */
+        CDK_ALLOWING_EXOCYCLIC,
+
+        /**
+         * Pi bonds electron donation model.
+         */
+        PI_BONDS;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Enum CycleFinderOption">
+    /**
+     * Enum for defining which cycle finder algorithm should be used to define an aromaticity model. The electron
+     * donation model is set via the respective option. See CDK class "Cycles" for more detailed descriptions of the
+     * available cycle finders.
+     */
+    public static enum CycleFinderOption {
+        /**
+         * Algorithm that tries to find all possible rings in a given structure. Might cause IntractableException.
+         */
+        ALL,
+
+        /**
+         * Algorithm that looks for cycles usually checked by the CDK when detecting aromaticity.
+         */
+        CDK_AROMATIC_SET,
+
+        /**
+         * Gives the shortest cycles through each edge.
+         */
+        EDGE_SHORT,
+
+        /**
+         * Unique set of essential cycles of a molecule.
+         */
+        ESSENTIAL,
+
+        /**
+         * Minimum Cycle Basis (MCB, aka. SSSR - smallest set of smallest rings).
+         */
+        MCB,
+
+        /**
+         * Union of all possible MCB cycle sets of a molecule.
+         */
+        RELEVANT,
+
+        /**
+         *  Shortest cycle through each triple of vertices.
+         */
+        TRIPLET_SHORT,
+
+        /**
+         * Shortest cycles through each vertex.
+         */
+        VERTEX_SHORT;
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Public static final constants">
     /**
      * Property key/name to assign a category to a fragment, represented by an IAtomContainer, e.g. 'aglycone' or
@@ -163,7 +242,7 @@ public interface IMoleculeFragmenter {
 
     /**
      * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
-     * multi-threaded work where every thread needs its own fragmenter instance.
+     * multithreaded work where every thread needs its own fragmenter instance.
      *
      * @return new fragmenter instance with the same settings
      */

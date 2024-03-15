@@ -25,11 +25,6 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-/**
- * TODO:
- * -
- */
-
 import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -138,11 +133,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public static final SRUFragmenterReturnedFragmentsOption RETURNED_FRAGMENTS_OPTION_DEFAULT = SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS;
     //</editor-fold>
     //
-    //<editor-fold desc="Private variables">
+    //<editor-fold desc="Private final variables">
     /**
      * Instance of the Sugar Removal Utility used internally to detect and remove the sugar moieties.
      */
-    private SugarRemovalUtility sugarRUInstance;
+    private final SugarRemovalUtility sugarRUInstance;
     //</editor-fold>
     //<editor-fold desc="Private final variables">
 
@@ -192,7 +187,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      * Logger of this class.
      */
-    private final Logger logger = Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -214,8 +209,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                 try {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -231,8 +229,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                 try {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -249,8 +250,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                 try {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -296,8 +300,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     SugarRemovalUtilityFragmenter.this.preservationModeThresholdSetting.set(
                             SugarRemovalUtilityFragmenter.this.sugarRUInstance.getPreservationModeThresholdSetting());
                 } catch (IllegalArgumentException | NullPointerException anException) {
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -315,8 +322,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     //throws IllegalArgumentException
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeThresholdSetting(newValue);
                 }catch(IllegalArgumentException anException){
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -348,8 +358,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     //throws IllegalArgumentException
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(newValue);
                 } catch (IllegalArgumentException anException) {
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -380,8 +393,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     //throws IllegalArgumentException
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMinSizeSetting(newValue);
                 } catch (IllegalArgumentException anException) {
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -400,8 +416,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     //throws IllegalArgumentException
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setLinearSugarCandidateMaxSizeSetting(newValue);
                 } catch (IllegalArgumentException anException) {
-                    SugarRemovalUtilityFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -1132,7 +1151,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     if (!Objects.isNull(tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
                             && ((String) tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
                             .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
-                        continue;
+                        //continue;
                     } else {
                         tmpFragments.remove(i);
                         i--;
