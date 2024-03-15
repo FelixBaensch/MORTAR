@@ -286,6 +286,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         };
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.fragmentSaturationSetting.tooltip"));
+        this.ertlFGFInstance = new ErtlFunctionalGroupsFinder(
+                ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.getAssociatedEFGFMode());
         this.environmentModeSetting = new SimpleEnumConstantNameProperty(this, "Environment mode setting",
                 ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.name(), ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.class) {
             @Override
@@ -408,7 +410,6 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.settings.add(this.returnedFragmentsSetting);
         this.settings.add(this.filterSingleAtomsSetting);
         this.settings.add(this.applyInputRestrictionsSetting);
-        this.ertlFGFInstance = new ErtlFunctionalGroupsFinder(FGEnvOption.valueOf(this.environmentModeSetting.get()).getAssociatedEFGFMode());
     }
     //</editor-fold>
     //
