@@ -298,7 +298,7 @@ public class MainViewController {
         //fragments export to PDB
         this.mainView.getMainMenuBar().getFragmentsExportToPDBMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.exportFile(Exporter.ExportTypes.PDB_FILE));
+                anEvent -> this.exportFile(Exporter.ExportTypes.FRAGMENT_PDB_FILE));
         //fragments export to PDF
         this.mainView.getMainMenuBar().getFragmentsExportToPDFMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -306,11 +306,11 @@ public class MainViewController {
         //fragments export to single SDF
         this.mainView.getMainMenuBar().getFragmentsExportToSingleSDFMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.exportFile(Exporter.ExportTypes.SINGLE_SD_FILE));
+                anEvent -> this.exportFile(Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE));
         //fragments export to separate SDFs
         this.mainView.getMainMenuBar().getFragmentsExportToSeparateSDFsMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.exportFile(Exporter.ExportTypes.SD_FILE));
+                anEvent -> this.exportFile(Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES));
         //items export to CSV
         this.mainView.getMainMenuBar().getItemsExportToCSVMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -559,7 +559,7 @@ public class MainViewController {
             return;
         }
         switch (anExportType) {
-            case Exporter.ExportTypes.FRAGMENT_CSV_FILE, Exporter.ExportTypes.PDB_FILE, Exporter.ExportTypes.FRAGMENT_PDF_FILE, Exporter.ExportTypes.SINGLE_SD_FILE, SD_FILE:
+            case Exporter.ExportTypes.FRAGMENT_CSV_FILE, Exporter.ExportTypes.FRAGMENT_PDB_FILE, Exporter.ExportTypes.FRAGMENT_PDF_FILE, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE, FRAGMENT_MULTIPLE_SD_FILES:
                 if (this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS) == null ||
                         this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS).isEmpty() ||
                         ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
@@ -591,13 +591,15 @@ public class MainViewController {
         if (this.isExportRunningProperty.get()) {
             this.interruptExport();
         }
-        tmpExporter.saveFile(this.primaryStage, anExportType, ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
-        if(tmpExporter.getFile() == null){
+        //returns null if file chooser dialog was cancelled
+        File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(this.primaryStage, anExportType,
+                ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+        if (tmpExportFile == null) {
             return;
         }
         boolean tmpGenerate2dAtomCoordinates = false;
-        if (anExportType.equals(Exporter.ExportTypes.PDB_FILE) || anExportType.equals(Exporter.ExportTypes.SINGLE_SD_FILE)
-                && (!ChemUtil.checkMoleculeListForCoordinates(getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS)))) {
+        if (anExportType.equals(Exporter.ExportTypes.FRAGMENT_PDB_FILE) || anExportType.equals(Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE)
+                && (!ChemUtil.checkMoleculeListForCoordinates(this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS)))) {
             ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
                     Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.title"),
                     Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.header"),
@@ -612,56 +614,61 @@ public class MainViewController {
                 switch (anExportType) {
                     case Exporter.ExportTypes.FRAGMENT_CSV_FILE:
                         return tmpExporter.exportCsvFile(
-                                getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
-                                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                                settingsContainer.getCsvExportSeparatorSetting(),
+                                tmpExportFile,
+                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
+                                ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                MainViewController.this.settingsContainer.getCsvExportSeparatorSetting(),
                                 TabNames.FRAGMENTS
                         );
-                    case Exporter.ExportTypes.PDB_FILE:
+                    case Exporter.ExportTypes.FRAGMENT_PDB_FILE:
                         return tmpExporter.exportFragmentsAsChemicalFile(
-                                getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
-                                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                tmpExportFile,
+                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
                                 ChemFileTypes.PDB,
                                 tmpGenerate2dAtomCoordinatesFinal
                         );
                     case Exporter.ExportTypes.FRAGMENT_PDF_FILE:
                         return tmpExporter.exportPdfFile(
-                                getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
-                                moleculeDataModelList,
-                                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                tmpExportFile,
+                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
+                                MainViewController.this.moleculeDataModelList,
+                                ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.FRAGMENTS
                         );
-                    case Exporter.ExportTypes.SINGLE_SD_FILE:
+                    case Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE:
                         return tmpExporter.exportFragmentsAsChemicalFile(
-                                getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
-                                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                tmpExportFile,
+                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
                                 ChemFileTypes.SDF,
                                 tmpGenerate2dAtomCoordinatesFinal,
                                 true
                         );
-                    case Exporter.ExportTypes.SD_FILE:
+                    case Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES:
                         return tmpExporter.exportFragmentsAsChemicalFile(
-                                getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
-                                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                tmpExportFile,
+                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
                                 ChemFileTypes.SDF,
                                 false
                         );
                     case Exporter.ExportTypes.ITEM_CSV_FILE:
                         return tmpExporter.exportCsvFile(
-                                moleculeDataModelList,
-                                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                                settingsContainer.getCsvExportSeparatorSetting(),
+                                tmpExportFile,
+                                MainViewController.this.moleculeDataModelList,
+                                ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                MainViewController.this.settingsContainer.getCsvExportSeparatorSetting(),
                                 TabNames.ITEMIZATION
                         );
                     case Exporter.ExportTypes.ITEM_PDF_FILE:
                         return tmpExporter.exportPdfFile(
-                                getItemsListOfSelectedFragmentationByTabId(TabNames.ITEMIZATION),
-                                moleculeDataModelList,
-                                ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                tmpExportFile,
+                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.ITEMIZATION),
+                                MainViewController.this.moleculeDataModelList,
+                                ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.ITEMIZATION
                         );
+                    default:
+                        throw new UnsupportedOperationException("Unknown export type.");
                 }
-                return null;
             }
         };
         this.exportTask.setOnSucceeded(event -> {

@@ -317,16 +317,15 @@ public final class FileUtil {
         if (tmpLastChar == File.separatorChar)
             throw new IllegalArgumentException("Given file path is a directory.");
         //</editor-fold>
-        String tmpFilePath = aFilePath;
         String tmpFileExtension = aFileExtension;
         if (Objects.isNull(tmpFileExtension)) {
             tmpFileExtension = "";
         }
         int tmpFilesInThisMinuteCounter = 1;
-        File tmpFile = new File(tmpFilePath+ tmpFileExtension);
+        File tmpFile = new File(aFilePath + tmpFileExtension);
         if (tmpFile.exists()) {
-            while (tmpFilesInThisMinuteCounter <= Integer.MAX_VALUE) {
-                tmpFile = new File(tmpFilePath + "(" + tmpFilesInThisMinuteCounter + ")" + tmpFileExtension);
+            while (true) {
+                tmpFile = new File(aFilePath + "(" + tmpFilesInThisMinuteCounter + ")" + tmpFileExtension);
                 if (!tmpFile.exists()) {
                     break;
                 }
@@ -338,7 +337,7 @@ public final class FileUtil {
             String tmpNonExistingFilePath = tmpFile.getPath();
             return tmpNonExistingFilePath;
         } else {
-            return tmpFilePath + tmpFileExtension;
+            return aFilePath + tmpFileExtension;
         }
     }
     // </editor-fold>
