@@ -176,6 +176,10 @@ public class MainViewController {
      */
     private Task<IAtomContainerSet> importTask;
     /**
+     * Storing the name of the last imported file.
+     */
+    private String importedFileName;
+    /**
      * Thread for molecule exports, so GUI thread is always responsive
      */
     private Thread exporterThread;
@@ -517,6 +521,7 @@ public class MainViewController {
                     tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
                     this.moleculeDataModelList.add(tmpMoleculeDataModel);
                 }
+                this.importedFileName = tmpImporter.getFileName();
                 MainViewController.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
                         "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
                         "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
@@ -633,6 +638,7 @@ public class MainViewController {
                                 MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
                                 MainViewController.this.moleculeDataModelList,
                                 ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                MainViewController.this.importedFileName,
                                 TabNames.FRAGMENTS
                         );
                     case Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE:
@@ -664,6 +670,7 @@ public class MainViewController {
                                 MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
                                 MainViewController.this.moleculeDataModelList,
                                 ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                                MainViewController.this.importedFileName,
                                 TabNames.ITEMIZATION
                         );
                     default:

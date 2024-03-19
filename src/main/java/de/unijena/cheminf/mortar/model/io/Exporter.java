@@ -48,6 +48,7 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 
+import de.unijena.cheminf.mortar.model.util.MiscUtil;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.stage.DirectoryChooser;
@@ -73,6 +74,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -204,19 +206,20 @@ public class Exporter {
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
      * @param aMoleculeDataModelList a list MoleculeDataModel to export items
      * @param aFragmentationName     fragmentation name to be displayed in the header of the PDF file
+     * @param anImportedFileName name of the input file whose molecules were fragmented
      * @param aTabName               TabName to identify type of tab
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportPdfFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, TabNames aTabName) throws FileNotFoundException {
+    public List<String> exportPdfFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String anImportedFileName, TabNames aTabName) throws FileNotFoundException {
         if (aFile == null)
             return null;
         if (aTabName.equals(TabNames.FRAGMENTS)) {
             //throws FileNotFoundException, gets handled in setOnFailed()
-            return this.createFragmentsTabPdfFile(aFile, aFragmentDataModelList, aMoleculeDataModelList.size(), aFragmentationName);
+            return this.createFragmentsTabPdfFile(aFile, aFragmentDataModelList, aMoleculeDataModelList.size(), aFragmentationName, anImportedFileName);
         } else if (aTabName.equals(TabNames.ITEMIZATION)) {
             //throws FileNotFoundException, gets handled in setOnFailed()
-            return this.createItemizationTabPdfFile(aFile, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
+            return this.createItemizationTabPdfFile(aFile, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName, anImportedFileName);
         }
         return null;
     }
@@ -289,7 +292,8 @@ public class Exporter {
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
             String tmpCsvHeader = Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
-                    Message.get("Exporter.itemsTab.csvHeader.smilesOfFragmentsAndFrequency");
+                    Message.get("Exporter.itemsTab.csvHeader.smilesOfFragment") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.frequencyOfFragment");
             tmpWriter.write(tmpCsvHeader);
             for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
                 if (Thread.currentThread().isInterrupted()) {
@@ -376,6 +380,7 @@ public class Exporter {
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
      * @param aMoleculeDataModelListSize size of imported molecule list to display in the PDF document header
      * @param aFragmentationName fragmentation name to be displayed in the header of the PDF file
+     * @param anImportedFileName name of the input file whose molecules were fragmented
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if given file cannot be found
      * @throws DocumentException if something goes wrong writing the document
@@ -384,9 +389,10 @@ public class Exporter {
     private List<String> createFragmentsTabPdfFile(File aPdfFile,
                                                    List<MoleculeDataModel> aFragmentDataModelList,
                                                    int aMoleculeDataModelListSize,
-                                                   String aFragmentationName) throws FileNotFoundException, DocumentException {
+                                                   String aFragmentationName,
+                                                   String anImportedFileName) throws FileNotFoundException, DocumentException {
         if (aPdfFile == null || aFragmentDataModelList == null || aMoleculeDataModelListSize == 0 ||
-                aFragmentationName == null) {
+                aFragmentationName == null || anImportedFileName == null) {
             return null;
         }
         try (Document tmpPDFDocument = new Document(PageSize.A4)) {
@@ -411,6 +417,7 @@ public class Exporter {
             tmpFragmentationTable.addCell(tmpPercentageCell);
             tmpFragmentationTable.addCell(tmpMolFrequencyCell);
             tmpFragmentationTable.addCell(tmpMolPercentageCell);
+            DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
             for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
@@ -421,9 +428,9 @@ public class Exporter {
                 double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
                 int tmpMoleculeFrequency = tmpFragmentDataModel.getMoleculeFrequency();
                 String tmpStringMoleculeFrequency = String.format("%d", tmpMoleculeFrequency);
-                String tmpStringAbsolutePercentage = String.format("%.4f", tmpAbsolutePercentage);
+                String tmpStringAbsolutePercentage = tmpPercentageForm.format(tmpAbsolutePercentage);
                 double tmpMoleculePercentage = tmpFragmentDataModel.getMoleculePercentage();
-                String tmpStringMoleculePercentage = String.format("%.4f", tmpMoleculePercentage);
+                String tmpStringMoleculePercentage = tmpPercentageForm.format(tmpMoleculePercentage);
                 //creates an image of the fragment
                 PdfPCell tmpImageFragmentCell = new PdfPCell();
                 tmpImageFragmentCell.setFixedHeight(85f);
@@ -458,7 +465,7 @@ public class Exporter {
             }
             tmpPDFDocument.add(tmpHeader);
             tmpPDFDocument.add(tmpSpace);
-            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelListSize, aFragmentationName));
+            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelListSize, aFragmentationName, anImportedFileName));
             tmpPDFDocument.add(tmpSpace);
             tmpPDFDocument.add(tmpFragmentationTable);
             return tmpFailedExportFragments;
@@ -472,6 +479,7 @@ public class Exporter {
      * @param aFragmentDataModelListSize size of list of FragmentDataModel instances to export
      * @param aMoleculeDataModelList     a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName         fragmentation name to retrieve the specific set of fragments from the molecule data models
+     * @param anImportedFileName name of the input file whose molecules were fragmented
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if given file cannot be found
      * @throws DocumentException if something goes wrong writing the document
@@ -480,10 +488,12 @@ public class Exporter {
     private List<String> createItemizationTabPdfFile(File aPdfFile,
                                              int aFragmentDataModelListSize,
                                              ObservableList<MoleculeDataModel> aMoleculeDataModelList,
-                                             String aFragmentationName) throws FileNotFoundException, DocumentException {
+                                             String aFragmentationName,
+                                             String anImportedFileName) throws FileNotFoundException, DocumentException {
         if (aPdfFile == null || aFragmentDataModelListSize == 0 ||
                 aMoleculeDataModelList == null || aMoleculeDataModelList.isEmpty() ||
-                aFragmentationName == null || aFragmentationName.isEmpty()) {
+                aFragmentationName == null || aFragmentationName.isEmpty() ||
+                anImportedFileName == null || anImportedFileName.isEmpty()) {
             return null;
         }
         try (Document tmpPDFDocument = new Document(PageSize.A4)) {
@@ -496,7 +506,7 @@ public class Exporter {
             Paragraph tmpSpace = new Paragraph(" ");
             tmpPDFDocument.add(tmpItemizationTabHeader);
             tmpPDFDocument.add(tmpSpace);
-            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName));
+            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName, anImportedFileName));
             tmpPDFDocument.add(tmpSpace);
             for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
                 if (Thread.currentThread().isInterrupted()) {
@@ -896,13 +906,15 @@ public class Exporter {
      * @param aFragmentDataModelListSize size of list of fragments
      * @param aMoleculeDataModelListSize size of list of molecules
      * @param aFragmentationName name of the fragmentation task to display in the header
+     * @param anImportedFileName name of the input file whose molecules were fragmented
      * @return fragmentation report table for a PDF file header
      * @author Betül Sevindik
      */
     private PdfPTable createHeaderTable(
             int aFragmentDataModelListSize,
             int aMoleculeDataModelListSize,
-            String aFragmentationName) {
+            String aFragmentationName,
+            String anImportedFileName) {
         //creates the header
         float[] tmpCellLengthIntro = {60f, 60f}; // relative sizes
         PdfPTable tmpTableIntro = new PdfPTable(tmpCellLengthIntro);
@@ -912,12 +924,20 @@ public class Exporter {
         PdfPCell tmpIntroCell4 = new PdfPCell(new Paragraph(String.valueOf(aMoleculeDataModelListSize)));
         PdfPCell tmpIntroCell5 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.numberOfFragments"), Exporter.PDF_CELL_FONT));
         PdfPCell tmpIntroCell6 = new PdfPCell(new Paragraph(String.valueOf(aFragmentDataModelListSize)));
+        PdfPCell tmpIntroCell7 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.fileName"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell8 = new PdfPCell(new Paragraph(anImportedFileName));
+        PdfPCell tmpIntroCell9 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.timeStamp"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell10 = new PdfPCell(new Paragraph(MiscUtil.getTimestampInStandardFormat()));
         tmpTableIntro.addCell(tmpIntroCell1);
         tmpTableIntro.addCell(tmpIntroCell2);
         tmpTableIntro.addCell(tmpIntroCell3);
         tmpTableIntro.addCell(tmpIntroCell4);
         tmpTableIntro.addCell(tmpIntroCell5);
         tmpTableIntro.addCell(tmpIntroCell6);
+        tmpTableIntro.addCell(tmpIntroCell7);
+        tmpTableIntro.addCell(tmpIntroCell8);
+        tmpTableIntro.addCell(tmpIntroCell9);
+        tmpTableIntro.addCell(tmpIntroCell10);
         return tmpTableIntro;
     }
     //
