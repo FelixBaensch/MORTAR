@@ -962,7 +962,7 @@ public class Exporter {
         tmpFileChooser.setInitialDirectory(new File(this.settingsContainer.getRecentDirectoryPathSetting()));
         File tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         if (tmpFile != null) {
-            this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent());
+            this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent() + File.separator);
         }
         return tmpFile;
     }
