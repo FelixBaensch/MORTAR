@@ -430,11 +430,11 @@ public class FragmentationService {
      * Under construction
      * Start fragmentation pipeline
      * Fragmentation will be done molecule by molecule
-     * TODO: After adapting the data models, this method must be modified so that the resulting fragments are kept separate for each molecule. Note the setting keepLastFragment
      *
      * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
      * @param aNumberOfTasks int
      * @throws Exception if anything unexpected happen
+     * @deprecated After adapting the data models, this method must be modified so that the resulting fragments are kept separate for each molecule. Note the setting keepLastFragment
      */
     @Deprecated
     public void startPipelineFragmentationMolByMol(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
@@ -498,7 +498,7 @@ public class FragmentationService {
                                 );
                             }
                         } catch(CDKException anException) {
-                            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFrag.getName(), anException);
+                            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s fragment name: %s", anException.toString(), tmpFrag.getName()), anException);
                         }
                     }
                 }
@@ -517,7 +517,7 @@ public class FragmentationService {
                 try{
                     tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
                 } catch (CDKException anException){
-                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFrag.getName(), anException);
+                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s fragment name: %s", anException.toString(), tmpFrag.getName()), anException);
                     continue;
                 }
                 if(!tmpMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
@@ -594,12 +594,13 @@ public class FragmentationService {
         String tmpDirectoryPath = FileUtil.getSettingsDirPath()
                 + FragmentationService.FRAGMENTER_SETTINGS_SUBFOLDER_NAME + File.separator;
         File tmpDirectory = new File(tmpDirectoryPath);
+        boolean tmpMKDirsSuccessful = true;
         if (!tmpDirectory.exists()) {
-            tmpDirectory.mkdirs();
+            tmpMKDirsSuccessful = tmpDirectory.mkdirs();
         } else {
             FileUtil.deleteAllFilesInDirectory(tmpDirectoryPath);
         }
-        if (!tmpDirectory.canWrite()) {
+        if (!tmpDirectory.canWrite() || !tmpMKDirsSuccessful) {
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
                     Message.get("FragmentationService.Error.settingsPersistence"));
@@ -620,7 +621,7 @@ public class FragmentationService {
                 PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
                 tmpPrefContainer.writeRepresentation();
             } catch (NullPointerException | IllegalArgumentException | IOException | SecurityException anException) {
-                FragmentationService.LOGGER.log(Level.WARNING, "Fragmenter settings persistence went wrong, exception: " + anException.toString(), anException);
+                FragmentationService.LOGGER.log(Level.WARNING, String.format("Fragmenter settings persistence went wrong, exception: %s", anException.toString()), anException);
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),
                         Message.get("FragmentationService.Error.settingsPersistence"),
@@ -639,12 +640,13 @@ public class FragmentationService {
         String tmpFragmentationServiceSettingsPath = FileUtil.getSettingsDirPath()
                 + FragmentationService.FRAGMENTATION_SERVICE_SETTINGS_SUBFOLDER_NAME + File.separator;
         File tmpFragmentationServiceSettingsDir = new File(tmpFragmentationServiceSettingsPath);
+        boolean tmpMKDirsSuccessful = true;
         if (!tmpFragmentationServiceSettingsDir.exists()) {
-            tmpFragmentationServiceSettingsDir.mkdirs();
+            tmpMKDirsSuccessful = tmpFragmentationServiceSettingsDir.mkdirs();
         } else {
             FileUtil.deleteAllFilesInDirectory(tmpFragmentationServiceSettingsPath);
         }
-        if (!tmpFragmentationServiceSettingsDir.canWrite()) {
+        if (!tmpFragmentationServiceSettingsDir.canWrite() || !tmpMKDirsSuccessful) {
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR,
                     Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
@@ -686,7 +688,7 @@ public class FragmentationService {
         try {
             tmpFragmentationServiceSettingsContainer.writeRepresentation();
         } catch (IOException | SecurityException anException) {
-            FragmentationService.LOGGER.log(Level.WARNING, "Fragmentation service settings persistence went wrong, exception: " + anException.toString(), anException);
+            FragmentationService.LOGGER.log(Level.WARNING, String.format("Fragmentation service settings persistence went wrong, exception: %s", anException.toString()), anException);
             GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                     Message.get("Error.ExceptionAlert.Header"),
                     Message.get("FragmentationService.Error.settingsPersistence"),
@@ -704,7 +706,7 @@ public class FragmentationService {
             try {
                 tmpPrefContainer.writeRepresentation();
             } catch (IOException | SecurityException anException) {
-                FragmentationService.LOGGER.log(Level.WARNING, "Pipeline fragmenter settings persistence went wrong, exception: " + anException.toString(), anException);
+                FragmentationService.LOGGER.log(Level.WARNING, String.format("Pipeline fragmenter settings persistence went wrong, exception: %s", anException.toString()), anException);
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),
                         Message.get("FragmentationService.Error.settingsPersistence"),
@@ -769,7 +771,7 @@ public class FragmentationService {
                     }
                 }
             } catch (IllegalArgumentException | IOException anException) {
-                FragmentationService.LOGGER.log(Level.WARNING, "FragmentationService settings reload failed: " + anException.toString(), anException);
+                FragmentationService.LOGGER.log(Level.WARNING, String.format("FragmentationService settings reload failed: %s", anException.toString()), anException);
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),
                         Message.get("FragmentationService.Error.settingsReload"),
@@ -788,7 +790,7 @@ public class FragmentationService {
                         this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpFragmenterSettingsContainer);
                         tmpFragmenterList.add(tmpFragmenter);
                     } catch (Exception anException) {
-                        FragmentationService.LOGGER.log(Level.WARNING, "FragmentationService settings reload failed: " + anException.toString(), anException);
+                        FragmentationService.LOGGER.log(Level.WARNING, String.format("FragmentationService settings reload failed: %s", anException.toString()), anException);
                         GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                                 Message.get("Error.ExceptionAlert.Header"),
                                 Message.get("FragmentationService.Error.settingsReload"),
@@ -960,11 +962,11 @@ public class FragmentationService {
      * Manages the fragmentation, creates {@link FragmentationTask} equal to the amount of {@param aNumberOfTasks},
      * assigns the molecules of {@param aListOfMolecules} to them and starts the fragmentation.
      *
-     * @param aListOfMolecules
-     * @param aNumberOfTasks
-     * @param aFragmenter
-     * @param aFragmentationName
-     * @throws Exception
+     * @param aListOfMolecules molecules to fragment and to assign the fragments to
+     * @param aNumberOfTasks number of parallel tasks to use for the process
+     * @param aFragmenter fragmenter instance to use to fragment, will be copied for the parallel tasks
+     * @param aFragmentationName name under which to store the fragmentation results on the molecules
+     * @throws Exception if anything goes wrong
      */
     private Hashtable<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules,
                                                                     int aNumberOfTasks,
