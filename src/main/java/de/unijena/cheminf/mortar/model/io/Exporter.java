@@ -202,7 +202,7 @@ public class Exporter {
      *
      * @param aFile                  the file to export to
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
-     * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
+     * @param aMoleculeDataModelList a list MoleculeDataModel to export items
      * @param aFragmentationName     fragmentation name to be displayed in the header of the PDF file
      * @param aTabName               TabName to identify type of tab
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
@@ -213,7 +213,7 @@ public class Exporter {
             return null;
         if (aTabName.equals(TabNames.FRAGMENTS)) {
             //throws FileNotFoundException, gets handled in setOnFailed()
-            return this.createFragmentsTabPdfFile(aFile, aFragmentDataModelList, aMoleculeDataModelList, aFragmentationName);
+            return this.createFragmentsTabPdfFile(aFile, aFragmentDataModelList, aMoleculeDataModelList.size(), aFragmentationName);
         } else if (aTabName.equals(TabNames.ITEMIZATION)) {
             //throws FileNotFoundException, gets handled in setOnFailed()
             return this.createItemizationTabPdfFile(aFile, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
@@ -249,16 +249,20 @@ public class Exporter {
      * @throws IOException if sth goes wrong
      */
     public List<String> exportFragmentsAsChemicalFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates, boolean isSingleExport) throws IOException {
-        if (aFile == null)
+        if (aFile == null) {
             return null;
-        if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
-            return this.createFragmentationTabSingleSDFile(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
-        } else if (aChemFileType == ChemFileTypes.SDF) {
-            return this.createFragmentationTabSeparateSDFiles(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
-        } else if (aChemFileType == ChemFileTypes.PDB) {
-            return this.createFragmentationTabPDBFiles(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
         }
-        return null;
+        List<String> tmpReturnedList;
+        if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
+            tmpReturnedList = this.createFragmentationTabSingleSDFile(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
+        } else if (aChemFileType == ChemFileTypes.SDF) {
+            tmpReturnedList = this.createFragmentationTabSeparateSDFiles(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
+        } else if (aChemFileType == ChemFileTypes.PDB) {
+            tmpReturnedList = this.createFragmentationTabPDBFiles(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
+        } else {
+            tmpReturnedList = null;
+        }
+        return tmpReturnedList;
     }
     //</editor-fold>
     //
@@ -370,7 +374,7 @@ public class Exporter {
      * dialog for the user to determine a directory and file for the exported data.
      *
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
-     * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
+     * @param aMoleculeDataModelListSize size of imported molecule list to display in the PDF document header
      * @param aFragmentationName fragmentation name to be displayed in the header of the PDF file
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if given file cannot be found
@@ -379,9 +383,9 @@ public class Exporter {
      */
     private List<String> createFragmentsTabPdfFile(File aPdfFile,
                                                    List<MoleculeDataModel> aFragmentDataModelList,
-                                                   ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+                                                   int aMoleculeDataModelListSize,
                                                    String aFragmentationName) throws FileNotFoundException, DocumentException {
-        if (aPdfFile == null || aFragmentDataModelList == null || aMoleculeDataModelList == null ||
+        if (aPdfFile == null || aFragmentDataModelList == null || aMoleculeDataModelListSize == 0 ||
                 aFragmentationName == null) {
             return null;
         }
@@ -454,7 +458,7 @@ public class Exporter {
             }
             tmpPDFDocument.add(tmpHeader);
             tmpPDFDocument.add(tmpSpace);
-            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelList.size(), aFragmentationName));
+            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelListSize, aFragmentationName));
             tmpPDFDocument.add(tmpSpace);
             tmpPDFDocument.add(tmpFragmentationTable);
             return tmpFailedExportFragments;
@@ -468,7 +472,7 @@ public class Exporter {
      * @param aFragmentDataModelListSize size of list of FragmentDataModel instances to export
      * @param aMoleculeDataModelList     a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName         fragmentation name to retrieve the specific set of fragments from the molecule data models
-     * @return                           List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if given file cannot be found
      * @throws DocumentException if something goes wrong writing the document
      * @author Betül Sevindik
@@ -891,19 +895,19 @@ public class Exporter {
      *
      * @param aFragmentDataModelListSize size of list of fragments
      * @param aMoleculeDataModelListSize size of list of molecules
-     * @param anAlgorithmName name of the used algorithm
+     * @param aFragmentationName name of the fragmentation task to display in the header
      * @return fragmentation report table for a PDF file header
      * @author Betül Sevindik
      */
     private PdfPTable createHeaderTable(
             int aFragmentDataModelListSize,
             int aMoleculeDataModelListSize,
-            String anAlgorithmName) {
+            String aFragmentationName) {
         //creates the header
         float[] tmpCellLengthIntro = {60f, 60f}; // relative sizes
         PdfPTable tmpTableIntro = new PdfPTable(tmpCellLengthIntro);
-        PdfPCell tmpIntroCell1 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.algorithmUsed"), Exporter.PDF_CELL_FONT));
-        PdfPCell tmpIntroCell2 = new PdfPCell(new Paragraph(anAlgorithmName));
+        PdfPCell tmpIntroCell1 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.fragmentationName"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell2 = new PdfPCell(new Paragraph(aFragmentationName));
         PdfPCell tmpIntroCell3 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.numberOfMolecules"), Exporter.PDF_CELL_FONT));
         PdfPCell tmpIntroCell4 = new PdfPCell(new Paragraph(String.valueOf(aMoleculeDataModelListSize)));
         PdfPCell tmpIntroCell5 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.numberOfFragments"), Exporter.PDF_CELL_FONT));

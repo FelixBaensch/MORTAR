@@ -661,7 +661,7 @@ public class MainViewController {
                     case Exporter.ExportTypes.ITEM_PDF_FILE:
                         return tmpExporter.exportPdfFile(
                                 tmpExportFile,
-                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.ITEMIZATION),
+                                MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
                                 MainViewController.this.moleculeDataModelList,
                                 ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
                                 TabNames.ITEMIZATION
