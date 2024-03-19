@@ -38,7 +38,7 @@ import java.util.List;
  * @version 1.0.2.0
  */
 public final class CollectionUtil {
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -79,49 +79,50 @@ public final class CollectionUtil {
                             return Integer.compare(f1.getAbsoluteFrequency(), f2.getAbsoluteFrequency());
                         else
                             return Integer.compare(f2.getAbsoluteFrequency(), f1.getAbsoluteFrequency());
-                    case ABSOLUTE_PERCENTAGE:
+                    case DataModelPropertiesForTableView.ABSOLUTE_PERCENTAGE:
                         f1 = (FragmentDataModel) m1;
                         f2 = (FragmentDataModel) m2;
                         if (ascending)
                             return Double.compare(f1.getAbsolutePercentage(), f2.getAbsolutePercentage());
                         else
                             return Double.compare(f2.getAbsolutePercentage(), f1.getAbsolutePercentage());
-                    case MOLECULE_FREQUENCY:
+                    case DataModelPropertiesForTableView.MOLECULE_FREQUENCY:
                         f1 = (FragmentDataModel) m1;
                         f2 = (FragmentDataModel) m2;
                         if (ascending)
                             return Double.compare(f1.getMoleculeFrequency(), f2.getMoleculeFrequency());
                         else
                             return Integer.compare(f2.getMoleculeFrequency(), f1.getMoleculeFrequency());
-                    case MOLECULE_PERCENTAGE:
+                    case DataModelPropertiesForTableView.MOLECULE_PERCENTAGE:
                         f1 = (FragmentDataModel) m1;
                         f2 = (FragmentDataModel) m2;
                         if (ascending)
                             return Double.compare(f1.getMoleculePercentage(), f2.getMoleculePercentage());
                         else
                             return Double.compare(f2.getMoleculePercentage(), f1.getMoleculePercentage());
-                    case NAME:
+                    case DataModelPropertiesForTableView.NAME:
                         if (ascending)
                             return m1.getName().compareTo(m2.getName());
                         else
                             return m2.getName().compareTo(m1.getName());
-                    case UNIQUE_SMILES:
+                    case DataModelPropertiesForTableView.UNIQUE_SMILES:
                         if (ascending)
                             return m1.getUniqueSmiles().compareTo(m2.getUniqueSmiles());
                         else
                             return m2.getUniqueSmiles().compareTo(m1.getUniqueSmiles());
-                    case PARENT_MOLECULE_NAME:
+                    case DataModelPropertiesForTableView.PARENT_MOLECULE_NAME:
                         f1 = (FragmentDataModel) m1;
                         f2 = (FragmentDataModel) m2;
                         if (ascending)
                             return f1.getParentMoleculeName().compareTo(f2.getParentMoleculeName());
                         else
                             return f2.getParentMoleculeName().compareTo(f1.getParentMoleculeName());
+                    default:
+                        return 0;
                 }
             } catch (ClassCastException anException) {
                 throw new IllegalArgumentException("The specified property does not match the specified data model object.");
             }
-            return 0;
         });
     }
     //
@@ -147,7 +148,7 @@ public final class CollectionUtil {
         if (aLoadFactor <= 0 || aLoadFactor > 1.0f) {
             throw new IllegalArgumentException("Load factor must be higher than 0 and not bigger than 1.0 but is " + aLoadFactor);
         }
-        float tmpInitialSize = (float) aNumberOfElements * (1.0f / aLoadFactor) + 2.0f;
+        float tmpInitialSize = aNumberOfElements * (1.0f / aLoadFactor) + 2.0f;
         return (int) tmpInitialSize;
     }
     //

@@ -294,8 +294,7 @@ public final class FileUtil {
      */
     public static String getTimeStampFileNameExtension() throws DateTimeException {
         LocalDateTime tmpDateTime = LocalDateTime.now();
-        String tmpDateTimeAddition = tmpDateTime.format(DateTimeFormatter.ofPattern(
-                BasicDefinitions.FILENAME_TIMESTAMP_FORMAT));
+        String tmpDateTimeAddition = tmpDateTime.format(DateTimeFormatter.ofPattern(BasicDefinitions.FILENAME_TIMESTAMP_FORMAT));
         return tmpDateTimeAddition;
     }
 

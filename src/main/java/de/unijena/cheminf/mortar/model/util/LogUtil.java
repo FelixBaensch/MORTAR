@@ -33,7 +33,6 @@ import de.unijena.cheminf.mortar.message.Message;
 import javafx.scene.control.Alert;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -80,11 +79,11 @@ public final class LogUtil {
         }
     }
     /**
-     * Name for Log files
+     * Name for Log files.
      */
     private static final String LOG_FILE_NAME = "MORTAR_Log";
     /**
-     * Name extension (denoting the file type) of log files
+     * Name extension (denoting the file type) of log files.
      */
     private static final String LOG_FILE_NAME_EXTENSION = ".txt";
     /**
@@ -127,22 +126,22 @@ public final class LogUtil {
     //
     //<editor-fold defaultstate="collapsed" desc="Private static class variables">
     /**
-     * File handler added to the root logger
+     * File handler added to the root logger.
      */
     private static FileHandler fileHandler;
 
     /**
-     * Log file that is currently logged in
+     * Log file that is currently logged in.
      */
     private static File logFile;
 
     /**
-     * Storage for exceptions thrown in the process of managing the log-files' folder
+     * Storage for exceptions thrown in the process of managing the log files folder.
      */
     private static ArrayList<Exception> storedExceptions;
     //</editor-fold>
     //
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -268,7 +267,7 @@ public final class LogUtil {
             return;
         }
         LogUtil.storedExceptions = new ArrayList<>();
-        //deleting all of the *.txt.lck files out of the log-files' folder
+        //deleting all of the *.txt.lck files out of the log files folder
         try (DirectoryStream<Path> tmpLCKFilePaths = Files.newDirectoryStream(tmpLogFileDirectory, "*.txt.lck")) {
             for (Path tmpLCKFilePath : tmpLCKFilePaths) {
                 try {
@@ -286,7 +285,7 @@ public final class LogUtil {
         }
         int tmpTotalOfBytesUsed = 0;
         for (File tmpLogFile : tmpLogFiles) {
-            tmpTotalOfBytesUsed += tmpLogFile.length();
+            tmpTotalOfBytesUsed += (int) tmpLogFile.length();
         }
         //managing the log-files if the limits are exceeded
         //the parameters of this if statement's condition should be changed with caution or otherwise an infinite loop is risked
@@ -319,12 +318,7 @@ public final class LogUtil {
         if (!tmpLoggingDirFile.exists() || !tmpLoggingDirFile.isDirectory()) {
             return false;
         }
-        return tmpLoggingDirFile.listFiles(new FilenameFilter() {
-           @Override
-           public boolean accept(File dir, String name) {
-               return FileUtil.getFileExtension(dir + File.separator + name).equals(".lck");
-           }
-        }).length > 0;
+        return tmpLoggingDirFile.listFiles((dir, name) -> FileUtil.getFileExtension(dir + File.separator + name).equals(".lck")).length > 0;
     }
     // </editor-fold>
     //
