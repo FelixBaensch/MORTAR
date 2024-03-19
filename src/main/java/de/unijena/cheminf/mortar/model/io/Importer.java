@@ -80,7 +80,7 @@ public class Importer {
     /**
      * Property key that is used to store the detected molecule names on the imported atom containers.
      */
-    public static final String MOLECULE_NAME_PROPERTY_KEY = "NAME";
+    public static final String MOLECULE_NAME_PROPERTY_KEY = "MORTAR_IMPORTER_NAME";
     //</editor-fold>
     //
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">
@@ -98,7 +98,7 @@ public class Importer {
     /**
      * Container of general MORTAR settings, providing the recent directory path and other import-related settings.
      */
-    private SettingsContainer settingsContainer;
+    private final SettingsContainer settingsContainer;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">

@@ -26,6 +26,7 @@
 package de.unijena.cheminf.mortar.model.settings;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.model.io.Exporter;
 
 import javafx.beans.property.Property;
 
@@ -57,14 +58,14 @@ public class SettingsContainerTest {
      */
     @Test
     public void testSettingsContainerBasics() throws Exception {
-        String tmpCsvExportSeparatorTest = ";";
+        Exporter.CSVSeparator tmpCsvExportSeparatorTest = Exporter.CSVSeparator.COMMA;
         //if there is a persisted settings container file already on the machine, it is loaded into the new SettingsContainer object
         SettingsContainer tmpSettingsContainer = new SettingsContainer();
         //restoring to default because a previous settings file with altered settings may have been imported (see below)
         tmpSettingsContainer.restoreDefaultSettings();
         List<Property<?>> tmpPropertiesList = tmpSettingsContainer.settingsProperties();
         System.out.println();
-        for (Property tmpProp : tmpPropertiesList) {
+        for (Property<?> tmpProp : tmpPropertiesList) {
             //recent directory path setting is not included because it is an internal setting
             System.out.println(tmpProp.getName() + ": " + tmpProp.getValue());
         }
@@ -77,13 +78,13 @@ public class SettingsContainerTest {
         Assertions.assertEquals(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT, tmpSettingsContainer.getRecentDirectoryPathSetting());
         Assertions.assertEquals(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
         Assertions.assertEquals(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
-        Assertions.assertEquals(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT, tmpSettingsContainer.getCsvExportSeparatorSetting());
+        Assertions.assertEquals(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT.name(), tmpSettingsContainer.getCsvExportSeparatorSetting());
         tmpSettingsContainer.setRowsPerPageSetting(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5);
         tmpSettingsContainer.setAddImplicitHydrogensAtImportSetting(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         //tmpSettingsContainer.setNumberOfTasksForFragmentationSetting(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault() - 1);
         //tmpSettingsContainer.setKeepAtomContainerInDataModelSetting(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         tmpSettingsContainer.setAlwaysMDLV3000FormatAtExportSetting(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
-        tmpSettingsContainer.setCsvExportSeparatorSetting(tmpCsvExportSeparatorTest);
+        tmpSettingsContainer.setCsvExportSeparatorSetting(tmpCsvExportSeparatorTest.name());
         //persisting the settings container
         tmpSettingsContainer.preserveSettings();
         //reload persisted container
@@ -94,7 +95,7 @@ public class SettingsContainerTest {
         //Assertions.assertEquals(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault() - 1, tmpSecondContainer.getNumberOfTasksForFragmentationSetting());
         //Assertions.assertEquals(!SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
         Assertions.assertEquals(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
-        Assertions.assertEquals(tmpCsvExportSeparatorTest, tmpSecondContainer.getCsvExportSeparatorSetting());
+        Assertions.assertEquals(tmpCsvExportSeparatorTest.name(), tmpSecondContainer.getCsvExportSeparatorSetting());
         tmpSecondContainer.restoreDefaultSettings();
         tmpSecondContainer.preserveSettings();
     }

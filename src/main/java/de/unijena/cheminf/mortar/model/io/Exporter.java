@@ -185,7 +185,7 @@ public class Exporter {
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportCsvFile(File aFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aSeparator, TabNames aTabName) throws FileNotFoundException {
+    public List<String> exportCsvFile(File aFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator, TabNames aTabName) throws FileNotFoundException {
         if (aFile == null)
             return null;
         if (aTabName.equals(TabNames.FRAGMENTS)) {
@@ -283,7 +283,7 @@ public class Exporter {
     private List<String> createItemizationTabCsvFile(File aCsvFile,
                                              List<MoleculeDataModel> aMoleculeDataModelList,
                                              String aFragmentationName,
-                                             String aSeparator)
+                                             char aSeparator)
             throws FileNotFoundException {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
             return null;
@@ -340,7 +340,7 @@ public class Exporter {
      * @throws FileNotFoundException if given file cannot be found
      * @author Betül Sevindik
      */
-    private List<String> createFragmentsTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, String aSeparator)
+    private List<String> createFragmentsTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, char aSeparator)
             throws FileNotFoundException {
         if (aCsvFile == null || aList == null) {
             return null;
@@ -1075,6 +1075,48 @@ public class Exporter {
          * enum value for pdb file.
          */
         FRAGMENT_PDB_FILE;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Enum CSVSeparator">
+    /**
+     * Enum for allowed CSV file export separator chars.
+     */
+    public enum CSVSeparator {
+        /**
+         * Comma.
+         */
+        COMMA(','),
+        /**
+         * Semicolon.
+         */
+        SEMICOLON(';'),
+        /**
+         * Tab.
+         */
+        TAB('\t'),
+        /**
+         * Space.
+         */
+        SPACE(' ');
+        /**
+         * Character representation of the wrapped separator char.
+         */
+        final char separatorChar;
+        /**
+         * Constructor setting the wrapped separator char.
+         */
+        CSVSeparator(char aSeparatorChar) {
+            this.separatorChar = aSeparatorChar;
+        }
+        /**
+         * Returns the character representation of this separator.
+         *
+         * @return CSV separator char
+         */
+        public char getSeparatorChar() {
+            return this.separatorChar;
+        }
     }
     //</editor-fold>
 }

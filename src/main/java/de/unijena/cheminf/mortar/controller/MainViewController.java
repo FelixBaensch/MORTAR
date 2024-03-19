@@ -622,7 +622,7 @@ public class MainViewController {
                                 tmpExportFile,
                                 MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
                                 ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                                MainViewController.this.settingsContainer.getCsvExportSeparatorSetting(),
+                                MainViewController.this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                                 TabNames.FRAGMENTS
                         );
                     case Exporter.ExportTypes.FRAGMENT_PDB_FILE:
@@ -661,7 +661,7 @@ public class MainViewController {
                                 tmpExportFile,
                                 MainViewController.this.moleculeDataModelList,
                                 ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
-                                MainViewController.this.settingsContainer.getCsvExportSeparatorSetting(),
+                                MainViewController.this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                                 TabNames.ITEMIZATION
                         );
                     case Exporter.ExportTypes.ITEM_PDF_FILE:

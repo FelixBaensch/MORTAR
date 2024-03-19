@@ -32,6 +32,7 @@ package de.unijena.cheminf.mortar.model.settings;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
@@ -114,9 +115,9 @@ public class SettingsContainer {
     public static final boolean ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT = false;
 
     /**
-     * Default string for separator for the csv export
+     * Default separator for the csv export.
      */
-    public static final String CSV_EXPORT_SEPARATOR_SETTING_DEFAULT = ",";
+    public static final Exporter.CSVSeparator CSV_EXPORT_SEPARATOR_SETTING_DEFAULT = Exporter.CSVSeparator.COMMA;
 
     /**
      * Default value of whether to keep last fragment.
@@ -146,7 +147,7 @@ public class SettingsContainer {
 
     private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
 
-    private SimpleStringProperty csvExportSeparatorSetting;
+    private SimpleEnumConstantNameProperty csvExportSeparatorSetting;
 
     private SimpleBooleanProperty keepLastFragmentSetting;
 
@@ -348,6 +349,24 @@ public class SettingsContainer {
     }
 
     /**
+     * Return the enum constant value of the property wrapping the separator setting for csv export.
+     *
+     * @return enum constant
+     */
+    public Exporter.CSVSeparator getCsvExportSeparatorSettingConstant() {
+        return Exporter.CSVSeparator.valueOf(this.csvExportSeparatorSetting.get());
+    }
+
+    /**
+     * Returns the currently set CSV export separator character.
+     *
+     * @return CSV separator char
+     */
+    public char getCsvExportSeparatorSettingCharacter() {
+        return Exporter.CSVSeparator.valueOf(this.csvExportSeparatorSetting.get()).getSeparatorChar();
+    }
+
+    /**
      * Returns the current value of the keep last fragment setting.
      *
      * @return keep last fragment setting value
@@ -481,7 +500,7 @@ public class SettingsContainer {
         //DEPRECATED
         //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
-        this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
+        this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT.name());
         this.keepLastFragmentSetting.set(SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
     }
     //</editor-fold>
@@ -601,7 +620,7 @@ public class SettingsContainer {
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.settingNameTooltipTextMap = new HashMap<String, String>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 "Rows per page setting",
                 SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT) {
@@ -611,7 +630,7 @@ public class SettingsContainer {
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal rows per page number was given: " + newValue);
-                    SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
+                    SettingsContainer.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                     GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
                             Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
                             tmpException.toString(),
@@ -694,16 +713,16 @@ public class SettingsContainer {
             }
         };
         this.settingNameTooltipTextMap.put(this.alwaysMDLV3000FormatAtExportSetting.getName(), Message.get("SettingsContainer.alwaysMDLV3000FormatAtExportSetting.tooltip"));
-        this.csvExportSeparatorSetting = new SimpleStringProperty( this,
-                "Csv export separator setting",
-                SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT) {
+        this.csvExportSeparatorSetting = new SimpleEnumConstantNameProperty(this,
+                "Csv export separator setting", SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT.name(),
+                Exporter.CSVSeparator.class) {
             @Override
             public void set(String newValue) throws IllegalArgumentException {
-                if(SettingsContainer.this.isLegalCsvExportSeparator(newValue)) {
+                if (SettingsContainer.this.isLegalCsvExportSeparator(newValue)) {
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal value for the separator for the csv export was given: " + newValue);
-                    SettingsContainer.this.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
+                    SettingsContainer.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                     GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
                             Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
                             tmpException.toString(),
@@ -826,47 +845,21 @@ public class SettingsContainer {
 
     /**
      * Tests whether a string is an allowed separator for csv export. For this, it must be not null, not empty, not blank
-     * and an allowed ASCII char. For now, only "," and ";" are allowed.
+     * and must be findable in the exporter csv separator enum.
      *
      * @param aSeparator the separator to test
      * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalCsvExportSeparator(String aSeparator){
-        if(Objects.isNull(aSeparator)){
+        if (Objects.isNull(aSeparator)|| aSeparator.isEmpty() || aSeparator.isBlank()) {
             return false;
         }
-        if(aSeparator.isEmpty()){
-            return false;
-        }
-        if(aSeparator.isBlank()){
-            return false;
-        }
-        if(aSeparator.length()>1){
-            return false;
-        }
-        switch (aSeparator){
-            case ",":
-            case ";":
+        for (Enum<Exporter.CSVSeparator> tmpEnumConstant : Exporter.CSVSeparator.values()) {
+            if (aSeparator.equals(tmpEnumConstant.name())) {
                 return true;
-            //some characters defined in the SMILES syntax
-            case ".":
-            case "=":
-            case "#":
-            case "(":
-            case ")":
-            case "{":
-            case "}":
-            case "[":
-            case "]":
-            case "-":
-            case "+":
-            case "@":
-            case "/":
-            case "\\":
-            case " ":
-            default:
-                return false;
+            }
         }
+        return false;
     }
     //</editor-fold>
 }
