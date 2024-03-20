@@ -138,8 +138,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * Instance of the Sugar Removal Utility used internally to detect and remove the sugar moieties.
      */
     private final SugarRemovalUtility sugarRUInstance;
-    //</editor-fold>
-    //<editor-fold desc="Private final variables">
 
     private final SimpleEnumConstantNameProperty returnedFragmentsSetting;
 
@@ -185,6 +183,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     private final HashMap<String, String> settingNameTooltipTextMap;
 
     /**
+     * Map to store pairs of {@literal <setting name, display name>}.
+     */
+    private final HashMap<String, String> settingNameDisplayNameMap;
+
+    /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName());
@@ -202,6 +205,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",
                 SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name(), SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.class) {
             @Override
@@ -222,6 +226,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.returnedFragmentsSetting);
         this.settingNameTooltipTextMap.put(this.returnedFragmentsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.returnedFragmentsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.returnedFragmentsSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.returnedFragmentsSetting.displayName"));
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
@@ -242,6 +248,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.fragmentSaturationSetting);
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.fragmentSaturationSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.fragmentSaturationSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.fragmentSaturationSetting.displayName"));
         this.sugarTypeToRemoveSetting = new SimpleEnumConstantNameProperty(this, "Sugar type to remove setting",
                 SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT.name(),
                 SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.class) {
@@ -263,6 +271,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.sugarTypeToRemoveSetting);
         this.settingNameTooltipTextMap.put(this.sugarTypeToRemoveSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.sugarTypeToRemoveSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.sugarTypeToRemoveSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.sugarTypeToRemoveSetting.displayName"));
         this.detectCircularSugarsOnlyWithGlycosidicBondSetting = new SimpleBooleanProperty(this,
                 "Detect circular sugars only with glycosidic bond setting",
                 this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected()) {
@@ -276,6 +286,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.detectCircularSugarsOnlyWithGlycosidicBondSetting);
         this.settingNameTooltipTextMap.put(this.detectCircularSugarsOnlyWithGlycosidicBondSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.detectCircularSugarsOnlyWithGlycosidicBondSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.detectCircularSugarsOnlyWithGlycosidicBondSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.detectCircularSugarsOnlyWithGlycosidicBondSetting.displayName"));
         this.removeOnlyTerminalSugarsSetting = new SimpleBooleanProperty(this, "Remove only terminal sugars setting",
                 this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             @Override
@@ -288,6 +300,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.removeOnlyTerminalSugarsSetting);
         this.settingNameTooltipTextMap.put(this.removeOnlyTerminalSugarsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.removeOnlyTerminalSugarsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.removeOnlyTerminalSugarsSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.removeOnlyTerminalSugarsSetting.displayName"));
         this.preservationModeSetting = new SimpleEnumConstantNameProperty(this, "Preservation mode setting",
                 this.sugarRUInstance.getPreservationModeSetting().name(), SugarRemovalUtility.PreservationModeOption.class) {
             @Override
@@ -314,6 +328,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.preservationModeSetting);
         this.settingNameTooltipTextMap.put(this.preservationModeSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.preservationModeSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.preservationModeSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.preservationModeSetting.displayName"));
         this.preservationModeThresholdSetting = new SimpleIntegerProperty(this, "Preservation mode threshold setting",
                 this.sugarRUInstance.getPreservationModeThresholdSetting()) {
             @Override
@@ -336,6 +352,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.preservationModeThresholdSetting);
         this.settingNameTooltipTextMap.put(this.preservationModeThresholdSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.preservationModeThresholdSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.preservationModeThresholdSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.preservationModeThresholdSetting.displayName"));
         this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting = new SimpleBooleanProperty(this,
                 "Detect circular sugars only with enough exocyclic oxygen atoms setting",
                 this.sugarRUInstance.areOnlyCircularSugarsWithEnoughExocyclicOxygenAtomsDetected()) {
@@ -349,6 +367,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting);
         this.settingNameTooltipTextMap.put(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.displayName"));
         this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting = new SimpleDoubleProperty(this,
                 "Exocyclic oxygen atoms to atoms in ring ratio threshold setting",
                 this.sugarRUInstance.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting()) {
@@ -372,6 +392,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting);
         this.settingNameTooltipTextMap.put(this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.displayName"));
         this.detectLinearSugarsInRingsSetting = new SimpleBooleanProperty(this, "Detect linear sugars in rings setting",
                 this.sugarRUInstance.areLinearSugarsInRingsDetected()) {
             @Override
@@ -384,6 +406,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.detectLinearSugarsInRingsSetting);
         this.settingNameTooltipTextMap.put(this.detectLinearSugarsInRingsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.detectLinearSugarsInRingsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.detectLinearSugarsInRingsSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.detectLinearSugarsInRingsSetting.displayName"));
         this.linearSugarCandidateMinimumSizeSetting = new SimpleIntegerProperty(this,
                 "Linear sugar candidate minimum size setting",
                 this.sugarRUInstance.getLinearSugarCandidateMinSizeSetting()) {
@@ -407,6 +431,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.linearSugarCandidateMinimumSizeSetting);
         this.settingNameTooltipTextMap.put(this.linearSugarCandidateMinimumSizeSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.linearSugarCandidateMinimumSizeSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.linearSugarCandidateMinimumSizeSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.linearSugarCandidateMinimumSizeSetting.displayName"));
         this.linearSugarCandidateMaximumSizeSetting = new SimpleIntegerProperty(this,
                 "Linear sugar candidate maximum size setting",
                 this.sugarRUInstance.getLinearSugarCandidateMaxSizeSetting()) {
@@ -430,6 +456,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.linearSugarCandidateMaximumSizeSetting);
         this.settingNameTooltipTextMap.put(this.linearSugarCandidateMaximumSizeSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.linearSugarCandidateMaximumSizeSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.linearSugarCandidateMaximumSizeSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.linearSugarCandidateMaximumSizeSetting.displayName"));
         this.detectLinearAcidicSugarsSetting = new SimpleBooleanProperty(this,
                 "Detect linear acidic sugars setting",
                 this.sugarRUInstance.areLinearAcidicSugarsDetected()) {
@@ -443,6 +471,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.detectLinearAcidicSugarsSetting);
         this.settingNameTooltipTextMap.put(this.detectLinearAcidicSugarsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.detectLinearAcidicSugarsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.detectLinearAcidicSugarsSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.detectLinearAcidicSugarsSetting.displayName"));
         this.detectSpiroRingsAsCircularSugarsSetting = new SimpleBooleanProperty(this,
                 "Detect spiro rings as circular sugars setting",
                 this.sugarRUInstance.areSpiroRingsDetectedAsCircularSugars()) {
@@ -456,6 +486,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.detectSpiroRingsAsCircularSugarsSetting);
         this.settingNameTooltipTextMap.put(this.detectSpiroRingsAsCircularSugarsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.detectSpiroRingsAsCircularSugarsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.detectSpiroRingsAsCircularSugarsSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.detectSpiroRingsAsCircularSugarsSetting.displayName"));
         this.detectCircularSugarsWithKetoGroupsSetting = new SimpleBooleanProperty(this,
                 "Detect circular sugars with keto groups setting",
                 this.sugarRUInstance.areCircularSugarsWithKetoGroupsDetected()) {
@@ -469,6 +501,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.detectCircularSugarsWithKetoGroupsSetting);
         this.settingNameTooltipTextMap.put(this.detectCircularSugarsWithKetoGroupsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.detectCircularSugarsWithKetoGroupsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.detectCircularSugarsWithKetoGroupsSetting.getName(),
+                Message.get("SugarRemovalUtilityFragmenter.detectCircularSugarsWithKetoGroupsSetting.displayName"));
     }
     //</editor-fold>
     //
@@ -986,6 +1020,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     @Override
     public Map<String, String> getSettingNameToTooltipTextMap() {
         return this.settingNameTooltipTextMap;
+    }
+
+    @Override
+    public Map<String, String> getSettingNameToDisplayNameMap() {
+        return this.settingNameDisplayNameMap;
     }
 
     @Override

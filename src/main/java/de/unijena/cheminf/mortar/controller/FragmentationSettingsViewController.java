@@ -103,11 +103,12 @@ public class FragmentationSettingsViewController {
     }
     //
     /**
-     * Initialises and opens a settings view for fragmentationSettings
+     * Initialises and opens a settings view for fragmentationSettings.
      */
-    private void openFragmentationSettingsView(){
-        if(this.settingsView == null)
+    private void openFragmentationSettingsView() {
+        if (this.settingsView == null) {
             this.settingsView = new SettingsView();
+        }
         this.fragmentationSettingsViewStage = new Stage();
         Scene tmpScene = new Scene(this.settingsView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.fragmentationSettingsViewStage.setScene(tmpScene);
@@ -126,17 +127,18 @@ public class FragmentationSettingsViewController {
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmenter.settingsProperties().size()));
             this.recentProperties.put(tmpFragmenter.getFragmentationAlgorithmName(), tmpRecentProperties);
-            Tab tmpTab = this.settingsView.addTab(this.fragmentationSettingsViewStage,
+            Tab tmpTab = this.settingsView.addTab(
                     tmpFragmenter.getFragmentationAlgorithmName(), tmpFragmenter.settingsProperties(),
+                    tmpFragmenter.getSettingNameToDisplayNameMap(),
                     tmpFragmenter.getSettingNameToTooltipTextMap(), tmpRecentProperties);
-            if(tmpFragmenter.getFragmentationAlgorithmName().equals(this.selectedFragmenterName)){
+            if (tmpFragmenter.getFragmentationAlgorithmName().equals(this.selectedFragmenterName)) {
                 this.settingsView.getSelectionModel().select(tmpTab);
             }
         }
     }
     //
     /**
-     * Adds listeners
+     * Adds listeners.
      */
     private void addListener(){
         //fragmentationSettingsViewStage close request

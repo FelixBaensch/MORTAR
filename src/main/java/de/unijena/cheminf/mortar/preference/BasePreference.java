@@ -43,11 +43,11 @@ public abstract class BasePreference implements IPreference {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
      * Preference name regex pattern.
-     * Allowed characters: 1-9, a-z, A-z, -, [], (), {}, ., space (ASCII 32, hexadecimal value: 20, see below) and ,.
+     * Allowed characters: 1-9, a-z, A-z, -, [], (), {}, ., space (ASCII 32, hexadecimal value: 20, see below), and ,.
      * The first character must be a capital letter.
      * '#' is reserved for comments in text files for persisting objects.
      */
-    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z]{1}+[0-9a-zA-Z\\.\\,\\-\\[\\]\\(\\)\\{\\}\\x20]*+\\z");
+    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z][0-9a-zA-Z\\.\\,\\-\\[\\]\\(\\)\\{\\}\\x20]*+\\z");
 
     /**
      * Seed for hashCode() method.

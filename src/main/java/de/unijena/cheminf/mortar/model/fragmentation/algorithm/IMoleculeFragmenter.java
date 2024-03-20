@@ -195,6 +195,14 @@ public interface IMoleculeFragmenter {
     public Map<String, String> getSettingNameToTooltipTextMap();
 
     /**
+     * Returns a map containing language-specific names (values) for the settings with the given names (keys) to be used
+     * in the GUI.
+     *
+     * @return map with display names
+     */
+    public Map<String, String> getSettingNameToDisplayNameMap();
+
+    /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
      * The given name must be unique among the available fragmentation algorithms!
      *

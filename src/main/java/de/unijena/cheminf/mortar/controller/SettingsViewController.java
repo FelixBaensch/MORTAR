@@ -44,7 +44,7 @@ import java.util.Map;
 
 /**
  * SettingsViewController
- * controls {@link SettingsView} for {@link SettingsContainer}
+ * controls {@link SettingsView} for {@link SettingsContainer}.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
@@ -53,12 +53,12 @@ public class SettingsViewController {
 
     //<editor-fold desc="private and private final class variables">
     /**
-     * SettingsContainer
+     * SettingsContainer.
      */
     private final SettingsContainer settingsContainer;
     private final SettingsContainer recentSettingsContainer;
     /**
-     * Main stage object of the application
+     * Main stage object of the application.
      */
     private final Stage mainStage;
     /**
@@ -66,29 +66,29 @@ public class SettingsViewController {
      */
     private final IConfiguration configuration;
     /**
-     * Stage for the SettingsView
+     * Stage for the SettingsView.
      */
     private Stage settingsViewStage;
     /**
-     * SettingsView
+     * SettingsView.
      */
     private SettingsView settingsView;
     /**
-     * Map to hold the initial settings properties
+     * Map to hold the initial settings properties.
      */
-    private Map<String, Object> recentProperties;
+    private final Map<String, Object> recentProperties;
     /**
-     * Boolean value to check if the rowsPerPage property has changed
+     * Boolean value to check if the rowsPerPage property has changed.
      */
     private boolean hasRowsPerPageChanged;
     /**
-     * Boolean value to check if the keepAtomContainerInDataModel property has changed
+     * Boolean value to check if the keepAtomContainerInDataModel property has changed.
      */
     private boolean hasKeepAtomContainerInDataModelChanged;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      *
      * @param aStage Parent stage
      * @param aSettingsContainer SettingsContainer
@@ -105,11 +105,12 @@ public class SettingsViewController {
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
-     * Initialises and opens settingsView
+     * Initialises and opens settingsView.
      */
     private void showSettingsView(){
-        if(this.settingsView == null)
+        if (this.settingsView == null) {
             this.settingsView = new SettingsView();
+        }
         this.settingsViewStage = new Stage();
         Scene tmpScene = new Scene(this.settingsView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.settingsViewStage.setScene(tmpScene);
@@ -124,15 +125,15 @@ public class SettingsViewController {
         this.settingsViewStage.getIcons().add(new Image(tmpIconURL));
         Platform.runLater(()->{
             this.addListeners();
-            this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title.text"),
-                    this.settingsContainer.settingsProperties(), this.settingsContainer.getSettingNameToTooltipTextMap(),
-                    this.recentProperties);
+            this.settingsView.addTab(Message.get("GlobalSettingsView.title.text"),
+                    this.settingsContainer.settingsProperties(), this.settingsContainer.getSettingNameToDisplayNameMap(),
+                    this.settingsContainer.getSettingNameToTooltipTextMap(), this.recentProperties);
         });
         this.settingsViewStage.showAndWait();
     }
     //
     /**
-     * Adds listeners and event handlers to the buttons of the settings view
+     * Adds listeners and event handlers to the buttons of the settings view.
      */
     private void addListeners(){
         //stage close request
@@ -149,7 +150,7 @@ public class SettingsViewController {
             this.settingsViewStage.close();
         });
         //cancel button
-        this.settingsView.getCancelButton().setOnAction(event ->{
+        this.settingsView.getCancelButton().setOnAction(event -> {
             this.setRecentProperties();
             this.settingsViewStage.close();
         });
@@ -160,7 +161,7 @@ public class SettingsViewController {
     }
     //
     /**
-     * Sets the properties to the values of the 'recentPropertiesMap'
+     * Sets the properties to the values of the 'recentPropertiesMap'.
      */
     private void setRecentProperties(){
         Platform.runLater(()->{

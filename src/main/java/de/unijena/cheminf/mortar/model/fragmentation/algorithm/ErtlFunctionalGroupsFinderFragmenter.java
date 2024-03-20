@@ -246,6 +246,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     private final HashMap<String, String> settingNameTooltipTextMap;
 
     /**
+     * Map to store pairs of {@literal <setting name, display name>}.
+     */
+    private final HashMap<String, String> settingNameDisplayNameMap;
+
+    /**
      * Instance of ErtlfFunctionalGroupsFinder class used to do the extraction of functional groups.
      */
     private final ErtlFunctionalGroupsFinder ertlFGFInstance;
@@ -266,6 +271,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        //these names are for internal use, the language-specific display names for the GUI are stored in the map
         this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
                 IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
@@ -286,6 +293,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         };
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.fragmentSaturationSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.fragmentSaturationSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.fragmentSaturationSetting.displayName"));
         this.ertlFGFInstance = new ErtlFunctionalGroupsFinder(
                 ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT.getAssociatedEFGFMode());
         this.environmentModeSetting = new SimpleEnumConstantNameProperty(this, "Environment mode setting",
@@ -310,6 +319,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         };
         this.settingNameTooltipTextMap.put(this.environmentModeSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.environmentModeSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.environmentModeSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.environmentModeSetting.displayName"));
         //initialisation of EFGF instance
         this.setErtlFGFInstance(FGEnvOption.valueOf(this.environmentModeSetting.get()));
         this.returnedFragmentsSetting = new SimpleEnumConstantNameProperty(this, "Returned fragments setting",
@@ -332,6 +343,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         };
         this.settingNameTooltipTextMap.put(this.returnedFragmentsSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.returnedFragmentsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.returnedFragmentsSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.returnedFragmentsSetting.displayName"));
         //note: cycle finder and electron donation model have to be set prior to setting the aromaticity model!
         this.cycleFinderSetting = new SimpleEnumConstantNameProperty(this, "Cycle finder algorithm setting",
                 ErtlFunctionalGroupsFinderFragmenter.CYCLE_FINDER_OPTION_DEFAULT.name(),
@@ -360,6 +373,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         };
         this.settingNameTooltipTextMap.put(this.cycleFinderSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.cycleFinderSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.cycleFinderSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.cycleFinderSetting.displayName"));
         this.setCycleFinderInstance(IMoleculeFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
         this.electronDonationModelSetting = new SimpleEnumConstantNameProperty(this, "Electron donation model setting",
                 ErtlFunctionalGroupsFinderFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name(),
@@ -388,6 +403,8 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         };
         this.settingNameTooltipTextMap.put(this.electronDonationModelSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.electronDonationModelSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.electronDonationModelSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.electronDonationModelSetting.displayName"));
         this.setElectronDonationInstance(
                 IMoleculeFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get()));
         this.setAromaticityInstance(
@@ -398,10 +415,14 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT);
         this.settingNameTooltipTextMap.put(this.filterSingleAtomsSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.filterSingleAtomsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.filterSingleAtomsSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.filterSingleAtomsSetting.displayName"));
         this.applyInputRestrictionsSetting = new SimpleBooleanProperty(this, "Apply input restrictions setting",
                 ErtlFunctionalGroupsFinderFragmenter.APPLY_INPUT_RESTRICTIONS_OPTION_DEFAULT);
         this.settingNameTooltipTextMap.put(this.applyInputRestrictionsSetting.getName(),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.applyInputRestrictionsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.applyInputRestrictionsSetting.getName(),
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.applyInputRestrictionsSetting.displayName"));
         this.settings = new ArrayList<>(7);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.electronDonationModelSetting);
@@ -706,6 +727,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     @Override
     public Map<String, String> getSettingNameToTooltipTextMap() {
         return this.settingNameTooltipTextMap;
+    }
+
+    @Override
+    public Map<String, String> getSettingNameToDisplayNameMap() {
+        return this.settingNameDisplayNameMap;
     }
 
     @Override

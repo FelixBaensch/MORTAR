@@ -158,6 +158,11 @@ public class SettingsContainer {
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
     private HashMap<String, String> settingNameTooltipTextMap;
+    //
+    /**
+     * Map to store pairs of {@literal <setting name, display name>}.
+     */
+    private HashMap<String, String> settingNameDisplayNameMap;
     //</editor-fold>
     //
     //<editor-fold desc="constructors">
@@ -205,6 +210,16 @@ public class SettingsContainer {
      */
     public Map<String, String> getSettingNameToTooltipTextMap() {
         return this.settingNameTooltipTextMap;
+    }
+
+    /**
+     * Returns a map containing language-specific names for display (values) for the settings with the given names (keys)
+     * to be used in the GUI.
+     *
+     * @return map with display names
+     */
+    public Map<String, String> getSettingNameToDisplayNameMap() {
+        return this.settingNameDisplayNameMap;
     }
 
     /**
@@ -567,20 +582,20 @@ public class SettingsContainer {
                         "A new one is initialised.");
                 //return;
             } else {
-                PreferenceContainer tmpContainer;
+                PreferenceContainer tmpDePersistedContainer;
                 try {
-                    tmpContainer = new PreferenceContainer(tmpPreferenceContainerFile);
+                    tmpDePersistedContainer = new PreferenceContainer(tmpPreferenceContainerFile);
                 } catch (IOException | SecurityException anException) {
                     SettingsContainer.LOGGER.log(Level.SEVERE, String.format("Unable to reload global settings: %s", anException.toString()), anException);
                     return;
                 }
-                List<Property<?>> tmpSettings = new ArrayList<>(6);
+                List<Property<?>> tmpSettings = new ArrayList<>(8);
                 tmpSettings.addAll(this.settings);
                 tmpSettings.add(this.recentDirectoryPathSetting);
                 for (Property<?> tmpSettingProperty : tmpSettings) {
                     String tmpPropertyName = tmpSettingProperty.getName();
-                    if (tmpContainer.containsPreferenceName(tmpPropertyName)) {
-                        IPreference[] tmpPreferences = tmpContainer.getPreferences(tmpPropertyName);
+                    if (tmpDePersistedContainer.containsPreferenceName(tmpPropertyName)) {
+                        IPreference[] tmpPreferences = tmpDePersistedContainer.getPreferences(tmpPropertyName);
                         try {
                             switch (tmpSettingProperty) {
                                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
@@ -625,12 +640,14 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        int tmpNumberOfSettings = 8;
-        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+        int tmpNumberOfSettings = 6;
+        int tmpInitialCapacityForSettingNameMaps = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameMaps, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameMaps, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
+                // note: these names are for persistence and de-persistence! The map values are for display
                 "Rows per page setting",
                 SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT) {
             @Override
@@ -650,6 +667,7 @@ public class SettingsContainer {
             }
         };
         this.settingNameTooltipTextMap.put(this.rowsPerPageSetting.getName(), Message.get("SettingsContainer.rowsPerPageSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.rowsPerPageSetting.getName(), Message.get("SettingsContainer.rowsPerPageSetting.displayName"));
         this.numberOfTasksForFragmentationSetting = new SimpleIntegerProperty(this,
                 "Nr of tasks for fragmentation setting",
                 this.nrOfTasksForFragmentationSettingDefault) {
@@ -669,7 +687,10 @@ public class SettingsContainer {
                 }
             }
         };
-        this.settingNameTooltipTextMap.put(this.numberOfTasksForFragmentationSetting.getName(), String.format(Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.tooltip"), SettingsContainer.MAX_AVAILABLE_THREADS));
+        this.settingNameTooltipTextMap.put(this.numberOfTasksForFragmentationSetting.getName(),
+                String.format(Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.tooltip"), SettingsContainer.MAX_AVAILABLE_THREADS));
+        this.settingNameDisplayNameMap.put(this.numberOfTasksForFragmentationSetting.getName(),
+                Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.displayName"));
         this.recentDirectoryPathSetting = new SimpleStringProperty(this,
                 "Recent directory path setting",
                 SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT) {
@@ -690,6 +711,7 @@ public class SettingsContainer {
                 "Add implicit hydrogens at import setting",
                 SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.addImplicitHydrogensAtImportSetting.getName(), Message.get("SettingsContainer.addImplicitHydrogensAtImportSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.addImplicitHydrogensAtImportSetting.getName(), Message.get("SettingsContainer.addImplicitHydrogensAtImportSetting.displayName"));
         //DEPRECATED
         /*this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
                 "Keep AtomContainers in the DataModels setting",
@@ -712,6 +734,7 @@ public class SettingsContainer {
                 "Always MDL V3000 format at export setting",
                 SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.alwaysMDLV3000FormatAtExportSetting.getName(), Message.get("SettingsContainer.alwaysMDLV3000FormatAtExportSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.alwaysMDLV3000FormatAtExportSetting.getName(), Message.get("SettingsContainer.alwaysMDLV3000FormatAtExportSetting.displayName"));
         this.csvExportSeparatorSetting = new SimpleEnumConstantNameProperty(this,
                 "Csv export separator setting", SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT.name(),
                 Exporter.CSVSeparator.class) {
@@ -732,11 +755,13 @@ public class SettingsContainer {
             }
         };
         this.settingNameTooltipTextMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.displayName"));
         this.keepLastFragmentSetting = new SimpleBooleanProperty(this,
                 "Keep last fragment in pipelining",
                 SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.tooltip"));
-        this.settings = new ArrayList<>(6);
+        this.settingNameDisplayNameMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.displayName"));
+        this.settings = new ArrayList<>(tmpNumberOfSettings);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);

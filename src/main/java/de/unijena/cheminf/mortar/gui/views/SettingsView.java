@@ -58,7 +58,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 
 import java.util.List;
 import java.util.Map;
@@ -70,30 +69,29 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public class SettingsView extends AnchorPane {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private TabPane tabPane;
-    private BorderPane borderPane;
-    private Button cancelButton;
-    private Button applyButton;
-    private Button defaultButton;
-    private HBox hBoxRightSideButtons;
-    private HBox hBoxLeftSideButtons;
-    private HBox hBoxButtonsHBox;
-    private SelectionModel<Tab> selectionModel;
+    private final TabPane tabPane;
+    private final BorderPane borderPane;
+    private final Button cancelButton;
+    private final Button applyButton;
+    private final Button defaultButton;
+    private final HBox hBoxRightSideButtons;
+    private final HBox hBoxLeftSideButtons;
+    private final HBox hBoxButtonsHBox;
+    private final SelectionModel<Tab> selectionModel;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      */
     public SettingsView(){
         super();
         //borderPane
         this.borderPane = new BorderPane();
-        SettingsView.setTopAnchor(this.borderPane, 0.0);
-        SettingsView.setRightAnchor(this.borderPane, 0.0);
-        SettingsView.setLeftAnchor(this.borderPane, 0.0);
-        SettingsView.setBottomAnchor(this.borderPane, 0.0);
+        AnchorPane.setTopAnchor(this.borderPane, 0.0);
+        AnchorPane.setRightAnchor(this.borderPane, 0.0);
+        AnchorPane.setLeftAnchor(this.borderPane, 0.0);
+        AnchorPane.setBottomAnchor(this.borderPane, 0.0);
         //tabPane
         this.tabPane =  new TabPane();
         this.selectionModel = this.tabPane.getSelectionModel();
@@ -131,15 +129,16 @@ public class SettingsView extends AnchorPane {
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     * Adds a tab which contains the properties of the given properties list
-     * @param aStage Stage to bind width and height
+     * Adds a tab which contains the properties of the given properties list.
+     *
      * @param aLabel Label for the tab title and the tab Id
      * @param aPropertiesList List of properties to show in created tab
+     * @param aDisplayNamesMap Map containing setting names as keys and language-specific names for the settings to display in the GUI
      * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      * @return Tab
      */
-    public Tab addTab(Stage aStage, String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
+    public Tab addTab(String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         tmpTab.setId(aLabel);
@@ -166,7 +165,7 @@ public class SettingsView extends AnchorPane {
                 tmpScrollPane.widthProperty().multiply(0.5)
         );
         tmpGridPane.getColumnConstraints().add(tmpColCon2);
-        this.addPropertyItems(tmpGridPane, aPropertiesList, aTooltipTextsMap, aRecentPropertiesMap);
+        this.addPropertyItems(tmpGridPane, aPropertiesList, aDisplayNamesMap, aTooltipTextsMap, aRecentPropertiesMap);
         tmpScrollPane.setContent(tmpGridPane);
         tmpTab.setContent(tmpScrollPane);
         this.tabPane.getTabs().add(tmpTab);
@@ -174,24 +173,26 @@ public class SettingsView extends AnchorPane {
     }
     //
     /**
-     * Adds a row for each {@link Property} of given List which contains of properties name and a control to change properties value
+     * Adds a row for each {@link Property} of given List which contains the property name and a control to change the property value.
+     *
      * @param aGridPane GridPane to add row
      * @param aPropertiesList List of properties to show in created tab
+     * @param aDisplayNamesMap Map containing setting names as keys and language-specific names for the settings to display in the GUI
      * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      */
-    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
+    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
         int tmpRowIndex = 0;
-        for(Property tmpProperty : aPropertiesList){
+        for (Property tmpProperty : aPropertiesList) {
             RowConstraints tmpRow = new RowConstraints();
             tmpRow.setVgrow(Priority.ALWAYS);
-            tmpRow.setPrefHeight(50);
-            tmpRow.setMaxHeight(50);
-            tmpRow.setMinHeight(50);
+            tmpRow.setPrefHeight(50); //magic number
+            tmpRow.setMaxHeight(50); //magic number
+            tmpRow.setMinHeight(50); //magic number
             aGridPane.getRowConstraints().add(tmpRow);
             String tmpPropName = tmpProperty.getName();
-            Label tmpNameLabel = new Label(tmpPropName);
-            Tooltip tmpTooltip = new Tooltip(aTooltipTextsMap.get(tmpProperty.getName()));
+            Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpPropName));
+            Tooltip tmpTooltip = new Tooltip(aTooltipTextsMap.get(tmpPropName));
             tmpTooltip.setMaxWidth(GuiDefinitions.GUI_TOOLTIP_MAX_WIDTH);
             tmpTooltip.setWrapText(true);
             tmpNameLabel.setTooltip(tmpTooltip);
@@ -199,16 +200,15 @@ public class SettingsView extends AnchorPane {
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             Object tmpRecentValue = tmpProperty.getValue();
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
-            if(tmpProperty instanceof SimpleBooleanProperty){
+            if (tmpProperty instanceof SimpleBooleanProperty tmpSimpleBooleanProperty) {
                 ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
                 tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
-                tmpBooleanComboBox.valueProperty().bindBidirectional(tmpProperty);
+                tmpBooleanComboBox.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
                 tmpBooleanComboBox.setTooltip(tmpTooltip);
                 //add to gridpane
                 aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleIntegerProperty){
+            } else if (tmpProperty instanceof SimpleIntegerProperty) {
                 TextField tmpIntegerTextField = new TextField();
                 tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                 tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
@@ -220,8 +220,7 @@ public class SettingsView extends AnchorPane {
                 //add to gridpane
                 aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleDoubleProperty){
+            } else if (tmpProperty instanceof SimpleDoubleProperty) {
                 TextField tmpDoubleTextField = new TextField();
                 tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                 tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
@@ -233,17 +232,15 @@ public class SettingsView extends AnchorPane {
                 //add to gridpane
                 aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleEnumConstantNameProperty){
-                ComboBox<String> tmpEnumComboBox = new ComboBox();
+            } else if (tmpProperty instanceof SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty) {
+                ComboBox<String> tmpEnumComboBox = new ComboBox<>();
                 tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
-                tmpEnumComboBox.valueProperty().bindBidirectional(tmpProperty);
+                tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleEnumConstantNameProperty);
                 tmpEnumComboBox.setTooltip(tmpTooltip);
                 //add to gridpane
                 aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleStringProperty){
+            } else if (tmpProperty instanceof SimpleStringProperty) {
                 TextField tmpStringTextField = new TextField();
                 tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                 tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
@@ -253,6 +250,8 @@ public class SettingsView extends AnchorPane {
                 //add to gridpane
                 aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+            } else {
+                throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
             }
         }
     }
@@ -260,48 +259,48 @@ public class SettingsView extends AnchorPane {
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns the tab pane, holding tabs for the settings of the different fragmenters
+     * Returns the tab pane, holding tabs for the settings of the different fragmenters.
      *
      * @return TabPane
      */
-    public TabPane getTabPane(){
+    public TabPane getTabPane() {
         return this.tabPane;
     }
     //
     /**
      * Returns selection model, holding the active tab.
-     * Used to set tab of the selected fragmenter as active tab
+     * Used to set tab of the selected fragmenter as active tab.
      *
      * @return SelectionModel {@literal <} Tab {@literal >}
      */
-    public SelectionModel<Tab> getSelectionModel(){
+    public SelectionModel<Tab> getSelectionModel() {
         return this.selectionModel;
     }
     //
     /**
-     * Returns cancel button, which closes the view without saving changes
+     * Returns cancel button, which closes the view without saving changes.
      *
      * @return CancelButton
      */
-    public Button getCancelButton(){
+    public Button getCancelButton() {
         return this.cancelButton;
     }
     //
     /**
-     * Returns apply button, which applies changes and closes the view
+     * Returns apply button, which applies changes and closes the view.
      *
      * @return ApplyButton
      */
-    public Button getApplyButton(){
+    public Button getApplyButton() {
         return this.applyButton;
     }
     //
     /**
-     * Returns default button, which sets all options of active tab to default values
+     * Returns default button, which sets all options of active tab to default values.
      *
      * @return DefaultButton
      */
-    public Button getDefaultButton(){
+    public Button getDefaultButton() {
         return this.defaultButton;
     }
     //</editor-fold>
