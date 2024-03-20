@@ -369,7 +369,7 @@ public class SettingsContainer {
      * @return enum constant
      */
     public Exporter.CSVSeparator getCsvExportSeparatorSettingConstant() {
-        return Exporter.CSVSeparator.valueOf(this.csvExportSeparatorSetting.get());
+        return (Exporter.CSVSeparator) this.csvExportSeparatorSetting.getEnumValue();
     }
 
     /**
@@ -378,7 +378,7 @@ public class SettingsContainer {
      * @return CSV separator char
      */
     public char getCsvExportSeparatorSettingCharacter() {
-        return Exporter.CSVSeparator.valueOf(this.csvExportSeparatorSetting.get()).getSeparatorChar();
+        return ((Exporter.CSVSeparator) this.csvExportSeparatorSetting.getEnumValue()).getSeparatorChar();
     }
 
     /**

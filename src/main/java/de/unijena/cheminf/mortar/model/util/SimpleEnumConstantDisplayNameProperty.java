@@ -27,6 +27,8 @@ package de.unijena.cheminf.mortar.model.util;
 
 import java.util.Objects;
 
+//TODO: WIP!
+
 /**
  * A JavaFX property for wrapping the name of a constant from one specified enum class. The specific enum class is set
  * in the constructor and cannot be changed. All values the property might be given later must represent a constant name
@@ -35,7 +37,7 @@ import java.util.Objects;
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
-public class SimpleEnumConstantNameProperty extends SimpleEnumConstantPropertyBase {
+public class SimpleEnumConstantDisplayNameProperty extends SimpleEnumConstantPropertyBase {
     //<editor-fold desc="Constructors">
     /**
      * Constructor with all parameters.
@@ -48,7 +50,7 @@ public class SimpleEnumConstantNameProperty extends SimpleEnumConstantPropertyBa
      * @throws IllegalArgumentException if the given class is no enum, it contains no constants, or the given initial
      * values does not represent a constant name from the given enum class
      */
-    public SimpleEnumConstantNameProperty(Object bean, String name, String initialValue, Class associatedEnum)
+    public SimpleEnumConstantDisplayNameProperty(Object bean, String name, String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name, initialValue, associatedEnum);
         //throws IllegalArgumentException if initial value is no enum constant name
@@ -64,7 +66,7 @@ public class SimpleEnumConstantNameProperty extends SimpleEnumConstantPropertyBa
      * @throws NullPointerException if a parameter is null
      * @throws IllegalArgumentException if the given class is no enum or it contains no constants
      */
-    public SimpleEnumConstantNameProperty(Object bean, String name, Class associatedEnum)
+    public SimpleEnumConstantDisplayNameProperty(Object bean, String name, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name, associatedEnum);
     }
@@ -78,7 +80,7 @@ public class SimpleEnumConstantNameProperty extends SimpleEnumConstantPropertyBa
      * @throws IllegalArgumentException if the given class is no enum, it contains no constants, or the given initial
      * values does not represent a constant name from the given enum class
      */
-    public SimpleEnumConstantNameProperty(String initialValue, Class associatedEnum)
+    public SimpleEnumConstantDisplayNameProperty(String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(initialValue, associatedEnum);
         //throws IllegalArgumentException if initial value is no enum constant name
@@ -92,7 +94,7 @@ public class SimpleEnumConstantNameProperty extends SimpleEnumConstantPropertyBa
      * @throws NullPointerException if a parameter is null
      * @throws IllegalArgumentException if the given class is no enum or it contains no constants
      */
-    public SimpleEnumConstantNameProperty(Class associatedEnum)
+    public SimpleEnumConstantDisplayNameProperty(Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(associatedEnum);
     }
@@ -125,10 +127,13 @@ public class SimpleEnumConstantNameProperty extends SimpleEnumConstantPropertyBa
      */
     @Override
     public void setValue(String v) throws NullPointerException, IllegalArgumentException {
-        this.set(v);
+        Objects.requireNonNull(v, "Given value is null.");
+        //throws IllegalArgumentException if value is no enum constant name
+        Enum.valueOf(this.associatedEnum, v);
+        super.setValue(v);
     }
 
-    @Override
+   @Override
     public void setEnumValue(Enum newValue) throws NullPointerException, IllegalArgumentException {
         this.set(newValue.name());
     }

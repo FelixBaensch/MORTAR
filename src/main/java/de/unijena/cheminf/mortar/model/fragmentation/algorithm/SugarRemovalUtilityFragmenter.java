@@ -125,12 +125,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      * Default option for the sugar type to remove setting.
      */
-    public static final SugarTypeToRemoveOption SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT = SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR;
+    public static final SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT = SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR;
 
     /**
      * Default returned fragments option.
      */
-    public static final SRUFragmenterReturnedFragmentsOption RETURNED_FRAGMENTS_OPTION_DEFAULT = SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS;
+    public static final SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption RETURNED_FRAGMENTS_OPTION_DEFAULT = SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS;
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
@@ -531,8 +531,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant for returned fragments setting
      */
-    public SRUFragmenterReturnedFragmentsOption getReturnedFragmentsSettingConstant() {
-        return SRUFragmenterReturnedFragmentsOption.valueOf(this.returnedFragmentsSetting.get());
+    public SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption getReturnedFragmentsSettingConstant() {
+        return (SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption) this.returnedFragmentsSetting.getEnumValue();
     }
 
     /**
@@ -559,8 +559,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant for sugar type to remove setting
      */
-    public SugarTypeToRemoveOption getSugarTypeToRemoveSettingConstant() {
-        return SugarTypeToRemoveOption.valueOf(this.sugarTypeToRemoveSetting.get());
+    public SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption getSugarTypeToRemoveSettingConstant() {
+        return (SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption) this.sugarTypeToRemoveSetting.getEnumValue();
     }
 
     /**
@@ -624,7 +624,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * @return enum constant for preservation mode setting
      */
     public SugarRemovalUtility.PreservationModeOption getPreservationModeSettingConstant() {
-        return SugarRemovalUtility.PreservationModeOption.valueOf(this.preservationModeSetting.get());
+        return (SugarRemovalUtility.PreservationModeOption) this.preservationModeSetting.getEnumValue();
     }
 
     /**
@@ -809,7 +809,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public void setReturnedFragmentsSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        SRUFragmenterReturnedFragmentsOption tmpConstant = SRUFragmenterReturnedFragmentsOption.valueOf(anOptionName);
+        SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption tmpConstant = (SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption) this.returnedFragmentsSetting.translateNameToEnumConstant(anOptionName);
         this.setReturnedFragmentsSetting(tmpConstant);
     }
 
@@ -820,9 +820,9 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * @param anOption a constant from the SRUFragmenterReturnedFragmentsOption enum
      * @throws NullPointerException if the given parameter is null
      */
-    public void setReturnedFragmentsSetting(SRUFragmenterReturnedFragmentsOption anOption) throws NullPointerException {
+    public void setReturnedFragmentsSetting(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
-        this.returnedFragmentsSetting.set(anOption.name());
+        this.returnedFragmentsSetting.setEnumValue(anOption);
     }
 
     /**
@@ -836,7 +836,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public void setSugarTypeToRemoveSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        SugarTypeToRemoveOption tmpConstant = SugarTypeToRemoveOption.valueOf(anOptionName);
+        SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption tmpConstant = (SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption) this.sugarTypeToRemoveSetting.translateNameToEnumConstant(anOptionName);
         this.setSugarTypeToRemoveSetting(tmpConstant);
     }
 
@@ -847,9 +847,9 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * @param aSugarTypeToRemoveOption a constant from the SugarTypeToRemoveOption enum
      * @throws NullPointerException if the given parameter is null
      */
-    public void setSugarTypeToRemoveSetting(SugarTypeToRemoveOption aSugarTypeToRemoveOption) throws NullPointerException {
+    public void setSugarTypeToRemoveSetting(SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption aSugarTypeToRemoveOption) throws NullPointerException {
         Objects.requireNonNull(aSugarTypeToRemoveOption, "Given type of sugars to remove is null.");
-        this.sugarTypeToRemoveSetting.set(aSugarTypeToRemoveOption.name());
+        this.sugarTypeToRemoveSetting.setEnumValue(aSugarTypeToRemoveOption);
     }
 
     /**
@@ -883,7 +883,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public void setPreservationModeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        SugarRemovalUtility.PreservationModeOption tmpConstant = SugarRemovalUtility.PreservationModeOption.valueOf(anOptionName);
+        SugarRemovalUtility.PreservationModeOption tmpConstant = (SugarRemovalUtility.PreservationModeOption) this.preservationModeSetting.translateNameToEnumConstant(anOptionName);
         this.setPreservationModeSetting(tmpConstant);
     }
 
@@ -897,7 +897,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public void setPreservationModeSetting(SugarRemovalUtility.PreservationModeOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
         //synchronisation with SRU instance done in overridden set() function of the property
-        this.preservationModeSetting.set(anOption.name());
+        this.preservationModeSetting.setEnumValue(anOption);
     }
 
     /**
@@ -1043,22 +1043,22 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public FragmentSaturationOption getFragmentSaturationSettingConstant() {
-        return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
+    public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSettingConstant() {
+        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.getEnumValue();
     }
 
     @Override
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        FragmentSaturationOption tmpConstant = FragmentSaturationOption.valueOf(anOptionName);
-        this.fragmentSaturationSetting.set(tmpConstant.name());
+        IMoleculeFragmenter.FragmentSaturationOption tmpConstant = (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.translateNameToEnumConstant(anOptionName);
+        this.fragmentSaturationSetting.setEnumValue(tmpConstant);
     }
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationSetting.set(anOption.name());
+        this.fragmentSaturationSetting.setEnumValue(anOption);
     }
 
     @Override
@@ -1084,13 +1084,13 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
 
     @Override
     public void restoreDefaultSettings() {
-        this.returnedFragmentsSetting.set(SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT.name());
-        this.sugarTypeToRemoveSetting.set(SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT.name());
-        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.returnedFragmentsSetting.setEnumValue(SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT);
+        this.sugarTypeToRemoveSetting.setEnumValue(SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT);
+        this.fragmentSaturationSetting.setEnumValue(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.sugarRUInstance.restoreDefaultSettings();
         this.detectCircularSugarsOnlyWithGlycosidicBondSetting.set(this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected());
         this.removeOnlyTerminalSugarsSetting.set(this.sugarRUInstance.areOnlyTerminalSugarsRemoved());
-        this.preservationModeSetting.set(this.sugarRUInstance.getPreservationModeSetting().name());
+        this.preservationModeSetting.setEnumValue(this.sugarRUInstance.getPreservationModeSetting());
         this.preservationModeThresholdSetting.set(this.sugarRUInstance.getPreservationModeThresholdSetting());
         this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.set(this.sugarRUInstance.areOnlyCircularSugarsWithEnoughExocyclicOxygenAtomsDetected());
         this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.set(this.sugarRUInstance.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting());
@@ -1117,20 +1117,20 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
         List<IAtomContainer> tmpFragments;
-        SugarTypeToRemoveOption tmpOption = SugarTypeToRemoveOption.valueOf(this.sugarTypeToRemoveSetting.get());
+        SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption tmpOption = (SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption) this.sugarTypeToRemoveSetting.getEnumValue();
         try {
             switch (tmpOption) {
-                case CIRCULAR:
+                case SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.CIRCULAR:
                     tmpFragments = this.sugarRUInstance.removeAndReturnCircularSugars(aMolecule, true);
                     break;
-                case LINEAR:
+                case SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.LINEAR:
                     tmpFragments = this.sugarRUInstance.removeAndReturnLinearSugars(aMolecule, true);
                     break;
-                case CIRCULAR_AND_LINEAR:
+                case SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR:
                     tmpFragments = this.sugarRUInstance.removeAndReturnCircularAndLinearSugars(aMolecule, true);
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemoveSetting);
+                    throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemoveSetting.get());
             }
         } catch (IllegalArgumentException | CloneNotSupportedException anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
@@ -1140,8 +1140,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         tmpAglycone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
         boolean tmpSugarsWereDetected = (tmpFragments.size() > 1);
-        if (this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS.name())
-                || this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ONLY_AGLYCONE.name())) {
+        if (this.returnedFragmentsSetting.getEnumValue().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS)
+                || this.returnedFragmentsSetting.getEnumValue().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_AGLYCONE)) {
             if (!tmpAglycone.isEmpty()) {
                 if (!ConnectivityChecker.isConnected(tmpAglycone)) {
                     List<IAtomContainer> tmpAglyconeFragments = SugarRemovalUtility.partitionAndSortUnconnectedFragments(tmpAglycone);
@@ -1161,8 +1161,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         }
         //sugars were detected, postprocessing
         if (tmpSugarsWereDetected) {
-            if (this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS.name())
-                    || this.returnedFragmentsSetting.get().equals(SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES.name())) {
+            if (this.returnedFragmentsSetting.getEnumValue().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS)
+                    || this.returnedFragmentsSetting.getEnumValue().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES)) {
                 for (int i = 0; i < tmpFragments.size(); i++) {
                     IAtomContainer tmpSugarFragment = tmpFragments.get(i);
                     if (!Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
@@ -1175,7 +1175,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
                     }
                     try {
-                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                        if (this.fragmentSaturationSetting.getEnumValue().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
                             ChemUtil.saturateWithHydrogen(tmpSugarFragment);
                         }
                         ChemUtil.checkAndCorrectElectronConfiguration(tmpSugarFragment);

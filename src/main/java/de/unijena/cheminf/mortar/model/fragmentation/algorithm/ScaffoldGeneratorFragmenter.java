@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 
 import javafx.beans.property.Property;
@@ -64,16 +65,35 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * Enum for defining which SmiFlavor is used for the SmilesGenerator.
      * The SmilesGenerator is used for the enumerative fragmentation.
      */
-    public static enum SmilesGeneratorOption {
+    public static enum SmilesGeneratorOption implements IDisplayEnum {
         /**
          * Output canonical SMILES without stereochemistry and without atomic masses.
          */
-        UNIQUE_WITHOUT_STEREO,
+        UNIQUE_WITHOUT_STEREO(Message.get("ScaffoldGeneratorFragmenter.SmilesGeneratorOption.UniqueWithoutStereo.displayName")),
 
         /**
          * Output canonical SMILES with stereochemistry and without atomic masses.
          */
-        UNIQUE_WITH_STEREO;
+        UNIQUE_WITH_STEREO(Message.get("ScaffoldGeneratorFragmenter.SmilesGeneratorOption.UniqueWithStereo.displayName"));
+
+        /**
+         * Language-specific name for each constant to display in the GUI.
+         */
+        private final String displayName;
+
+        /**
+         * Constructor.
+         *
+         * @param aDisplayName language-specific name for each constant to display in the GUI
+         */
+        private SmilesGeneratorOption(String aDisplayName) {
+            this.displayName = aDisplayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
     }
     //</editor-fold>
     //
@@ -152,17 +172,17 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Default SmiFlavor for the default SmilesGenerator.
      */
-    public static final ScaffoldGeneratorFragmenter.SmilesGeneratorOption SMILES_GENERATOR_OPTION_DEFAULT = SmilesGeneratorOption.UNIQUE_WITHOUT_STEREO;
+    public static final ScaffoldGeneratorFragmenter.SmilesGeneratorOption SMILES_GENERATOR_OPTION_DEFAULT = ScaffoldGeneratorFragmenter.SmilesGeneratorOption.UNIQUE_WITHOUT_STEREO;
 
     /**
      * Default fragmentation type.
      */
-    public static final FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = FragmentationTypeOption.SCHUFFENHAUER;
+    public static final ScaffoldGeneratorFragmenter.FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = ScaffoldGeneratorFragmenter.FragmentationTypeOption.SCHUFFENHAUER;
 
     /**
      * Default side chain option.
      */
-    public static final SideChainOption SIDE_CHAIN_OPTION_DEFAULT = SideChainOption.ONLY_SCAFFOLDS;
+    public static final ScaffoldGeneratorFragmenter.SideChainOption SIDE_CHAIN_OPTION_DEFAULT = ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SCAFFOLDS;
 
     /**
      * Scaffolds will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
@@ -287,9 +307,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(String newValue) throws NullPointerException, IllegalArgumentException {
                 try {
-                    //valueOf() throws IllegalArgumentException
-                    ScaffoldGenerator.ScaffoldModeOption tmpEnumConstant = ScaffoldGenerator.ScaffoldModeOption.valueOf(newValue);
-                    ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setScaffoldModeSetting(tmpEnumConstant);
+                    super.set(newValue);
+                    ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setScaffoldModeSetting((ScaffoldGenerator.ScaffoldModeOption) this.getEnumValue());
                 } catch (IllegalArgumentException | NullPointerException anException) {
                     ScaffoldGeneratorFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
@@ -299,7 +318,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
-                super.set(newValue);
+
             }
         };
         this.settingNameTooltipTextMap.put(this.scaffoldModeSetting.getName(),
@@ -339,7 +358,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
                 //throws no exception if super.set() throws no exception
                 ScaffoldGeneratorFragmenter.this.setCycleFinderInstance(
-                        IMoleculeFragmenter.CycleFinderOption.valueOf(newValue));
+                        (IMoleculeFragmenter.CycleFinderOption) this.getEnumValue());
                 Aromaticity tmpAromaticity = new Aromaticity(ScaffoldGeneratorFragmenter.this.electronDonationInstance, ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
                 ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
             }
@@ -348,7 +367,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 Message.get("ScaffoldGeneratorFragmenter.cycleFinderSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.cycleFinderSetting.getName(),
                 Message.get("ScaffoldGeneratorFragmenter.cycleFinderSetting.displayName"));
-        this.setCycleFinderInstance(IMoleculeFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
+        this.setCycleFinderInstance((IMoleculeFragmenter.CycleFinderOption) this.cycleFinderSetting.getEnumValue());
         this.electronDonationModelSetting = new SimpleEnumConstantNameProperty(this, "Electron donation model setting",
                 ScaffoldGeneratorFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name(),
                 IMoleculeFragmenter.ElectronDonationModelOption.class) {
@@ -367,7 +386,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     throw anException;
                 }
                 //throws no exception if super.set() throws no exception
-                ScaffoldGeneratorFragmenter.this.setElectronDonationInstance(IMoleculeFragmenter.ElectronDonationModelOption.valueOf(newValue));
+                ScaffoldGeneratorFragmenter.this.setElectronDonationInstance((IMoleculeFragmenter.ElectronDonationModelOption) this.getEnumValue());
                 Aromaticity tmpAromaticity = new Aromaticity(ScaffoldGeneratorFragmenter.this.electronDonationInstance, ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
                 ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
             }
@@ -376,7 +395,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 Message.get("ScaffoldGeneratorFragmenter.electronDonationModelSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.electronDonationModelSetting.getName(),
                 Message.get("ScaffoldGeneratorFragmenter.electronDonationModelSetting.displayName"));
-        this.setElectronDonationInstance(IMoleculeFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get()));
+        this.setElectronDonationInstance((IMoleculeFragmenter.ElectronDonationModelOption) this.electronDonationModelSetting.getEnumValue());
         Aromaticity tmpAromaticity = new Aromaticity(ScaffoldGeneratorFragmenter.this.electronDonationInstance, ScaffoldGeneratorFragmenter.this.cycleFinderInstance);
         ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setAromaticityModelSetting(tmpAromaticity);
         this.smilesGeneratorSetting = new SimpleEnumConstantNameProperty(this, "SMILES generator setting",
@@ -395,7 +414,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
-                ScaffoldGeneratorFragmenter.this.setSmilesGeneratorInstance(ScaffoldGeneratorFragmenter.SmilesGeneratorOption.valueOf(newValue));
+                ScaffoldGeneratorFragmenter.this.setSmilesGeneratorInstance((ScaffoldGeneratorFragmenter.SmilesGeneratorOption) this.getEnumValue());
                 ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setSmilesGeneratorSetting(smilesGeneratorInstance);
             }
         };
@@ -403,7 +422,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 Message.get("ScaffoldGeneratorFragmenter.smilesGeneratorSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.smilesGeneratorSetting.getName(),
                 Message.get("ScaffoldGeneratorFragmenter.smilesGeneratorSetting.displayName"));
-        this.setSmilesGeneratorInstance(ScaffoldGeneratorFragmenter.SmilesGeneratorOption.valueOf(this.smilesGeneratorSetting.get()));
+        this.setSmilesGeneratorInstance((ScaffoldGeneratorFragmenter.SmilesGeneratorOption) this.smilesGeneratorSetting.getEnumValue());
         ScaffoldGeneratorFragmenter.this.scaffoldGeneratorInstance.setSmilesGeneratorSetting(ScaffoldGeneratorFragmenter.this.smilesGeneratorInstance);
         this.ruleSevenAppliedSetting = new SimpleBooleanProperty(this,
                 "Rule seven setting", ScaffoldGenerator.RULE_SEVEN_APPLIED_SETTING_DEFAULT) {
@@ -498,7 +517,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public void setScaffoldModeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        ScaffoldGenerator.ScaffoldModeOption tmpConstant = ScaffoldGenerator.ScaffoldModeOption.valueOf(anOptionName);
+        ScaffoldGenerator.ScaffoldModeOption tmpConstant =
+                (ScaffoldGenerator.ScaffoldModeOption) this.scaffoldModeSetting.translateNameToEnumConstant(anOptionName);
         this.setScaffoldModeSetting(tmpConstant);
     }
 
@@ -511,7 +531,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public void setScaffoldModeSetting(ScaffoldGenerator.ScaffoldModeOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        this.scaffoldModeSetting.set(anOption.name());
+        this.scaffoldModeSetting.setEnumValue(anOption);
     }
 
     /**
@@ -536,7 +556,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
         IMoleculeFragmenter.ElectronDonationModelOption tmpConstant =
-                IMoleculeFragmenter.ElectronDonationModelOption.valueOf(anOptionName);
+                (IMoleculeFragmenter.ElectronDonationModelOption) this.electronDonationModelSetting.translateNameToEnumConstant(anOptionName);
         this.setElectronDonationModelSetting(tmpConstant);
     }
 
@@ -550,7 +570,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public void setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
         //synchronisation with aromaticity model instance done in overridden set() function of the property
-        this.electronDonationModelSetting.set(anOption.name());
+        this.electronDonationModelSetting.setEnumValue(anOption);
     }
 
     /**
@@ -564,7 +584,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public void setCycleFinderSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        IMoleculeFragmenter.CycleFinderOption tmpConstant = IMoleculeFragmenter.CycleFinderOption.valueOf(anOptionName);
+        IMoleculeFragmenter.CycleFinderOption tmpConstant =
+                (IMoleculeFragmenter.CycleFinderOption) this.cycleFinderSetting.translateNameToEnumConstant(anOptionName);
         this.setCycleFinderSetting(tmpConstant);
     }
 
@@ -577,7 +598,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      */
     public void setCycleFinderSetting(IMoleculeFragmenter.CycleFinderOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
-        this.cycleFinderSetting.set(anOption.name());
+        this.cycleFinderSetting.setEnumValue(anOption);
     }
 
     /**
@@ -590,7 +611,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public void setSmilesGeneratorSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        SmilesGeneratorOption tmpConstant = SmilesGeneratorOption.valueOf(anOptionName);
+        ScaffoldGeneratorFragmenter.SmilesGeneratorOption tmpConstant =
+                (ScaffoldGeneratorFragmenter.SmilesGeneratorOption) this.smilesGeneratorSetting.translateNameToEnumConstant(anOptionName);
         this.setSmilesGeneratorSetting(tmpConstant);
     }
 
@@ -600,10 +622,10 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @param anOption a constant from the SmilesGeneratorOption enum
      * @throws NullPointerException if the given parameter is null
      */
-    public void setSmilesGeneratorSetting(SmilesGeneratorOption anOption) throws NullPointerException, IllegalArgumentException {
+    public void setSmilesGeneratorSetting(ScaffoldGeneratorFragmenter.SmilesGeneratorOption anOption) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOption, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        this.smilesGeneratorSetting.set(anOption.name());
+        this.smilesGeneratorSetting.setEnumValue(anOption);
     }
 
     /**
@@ -636,7 +658,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public void setFragmentationTypeSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        FragmentationTypeOption tmpConstant = FragmentationTypeOption.valueOf(anOptionName);
+        ScaffoldGeneratorFragmenter.FragmentationTypeOption tmpConstant =
+                (ScaffoldGeneratorFragmenter.FragmentationTypeOption) this.fragmentationTypeSetting.translateNameToEnumConstant(anOptionName);
         this.setFragmentationTypeSetting(tmpConstant);
     }
 
@@ -646,9 +669,9 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @param anOption a constant from the FragmentationType enum
      * @throws NullPointerException if the given parameter is null
      */
-    public void setFragmentationTypeSetting(FragmentationTypeOption anOption) throws NullPointerException {
+    public void setFragmentationTypeSetting(ScaffoldGeneratorFragmenter.FragmentationTypeOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given type of fragmentation to remove is null.");
-        this.fragmentationTypeSetting.set(anOption.name());
+        this.fragmentationTypeSetting.setEnumValue(anOption);
     }
 
     /**
@@ -661,7 +684,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     public void setSideChainSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        SideChainOption tmpConstant = SideChainOption.valueOf(anOptionName);
+        ScaffoldGeneratorFragmenter.SideChainOption tmpConstant =
+                (ScaffoldGeneratorFragmenter.SideChainOption) this.sideChainSetting.translateNameToEnumConstant(anOptionName);
         this.setSideChainSetting(tmpConstant);
     }
 
@@ -671,9 +695,9 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @param anOption a constant from the SideChainOption enum
      * @throws NullPointerException if the given parameter is null
      */
-    public void setSideChainSetting(SideChainOption anOption) throws NullPointerException {
+    public void setSideChainSetting(ScaffoldGeneratorFragmenter.SideChainOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given type of side chain option is null.");
-        this.sideChainSetting.set(anOption.name());
+        this.sideChainSetting.setEnumValue(anOption);
     }
     //</editor-fold>
     //
@@ -722,8 +746,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant for side chain setting
      */
-    public SideChainOption getSideChainSettingConstant() {
-        return SideChainOption.valueOf(this.sideChainSetting.get());
+    public ScaffoldGeneratorFragmenter.SideChainOption getSideChainSettingConstant() {
+        return (ScaffoldGeneratorFragmenter.SideChainOption) this.sideChainSetting.getEnumValue();
     }
 
     /**
@@ -750,8 +774,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant for fragmentation type setting
      */
-    public FragmentationTypeOption getFragmentationTypeSettingConstant() {
-        return FragmentationTypeOption.valueOf(this.fragmentationTypeSetting.get());
+    public ScaffoldGeneratorFragmenter.FragmentationTypeOption getFragmentationTypeSettingConstant() {
+        return (ScaffoldGeneratorFragmenter.FragmentationTypeOption) this.fragmentationTypeSetting.getEnumValue();
     }
 
     /**
@@ -816,8 +840,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant for smiles generator setting
      */
-    public SmilesGeneratorOption getSmilesGeneratorSettingConstant() {
-        return SmilesGeneratorOption.valueOf(this.smilesGeneratorSetting.get());
+    public ScaffoldGeneratorFragmenter.SmilesGeneratorOption getSmilesGeneratorSettingConstant() {
+        return (ScaffoldGeneratorFragmenter.SmilesGeneratorOption) this.smilesGeneratorSetting.getEnumValue();
     }
 
     /**
@@ -863,7 +887,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @return enum constant for returned scaffold mode setting
      */
     public ScaffoldGenerator.ScaffoldModeOption getScaffoldModeSettingConstant() {
-        return ScaffoldGenerator.ScaffoldModeOption.valueOf(this.scaffoldModeSetting.get());
+        return (ScaffoldGenerator.ScaffoldModeOption) this.scaffoldModeSetting.getEnumValue();
     }
 
     /**
@@ -891,7 +915,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @return enum constant for electron donation model setting
      */
     public IMoleculeFragmenter.ElectronDonationModelOption getElectronDonationModelSettingConstant() {
-        return IMoleculeFragmenter.ElectronDonationModelOption.valueOf(this.electronDonationModelSetting.get());
+        return (IMoleculeFragmenter.ElectronDonationModelOption) this.electronDonationModelSetting.getEnumValue();
     }
 
     /**
@@ -920,7 +944,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
      * @return enum constant for cycle finder setting
      */
     public IMoleculeFragmenter.CycleFinderOption getCycleFinderSettingConstant() {
-        return IMoleculeFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get());
+        return (IMoleculeFragmenter.CycleFinderOption) this.cycleFinderSetting.getEnumValue();
     }
     //</editor-fold>
     //
@@ -958,22 +982,21 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public FragmentSaturationOption getFragmentSaturationSettingConstant() {
-        return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
+    public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSettingConstant() {
+        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.getEnumValue();
     }
 
     @Override
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
         //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        FragmentSaturationOption tmpConstant = FragmentSaturationOption.valueOf(anOptionName);
-        this.fragmentSaturationSetting.set(tmpConstant.name());
+        this.fragmentSaturationSetting.set(anOptionName);
     }
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationSetting.set(anOption.name());
+        this.fragmentSaturationSetting.setEnumValue(anOption);
     }
 
     @Override
@@ -994,17 +1017,17 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
 
     @Override
     public void restoreDefaultSettings() {
-        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
-        this.scaffoldModeSetting.set(ScaffoldGenerator.SCAFFOLD_MODE_OPTION_DEFAULT.name());
+        this.fragmentSaturationSetting.setEnumValue(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.scaffoldModeSetting.setEnumValue(ScaffoldGenerator.SCAFFOLD_MODE_OPTION_DEFAULT);
         this.determineAromaticitySetting.set(ScaffoldGenerator.DETERMINE_AROMATICITY_SETTING_DEFAULT);
-        this.cycleFinderSetting.set(ScaffoldGeneratorFragmenter.CYCLE_FINDER_OPTION_DEFAULT.name());
-        this.setCycleFinderSetting(IMoleculeFragmenter.CycleFinderOption.valueOf(this.cycleFinderSetting.get()));
-        this.electronDonationModelSetting.set(ScaffoldGeneratorFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT.name());
-        this.smilesGeneratorSetting.set(ScaffoldGeneratorFragmenter.SMILES_GENERATOR_OPTION_DEFAULT.name());
+        this.cycleFinderSetting.setEnumValue(ScaffoldGeneratorFragmenter.CYCLE_FINDER_OPTION_DEFAULT);
+        this.setCycleFinderSetting(ScaffoldGeneratorFragmenter.CYCLE_FINDER_OPTION_DEFAULT);
+        this.electronDonationModelSetting.setEnumValue(ScaffoldGeneratorFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT);
+        this.smilesGeneratorSetting.setEnumValue(ScaffoldGeneratorFragmenter.SMILES_GENERATOR_OPTION_DEFAULT);
         this.ruleSevenAppliedSetting.set(ScaffoldGenerator.RULE_SEVEN_APPLIED_SETTING_DEFAULT);
         this.retainOnlyHybridisationsAtAromaticBondsSetting.set(ScaffoldGenerator.RETAIN_ONLY_HYBRIDISATIONS_AT_AROMATIC_BONDS_SETTING_DEFAULT);
-        this.setFragmentationTypeSetting(ScaffoldGeneratorFragmenter.FRAGMENTATION_TYPE_OPTION_DEFAULT.name());
-        this.setSideChainSetting(ScaffoldGeneratorFragmenter.SIDE_CHAIN_OPTION_DEFAULT.name());
+        this.setFragmentationTypeSetting(ScaffoldGeneratorFragmenter.FRAGMENTATION_TYPE_OPTION_DEFAULT);
+        this.setSideChainSetting(ScaffoldGeneratorFragmenter.SIDE_CHAIN_OPTION_DEFAULT);
     }
 
     @Override
@@ -1023,28 +1046,28 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             //Hotfix for aromatic SMILES loader bug:
             //Kekulization.kekulize(tmpMoleculeClone);
             /*Generate side chains*/
-            if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDE_CHAINS.name()) ||
-                    this.sideChainSetting.get().equals(SideChainOption.BOTH.name())) {
-                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+            if (this.sideChainSetting.getEnumValue().equals(ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SIDE_CHAINS) ||
+                    this.sideChainSetting.getEnumValue().equals(ScaffoldGeneratorFragmenter.SideChainOption.BOTH)) {
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.getEnumValue().equals(FragmentSaturationOption.HYDROGEN_SATURATION);
                 tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 /*Add side chain Property*/
-                for(IAtomContainer tmpSideChain : tmpSideChainList) {
+                for (IAtomContainer tmpSideChain : tmpSideChainList) {
                     tmpSideChain.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SIDE_CHAIN_VALUE);
                 }
             }
             /*Return only the side chains*/
-            if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDE_CHAINS.name())) {
+            if (this.sideChainSetting.getEnumValue().equals(ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SIDE_CHAINS)) {
                 return tmpSideChainList;
             }
             /*Decomposition according to the Schuffenhauer rules*/
-            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCHUFFENHAUER.name())) {
+            if (this.fragmentationTypeSetting.getEnumValue().equals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.SCHUFFENHAUER)) {
                 List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.applySchuffenhauerRules(tmpMoleculeClone);
                 /*Set fragment category property*/
                 boolean tmpIsFirstFragment = true;
-                for(IAtomContainer tmpFragment : tmpFragmentList) {
+                for (IAtomContainer tmpFragment : tmpFragmentList) {
                     /*First fragment is the scaffold*/
-                    if(tmpIsFirstFragment) {
+                    if (tmpIsFirstFragment) {
                         tmpIsFirstFragment = false;
                         tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                                 ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
@@ -1057,7 +1080,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 tmpReturnList.addAll(tmpFragmentList);
             }
             /*Enumerative decomposition*/
-            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.ENUMERATIVE.name())) {
+            if (this.fragmentationTypeSetting.getEnumValue().equals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.ENUMERATIVE)) {
                 List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.applyEnumerativeRemoval(tmpMoleculeClone);
                 /*Set fragment category property*/
                 boolean tmpIsFirstFragment = true;
@@ -1076,22 +1099,22 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 tmpReturnList.addAll(tmpFragmentList);
             }
             /*Generate the scaffold only*/
-            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCAFFOLD_ONLY.name())) {
-                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+            if (this.fragmentationTypeSetting.getEnumValue().equals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.SCAFFOLD_ONLY)) {
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.getEnumValue().equals(FragmentSaturationOption.HYDROGEN_SATURATION);
                 IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 //Set Scaffold Property
                 tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                         ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
                 tmpReturnList.add(tmpScaffold);
             }
-            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.RING_DISSECTION.name())) {
-                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
+            if (this.fragmentationTypeSetting.getEnumValue().equals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.RING_DISSECTION)) {
+                boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.getEnumValue().equals(FragmentSaturationOption.HYDROGEN_SATURATION);
                 IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 tmpScaffold.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                         ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
                 tmpReturnList.add(tmpScaffold);
                 List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.getRings(tmpMoleculeClone, tmpSaturateWithHydrogen);
-                for(IAtomContainer tmpFragment : tmpFragmentList) {
+                for (IAtomContainer tmpFragment : tmpFragmentList) {
                     tmpFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_PARENT_SCAFFOLD_VALUE);
                     tmpReturnList.add(tmpFragment);
@@ -1103,9 +1126,9 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         tmpReturnList.addAll(tmpSideChainList);
         /*Remove all empty fragments*/
         if (!tmpReturnList.isEmpty()) {
-            for(int i = 0; i < tmpReturnList.size(); i++) {
+            for (int i = 0; i < tmpReturnList.size(); i++) {
                 IAtomContainer tmpReturnMolecule = tmpReturnList.get(i);
-                if(tmpReturnMolecule.isEmpty()){
+                if (tmpReturnMolecule.isEmpty()){
                     tmpReturnList.remove(tmpReturnMolecule);
                     i--;
                 }
