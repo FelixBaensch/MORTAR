@@ -95,7 +95,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         /**
          * Generate scaffolds and side chains.
          */
-        SCAFFOLDS_AND_SIDE_CHAINS;
+        BOTH;
     }
     //</editor-fold>
     //
@@ -107,12 +107,12 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         /**
          * {@link ScaffoldGenerator#applyEnumerativeRemoval(IAtomContainer)} is used.
          */
-        ENUMERATIVE_FRAGMENTATION,
+        ENUMERATIVE,
 
         /**
          * {@link ScaffoldGenerator#applySchuffenhauerRules(IAtomContainer)} is used.
          */
-        SCHUFFENHAUER_FRAGMENTATION,
+        SCHUFFENHAUER,
 
         /**
          * {@link ScaffoldGenerator#getScaffold(IAtomContainer, boolean)} is used.
@@ -157,7 +157,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Default fragmentation type.
      */
-    public static final FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = FragmentationTypeOption.SCHUFFENHAUER_FRAGMENTATION;
+    public static final FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = FragmentationTypeOption.SCHUFFENHAUER;
 
     /**
      * Default side chain option.
@@ -1024,7 +1024,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
             //Kekulization.kekulize(tmpMoleculeClone);
             /*Generate side chains*/
             if(this.sideChainSetting.get().equals(SideChainOption.ONLY_SIDE_CHAINS.name()) ||
-                    this.sideChainSetting.get().equals(SideChainOption.SCAFFOLDS_AND_SIDE_CHAINS.name())) {
+                    this.sideChainSetting.get().equals(SideChainOption.BOTH.name())) {
                 boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name());
                 tmpSideChainList = this.scaffoldGeneratorInstance.getSideChains(tmpMoleculeClone, tmpSaturateWithHydrogen);
                 /*Add side chain Property*/
@@ -1038,7 +1038,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 return tmpSideChainList;
             }
             /*Decomposition according to the Schuffenhauer rules*/
-            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCHUFFENHAUER_FRAGMENTATION.name())) {
+            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.SCHUFFENHAUER.name())) {
                 List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.applySchuffenhauerRules(tmpMoleculeClone);
                 /*Set fragment category property*/
                 boolean tmpIsFirstFragment = true;
@@ -1057,7 +1057,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 tmpReturnList.addAll(tmpFragmentList);
             }
             /*Enumerative decomposition*/
-            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.ENUMERATIVE_FRAGMENTATION.name())) {
+            if(this.fragmentationTypeSetting.get().equals(FragmentationTypeOption.ENUMERATIVE.name())) {
                 List<IAtomContainer> tmpFragmentList = this.scaffoldGeneratorInstance.applyEnumerativeRemoval(tmpMoleculeClone);
                 /*Set fragment category property*/
                 boolean tmpIsFirstFragment = true;

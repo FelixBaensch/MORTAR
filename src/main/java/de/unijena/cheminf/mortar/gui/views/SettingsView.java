@@ -202,6 +202,8 @@ public class SettingsView extends AnchorPane {
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             if (tmpProperty instanceof SimpleBooleanProperty tmpSimpleBooleanProperty) {
                 ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
+                tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
                 tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
                 tmpBooleanComboBox.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
                 tmpBooleanComboBox.setTooltip(tmpTooltip);
@@ -234,6 +236,8 @@ public class SettingsView extends AnchorPane {
                 GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             } else if (tmpProperty instanceof SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty) {
                 ComboBox<String> tmpEnumComboBox = new ComboBox<>();
+                tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+                tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
                 tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
                 tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleEnumConstantNameProperty);
                 tmpEnumComboBox.setTooltip(tmpTooltip);
