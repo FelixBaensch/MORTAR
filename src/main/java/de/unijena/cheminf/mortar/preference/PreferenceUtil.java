@@ -26,6 +26,7 @@
 package de.unijena.cheminf.mortar.preference;
 
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -109,6 +110,9 @@ public final class PreferenceUtil {
                 } else if (tmpProperty instanceof SimpleDoubleProperty) {
                     SingleNumberPreference tmpDoublePreference = new SingleNumberPreference(tmpProperty.getName(), ((SimpleDoubleProperty) tmpProperty).get());
                     tmpContainer.add(tmpDoublePreference);
+                } else if (tmpProperty instanceof SimpleIDisplayEnumConstantProperty) {
+                    SingleTermPreference tmpStringPreference = new SingleTermPreference(tmpProperty.getName(), ((Enum)((SimpleIDisplayEnumConstantProperty) tmpProperty).get()).name());
+                    tmpContainer.add(tmpStringPreference);
                 } else if (tmpProperty instanceof SimpleEnumConstantNameProperty || tmpProperty instanceof SimpleStringProperty) {
                     SingleTermPreference tmpStringPreference = new SingleTermPreference(tmpProperty.getName(), ((SimpleStringProperty) tmpProperty).get());
                     tmpContainer.add(tmpStringPreference);

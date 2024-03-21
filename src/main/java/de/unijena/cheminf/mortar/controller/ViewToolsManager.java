@@ -33,6 +33,7 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
 import de.unijena.cheminf.mortar.preference.IPreference;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
@@ -271,6 +272,9 @@ public class ViewToolsManager {
                     } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
                         SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
                         tmpSettingProperty.setValue(tmpDoublePreference.getContent());
+                    } else if (tmpSettingProperty instanceof SimpleIDisplayEnumConstantProperty) {
+                        SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                        tmpSettingProperty.setValue(Enum.valueOf(((SimpleIDisplayEnumConstantProperty) tmpSettingProperty).getAssociatedEnum(), tmpStringPreference.getContent()));
                     } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
                         SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
                         tmpSettingProperty.setValue(tmpStringPreference.getContent());
@@ -328,6 +332,10 @@ public class ViewToolsManager {
                 } else if (tmpSetting instanceof SimpleDoubleProperty) {
                     if (!SingleNumberPreference.isValidContent(((SimpleDoubleProperty) tmpSetting).get())) {
                         throw new IOException(String.format("Setting value %d of setting name %s is invalid.", ((SimpleDoubleProperty) tmpSetting).get(), tmpSetting.getName()));
+                    }
+                } else if (tmpSetting instanceof SimpleIDisplayEnumConstantProperty) {
+                    if (!SingleTermPreference.isValidContent(((Enum)((SimpleIDisplayEnumConstantProperty) tmpSetting).get()).name())) {
+                        throw new IOException(String.format("Setting value %s of setting name %s is invalid.", ((SimpleStringProperty) tmpSetting).get(), tmpSetting.getName()));
                     }
                 } else if (tmpSetting instanceof SimpleEnumConstantNameProperty || tmpSetting instanceof SimpleStringProperty) {
                     if (!SingleTermPreference.isValidContent(((SimpleStringProperty) tmpSetting).get())) {

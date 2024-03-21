@@ -28,13 +28,17 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -43,6 +47,7 @@ import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.control.Tab;
@@ -59,6 +64,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -234,6 +240,38 @@ public class SettingsView extends AnchorPane {
                 //add to gridpane
                 aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
                 GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+            } else if (tmpProperty instanceof SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty) {
+                ComboBox<IDisplayEnum> tmpEnumComboBox = new ComboBox<>();
+                tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+                tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
+                final ObservableList<IDisplayEnum> tmpItems = FXCollections.observableArrayList();
+                Collections.addAll(tmpItems, (IDisplayEnum[]) tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnumConstants());
+                tmpEnumComboBox.setItems(tmpItems);
+                tmpEnumComboBox.setCellFactory(param -> new ListCell<>() {
+                    @Override
+                    protected void updateItem(IDisplayEnum iDisplayEnum, boolean empty) {
+                        super.updateItem(iDisplayEnum, empty);
+                        if (!empty) {
+                            this.setText(iDisplayEnum.getDisplayName());
+                            this.setTooltip(new Tooltip(iDisplayEnum.getTooltipText()));
+                        }
+                    }
+                });
+                tmpEnumComboBox.setButtonCell(new ListCell<>(){
+                    @Override
+                    protected void updateItem(IDisplayEnum item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (!empty) {
+                            this.setText(item.getDisplayName());
+                            this.setTooltip(new Tooltip(item.getTooltipText()));
+                        }
+                    }
+                });
+                tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleIDisplayEnumConstantProperty);
+                tmpEnumComboBox.setTooltip(tmpTooltip);
+                //add to gridpane
+                aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
+                GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             } else if (tmpProperty instanceof SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty) {
                 ComboBox<String> tmpEnumComboBox = new ComboBox<>();
                 tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);

@@ -93,32 +93,44 @@ public class HistogramViewController implements IViewToolController {
      */
     public static enum BarWidthOption implements IDisplayEnum {
         /**
-         * Small bar width
+         * Small bar width.
          */
-        SMALL(Message.get("HistogramView.barWidths.small")),
+        SMALL(Message.get("HistogramView.barWidths.small.displayName"), Message.get("HistogramView.barWidths.small.tooltip")),
         /**
-         * Medium bar width
+         * Medium bar width.
          */
-        MEDIUM(Message.get("HistogramView.barWidths.medium")),
+        MEDIUM(Message.get("HistogramView.barWidths.medium.displayName"), Message.get("HistogramView.barWidths.medium.tooltip")),
         /**
-         * Large bar width
+         * Large bar width.
          */
-        LARGE(Message.get("HistogramView.barWidths.large"));
+        LARGE(Message.get("HistogramView.barWidths.large.displayName"), Message.get("HistogramView.barWidths.large.tooltip"));
         /**
          * A name for the respective constant that is meant for display, i.e. taken from the Message file.
          */
         private final String displayName;
         /**
-         * Constructor that sets the display name.
-         *
-         * @param aDisplayName a name for the respective constant that is meant for display, i.e. taken from the Message file.
+         * Language-specific tooltip text for display in GUI.
          */
-        BarWidthOption(String aDisplayName) {
+        private final String tooltip;
+        /**
+         * Constructor setting the display name and tooltip.
+         *
+         * @param aDisplayName display name
+         * @param aTooltip tooltip text
+         */
+        private BarWidthOption(String aDisplayName, String aTooltip) {
             this.displayName = aDisplayName;
+            this.tooltip = aTooltip;
         }
+        //
         @Override
         public String getDisplayName() {
             return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
         }
     }
     //
@@ -130,26 +142,39 @@ public class HistogramViewController implements IViewToolController {
         /**
          * Display the molecule frequencies of the fragments in the histogram.
          */
-        MOLECULE_FREQUENCY(Message.get("HistogramView.chooseDataComboBoxMoleculeFrequency.text")),
+        MOLECULE_FREQUENCY(Message.get("HistogramView.frequencyOption.moleculeFrequency.displayName"),
+                Message.get("HistogramView.frequencyOption.moleculeFrequency.tooltip")),
         /**
          * Display the absolute fragment frequencies in the histogram.
          */
-        ABSOLUTE_FREQUENCY(Message.get("HistogramView.chooseDataComboBoxFragmentFrequency.text"));
+        ABSOLUTE_FREQUENCY(Message.get("HistogramView.frequencyOption.absoluteFrequency.displayName"),
+                Message.get("HistogramView.frequencyOption.absoluteFrequency.tooltip"));
         /**
          * A name for the respective constant that is meant for display, i.e. taken from the Message file.
          */
         private final String displayName;
         /**
-         * Constructor that sets the display name.
-         *
-         * @param aDisplayName a name for the respective constant that is meant for display, i.e. taken from the Message file.
+         * Language-specific tooltip text for display in GUI.
          */
-        FrequencyOption(String aDisplayName) {
+        private final String tooltip;
+        /**
+         * Constructor setting the display name and tooltip.
+         *
+         * @param aDisplayName display name
+         * @param aTooltip tooltip text
+         */
+        private FrequencyOption(String aDisplayName, String aTooltip) {
             this.displayName = aDisplayName;
+            this.tooltip = aTooltip;
         }
         @Override
         public String getDisplayName() {
             return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
         }
     }
     //</editor-fold>

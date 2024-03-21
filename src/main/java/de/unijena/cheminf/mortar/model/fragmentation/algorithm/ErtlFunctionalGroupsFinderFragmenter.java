@@ -31,7 +31,9 @@ import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -227,7 +229,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      * A property that has a constant name from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
      */
-    private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+    private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
 
     private final SimpleEnumConstantNameProperty returnedFragmentsSetting;
 
@@ -275,10 +277,10 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         //these names are for internal use, the language-specific display names for the GUI are stored in the map
-        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
-                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
+        this.fragmentSaturationSetting = new SimpleIDisplayEnumConstantProperty(this, "Fragment saturation setting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT, IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
-            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+            public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
                     //call to super.set() for parameter checks
                     super.set(newValue);
@@ -742,31 +744,19 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     @Override
-    public String getFragmentSaturationSetting() {
-        return this.fragmentSaturationSetting.get();
+    public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSetting() {
+        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }
 
     @Override
-    public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
+    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
-    }
-
-    @Override
-    public FragmentSaturationOption getFragmentSaturationSettingConstant() {
-        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.getEnumValue();
-    }
-
-    @Override
-    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
-        Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
-        //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        this.fragmentSaturationSetting.set(anOptionName);
     }
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationSetting.setEnumValue(anOption);
+        this.fragmentSaturationSetting.set(anOption);
     }
 
     @Override
@@ -775,7 +765,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         tmpCopy.setEnvironmentModeSetting(this.environmentModeSetting.get());
         tmpCopy.setCycleFinderSetting(this.cycleFinderSetting.get());
         tmpCopy.setElectronDonationModelSetting(this.electronDonationModelSetting.get());
-        tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
+        tmpCopy.setFragmentSaturationSetting((FragmentSaturationOption) this.fragmentSaturationSetting.get());
         tmpCopy.setReturnedFragmentsSetting(this.returnedFragmentsSetting.get());
         tmpCopy.setFilterSingleAtomsSetting(this.filterSingleAtomsSetting.get());
         tmpCopy.setApplyInputRestrictionsSetting(this.applyInputRestrictionsSetting.get());
@@ -792,7 +782,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.electronDonationModelSetting.setEnumValue(ErtlFunctionalGroupsFinderFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT);
         //this.aromaticityModel is set in the method
         this.setAromaticityInstance(this.electronDonationInstance, this.cycleFinderInstance);
-        this.fragmentSaturationSetting.setEnumValue(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.returnedFragmentsSetting.setEnumValue(ErtlFunctionalGroupsFinderFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT);
         this.filterSingleAtomsSetting.set(ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT);
         this.applyInputRestrictionsSetting.set(ErtlFunctionalGroupsFinderFragmenter.APPLY_INPUT_RESTRICTIONS_OPTION_DEFAULT);
@@ -828,7 +818,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                     //post-processing FG fragments
                     tmpFunctionalGroup.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                             ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_FUNCTIONAL_GROUP_VALUE);
-                    if (this.fragmentSaturationSetting.getEnumValue().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
                         ChemUtil.saturateWithHydrogen(tmpFunctionalGroup);
                     }
                     ChemUtil.checkAndCorrectElectronConfiguration(tmpFunctionalGroup);
@@ -854,7 +844,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                             //post-processing of alkane fragments
                             tmpContainer.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                                     ErtlFunctionalGroupsFinderFragmenter.FRAGMENT_CATEGORY_ALKANE_VALUE);
-                            if (this.fragmentSaturationSetting.getEnumValue().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
                                 ChemUtil.saturateWithHydrogen(tmpContainer);
                             }
                             ChemUtil.checkAndCorrectElectronConfiguration(tmpContainer);

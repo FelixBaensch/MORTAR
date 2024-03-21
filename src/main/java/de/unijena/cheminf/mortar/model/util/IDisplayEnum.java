@@ -26,7 +26,7 @@
 package de.unijena.cheminf.mortar.model.util;
 
 /**
- * Interface for enums to extend in order to provide a language-specific display name for their constants.
+ * Interface for enums to extend in order to provide a language-specific display name and a tooltip text for their constants.
  */
 public interface IDisplayEnum {
     /**
@@ -35,4 +35,10 @@ public interface IDisplayEnum {
      * @return String display name
      */
     public String getDisplayName();
+    /**
+     * Returns the language-specific tooltip text of the enum constant for using it in the GUI.
+     *
+     * @return String tooltip text
+     */
+    public String getTooltipText();
 }

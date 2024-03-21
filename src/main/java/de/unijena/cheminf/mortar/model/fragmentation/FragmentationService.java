@@ -38,6 +38,8 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
 import de.unijena.cheminf.mortar.preference.IPreference;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
@@ -1088,6 +1090,10 @@ public class FragmentationService {
                             SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
                             tmpSimpleDoubleProperty.setValue(tmpDoublePreference.getContent());
                         }
+                        case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
+                            SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                            tmpSimpleIDisplayEnumConstantProperty.setValue((IDisplayEnum) Enum.valueOf(tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
+                        }
                         case SimpleStringProperty tmpSimpleStringProperty -> {
                             //includes SimpleEnumConstantNameProperty since it extends tmpSimpleStringProperty
                             SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
@@ -1149,18 +1155,23 @@ public class FragmentationService {
                     }
                     case SimpleIntegerProperty simpleIntegerProperty -> {
                         if (!SingleIntegerPreference.isValidContent(Integer.toString(simpleIntegerProperty.get()))) {
-                            throw new UnsupportedOperationException("Setting value " + ((SimpleIntegerProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                            throw new UnsupportedOperationException("Setting value " + simpleIntegerProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
                         }
                     }
                     case SimpleDoubleProperty simpleDoubleProperty -> {
                         if (!SingleNumberPreference.isValidContent(simpleDoubleProperty.get())) {
-                            throw new UnsupportedOperationException("Setting value " + ((SimpleDoubleProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                            throw new UnsupportedOperationException("Setting value " + simpleDoubleProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                        }
+                    }
+                    case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
+                        if (!SingleTermPreference.isValidContent(((Enum)simpleIDisplayEnumConstantProperty.get()).name())) {
+                            throw new UnsupportedOperationException("Setting value " + simpleIDisplayEnumConstantProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
                         }
                     }
                     case SimpleStringProperty simpleStringProperty -> {
                         //includes SimpleEnumConstantNameProperty
                         if (!SingleTermPreference.isValidContent(simpleStringProperty.get())) {
-                            throw new UnsupportedOperationException("Setting value " + ((SimpleStringProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
+                            throw new UnsupportedOperationException("Setting value " + simpleStringProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
                         }
                     }
                     default -> {

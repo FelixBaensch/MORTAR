@@ -31,7 +31,9 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -146,7 +148,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      * A property that has a constant name from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
      */
-    private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+    private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
 
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
 
@@ -228,10 +230,10 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                 Message.get("SugarRemovalUtilityFragmenter.returnedFragmentsSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.returnedFragmentsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.returnedFragmentsSetting.displayName"));
-        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
-                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
+        this.fragmentSaturationSetting = new SimpleIDisplayEnumConstantProperty(this, "Fragment saturation setting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT, IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
-            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+            public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
@@ -1033,32 +1035,19 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public String getFragmentSaturationSetting() {
-        return this.fragmentSaturationSetting.get();
+    public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSetting() {
+        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }
 
     @Override
-    public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
+    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
-    }
-
-    @Override
-    public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSettingConstant() {
-        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.getEnumValue();
-    }
-
-    @Override
-    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
-        Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
-        //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        IMoleculeFragmenter.FragmentSaturationOption tmpConstant = (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.translateNameToEnumConstant(anOptionName);
-        this.fragmentSaturationSetting.setEnumValue(tmpConstant);
     }
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationSetting.setEnumValue(anOption);
+        this.fragmentSaturationSetting.set(anOption);
     }
 
     @Override
@@ -1066,7 +1055,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         SugarRemovalUtilityFragmenter tmpCopy = new SugarRemovalUtilityFragmenter();
         tmpCopy.setReturnedFragmentsSetting(this.returnedFragmentsSetting.get());
         tmpCopy.setSugarTypeToRemoveSetting(this.sugarTypeToRemoveSetting.get());
-        tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
+        tmpCopy.setFragmentSaturationSetting((FragmentSaturationOption) this.fragmentSaturationSetting.get());
         tmpCopy.setDetectCircularSugarsOnlyWithGlycosidicBondSetting(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get());
         tmpCopy.setRemoveOnlyTerminalSugarsSetting(this.removeOnlyTerminalSugarsSetting.get());
         tmpCopy.setPreservationModeSetting(this.preservationModeSetting.get());
@@ -1086,7 +1075,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public void restoreDefaultSettings() {
         this.returnedFragmentsSetting.setEnumValue(SugarRemovalUtilityFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT);
         this.sugarTypeToRemoveSetting.setEnumValue(SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT);
-        this.fragmentSaturationSetting.setEnumValue(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.sugarRUInstance.restoreDefaultSettings();
         this.detectCircularSugarsOnlyWithGlycosidicBondSetting.set(this.sugarRUInstance.areOnlyCircularSugarsWithOGlycosidicBondDetected());
         this.removeOnlyTerminalSugarsSetting.set(this.sugarRUInstance.areOnlyTerminalSugarsRemoved());
@@ -1175,7 +1164,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE);
                     }
                     try {
-                        if (this.fragmentSaturationSetting.getEnumValue().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                        if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
                             ChemUtil.saturateWithHydrogen(tmpSugarFragment);
                         }
                         ChemUtil.checkAndCorrectElectronConfiguration(tmpSugarFragment);

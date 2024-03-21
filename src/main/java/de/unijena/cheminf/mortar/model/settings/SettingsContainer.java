@@ -31,7 +31,9 @@ import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
 import de.unijena.cheminf.mortar.preference.IPreference;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
@@ -610,6 +612,10 @@ public class SettingsContainer {
                                     SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
                                     tmpSimpleDoubleProperty.setValue(tmpDoublePreference.getContent());
                                 }
+                                case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
+                                    SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                                    tmpSimpleIDisplayEnumConstantProperty.setValue((IDisplayEnum) Enum.valueOf(tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
+                                }
                                 case SimpleStringProperty tmpSimpleStringProperty -> {
                                     //also true for case of SimpleEnumConstantNameProperty
                                     SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
@@ -807,6 +813,11 @@ public class SettingsContainer {
                 case SimpleDoubleProperty tmpSimpleDoubleProperty -> {
                     if (!SingleNumberPreference.isValidContent(tmpSimpleDoubleProperty.get())) {
                         throw new UnsupportedOperationException(String.format("Setting value %f of setting name %s is invalid.", tmpSimpleDoubleProperty.get(), tmpSetting.getName()));
+                    }
+                }
+                case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
+                    if (!SingleTermPreference.isValidContent(((Enum)simpleIDisplayEnumConstantProperty.get()).name())) {
+                        throw new UnsupportedOperationException("Setting value " + simpleIDisplayEnumConstantProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
                     }
                 }
                 case SimpleStringProperty tmpSimpleStringProperty -> {
