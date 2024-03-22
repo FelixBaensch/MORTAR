@@ -960,7 +960,7 @@ public class MainViewController {
         tmpFragmentationButtonsHBox.setAlignment(Pos.CENTER_LEFT);
         this.fragmentationButton = new Button();
         this.fragmentationButton.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
-        Tooltip tmpTooltip = new Tooltip();
+        Tooltip tmpTooltip = GuiUtil.createTooltip("");
         tmpTooltip.textProperty().bind(Bindings.format(Message.get("MainTabPane.moleculesTab.fragmentButton.text"), this.fragmentationService.selectedFragmenterNamePropertyProperty()));
         this.fragmentationButton.setTooltip(tmpTooltip);
         double tmpTextWidth = new Text(this.fragmentationService.getSelectedFragmenterNameProperty()).getLayoutBounds().getWidth() + 20;
@@ -976,7 +976,7 @@ public class MainViewController {
         });
         tmpFragmentationButtonsHBox.getChildren().add(this.fragmentationButton);
         this.cancelFragmentationButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.text"));
-        this.cancelFragmentationButton.setTooltip(new Tooltip(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")));
+        this.cancelFragmentationButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")));
         this.cancelFragmentationButton.setVisible(false);
         tmpFragmentationButtonsHBox.getChildren().add(this.cancelFragmentationButton);
         tmpMoleculesTab.addNodeToGridPane(tmpFragmentationButtonsHBox, 0, 1, 1, 1);
@@ -992,7 +992,7 @@ public class MainViewController {
         tmpViewButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
         tmpViewButtonsHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         Button tmpOpenOverviewViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showOverviewViewButton.text"));
-        tmpOpenOverviewViewButton.setTooltip(new Tooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
+        tmpOpenOverviewViewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
         tmpViewButtonsHBox.getChildren().add(tmpOpenOverviewViewButton);
         tmpMoleculesTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.MOLECULES_TAB));
@@ -1191,11 +1191,11 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer));
         tmpFragmentsTab.addPaginationToGridPane(tmpPagination);
         Button tmpExportCsvButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCSV.txt"));
-        tmpExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCSV.tooltip")));
+        tmpExportCsvButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragments.buttonCSV.tooltip")));
         Button tmpExportPdfButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonPDF.txt"));
-        tmpExportPdfButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonPDF.tooltip")));
+        tmpExportPdfButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragments.buttonPDF.tooltip")));
         Button tmpCancelExportButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
-        tmpCancelExportButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
+        tmpCancelExportButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
         tmpCancelExportButton.visibleProperty().bind(this.isExportRunningProperty);
         HBox tmpExportButtonsHBox = new HBox();
         tmpExportButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
@@ -1212,9 +1212,9 @@ public class MainViewController {
         tmpViewButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
         tmpViewButtonsHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         Button tmpOpenOverviewViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showOverviewViewButton.text"));
-        tmpOpenOverviewViewButton.setTooltip(new Tooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
+        tmpOpenOverviewViewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
         Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
-        tmpOpenHistogramViewButton.setTooltip(new Tooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
+        tmpOpenHistogramViewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
         tmpViewButtonsHBox.getChildren().addAll(tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
@@ -1261,11 +1261,11 @@ public class MainViewController {
         tmpPagination.setPageFactory((pageIndex) -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
         tmpItemizationTab.addPaginationToGridPane(tmpPagination);
         Button tmpItemizationTabExportPDfButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
-        tmpItemizationTabExportPDfButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.pdfButton.tooltip")));
+        tmpItemizationTabExportPDfButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.itemizationTab.pdfButton.tooltip")));
         Button tmpItemizationExportCsvButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.itemizationTab.csvButton.txt"));
-        tmpItemizationExportCsvButton.setTooltip(new Tooltip(Message.get("MainTabPane.itemizationTab.csvButton.tooltip")));
+        tmpItemizationExportCsvButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.itemizationTab.csvButton.tooltip")));
         Button tmpCancelExportButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
-        tmpCancelExportButton.setTooltip(new Tooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
+        tmpCancelExportButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
         tmpCancelExportButton.visibleProperty().bind(this.isExportRunningProperty);
         tmpItemizationExportCsvButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_CSV_FILE));
         tmpItemizationTabExportPDfButton.setOnAction(event -> this.exportFile(Exporter.ExportTypes.ITEM_PDF_FILE));
@@ -1282,7 +1282,7 @@ public class MainViewController {
         tmpViewButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
         tmpViewButtonsHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
-        tmpOpenHistogramViewButton.setTooltip(new Tooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
+        tmpOpenHistogramViewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
         tmpViewButtonsHBox.getChildren().add(tmpOpenHistogramViewButton);
         tmpItemizationTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());

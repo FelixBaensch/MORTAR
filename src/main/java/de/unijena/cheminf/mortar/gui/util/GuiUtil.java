@@ -47,6 +47,7 @@ import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -56,6 +57,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 
 import org.openscience.cdk.exception.CDKException;
@@ -508,6 +510,21 @@ public class GuiUtil {
         tmpButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         return tmpButton;
+    }
+    //
+    /**
+     * Returns a new tooltip with the given text, configured with a fixed maximum width, text wrap activated, and
+     * a set show duration.
+     *
+     * @param aText text for the tooltip
+     * @return new tooltip instance
+     */
+    public static Tooltip createTooltip(String aText) {
+        Tooltip tmpTooltip = new Tooltip(aText);
+        tmpTooltip.setMaxWidth(GuiDefinitions.GUI_TOOLTIP_MAX_WIDTH);
+        tmpTooltip.setWrapText(true);
+        tmpTooltip.setShowDuration(Duration.seconds(GuiDefinitions.GUI_TOOLTIP_SHOW_DURATION));
+        return tmpTooltip;
     }
     //</editor-fold>
 }

@@ -47,6 +47,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import javafx.collections.ObservableList;
@@ -1082,32 +1083,46 @@ public class Exporter {
     /**
      * Enum for allowed CSV file export separator chars.
      */
-    public enum CSVSeparator {
+    public enum CSVSeparator implements IDisplayEnum {
         /**
          * Comma.
          */
-        COMMA(','),
+        COMMA(',', Message.get("Exporter.CSVSeparator.Comma.displayName"), Message.get("Exporter.CSVSeparator.Comma.tooltip")),
         /**
          * Semicolon.
          */
-        SEMICOLON(';'),
+        SEMICOLON(';', Message.get("Exporter.CSVSeparator.Semicolon.displayName"), Message.get("Exporter.CSVSeparator.Semicolon.tooltip")),
         /**
          * Tab.
          */
-        TAB('\t'),
+        TAB('\t', Message.get("Exporter.CSVSeparator.Tab.displayName"), Message.get("Exporter.CSVSeparator.Tab.tooltip")),
         /**
          * Space.
          */
-        SPACE(' ');
+        SPACE(' ', Message.get("Exporter.CSVSeparator.Space.displayName"), Message.get("Exporter.CSVSeparator.Space.tooltip"));
         /**
          * Character representation of the wrapped separator char.
          */
-        final char separatorChar;
+        private final char separatorChar;
         /**
-         * Constructor setting the wrapped separator char.
+         * Language-specific name for display in GUI.
          */
-        CSVSeparator(char aSeparatorChar) {
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor setting the wrapped separator char, display name, and tooltip text.
+         *
+         * @param aSeparatorChar CSV separator character to use when this option is selected
+         * @param aDisplayName display name
+         * @param aTooltipText tooltip text
+         */
+        private CSVSeparator(char aSeparatorChar, String aDisplayName, String aTooltipText) {
             this.separatorChar = aSeparatorChar;
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltipText;
         }
         /**
          * Returns the character representation of this separator.
@@ -1116,6 +1131,16 @@ public class Exporter {
          */
         public char getSeparatorChar() {
             return this.separatorChar;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
         }
     }
     //</editor-fold>

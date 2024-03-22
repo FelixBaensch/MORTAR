@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.PipelineSettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
@@ -41,7 +42,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -244,7 +244,7 @@ public class PipelineSettingsViewController {
             }
         });
         Button tmpFragmenterSettingsButton = new Button();
-        tmpFragmenterSettingsButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.settingButton.toolTip")));
+        tmpFragmenterSettingsButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.settingButton.toolTip")));
         String tmpIconURL = this.getClass().getClassLoader().getResource(
                 this.configuration.getProperty("mortar.imagesFolder")
                         + this.configuration.getProperty("mortar.icon.gear.name")).toExternalForm();
@@ -285,7 +285,7 @@ public class PipelineSettingsViewController {
      */
     private void addAddRowButton(int aRowNumber){
         Button tmpAddButton = new Button();
-        tmpAddButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.addNewRowButton.toolTip")));
+        tmpAddButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.addNewRowButton.toolTip")));
         tmpAddButton.setText("+");
         tmpAddButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpAddButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
@@ -306,7 +306,7 @@ public class PipelineSettingsViewController {
      */
     private void addRemoveRowButton(int aRowNumber){
         Button tmpRemoveButton = new Button();
-        tmpRemoveButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.removeRowButton.toolTip")));
+        tmpRemoveButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.removeRowButton.toolTip")));
         tmpRemoveButton.setText("-");
         tmpRemoveButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpRemoveButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);

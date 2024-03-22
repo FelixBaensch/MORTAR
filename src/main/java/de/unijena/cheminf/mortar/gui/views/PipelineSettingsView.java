@@ -38,7 +38,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
@@ -56,7 +55,6 @@ import javafx.stage.Stage;
  * @version 1.0.0.0
  */
 public class PipelineSettingsView extends AnchorPane {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * BorderPane to hold and adjust child panes
@@ -105,7 +103,7 @@ public class PipelineSettingsView extends AnchorPane {
         this.borderPane.setBottom(tmpHBoxButtonsHBox);
         //-left side
         this.defaultButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.defaultButton.text"));
-        this.defaultButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.defaultButton.tooltip")));
+        this.defaultButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.defaultButton.tooltip")));
         HBox tmpHBoxLeftSideButtons = new HBox();
         tmpHBoxLeftSideButtons.getChildren().add(this.defaultButton);
         tmpHBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);
@@ -116,11 +114,11 @@ public class PipelineSettingsView extends AnchorPane {
         //-right side
         HBox tmpHBoxRightSideButtons = new HBox();
         this.cancelButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.cancelButton.text"));
-        this.cancelButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.cancelButton.toolTip")));
+        this.cancelButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.cancelButton.toolTip")));
         this.fragmentButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.fragmentButton.text"));
-        this.fragmentButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.fragmentButton.toolTip")));
+        this.fragmentButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.fragmentButton.toolTip")));
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("PipelineSettingsView.applyButton.text"));
-        this.applyButton.setTooltip(new Tooltip(Message.get("PipelineSettingsView.applyButton.toolTip")));
+        this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.applyButton.toolTip")));
         tmpHBoxRightSideButtons.getChildren().addAll(this.fragmentButton, this.applyButton, this.cancelButton);
         tmpHBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
         tmpHBoxRightSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);

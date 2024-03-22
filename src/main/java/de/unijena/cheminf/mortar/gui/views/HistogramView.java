@@ -38,7 +38,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -181,30 +180,30 @@ public class HistogramView extends AnchorPane {
         // left side controls
         this.displayedFragmentsNumberTextField = new TextField();
         this.displayedFragmentsNumberTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
-        this.displayedFragmentsNumberTextField.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
+        this.displayedFragmentsNumberTextField.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.refreshButton.text"));
-        this.applyButton.setTooltip(new Tooltip(Message.get("HistogramView.refreshButton.toolTip")));
+        this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.maximumSMILESLengthTextField = new TextField();
         this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
-        this.maximumSMILESLengthTextField.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
+        this.maximumSMILESLengthTextField.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.smilesField.toolTip")));
         this.maximumSMILESLengthLabel = new Label(Message.get("HistogramView.smilesLabel.text"));
-        this.maximumSMILESLengthLabel.setTooltip(new Tooltip(Message.get("HistogramView.smilesField.toolTip")));
+        this.maximumSMILESLengthLabel.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.smilesField.toolTip")));
         this.displayedFragmentsNumberLabel = new Label(Message.get("HistogramView.displayedFragmentsTextFieldLabel.text"));
-        this.displayedFragmentsNumberLabel.setTooltip(new Tooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
+        this.displayedFragmentsNumberLabel.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
         this.barWidthsComboBox = new ComboBox<>();
         for (HistogramViewController.BarWidthOption tmpBarWidthOptionConstant : HistogramViewController.BarWidthOption.values()) {
             this.barWidthsComboBox.getItems().add(tmpBarWidthOptionConstant.getDisplayName());
         }
-        this.barWidthsComboBox.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
+        this.barWidthsComboBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.comboBox.toolTip")));
         this.barWidthsLabel = new Label(Message.get("HistogramView.gapSettingLabel.text"));
-        this.barWidthsLabel.setTooltip(new Tooltip(Message.get("HistogramView.comboBox.toolTip")));
+        this.barWidthsLabel.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.comboBox.toolTip")));
         this.frequencyLabel = new Label(Message.get("HistogramView.chooseDataComboBox.text"));
-        this.frequencyLabel.setTooltip(new Tooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
+        this.frequencyLabel.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
         this.frequencyComboBox = new ComboBox<>();
         for (HistogramViewController.FrequencyOption tmpFrequencyOptionConstant : HistogramViewController.FrequencyOption.values()) {
             this.frequencyComboBox.getItems().add(tmpFrequencyOptionConstant.getDisplayName());
         }
-        this.frequencyComboBox.setTooltip(new Tooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
+        this.frequencyComboBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
         tmpLeftSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -229,17 +228,17 @@ public class HistogramView extends AnchorPane {
         this.structureDisplayImageView.setStyle("fx-padding: 50px; fx-margin: 50px");
         // right side controls
         this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.cancelButton.text"));
-        this.closeButton.setTooltip(new Tooltip(Message.get("HistogramView.cancelButton.toolTip")));
+        this.closeButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.cancelButton.toolTip")));
         this.displayBarLabelsCheckBox = new CheckBox(Message.get("HistogramView.checkBox.text"));
-        this.displayBarLabelsCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBox.toolTip")));
+        this.displayBarLabelsCheckBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.checkBox.toolTip")));
         this.displayGridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));
-        this.displayGridLinesCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxGridlines.toolTip")));
+        this.displayGridLinesCheckBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.checkBoxGridlines.toolTip")));
         this.logarithmicScale = new CheckBox(Message.get("HistogramView.checkBoxLogarithmicScale.text"));
-        this.logarithmicScale.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxLogarithmicScale.toolTip")));
+        this.logarithmicScale.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.checkBoxLogarithmicScale.toolTip")));
         this.barStylingCheckBox = new CheckBox(Message.get("HistogramView.stylingCheckBox.text"));
-        this.barStylingCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.stylingCheckBox.tooltip")));
+        this.barStylingCheckBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.stylingCheckBox.tooltip")));
         this.displaySMILESonYaxisCheckBox = new CheckBox(Message.get("HistogramView.checkBoxSmilesTickLabel.text"));
-        this.displaySMILESonYaxisCheckBox.setTooltip(new Tooltip(Message.get("HistogramView.checkBoxSmilesTickLabel.toolTip")));
+        this.displaySMILESonYaxisCheckBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.checkBoxSmilesTickLabel.toolTip")));
         HBox tmpHBoxRightSideControls = new HBox();
         tmpRightSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpRightSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE * 2);

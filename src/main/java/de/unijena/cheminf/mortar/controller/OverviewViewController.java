@@ -841,7 +841,7 @@ public class OverviewViewController implements IViewToolController {
                             tmpErrorLabel.setMinHeight(tmpImageHeight);
                             tmpErrorLabel.setMaxHeight(tmpImageHeight);
                             tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
-                            Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
+                            Tooltip tmpErrorLabelTooltip = GuiUtil.createTooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
                             tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
                             tmpContentNode = new StackPane(tmpErrorLabel);
                             tmpContentNode.disableProperty().set(true);

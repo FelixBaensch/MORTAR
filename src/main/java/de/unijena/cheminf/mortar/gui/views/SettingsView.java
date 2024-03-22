@@ -109,7 +109,7 @@ public class SettingsView extends AnchorPane {
         this.borderPane.setBottom(hBoxButtonsHBox);
         //-left side
         this.defaultButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.defaultButton.text"));
-        this.defaultButton.setTooltip(new Tooltip(Message.get("SettingsView.defaultButton.toolTip")));
+        this.defaultButton.setTooltip(GuiUtil.createTooltip(Message.get("SettingsView.defaultButton.toolTip")));
         this.hBoxLeftSideButtons = new HBox();
         this.hBoxLeftSideButtons.getChildren().add(this.defaultButton);
         this.hBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);
@@ -120,9 +120,9 @@ public class SettingsView extends AnchorPane {
         //-right side
         this.hBoxRightSideButtons = new HBox();
         this.cancelButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.cancelButton.text"));
-        this.cancelButton.setTooltip(new Tooltip(Message.get("SettingsView.cancelButton.toolTip")));
+        this.cancelButton.setTooltip(GuiUtil.createTooltip(Message.get("SettingsView.cancelButton.toolTip")));
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.applyButton.text"));
-        this.applyButton.setTooltip(new Tooltip(Message.get("SettingsView.applyButton.toolTip")));
+        this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("SettingsView.applyButton.toolTip")));
         this.hBoxRightSideButtons.getChildren().addAll(this.applyButton, this.cancelButton);
         this.hBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
         this.hBoxRightSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
@@ -198,9 +198,7 @@ public class SettingsView extends AnchorPane {
             aGridPane.getRowConstraints().add(tmpRow);
             String tmpPropName = tmpProperty.getName();
             Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpPropName));
-            Tooltip tmpTooltip = new Tooltip(aTooltipTextsMap.get(tmpPropName));
-            tmpTooltip.setMaxWidth(GuiDefinitions.GUI_TOOLTIP_MAX_WIDTH);
-            tmpTooltip.setWrapText(true);
+            Tooltip tmpTooltip = GuiUtil.createTooltip(aTooltipTextsMap.get(tmpPropName));
             tmpNameLabel.setTooltip(tmpTooltip);
             aGridPane.add(tmpNameLabel, 0, tmpRowIndex);
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -253,17 +251,18 @@ public class SettingsView extends AnchorPane {
                         super.updateItem(iDisplayEnum, empty);
                         if (!empty) {
                             this.setText(iDisplayEnum.getDisplayName());
-                            this.setTooltip(new Tooltip(iDisplayEnum.getTooltipText()));
+                            this.setTooltip(GuiUtil.createTooltip(iDisplayEnum.getTooltipText()));
                         }
                     }
                 });
+                //note this is called to set the initial value, so yes, we need to overwrite both methods with the same functionality here
                 tmpEnumComboBox.setButtonCell(new ListCell<>(){
                     @Override
                     protected void updateItem(IDisplayEnum item, boolean empty) {
                         super.updateItem(item, empty);
                         if (!empty) {
                             this.setText(item.getDisplayName());
-                            this.setTooltip(new Tooltip(item.getTooltipText()));
+                            this.setTooltip(GuiUtil.createTooltip(item.getTooltipText()));
                         }
                     }
                 });

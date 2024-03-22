@@ -45,7 +45,6 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -123,11 +122,11 @@ public class AboutView extends AnchorPane {
         hBoxButtonsHBox.maxWidthProperty().bind(this.widthProperty());
         //-left side
         this.logFileButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.logFileButton.text"));
-        this.logFileButton.setTooltip(new Tooltip(Message.get("AboutView.logFileButton.tooltip")));
+        this.logFileButton.setTooltip(GuiUtil.createTooltip(Message.get("AboutView.logFileButton.tooltip")));
         this.gitHubButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.gitHubButton.text"));
-        this.gitHubButton.setTooltip(new Tooltip(Message.get("AboutView.gitHubButton.tooltip")));
+        this.gitHubButton.setTooltip(GuiUtil.createTooltip(Message.get("AboutView.gitHubButton.tooltip")));
         this.tutorialButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.tutorialButton.text"));
-        this.tutorialButton.setTooltip(new Tooltip(Message.get("AboutView.tutorialButton.tooltip")));
+        this.tutorialButton.setTooltip(GuiUtil.createTooltip(Message.get("AboutView.tutorialButton.tooltip")));
         HBox hBoxLeftSideButtons = new HBox();
         hBoxLeftSideButtons.getChildren().addAll(this.logFileButton, this.gitHubButton, this.tutorialButton);
         hBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);

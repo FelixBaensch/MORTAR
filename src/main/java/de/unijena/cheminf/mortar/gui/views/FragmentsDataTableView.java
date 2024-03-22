@@ -42,7 +42,6 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -169,7 +168,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         //-parentMolColumn
         this.parentMolColumn = new TableColumn<>();
         Label tmpParentMolLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.header"));
-        tmpParentMolLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
+        tmpParentMolLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
         this.parentMolColumn.setGraphic(tmpParentMolLabel);
         this.parentMolColumn.setMinWidth(150); //magic number
         this.parentMolColumn.prefWidthProperty().bind(
@@ -184,7 +183,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         //-parentMolNameColumn
         this.parentMolNameColumn = new TableColumn<>();
         Label tmpParentNameLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.header"));
-        tmpParentNameLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
+        tmpParentNameLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
         this.parentMolNameColumn.setGraphic(tmpParentNameLabel);
         this.parentMolNameColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.075) //magic number

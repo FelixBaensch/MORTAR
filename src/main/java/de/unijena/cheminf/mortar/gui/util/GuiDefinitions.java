@@ -121,9 +121,13 @@ public final class GuiDefinitions {
      */
     public static final double GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH = 200.0;
     /**
-     * Max width of tooltip.
+     * Max width for tooltips.
      */
     public static final double GUI_TOOLTIP_MAX_WIDTH = 500.0;
+    /**
+     * Show duration for tooltips.
+     */
+    public static final double GUI_TOOLTIP_SHOW_DURATION = 10.0;
     /**
      * Width of an image copied to clipboard.
      */
