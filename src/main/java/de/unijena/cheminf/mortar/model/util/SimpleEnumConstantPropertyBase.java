@@ -54,7 +54,7 @@ public abstract class SimpleEnumConstantPropertyBase extends SimpleStringPropert
      * @throws NullPointerException if a parameter is null
      * @throws IllegalArgumentException if the given class is no enum or it contains no constants
      */
-    public SimpleEnumConstantPropertyBase(Object bean, String name, String initialValue, Class associatedEnum)
+    protected SimpleEnumConstantPropertyBase(Object bean, String name, String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name, initialValue);
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
@@ -80,7 +80,7 @@ public abstract class SimpleEnumConstantPropertyBase extends SimpleStringPropert
      * @throws NullPointerException if a parameter is null
      * @throws IllegalArgumentException if the given class is no enum or it contains no constants
      */
-    public SimpleEnumConstantPropertyBase(Object bean, String name, Class associatedEnum)
+    protected SimpleEnumConstantPropertyBase(Object bean, String name, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(bean, name);
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
@@ -104,7 +104,7 @@ public abstract class SimpleEnumConstantPropertyBase extends SimpleStringPropert
      * @throws NullPointerException if a parameter is null
      * @throws IllegalArgumentException if the given class is no enum, or it contains no constants
      */
-    public SimpleEnumConstantPropertyBase(String initialValue, Class associatedEnum)
+    protected SimpleEnumConstantPropertyBase(String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super(initialValue);
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
@@ -126,7 +126,7 @@ public abstract class SimpleEnumConstantPropertyBase extends SimpleStringPropert
      * @throws NullPointerException if a parameter is null
      * @throws IllegalArgumentException if the given class is no enum or it contains no constants
      */
-    public SimpleEnumConstantPropertyBase(Class associatedEnum)
+    protected SimpleEnumConstantPropertyBase(Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
         super();
         Objects.requireNonNull(associatedEnum, "Given enum class is null.");
