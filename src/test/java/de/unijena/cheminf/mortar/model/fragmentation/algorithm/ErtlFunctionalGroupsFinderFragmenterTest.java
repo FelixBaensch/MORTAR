@@ -52,7 +52,7 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
      * fragmenter because the settings tooltips are imported from the message.properties file.
      */
     public ErtlFunctionalGroupsFinderFragmenterTest() {
-        Locale.setDefault(new Locale("en", "GB"));
+        Locale.setDefault(Locale.of("en", "GB"));
     }
     //
     /**
@@ -63,16 +63,16 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
     @Test
     public void basicTest() throws Exception {
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
-        System.out.println(tmpFragmenter.getFragmentationAlgorithmName());
-        System.out.println(tmpFragmenter.getElectronDonationModelSetting());
-        System.out.println(tmpFragmenter.getEnvironmentModeSetting());
-        for (Property tmpSetting : tmpFragmenter.settingsProperties()) {
-            System.out.println(tmpSetting.getName());
+        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getElectronDonationModelSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getEnvironmentModeSetting);
+        for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
+            Assertions.assertDoesNotThrow(tmpSetting::getName);
         }
     }
     //
     /**
-     * Does a test fragmentation on the COCONUT natural product CNP0151033 and prints the results.
+     * Does a test fragmentation on the COCONUT natural product CNP0151033.
      *
      * @throws Exception if anything goes wrong
      */
@@ -97,8 +97,8 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {
-            System.out.println(tmpSmiGen.create(tmpFragment) + " " + tmpFragment.getProperty(
-                    IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
+            Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
+            Assertions.assertNotNull(tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         }
     }
 }

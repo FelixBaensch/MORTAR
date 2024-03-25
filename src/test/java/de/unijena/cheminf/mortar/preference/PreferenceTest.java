@@ -49,14 +49,14 @@ public class PreferenceTest {
      * Constructor to initialize locale and configuration.
      */
     public PreferenceTest() throws Exception {
-        Locale.setDefault(new Locale("en", "GB"));
+        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //
     /**
      * Tests basic functionalities of class BooleanPreference.
      *
-     * @throws Exception
+     * @throws Exception if anything goes wrong
      */
     @Test
     public void testBooleanPreference() throws Exception {
@@ -69,7 +69,7 @@ public class PreferenceTest {
     /**
      * Tests basic functionalities of class RGBColorPreference.
      *
-     * @throws Exception
+     * @throws Exception if anything goes wrong
      */
     @Test
     public void testColorPreference() throws Exception {
@@ -91,7 +91,7 @@ public class PreferenceTest {
     /**
      * Tests basic functionalities of class SingleIntegerPreference.
      *
-     * @throws Exception
+     * @throws Exception if anything goes wrong
      */
     @Test
     public void testSingleIntegerPreference() throws Exception {
@@ -102,7 +102,7 @@ public class PreferenceTest {
     /**
      * Tests basic functionalities of class SingleNumberPreference.
      *
-     * @throws Exception
+     * @throws Exception if anything goes wrong
      */
     @Test
     public void testSingleNumberPreference() throws Exception {
@@ -113,7 +113,7 @@ public class PreferenceTest {
     /**
      * Tests basic functionalities of class SingleTermPreference.
      *
-     * @throws Exception
+     * @throws Exception if anything goes wrong
      */
     @Test
     public void testSingleTermPreference() throws Exception {
@@ -125,12 +125,11 @@ public class PreferenceTest {
      * Tests basic functionalities of given preference object, like management of public properties and persistence.
      */
     private void testPreferenceBasics(IPreference aPreference) throws Exception {
-        System.out.println();
-        System.out.println(aPreference.getType());
-        System.out.println(aPreference.getContentRepresentative());
-        System.out.println(aPreference.getGUID());
-        System.out.println(aPreference.getName());
-        System.out.println(aPreference.toString());
+        Assertions.assertDoesNotThrow(aPreference::getType);
+        Assertions.assertDoesNotThrow(aPreference::getContentRepresentative);
+        Assertions.assertDoesNotThrow(aPreference::getGUID);
+        Assertions.assertDoesNotThrow(aPreference::getName);
+        Assertions.assertDoesNotThrow(aPreference::toString);
 
         String tmpDir = FileUtil.getAppDirPath() + File.separatorChar + "Test";
         (new File(tmpDir)).mkdirs();
@@ -143,7 +142,7 @@ public class PreferenceTest {
         IPreference tmpPreference = PreferenceFactory.reinitializePreference(tmpReader.readLine(), tmpReader);
         tmpWriter.close();
         tmpReader.close();
-        Assertions.assertTrue(aPreference.getContentRepresentative().equals(tmpPreference.getContentRepresentative()));
+        Assertions.assertEquals(aPreference.getContentRepresentative(), tmpPreference.getContentRepresentative());
         Assertions.assertEquals(aPreference.getName(), tmpPreference.getName());
         Assertions.assertEquals(aPreference.getGUID(), tmpPreference.getGUID());
         Assertions.assertEquals(aPreference.toString(), tmpPreference.toString());

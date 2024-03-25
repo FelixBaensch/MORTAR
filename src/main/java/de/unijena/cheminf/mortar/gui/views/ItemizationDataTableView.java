@@ -56,41 +56,41 @@ import java.util.List;
  * @version 1.0.0.0
  *
  */
-public class ItemizationDataTableView extends TableView implements IDataTableView{
+public class ItemizationDataTableView extends TableView implements IDataTableView {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * TableColumn for name of the molecule
+     * TableColumn for name of the molecule.
      */
-    private TableColumn<MoleculeDataModel, String> nameColumn;
+    private final TableColumn<MoleculeDataModel, String> nameColumn;
     /**
-     * TableColumn for 2D structure of the molecule
+     * TableColumn for 2D structure of the molecule.
      */
-    private TableColumn<MoleculeDataModel, Image> moleculeStructureColumn;
+    private final TableColumn<MoleculeDataModel, Image> moleculeStructureColumn;
     /**
      * TableColumn for 2D structure of the fragments of the molecule with labelling of how often
      * the respective fragment occurs in the molecule. BorderPane is used to align text and image.
      */
-    private TableColumn<MoleculeDataModel, BorderPane> fragmentStructureColumn;
+    private final TableColumn<MoleculeDataModel, BorderPane> fragmentStructureColumn;
     /**
-     * Name of the fragmentation algorithm used
+     * Name of the fragmentation algorithm used.
      */
-    private String fragmentationName;
+    private final String fragmentationName;
     /**
-     * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination)
+     * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination).
      */
     private List<MoleculeDataModel> itemsList;
     /**
-     * ContextMenu ot the TableView
+     * ContextMenu ot the TableView.
      */
-    private ContextMenu contextMenu;
+    private final ContextMenu contextMenu;
     /**
-     * MenuItem of ContextMenu to copy selected cell to clipboard
+     * MenuItem of ContextMenu to copy selected cell to clipboard.
      */
-    private MenuItem copyMenuItem;
+    private final MenuItem copyMenuItem;
     /**
-     * MenuItem of ContextMenu to open an overview view with the item and its fragments
+     * MenuItem of ContextMenu to open an overview view with the item and its fragments.
      */
-    private MenuItem overviewViewMenuItem;
+    private final MenuItem overviewViewMenuItem;
     /**
      * Configuration class to read resource file paths from.
      */
@@ -116,7 +116,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(true);
         this.nameColumn.setCellValueFactory(new PropertyValueFactory<>(DataModelPropertiesForTableView.NAME.getText()));
-        this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
+        this.nameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         this.nameColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.15) //magic number
@@ -166,7 +166,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      * @param aSettingsContainer SettingsContainer
      * @return Node BorderPane which holds TableView as page for Pagination
      */
-    public Node createItemizationTableViewPage(int aPageIndex, String aFragmentationName, SettingsContainer aSettingsContainer){
+    public Node createItemizationTableViewPage(int aPageIndex, String aFragmentationName, SettingsContainer aSettingsContainer) {
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
         int fromIndex = aPageIndex * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
@@ -188,9 +188,9 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      *
      * @param aSettingsContainer SettingsContainer
      */
-    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer) {
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
-            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(),aSettingsContainer.getRowsPerPageSetting());
+            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer.getRowsPerPageSetting());
             this.refresh();
         });
     }
@@ -246,7 +246,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      *
      * @return String
      */
-    public String getFragmentationName(){
+    public String getFragmentationName() {
         return this.fragmentationName;
     }
     //
@@ -255,14 +255,16 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      *
      * @return List {@literal <}MoleculeDataModel {@literal >}
      */
-    public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public List<MoleculeDataModel> getItemsList() {
+        return this.itemsList;
+    }
     //
     /**
      * Returns MenuItem to copy selected cell.
      *
      * @return MenuItem
      */
-    public MenuItem getCopyMenuItem(){
+    public MenuItem getCopyMenuItem() {
         return this.copyMenuItem;
     }
     //

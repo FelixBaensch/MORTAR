@@ -44,8 +44,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * SettingsViewController
- * controls {@link SettingsView} for fragmentation settings
+ * SettingsViewController controls {@link SettingsView} for fragmentation settings.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
@@ -53,47 +52,47 @@ import java.util.logging.Logger;
 public class FragmentationSettingsViewController {
     //<editor-fold desc="private and private final class variables">
     /**
-     * Main stage object of the application
+     * Main stage object of the application.
      */
     private final Stage mainStage;
     /**
-     * Stage for the SettingsView
+     * Stage for the SettingsView.
      */
     private Stage fragmentationSettingsViewStage;
     /**
-     * SettingsView
+     * SettingsView.
      */
     private SettingsView settingsView;
     /**
-     * Map of maps to hold initial settings properties for each algorithm
+     * Map of maps to hold initial settings properties for each algorithm.
      */
-    private Map<String, Map<String, Object>> recentProperties;
+    private final Map<String, Map<String, Object>> recentProperties;
     /**
-     * Array of {@link IMoleculeFragmenter} objects
+     * Array of {@link IMoleculeFragmenter} objects.
      */
-    private IMoleculeFragmenter[] fragmenters;
+    private final IMoleculeFragmenter[] fragmenters;
     /**
-     * Name of the selected fragmentation algorithm
+     * Name of the selected fragmentation algorithm.
      */
-    private String selectedFragmenterName;
+    private final String selectedFragmenterName;
     /**
      * Configuration class to read resource file paths from.
      */
     private final IConfiguration configuration;
     /**
-     * Logger
+     * Logger.
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentationSettingsViewController.class.getName());
     //</editor-fold>
     /**
-     * Constructor
+     * Constructor.
      *
      * @param aStage Stage
      * @param anArrayOfFragmenters IMoleculeFragmenter[]
      * @param aSelectedFragmenterAlgorithmName String
      * @param aConfiguration configuration instance to read resource file paths from
      */
-    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName, IConfiguration aConfiguration){
+    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName, IConfiguration aConfiguration) {
         this.mainStage = aStage;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(anArrayOfFragmenters.length));
         this.fragmenters = anArrayOfFragmenters;
@@ -140,46 +139,44 @@ public class FragmentationSettingsViewController {
     /**
      * Adds listeners.
      */
-    private void addListener(){
+    private void addListener() {
         //fragmentationSettingsViewStage close request
         this.fragmentationSettingsViewStage.setOnCloseRequest(event -> {
-            for(int i = 0; i < this.fragmenters.length; i++){
-                if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
-                    this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
+            for (IMoleculeFragmenter fragmenter : this.fragmenters) {
+                if (fragmenter.getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
+                    this.setRecentProperties(fragmenter, this.recentProperties.get(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
                 }
             }
             this.fragmentationSettingsViewStage.close();
         });
         //applyButton
-        this.settingsView.getApplyButton().setOnAction(event -> {
-            this.fragmentationSettingsViewStage.close();
-        });
+        this.settingsView.getApplyButton().setOnAction(event -> this.fragmentationSettingsViewStage.close());
         //cancelButton
         this.settingsView.getCancelButton().setOnAction(event -> {
-            for(int i = 0; i < this.fragmenters.length; i++){
-                this.setRecentProperties(this.fragmenters[i], this.recentProperties.get(this.fragmenters[i].getFragmentationAlgorithmName()));
+            for (IMoleculeFragmenter fragmenter : this.fragmenters) {
+                this.setRecentProperties(fragmenter, this.recentProperties.get(fragmenter.getFragmentationAlgorithmName()));
             }
             this.fragmentationSettingsViewStage.close();
         });
         //defaultButton
         this.settingsView.getDefaultButton().setOnAction(event -> {
-            for(int i = 0; i < this.fragmenters.length; i++){
-                if(this.fragmenters[i].getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())){
-                    this.fragmenters[i].restoreDefaultSettings();
+            for (IMoleculeFragmenter fragmenter : this.fragmenters) {
+                if (fragmenter.getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
+                    fragmenter.restoreDefaultSettings();
                 }
             }
         });
     }
-
+    //
     /**
-     * Sets the properties of the given fragmenter to the values of the 'recentPropertiesMap'
+     * Sets the properties of the given fragmenter to the values of the 'recentPropertiesMap'.
      *
      * @param aFragmenter IMoleculeFragmenter
      * @param aRecentPropertiesMap Map
      */
     private void setRecentProperties(IMoleculeFragmenter aFragmenter, Map<String, Object> aRecentPropertiesMap){
         for (Property tmpProperty : aFragmenter.settingsProperties()) {
-            if(aRecentPropertiesMap.containsKey(tmpProperty.getName())){
+            if (aRecentPropertiesMap.containsKey(tmpProperty.getName())) {
                 tmpProperty.setValue(aRecentPropertiesMap.get(tmpProperty.getName()));
             }
         }

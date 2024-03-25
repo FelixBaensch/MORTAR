@@ -25,11 +25,6 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - Implement clone()
- */
-
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import java.io.BufferedReader;
@@ -56,7 +51,7 @@ public class SingleTermPreference extends BasePreference {
      * -, _, [], (), {}, :, ;, /, \, ., ', space (ASCII 32, hexadecimal value: 20, see below) and ,.
      */
     private static final Pattern INPUT_TEST_PATTERN =
-            Pattern.compile("\\A[0-9a-z\\xE4\\xFC\\xF6\\xDFA-Z\\xC4\\xDC\\xD6\\.\\,\\'\\-\\_\\[\\]\\(\\)\\{\\}\\:\\;\\/\\\\\\x20]++\\z");
+            Pattern.compile("\\A[0-9a-z\\xE4\\xFC\\xF6\\xDFA-Z\\xC4\\xDC\\xD6.,'\\-_\\[\\](){}:;/\\\\\\x20]++\\z");
 
     /**
      * The version of this class.
@@ -76,7 +71,7 @@ public class SingleTermPreference extends BasePreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Private class variables">
     /**
-     * String content of this preference
+     * String content of this preference.
      */
     private String content;
     //</editor-fold>
@@ -122,7 +117,7 @@ public class SingleTermPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             SingleTermPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -173,15 +168,11 @@ public class SingleTermPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public SingleTermPreference copy() {
-        SingleTermPreference tmpCopy = new SingleTermPreference(new String(this.name), new String(this.content));
-        tmpCopy.guid = new String(this.guid);
+        SingleTermPreference tmpCopy = new SingleTermPreference(this.name, this.content);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -197,13 +188,23 @@ public class SingleTermPreference extends BasePreference {
     public String toString() {
         return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + this.content;
     }
+
+    @Override
+    public boolean equals(Object anObject) {
+        return super.equals(anObject);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Private methods">
     /**
      * (Re-)instantiates a new SingleTermPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         this.content = aReader.readLine();

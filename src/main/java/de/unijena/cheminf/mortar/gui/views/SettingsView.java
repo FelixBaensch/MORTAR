@@ -204,95 +204,102 @@ public class SettingsView extends AnchorPane {
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             Object tmpRecentValue = tmpProperty.getValue();
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
-            if (tmpProperty instanceof SimpleBooleanProperty tmpSimpleBooleanProperty) {
-                ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
-                tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
-                tmpBooleanComboBox.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
-                tmpBooleanComboBox.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            } else if (tmpProperty instanceof SimpleIntegerProperty) {
-                TextField tmpIntegerTextField = new TextField();
-                tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
-                TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
-                tmpIntegerTextField.setTextFormatter(tmpFormatter);
-                tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
-                tmpIntegerTextField.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            } else if (tmpProperty instanceof SimpleDoubleProperty) {
-                TextField tmpDoubleTextField = new TextField();
-                tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
-                TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(), 0.0, GuiUtil.getDoubleFilter());
-                tmpDoubleTextField.setTextFormatter(tmpFormatter);
-                tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
-                tmpDoubleTextField.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            } else if (tmpProperty instanceof SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty) {
-                ComboBox<IDisplayEnum> tmpEnumComboBox = new ComboBox<>();
-                tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
-                tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
-                final ObservableList<IDisplayEnum> tmpItems = FXCollections.observableArrayList();
-                Collections.addAll(tmpItems, (IDisplayEnum[]) tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnumConstants());
-                tmpEnumComboBox.setItems(tmpItems);
-                tmpEnumComboBox.setCellFactory(param -> new ListCell<>() {
-                    @Override
-                    protected void updateItem(IDisplayEnum iDisplayEnum, boolean empty) {
-                        super.updateItem(iDisplayEnum, empty);
-                        if (!empty) {
-                            this.setText(iDisplayEnum.getDisplayName());
-                            this.setTooltip(GuiUtil.createTooltip(iDisplayEnum.getTooltipText()));
+            switch (tmpProperty) {
+                case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
+                    ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
+                    tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
+                    tmpBooleanComboBox.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
+                    tmpBooleanComboBox.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleIntegerProperty simpleIntegerProperty -> {
+                    TextField tmpIntegerTextField = new TextField();
+                    tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
+                    TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
+                    tmpIntegerTextField.setTextFormatter(tmpFormatter);
+                    tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
+                    tmpIntegerTextField.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleDoubleProperty simpleDoubleProperty -> {
+                    TextField tmpDoubleTextField = new TextField();
+                    tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
+                    TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(), 0.0, GuiUtil.getDoubleFilter());
+                    tmpDoubleTextField.setTextFormatter(tmpFormatter);
+                    tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
+                    tmpDoubleTextField.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
+                    ComboBox<IDisplayEnum> tmpEnumComboBox = new ComboBox<>();
+                    tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+                    tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
+                    final ObservableList<IDisplayEnum> tmpItems = FXCollections.observableArrayList();
+                    Collections.addAll(tmpItems, (IDisplayEnum[]) tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnumConstants());
+                    tmpEnumComboBox.setItems(tmpItems);
+                    tmpEnumComboBox.setCellFactory(param -> new ListCell<>() {
+                        @Override
+                        protected void updateItem(IDisplayEnum iDisplayEnum, boolean empty) {
+                            super.updateItem(iDisplayEnum, empty);
+                            if (!empty) {
+                                this.setText(iDisplayEnum.getDisplayName());
+                                this.setTooltip(GuiUtil.createTooltip(iDisplayEnum.getTooltipText()));
+                            }
                         }
-                    }
-                });
-                //note this is called to set the initial value, so yes, we need to overwrite both methods with the same functionality here
-                tmpEnumComboBox.setButtonCell(new ListCell<>(){
-                    @Override
-                    protected void updateItem(IDisplayEnum item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (!empty) {
-                            this.setText(item.getDisplayName());
-                            this.setTooltip(GuiUtil.createTooltip(item.getTooltipText()));
+                    });
+                    //note this is called to set the initial value, so yes, we need to overwrite both methods with the same functionality here
+                    tmpEnumComboBox.setButtonCell(new ListCell<>() {
+                        @Override
+                        protected void updateItem(IDisplayEnum item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (!empty) {
+                                this.setText(item.getDisplayName());
+                                this.setTooltip(GuiUtil.createTooltip(item.getTooltipText()));
+                            }
                         }
-                    }
-                });
-                tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleIDisplayEnumConstantProperty);
-                tmpEnumComboBox.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            } else if (tmpProperty instanceof SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty) {
-                ComboBox<String> tmpEnumComboBox = new ComboBox<>();
-                tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
-                tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
-                tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
-                tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleEnumConstantNameProperty);
-                tmpEnumComboBox.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            } else if (tmpProperty instanceof SimpleStringProperty) {
-                TextField tmpStringTextField = new TextField();
-                tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
-                tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
-                tmpStringTextField.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            } else {
-                throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
+                    });
+                    tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleIDisplayEnumConstantProperty);
+                    tmpEnumComboBox.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty -> {
+                    ComboBox<String> tmpEnumComboBox = new ComboBox<>();
+                    tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+                    tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
+                    tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
+                    tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleEnumConstantNameProperty);
+                    tmpEnumComboBox.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleStringProperty simpleStringProperty -> {
+                    TextField tmpStringTextField = new TextField();
+                    tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
+                    tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
+                    tmpStringTextField.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                default ->
+                        throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
             }
         }
     }

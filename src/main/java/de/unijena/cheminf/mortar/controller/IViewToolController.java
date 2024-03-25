@@ -63,8 +63,5 @@ public interface IViewToolController {
      * @return true if the view tool can be opened when this specific tab is active
      */
     public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant);
-
-    //TODO how to add a getInstance method?
-    //TODO add open view tool method?
     //</editor-fold>
 }

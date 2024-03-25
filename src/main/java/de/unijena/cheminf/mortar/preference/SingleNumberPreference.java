@@ -25,11 +25,6 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - Implement clone()
- */
-
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import java.io.BufferedReader;
@@ -65,7 +60,7 @@ public class SingleNumberPreference extends BasePreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Private class variables">
     /**
-     * Single number content of this preference
+     * Single number content of this preference.
      */
     private double content;
     //</editor-fold>
@@ -106,8 +101,8 @@ public class SingleNumberPreference extends BasePreference {
         if (!BasePreference.isValidName(aName)) {
             throw new IllegalArgumentException("Preference name " + aName + " does not match required pattern!");
         }
-        Double tmpDouble = SingleNumberPreference.parseValidContent(aDoubleString);
-        if (tmpDouble.isNaN()) {
+        double tmpDouble = SingleNumberPreference.parseValidContent(aDoubleString);
+        if (Double.isNaN(tmpDouble)) {
             throw new IllegalArgumentException("The given number " + aDoubleString + " is no valid content!");
         }
         //</editor-fold>
@@ -135,7 +130,7 @@ public class SingleNumberPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             SingleNumberPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -145,6 +140,7 @@ public class SingleNumberPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getContentRepresentative() {
         return Double.toString(this.content);
@@ -192,8 +188,8 @@ public class SingleNumberPreference extends BasePreference {
      * double is infinite or 'NaN'
      */
     public void setContent(String aDoubleString) throws IllegalArgumentException {
-        Double tmpDouble = SingleNumberPreference.parseValidContent(aDoubleString);
-        if (tmpDouble.isNaN()) {
+        double tmpDouble = SingleNumberPreference.parseValidContent(aDoubleString);
+        if (Double.isNaN(tmpDouble)) {
             throw new IllegalArgumentException("The given number " + aDoubleString + " is no valid content!");
         }
         this.content = tmpDouble;
@@ -201,15 +197,11 @@ public class SingleNumberPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public SingleNumberPreference copy() {
-        SingleNumberPreference tmpCopy = new SingleNumberPreference(new String(this.name), Double.valueOf(this.content));
-        tmpCopy.guid = new String(this.guid);
+        SingleNumberPreference tmpCopy = new SingleNumberPreference(this.name, this.content);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -225,6 +217,16 @@ public class SingleNumberPreference extends BasePreference {
     public String toString() {
         return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + this.content;
     }
+
+    @Override
+    public boolean equals(Object anObject) {
+        return super.equals(anObject);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
@@ -235,8 +237,8 @@ public class SingleNumberPreference extends BasePreference {
      * @return true if aContent meets the requirements for contents of this preference
      */
     public static boolean isValidContent(double aContent) {
-        Double tmpDouble = aContent;
-        return !(tmpDouble.isInfinite() || tmpDouble.isNaN());
+        double tmpDouble = aContent;
+        return !(Double.isInfinite(tmpDouble) || Double.isNaN(tmpDouble));
     }
 
     /**
@@ -251,8 +253,8 @@ public class SingleNumberPreference extends BasePreference {
         if (Objects.isNull(aDoubleString) || aDoubleString.isEmpty()) {
             return false;
         }
-        Double tmpResult = SingleNumberPreference.parseValidContent(aDoubleString);
-        return !tmpResult.isNaN();
+        double tmpResult = SingleNumberPreference.parseValidContent(aDoubleString);
+        return !Double.isNaN(tmpResult);
     }
     //</editor-fold>
     //
@@ -260,7 +262,7 @@ public class SingleNumberPreference extends BasePreference {
     /**
      * (Re-)instantiates a new SingleNumberPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         this.content = Double.parseDouble(aReader.readLine());

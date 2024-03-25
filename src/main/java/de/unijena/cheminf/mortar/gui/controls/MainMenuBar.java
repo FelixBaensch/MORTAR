@@ -35,7 +35,7 @@ import javafx.scene.control.SeparatorMenuItem;
 
 /**
  * A MenuBar for the application's {@link MainView}.
- * It contains menus for file handling (I/O), shutting down the application, settings and help menu entries
+ * It contains menus for file handling (I/O), shutting down the application, settings and help menu entries.
  *
  * @author Felix Baensch, Jonas Schaub, Samuel Behr
  * @version 1.0.0.0
@@ -43,111 +43,111 @@ import javafx.scene.control.SeparatorMenuItem;
 public class MainMenuBar extends MenuBar {
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
-     * FileMenu
+     * FileMenu.
      */
     private final Menu fileMenu;
     /**
-     * MenuItem to import molecules
+     * MenuItem to import molecules.
      */
     private final MenuItem openMenuItem;
     /**
-     * MenuItem for export
+     * MenuItem for export.
      */
     private final Menu exportMenu;
     /**
-     * Menu for fragments export
+     * Menu for fragments export.
      */
     private final Menu fragmentsExportMenu;
     /**
-     * MenuItem to export fragments as csv file
+     * MenuItem to export fragments as csv file.
      */
     private final MenuItem fragmentsExportToCSVMenuItem;
     /**
-     * MenuItem to export fragments as pdb file
+     * MenuItem to export fragments as pdb file.
      */
     private final MenuItem fragmentsExportToPDBMenuItem;
     /**
-     * MenuItem to export fragments as pdf file
+     * MenuItem to export fragments as pdf file.
      */
     private final MenuItem fragmentsExportToPDFMenuItem;
     /**
-     * Menu for fragments export as sdf
+     * Menu for fragments export as sdf.
      */
     private final Menu fragmentsExportToSDFMenu;
     /**
-     * MenuItem to export fragments as sd file
+     * MenuItem to export fragments as sd file.
      */
     private final MenuItem fragmentsExportToSingleSDFMenuItem;
     /**
-     * MenuItem to export fragments as sd file separately
+     * MenuItem to export fragments as sd file separately.
      */
     private final MenuItem fragmentsExportToSeparateSDFsMenuItem;
     /**
-     * Menu for items export
+     * Menu for items export.
      */
     private final Menu itemsExportMenu;
     /**
-     * MenuItem to export items as csv file
+     * MenuItem to export items as csv file.
      */
     private final MenuItem itemsExportToCSVMenuItem;
     /**
-     * MenuItem to export fragments as pdf file
+     * MenuItem to export fragments as pdf file.
      */
     private final MenuItem itemsExportToPDFMenuItem;
     /**
-     * MenuItem to exit app
+     * MenuItem to exit app.
      */
     private final MenuItem exitMenuItem;
     /**
-     * Menu for settings
+     * Menu for settings.
      */
     private final Menu settingsMenu;
     /**
-     * Menu for pipeline
+     * Menu for pipeline.
      */
     private final Menu pipelineMenu;
     /**
-     * Menu for help
+     * Menu for help.
      */
     private final Menu helpMenu;
     /**
-     * MenuItem to open fragmentation settings
+     * MenuItem to open fragmentation settings.
      */
     private final MenuItem fragmentationSettingsMenuItem;
     /**
-     * MenuItem to open global settings
+     * MenuItem to open global settings.
      */
     private final MenuItem globalSettingsMenuItem;
     /**
-     * MenuItem to open pipeline settings
+     * MenuItem to open pipeline settings.
      */
     private final MenuItem pipelineSettingsMenuItem;
     /**
-     * MenuItem to open AboutView
+     * MenuItem to open AboutView.
      */
     private final MenuItem aboutViewMenuItem;
     /**
-     * Menu to choose fragmentation algorithm
+     * Menu to choose fragmentation algorithm.
      */
     private final Menu fragmentationAlgorithmMenu;
     /**
-     * MenuItem to cancel molecule import, only visible if import is running
+     * MenuItem to cancel molecule import, only visible if import is running.
      */
     private final MenuItem cancelImportMenuItem;
     /**
-     * MenuItem to cancel export, only visible if import is running
+     * MenuItem to cancel export, only visible if import is running.
      */
     private final MenuItem cancelExportMenuItem;
     /**
-     * Menu to open views
+     * Menu to open views.
      */
     private final Menu viewsMenu;
     /**
-     * MenuItem to open the histogram
+     * MenuItem to open the histogram.
      */
     private final MenuItem histogramViewerMenuItem;
     /**
-     * MenuItem to open the OverviewView
+     * MenuItem to open the OverviewView.
      */
     private final MenuItem overviewViewMenuItem;
     //</editor-fold>
@@ -157,7 +157,7 @@ public class MainMenuBar extends MenuBar {
      * Initialises the MainMenuBar's components and adds them to the MainMenuBar.
      * No listeners are added here.
      */
-    public MainMenuBar(){
+    public MainMenuBar() {
         super();
         //<editor-fold desc="initialisation" defaultstate="collapsed">
         //fileMenu
@@ -208,9 +208,9 @@ public class MainMenuBar extends MenuBar {
     //<editor-fold desc="private methods" defaultstate="collapsed">
     //<editor-fold desc="addComponentsToMenuBar" defaultstate="collapsed">
     /**
-     * Adds the menu items to the menus and the menus to the menu bar
+     * Adds the menu items to the menus and the menus to the menu bar.
      */
-    private void addComponentsToMenuBar(){
+    private void addComponentsToMenuBar() {
         //<editor-fold desc="fileMenu" defaultstate="collapsed">
         this.getMenus().add(this.fileMenu);
         //openMenuItem
@@ -262,9 +262,9 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="addComponentsToExportMenu" defaultstate="collapsed">
     /**
-     * Adds the menu items to the export menu
+     * Adds the menu items to the export menu.
      */
-    private void addComponentsToExportMenu(){
+    private void addComponentsToExportMenu() {
         //<editor-fold desc="fragmentsExportMenu" defaultstate="collapsed">
         this.exportMenu.getItems().add(this.fragmentsExportMenu);
         this.fragmentsExportMenu.getItems().add(this.fragmentsExportToCSVMenuItem);
@@ -286,7 +286,7 @@ public class MainMenuBar extends MenuBar {
     //<editor-fold desc="public properties" defaultstate="collapsed">
     //<editor-fold desc="getOpenMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to open a molecule set
+     * Returns the menu item that is supposed to open a molecule set.
      *
      * @return the menu item that should open a molecule set
      */
@@ -296,7 +296,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getExportMenu" defaultstate="collapsed">
     /**
-     * Returns the menu that is supposed to open a list of export options
+     * Returns the menu that is supposed to open a list of export options.
      *
      * @return the menu that should open a list of export options
      */
@@ -306,7 +306,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportMenu" defaultstate="collapsed">
     /**
-     * Returns the menu that is supposed to open a list of fragments export options
+     * Returns the menu that is supposed to open a list of fragments export options.
      *
      * @return the menu that should open a list of fragments export options
      */
@@ -316,7 +316,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportToCSVMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to export the fragments to a CSV file
+     * Returns the menu item that is supposed to export the fragments to a CSV file.
      *
      * @return the menu item that should export the fragments to a CSV file
      */
@@ -326,7 +326,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportToPDBMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to export the fragments to a PDB file
+     * Returns the menu item that is supposed to export the fragments to a PDB file.
      *
      * @return the menu item that should export the fragments to a PDB file
      */
@@ -336,7 +336,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportToPDFMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to export the fragments to a PDF
+     * Returns the menu item that is supposed to export the fragments to a PDF.
      *
      * @return the menu item that should export the fragments to a PDF
      */
@@ -346,7 +346,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportToSDFMenu" defaultstate="collapsed">
     /**
-     * Returns the menu that is supposed to open a list of SDF export options
+     * Returns the menu that is supposed to open a list of SDF export options.
      *
      * @return the menu that should open a list of SDF export options
      */
@@ -356,7 +356,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportToSingleSDFMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to export the fragments to a single SD file
+     * Returns the menu item that is supposed to export the fragments to a single SD file.
      *
      * @return the menu item that should export the fragments to a single SD file
      */
@@ -366,7 +366,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportToSeparateSDFsMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to export the fragments to separate SD files
+     * Returns the menu item that is supposed to export the fragments to separate SD files.
      *
      * @return the menu item that should export the fragments to separate SD files
      */
@@ -376,7 +376,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getItemsExportMenu" defaultstate="collapsed">
     /**
-     * Returns the menu that is supposed to open a list of items export options
+     * Returns the menu that is supposed to open a list of items export options.
      *
      * @return the menu that should open a list of items export options
      */
@@ -386,7 +386,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getItemsExportToCSVMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to export the items to a CSV file
+     * Returns the menu item that is supposed to export the items to a CSV file.
      *
      * @return the menu item that should export the items to a CSV file
      */
@@ -396,7 +396,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getItemsExportToPDFMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to export the items to a PDF
+     * Returns the menu item that is supposed to export the items to a PDF.
      *
      * @return the menu item that should export the items to a PDF
      */
@@ -406,7 +406,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getExitMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to shut down the application
+     * Returns the menu item that is supposed to shut down the application.
      *
      * @return the menu item that should shut down the application
      */
@@ -416,7 +416,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getGlobalSettingsMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that opens the global settings view
+     * Returns the menu item that opens the global settings view.
      *
      * @return the menu item that opens the global settings view
      */
@@ -426,7 +426,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentationAlgorithmMenu" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to choose the fragmentation algorithm
+     * Returns the menu item that is supposed to choose the fragmentation algorithm.
      *
      * @return the menu item that should choose the fragmentation algorithm
      */
@@ -436,7 +436,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getFragmentationSettingsMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to open the fragmentation settings window
+     * Returns the menu item that is supposed to open the fragmentation settings window.
      *
      * @return the menu item that should open the fragmentation settings window
      */
@@ -446,7 +446,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getPipelineSettingsMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to open the pipeline settings window
+     * Returns the menu item that is supposed to open the pipeline settings window.
      *
      * @return the menu item that should open the pipeline settings window
      */
@@ -456,7 +456,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getOverviewMenuItem defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to open the OverviewView
+     * Returns the menu item that is supposed to open the OverviewView.
      *
      * @return the menu item that should open the OverviewView
      */
@@ -466,7 +466,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getAboutViewMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to open the AboutView
+     * Returns the menu item that is supposed to open the AboutView.
      *
      * @return the menu item that should open the AboutView
      */
@@ -476,7 +476,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //<editor-fold desc="getHistogramViewerMenuItem" defaultstate="collapsed">
     /**
-     * Returns the menu item that is supposed to open histogram window
+     * Returns the menu item that is supposed to open histogram window.
      *
      * @return MenuItem to open histogram view
      */
@@ -486,7 +486,7 @@ public class MainMenuBar extends MenuBar {
     //</editor-fold>
     //
     /**
-     * Returns MenuItem to cancel running import, only visible if import is running
+     * Returns MenuItem to cancel running import, only visible if import is running.
      *
      * @return MenuItem to cancel import
      */
@@ -495,7 +495,7 @@ public class MainMenuBar extends MenuBar {
     }
     //
     /**
-     * Returns MenuItem to cancel running export, only visible if import is running
+     * Returns MenuItem to cancel running export, only visible if import is running.
      *
      * @return MenuItem to cancel export
      */

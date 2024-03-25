@@ -58,73 +58,73 @@ import javafx.scene.paint.Color;
 public class HistogramView extends AnchorPane {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * Button to close view
+     * Button to close view.
      */
-    private Button closeButton;
+    private final Button closeButton;
     /**
-     * Button to refresh the histogram
+     * Button to refresh the histogram.
      */
-    private Button applyButton;
+    private final Button applyButton;
     /**
-     * Text field for creating a new histogram with the given number of fragments
+     * Text field for creating a new histogram with the given number of fragments.
      */
-    private TextField displayedFragmentsNumberTextField;
+    private final TextField displayedFragmentsNumberTextField;
     /**
-     * Label for the displayed fragments number text field
+     * Label for the displayed fragments number text field.
      */
-    private Label displayedFragmentsNumberLabel;
+    private final Label displayedFragmentsNumberLabel;
     /**
-     * ImageView to display the structures when the cursor hovers over a bar
+     * ImageView to display the structures when the cursor hovers over a bar.
      */
-    private ImageView structureDisplayImageView;
+    private final ImageView structureDisplayImageView;
     /**
      * Text field for defining the maximum SMILES length to display fully on the y-axis.
      */
-    private TextField maximumSMILESLengthTextField;
+    private final TextField maximumSMILESLengthTextField;
     /**
      * Label for the maximum SMILES length text field.
      */
-    private Label maximumSMILESLengthLabel;
+    private final Label maximumSMILESLengthLabel;
     /**
      * Checkbox to choose to show or hide the bar labels that display the exact frequency.
      */
-    private CheckBox displayBarLabelsCheckBox;
+    private final CheckBox displayBarLabelsCheckBox;
     /**
-     * CheckBox to display or hide histogram gridlines
+     * CheckBox to display or hide histogram gridlines.
      */
-    private CheckBox displayGridLinesCheckBox;
+    private final CheckBox displayGridLinesCheckBox;
     /**
-     * ScrollPane to make histogram scrollable
+     * ScrollPane to make histogram scrollable.
      */
-    private ScrollPane histogramScrollPane;
+    private final ScrollPane histogramScrollPane;
     /**
-     * ComboBox to make the gap between the bars adjustable
+     * ComboBox to make the gap between the bars adjustable.
      */
-    private ComboBox barWidthsComboBox;
+    private final ComboBox<String> barWidthsComboBox;
     /**
      * Label for the bar widths combo box.
      */
-    private Label barWidthsLabel;
+    private final Label barWidthsLabel;
     /**
-     * CheckBox to scale the X-axis logarithmically
+     * CheckBox to scale the X-axis logarithmically.
      */
-    private CheckBox logarithmicScale; //TODO: currently unused
+    private final CheckBox logarithmicScale; //currently unused
     /**
-     * CheckBox to show or hide the bar shadows
+     * CheckBox to show or hide the bar shadows.
      */
-    private CheckBox barStylingCheckBox;
+    private final CheckBox barStylingCheckBox;
     /**
-     * CheckBox to show or hide the SMILES labels on the y-axis
+     * CheckBox to show or hide the SMILES labels on the y-axis.
      */
-    private CheckBox displaySMILESonYaxisCheckBox;
+    private final CheckBox displaySMILESonYaxisCheckBox;
     /**
-     * ComboBox to choose which frequency is used
+     * ComboBox to choose which frequency is used.
      */
-    private ComboBox frequencyComboBox;
+    private final ComboBox<String> frequencyComboBox;
     /**
      * Label for the frequency combo box.
      */
-    private Label frequencyLabel;
+    private final Label frequencyLabel;
     //</editor-fold>
     //
     /**
@@ -142,10 +142,10 @@ public class HistogramView extends AnchorPane {
         this.histogramScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         //borderPane
         BorderPane tmpBorderPane = new BorderPane();
-        HistogramView.setTopAnchor(tmpBorderPane, 0.0);
-        HistogramView.setRightAnchor(tmpBorderPane, 0.0);
-        HistogramView.setLeftAnchor(tmpBorderPane, 0.0);
-        HistogramView.setBottomAnchor(tmpBorderPane, 0.0);
+        AnchorPane.setTopAnchor(tmpBorderPane, 0.0);
+        AnchorPane.setRightAnchor(tmpBorderPane, 0.0);
+        AnchorPane.setLeftAnchor(tmpBorderPane, 0.0);
+        AnchorPane.setBottomAnchor(tmpBorderPane, 0.0);
         //mainGrid (4x4 grid)
         GridPane tmpMainGrid = new GridPane();
         RowConstraints tmpRow1 = new RowConstraints();
@@ -263,7 +263,7 @@ public class HistogramView extends AnchorPane {
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns button for closing the view
+     * Returns button for closing the view.
      *
      * @return button for closing histogram view
      */
@@ -286,7 +286,9 @@ public class HistogramView extends AnchorPane {
      *
      * @return String number of fragments to be displayed in the histogram
      */
-    public String getDisplayedFragmentsNumberTextFieldContent() {return this.displayedFragmentsNumberTextField.getText();}
+    public String getDisplayedFragmentsNumberTextFieldContent() {
+        return this.displayedFragmentsNumberTextField.getText();
+    }
     //
     /**
      * Returns the text field where the maximum SMILES string length to display is entered.
@@ -312,7 +314,9 @@ public class HistogramView extends AnchorPane {
      *
      * @return String maximum SMILES length
      */
-    public String getMaximumSMILESLengthTextFieldContent() {return this.maximumSMILESLengthTextField.getText();}
+    public String getMaximumSMILESLengthTextFieldContent() {
+        return this.maximumSMILESLengthTextField.getText();
+    }
     //
     /**
      * Returns an ImageView to enable the display of the structures when the cursor hovers over a bar.
@@ -341,15 +345,15 @@ public class HistogramView extends AnchorPane {
         return this.displayGridLinesCheckBox;
     }
     //
-    //TODO currently unused
+    //currently unused
     /**
-     * Returns a CheckBox to make the number axis logarithmically
+     * Returns a CheckBox to make the number axis logarithmically.
      *
      * @return CheckBox for logarithmic number axis
      */
-    /*public CheckBox getLogarithmicScale(){
+    public CheckBox getLogarithmicScale(){
         return this.logarithmicScale;
-    }*/
+    }
     //
     /**
      * Returns the display bar shadows check box.
@@ -374,7 +378,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return ComboBox for setting bar widths
      */
-    public ComboBox getBarWidthsComboBox() {
+    public ComboBox<String> getBarWidthsComboBox() {
         return this.barWidthsComboBox;
     }
     //
@@ -392,7 +396,7 @@ public class HistogramView extends AnchorPane {
      *
      * @return ComboBox for choosing frequency type to display
      */
-    public ComboBox getFrequencyComboBox() {
+    public ComboBox<String> getFrequencyComboBox() {
         return this.frequencyComboBox;
     }
     //</editor-fold>

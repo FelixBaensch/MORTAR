@@ -44,10 +44,10 @@ import javafx.scene.layout.VBox;
  */
 public class MainView extends AnchorPane {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private BorderPane mainBorderPane;
-    private Pane mainCenterPane;
-    private MainMenuBar mainMenuBar;
-    private StatusBar statusBar;
+    private final BorderPane mainBorderPane;
+    private final Pane mainCenterPane;
+    private final MainMenuBar mainMenuBar;
+    private final StatusBar statusBar;
     /**
      * Configuration class to read resource file paths from.
      */
@@ -59,15 +59,15 @@ public class MainView extends AnchorPane {
      *
      * @param aConfiguration configuration class reading from properties file
      */
-    public MainView(IConfiguration aConfiguration){
+    public MainView(IConfiguration aConfiguration) {
         super();
         this.configuration = aConfiguration;
         //BorderPane
         this.mainBorderPane = new BorderPane();
-        MainView.setTopAnchor(this.mainBorderPane, 0.0);
-        MainView.setBottomAnchor(this.mainBorderPane, 0.0);
-        MainView.setLeftAnchor(this.mainBorderPane, 0.0);
-        MainView.setRightAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setTopAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setBottomAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setLeftAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setRightAnchor(this.mainBorderPane, 0.0);
         HBox.setHgrow(this.mainBorderPane, Priority.ALWAYS);
         VBox.setVgrow(this.mainBorderPane, Priority.ALWAYS);
         //mainCenterPane
@@ -88,12 +88,12 @@ public class MainView extends AnchorPane {
         this.statusBar = new StatusBar();
         this.mainBorderPane.setBottom(this.statusBar);
         this.getChildren().add(this.mainBorderPane);
-
     }
     //<editor-fold desc="public properties" defaultstate="collapsed">
     //<editor-fold desc="getMainMenuBar" defaultstate="collapsed">
     /**
-     * Returns the main menubar that contains menus for file handling (I/O), shutting down the application, settings and help menu entries
+     * Returns the main menubar that contains menus for file handling (I/O), shutting down the application, settings and help menu entries.
+     *
      * @return main menubar
      */
     public MainMenuBar getMainMenuBar() {
@@ -103,7 +103,8 @@ public class MainView extends AnchorPane {
     //
     //<editor-fold desc="getMainCenterPane" defaultstate="collapsed">
     /**
-     * Returns the main center pane that contains
+     * Returns the main center pane that contains the GUI elements.
+     *
      * @return main center pane that is supposed to contain GUI elements of interest
      */
     public Pane getMainCenterPane() {
@@ -113,7 +114,8 @@ public class MainView extends AnchorPane {
     //
     //<editor-fold desc="getMainMenuBar" defaultstate="collapsed">
     /**
-     * Returns the status bar
+     * Returns the status bar.
+     *
      * @return statusBar
      */
     public StatusBar getStatusBar() {

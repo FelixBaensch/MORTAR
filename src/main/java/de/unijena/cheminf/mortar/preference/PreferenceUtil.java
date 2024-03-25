@@ -25,7 +25,6 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
@@ -97,31 +96,46 @@ public final class PreferenceUtil {
         }
         PreferenceContainer tmpContainer = new PreferenceContainer(aContainerFilePathname);
         for (Property tmpProperty : aPropertiesList) {
+            if (tmpProperty == null) {
+                continue;
+            }
             try {
-                if (Objects.isNull(tmpProperty)) {
-                    continue;
-                }
-                if (tmpProperty instanceof SimpleBooleanProperty){
-                    BooleanPreference tmpBooleanPreference = new BooleanPreference(tmpProperty.getName(), ((SimpleBooleanProperty) tmpProperty).get());
-                    tmpContainer.add(tmpBooleanPreference);
-                } else if (tmpProperty instanceof SimpleIntegerProperty) {
-                    SingleIntegerPreference tmpIntPreference = new SingleIntegerPreference(tmpProperty.getName(), ((SimpleIntegerProperty) tmpProperty).get());
-                    tmpContainer.add(tmpIntPreference);
-                } else if (tmpProperty instanceof SimpleDoubleProperty) {
-                    SingleNumberPreference tmpDoublePreference = new SingleNumberPreference(tmpProperty.getName(), ((SimpleDoubleProperty) tmpProperty).get());
-                    tmpContainer.add(tmpDoublePreference);
-                } else if (tmpProperty instanceof SimpleIDisplayEnumConstantProperty) {
-                    SingleTermPreference tmpStringPreference = new SingleTermPreference(tmpProperty.getName(), ((Enum)((SimpleIDisplayEnumConstantProperty) tmpProperty).get()).name());
-                    tmpContainer.add(tmpStringPreference);
-                } else if (tmpProperty instanceof SimpleEnumConstantNameProperty || tmpProperty instanceof SimpleStringProperty) {
-                    SingleTermPreference tmpStringPreference = new SingleTermPreference(tmpProperty.getName(), ((SimpleStringProperty) tmpProperty).get());
-                    tmpContainer.add(tmpStringPreference);
-                } else {
-                    PreferenceUtil.LOGGER.log(Level.WARNING, "Unknown property type " + tmpProperty.getClass().getSimpleName() + " was given.");
+                switch (tmpProperty) {
+                    case SimpleBooleanProperty simpleBooleanProperty -> {
+                        BooleanPreference tmpBooleanPreference = new BooleanPreference(simpleBooleanProperty.getName(),
+                                simpleBooleanProperty.get());
+                        tmpContainer.add(tmpBooleanPreference);
+                    }
+                    case SimpleIntegerProperty simpleIntegerProperty -> {
+                        SingleIntegerPreference tmpIntPreference = new SingleIntegerPreference(simpleIntegerProperty.getName(),
+                                simpleIntegerProperty.get());
+                        tmpContainer.add(tmpIntPreference);
+                    }
+                    case SimpleDoubleProperty simpleDoubleProperty -> {
+                        SingleNumberPreference tmpDoublePreference = new SingleNumberPreference(simpleDoubleProperty.getName(),
+                                simpleDoubleProperty.get());
+                        tmpContainer.add(tmpDoublePreference);
+                    }
+                    case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
+                        SingleTermPreference tmpStringPreference = new SingleTermPreference(simpleIDisplayEnumConstantProperty.getName(),
+                                ((Enum) simpleIDisplayEnumConstantProperty.get()).name());
+                        tmpContainer.add(tmpStringPreference);
+                    }
+                    case SimpleStringProperty simpleStringProperty -> {
+                        // includes SimpleEnumConstantNameProperty
+                        SingleTermPreference tmpStringPreference = new SingleTermPreference(simpleStringProperty.getName(),
+                                simpleStringProperty.get());
+                        tmpContainer.add(tmpStringPreference);
+                    }
+                    default ->
+                            PreferenceUtil.LOGGER.log(Level.WARNING, "Unknown property type {0} was given.",
+                                    tmpProperty.getClass().getSimpleName());
                 }
             } catch (IllegalArgumentException anException) {
-                PreferenceUtil.LOGGER.log(Level.WARNING, "Setting translation to property went wrong, exception: " + anException.toString(), anException);
-                continue;
+                PreferenceUtil.LOGGER.log(Level.WARNING,
+                        String.format("Setting translation to property went wrong, exception: %s", anException.toString()),
+                        anException);
+                //continue;
             }
         }
         return tmpContainer;

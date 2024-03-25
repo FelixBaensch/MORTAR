@@ -62,43 +62,43 @@ import java.util.List;
 public class FragmentsDataTableView extends TableView implements IDataTableView{
     //<editor-fold desc="private final class constants", defaultstate="collapsed">
     /**
-     * TableColumn for 2D structure state of the fragment
+     * TableColumn for 2D structure state of the fragment.
      */
     private final TableColumn<FragmentDataModel, ImageView> structureColumn;
     /**
-     * TableColumn for SMILES of the fragment
+     * TableColumn for SMILES of the fragment.
      */
     private final TableColumn<FragmentDataModel, String> smilesColumn;
     /**
-     * TableColumn for 2D structure state of one (random/first occurred) parent molecule
+     * TableColumn for 2D structure state of one (random/first occurred) parent molecule.
      */
     private final TableColumn<FragmentDataModel, Image> parentMolColumn;
     /**
-     * TableColumn for name of one (random/first occurred) parent molecule
+     * TableColumn for name of one (random/first occurred) parent molecule.
      */
     private final TableColumn<FragmentDataModel, String> parentMolNameColumn;
     /**
-     * TableColumn for frequency of the fragment
+     * TableColumn for frequency of the fragment.
      */
     private final TableColumn<FragmentDataModel, Integer> frequencyColumn;
     /**
-     * TableColumn for percentage frequency of the fragment
+     * TableColumn for percentage frequency of the fragment.
      */
     private final TableColumn<FragmentDataModel, Double> percentageColumn;
     /**
-     * TableColumn for the frequency in how many molecules this fragment occurs in
+     * TableColumn for the frequency in how many molecules this fragment occurs in.
      */
     private final TableColumn<FragmentDataModel, Integer> moleculeFrequencyColumn;
     /**
-     * TableColumn for the percentage frequency in how many molecules this fragment occurs in
+     * TableColumn for the percentage frequency in how many molecules this fragment occurs in.
      */
     private final TableColumn<FragmentDataModel, Double> moleculePercentageColumn;
     /**
-     * MenuItem of ContextMenu to copy selected cell to clipboard
+     * MenuItem of ContextMenu to copy selected cell to clipboard.
      */
     private final MenuItem copyMenuItem;
     /**
-     * MenuItem of ContextMenu to open an overview view with the parent molecules of the row of the selected cell
+     * MenuItem of ContextMenu to open an overview view with the parent molecules of the row of the selected cell.
      */
     private final MenuItem overviewViewMenuItem;
     /**
@@ -111,7 +111,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     /**
      * ContextMenu ot the TableView.
      */
-    private ContextMenu contextMenu;
+    private final ContextMenu contextMenu;
     /**
      * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination).
      */
@@ -216,14 +216,14 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.percentageColumn.setEditable(false);
         this.percentageColumn.setSortable(true);
         this.percentageColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.ABSOLUTE_PERCENTAGE.getText()));
-        this.percentageColumn.setCellFactory(tc -> new TableCell<>(){
+        this.percentageColumn.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double value, boolean empty){
                 super.updateItem(value, empty);
-                if(empty){
-                    setText(null);
-                } else{
-                    setText(tmpPercentageForm.format(value));
+                if (empty) {
+                    this.setText(null);
+                } else {
+                    this.setText(tmpPercentageForm.format(value));
                 }
             }
         });
@@ -256,9 +256,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
             protected void updateItem(Double value, boolean empty) {
                 super.updateItem(value, empty);
                 if (empty) {
-                    setText(null);
+                    this.setText(null);
                 } else {
-                    setText(tmpPercentageForm.format(value));
+                    this.setText(tmpPercentageForm.format(value));
                 }
             }
         });
@@ -305,7 +305,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      *
      * @param aSettingsContainer SettingsContainer
      */
-    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer) {
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
             GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer.getRowsPerPageSetting());
             this.refresh();
@@ -315,67 +315,83 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * Returns the column that shows the 2d structure
+     * Returns the column that shows the 2d structure.
      *
      * @return TableColumn for 2d structure
      */
-    public TableColumn<FragmentDataModel, ImageView> getStructureColumn() { return this.structureColumn; }
+    public TableColumn<FragmentDataModel, ImageView> getStructureColumn() {
+        return this.structureColumn;
+    }
     //
     /**
-     * Returns the column that hold the SMILES
+     * Returns the column that hold the SMILES.
      *
      * @return TableColumn for SMILES
      */
-    public TableColumn<FragmentDataModel, String> getSmilesColumn() { return this.smilesColumn; }
+    public TableColumn<FragmentDataModel, String> getSmilesColumn() {
+        return this.smilesColumn;
+    }
     //
     /**
      * Returns the column that shows the 2d structure for a parent molecule.
      *
      * @return TableColumn for 2d structure
      */
-    public TableColumn<FragmentDataModel, Image> getParentMolColumn(){ return this.parentMolColumn; }
+    public TableColumn<FragmentDataModel, Image> getParentMolColumn(){
+        return this.parentMolColumn;
+    }
     //
     /**
      * Returns the column that holds the name for a parent molecule.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, String> getParentMolNameColumn() { return this.parentMolNameColumn; }
+    public TableColumn<FragmentDataModel, String> getParentMolNameColumn() {
+        return this.parentMolNameColumn;
+    }
     //
     /**
      * Returns the column that holds the frequency how often this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Integer> getFrequencyColumn() { return this.frequencyColumn; }
+    public TableColumn<FragmentDataModel, Integer> getFrequencyColumn() {
+        return this.frequencyColumn;
+    }
     //
     /**
      * Returns the column that holds the percentage frequency how often this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Double> getPercentageColumn() { return this.percentageColumn; }
+    public TableColumn<FragmentDataModel, Double> getPercentageColumn() {
+        return this.percentageColumn;
+    }
     //
     /**
      * Returns the column that holds the frequency in how many molecules this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Integer> getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
+    public TableColumn<FragmentDataModel, Integer> getMoleculeFrequencyColumn() {
+        return this.moleculeFrequencyColumn;
+    }
     //
     /**
      * Returns the column that holds the percentage frequency in how many molecules this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Double> getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
+    public TableColumn<FragmentDataModel, Double> getMoleculePercentageColumn() {
+        return this.moleculePercentageColumn;
+    }
     //
     /**
      * Returns the MenuItem to copy.
      *
      * @return MenuItem
      */
-    public MenuItem getCopyMenuItem(){
+    public MenuItem getCopyMenuItem() {
         return this.copyMenuItem;
     }
     //
@@ -393,7 +409,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      *
      * @return List
      */
-    public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public List<MoleculeDataModel> getItemsList() {
+        return this.itemsList;
+    }
     //
     /**
      * Sets the given list of {@link MoleculeDataModel} objects as items.

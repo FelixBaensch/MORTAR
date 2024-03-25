@@ -50,7 +50,7 @@ public class PreferenceContainerTest {
      * Constructor to initialize locale and configuration.
      */
     public PreferenceContainerTest() throws Exception {
-        Locale.setDefault(new Locale("en", "GB"));
+        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //
@@ -58,7 +58,7 @@ public class PreferenceContainerTest {
      * Tests basic functionalities of PreferenceContainer class/objects, like preference management, management of
      * public properties and persistence.
      *
-     * @throws Exception
+     * @throws Exception if anything goes wrong
      */
     @Test
     public void testPreferenceContainerBasics() throws Exception {
@@ -95,13 +95,14 @@ public class PreferenceContainerTest {
         Assertions.assertEquals(tmpPreference3, tmpSortedNameAscending[3]);
         Assertions.assertEquals(tmpPreference5, tmpSortedNameAscending[4]);
 
-        System.out.println(tmpContainer.getGUID());
-        System.out.println(tmpContainer.getTimeStamp());
-        System.out.println(tmpContainer.getVersion());
-        System.out.println(tmpContainer.toString());
+        Assertions.assertDoesNotThrow(tmpContainer::getGUID);
+        Assertions.assertDoesNotThrow(tmpContainer::getTimeStamp);
+        Assertions.assertDoesNotThrow(tmpContainer::getVersion);
+        Assertions.assertDoesNotThrow(tmpContainer::toString);
         IPreference[] tmpPreferences = tmpContainer.getPreferences();
         for (IPreference tmpPreference : tmpPreferences) {
-            System.out.println(tmpPreference.getName() + " : " + tmpPreference.getContentRepresentative());
+            Assertions.assertNotNull(tmpPreference.getName());
+            Assertions.assertNotNull(tmpPreference.getContentRepresentative());
         }
 
         tmpContainer.writeRepresentation();
@@ -113,7 +114,6 @@ public class PreferenceContainerTest {
         Assertions.assertEquals(tmpContainer.getTimeStamp(), tmpReloadedContainer.getTimeStamp());
         Assertions.assertEquals(tmpContainer.toString(), tmpReloadedContainer.toString());
         Assertions.assertEquals(tmpContainer, tmpReloadedContainer);
-        System.out.println();
     }
     //
     /**
@@ -125,7 +125,6 @@ public class PreferenceContainerTest {
      */
     @Test
     public void testPropertyToPreferenceConversion() throws Exception {
-        Locale.setDefault(new Locale("en", "GB"));
         SugarRemovalUtilityFragmenter tmpSRUFragmenter = new SugarRemovalUtilityFragmenter();
         String tmpDir = FileUtil.getAppDirPath()
                 + File.separatorChar
@@ -133,11 +132,11 @@ public class PreferenceContainerTest {
                 + File.separatorChar;
         (new File(tmpDir)).mkdirs();
         String tmpFilePathname = tmpDir + "SRUFragmenterSettings.txt";
-        PreferenceContainer tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSRUFragmenter.settingsProperties(), tmpFilePathname);
-        tmpContainer.writeRepresentation();
-        tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new ErtlFunctionalGroupsFinderFragmenter().settingsProperties(), tmpDir + "EFGFFragmenterSettings.txt");
-        tmpContainer.writeRepresentation();
-        tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new SettingsContainer().settingsProperties(), tmpDir + "SettingContainer.txt");
-        tmpContainer.writeRepresentation();
+        final PreferenceContainer tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSRUFragmenter.settingsProperties(), tmpFilePathname);
+        Assertions.assertDoesNotThrow(tmpContainer::writeRepresentation);
+        final PreferenceContainer tmpNewContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new ErtlFunctionalGroupsFinderFragmenter().settingsProperties(), tmpDir + "EFGFFragmenterSettings.txt");
+        Assertions.assertDoesNotThrow(tmpNewContainer::writeRepresentation);
+        final PreferenceContainer tmpNewNewContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new SettingsContainer().settingsProperties(), tmpDir + "SettingContainer.txt");
+        Assertions.assertDoesNotThrow(tmpNewNewContainer::writeRepresentation);
     }
 }

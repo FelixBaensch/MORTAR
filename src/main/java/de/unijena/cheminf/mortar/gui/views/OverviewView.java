@@ -60,15 +60,16 @@ import java.util.Objects;
 public class OverviewView extends AnchorPane {
     //<editor-fold desc="public static final class constants", defaultstate="collapsed">
     /**
-     * Width of columns and rows per page label of the overview view
+     * Width of columns and rows per page label of the overview view.
      */
     public static final double OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH = 10.0;
     //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Grid pane used to style the view.
      */
-    private GridPane mainGridPane;
+    private final GridPane mainGridPane;
     /**
      * Grid pane that holds the displayed structure images and can be reconfigured by the user.
      */
@@ -77,31 +78,31 @@ public class OverviewView extends AnchorPane {
      * Horizontal box that holds the nodes placed in the bottom-left corner of the view being the text fields and
      * apply button for the reconfiguration of the structure grid pane.
      */
-    private HBox bottomLeftHBox;
+    private final HBox bottomLeftHBox;
     /**
      * Horizontal box that holds the nodes placed in the bottom-right corner of the view.
      */
-    private HBox bottomRightHBox;
+    private final HBox bottomRightHBox;
     /**
      * Text field for columns per page input.
      */
-    private TextField columnsPerPageTextField;
+    private final TextField columnsPerPageTextField;
     /**
      * Text field for rows per page input.
      */
-    private TextField rowsPerPageTextField;
+    private final TextField rowsPerPageTextField;
     /**
      * Button to apply changes to the structure grid pane configuration.
      */
-    private Button applyButton;
+    private final Button applyButton;
     /**
      * Button to apply the default configuration to the structure grid pane.
      */
-    private Button defaultButton;
+    private final Button defaultButton;
     /**
      * Button to close the view.
      */
-    private Button closeButton;
+    private final Button closeButton;
     /**
      * Pagination that holds the structure grid pane and enables the user to switch pages.
      */
@@ -109,13 +110,12 @@ public class OverviewView extends AnchorPane {
     /**
      * Vertical box to be shown when the dimensions of the structure images fell below a limit.
      */
-    private VBox imageDimensionsBelowLimitVBox;
+    private final VBox imageDimensionsBelowLimitVBox;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor.
-     *
      * Initializes the main components of the overview view and does the basic styling. The grid pane to display the
      * structure images that is to be hold by the pagination node of the overview view gets generated, configured and
      * styled. The horizontal boxes holding the text fields and buttons of the lower side of the view are not yet being
@@ -133,10 +133,12 @@ public class OverviewView extends AnchorPane {
         super();
         //
         //<editor-fold desc="checks" defaultstate="collapsed">
-        if (aColumnsPerPage <= 0)
+        if (aColumnsPerPage <= 0) {
             throw new IllegalArgumentException("aColumnsPerPage (Integer value) was <= to 0.");
-        if (aRowsPerPage <= 0)
+        }
+        if (aRowsPerPage <= 0) {
             throw new IllegalArgumentException("aRowsPerPage (Integer value) was <= to 0.");
+        }
         //</editor-fold>
         //
         //mainGridPane to style the view and set up its components
@@ -377,7 +379,7 @@ public class OverviewView extends AnchorPane {
      * @param aColSpan Integer value for number of columns for the node to span
      * @param aRowSpan Integer value for number of rows for the node to span
      */
-    private void addNodeToMainGridPane(Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
+    private void addNodeToMainGridPane(Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan) {
         //method is private and only called with magic numbers
         this.mainGridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }

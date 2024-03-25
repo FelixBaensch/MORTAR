@@ -43,20 +43,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SettingsViewController
- * controls {@link SettingsView} for {@link SettingsContainer}.
+ * SettingsViewController controls {@link SettingsView} for {@link SettingsContainer}.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class SettingsViewController {
-
     //<editor-fold desc="private and private final class variables">
     /**
      * SettingsContainer.
      */
     private final SettingsContainer settingsContainer;
-    private final SettingsContainer recentSettingsContainer;
     /**
      * Main stage object of the application.
      */
@@ -97,7 +94,6 @@ public class SettingsViewController {
     public SettingsViewController(Stage aStage, SettingsContainer aSettingsContainer, IConfiguration aConfiguration) {
         this.mainStage = aStage;
         this.settingsContainer = aSettingsContainer;
-        this.recentSettingsContainer = aSettingsContainer;
         this.configuration = aConfiguration;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(this.settingsContainer.settingsProperties().size()));
         this.showSettingsView();
@@ -107,7 +103,7 @@ public class SettingsViewController {
     /**
      * Initialises and opens settingsView.
      */
-    private void showSettingsView(){
+    private void showSettingsView() {
         if (this.settingsView == null) {
             this.settingsView = new SettingsView();
         }
@@ -135,7 +131,7 @@ public class SettingsViewController {
     /**
      * Adds listeners and event handlers to the buttons of the settings view.
      */
-    private void addListeners(){
+    private void addListeners() {
         //stage close request
         this.settingsViewStage.setOnCloseRequest(event -> {
             this.setRecentProperties();
@@ -143,7 +139,7 @@ public class SettingsViewController {
         });
         //apply button
         this.settingsView.getApplyButton().setOnAction(event -> {
-            this.hasRowsPerPageChanged = (int) this.settingsContainer.rowsPerPageSettingProperty().getValue()
+            this.hasRowsPerPageChanged = this.settingsContainer.rowsPerPageSettingProperty().getValue()
                     != (int) this.recentProperties.get(this.settingsContainer.rowsPerPageSettingProperty().getName());
             this.hasKeepAtomContainerInDataModelChanged = this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getValue()
                     != this.recentProperties.get(this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getName());
@@ -155,15 +151,13 @@ public class SettingsViewController {
             this.settingsViewStage.close();
         });
         //default button
-        this.settingsView.getDefaultButton().setOnAction(event -> {
-            this.settingsContainer.restoreDefaultSettings();
-        });
+        this.settingsView.getDefaultButton().setOnAction(event -> this.settingsContainer.restoreDefaultSettings());
     }
     //
     /**
      * Sets the properties to the values of the 'recentPropertiesMap'.
      */
-    private void setRecentProperties(){
+    private void setRecentProperties() {
         Platform.runLater(()->{
             for (Property tmpProperty : this.settingsContainer.settingsProperties()) {
                 if (this.recentProperties.containsKey(tmpProperty.getName())){
@@ -176,7 +170,8 @@ public class SettingsViewController {
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns boolean value whether if rowsPerPage property has changed or not
+     * Returns boolean value whether if rowsPerPage property has changed or not.
+     *
      * @return hasRowsPerPageChanged
      */
     public boolean hasRowsPerPageChanged() {
@@ -185,6 +180,7 @@ public class SettingsViewController {
     //
     /**
      * Returns boolean value whether if keepAtomContainerInDataModel property has changed or not.
+     *
      * @return hasKeepAtomContainerInDataModelChanged
      */
     public boolean hasKeepAtomContainerInDataModelChanged() {

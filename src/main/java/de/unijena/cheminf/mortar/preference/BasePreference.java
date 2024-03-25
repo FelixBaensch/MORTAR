@@ -47,7 +47,7 @@ public abstract class BasePreference implements IPreference {
      * The first character must be a capital letter.
      * '#' is reserved for comments in text files for persisting objects.
      */
-    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z][0-9a-zA-Z\\.\\,\\-\\[\\]\\(\\)\\{\\}\\x20]*+\\z");
+    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z][0-9a-zA-Z.,\\-\\[\\](){}\\x20]*+\\z");
 
     /**
      * Seed for hashCode() method.
@@ -89,9 +89,6 @@ public abstract class BasePreference implements IPreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Public abstract methods">
     @Override
-    public abstract IPreference clone() throws CloneNotSupportedException;
-
-    @Override
     public abstract String toString();
     //</editor-fold>
     //
@@ -131,7 +128,7 @@ public abstract class BasePreference implements IPreference {
     @Override
     public int hashCode() {
         int tmpHash = BasePreference.HASH_SEED;
-        tmpHash = BasePreference.HASH_FACTOR_GUID * tmpHash + Objects.hashCode(this.guid);
+        tmpHash = BasePreference.HASH_FACTOR_GUID * tmpHash + this.guid.hashCode();
         return tmpHash;
     }
     //</editor-fold>

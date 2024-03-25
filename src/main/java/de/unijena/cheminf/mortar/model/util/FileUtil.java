@@ -339,5 +339,33 @@ public final class FileUtil {
             return aFilePath + tmpFileExtension;
         }
     }
+    //
+    /**
+     * Opens given path in OS depending explorer equivalent.
+     *
+     * @param aPath path to open
+     * @throws IllegalArgumentException if the given path is empty, blank, or null
+     * @throws SecurityException if the directory could not be opened
+     */
+    public static void openFilePathInExplorer(String aPath) throws SecurityException {
+        if (Objects.isNull(aPath) || aPath.isEmpty() || aPath.isBlank()) {
+            throw new IllegalArgumentException("Given file path is null or empty.");
+        }
+        String tmpOS = System.getProperty("os.name").toUpperCase();
+        try {
+            if (tmpOS.contains("WIN")) {
+                Runtime.getRuntime().exec(new String[]{"explorer", "/open,", aPath});
+            } else if (tmpOS.contains("MAC")) {
+                Runtime.getRuntime().exec(new String[]{"open", "-R", aPath});
+            } else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX")) {
+                Runtime.getRuntime().exec(new String[]{"gio", "open", aPath});
+            } else {
+                throw new SecurityException("OS name " + tmpOS + " unknown.");
+            }
+        } catch (IOException anException) {
+            FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            throw new SecurityException("Could not open directory path");
+        }
+    }
     // </editor-fold>
 }

@@ -57,7 +57,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
-
 /**
  * "About" window view.
  *
@@ -67,31 +66,31 @@ import javafx.scene.text.Text;
 public class AboutView extends AnchorPane {
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * TableView to show ExternalTool properties
+     * TableView to show ExternalTool properties.
      */
     private final TableView<ExternalTool> tableView;
     /**
-     * Button to open log file directory
+     * Button to open log file directory.
      */
     private final Button logFileButton;
     /**
-     * Button to open GitHub repository
+     * Button to open GitHub repository.
      */
     private final Button gitHubButton;
     /**
-     * Button to close this view
+     * Button to close this view.
      */
     private final Button closeButton;
     /**
-     * Button to open tutorial pdf
+     * Button to open tutorial pdf.
      */
     private final Button tutorialButton;
     /**
-     * ImageView for application logo
+     * ImageView for application logo.
      */
     private final ImageView logoImageView;
     /**
-     * GridPane to align information and logo
+     * GridPane to align information and logo.
      */
     private final GridPane gridPane;
     /**
@@ -110,10 +109,10 @@ public class AboutView extends AnchorPane {
         this.configuration = aConfiguration;
         //borderPane
         BorderPane borderPane = new BorderPane();
-        AboutView.setTopAnchor(borderPane, 0.0);
-        AboutView.setRightAnchor(borderPane, 0.0);
-        AboutView.setLeftAnchor(borderPane, 0.0);
-        AboutView.setBottomAnchor(borderPane, 0.0);
+        AnchorPane.setTopAnchor(borderPane, 0.0);
+        AnchorPane.setRightAnchor(borderPane, 0.0);
+        AnchorPane.setLeftAnchor(borderPane, 0.0);
+        AnchorPane.setBottomAnchor(borderPane, 0.0);
         //borderPane bottom -> buttons
         HBox hBoxButtonsHBox = new HBox();
         hBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
@@ -157,7 +156,7 @@ public class AboutView extends AnchorPane {
         tmpTextCol.prefWidthProperty().bind(
                 this.gridPane.widthProperty().multiply(0.4975)
         );
-        this.gridPane.getColumnConstraints().add(0, tmpTextCol);
+        this.gridPane.getColumnConstraints().addFirst(tmpTextCol);
 
         ColumnConstraints tmpLogoCol = new ColumnConstraints();
         tmpLogoCol.prefWidthProperty().bind(
@@ -206,8 +205,8 @@ public class AboutView extends AnchorPane {
         String tmpLogoURL = this.getClass().getClassLoader().getResource(
                 this.configuration.getProperty("mortar.imagesFolder")
                         + this.configuration.getProperty("mortar.logo.name")).toExternalForm();
-        Double tmpImageSize = 495.3125; // magic number, do not touch
-        Image tmpLogo = new Image(tmpLogoURL,tmpImageSize,tmpImageSize/1.414, true,true );
+        double tmpImageSize = 495.3125; // magic number, do not touch
+        Image tmpLogo = new Image(tmpLogoURL, tmpImageSize, tmpImageSize/1.414, true,true );
         this.logoImageView = new ImageView(tmpLogo);
         this.gridPane.add(this.logoImageView, 1,0, 1, 6);
         GridPane.setHalignment(this.logoImageView, HPos.CENTER);
@@ -266,17 +265,13 @@ public class AboutView extends AnchorPane {
             tmpTitledPaneAcknowledgement.setMinWidth(newValue.doubleValue() * 0.5);
             tmpTitledPaneAcknowledgement.setMaxWidth(newValue.doubleValue() * 0.5);
         }));
-        tmpTitledPaneLicense.expandedProperty().addListener((obs, oldValue, newValue) ->{
-            tmpTitledPaneAcknowledgement.setExpanded(!newValue);
-        });
-        tmpTitledPaneAcknowledgement.expandedProperty().addListener((obs, oldValue, newValue) ->{
-            tmpTitledPaneLicense.setExpanded(!newValue);
-        });
+        tmpTitledPaneLicense.expandedProperty().addListener((obs, oldValue, newValue) -> tmpTitledPaneAcknowledgement.setExpanded(!newValue));
+        tmpTitledPaneAcknowledgement.expandedProperty().addListener((obs, oldValue, newValue) -> tmpTitledPaneLicense.setExpanded(!newValue));
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * Returns button to open log files directory
+     * Returns button to open log files directory.
      *
      * @return button
      */
@@ -285,7 +280,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns button to open GitHub repository
+     * Returns button to open GitHub repository.
      *
      * @return button
      */
@@ -294,7 +289,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns button to open tutorial
+     * Returns button to open tutorial.
      *
      * @return Button to open the MORTAR tutorial
      */
@@ -303,7 +298,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns button to close this view
+     * Returns button to close this view.
      *
      * @return button
      */
@@ -312,7 +307,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns the TableView which shows ExternalTool properties
+     * Returns the TableView which shows ExternalTool properties.
      * @return TableView {@literal <}ExternalTool {@literal >}
      */
     public TableView<ExternalTool> getTableView(){
@@ -320,7 +315,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns grid pane to hold application information and logo
+     * Returns grid pane to hold application information and logo.
      *
      * @return GridPane
      */
@@ -329,7 +324,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns the ImageView for the logo image
+     * Returns the ImageView for the logo image.
      *
      * @return ImageView
      */
@@ -338,7 +333,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Sets given image to image vie
+     * Sets given image to image view.
      *
      * @param anImage Image to set as logo
      */

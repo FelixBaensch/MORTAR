@@ -32,7 +32,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 import de.unijena.cheminf.mortar.preference.BooleanPreference;
 import de.unijena.cheminf.mortar.preference.IPreference;
@@ -263,24 +263,31 @@ public class ViewToolsManager {
             if (aPreferenceContainer.containsPreferenceName(tmpPropertyName)) {
                 IPreference[] tmpPreferences = aPreferenceContainer.getPreferences(tmpPropertyName);
                 try {
-                    if (tmpSettingProperty instanceof SimpleBooleanProperty) {
-                        BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpBooleanPreference.getContent());
-                    } else if (tmpSettingProperty instanceof SimpleIntegerProperty) {
-                        SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpIntPreference.getContent());
-                    } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
-                        SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpDoublePreference.getContent());
-                    } else if (tmpSettingProperty instanceof SimpleIDisplayEnumConstantProperty) {
-                        SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(Enum.valueOf(((SimpleIDisplayEnumConstantProperty) tmpSettingProperty).getAssociatedEnum(), tmpStringPreference.getContent()));
-                    } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
-                        SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpStringPreference.getContent());
-                    } else {
-                        //setting will remain in default
-                        ViewToolsManager.LOGGER.log(Level.WARNING, "Setting {0} is of unknown type.", tmpPropertyName);
+                    switch (tmpSettingProperty) {
+                        case SimpleBooleanProperty simpleBooleanProperty -> {
+                            BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
+                            simpleBooleanProperty.setValue(tmpBooleanPreference.getContent());
+                        }
+                        case SimpleIntegerProperty simpleIntegerProperty -> {
+                            SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
+                            simpleIntegerProperty.setValue(tmpIntPreference.getContent());
+                        }
+                        case SimpleDoubleProperty simpleDoubleProperty -> {
+                            SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
+                            simpleDoubleProperty.setValue(tmpDoublePreference.getContent());
+                        }
+                        case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
+                            SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                            simpleIDisplayEnumConstantProperty.setValue((IDisplayEnum) Enum.valueOf(simpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
+                        }
+                        case SimpleStringProperty simpleStringProperty -> {
+                            // includes SimpleEnumConstantNameProperty
+                            SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                            simpleStringProperty.setValue(tmpStringPreference.getContent());
+                        }
+                        default ->
+                            //setting will remain in default
+                                ViewToolsManager.LOGGER.log(Level.WARNING, "Setting {0} is of unknown type.", tmpPropertyName);
                     }
                 } catch (ClassCastException | IllegalArgumentException anException) {
                     //setting will remain in default
@@ -323,26 +330,32 @@ public class ViewToolsManager {
                 } else {
                     tmpSettingNames.add(tmpSetting.getName());
                 }
-                if (tmpSetting instanceof SimpleBooleanProperty) {
-                    //nothing to do here, booleans cannot have invalid values
-                } else if (tmpSetting instanceof SimpleIntegerProperty) {
-                    if (!SingleIntegerPreference.isValidContent(Integer.toString(((SimpleIntegerProperty) tmpSetting).get()))) {
-                        throw new IOException(String.format("Setting value %d of setting name %s is invalid.", ((SimpleIntegerProperty) tmpSetting).get(), tmpSetting.getName()));
+                switch (tmpSetting) {
+                    case SimpleBooleanProperty simpleBooleanProperty -> {
+                        //nothing to do here, booleans cannot have invalid values
                     }
-                } else if (tmpSetting instanceof SimpleDoubleProperty) {
-                    if (!SingleNumberPreference.isValidContent(((SimpleDoubleProperty) tmpSetting).get())) {
-                        throw new IOException(String.format("Setting value %d of setting name %s is invalid.", ((SimpleDoubleProperty) tmpSetting).get(), tmpSetting.getName()));
+                    case SimpleIntegerProperty simpleIntegerProperty -> {
+                        if (!SingleIntegerPreference.isValidContent(Integer.toString(simpleIntegerProperty.get()))) {
+                            throw new IOException(String.format("Setting value %d of setting name %s is invalid.", simpleIntegerProperty.get(), tmpSetting.getName()));
+                        }
                     }
-                } else if (tmpSetting instanceof SimpleIDisplayEnumConstantProperty) {
-                    if (!SingleTermPreference.isValidContent(((Enum)((SimpleIDisplayEnumConstantProperty) tmpSetting).get()).name())) {
-                        throw new IOException(String.format("Setting value %s of setting name %s is invalid.", ((SimpleStringProperty) tmpSetting).get(), tmpSetting.getName()));
+                    case SimpleDoubleProperty simpleDoubleProperty -> {
+                        if (!SingleNumberPreference.isValidContent(simpleDoubleProperty.get())) {
+                            throw new IOException(String.format("Setting value %f of setting name %s is invalid.", simpleDoubleProperty.get(), tmpSetting.getName()));
+                        }
                     }
-                } else if (tmpSetting instanceof SimpleEnumConstantNameProperty || tmpSetting instanceof SimpleStringProperty) {
-                    if (!SingleTermPreference.isValidContent(((SimpleStringProperty) tmpSetting).get())) {
-                        throw new IOException(String.format("Setting value %s of setting name %s is invalid.", ((SimpleStringProperty) tmpSetting).get(), tmpSetting.getName()));
+                    case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
+                        if (!SingleTermPreference.isValidContent(((Enum) simpleIDisplayEnumConstantProperty.get()).name())) {
+                            throw new IOException(String.format("Setting value %s of setting name %s is invalid.", simpleIDisplayEnumConstantProperty.get(), tmpSetting.getName()));
+                        }
                     }
-                } else {
-                    throw new IOException(String.format("Setting %s is of an invalid type.", tmpSetting.getName()));
+                    case SimpleStringProperty simpleStringProperty -> {
+                        // includes SimpleEnumConstantNameProperty
+                        if (!SingleTermPreference.isValidContent(simpleStringProperty.get())) {
+                            throw new IOException(String.format("Setting value %s of setting name %s is invalid.", simpleStringProperty.get(), tmpSetting.getName()));
+                        }
+                    }
+                    default -> throw new IOException(String.format("Setting %s is of an invalid type.", tmpSetting.getName()));
                 }
             }
         }

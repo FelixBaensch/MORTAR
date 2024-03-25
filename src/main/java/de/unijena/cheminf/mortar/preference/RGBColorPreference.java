@@ -25,11 +25,6 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - Implement clone()
- */
-
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import java.io.BufferedReader;
@@ -178,7 +173,7 @@ public class RGBColorPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             RGBColorPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -188,6 +183,7 @@ public class RGBColorPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getContentRepresentative() {
         String tmpContentRepresentative = "RGB Color [red=" + RGBColorPreference.FORMAT_FOR_REPRESENTATIVE.format(this.red)
@@ -290,19 +286,15 @@ public class RGBColorPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public RGBColorPreference copy() {
-        RGBColorPreference tmpCopy = new RGBColorPreference(new String(this.name),
-                Double.valueOf(this.red),
-                Double.valueOf(this.green),
-                Double.valueOf(this.blue),
-                Double.valueOf(alpha));
-        tmpCopy.guid = new String(this.guid);
+        RGBColorPreference tmpCopy = new RGBColorPreference(this.name,
+                this.red,
+                this.green,
+                this.blue,
+                alpha);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -321,6 +313,16 @@ public class RGBColorPreference extends BasePreference {
     @Override
     public String toString() {
         return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + this.getContentRepresentative();
+    }
+
+    @Override
+    public boolean equals(Object anObject) {
+        return super.equals(anObject);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
     //</editor-fold>
     //
@@ -391,7 +393,7 @@ public class RGBColorPreference extends BasePreference {
     /**
      * (Re-)instantiates a new RGBColorPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         //If RGBColorPreference.PERSISTENCE_VALUE_SEPARATOR is altered this will not work anymore, see above.
