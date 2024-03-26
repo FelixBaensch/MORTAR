@@ -314,16 +314,6 @@ public class RGBColorPreference extends BasePreference {
     public String toString() {
         return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + this.getContentRepresentative();
     }
-
-    @Override
-    public boolean equals(Object anObject) {
-        return super.equals(anObject);
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">

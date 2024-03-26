@@ -88,11 +88,13 @@ public abstract class BasePreference implements IPreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public abstract methods">
+
     @Override
     public abstract String toString();
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getName() {
         return this.name;
@@ -106,6 +108,7 @@ public abstract class BasePreference implements IPreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
     //<editor-fold defaultstate="collapsed" desc="Comparing and sorting">
+
     @Override
     public int compareTo(IPreference aPreference) throws NullPointerException {
         Objects.requireNonNull(aPreference, "aPreference is 'null'");

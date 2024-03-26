@@ -188,16 +188,6 @@ public class SingleTermPreference extends BasePreference {
     public String toString() {
         return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + this.content;
     }
-
-    @Override
-    public boolean equals(Object anObject) {
-        return super.equals(anObject);
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Private methods">
