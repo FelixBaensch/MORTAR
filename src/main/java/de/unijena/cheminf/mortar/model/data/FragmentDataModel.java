@@ -70,7 +70,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * List of parent molecules, which contain this fragment.
      */
-    private Set<MoleculeDataModel> parentMolecules;
+    private final Set<MoleculeDataModel> parentMolecules;
     //
     /**
      * First or random parent molecule which contains this fragment.
@@ -126,14 +126,14 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Increases the absolute frequency by one.
      */
-    public void incrementAbsoluteFrequency(){
+    public void incrementAbsoluteFrequency() {
         this.absoluteFrequency += 1;
     }
     //
     /**
      * Increases the molecule frequency by one.
      */
-    public void incrementMoleculeFrequency(){
+    public void incrementMoleculeFrequency() {
         this.moleculeFrequency += 1;
     }
     //</editor-fold>
@@ -192,7 +192,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      *
      * @return set of parent molecules
      */
-    public Set<MoleculeDataModel> getParentMolecules(){
+    public Set<MoleculeDataModel> getParentMolecules() {
         return this.parentMolecules;
     }
     //
@@ -222,7 +222,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public ImageView getParentMoleculeStructure() throws NullPointerException {
         if (this.parentMolecules.isEmpty()) {
-            return null;
+            return new ImageView(DepictionUtil.depictErrorImage("No parent molecules", 250, 250));
         }
         if (this.parentMolecule == null) {
             this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
@@ -232,7 +232,7 @@ public class FragmentDataModel extends MoleculeDataModel {
             IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
             return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
         } catch (CDKException | NullPointerException anException) {
-            Logger.getLogger(MoleculeDataModel.class.getName()).log(
+            FragmentDataModel.LOGGER.log(
                     Level.SEVERE,
                     String.format("Molecule name: %s; exception: %s", this.parentMolecule.getName(), anException.toString()),
                     anException);
@@ -250,10 +250,10 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public String getParentMoleculeName() {
         if (this.parentMolecules.isEmpty()) {
-            return null;
+            return "";
         }
         if (this.parentMolecule == null) {
-           this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
+            this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
         }
         return this.parentMolecule == null ? "" : this.parentMolecule.getName();
     }
@@ -289,7 +289,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      *
      * @param aValue absolute frequency percentage
      */
-    public void setAbsolutePercentage(double aValue){
+    public void setAbsolutePercentage(double aValue) {
         if (aValue < 0.0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
@@ -304,7 +304,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      *
      * @param aValue molecule frequency percentage
      */
-    public void setMoleculePercentage(double aValue){
+    public void setMoleculePercentage(double aValue) {
         if (aValue < 0.0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
@@ -324,5 +324,4 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.parentMolecule = aParentMolecule;
     }
     //</editor-fold>
-
 }

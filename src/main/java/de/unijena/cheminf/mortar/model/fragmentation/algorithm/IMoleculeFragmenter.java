@@ -83,11 +83,13 @@ public interface IMoleculeFragmenter {
         /**
          * Do not saturate free valences or use default of the respective fragmenter.
          */
-        NO_SATURATION(Message.get("IMoleculeFragmenter.FragmentSaturationOption.noSaturation.displayName"), Message.get("IMoleculeFragmenter.FragmentSaturationOption.noSaturation.tooltip")),
+        NO_SATURATION(Message.get("IMoleculeFragmenter.FragmentSaturationOption.noSaturation.displayName"),
+                Message.get("IMoleculeFragmenter.FragmentSaturationOption.noSaturation.tooltip")),
         /**
          * Saturate free valences with (implicit) hydrogen atoms.
          */
-        HYDROGEN_SATURATION(Message.get("IMoleculeFragmenter.FragmentSaturationOption.hydrogenSaturation.displayName"), Message.get("IMoleculeFragmenter.FragmentSaturationOption.hydrogenSaturation.tooltip"));
+        HYDROGEN_SATURATION(Message.get("IMoleculeFragmenter.FragmentSaturationOption.hydrogenSaturation.displayName"),
+                Message.get("IMoleculeFragmenter.FragmentSaturationOption.hydrogenSaturation.tooltip"));
         /**
          * Language-specific name for display in GUI.
          */
@@ -129,19 +131,23 @@ public interface IMoleculeFragmenter {
         /**
          * Daylight electron donation model.
          */
-        DAYLIGHT(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.displayName"), Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.tooltip")),
+        DAYLIGHT(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.tooltip")),
         /**
          * CDK electron donation model.
          */
-        CDK(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.displayName"), Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.tooltip")),
+        CDK(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.tooltip")),
         /**
          * CDK electron donation model that additionally allows exocyclic bonds to contribute electrons to the aromatic system.
          */
-        CDK_ALLOWING_EXOCYCLIC(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.displayName"), Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.tooltip")),
+        CDK_ALLOWING_EXOCYCLIC(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.tooltip")),
         /**
          * Pi bonds electron donation model.
          */
-        PI_BONDS(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.displayName"), Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.tooltip"));
+        PI_BONDS(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.tooltip"));
         /**
          * Language-specific name for display in GUI.
          */
@@ -183,35 +189,43 @@ public interface IMoleculeFragmenter {
         /**
          * Algorithm that tries to find all possible rings in a given structure. Might cause IntractableException.
          */
-        ALL(Message.get("IMoleculeFragmenter.CycleFinderOption.all.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.all.tooltip")),
+        ALL(Message.get("IMoleculeFragmenter.CycleFinderOption.all.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.all.tooltip")),
         /**
          * Algorithm that looks for cycles usually checked by the CDK when detecting aromaticity.
          */
-        CDK_AROMATIC_SET(Message.get("IMoleculeFragmenter.CycleFinderOption.cdkAromaticSet.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.cdkAromaticSet.tooltip")),
+        CDK_AROMATIC_SET(Message.get("IMoleculeFragmenter.CycleFinderOption.cdkAromaticSet.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.cdkAromaticSet.tooltip")),
         /**
          * Gives the shortest cycles through each edge.
          */
-        EDGE_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.edgeShort.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.edgeShort.tooltip")),
+        EDGE_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.edgeShort.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.edgeShort.tooltip")),
         /**
          * Unique set of essential cycles of a molecule.
          */
-        ESSENTIAL(Message.get("IMoleculeFragmenter.CycleFinderOption.essential.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.essential.tooltip")),
+        ESSENTIAL(Message.get("IMoleculeFragmenter.CycleFinderOption.essential.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.essential.tooltip")),
         /**
          * Minimum Cycle Basis (MCB, aka. SSSR - smallest set of smallest rings).
          */
-        MCB(Message.get("IMoleculeFragmenter.CycleFinderOption.mcb.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.mcb.tooltip")),
+        MCB(Message.get("IMoleculeFragmenter.CycleFinderOption.mcb.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.mcb.tooltip")),
         /**
          * Union of all possible MCB cycle sets of a molecule.
          */
-        RELEVANT(Message.get("IMoleculeFragmenter.CycleFinderOption.relevant.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.relevant.tooltip")),
+        RELEVANT(Message.get("IMoleculeFragmenter.CycleFinderOption.relevant.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.relevant.tooltip")),
         /**
          *  Shortest cycle through each triple of vertices.
          */
-        TRIPLET_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.tripletShort.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.tripletShort.tooltip")),
+        TRIPLET_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.tripletShort.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.tripletShort.tooltip")),
         /**
          * Shortest cycles through each vertex.
          */
-        VERTEX_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.vertexShort.displayName"), Message.get("IMoleculeFragmenter.CycleFinderOption.vertexShort.tooltip"));
+        VERTEX_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.vertexShort.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.vertexShort.tooltip"));
         /**
          * Language-specific name for display in GUI.
          */

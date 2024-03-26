@@ -649,7 +649,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Public properties get">
     /**
-     * Returns the currently set option for the returned fragments setting
+     * Returns the currently set option for the returned fragments setting.
      *
      * @return enum constant of the set option
      */
@@ -735,6 +735,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      * Returns the property object of the preservation mode setting that can be used to configure this setting.
      * It has a constant from the SugarRemovalUtility.PreservationModeOption enum as value.
+     *
      * @return property object of the preservation mode setting
      */
     public SimpleIDisplayEnumConstantProperty preservationModeSettingProperty() {
@@ -1162,8 +1163,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         if (aMolecule.isEmpty()) {
-            List<IAtomContainer> tmpReturnList = new ArrayList<IAtomContainer>(1);
-            tmpReturnList.add(0, aMolecule.clone());
+            List<IAtomContainer> tmpReturnList = new ArrayList<>(1);
+            tmpReturnList.addFirst(aMolecule.clone());
             aMolecule.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                     SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
             return tmpReturnList;
@@ -1189,7 +1190,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
         }
         //post-processing of aglycone, it is always saturated with implicit hydrogen atoms (might be empty)
-        IAtomContainer tmpAglycone = tmpFragments.get(0);
+        IAtomContainer tmpAglycone = tmpFragments.getFirst();
         tmpAglycone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
         boolean tmpSugarsWereDetected = (tmpFragments.size() > 1);
@@ -1202,25 +1203,24 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                         tmpAglyconeFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
                     }
-                    tmpFragments.remove(0);
+                    tmpFragments.removeFirst();
                     tmpFragments.addAll(0, tmpAglyconeFragments);
                 }
             } else {
-                tmpFragments.remove(0);
+                tmpFragments.removeFirst();
             }
             //else: only sugars are returned, dispose of aglycone
         } else {
-            tmpFragments.remove(0);
+            tmpFragments.removeFirst();
         }
         //sugars were detected, postprocessing
         if (tmpSugarsWereDetected) {
             if (this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS)
                     || this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES)) {
-                for (int i = 0; i < tmpFragments.size(); i++) {
-                    IAtomContainer tmpSugarFragment = tmpFragments.get(i);
+                for (IAtomContainer tmpSugarFragment : tmpFragments) {
                     if (!Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
-                            && ((String) tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
-                                    .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
+                            && tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY)
+                            .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
                         continue;
                     }
                     if (Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))) {
@@ -1240,13 +1240,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
             } else {
                 for (int i = 0; i < tmpFragments.size(); i++) {
                     IAtomContainer tmpFragment = tmpFragments.get(i);
-                    if (!Objects.isNull(tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
-                            && ((String) tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
+                    if (Objects.isNull(tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
+                            || !tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY)
                             .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
-                        //continue;
-                    } else {
-                        tmpFragments.remove(i);
-                        i--;
+                                tmpFragments.remove(i);
+                                i--;
                     }
                 }
             }
@@ -1264,9 +1262,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
-            if (!tmpIsConnected) {
-                return true;
-            }
+            return !tmpIsConnected;
         }
         return false;
     }
@@ -1289,7 +1285,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         if (!this.shouldBePreprocessed(aMolecule)) {
             return aMolecule.clone();
         }
-        //Todo I (Jonas) would like to remove any preprocessing done by the fragmenters as soon as possible, i.e. as soon as we have central preprocessing functionalities available
         if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
             boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
             if (!tmpIsConnected) {

@@ -215,14 +215,14 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
                 if (!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)) {
                     return null;
                 }
-                if (tmpIndex >= cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).size()) {
+                if (tmpIndex >= cellData.getValue().getFragmentsOfSpecificFragmentation(this.fragmentationName).size()) {
                     return null;
                 }
-                FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificAlgorithm(this.fragmentationName).get(tmpIndex);
+                FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificFragmentation(this.fragmentationName).get(tmpIndex);
                 if (!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)) {
                     return null;
                 }
-                String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificAlgorithm(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
+                String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificFragmentation(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
                 return tmpFragment.getStructureWithText(tmpFrequency);
             }));
             tmpColumn.setMinWidth(300);

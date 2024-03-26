@@ -90,6 +90,108 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class Exporter {
+    //<editor-fold desc="Enum ExportTypes" defaultstate="collapsed">
+    /**
+     * Enum for different file types to export.
+     */
+    public enum ExportTypes {
+        /**
+         * enum value for item csv file.
+         */
+        ITEM_CSV_FILE,
+        /**
+         * enum value for item pdf file.
+         */
+        ITEM_PDF_FILE,
+        /**
+         * enum value for fragments csv file.
+         */
+        FRAGMENT_CSV_FILE,
+        /**
+         * enum value for fragments pdf file.
+         */
+        FRAGMENT_PDF_FILE,
+        /**
+         * enum value for single sd file.
+         */
+        FRAGMENT_SINGLE_SD_FILE,
+        /**
+         * enum value for sd file.
+         */
+        FRAGMENT_MULTIPLE_SD_FILES,
+        /**
+         * enum value for pdb file.
+         */
+        FRAGMENT_PDB_FILE;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Enum CSVSeparator">
+    /**
+     * Enum for allowed CSV file export separator chars.
+     */
+    public enum CSVSeparator implements IDisplayEnum {
+        /**
+         * Comma.
+         */
+        COMMA(',', Message.get("Exporter.CSVSeparator.Comma.displayName"), Message.get("Exporter.CSVSeparator.Comma.tooltip")),
+        /**
+         * Semicolon.
+         */
+        SEMICOLON(';', Message.get("Exporter.CSVSeparator.Semicolon.displayName"), Message.get("Exporter.CSVSeparator.Semicolon.tooltip")),
+        /**
+         * Tab.
+         */
+        TAB('\t', Message.get("Exporter.CSVSeparator.Tab.displayName"), Message.get("Exporter.CSVSeparator.Tab.tooltip")),
+        /**
+         * Space.
+         */
+        SPACE(' ', Message.get("Exporter.CSVSeparator.Space.displayName"), Message.get("Exporter.CSVSeparator.Space.tooltip"));
+        /**
+         * Character representation of the wrapped separator char.
+         */
+        private final char separatorChar;
+        /**
+         * Language-specific name for display in GUI.
+         */
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor setting the wrapped separator char, display name, and tooltip text.
+         *
+         * @param aSeparatorChar CSV separator character to use when this option is selected
+         * @param aDisplayName display name
+         * @param aTooltipText tooltip text
+         */
+        private CSVSeparator(char aSeparatorChar, String aDisplayName, String aTooltipText) {
+            this.separatorChar = aSeparatorChar;
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltipText;
+        }
+        /**
+         * Returns the character representation of this separator.
+         *
+         * @return CSV separator char
+         */
+        public char getSeparatorChar() {
+            return this.separatorChar;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
+        }
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
      * Logger of this class.
@@ -143,33 +245,32 @@ public class Exporter {
         File tmpFile;
         String tmpFileName;
         String tmpFragmentationName = aFragmentationName.replaceAll("\\s+", "_");
-        switch (anExportType) {
-            case ExportTypes.FRAGMENT_CSV_FILE:
+        tmpFile = switch (anExportType) {
+            case ExportTypes.FRAGMENT_CSV_FILE -> {
                 tmpFileName = "Fragments_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "CSV", "*.csv", tmpFileName);
-                break;
-            case ExportTypes.FRAGMENT_PDB_FILE, ExportTypes.FRAGMENT_MULTIPLE_SD_FILES:
-                tmpFile = this.chooseDirectory(aParentStage);
-                break;
-            case ExportTypes.FRAGMENT_PDF_FILE:
+                yield this.chooseFile(aParentStage, "CSV", "*.csv", tmpFileName);
+            }
+            case ExportTypes.FRAGMENT_PDB_FILE, ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
+                    this.chooseDirectory(aParentStage);
+            case ExportTypes.FRAGMENT_PDF_FILE -> {
                 tmpFileName = "Fragments_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "PDF", "*.pdf", tmpFileName);
-                break;
-            case ExportTypes.FRAGMENT_SINGLE_SD_FILE:
+                yield this.chooseFile(aParentStage, "PDF", "*.pdf", tmpFileName);
+            }
+            case ExportTypes.FRAGMENT_SINGLE_SD_FILE -> {
                 tmpFileName = "Fragments_Export_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
-                break;
-            case ExportTypes.ITEM_CSV_FILE:
+                yield this.chooseFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
+            }
+            case ExportTypes.ITEM_CSV_FILE -> {
                 tmpFileName = "Items_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "CSV", "*.csv", tmpFileName);
-                break;
-            case ExportTypes.ITEM_PDF_FILE:
+                yield this.chooseFile(aParentStage, "CSV", "*.csv", tmpFileName);
+            }
+            case ExportTypes.ITEM_PDF_FILE -> {
                 tmpFileName = "Items_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "PDF", "*.pdf", tmpFileName);
-                break;
-            default:
-                throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
-        }
+                yield this.chooseFile(aParentStage, "PDF", "*.pdf", tmpFileName);
+            }
+            default ->
+                    throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
+        };
         return tmpFile;
     }
     //
@@ -186,9 +287,11 @@ public class Exporter {
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportCsvFile(File aFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator, TabNames aTabName) throws FileNotFoundException {
-        if (aFile == null)
+    public List<String> exportCsvFile(File aFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator, TabNames aTabName)
+            throws FileNotFoundException {
+        if (aFile == null) {
             return null;
+        }
         if (aTabName.equals(TabNames.FRAGMENTS)) {
             //can throw FileNotFoundException, gets handled in setOnFailed()
             return this.createFragmentsTabCsvFile(aFile, aMoleculeDataModelList, aSeparator);
@@ -212,9 +315,15 @@ public class Exporter {
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportPdfFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String anImportedFileName, TabNames aTabName) throws FileNotFoundException {
-        if (aFile == null)
+    public List<String> exportPdfFile(File aFile,
+                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                      ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+                                      String aFragmentationName,
+                                      String anImportedFileName,
+                                      TabNames aTabName) throws FileNotFoundException {
+        if (aFile == null) {
             return null;
+        }
         if (aTabName.equals(TabNames.FRAGMENTS)) {
             //throws FileNotFoundException, gets handled in setOnFailed()
             return this.createFragmentsTabPdfFile(aFile, aFragmentDataModelList, aMoleculeDataModelList.size(), aFragmentationName, anImportedFileName);
@@ -236,7 +345,8 @@ public class Exporter {
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws IOException if sth goes wrong
      */
-    public List<String> exportFragmentsAsChemicalFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates) throws IOException {
+    public List<String> exportFragmentsAsChemicalFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates)
+            throws IOException {
         return this.exportFragmentsAsChemicalFile(aFile, aFragmentDataModelList, aChemFileType, generate2dAtomCoordinates, false);
     }
     //
@@ -252,7 +362,11 @@ public class Exporter {
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws IOException if sth goes wrong
      */
-    public List<String> exportFragmentsAsChemicalFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates, boolean isSingleExport) throws IOException {
+    public List<String> exportFragmentsAsChemicalFile(File aFile,
+                                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                                      ChemFileTypes aChemFileType,
+                                                      boolean generate2dAtomCoordinates,
+                                                      boolean isSingleExport) throws IOException {
         if (aFile == null) {
             return null;
         }
@@ -284,8 +398,7 @@ public class Exporter {
     private List<String> createItemizationTabCsvFile(File aCsvFile,
                                              List<MoleculeDataModel> aMoleculeDataModelList,
                                              String aFragmentationName,
-                                             char aSeparator)
-            throws FileNotFoundException {
+                                             char aSeparator) throws FileNotFoundException {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
             return null;
         }
@@ -310,7 +423,7 @@ public class Exporter {
                 if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                     continue;
                 }
-                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
+                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(aFragmentationName);
                 for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
                     if (Thread.currentThread().isInterrupted()) {
                         return null;
@@ -320,7 +433,7 @@ public class Exporter {
                         tmpWriter.printf("%s%s%s",
                                 tmpFragmentDataModel.getUniqueSmiles(),
                                 aSeparator,
-                                tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
+                                tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
                     } catch (Exception anException) {
                         Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
                         tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
@@ -549,7 +662,7 @@ public class Exporter {
                 if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                     continue;
                 }
-                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
+                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(aFragmentationName);
                 int tmpFragmentsPerLine = 3; //magic number
                 PdfPTable tmpFragmentationTable2 = new PdfPTable(tmpFragmentsPerLine);
                 for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
@@ -577,7 +690,7 @@ public class Exporter {
                         if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                             continue;
                         }
-                        String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
+                        String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
                         javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithText(
                                 tmpFragmentStructure,
                                 3.0,
@@ -690,9 +803,11 @@ public class Exporter {
                     //continue;
                 }
             }
-            Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as single SD file " +
-                            "(export of %d fragments failed). File name: %s", tmpExportedFragmentsCounter,
-                    tmpFailedFragmentExportCounter, aFile.getName()));
+            int finalTmpExportedFragmentsCounter = tmpExportedFragmentsCounter;
+            int finalTmpFailedFragmentExportCounter = tmpFailedFragmentExportCounter;
+            Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d fragments as single SD file " +
+                            "(export of %d fragments failed). File name: %s", finalTmpExportedFragmentsCounter,
+                    finalTmpFailedFragmentExportCounter, aFile.getName()));
             return tmpFailedExportFragments;
         }
     }
@@ -792,9 +907,11 @@ public class Exporter {
                 //continue;
             }
         }
-        Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as separate SD files " +
-                        "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
-                tmpFailedFragmentExportCounter, tmpSDFilesDirectory.getName()));
+        int finalTmpExportedFragmentsCounter = tmpExportedFragmentsCounter;
+        int finalTmpFailedFragmentExportCounter = tmpFailedFragmentExportCounter;
+        Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d fragments as separate SD files " +
+                        "(export of %d fragments failed). Folder name: %s", finalTmpExportedFragmentsCounter,
+                finalTmpFailedFragmentExportCounter, tmpSDFilesDirectory.getName()));
         return tmpFailedExportFragments;
     }
     //
@@ -877,9 +994,11 @@ public class Exporter {
                 //continue;
             }
         }
-        Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as PDB files " +
-                        "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
-                tmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
+        int finalTmpFailedFragmentExportCounter = tmpFailedFragmentExportCounter;
+        int finalTmpExportedFragmentsCounter = tmpExportedFragmentsCounter;
+        Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d fragments as PDB files " +
+                        "(export of %d fragments failed). Folder name: %s", finalTmpExportedFragmentsCounter,
+                finalTmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
         return tmpFailedExportFragments;
     }
     //
@@ -1040,108 +1159,6 @@ public class Exporter {
             ChemUtil.generateZero3DCoordinates(tmpFragmentClone);
         }
         return tmpFragmentClone;
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Enum ExportTypes" defaultstate="collapsed">
-    /**
-     * Enum for different file types to export.
-     */
-    public enum ExportTypes {
-        /**
-         * enum value for item csv file.
-         */
-        ITEM_CSV_FILE,
-        /**
-         * enum value for item pdf file.
-         */
-        ITEM_PDF_FILE,
-        /**
-         * enum value for fragments csv file.
-         */
-        FRAGMENT_CSV_FILE,
-        /**
-         * enum value for fragments pdf file.
-         */
-        FRAGMENT_PDF_FILE,
-        /**
-         * enum value for single sd file.
-         */
-        FRAGMENT_SINGLE_SD_FILE,
-        /**
-         * enum value for sd file.
-         */
-        FRAGMENT_MULTIPLE_SD_FILES,
-        /**
-         * enum value for pdb file.
-         */
-        FRAGMENT_PDB_FILE;
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Enum CSVSeparator">
-    /**
-     * Enum for allowed CSV file export separator chars.
-     */
-    public enum CSVSeparator implements IDisplayEnum {
-        /**
-         * Comma.
-         */
-        COMMA(',', Message.get("Exporter.CSVSeparator.Comma.displayName"), Message.get("Exporter.CSVSeparator.Comma.tooltip")),
-        /**
-         * Semicolon.
-         */
-        SEMICOLON(';', Message.get("Exporter.CSVSeparator.Semicolon.displayName"), Message.get("Exporter.CSVSeparator.Semicolon.tooltip")),
-        /**
-         * Tab.
-         */
-        TAB('\t', Message.get("Exporter.CSVSeparator.Tab.displayName"), Message.get("Exporter.CSVSeparator.Tab.tooltip")),
-        /**
-         * Space.
-         */
-        SPACE(' ', Message.get("Exporter.CSVSeparator.Space.displayName"), Message.get("Exporter.CSVSeparator.Space.tooltip"));
-        /**
-         * Character representation of the wrapped separator char.
-         */
-        private final char separatorChar;
-        /**
-         * Language-specific name for display in GUI.
-         */
-        private final String displayName;
-        /**
-         * Language-specific tooltip text for display in GUI.
-         */
-        private final String tooltip;
-        /**
-         * Constructor setting the wrapped separator char, display name, and tooltip text.
-         *
-         * @param aSeparatorChar CSV separator character to use when this option is selected
-         * @param aDisplayName display name
-         * @param aTooltipText tooltip text
-         */
-        private CSVSeparator(char aSeparatorChar, String aDisplayName, String aTooltipText) {
-            this.separatorChar = aSeparatorChar;
-            this.displayName = aDisplayName;
-            this.tooltip = aTooltipText;
-        }
-        /**
-         * Returns the character representation of this separator.
-         *
-         * @return CSV separator char
-         */
-        public char getSeparatorChar() {
-            return this.separatorChar;
-        }
-        //
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-        //
-        @Override
-        public String getTooltipText() {
-            return this.tooltip;
-        }
     }
     //</editor-fold>
 }

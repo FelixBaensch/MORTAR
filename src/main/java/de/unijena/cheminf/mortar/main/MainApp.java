@@ -58,6 +58,10 @@ public class MainApp extends Application {
      * Name (starting with "-") of the command line parameter that can be used to skip the Java version check.
      */
     public static final String SKIP_JAVA_VERSION_CHECK_CMD_ARG_NAME = "-skipJavaVersionCheck";
+    /**
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(MainApp.class.getName());
     //
     /**
      * Parameter-less constructor that calls super().
@@ -68,20 +72,20 @@ public class MainApp extends Application {
     }
     //
     /**
-     * Calls start(Stage) of Application class.
+     * Calls start(Stage) of Application class, overridden below.
      *
      * @param args the command line arguments
      */
-    public static void main(String[] args){
+    public static void main(String[] args) {
         Application.launch(args);
     }
     //
     @Override
     public void start(Stage aPrimaryStage) {
-        try{
+        try {
             //<editor-fold defaultstate="collapsed" desc="setting default locale">
             Locale.setDefault(Locale.of("en", "GB"));
-            Logger.getLogger(Main.class.getName()).info(Locale.getDefault().toString());
+            MainApp.LOGGER.info(() -> Locale.getDefault().toString());
             //</editor-fold>
             //
             //<editor-fold defaultstate="collapsed" desc="Check Java version">
@@ -97,7 +101,7 @@ public class MainApp extends Application {
                 }
             }
             if (!tmpSkipJavaVersionCheck && (MiscUtil.compareVersions(tmpJavaVersion, BasicDefinitions.MINIMUM_JAVA_VERSION) < 0)) {
-                Logger.getLogger(Main.class.getName()).log(Level.WARNING, "Java version lower than minimum: {0}", tmpJavaVersion);
+                MainApp.LOGGER.log(Level.WARNING, "Java version lower than minimum: {0}", tmpJavaVersion);
                 String tmpContentText = String.format(
                         Message.get("Error.InvalidJavaVersion.Content"),
                         BasicDefinitions.MINIMUM_JAVA_VERSION,
@@ -115,6 +119,7 @@ public class MainApp extends Application {
             try {
                 Configuration.getInstance();
             } catch (IOException anIOException) {
+                MainApp.LOGGER.log(Level.SEVERE, "Configuration properties file could not be imported.");
                 GuiUtil.guiExceptionAlert(Message.get("Error.Notification.Title"),
                         Message.get("Error.NoConfigFile.Header"),
                         String.format(Message.get("Error.NoConfigFile.Content"), Configuration.PROPERTIES_FILE_PATH),
@@ -144,18 +149,20 @@ public class MainApp extends Application {
                         Message.get("Error.LoggingInitialization.Content"));
             }
             //Start new logging session
-            Logger.getLogger(Main.class.getName()).info(String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
-            Logger.getLogger(Main.class.getName()).info(String.format("Started with Java version %s.", tmpJavaVersion));
+            MainApp.LOGGER.info(() -> String.format(BasicDefinitions.MORTAR_SESSION_START_FORMAT, BasicDefinitions.MORTAR_VERSION));
+            MainApp.LOGGER.info(() -> String.format("Started with Java version %s.", tmpJavaVersion));
             //</editor-fold>
             //
-            //<editor-fold desc="determining the application's directory and the default temp file path" defaultstate="collapsed">
+            //<editor-fold desc="determine the application's directory and the default temp file path" defaultstate="collapsed">
             String tmpAppDir = FileUtil.getAppDirPath();
             //</editor-fold>
             //
+            //<editor-fold desc="start application" defaultstate="collapsed">
             MainView tmpMainView = new MainView(Configuration.getInstance());
             new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir, Configuration.getInstance());
+            //</editor-fold>
         } catch (Exception | OutOfMemoryError anException){
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, anException.toString(), anException);
+            MainApp.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             if (anException instanceof OutOfMemoryError) {
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),

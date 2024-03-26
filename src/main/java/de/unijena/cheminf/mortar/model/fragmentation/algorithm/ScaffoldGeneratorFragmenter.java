@@ -330,22 +330,26 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     /**
      * Default SmiFlavor for the default SmilesGenerator.
      */
-    public static final ScaffoldGeneratorFragmenter.SmilesGeneratorOption SMILES_GENERATOR_OPTION_DEFAULT = ScaffoldGeneratorFragmenter.SmilesGeneratorOption.UNIQUE_WITHOUT_STEREO;
+    public static final ScaffoldGeneratorFragmenter.SmilesGeneratorOption SMILES_GENERATOR_OPTION_DEFAULT =
+            ScaffoldGeneratorFragmenter.SmilesGeneratorOption.UNIQUE_WITHOUT_STEREO;
 
     /**
      * Default fragmentation type.
      */
-    public static final ScaffoldGeneratorFragmenter.FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT = ScaffoldGeneratorFragmenter.FragmentationTypeOption.SCHUFFENHAUER;
+    public static final ScaffoldGeneratorFragmenter.FragmentationTypeOption FRAGMENTATION_TYPE_OPTION_DEFAULT =
+            ScaffoldGeneratorFragmenter.FragmentationTypeOption.SCHUFFENHAUER;
 
     /**
      * Default side chain option.
      */
-    public static final ScaffoldGeneratorFragmenter.SideChainOption SIDE_CHAIN_OPTION_DEFAULT = ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SCAFFOLDS;
+    public static final ScaffoldGeneratorFragmenter.SideChainOption SIDE_CHAIN_OPTION_DEFAULT =
+            ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SCAFFOLDS;
 
     /**
      * Default scaffold mode option.
      */
-    public static final ScaffoldGeneratorFragmenter.SGFragmenterScaffoldModeOption SCAFFOLD_MODE_OPTION_DEFAULT = SGFragmenterScaffoldModeOption.SCAFFOLD;
+    public static final ScaffoldGeneratorFragmenter.SGFragmenterScaffoldModeOption SCAFFOLD_MODE_OPTION_DEFAULT =
+            SGFragmenterScaffoldModeOption.SCAFFOLD;
 
     /**
      * Scaffolds will be assigned this value for the property with key IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY.
@@ -1043,8 +1047,6 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         List<IAtomContainer> tmpSideChainList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
-            //Hotfix for aromatic SMILES loader bug:
-            //Kekulization.kekulize(tmpMoleculeClone);
             /*Generate side chains*/
             if (this.sideChainSetting.get().equals(ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SIDE_CHAINS) ||
                     this.sideChainSetting.get().equals(ScaffoldGeneratorFragmenter.SideChainOption.BOTH)) {

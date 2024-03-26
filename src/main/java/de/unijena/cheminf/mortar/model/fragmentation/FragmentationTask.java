@@ -151,7 +151,8 @@ public class FragmentationTask implements Callable<Integer> {
                         continue;
                     }
                     FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
-                    FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel); // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
+                    // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
+                    FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel);
                     if (tmpFragmentDataModel == null) {
                         tmpFragmentDataModel = tmpNewFragmentDataModel;
                     }
@@ -161,7 +162,7 @@ public class FragmentationTask implements Callable<Integer> {
                     tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                     if (tmpFragmentsOfMolList.contains(tmpFragmentDataModel)) {
                         tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
-                    } else{
+                    } else {
                         FragmentationTask.LOCK.lock();
                         tmpFragmentDataModel.incrementMoleculeFrequency();
                         FragmentationTask.LOCK.unlock();

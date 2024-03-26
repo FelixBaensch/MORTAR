@@ -59,7 +59,7 @@ public class DepictionUtil {
     private static final Logger LOGGER = Logger.getLogger(DepictionUtil.class.getName());
     //</editor-fold>
     //
-    //<editor-fold desc="Private constructor">
+    //<editor-fold desc="private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.

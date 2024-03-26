@@ -208,8 +208,7 @@ public class Importer {
            GuiUtil.guiExceptionAlert(
                    Message.get("Error.ExceptionAlert.Title"),
                    Message.get("Importer.FileImportExceptionAlert.Header"),
-                   Message.get("Importer.FileImportExceptionAlert.Text") + "\n" +
-                           LogUtil.getLogFileDirectoryPath(),
+                   Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + LogUtil.getLogFileDirectoryPath(),
                    anException);
            return null;
         }
@@ -229,9 +228,14 @@ public class Importer {
      */
     private IAtomContainerSet importMolFile(File aFile) throws IOException, CDKException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-        BufferedInputStream tmpInputStream = new BufferedInputStream(new FileInputStream(aFile));
-        FormatFactory tmpFactory = new FormatFactory();
-        IChemFormat tmpFormat = tmpFactory.guessFormat(tmpInputStream);
+        IChemFormat tmpFormat;
+        try (BufferedInputStream tmpInputStream = new BufferedInputStream(new FileInputStream(aFile))) {
+            FormatFactory tmpFactory = new FormatFactory();
+            tmpFormat = tmpFactory.guessFormat(tmpInputStream);
+        }
+        if (tmpFormat == null) {
+            throw new CDKException("The given file type could not be determined");
+        }
         IAtomContainer tmpAtomContainer;
         if (tmpFormat.getFormatName().equalsIgnoreCase(MDLV2000Format.getInstance().getFormatName())) {
             try (MDLV2000Reader tmpReader = new MDLV2000Reader(new FileInputStream(aFile), IChemObjectReader.Mode.RELAXED)) {
@@ -256,7 +260,6 @@ public class Importer {
         }
         tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
         tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
-        tmpInputStream.close();
         return tmpAtomContainerSet;
     }
     //
@@ -390,21 +393,21 @@ public class Importer {
     private String findMoleculeName(IAtomContainer anAtomContainer) {
         String tmpName = anAtomContainer.getTitle();
         Set<String> keySet = (Set<String>)(Set<?>)anAtomContainer.getProperties().keySet();
-        if (tmpName == null  && keySet.stream().anyMatch(k -> (k.toLowerCase().contains("name")) && !k.equalsIgnoreCase("Database_Name"))){
+        if (tmpName == null  && keySet.stream().anyMatch(k -> (k.toLowerCase().contains("name")) && !k.equalsIgnoreCase("Database_Name"))) {
             Optional<String> tmpKeyOptional = keySet.stream().filter(k -> k.toLowerCase().contains("name")).findFirst();
             if (tmpKeyOptional.isPresent()) {
                 String key = tmpKeyOptional.get();
                 tmpName = anAtomContainer.getProperty(key);
             }
         }
-        if((tmpName == null || tmpName.equalsIgnoreCase("None")) && keySet.stream().anyMatch(k -> k.toLowerCase().contains("id"))){
+        if ((tmpName == null || tmpName.equalsIgnoreCase("None")) && keySet.stream().anyMatch(k -> k.toLowerCase().contains("id"))) {
             Optional<String> tmpKeyOptional = keySet.stream().filter(k -> k.toLowerCase().contains("id")).findFirst();
             if (tmpKeyOptional.isPresent()) {
                 String key = tmpKeyOptional.get();
                 tmpName = anAtomContainer.getProperty(key);
             }
         }
-        if(tmpName != null && (tmpName.equalsIgnoreCase("None"))) {
+        if (tmpName != null && (tmpName.equalsIgnoreCase("None"))) {
             tmpName = null;
         }
         return tmpName;
@@ -416,8 +419,8 @@ public class Importer {
      * on the respective atom. If the respective setting is activated, empty valences on the atom are completed with implicit
      * hydrogen atoms as well. Molecules that cause an exception in the routine are logged but remain in the given set.
      * note: Things like assigning bond orders and atom types here is redundant if the atom containers
-     *         are discarded after molecule set import and molecular information only represented by SMILES codes in
-     *         the molecule data models. Nevertheless, it is done here to ensure that the generated SMILES codes are correct.
+     * are discarded after molecule set import and molecular information only represented by SMILES codes in
+     * the molecule data models. Nevertheless, it is done here to ensure that the generated SMILES codes are correct.
      *
      * @param aMoleculeSet the molecule set to process; may be empty but not null
      * @throws NullPointerException if the given molecule set is null

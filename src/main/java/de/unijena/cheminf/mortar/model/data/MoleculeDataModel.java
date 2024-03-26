@@ -76,15 +76,14 @@ public class MoleculeDataModel {
     /**
      * Fragments map containing names of fragmentations done to the molecule as keys and lists of
      * {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that resulted from these fragmentations
-     * as values.
-     * Map<FragmentationAlgorithmName, List<Fragments>>
+     * as values. {@literal Map<FragmentationName, List<Fragments>>}
      */
     private final Map<String, List<FragmentDataModel>> fragments;
     //
     /**
      * Fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique SMILES
      * representations of the fragments and values are the frequencies of the respective fragments in the molecule.
-     * Map<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
+     * {@literal Map<FragmentationName, Map<uniqueSMILES, frequency in this molecule>>}
      */
     private final Map<String, Map<String, Integer>> fragmentFrequencies;
     //
@@ -189,23 +188,25 @@ public class MoleculeDataModel {
      *
      * @return String uniqueSmiles
      */
-    public String getUniqueSmiles(){
+    public String getUniqueSmiles() {
         return this.uniqueSmiles;
     }
     //
     /**
-     * Returns boolean telling whether molecule is selected or not
+     * Returns boolean telling whether molecule is selected or not.
+     *
      * @return true if molecule is selected
      */
-    public boolean isSelected(){
+    public boolean isSelected() {
         return this.selection.get();
     }
     //
     /**
-     * Returns BooleanProperty whether molecule is selected or not
+     * Returns BooleanProperty whether molecule is selected or not.
+     *
      * @return BooleanProperty
      */
-    public BooleanProperty selectionProperty(){
+    public BooleanProperty selectionProperty() {
         return this.selection;
     }
     //
@@ -216,16 +217,17 @@ public class MoleculeDataModel {
      *
      * @return Map {@literal <}fragmentationName, List {@literal <}FragmentDataModel {@literal >>}
      */
-    public Map<String, List<FragmentDataModel>> getAllFragments(){
+    public Map<String, List<FragmentDataModel>> getAllFragments() {
         return this.fragments;
     }
     //
     /**
      * Returns a list of unique fragments that resulted from the fragmentation of the molecule with the given name.
-     * @param aKey String specifies fragmentation or fragmentation algorithm
+     *
+     * @param aKey String specifies fragmentation
      * @return List {@literal <}FragmentDataModel {@literal >}
      */
-    public List<FragmentDataModel> getFragmentsOfSpecificAlgorithm(String aKey){
+    public List<FragmentDataModel> getFragmentsOfSpecificFragmentation(String aKey) {
         Objects.requireNonNull(aKey, "Key must not be null");
         return this.fragments.get(aKey);
     }
@@ -237,7 +239,7 @@ public class MoleculeDataModel {
      *
      * @return Map {@literal <}fragmentationName, Map {@literal <}uniqueSmiles, frequency {@literal >>}
      */
-    public Map<String, Map<String, Integer>> getFragmentFrequencies(){
+    public Map<String, Map<String, Integer>> getFragmentFrequencies() {
         return this.fragmentFrequencies;
     }
     //
@@ -245,10 +247,10 @@ public class MoleculeDataModel {
      * Returns the fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique
      * SMILES representations of the fragments and values are the frequencies of the respective fragments in the molecule.
      *
-     * @param aKey String specifies fragmentation or fragmentation algorithm
+     * @param aKey String specifies fragmentation
      * @return Map {@literal <}uniqueSmiles, frequency {@literal >}
      */
-    public Map<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
+    public Map<String, Integer> getFragmentFrequencyOfSpecificFragmentation(String aKey) {
         Objects.requireNonNull(aKey, "Key must not be null");
         return this.fragmentFrequencies.get(aKey);
     }
@@ -259,7 +261,7 @@ public class MoleculeDataModel {
      * @param aKey fragmentation name
      * @return true if the molecule has undergone the fragmentation with the specified name
      */
-    public boolean hasMoleculeUndergoneSpecificFragmentation(String aKey){
+    public boolean hasMoleculeUndergoneSpecificFragmentation(String aKey) {
         Objects.requireNonNull(aKey, "aKey must not be null");
         return this.fragments.containsKey(aKey);
     }
@@ -284,7 +286,8 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Creates and returns an ImageView of this molecule as 2D structure with the given text below the structure
+     * Creates and returns an ImageView of this molecule as 2D structure with the given text below the structure.
+     * Mainly used for fragments in items tab.
      *
      * @param aText to show below structure
      * @return ImageView with text
@@ -313,7 +316,7 @@ public class MoleculeDataModel {
      *
      * @return boolean keepAtomContainer
      */
-    public boolean isKeepAtomContainer(){
+    public boolean isKeepAtomContainer() {
         return this.keepAtomContainer;
     }
     //
@@ -322,7 +325,7 @@ public class MoleculeDataModel {
      *
      * @param aName String
      */
-    public void setName(String aName){
+    public void setName(String aName) {
         this.name = aName;
     }
     //
@@ -331,7 +334,7 @@ public class MoleculeDataModel {
      *
      * @param aValue boolean
      */
-    public void setSelection(boolean aValue){
+    public void setSelection(boolean aValue) {
         this.selection.set(aValue);
     }
     //
@@ -340,9 +343,9 @@ public class MoleculeDataModel {
      *
      * @param aValue boolean
      */
-    public void setKeepAtomContainer(boolean aValue){
+    public void setKeepAtomContainer(boolean aValue) {
         this.keepAtomContainer = aValue;
-        if(!(this.keepAtomContainer)){
+        if (!this.keepAtomContainer) {
             this.atomContainer = null;
         }
     }

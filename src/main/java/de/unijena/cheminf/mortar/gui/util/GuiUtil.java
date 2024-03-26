@@ -407,7 +407,7 @@ public class GuiUtil {
                         } else if(aTableView.getClass() == ItemizationDataTableView.class) {
                             if (tmpColIndex > 1) {
                                 String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
-                                tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getFragmentsOfSpecificAlgorithm(tmpFragmentationName).get(tmpColIndex-2).getAtomContainer(); //magic number
+                                tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getFragmentsOfSpecificFragmentation(tmpFragmentationName).get(tmpColIndex-2).getAtomContainer(); //magic number
                             } else {
                                 tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
                             }
@@ -454,7 +454,7 @@ public class GuiUtil {
                 if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)) {
                     continue;
                 }
-                for (FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)) {
+                for (FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(tmpFragmentationName)) {
                     tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
                 }
             }
@@ -479,7 +479,7 @@ public class GuiUtil {
             if (!aListOfMolecule.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                 continue;
             }
-            Map<String, Integer> tmpCurrentFragmentsMap = aListOfMolecule.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
+            Map<String, Integer> tmpCurrentFragmentsMap = aListOfMolecule.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName);
             if (tmpCurrentFragmentsMap == null) { //redundant, see if-clause above
                 continue;
             }

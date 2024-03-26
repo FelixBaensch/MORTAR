@@ -886,7 +886,7 @@ public class MainViewController {
                     //adding the item itself
                     tmpDataForOverviewView.add(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList));
                     //adding the sample of fragments
-                    tmpDataForOverviewView.addAll(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList).getFragmentsOfSpecificAlgorithm(tmpSelectedTab.getFragmentationNameOutOfTitle()));
+                    tmpDataForOverviewView.addAll(((IDataTableView) tmpSelectedTab.getTableView()).getItemsList().get(tmpIndexInDataList).getFragmentsOfSpecificFragmentation(tmpSelectedTab.getFragmentationNameOutOfTitle()));
                     this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE,

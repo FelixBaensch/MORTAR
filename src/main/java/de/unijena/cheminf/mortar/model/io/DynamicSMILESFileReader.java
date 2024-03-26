@@ -129,7 +129,7 @@ public class DynamicSMILESFileReader {
         try (
                 // throws FileNotFoundException if file cannot be found, see catch block below
                 FileReader tmpSmilesFileReader = new FileReader(aFile);
-                BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader, BasicDefinitions.BUFFER_SIZE);
+                BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader, BasicDefinitions.BUFFER_SIZE)
         ) {
             IChemObjectBuilder tmpBuilder = SilentChemObjectBuilder.getInstance();
             // AtomContainer to save the parsed SMILES in
@@ -274,7 +274,7 @@ public class DynamicSMILESFileReader {
                     } else {
                         tmpSmiles = tmpSmilesFileCurrentLine.trim();
                     }
-                    if (!tmpSmiles.isEmpty()) {
+                    if (tmpSmiles != null && !tmpSmiles.isEmpty()) {
                         //throws exception if SMILES string is null, goes to catch block
                         tmpMolecule = tmpSmilesParser.parseSmiles(tmpSmiles);
                     } else {
@@ -282,11 +282,11 @@ public class DynamicSMILESFileReader {
                     }
                 } catch (InvalidSmilesException | IndexOutOfBoundsException | NullPointerException anException) {
                     this.skippedLinesCounter++;
-                    DynamicSMILESFileReader.LOGGER.log(Level.WARNING, "Import failed for structure in line (starting at 0):\t" + tmpLineInFileCounter);
+                    DynamicSMILESFileReader.LOGGER.log(Level.WARNING, String.format("Import failed for structure in line (starting at 0):\t%s", tmpLineInFileCounter));
                     continue;
                 }
                 //setting the name of the atom container
-                String tmpName = "";
+                String tmpName;
                 if (aFormat.hasIDColumn() && tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].trim().isEmpty()) {
                     tmpName = tmpProcessedLineArray[tmpIDExpectedPosition].trim();
                 } else {
@@ -319,7 +319,6 @@ public class DynamicSMILESFileReader {
      * . (disconnected parts),
      * (, ) (branches),
      * /, \ (cis/trans stereochemistry).
-     *
      * All other characters, including whitespace characters, are not allowed.
      *
      * @param aPotentialSMILESString the string to test
