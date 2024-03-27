@@ -33,17 +33,12 @@ import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
-import de.unijena.cheminf.mortar.preference.BooleanPreference;
-import de.unijena.cheminf.mortar.preference.IPreference;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
 import de.unijena.cheminf.mortar.preference.PreferenceUtil;
-import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
-import de.unijena.cheminf.mortar.preference.SingleNumberPreference;
 import de.unijena.cheminf.mortar.preference.SingleTermPreference;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Alert;
@@ -52,7 +47,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -584,48 +578,7 @@ public class SettingsContainer {
                 List<Property<?>> tmpSettings = new ArrayList<>(8);
                 tmpSettings.addAll(this.settings);
                 tmpSettings.add(this.recentDirectoryPathSetting);
-                for (Property<?> tmpSettingProperty : tmpSettings) {
-                    String tmpPropertyName = tmpSettingProperty.getName();
-                    if (tmpDePersistedContainer.containsPreferenceName(tmpPropertyName)) {
-                        IPreference[] tmpPreferences = tmpDePersistedContainer.getPreferences(tmpPropertyName);
-                        try {
-                            switch (tmpSettingProperty) {
-                                case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                                    BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
-                                    tmpSimpleBooleanProperty.setValue(tmpBooleanPreference.getContent());
-                                }
-                                case SimpleIntegerProperty tmpSimpleIntegerProperty -> {
-                                    SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
-                                    tmpSimpleIntegerProperty.setValue(tmpIntPreference.getContent());
-                                }
-                                case SimpleDoubleProperty tmpSimpleDoubleProperty -> {
-                                    SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
-                                    tmpSimpleDoubleProperty.setValue(tmpDoublePreference.getContent());
-                                }
-                                case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
-                                    SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                                    tmpSimpleIDisplayEnumConstantProperty.setValue(
-                                            (IDisplayEnum) Enum.valueOf(tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
-                                }
-                                case SimpleStringProperty tmpSimpleStringProperty -> {
-                                    //also true for case of SimpleEnumConstantNameProperty
-                                    SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                                    tmpSimpleStringProperty.setValue(tmpStringPreference.getContent());
-                                }
-                                default -> {
-                                    //setting will remain in default
-                                    SettingsContainer.LOGGER.log(Level.WARNING, "Setting {0} is of unknown type.", tmpPropertyName);
-                                }
-                            }
-                        } catch (ClassCastException | IllegalArgumentException anException) {
-                            //setting will remain in default
-                            SettingsContainer.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                        }
-                    } else {
-                        //setting will remain in default
-                        SettingsContainer.LOGGER.log(Level.WARNING, "No persisted settings for {0} available.", tmpPropertyName);
-                    }
-                }
+                PreferenceUtil.updatePropertiesFromPreferences(tmpSettings, tmpDePersistedContainer);
             }
         }
     }
@@ -780,48 +733,10 @@ public class SettingsContainer {
      * @throws UnsupportedOperationException if a setting does not fulfil the requirements
      */
     private void checkSettings() throws UnsupportedOperationException {
-        List<Property<?>> tmpSettingsList = this.settings;
-        int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpSettingsList.size(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        HashSet<String> tmpSettingNamesSet = new HashSet<>(tmpSettingNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        for (Property<?> tmpSetting : tmpSettingsList) {
-            if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
-                throw new UnsupportedOperationException(String.format("Setting %s has an invalid name.", tmpSetting.getName()));
-            }
-            if (tmpSettingNamesSet.contains(tmpSetting.getName())) {
-                throw new UnsupportedOperationException(String.format("Setting name %s is used multiple times.", tmpSetting.getName()));
-            } else {
-                tmpSettingNamesSet.add(tmpSetting.getName());
-            }
-            switch (tmpSetting) {
-                case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                    //nothing to do here, booleans cannot have invalid values
-                }
-                case SimpleIntegerProperty tmpSimpleIntegerProperty -> {
-                    if (!SingleIntegerPreference.isValidContent(Integer.toString(tmpSimpleIntegerProperty.get()))) {
-                        throw new UnsupportedOperationException(String.format("Setting value %d of setting name %s is invalid.", tmpSimpleIntegerProperty.get(), tmpSimpleIntegerProperty.getName()));
-                    }
-                }
-                case SimpleDoubleProperty tmpSimpleDoubleProperty -> {
-                    if (!SingleNumberPreference.isValidContent(tmpSimpleDoubleProperty.get())) {
-                        throw new UnsupportedOperationException(String.format("Setting value %f of setting name %s is invalid.", tmpSimpleDoubleProperty.get(), tmpSetting.getName()));
-                    }
-                }
-                case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
-                    if (!SingleTermPreference.isValidContent(((Enum)simpleIDisplayEnumConstantProperty.get()).name())) {
-                        throw new UnsupportedOperationException("Setting value " + simpleIDisplayEnumConstantProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                    }
-                }
-                case SimpleStringProperty tmpSimpleStringProperty -> {
-                    //also true for SimpleEnumConstantNameProperty
-                    if (!SingleTermPreference.isValidContent(tmpSimpleStringProperty.get())) {
-                        throw new UnsupportedOperationException(String.format("Setting value %s of setting name %s is invalid.", tmpSimpleStringProperty.get(), tmpSetting.getName()));
-                    }
-                }
-                default -> {
-                    throw new UnsupportedOperationException(String.format("Setting %s is of an invalid type.", tmpSetting.getName()));
-                }
-            }
-        }
+        List<Property<?>> tmpSettings = new ArrayList<>(8);
+        tmpSettings.addAll(this.settings);
+        tmpSettings.add(this.recentDirectoryPathSetting);
+        PreferenceUtil.checkPropertiesForPreferenceRestrictions(tmpSettings);
     }
 
     /**

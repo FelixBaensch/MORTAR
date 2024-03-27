@@ -38,20 +38,12 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
-import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
-import de.unijena.cheminf.mortar.preference.BooleanPreference;
-import de.unijena.cheminf.mortar.preference.IPreference;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
 import de.unijena.cheminf.mortar.preference.PreferenceUtil;
 import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
-import de.unijena.cheminf.mortar.preference.SingleNumberPreference;
 import de.unijena.cheminf.mortar.preference.SingleTermPreference;
 
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Alert;
 
@@ -730,7 +722,7 @@ public class FragmentationService {
                     FragmentationService.LOGGER.log(Level.WARNING, String.format("Unable to reload settings of fragmenter %s : %s", tmpClassName, anException.toString()), anException);
                     continue;
                 }
-                this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpContainer);
+                PreferenceUtil.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpContainer);
             } else {
                 //settings will remain in default
                 FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for {0} available.", tmpClassName);
@@ -782,7 +774,7 @@ public class FragmentationService {
                         PreferenceContainer tmpFragmenterSettingsContainer = new PreferenceContainer(tmpFragmenterFile);
                         String tmpFragmenterClassName = tmpFragmenterSettingsContainer.getPreferences(FragmentationService.PIPELINE_FRAGMENTER_ALGORITHM_NAME_SETTING_NAME)[0].getContentRepresentative();
                         IMoleculeFragmenter tmpFragmenter = this.createNewFragmenterObjectByAlgorithmName(tmpFragmenterClassName);
-                        this.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpFragmenterSettingsContainer);
+                        PreferenceUtil.updatePropertiesFromPreferences(tmpFragmenter.settingsProperties(), tmpFragmenterSettingsContainer);
                         tmpFragmenterList.add(tmpFragmenter);
                     } catch (Exception anException) {
                         FragmentationService.LOGGER.log(Level.WARNING, String.format("FragmentationService settings reload failed: %s", anException.toString()), anException);
@@ -1059,58 +1051,15 @@ public class FragmentationService {
                 new Object[]{aFragmentationName, aListOfMolecules.size(), tmpDuration, tmpMemoryConsumption});
         return tmpFragmentHashtable;
     }
-
-    /**
-     * Sets the values of the given properties according to the preferences in the given container with the same name.
-     * If no matching preference for a given property is found, the value will remain in its default setting.
-     */
-    private void updatePropertiesFromPreferences(List<Property<?>> aPropertiesList, PreferenceContainer aPreferenceContainer) {
-        for (Property<?> tmpSettingProperty : aPropertiesList) {
-            String tmpPropertyName = tmpSettingProperty.getName();
-            if (aPreferenceContainer.containsPreferenceName(tmpPropertyName)) {
-                IPreference[] tmpPreferences = aPreferenceContainer.getPreferences(tmpPropertyName);
-                try {
-                    switch (tmpSettingProperty) {
-                        case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                            BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
-                            tmpSimpleBooleanProperty.setValue(tmpBooleanPreference.getContent());
-                        }
-                        case SimpleIntegerProperty tmpSimpleIntegerProperty -> {
-                            SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
-                            tmpSimpleIntegerProperty.setValue(tmpIntPreference.getContent());
-                        }
-                        case SimpleDoubleProperty tmpSimpleDoubleProperty -> {
-                            SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
-                            tmpSimpleDoubleProperty.setValue(tmpDoublePreference.getContent());
-                        }
-                        case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
-                            SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                            tmpSimpleIDisplayEnumConstantProperty.setValue((IDisplayEnum) Enum.valueOf(tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
-                        }
-                        case SimpleStringProperty tmpSimpleStringProperty -> {
-                            //includes SimpleEnumConstantNameProperty since it extends tmpSimpleStringProperty
-                            SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                            tmpSimpleStringProperty.setValue(tmpStringPreference.getContent());
-                        }
-                        default -> {
-                            //setting will remain in default
-                            FragmentationService.LOGGER.log(Level.WARNING, "Setting {0} is of unknown type.", tmpPropertyName);
-                        }
-                    }
-                } catch (ClassCastException | IllegalArgumentException anException) {
-                    //setting will remain in default
-                    FragmentationService.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                }
-            } else {
-                //setting will remain in default
-                FragmentationService.LOGGER.log(Level.WARNING, "No persisted settings for {0} available.", tmpPropertyName);
-            }
-        }
-    }
-
+    //
     /**
      * Checks the available fragmenters and their settings for restrictions imposed by persistence. Throws an exception if
      * anything does not meet the requirements.
+     * - setting names must be singletons
+     * - setting names and values must adhere to the preference input restrictions
+     * - setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
+     *
+     * @throws UnsupportedOperationException if a setting does not fulfil the requirements
      */
     private void checkFragmenters() throws UnsupportedOperationException {
         int tmpAlgorithmNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(this.fragmenters.length,
@@ -1131,47 +1080,7 @@ public class FragmentationService {
             //setting names and values must adhere to the preference input restrictions
             //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
             List<Property<?>> tmpSettingsList = tmpFragmenter.settingsProperties();
-            int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpSettingsList.size(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-            HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-            for (Property<?> tmpSetting : tmpSettingsList) {
-                if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
-                    throw new UnsupportedOperationException("Setting " + tmpSetting.getName() + " has an invalid name.");
-                }
-                if (tmpSettingNames.contains(tmpSetting.getName())) {
-                    throw new UnsupportedOperationException("Setting name " + tmpSetting.getName() + " is used multiple times.");
-                } else {
-                    tmpSettingNames.add(tmpSetting.getName());
-                }
-                switch (tmpSetting) {
-                    case SimpleBooleanProperty simpleBooleanProperty -> {
-                        //nothing to do here, booleans cannot have invalid values
-                    }
-                    case SimpleIntegerProperty simpleIntegerProperty -> {
-                        if (!SingleIntegerPreference.isValidContent(Integer.toString(simpleIntegerProperty.get()))) {
-                            throw new UnsupportedOperationException("Setting value " + simpleIntegerProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                        }
-                    }
-                    case SimpleDoubleProperty simpleDoubleProperty -> {
-                        if (!SingleNumberPreference.isValidContent(simpleDoubleProperty.get())) {
-                            throw new UnsupportedOperationException("Setting value " + simpleDoubleProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                        }
-                    }
-                    case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
-                        if (!SingleTermPreference.isValidContent(((Enum)simpleIDisplayEnumConstantProperty.get()).name())) {
-                            throw new UnsupportedOperationException("Setting value " + simpleIDisplayEnumConstantProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                        }
-                    }
-                    case SimpleStringProperty simpleStringProperty -> {
-                        //includes SimpleEnumConstantNameProperty
-                        if (!SingleTermPreference.isValidContent(simpleStringProperty.get())) {
-                            throw new UnsupportedOperationException("Setting value " + simpleStringProperty.get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                        }
-                    }
-                    default -> {
-                        throw new UnsupportedOperationException("Setting " + tmpSetting.getName() + " is of an invalid type.");
-                    }
-                }
-            }
+            PreferenceUtil.checkPropertiesForPreferenceRestrictions(tmpSettingsList);
         }
     }
     //</editor-fold>

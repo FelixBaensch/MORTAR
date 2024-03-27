@@ -25,6 +25,9 @@
 
 package de.unijena.cheminf.mortar.preference;
 
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
@@ -33,6 +36,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -139,6 +143,127 @@ public final class PreferenceUtil {
             }
         }
         return tmpContainer;
+    }
+    //
+    /**
+     * Sets the values of the given JFX properties (settings) according to the preferences in the given container with the same name.
+     * If no matching preference for a given property is found, the value will remain in its default setting. Intended use is to update
+     * JFX properties that represent settings based on de-persisted MORTAR preference objects. If no preference with the same name
+     * can be found for a given property, the case is logged with the property name and the property remains in the same
+     * value.
+     *
+     * @param aPropertiesList properties to update
+     * @param aPreferenceContainer preferences to take the values from
+     */
+    public static void updatePropertiesFromPreferences(List<Property<?>> aPropertiesList, PreferenceContainer aPreferenceContainer) {
+        Objects.requireNonNull(aPropertiesList, "Given JFX properties list is null");
+        Objects.requireNonNull(aPreferenceContainer, "Given preference container is null");
+        if (aPreferenceContainer.isEmpty() || aPropertiesList.isEmpty()) {
+            PreferenceUtil.LOGGER.log(Level.WARNING, "Preference container or properties list is empty.");
+            return;
+        }
+        for (Property<?> tmpSettingProperty : aPropertiesList) {
+            String tmpPropertyName = tmpSettingProperty.getName();
+            if (aPreferenceContainer.containsPreferenceName(tmpPropertyName)) {
+                IPreference[] tmpPreferences = aPreferenceContainer.getPreferences(tmpPropertyName);
+                try {
+                    switch (tmpSettingProperty) {
+                        case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
+                            BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
+                            tmpSimpleBooleanProperty.setValue(tmpBooleanPreference.getContent());
+                        }
+                        case SimpleIntegerProperty tmpSimpleIntegerProperty -> {
+                            SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
+                            tmpSimpleIntegerProperty.setValue(tmpIntPreference.getContent());
+                        }
+                        case SimpleDoubleProperty tmpSimpleDoubleProperty -> {
+                            SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
+                            tmpSimpleDoubleProperty.setValue(tmpDoublePreference.getContent());
+                        }
+                        case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
+                            SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                            tmpSimpleIDisplayEnumConstantProperty.setValue((IDisplayEnum) Enum.valueOf(tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
+                        }
+                        case SimpleStringProperty tmpSimpleStringProperty -> {
+                            //includes SimpleEnumConstantNameProperty since it extends tmpSimpleStringProperty
+                            SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
+                            tmpSimpleStringProperty.setValue(tmpStringPreference.getContent());
+                        }
+                        default -> {
+                            //setting will remain in default
+                            PreferenceUtil.LOGGER.log(Level.WARNING, "Setting {0} is of unknown type.", tmpPropertyName);
+                        }
+                    }
+                } catch (ClassCastException | IllegalArgumentException anException) {
+                    //setting will remain in default
+                    PreferenceUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                }
+            } else {
+                //setting will remain in default
+                PreferenceUtil.LOGGER.log(Level.WARNING, "No persisted settings for {0} available.", tmpPropertyName);
+            }
+        }
+    }
+    //
+    /**
+     * Checks the given list of JavaFx property objects for whether they adhere with the restrictions imposed by the MORTAR
+     * preferences classes that are used for persisting the properties. Property names must be singletons within the given list.
+     * Property names and values must adhere to the preference input restrictions. Property values are only tested for
+     * their current state, not the entire possible input space! It is therefore recommended to call this method again before
+     * attempting to persist the properties as preferences. An UnsupportedOperationException is thrown if something does
+     * not adhere to the given requirements.
+     *
+     * @param aPropertiesList the list of properties, e.g. the settings of a specific fragmenter class
+     * @throws UnsupportedOperationException if sth does not fit the restrictions
+     */
+    public static void checkPropertiesForPreferenceRestrictions(List<Property<?>> aPropertiesList) throws UnsupportedOperationException {
+        int tmpSettingNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(aPropertiesList.size(),
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        HashSet<String> tmpSettingNames = new HashSet<>(tmpSettingNamesSetInitCapacity,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        for (Property<?> tmpSetting : aPropertiesList) {
+            if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
+                throw new UnsupportedOperationException("Setting " + tmpSetting.getName() + " has an invalid name.");
+            }
+            if (tmpSettingNames.contains(tmpSetting.getName())) {
+                throw new UnsupportedOperationException("Setting name " + tmpSetting.getName() + " is used multiple times.");
+            } else {
+                tmpSettingNames.add(tmpSetting.getName());
+            }
+            switch (tmpSetting) {
+                case SimpleBooleanProperty simpleBooleanProperty -> {
+                    //nothing to do here, booleans cannot have invalid values
+                }
+                case SimpleIntegerProperty simpleIntegerProperty -> {
+                    if (!SingleIntegerPreference.isValidContent(Integer.toString(simpleIntegerProperty.get()))) {
+                        throw new UnsupportedOperationException("Setting value " + simpleIntegerProperty.get()
+                                + " of setting name " + tmpSetting.getName() + " is invalid.");
+                    }
+                }
+                case SimpleDoubleProperty simpleDoubleProperty -> {
+                    if (!SingleNumberPreference.isValidContent(simpleDoubleProperty.get())) {
+                        throw new UnsupportedOperationException("Setting value " + simpleDoubleProperty.get()
+                                + " of setting name " + tmpSetting.getName() + " is invalid.");
+                    }
+                }
+                case SimpleIDisplayEnumConstantProperty simpleIDisplayEnumConstantProperty -> {
+                    if (!SingleTermPreference.isValidContent(((Enum)simpleIDisplayEnumConstantProperty.get()).name())) {
+                        throw new UnsupportedOperationException("Setting value " + simpleIDisplayEnumConstantProperty.get()
+                                + " of setting name " + tmpSetting.getName() + " is invalid.");
+                    }
+                }
+                case SimpleStringProperty simpleStringProperty -> {
+                    //includes SimpleEnumConstantNameProperty
+                    if (!SingleTermPreference.isValidContent(simpleStringProperty.get())) {
+                        throw new UnsupportedOperationException("Setting value " + simpleStringProperty.get()
+                                + " of setting name " + tmpSetting.getName() + " is invalid.");
+                    }
+                }
+                default -> {
+                    throw new UnsupportedOperationException("Setting " + tmpSetting.getName() + " is of an invalid type.");
+                }
+            }
+        }
     }
     //</editor-fold>
 }
