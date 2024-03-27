@@ -117,9 +117,7 @@ public final class LogUtil {
                             Message.get("Error.UnexpectedError.Header"),
                             Message.get("Error.UnexpectedError.Content"),
                             (Exception) aThrowable);
-            } else {
-                //logging is enough in this case
-            }
+            } //else: logging is enough in this case, done in first line of this method
         }
     };
     //</editor-fold>
@@ -141,7 +139,7 @@ public final class LogUtil {
     private static ArrayList<Exception> storedExceptions;
     //</editor-fold>
     //
-    //<editor-fold desc="Private constructor">
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.

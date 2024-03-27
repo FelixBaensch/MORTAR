@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -385,10 +386,10 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
                 Collections.reverse(tmpDescendingList);
                 this.preferencesSortedNameAscendingCache = tmpDescendingList.toArray(new IPreference[0]);
             } else {
-                StringSortWrapper[] tmpArray = this.preferenceNameWrapperSet.toArray(new StringSortWrapper[0]);
+                StringSortWrapper<IPreference>[] tmpArray = this.preferenceNameWrapperSet.toArray(new StringSortWrapper[0]);
                 IPreference[] tmpPreferenceArray = new IPreference[tmpArray.length];
                 for (int i = 0; i < tmpArray.length; i++) {
-                    tmpPreferenceArray[i] = (IPreference) tmpArray[i].getWrappedObject();
+                    tmpPreferenceArray[i] = tmpArray[i].getWrappedObject();
                 }
                 this.preferencesSortedNameAscendingCache = tmpPreferenceArray;
             }
@@ -420,12 +421,12 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
                 Collections.reverse(tmpAscendingList);
                 this.preferencesSortedNameDescendingCache = tmpAscendingList.toArray(new IPreference[0]);
             } else {
-                List<StringSortWrapper> tmpWrapperList = new ArrayList<>(this.preferenceNameWrapperSet);
+                List<StringSortWrapper<IPreference>> tmpWrapperList = new ArrayList<>(this.preferenceNameWrapperSet);
                 Collections.reverse(tmpWrapperList);
-                StringSortWrapper[] tmpArray = tmpWrapperList.toArray(new StringSortWrapper[0]);
+                StringSortWrapper<IPreference>[] tmpArray = tmpWrapperList.toArray(new StringSortWrapper[0]);
                 IPreference[] tmpPreferenceArray = new IPreference[tmpArray.length];
                 for (int i = 0; i < tmpArray.length; i++) {
-                    tmpPreferenceArray[i] = (IPreference) tmpArray[i].getWrappedObject();
+                    tmpPreferenceArray[i] = tmpArray[i].getWrappedObject();
                 }
                 this.preferencesSortedNameDescendingCache = tmpPreferenceArray;
             }
@@ -457,7 +458,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * Replaces a preference in this container with another one.
      * <br>The central preference management of this class is backed by a ConcurrentSkipListMap.
      * <br>The time consumption of this method scales log(size) on average (worst case O(size) for both the addition
-     * operation and the deletion operation.
+     * operation and the deletion operation).
      *
      * @param anOldPreference the preference to delete from this container
      * @param aNewPreference the preference to add to this container in place of the first parameter
@@ -480,7 +481,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * Replaces a preference in this container with another one.
      * <br>The central preference management of this class is backed by a ConcurrentSkipListMap.
      * <br>The time consumption of this method scales log(size) on average (worst case O(size) for both the addition
-     * operation and the deletion operation.
+     * operation and the deletion operation).
      *
      * @param aPreferenceGUID GUID string of the preference to delete from this container
      * @param aPreference the preference to add to this container in place of the preference with the given GUID string
@@ -513,7 +514,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         if (!this.contains(aPreferenceGUID)) {
             return false;
         }
-        boolean tmpWasDeletionSuccessful = delete(aPreferenceGUID);
+        boolean tmpWasDeletionSuccessful = this.delete(this.preferenceMasterMap.get(aPreferenceGUID));
         return tmpWasDeletionSuccessful;
     }
 
@@ -528,7 +529,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * @throws NullPointerException if aPreference is 'null'
      */
     public boolean delete(IPreference aPreference) throws NullPointerException {
-        Objects.requireNonNull(aPreference, "aPrference is 'null'.");
+        Objects.requireNonNull(aPreference, "aPreference is 'null'.");
         if (!this.contains(aPreference.getGUID())) {
             return false;
         }
@@ -623,7 +624,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      *
      * @param aPreferenceType the preference type to check for
      * @return true, if this container contains one or more preference(s) with the given type; false, if otherwise or if
-     * apreferenceType is 'null'
+     * aPreferenceType is 'null'
      */
     public boolean containsPreferenceType(PreferenceType aPreferenceType) {
         if (Objects.isNull(aPreferenceType)) {
@@ -942,7 +943,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         if (!tmpContainerFile.canWrite()) {
             throw new IOException("Unable to modify the destined container file.");
         }
-        FileOutputStream tmpFileOut = null;
+        FileOutputStream tmpFileOut;
         try {
             tmpFileOut = new FileOutputStream(tmpContainerFile, false);
         } catch (FileNotFoundException e) {
@@ -988,7 +989,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         if (!tmpIsFile || !tmpCanRead) {
             throw new IOException("Given file does not exist, does not represent a file or can not be read.");
         }
-        FileInputStream tmpFileIn = null;
+        FileInputStream tmpFileIn;
         try {
             tmpFileIn = new FileInputStream(tmpContainerFile);
         } catch (FileNotFoundException e) {
@@ -996,10 +997,10 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         }
         InputStreamReader tmpInStreamReader;
         if (tmpFileExtension.equals(PreferenceContainer.VALID_FILE_EXTENSIONS[0])) {
-            tmpInStreamReader = new InputStreamReader(tmpFileIn, System.getProperty("file.encoding"));
+            tmpInStreamReader = new InputStreamReader(tmpFileIn, Charset.defaultCharset().displayName());
         } else if (tmpFileExtension.equals(PreferenceContainer.VALID_FILE_EXTENSIONS[1])) {
             GZIPInputStream tmpGzipIn = new GZIPInputStream(tmpFileIn, BasicDefinitions.BUFFER_SIZE);
-            tmpInStreamReader = new InputStreamReader(tmpGzipIn, System.getProperty("file.encoding"));
+            tmpInStreamReader = new InputStreamReader(tmpGzipIn, Charset.defaultCharset().displayName());
         } else {
             try {
                 tmpFileIn.close();

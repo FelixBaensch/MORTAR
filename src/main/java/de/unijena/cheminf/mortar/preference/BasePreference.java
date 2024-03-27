@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.preference;
 
 import java.util.Objects;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -58,11 +57,6 @@ public abstract class BasePreference implements IPreference {
      * Factor for including GUID string in hash code produced by hashCode() method.
      */
     private static final int HASH_FACTOR_GUID = 919;
-
-    /**
-     * Logger of this class.
-     */
-    private static final Logger LOGGER = Logger.getLogger(BasePreference.class.getName());
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Protected class variables">

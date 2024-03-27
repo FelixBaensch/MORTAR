@@ -65,7 +65,8 @@ public final class ChemUtil {
      */
     private static final Logger LOGGER = Logger.getLogger(ChemUtil.class.getName());
     //</editor-fold>
-    //<editor-fold desc="Protected constructor">
+    //
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -73,7 +74,6 @@ public final class ChemUtil {
     private ChemUtil() {
     }
     //</editor-fold>
-    //
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
@@ -198,9 +198,9 @@ public final class ChemUtil {
      * @param aMolecule to check for 2D coordinates
      * @return true if 2D coordinates are set for ALL atoms in the given molecule
      */
-    public static boolean has2DCoordinates(MoleculeDataModel aMolecule){
+    public static boolean has2DCoordinates(MoleculeDataModel aMolecule) {
         IAtomContainer tmpFragment;
-        try{
+        try {
             tmpFragment = aMolecule.getAtomContainer();
         } catch(CDKException anException){
             ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), aMolecule.getName()), anException);
@@ -223,7 +223,7 @@ public final class ChemUtil {
      * @param aListOfMolecules to check for 2D or 3D coordinates
      * @return true if 2D or 3D coordinates are set for EVERY atom in EVERY molecule in the given list
      */
-    public static boolean checkMoleculeListForCoordinates(List<MoleculeDataModel> aListOfMolecules){
+    public static boolean checkMoleculeListForCoordinates(List<MoleculeDataModel> aListOfMolecules) {
         if (aListOfMolecules == null || aListOfMolecules.isEmpty()) {
             return false;
         }

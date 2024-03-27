@@ -44,7 +44,7 @@ public final class PreferenceFactory {
     private static final Logger LOGGER = Logger.getLogger(PreferenceFactory.class.getName());
     //</editor-fold>
     //
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold defaultstate="collapsed" desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.

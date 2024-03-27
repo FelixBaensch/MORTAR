@@ -378,7 +378,7 @@ public class SettingsContainer {
      *
      * @return keep last fragment setting value
      */
-    public boolean isKeepLastFragmentSetting(){
+    public boolean isKeepLastFragmentSetting() {
         return this.keepLastFragmentSetting.get();
     }
 
@@ -387,7 +387,7 @@ public class SettingsContainer {
      *
      * @return keep last fragment setting property
      */
-    public SimpleBooleanProperty keepLastFragmentSettingProperty(){
+    public SimpleBooleanProperty keepLastFragmentSettingProperty() {
         return this.keepLastFragmentSetting;
     }
 
@@ -604,7 +604,8 @@ public class SettingsContainer {
                                 }
                                 case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
                                     SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                                    tmpSimpleIDisplayEnumConstantProperty.setValue((IDisplayEnum) Enum.valueOf(tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
+                                    tmpSimpleIDisplayEnumConstantProperty.setValue(
+                                            (IDisplayEnum) Enum.valueOf(tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnum(), tmpStringPreference.getContent()));
                                 }
                                 case SimpleStringProperty tmpSimpleStringProperty -> {
                                     //also true for case of SimpleEnumConstantNameProperty
@@ -876,8 +877,8 @@ public class SettingsContainer {
      * @return true if the given parameter is a legal value for the setting
      */
     private boolean isLegalCsvExportSeparator(char aSeparator){
-        for (Enum<Exporter.CSVSeparator> tmpEnumConstant : Exporter.CSVSeparator.values()) {
-            if (aSeparator == ((Exporter.CSVSeparator) tmpEnumConstant).getSeparatorChar()) {
+        for (Exporter.CSVSeparator tmpEnumConstant : Exporter.CSVSeparator.values()) {
+            if (aSeparator == tmpEnumConstant.getSeparatorChar()) {
                 return true;
             }
         }

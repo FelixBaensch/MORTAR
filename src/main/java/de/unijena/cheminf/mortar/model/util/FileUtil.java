@@ -30,6 +30,7 @@ import de.unijena.cheminf.mortar.configuration.IConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -72,7 +73,7 @@ public final class FileUtil {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Private constructor">
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -131,19 +132,18 @@ public final class FileUtil {
      */
     public static boolean deleteSingleFile(String aFilePathname) {
         // <editor-fold defaultstate="collapsed" desc="Checks">
-        if (aFilePathname == null ||
-                aFilePathname.isEmpty()
-        ) {
+        if (aFilePathname == null || aFilePathname.isEmpty()) {
             return false;
         }
         // </editor-fold>
         try {
             File tmpFile = new File(aFilePathname);
-            if (!tmpFile.isFile()) {
-                return true;
-            } else {
-                return tmpFile.delete();
+            if (tmpFile.isFile()) {
+                Files.delete(tmpFile.toPath());
             }
+            //if it is not a file, it does not exist and therefore must not be deleted
+            //if delete fails, it goes to catch, logs the detailed exception and returns false
+            return true;
         } catch (Exception anException) {
             FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return false;
@@ -165,26 +165,23 @@ public final class FileUtil {
             return false;
         }
         // </editor-fold>
+        boolean tmpAllFilesDeletedSuccessfully = true;
         try {
             File tmpDirectory = new File(aDirectoryPath);
             if (!tmpDirectory.isDirectory()) {
                 return false;
             }
             File[] tmpFilesArray = tmpDirectory.listFiles();
-            boolean tmpAllFilesDeletedSuccessfully = true;
             for (File tmpFile : tmpFilesArray) {
                 if (tmpFile.isFile()) {
-                    boolean tmpFileDeleted = tmpFile.delete();
-                    if (!tmpFileDeleted) {
-                        tmpAllFilesDeletedSuccessfully = false;
-                    }
+                    Files.delete(tmpFile.toPath());
                 }
             }
-            return tmpAllFilesDeletedSuccessfully;
         } catch (Exception anException) {
             FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return false;
+            tmpAllFilesDeletedSuccessfully = false;
         }
+        return tmpAllFilesDeletedSuccessfully;
     }
 
     /**
@@ -267,7 +264,7 @@ public final class FileUtil {
         tmpAppDir += File.separator + FileUtil.CONFIGURATION.getProperty("mortar.vendor.name") + File.separator + FileUtil.CONFIGURATION.getProperty("mortar.dataDirectory.name");
         tmpAppDirFile = new File(tmpAppDir);
         boolean tmpSuccessful = true;
-        if(!tmpAppDirFile.exists())
+        if (!tmpAppDirFile.exists())
             tmpSuccessful = tmpAppDirFile.mkdirs();
         if (!tmpSuccessful)
             throw new SecurityException("Unable to create application data directory");
@@ -289,13 +286,17 @@ public final class FileUtil {
     /**
      * Returns a timestamp to add to a filename.
      *
-     * @throws DateTimeException if the time cannot be determined or formatted
-     * @return timestamp filename extension
+     * @return timestamp filename extension or a placeholder string if time stamp creation failed
      */
     public static String getTimeStampFileNameExtension() throws DateTimeException {
-        LocalDateTime tmpDateTime = LocalDateTime.now();
-        String tmpDateTimeAddition = tmpDateTime.format(DateTimeFormatter.ofPattern(BasicDefinitions.FILENAME_TIMESTAMP_FORMAT));
-        return tmpDateTimeAddition;
+        try {
+            LocalDateTime tmpDateTime = LocalDateTime.now();
+            String tmpDateTimeAddition = tmpDateTime.format(DateTimeFormatter.ofPattern(BasicDefinitions.FILENAME_TIMESTAMP_FORMAT));
+            return tmpDateTimeAddition;
+        } catch (Exception e) {
+            FileUtil.LOGGER.log(Level.WARNING, e.toString(), e);
+            return BasicDefinitions.FILENAME_TIMESTAMP_FORMAT;
+        }
     }
 
     /**

@@ -47,7 +47,7 @@ public class SimpleIDisplayEnumConstantPropertyTest {
      * @throws Exception if anything goes wrong
      */
     public SimpleIDisplayEnumConstantPropertyTest() throws Exception {
-        Locale.setDefault(new Locale("en", "GB"));
+        Locale.setDefault(Locale.of("en", "GB"));
     }
     /**
      * Basic test for retrieval of associated enum, currently set option, and available options.
@@ -64,7 +64,7 @@ public class SimpleIDisplayEnumConstantPropertyTest {
         Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION, tmpEnumProperty.get());
         IDisplayEnum[] tmpAvailableOptions = (IDisplayEnum[]) tmpEnumProperty.getAssociatedEnumConstants();
         for (IDisplayEnum tmpOption : tmpAvailableOptions) {
-            Assertions.assertDoesNotThrow(() -> {tmpEnumProperty.set((IDisplayEnum)tmpOption);});
+            Assertions.assertDoesNotThrow(() -> tmpEnumProperty.set(tmpOption));
         }
     }
 }

@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
  * @version 1.0.0.0
  */
 public final class BasicDefinitions {
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold defaultstate="collapsed" desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -43,7 +43,7 @@ public final class BasicDefinitions {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Minimum system requirements">
+    //<editor-fold defaultstate="collapsed" desc="Minimum system requirements">
     /**
      * Minimum java version to run MORTAR.
      */
@@ -96,7 +96,7 @@ public final class BasicDefinitions {
     public static final String PREFERENCE_CONTAINER_FILE_EXTENSION = ".txt";
     //</editor-fold>
     //
-    //<editor-fold desc="Session">
+    //<editor-fold defaultstate="collapsed" desc="Session">
     /**
      * MORTAR session start log entry.
      */
@@ -107,14 +107,14 @@ public final class BasicDefinitions {
     public static final String MORTAR_SESSION_END = "MORTAR session end";
     //</editor-fold>
     //
-    //<editor-fold desc="Application version">
+    //<editor-fold defaultstate="collapsed" desc="Application version">
     /**
      * Version of application.
      */
     public static final String MORTAR_VERSION = "1.1.1.0";
     //</editor-fold>
     //
-    //<editor-fold desc="Model constants and magic numbers">
+    //<editor-fold defaultstate="collapsed" desc="Model constants and magic numbers">
     /**
      * Default initial capacity for fragment maps.
      */

@@ -59,7 +59,7 @@ public class BooleanPreference extends BasePreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Private class variables">
     /**
-     * Boolean content of this preference
+     * Boolean content of this preference.
      */
     private boolean content;
     //</editor-fold>

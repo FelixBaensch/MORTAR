@@ -54,8 +54,8 @@ public class SimpleEnumConstantNamePropertyTest {
         Enum[] tmpAvailableOptions = tmpEnumProperty.getAssociatedEnumConstants();
         for (Enum tmpOption : tmpAvailableOptions) {
             Assertions.assertDoesNotThrow(() -> {IMoleculeFragmenter.FragmentSaturationOption.valueOf(tmpOption.name());});
-            Assertions.assertDoesNotThrow(() -> {tmpEnumProperty.setEnumValue(tmpOption);});
-            Assertions.assertDoesNotThrow(() -> {tmpEnumProperty.set(tmpOption.name());});
+            Assertions.assertDoesNotThrow(() -> tmpEnumProperty.setEnumValue(tmpOption));
+            Assertions.assertDoesNotThrow(() -> tmpEnumProperty.set(tmpOption.name()));
         }
     }
 }

@@ -54,7 +54,7 @@ public class RGBColorPreference extends BasePreference {
 
     /**
      * Character to separate the different color components when writing a representation of this object to file.
-     * If this is altered, older versions can not be read any more! So should you change this, hard-code the ':'
+     * If this is altered, older versions can not be read anymore! So should you change this, hard-code the ':'
      * character in reloadVersion1000() and introduce a new version!
      */
     private static final String PERSISTENCE_VALUE_SEPARATOR = ":";
@@ -386,8 +386,7 @@ public class RGBColorPreference extends BasePreference {
     private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
-        //If RGBColorPreference.PERSISTENCE_VALUE_SEPARATOR is altered this will not work anymore, see above.
-        String[] tmpColorComponents = aReader.readLine().split(RGBColorPreference.PERSISTENCE_VALUE_SEPARATOR);
+        String[] tmpColorComponents = aReader.readLine().split(":");
         this.red = Double.parseDouble(tmpColorComponents[0]);
         this.green = Double.parseDouble(tmpColorComponents[1]);
         this.blue = Double.parseDouble(tmpColorComponents[2]);

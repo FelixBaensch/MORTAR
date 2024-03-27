@@ -38,7 +38,7 @@ import java.util.List;
  * @version 1.0.2.0
  */
 public final class CollectionUtil {
-    //<editor-fold desc="Private constructor">
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -67,7 +67,7 @@ public final class CollectionUtil {
             FragmentDataModel f1;
             FragmentDataModel f2;
             DataModelPropertiesForTableView property = DataModelPropertiesForTableView.fromString(aProperty);
-            if(property == null){
+            if (property == null) {
                 throw new IllegalArgumentException("Property is not part of the data model properties that are displayed in the TableViews: " + aProperty);
             }
             try {
