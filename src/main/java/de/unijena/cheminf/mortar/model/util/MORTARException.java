@@ -23,20 +23,32 @@
  * SOFTWARE.
  */
 
-package de.unijena.cheminf.mortar.model.io;
+package de.unijena.cheminf.mortar.model.util;
 
 /**
- * Enum for types of supported file formats for chemical structure information.
+ * A checked exception that MORTAR classes can throw when no predefined Java exception fits the case.
+ * Inspired by {@link org.openscience.cdk.exception.CDKException}.
  *
- * @author Felix Baensch
+ * @author Jonas Schaub
+ * @version 1.0.0.0
  */
-public enum ChemFileTypes {
+public class MORTARException extends Exception {
     /**
-     * enum value for SDF.
+     * Constructs a new MORTARException with the given message. Calls super class constructor.
+     *
+     * @param aMessage for the constructed exception
      */
-    SDF,
+    public MORTARException(String aMessage) {
+        super(aMessage);
+    }
+    //
     /**
-     * enum value for PDB.
+     * Constructs a new MORTARException with the given message and the Throwable as cause. Calls super class constructor.
+     *
+     * @param aMessage for the constructed exception
+     * @param aCause   the Throwable that triggered this MORTARException
      */
-    PDB;
+    public MORTARException(String aMessage, Throwable aCause) {
+        super(aMessage, aCause);
+    }
 }

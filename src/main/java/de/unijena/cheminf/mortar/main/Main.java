@@ -38,7 +38,7 @@ package de.unijena.cheminf.mortar.main;
  * @version 1.0.0.0
  */
 public class Main {
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -48,7 +48,7 @@ public class Main {
     //</editor-fold>
 
     /**
-     * Main method to start the application
+     * Main method to start the application.
      *
      * @param args the command line arguments
      */

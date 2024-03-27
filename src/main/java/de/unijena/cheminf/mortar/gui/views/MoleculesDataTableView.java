@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -57,44 +58,54 @@ import java.util.List;
  * @version 1.0.1.0
  */
 public class MoleculesDataTableView extends TableView implements IDataTableView {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * TableColumn for selection state of the molecule
+     * TableColumn for selection state of the molecule.
      */
-    private TableColumn<MoleculeDataModel, Boolean> selectionColumn;
+    private final TableColumn<MoleculeDataModel, Boolean> selectionColumn;
     /**
-     * TableColumn for name of the molecule
+     * TableColumn for name of the molecule.
      */
-    private TableColumn<MoleculeDataModel, String> nameColumn;
+    private final TableColumn<MoleculeDataModel, String> nameColumn;
     /**
-     * TableColumn for 2D structure of the molecule
+     * TableColumn for 2D structure of the molecule.
      */
-    private TableColumn<MoleculeDataModel, Image> structureColumn;
+    private final TableColumn<MoleculeDataModel, Image> structureColumn;
     /**
-     * CheckBox in table header to select or deselect all items
+     * CheckBox in table header to select or deselect all items.
      */
-    private CheckBox selectAllCheckBox;
+    private final CheckBox selectAllCheckBox;
     /**
-     * Observable list which contains all items to be shown in this tableView not only the displayed ones for this page (Pagination)
+     * Observable list which contains all items to be shown in this tableView not only the displayed ones for this page (Pagination).
      */
     private ObservableList<MoleculeDataModel> itemsObservableList;
     /**
-     * ContextMenu ot the TableView
+     * ContextMenu ot the TableView.
      */
-    private ContextMenu contextMenu;
+    private final ContextMenu contextMenu;
     /**
-     * MenuItem of ContextMenu to copy selected cell to clipboard
+     * MenuItem of ContextMenu to copy selected cell to clipboard.
      */
-    private MenuItem copyMenuItem;
+    private final MenuItem copyMenuItem;
+    /**
+     * Boolean value to suppress going through all table rows and check selection status when the checx for selecting all
+     * rows was used.
+     */
     private boolean selectionAllCheckBoxAction;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public MoleculesDataTableView(){
+    public MoleculesDataTableView(IConfiguration aConfiguration) {
         super();
+        this.configuration = aConfiguration;
         this.setEditable(true);
         this.getSelectionModel().setCellSelectionEnabled(true);
         //-selectionColumn
@@ -122,7 +133,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.nameColumn.setEditable(false);
         this.nameColumn.setSortable(true);
         this.nameColumn.setCellValueFactory(new PropertyValueFactory<>(DataModelPropertiesForTableView.NAME.getText()));
-        this.nameColumn.setCellFactory(TextFieldTableCell.<MoleculeDataModel>forTableColumn());
+        this.nameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         this.nameColumn.setStyle("-fx-alignment: CENTER");
         //-structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.structureColumn.header"));
@@ -142,56 +153,57 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.setContextMenu(this.contextMenu);
         //-copyMenuItem
         this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
+        this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      * Creates a page for the pagination for the dataTableView based on page index and settings, which shows the imported
-     * molecules
+     * molecules.
      *
      * @param aPageIndex index
      * @param aSettingsContainer SettingsContainer
      * @return Node page of pagination
      */
-    public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer){
+    public Node createMoleculeTableViewPage(int aPageIndex, SettingsContainer aSettingsContainer) {
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
         int tmpFromIndex = aPageIndex * tmpRowsPerPage;
         int tmpToIndex = Math.min(tmpFromIndex + tmpRowsPerPage, this.itemsObservableList.size());
         this.getSelectAllCheckBox().setOnAction(event -> {
             this.selectionAllCheckBoxAction = true;
-            for (int i = 0; i < this.itemsObservableList.size(); i++) {
-                if(this.getSelectAllCheckBox().isSelected()){
-                    this.itemsObservableList.get(i).setSelection(true);
-                }
-                else if(!this.getSelectAllCheckBox().isSelected()){
-                    this.itemsObservableList.get(i).setSelection(false);
+            for (MoleculeDataModel moleculeDataModel : this.itemsObservableList) {
+                if (this.getSelectAllCheckBox().isSelected()) {
+                    moleculeDataModel.setSelection(true);
+                } else if (!this.getSelectAllCheckBox().isSelected()) {
+                    moleculeDataModel.setSelection(false);
                 }
             }
             this.selectionAllCheckBoxAction = false;
         });
-        this.itemsObservableList.addListener((ListChangeListener) change ->{
-            if(this.selectionAllCheckBoxAction){
+        this.itemsObservableList.addListener((ListChangeListener) change -> {
+            if (this.selectionAllCheckBoxAction) {
                 // No further action needed with column checkbox data when the select all checkbox is operated on
                 return;
             }
-            while(change.next()){
-                if(change.wasUpdated()){
+            while (change.next()) {
+                if (change.wasUpdated()) {
                     int checked = 0;
-                    for(MoleculeDataModel tmpMoleculeDataModel : this.itemsObservableList){
-                        if(tmpMoleculeDataModel.isSelected())
+                    for (MoleculeDataModel tmpMoleculeDataModel : this.itemsObservableList) {
+                        if (tmpMoleculeDataModel.isSelected()) {
                             checked++;
+                        }
                     }
-                    if(checked == this.itemsObservableList.size()){
+                    if (checked == this.itemsObservableList.size()) {
                         this.getSelectAllCheckBox().setSelected(true);
                         this.getSelectAllCheckBox().setIndeterminate(false);
-                    }
-                    else if(checked == 0){
+                    } else if(checked == 0) {
                         this.getSelectAllCheckBox().setSelected(false);
                         this.getSelectAllCheckBox().setIndeterminate(false);
-                    }
-                    else if(checked > 0){
+                    } else if(checked > 0) {
                         this.getSelectAllCheckBox().setSelected(false);
                         this.getSelectAllCheckBox().setIndeterminate(true);
                     }
@@ -199,7 +211,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
             }
         });
         List<MoleculeDataModel> tmpItems = this.itemsObservableList.subList(tmpFromIndex, tmpToIndex);
-        for(MoleculeDataModel tmpMoleculeDataModel : tmpItems){
+        for (MoleculeDataModel tmpMoleculeDataModel : tmpItems) {
             tmpMoleculeDataModel.setStructureImageWidth(this.structureColumn.getWidth());
         }
         this.setItems(FXCollections.observableArrayList(this.itemsObservableList.subList(tmpFromIndex, tmpToIndex)));
@@ -209,14 +221,14 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     //
     /**
      * Adds a change listener to the height property of table view which sets the height for structure images to
-     * each MoleculeDataModel object of the items list and refreshes the table view
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     * each MoleculeDataModel object of the items list and refreshes the table view.
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0).
      *
      * @param aSettingsContainer SettingsContainer
      */
-    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer) {
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
-            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer);
+            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer.getRowsPerPageSetting());
             this.refresh();
         });
     }
@@ -224,25 +236,25 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     //
     //<editor-fold desc="properties" defaulstate="collapsed">
     /**
-     * Returns the column which holds the checkbox to select the corresponding item
+     * Returns the column which holds the checkbox to select the corresponding item.
      *
      * @return TableColumn
      */
-    public TableColumn<MoleculeDataModel, Boolean> getSelectionColumn(){
+    public TableColumn<MoleculeDataModel, Boolean> getSelectionColumn() {
         return this.selectionColumn;
     }
     //
     /**
-     * Returns the column that holds the name of the molecule
+     * Returns the column that holds the name of the molecule.
      *
      * @return TableColumn
      */
-    public TableColumn<MoleculeDataModel, String> getNameColumn(){
+    public TableColumn<MoleculeDataModel, String> getNameColumn() {
         return this.nameColumn;
     }
     //
     /**
-     * Returns the column which shows the 2d structure of the molecule
+     * Returns the column which shows the 2d structure of the molecule.
      *
      * @return TableColumn
      */
@@ -251,33 +263,34 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
     }
     //
     /**
-     * Returns menu item to copy
+     * Returns menu item to copy.
      *
      * @return MenuItem
      */
-    public MenuItem getCopyMenuItem(){
+    public MenuItem getCopyMenuItem() {
         return this.copyMenuItem;
     }
     //
     /**
-     * Returns checkbox to de/select all molecules
+     * Returns checkbox to de/select all molecules.
      *
      * @return CheckBox
      */
-    public CheckBox getSelectAllCheckBox() { return this.selectAllCheckBox; }
+    public CheckBox getSelectAllCheckBox() {
+        return this.selectAllCheckBox;
+    }
     //
     /**
-     * Returns the items of this tableview as a list of {@link MoleculeDataModel} objects
+     * Returns the items of this tableview as a list of {@link MoleculeDataModel} objects.
      *
      * @return List items
      */
-    public List<MoleculeDataModel> getItemsList()
-    {
+    public List<MoleculeDataModel> getItemsList() {
         return this.itemsObservableList;
     }
     //
     /**
-     * Sets the given list of {@link MoleculeDataModel} objects as items of this table view
+     * Sets the given list of {@link MoleculeDataModel} objects as items of this table view.
      *
      * @param aListOfMolecules List
      */

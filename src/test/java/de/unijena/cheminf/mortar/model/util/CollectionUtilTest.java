@@ -44,11 +44,6 @@ public class CollectionUtilTest {
         for (int i = 0; i < tmpNumberOfElements.length; i++) {
             int tmpCalculatedInitialHashMapCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpNumberOfElements[i], tmpLoadFactor[i]);
             float tmpRehashThreshold = tmpCalculatedInitialHashMapCapacity * tmpLoadFactor[i];
-            System.out.println("\nNumber of elements: " + tmpNumberOfElements[i]);
-            System.out.println("Load factor: " + tmpLoadFactor[i]);
-            System.out.println("Expected initial capacity ((int) n_elements * (1/lf) + 2): " + tmpExpectedInitialCapacity[i]);
-            System.out.println("Calculated initial capacity: " + tmpCalculatedInitialHashMapCapacity);
-            System.out.println("Rehash threshold (lf * initCap, must be higher than number of elements): " + tmpRehashThreshold);
             Assertions.assertTrue(tmpNumberOfElements[i] < tmpRehashThreshold);
             Assertions.assertEquals(tmpExpectedInitialCapacity[i], tmpCalculatedInitialHashMapCapacity);
         }

@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
@@ -35,18 +36,17 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
@@ -60,66 +60,76 @@ import java.util.List;
  * @version 1.0.0.0
  */
 public class FragmentsDataTableView extends TableView implements IDataTableView{
-
-    //<editor-fold desc="private class variables", defaultstate="collapsed">
+    //<editor-fold desc="private final class constants", defaultstate="collapsed">
     /**
-     * TableColumn for 2D structure state of the fragment
+     * TableColumn for 2D structure state of the fragment.
      */
-    private TableColumn<FragmentDataModel, ImageView> structureColumn;
+    private final TableColumn<FragmentDataModel, ImageView> structureColumn;
     /**
-     * TableColumn for SMILES of the fragment
+     * TableColumn for SMILES of the fragment.
      */
-    private TableColumn<FragmentDataModel, String> smilesColumn;
+    private final TableColumn<FragmentDataModel, String> smilesColumn;
     /**
-     * TableColumn for 2D structure state of one (random/first occurred) parent molecule
+     * TableColumn for 2D structure state of one (random/first occurred) parent molecule.
      */
-    private TableColumn<FragmentDataModel, Image> parentMolColumn;
+    private final TableColumn<FragmentDataModel, Image> parentMolColumn;
     /**
-     * TableColumn for name of one (random/first occurred) parent molecule
+     * TableColumn for name of one (random/first occurred) parent molecule.
      */
-    private TableColumn<FragmentDataModel, String> parentMolNameColumn;
+    private final TableColumn<FragmentDataModel, String> parentMolNameColumn;
     /**
-     * TableColumn for frequency of the fragment
+     * TableColumn for frequency of the fragment.
      */
-    private TableColumn<FragmentDataModel, Integer> frequencyColumn;
+    private final TableColumn<FragmentDataModel, Integer> frequencyColumn;
     /**
-     * TableColumn for percentage frequency of the fragment
+     * TableColumn for percentage frequency of the fragment.
      */
-    private TableColumn<FragmentDataModel, Double> percentageColumn;
+    private final TableColumn<FragmentDataModel, Double> percentageColumn;
     /**
-     * TableColumn for the frequency in how many molecules this fragment occurs in
+     * TableColumn for the frequency in how many molecules this fragment occurs in.
      */
-    private TableColumn<FragmentDataModel, Integer> moleculeFrequencyColumn;
+    private final TableColumn<FragmentDataModel, Integer> moleculeFrequencyColumn;
     /**
-     * TableColumn for the percentage frequency in how many molecules this fragment occurs in
+     * TableColumn for the percentage frequency in how many molecules this fragment occurs in.
      */
-    private TableColumn<FragmentDataModel, Double> moleculePercentageColumn;
+    private final TableColumn<FragmentDataModel, Double> moleculePercentageColumn;
     /**
-     * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination)
+     * MenuItem of ContextMenu to copy selected cell to clipboard.
+     */
+    private final MenuItem copyMenuItem;
+    /**
+     * MenuItem of ContextMenu to open an overview view with the parent molecules of the row of the selected cell.
+     */
+    private final MenuItem overviewViewMenuItem;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    //</editor-fold>
+    //
+    //<editor-fold desc="private class variables">
+    /**
+     * ContextMenu ot the TableView.
+     */
+    private final ContextMenu contextMenu;
+    /**
+     * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination).
      */
     private List<MoleculeDataModel> itemsList;
-    /**
-     * ContextMenu ot the TableView
-     */
-    private ContextMenu contextMenu;
-    /**
-     * MenuItem of ContextMenu to copy selected cell to clipboard
-     */
-    private MenuItem copyMenuItem;
-    /**
-     * MenuItem of ContextMenu to open an overview view with the parent molecules of the row of the selected cell
-     */
-    private MenuItem overviewViewMenuItem;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public FragmentsDataTableView(){
+    public FragmentsDataTableView(IConfiguration aConfiguration){
         super();
+        this.configuration = aConfiguration;
         this.setEditable(false);
         this.getSelectionModel().setCellSelectionEnabled(true);
-//        this.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        //activate for future bulk export?
+        //this.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
         //-structureColumn
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
@@ -148,7 +158,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
             Text tmpText = new Text();
             tmpText.setTextAlignment(TextAlignment.CENTER);
             tmpCell.setGraphic(tmpText);
-            tmpCell.setPrefHeight(Control.USE_COMPUTED_SIZE);
+            tmpCell.setPrefHeight(Region.USE_COMPUTED_SIZE);
             tmpText.wrappingWidthProperty().bind(this.smilesColumn.widthProperty());
             tmpText.textProperty().bind(tmpCell.itemProperty());
             return tmpCell;
@@ -158,7 +168,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         //-parentMolColumn
         this.parentMolColumn = new TableColumn<>();
         Label tmpParentMolLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.header"));
-        tmpParentMolLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
+        tmpParentMolLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
         this.parentMolColumn.setGraphic(tmpParentMolLabel);
         this.parentMolColumn.setMinWidth(150); //magic number
         this.parentMolColumn.prefWidthProperty().bind(
@@ -173,7 +183,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         //-parentMolNameColumn
         this.parentMolNameColumn = new TableColumn<>();
         Label tmpParentNameLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.header"));
-        tmpParentNameLabel.setTooltip(new Tooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
+        tmpParentNameLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
         this.parentMolNameColumn.setGraphic(tmpParentNameLabel);
         this.parentMolNameColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.075) //magic number
@@ -206,14 +216,14 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.percentageColumn.setEditable(false);
         this.percentageColumn.setSortable(true);
         this.percentageColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.ABSOLUTE_PERCENTAGE.getText()));
-        this.percentageColumn.setCellFactory(tc -> new TableCell<>(){
+        this.percentageColumn.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double value, boolean empty){
                 super.updateItem(value, empty);
-                if(empty){
-                    setText(null);
-                } else{
-                    setText(tmpPercentageForm.format(value));
+                if (empty) {
+                    this.setText(null);
+                } else {
+                    this.setText(tmpPercentageForm.format(value));
                 }
             }
         });
@@ -246,9 +256,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
             protected void updateItem(Double value, boolean empty) {
                 super.updateItem(value, empty);
                 if (empty) {
-                    setText(null);
+                    this.setText(null);
                 } else {
-                    setText(tmpPercentageForm.format(value));
+                    this.setText(tmpPercentageForm.format(value));
                 }
             }
         });
@@ -259,7 +269,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.setContextMenu(this.contextMenu);
         //-copyMenuItem
         this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        this.copyMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
+        String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
+        this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
         //-separatorMenuItem
         this.contextMenu.getItems().add(new SeparatorMenuItem());
@@ -270,7 +283,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     * Creates and returns a fragments tableview page inside a BorderPane
+     * Creates and returns a fragments tableview page inside a BorderPane.
      *
      * @param aPageIndex int page index
      * @param aSettingsContainer SettingsContainer
@@ -287,14 +300,14 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     //
     /**
      * Adds a change listener to the height property of table view which sets the height for structure images to
-     * each MoleculeDataModel object of the items list and refreshes the table view
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     * each MoleculeDataModel object of the items list and refreshes the table view.
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0).
      *
      * @param aSettingsContainer SettingsContainer
      */
-    public void addTableViewHeightListener(SettingsContainer aSettingsContainer){
+    public void addTableViewHeightListener(SettingsContainer aSettingsContainer) {
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
-            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer);
+            GuiUtil.setImageStructureHeight(this, newValue.doubleValue(), aSettingsContainer.getRowsPerPageSetting());
             this.refresh();
         });
     }
@@ -302,72 +315,88 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * Returns the column that shows the 2d structure
+     * Returns the column that shows the 2d structure.
      *
      * @return TableColumn for 2d structure
      */
-    public TableColumn<FragmentDataModel, ImageView> getStructureColumn() { return this.structureColumn; }
+    public TableColumn<FragmentDataModel, ImageView> getStructureColumn() {
+        return this.structureColumn;
+    }
     //
     /**
-     * Returns the column that hold the SMILES
+     * Returns the column that hold the SMILES.
      *
      * @return TableColumn for SMILES
      */
-    public TableColumn<FragmentDataModel, String> getSmilesColumn() { return this.smilesColumn; }
+    public TableColumn<FragmentDataModel, String> getSmilesColumn() {
+        return this.smilesColumn;
+    }
     //
     /**
-     * Returns the column that shows the 2d structure for a parent molecule
+     * Returns the column that shows the 2d structure for a parent molecule.
      *
      * @return TableColumn for 2d structure
      */
-    public TableColumn<FragmentDataModel, Image> getParentMolColumn(){ return this.parentMolColumn; }
+    public TableColumn<FragmentDataModel, Image> getParentMolColumn(){
+        return this.parentMolColumn;
+    }
     //
     /**
-     * Returns the column that holds the name for a parent molecule
+     * Returns the column that holds the name for a parent molecule.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, String> getParentMolNameColumn() { return this.parentMolNameColumn; }
+    public TableColumn<FragmentDataModel, String> getParentMolNameColumn() {
+        return this.parentMolNameColumn;
+    }
     //
     /**
-     * Returns the column that holds the frequency how this fragment occurs
+     * Returns the column that holds the frequency how often this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Integer> getFrequencyColumn() { return this.frequencyColumn; }
+    public TableColumn<FragmentDataModel, Integer> getFrequencyColumn() {
+        return this.frequencyColumn;
+    }
     //
     /**
-     * Returns the column that holds the percentage frequency  how this fragment occurs
+     * Returns the column that holds the percentage frequency how often this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Double> getPercentageColumn() { return this.percentageColumn; }
+    public TableColumn<FragmentDataModel, Double> getPercentageColumn() {
+        return this.percentageColumn;
+    }
     //
     /**
-     * Returns the column that holds the frequency in how many molecules this fragment occurs
+     * Returns the column that holds the frequency in how many molecules this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Integer> getMoleculeFrequencyColumn() { return this.moleculeFrequencyColumn; }
+    public TableColumn<FragmentDataModel, Integer> getMoleculeFrequencyColumn() {
+        return this.moleculeFrequencyColumn;
+    }
     //
     /**
-     * Returns the column that holds the percentage frequency in how many molecules this fragment occurs
+     * Returns the column that holds the percentage frequency in how many molecules this fragment occurs.
      *
      * @return TableColumn
      */
-    public TableColumn<FragmentDataModel, Double> getMoleculePercentageColumn() { return this.moleculePercentageColumn; }
+    public TableColumn<FragmentDataModel, Double> getMoleculePercentageColumn() {
+        return this.moleculePercentageColumn;
+    }
     //
     /**
-     * Returns the MenuItem to copy
+     * Returns the MenuItem to copy.
      *
      * @return MenuItem
      */
-    public MenuItem getCopyMenuItem(){
+    public MenuItem getCopyMenuItem() {
         return this.copyMenuItem;
     }
     //
     /**
-     * Returns the MenuItem to open the parent molecules overview view
+     * Returns the MenuItem to open the parent molecules overview view.
      *
      * @return MenuItem
      */
@@ -376,14 +405,16 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     }
     //
     /**
-     * Returns the items as a list of {@link MoleculeDataModel} objects
+     * Returns the items as a list of {@link MoleculeDataModel} objects.
      *
      * @return List
      */
-    public List<MoleculeDataModel> getItemsList() { return this.itemsList; }
+    public List<MoleculeDataModel> getItemsList() {
+        return this.itemsList;
+    }
     //
     /**
-     * Sets the given list of {@link MoleculeDataModel} objects as items
+     * Sets the given list of {@link MoleculeDataModel} objects as items.
      *
      * @param aListOfFragments  list of fragments to set as items
      */

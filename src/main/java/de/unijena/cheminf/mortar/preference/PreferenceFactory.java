@@ -25,18 +25,13 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - implement method that initializes a whole new IPreference object?
- * - newly added preference classes need to be added to 'reinitializePreference()' method
- */
-
 import java.io.BufferedReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Utility class for creating IPreference objects.
+ * Utility class for creating IPreference objects. Note for developers: newly added preference classes need to be added
+ * to 'reinitializePreference()' method.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
@@ -49,7 +44,7 @@ public final class PreferenceFactory {
     private static final Logger LOGGER = Logger.getLogger(PreferenceFactory.class.getName());
     //</editor-fold>
     //
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold defaultstate="collapsed" desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.

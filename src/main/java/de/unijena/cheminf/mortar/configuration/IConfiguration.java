@@ -23,20 +23,23 @@
  * SOFTWARE.
  */
 
-package de.unijena.cheminf.mortar.model.io;
+package de.unijena.cheminf.mortar.configuration;
+
+import java.util.MissingResourceException;
 
 /**
- * Enum for types of supported file formats for chemical structure information.
+ * Interface for classes reading configuration properties files, e.g. for paths to resource folders.
  *
- * @author Felix Baensch
+ * @author Jonas Schaub
+ * @version 1.0.0.0
  */
-public enum ChemFileTypes {
+public interface IConfiguration {
     /**
-     * enum value for SDF.
+     * Returns the string value associated with the key in the configurations properties file.
+     *
+     * @param aKey key defined in the configuration properties file
+     * @return property value associated with the given key
+     * @throws MissingResourceException if no associated value could be found for the given key
      */
-    SDF,
-    /**
-     * enum value for PDB.
-     */
-    PDB;
+    public String getProperty(String aKey) throws MissingResourceException;
 }

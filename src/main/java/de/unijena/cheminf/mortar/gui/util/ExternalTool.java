@@ -26,41 +26,40 @@
 package de.unijena.cheminf.mortar.gui.util;
 
 /**
- * Wrapper class to visualize information about external tools used in MORTAR in the AboutView
+ * Wrapper class to visualize information about external tools used in MORTAR in the AboutView.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class ExternalTool {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * Name of the tool
+     * Name of the tool.
      */
     private String name;
     /**
-     * Number string of the used version of the tool
+     * Number string of the used version of the tool.
      */
     private String version;
     /**
-     * Author(s) of the tool
+     * Author(s) of the tool.
      */
     private String author;
     /**
-     * License of the tool
+     * License of the tool.
      */
     private String license;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      *
      * @param aName Name of tool
      * @param aVersion Version used
      * @param anAuthor Author
      * @param aLicense License used
      */
-    public ExternalTool(String aName, String aVersion, String anAuthor, String aLicense){
+    public ExternalTool(String aName, String aVersion, String anAuthor, String aLicense) {
         this.name = aName;
         this.version = aVersion;
         this.author = anAuthor;
@@ -69,7 +68,7 @@ public class ExternalTool {
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns name as String
+     * Returns name as String.
      *
      * @return {@link String}
      */
@@ -78,7 +77,7 @@ public class ExternalTool {
     }
     //
     /**
-     * Returns version number as String
+     * Returns version number as String.
      *
      * @return {@link String}
      */
@@ -87,7 +86,7 @@ public class ExternalTool {
     }
     //
     /**
-     * Returns author(s) name
+     * Returns author(s) name.
      *
      * @return {@link String}
      */
@@ -96,7 +95,7 @@ public class ExternalTool {
     }
     //
     /**
-     * Returns license
+     * Returns license.
      *
      * @return {@link String}
      */
@@ -105,7 +104,8 @@ public class ExternalTool {
     }
     //
     /**
-     * Sets given String as name
+     * Sets given String as name.
+     *
      * @param name {@link String}
      */
     public void setName(String name) {
@@ -113,7 +113,7 @@ public class ExternalTool {
     }
     //
     /**
-     * Sets given String as version
+     * Sets given String as version.
      *
      * @param version {@link String}
      */
@@ -122,7 +122,7 @@ public class ExternalTool {
     }
     //
     /**
-     * Sets given String as author
+     * Sets given String as author.
      *
      * @param author {@link String}
      */
@@ -131,7 +131,7 @@ public class ExternalTool {
     }
     //
     /**
-     * Sets given String as license
+     * Sets given String as license.
      *
      * @param license {@link String}
      */

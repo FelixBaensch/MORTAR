@@ -37,22 +37,18 @@ public enum PreferenceType {
      * Constant associated with class BooleanPreference.
      */
     BOOLEAN,
-
     /**
      * Constant associated with class RGBColorPreference.
      */
     RGB_COLOR,
-
     /**
      * Constant associated with class SingleIntegerPreference.
      */
     SINGLE_INTEGER,
-
     /**
      * Constant associated with class SingleNumberPreference.
      */
     SINGLE_NUMBER,
-
     /**
      * Constant associated with class SingleTermPreference.
      */

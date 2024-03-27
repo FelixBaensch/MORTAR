@@ -25,12 +25,6 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - Implement preference container reference (GUID) to ensure that no preference is added to multiple preference
- *      containers?
- */
-
 import java.io.PrintWriter;
 
 /**
@@ -39,7 +33,7 @@ import java.io.PrintWriter;
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
-public interface IPreference extends Comparable<IPreference>, Cloneable {
+public interface IPreference extends Comparable<IPreference> {
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
     /**
      * Returns the name of this preference.
@@ -126,16 +120,7 @@ public interface IPreference extends Comparable<IPreference>, Cloneable {
     public int hashCode();
     //</editor-fold>
     //
-    //<editor-fold defaultstate="collapsed" desc="Cloning and copying">
-    /**
-     * Returns a clone of this preference object. When implementing this method the compiler recognizes it as an
-     * override of the clone method in class Object.
-     *
-     * @return a clone of this preference object
-     * @throws CloneNotSupportedException if cloning this specific object fails
-     */
-    public IPreference clone() throws CloneNotSupportedException;
-
+    //<editor-fold defaultstate="collapsed" desc="Copying">
     /**
      * Returns a deep copy of this object.
      *

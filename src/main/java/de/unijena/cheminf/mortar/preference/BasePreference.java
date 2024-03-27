@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.preference;
 
 import java.util.Objects;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -43,11 +42,11 @@ public abstract class BasePreference implements IPreference {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
      * Preference name regex pattern.
-     * Allowed characters: 1-9, a-z, A-z, -, [], (), {}, ., space (ASCII 32, hexadecimal value: 20, see below) and ,.
+     * Allowed characters: 1-9, a-z, A-z, -, [], (), {}, ., space (ASCII 32, hexadecimal value: 20, see below), and ,.
      * The first character must be a capital letter.
      * '#' is reserved for comments in text files for persisting objects.
      */
-    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z]{1}+[0-9a-zA-Z\\.\\,\\-\\[\\]\\(\\)\\{\\}\\x20]*+\\z");
+    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z][0-9a-zA-Z.,\\-\\[\\](){}\\x20]*+\\z");
 
     /**
      * Seed for hashCode() method.
@@ -58,11 +57,6 @@ public abstract class BasePreference implements IPreference {
      * Factor for including GUID string in hash code produced by hashCode() method.
      */
     private static final int HASH_FACTOR_GUID = 919;
-
-    /**
-     * Logger of this class.
-     */
-    private static final Logger LOGGER = Logger.getLogger(BasePreference.class.getName());
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Protected class variables">
@@ -88,14 +82,13 @@ public abstract class BasePreference implements IPreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public abstract methods">
-    @Override
-    public abstract IPreference clone() throws CloneNotSupportedException;
 
     @Override
     public abstract String toString();
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getName() {
         return this.name;
@@ -109,6 +102,7 @@ public abstract class BasePreference implements IPreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
     //<editor-fold defaultstate="collapsed" desc="Comparing and sorting">
+
     @Override
     public int compareTo(IPreference aPreference) throws NullPointerException {
         Objects.requireNonNull(aPreference, "aPreference is 'null'");
@@ -131,7 +125,7 @@ public abstract class BasePreference implements IPreference {
     @Override
     public int hashCode() {
         int tmpHash = BasePreference.HASH_SEED;
-        tmpHash = BasePreference.HASH_FACTOR_GUID * tmpHash + Objects.hashCode(this.guid);
+        tmpHash = BasePreference.HASH_FACTOR_GUID * tmpHash + this.guid.hashCode();
         return tmpHash;
     }
     //</editor-fold>

@@ -25,11 +25,6 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - Implement clone()
- */
-
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import java.io.BufferedReader;
@@ -64,7 +59,7 @@ public class BooleanPreference extends BasePreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Private class variables">
     /**
-     * Boolean content of this preference
+     * Boolean content of this preference.
      */
     private boolean content;
     //</editor-fold>
@@ -107,7 +102,7 @@ public class BooleanPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             BooleanPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -117,6 +112,7 @@ public class BooleanPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getContentRepresentative() {
         return Boolean.toString(this.content);
@@ -154,15 +150,11 @@ public class BooleanPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public BooleanPreference copy() {
-        BooleanPreference tmpCopy = new BooleanPreference(new String(this.name), Boolean.valueOf(this.content));
-        tmpCopy.guid = new String(this.guid);
+        BooleanPreference tmpCopy = new BooleanPreference(this.name, this.content);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -171,12 +163,12 @@ public class BooleanPreference extends BasePreference {
         aPrintWriter.println(BooleanPreference.VERSION);
         aPrintWriter.println(this.name);
         aPrintWriter.println(this.guid);
-        aPrintWriter.println(Boolean.toString(this.content));
+        aPrintWriter.println(this.content);
     }
 
     @Override
     public String toString() {
-        return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + Boolean.toString(this.content);
+        return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + this.content;
     }
     //</editor-fold>
     //
@@ -184,7 +176,7 @@ public class BooleanPreference extends BasePreference {
     /**
      * (Re-)instantiates a new BooleanPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         this.content = Boolean.parseBoolean(aReader.readLine());

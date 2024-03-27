@@ -25,7 +25,12 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
+
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -34,7 +39,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * File utility
+ * File utility.
  *
  * @author Achim Zielesny, Jonas Schaub, Felix Baensch
  * @version 1.0.0.0
@@ -42,7 +47,7 @@ import java.util.logging.Logger;
 public final class FileUtil {
     //<editor-fold desc="Private static class variables" defaultstate="collapsed">
     /**
-     * Cache String for app dir path
+     * Cache String for app dir path.
      */
     private static String appDirPath = null;
     //</editor-fold>
@@ -52,9 +57,23 @@ public final class FileUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(FileUtil.class.getName());
+    //
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private static final IConfiguration CONFIGURATION;
+    static {
+        try {
+            CONFIGURATION = Configuration.getInstance();
+        } catch (IOException anIOException) {
+            //when MORTAR is run via MainApp.start(), the correct initialization of Configuration is checked there before
+            // FileUtil is accessed and this static initializer called
+            throw new NullPointerException("Configuration could not be initialized");
+        }
+    }
     //</editor-fold>
     //
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -93,7 +112,7 @@ public final class FileUtil {
     /**
      * Returns the name of the file without the file extension.
      *
-     * @param aFile whose name should ne return without extension
+     * @param aFile whose name should be returned without extension
      * @return file name without extension
      * @throws NullPointerException if given file is 'null'
      */
@@ -101,11 +120,11 @@ public final class FileUtil {
         //<editor-fold defaultstate="collapsed" desc="Checks">
         Objects.requireNonNull(aFile, "Given file is 'null'.");
         //</editor-fold>
-        return aFile.getName().replaceFirst("[.][^.]+$", ""); //cuts the
+        return aFile.getName().replaceFirst("[.][^.]+$", "");
     }
 
     /**
-     * Deletes single file
+     * Deletes single file.
      *
      * @param aFilePathname Full pathname of file to be deleted (may be null
      * then false is returned)
@@ -113,19 +132,18 @@ public final class FileUtil {
      */
     public static boolean deleteSingleFile(String aFilePathname) {
         // <editor-fold defaultstate="collapsed" desc="Checks">
-        if (aFilePathname == null ||
-                aFilePathname.isEmpty()
-        ) {
+        if (aFilePathname == null || aFilePathname.isEmpty()) {
             return false;
         }
         // </editor-fold>
         try {
             File tmpFile = new File(aFilePathname);
-            if (!tmpFile.isFile()) {
-                return true;
-            } else {
-                return tmpFile.delete();
+            if (tmpFile.isFile()) {
+                Files.delete(tmpFile.toPath());
             }
+            //if it is not a file, it does not exist and therefore must not be deleted
+            //if delete fails, it goes to catch, logs the detailed exception and returns false
+            return true;
         } catch (Exception anException) {
             FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             return false;
@@ -147,30 +165,27 @@ public final class FileUtil {
             return false;
         }
         // </editor-fold>
+        boolean tmpAllFilesDeletedSuccessfully = true;
         try {
             File tmpDirectory = new File(aDirectoryPath);
             if (!tmpDirectory.isDirectory()) {
                 return false;
             }
             File[] tmpFilesArray = tmpDirectory.listFiles();
-            boolean tmpAllFilesDeletedSuccessfully = true;
             for (File tmpFile : tmpFilesArray) {
                 if (tmpFile.isFile()) {
-                    boolean tmpFileDeleted = tmpFile.delete();
-                    if (!tmpFileDeleted) {
-                        tmpAllFilesDeletedSuccessfully = false;
-                    }
+                    Files.delete(tmpFile.toPath());
                 }
             }
-            return tmpAllFilesDeletedSuccessfully;
         } catch (Exception anException) {
             FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return false;
+            tmpAllFilesDeletedSuccessfully = false;
         }
+        return tmpAllFilesDeletedSuccessfully;
     }
 
     /**
-     * Creates directory and all non-existent ancestor directories if necessary
+     * Creates directory and all non-existent ancestor directories if necessary.
      *
      * @param aDirectoryPath Full directory path to be created
      * @return true: Directory already existed or was successfully created,
@@ -197,7 +212,7 @@ public final class FileUtil {
     }
 
     /**
-     * Creates empty file
+     * Creates empty file.
      *
      * @param aFilePathname Full file pathname
      * @return True: Empty file was created, false: Otherwise
@@ -228,7 +243,7 @@ public final class FileUtil {
      * path cannot be determined or data directory cannot be created
      */
     public static String getAppDirPath() throws SecurityException {
-        if(FileUtil.appDirPath != null){
+        if (FileUtil.appDirPath != null) {
             return FileUtil.appDirPath;
         }
         String tmpAppDir;
@@ -246,10 +261,10 @@ public final class FileUtil {
             throw new SecurityException("AppData (Windows) or user home directory path " + tmpAppDir + " is either no directory or does not exist.");
         if (tmpOS.contains("MAC"))
             tmpAppDir += File.separator + "Library" + File.separator + "Application Support";
-        tmpAppDir += File.separator + BasicDefinitions.MORTAR_VENDOR + File.separator + BasicDefinitions.MORTAR_DATA_DIRECTORY;
+        tmpAppDir += File.separator + FileUtil.CONFIGURATION.getProperty("mortar.vendor.name") + File.separator + FileUtil.CONFIGURATION.getProperty("mortar.dataDirectory.name");
         tmpAppDirFile = new File(tmpAppDir);
         boolean tmpSuccessful = true;
-        if(!tmpAppDirFile.exists())
+        if (!tmpAppDirFile.exists())
             tmpSuccessful = tmpAppDirFile.mkdirs();
         if (!tmpSuccessful)
             throw new SecurityException("Unable to create application data directory");
@@ -265,20 +280,23 @@ public final class FileUtil {
      * path cannot be determined or data directory cannot be created
      */
     public static String getSettingsDirPath() throws SecurityException {
-        return FileUtil.getAppDirPath() + File.separator + BasicDefinitions.SETTINGS_CONTAINER_FILE_DIRECTORY + File.separator;
+        return FileUtil.getAppDirPath() + File.separator + FileUtil.CONFIGURATION.getProperty("mortar.settingsDirectory.name") + File.separator;
     }
 
     /**
      * Returns a timestamp to add to a filename.
      *
-     * @throws DateTimeException if the time cannot be determined or formatted
-     * @return timestamp filename extension
+     * @return timestamp filename extension or a placeholder string if time stamp creation failed
      */
     public static String getTimeStampFileNameExtension() throws DateTimeException {
-        LocalDateTime tmpDateTime = LocalDateTime.now();
-        String tmpDateTimeAddition = tmpDateTime.format(DateTimeFormatter.ofPattern(
-                BasicDefinitions.FILENAME_TIMESTAMP_FORMAT));
-        return tmpDateTimeAddition;
+        try {
+            LocalDateTime tmpDateTime = LocalDateTime.now();
+            String tmpDateTimeAddition = tmpDateTime.format(DateTimeFormatter.ofPattern(BasicDefinitions.FILENAME_TIMESTAMP_FORMAT));
+            return tmpDateTimeAddition;
+        } catch (Exception e) {
+            FileUtil.LOGGER.log(Level.WARNING, e.toString(), e);
+            return BasicDefinitions.FILENAME_TIMESTAMP_FORMAT;
+        }
     }
 
     /**
@@ -299,16 +317,15 @@ public final class FileUtil {
         if (tmpLastChar == File.separatorChar)
             throw new IllegalArgumentException("Given file path is a directory.");
         //</editor-fold>
-        String tmpFilePath = aFilePath;
         String tmpFileExtension = aFileExtension;
         if (Objects.isNull(tmpFileExtension)) {
             tmpFileExtension = "";
         }
         int tmpFilesInThisMinuteCounter = 1;
-        File tmpFile = new File(tmpFilePath+ tmpFileExtension);
+        File tmpFile = new File(aFilePath + tmpFileExtension);
         if (tmpFile.exists()) {
-            while (tmpFilesInThisMinuteCounter <= Integer.MAX_VALUE) {
-                tmpFile = new File(tmpFilePath + "(" + tmpFilesInThisMinuteCounter + ")" + tmpFileExtension);
+            while (true) {
+                tmpFile = new File(aFilePath + "(" + tmpFilesInThisMinuteCounter + ")" + tmpFileExtension);
                 if (!tmpFile.exists()) {
                     break;
                 }
@@ -320,7 +337,35 @@ public final class FileUtil {
             String tmpNonExistingFilePath = tmpFile.getPath();
             return tmpNonExistingFilePath;
         } else {
-            return tmpFilePath + tmpFileExtension;
+            return aFilePath + tmpFileExtension;
+        }
+    }
+    //
+    /**
+     * Opens given path in OS depending explorer equivalent.
+     *
+     * @param aPath path to open
+     * @throws IllegalArgumentException if the given path is empty, blank, or null
+     * @throws SecurityException if the directory could not be opened
+     */
+    public static void openFilePathInExplorer(String aPath) throws SecurityException {
+        if (Objects.isNull(aPath) || aPath.isEmpty() || aPath.isBlank()) {
+            throw new IllegalArgumentException("Given file path is null or empty.");
+        }
+        String tmpOS = System.getProperty("os.name").toUpperCase();
+        try {
+            if (tmpOS.contains("WIN")) {
+                Runtime.getRuntime().exec(new String[]{"explorer", "/open,", aPath});
+            } else if (tmpOS.contains("MAC")) {
+                Runtime.getRuntime().exec(new String[]{"open", "-R", aPath});
+            } else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX")) {
+                Runtime.getRuntime().exec(new String[]{"gio", "open", aPath});
+            } else {
+                throw new SecurityException("OS name " + tmpOS + " unknown.");
+            }
+        } catch (IOException anException) {
+            FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            throw new SecurityException("Could not open directory path");
         }
     }
     // </editor-fold>

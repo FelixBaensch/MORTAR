@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.model.util;
 
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * A generic sort wrapper that can be compared to another object (e.g. for sorting) via a specified sort string.
@@ -35,13 +34,8 @@ import java.util.logging.Logger;
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
-public class StringSortWrapper<T> implements Comparable<StringSortWrapper>{
+public class StringSortWrapper<T> implements Comparable<StringSortWrapper<T>>{
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
-    /**
-     * Logger of this class.
-     */
-    private static final Logger LOGGER = Logger.getLogger(StringSortWrapper.class.getName());
-
     /**
      * Seed for hashCode() method.
      */
@@ -140,7 +134,7 @@ public class StringSortWrapper<T> implements Comparable<StringSortWrapper>{
         if (anObject == null || (anObject.getClass() != this.getClass())) {
             return false;
         }
-        StringSortWrapper tmpStringSortWrapper = (StringSortWrapper) anObject;
+        StringSortWrapper<T> tmpStringSortWrapper = (StringSortWrapper<T>) anObject;
         return this.hashCode() == tmpStringSortWrapper.hashCode();
     }
 

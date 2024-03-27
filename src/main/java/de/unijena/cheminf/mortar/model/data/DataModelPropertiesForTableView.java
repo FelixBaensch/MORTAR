@@ -26,56 +26,59 @@
 package de.unijena.cheminf.mortar.model.data;
 
 /**
- * Enum for the data model properties that are displayed in the TableViews
+ * Enum for the data model properties that are displayed in the TableViews. Note that the textual representations are
+ * used to find the respective property of the data classes that should be used to fill a specific column in the table
+ * views, e.g. "name" textual representation of NAME is used in the MoleculesDatatableView as property for the cell value
+ * factory of the names column, so that MoleculeDataModel.getName() is invoked to fill the cells of this column.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public enum DataModelPropertiesForTableView {
     /**
-     * Enum for name property
+     * Enum for name property.
      */
     NAME ("name"),
     /**
-     * Enum for uniqueSmiles property
+     * Enum for uniqueSmiles property.
      */
     UNIQUE_SMILES ("uniqueSmiles"),
     /**
-     * Enum for parentMoleculeName property
+     * Enum for parentMoleculeName property.
      */
     PARENT_MOLECULE_NAME ("parentMoleculeName"),
     /**
-     * Enum for absoluteFrequency property
+     * Enum for absoluteFrequency property.
      */
     ABSOLUTE_FREQUENCY ("absoluteFrequency"),
     /**
-     * Enum for absolutePercentage property
+     * Enum for absolutePercentage property.
      */
     ABSOLUTE_PERCENTAGE ("absolutePercentage"),
     /**
-     * Enum for moleculeFrequency property
+     * Enum for moleculeFrequency property.
      */
     MOLECULE_FREQUENCY ("moleculeFrequency"),
     /**
-     * Enum for moleculePercentage property
+     * Enum for moleculePercentage property.
      */
     MOLECULE_PERCENTAGE ("moleculePercentage"),
     /**
-     * Enum for structure property
+     * Enum for structure property.
      */
-    STRUCTURE("structure"),
+    STRUCTURE ("structure"),
     /**
-     * Enum for parent molecule structure property
+     * Enum for parent molecule structure property.
      */
-    PARENT_MOLECULE_STRUCTURE("parentMoleculeStructure");
+    PARENT_MOLECULE_STRUCTURE ("parentMoleculeStructure");
     //
     /**
-     * String representation
+     * String representation.
      */
     private final String text;
     //
     /**
-     * Constructor
+     * Constructor.
      *
      * @param aText String representation of enum property
      */
@@ -84,7 +87,7 @@ public enum DataModelPropertiesForTableView {
     }
     //
     /**
-     * Gets String representation
+     * Gets String representation.
      *
      * @return text String representation
      */
@@ -100,7 +103,7 @@ public enum DataModelPropertiesForTableView {
      */
     public static DataModelPropertiesForTableView fromString(String aText) {
         for (DataModelPropertiesForTableView property : DataModelPropertiesForTableView.values()) {
-            if(property.text.equalsIgnoreCase(aText)) {
+            if (property.text.equalsIgnoreCase(aText)) {
                 return property;
             }
         }

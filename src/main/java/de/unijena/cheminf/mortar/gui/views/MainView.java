@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.controls.MainMenuBar;
 import de.unijena.cheminf.mortar.gui.controls.StatusBar;
 
@@ -36,41 +37,49 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /**
- * MainView Class of MORTAR.
+ * MainView class of MORTAR.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class MainView extends AnchorPane {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private BorderPane mainBorderPane;
-    private Pane mainCenterPane;
-    private MainMenuBar mainMenuBar;
-    private StatusBar statusBar;
-
-    //</editor-fold>
-
+    private final BorderPane mainBorderPane;
+    private final Pane mainCenterPane;
+    private final MainMenuBar mainMenuBar;
+    private final StatusBar statusBar;
     /**
-     * Constructor
-     *
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    //</editor-fold>
+    /**
      * Initialises the variables and fields and adds the components to the frame.
      * No event listeners are added to any component.
+     *
+     * @param aConfiguration configuration class reading from properties file
      */
-    public MainView(){
+    public MainView(IConfiguration aConfiguration) {
         super();
+        this.configuration = aConfiguration;
         //BorderPane
         this.mainBorderPane = new BorderPane();
-        MainView.setTopAnchor(this.mainBorderPane, 0.0);
-        MainView.setBottomAnchor(this.mainBorderPane, 0.0);
-        MainView.setLeftAnchor(this.mainBorderPane, 0.0);
-        MainView.setRightAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setTopAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setBottomAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setLeftAnchor(this.mainBorderPane, 0.0);
+        AnchorPane.setRightAnchor(this.mainBorderPane, 0.0);
         HBox.setHgrow(this.mainBorderPane, Priority.ALWAYS);
         VBox.setVgrow(this.mainBorderPane, Priority.ALWAYS);
         //mainCenterPane
         this.mainCenterPane = new Pane();
         this.mainCenterPane.setStyle("-fx-background-color: LIGHTGREY");
-        this.mainCenterPane.setStyle("-fx-background-image: url('/de/unijena/cheminf/mortar/images/Mortar_Logo1_alpha50.png'); -fx-background-repeat: no-repeat; -fx-background-size: 521 362; -fx-background-position: center center;");
+        String tmpLogoURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.withHalfAlpha.name")).toExternalForm();
+        this.mainCenterPane.setStyle("-fx-background-image: url('" + tmpLogoURL + "'); "
+                + "-fx-background-repeat: no-repeat; "
+                + "-fx-background-size: 521 362; "
+                + "-fx-background-position: center center;");
         this.mainBorderPane.setCenter(this.mainCenterPane);
         //menuBar
         this.mainMenuBar = new MainMenuBar();
@@ -79,13 +88,12 @@ public class MainView extends AnchorPane {
         this.statusBar = new StatusBar();
         this.mainBorderPane.setBottom(this.statusBar);
         this.getChildren().add(this.mainBorderPane);
-
     }
-
     //<editor-fold desc="public properties" defaultstate="collapsed">
     //<editor-fold desc="getMainMenuBar" defaultstate="collapsed">
     /**
-     * Returns the main menubar that contains menus for file handling (I/O), shutting down the application, settings and help menu entries
+     * Returns the main menubar that contains menus for file handling (I/O), shutting down the application, settings and help menu entries.
+     *
      * @return main menubar
      */
     public MainMenuBar getMainMenuBar() {
@@ -95,7 +103,8 @@ public class MainView extends AnchorPane {
     //
     //<editor-fold desc="getMainCenterPane" defaultstate="collapsed">
     /**
-     * Returns the main center pane that contains
+     * Returns the main center pane that contains the GUI elements.
+     *
      * @return main center pane that is supposed to contain GUI elements of interest
      */
     public Pane getMainCenterPane() {
@@ -105,7 +114,8 @@ public class MainView extends AnchorPane {
     //
     //<editor-fold desc="getMainMenuBar" defaultstate="collapsed">
     /**
-     * Returns the status bar
+     * Returns the status bar.
+     *
      * @return statusBar
      */
     public StatusBar getStatusBar() {

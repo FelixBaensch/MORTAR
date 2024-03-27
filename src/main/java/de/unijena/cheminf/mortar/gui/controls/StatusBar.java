@@ -35,26 +35,25 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.FlowPane;
 
 /**
- * StatusBar to show status of the application and progress of a running task
+ * StatusBar to show status of the application and progress of a running task.
  *
  * @author Felix Baensch, Jonas Schaub
  * @version 1.0.0.0
  */
 public class StatusBar extends FlowPane {
-
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
-     * Label to show status message
+     * Label to show status message.
      */
-    private Label statusLabel;
+    private final Label statusLabel;
     /**
-     * ProgressBar
+     * ProgressBar.
      */
-    private ProgressBar progressBar;
+    private final ProgressBar progressBar;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      */
     public StatusBar(){
         super();
@@ -73,7 +72,8 @@ public class StatusBar extends FlowPane {
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * Returns statusLabel
+     * Returns statusLabel.
+     *
      * @return Label
      */
     public Label getStatusLabel() {
@@ -81,7 +81,8 @@ public class StatusBar extends FlowPane {
     }
     //
     /**
-     * Returns the progressBar
+     * Returns the progressBar.
+     *
      * @return ProgressBar
      */
     public ProgressBar getProgressBar() {

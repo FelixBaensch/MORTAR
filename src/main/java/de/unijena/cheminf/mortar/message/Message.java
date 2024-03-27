@@ -32,13 +32,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Message
+ * Message.
  *
  * @author Felix Baensch, Jonas Schaub
  * @version 1.0.0.0
  */
 public class Message {
-
     //<editor-fold defaultstate="collapsed" desc="Public static final class constants">
     /**
      * Logger of this class.
@@ -48,22 +47,22 @@ public class Message {
     //
     //<editor-fold desc="Private class variables" defaultstate="collapsed">
     /**
-     * Resource bundle name
+     * Resource bundle name.
      */
     private static final String BUNDLE_NAME = "de.unijena.cheminf.mortar.message.Message";
     /**
-     * Locale default
+     * Locale default.
      */
     private static final Locale LOCALE_DEFAULT = Locale.getDefault();
     /**
-     * Resource bundle
+     * Resource bundle.
      */
     private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME, LOCALE_DEFAULT);
     //</editor-fold>
     //
     //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
-     * Private constructor
+     * Private constructor.
      */
     private Message(){
     }
@@ -71,16 +70,16 @@ public class Message {
     //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
     /**
-     * Return resource string for key
+     * Return resource string for key. If the key is not found in the resource bundle, a string stating that is returned.
      *
      * @param aKey Key
      * @return Resource string for key
      */
-    public static String get(String aKey){
-        try{
+    public static String get(String aKey) {
+        try {
             return RESOURCE_BUNDLE.getString(aKey).trim();
-        } catch (MissingResourceException | NullPointerException anException){
-            Message.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        } catch (MissingResourceException | NullPointerException anException) {
+            Message.LOGGER.log(Level.WARNING, anException.toString(), anException);
             return "Key '" + aKey + "' not found.";
         }
     }
