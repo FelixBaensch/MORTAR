@@ -694,6 +694,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     }
 
     @Override
+    public String getFragmentationAlgorithmDisplayName() {
+        return Message.get("ErtlFunctionalGroupsFinderFragmenter.displayName");
+    }
+
+    @Override
     public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSetting() {
         return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }

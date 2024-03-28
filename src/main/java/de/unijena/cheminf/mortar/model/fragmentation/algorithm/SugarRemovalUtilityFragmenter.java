@@ -1103,6 +1103,11 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
+    public String getFragmentationAlgorithmDisplayName() {
+        return Message.get("SugarRemovalUtilityFragmenter.displayName");
+    }
+
+    @Override
     public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSetting() {
         return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }

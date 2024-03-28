@@ -988,6 +988,11 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
+    public String getFragmentationAlgorithmDisplayName() {
+        return Message.get("ScaffoldGeneratorFragmenter.displayName");
+    }
+
+    @Override
     public FragmentSaturationOption getFragmentSaturationSetting() {
         return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }

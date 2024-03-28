@@ -303,6 +303,14 @@ public interface IMoleculeFragmenter {
     public String getFragmentationAlgorithmName();
 
     /**
+     * Returns a language-specific name of the fragmenter to be used in the GUI.
+     * The given name must be unique among the available fragmentation algorithms!
+     *
+     * @return language-specific name for display in GUI
+     */
+    public String getFragmentationAlgorithmDisplayName();
+
+    /**
      * Returns the currently set option for saturating free valences on returned fragment molecules.
      *
      * @return the set option

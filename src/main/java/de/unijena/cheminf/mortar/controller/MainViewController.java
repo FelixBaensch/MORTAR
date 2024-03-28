@@ -760,7 +760,9 @@ public class MainViewController {
             RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmName());
             tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
             this.mainView.getMainMenuBar().getFragmentationAlgorithmMenu().getItems().add(tmpRadioMenuItem);
-            if (!Objects.isNull(this.fragmentationService.getSelectedFragmenter()) && tmpFragmenter.getFragmentationAlgorithmName().equals(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())) {
+            if (!Objects.isNull(this.fragmentationService.getSelectedFragmenter())
+                    && tmpFragmenter.getFragmentationAlgorithmName()
+                        .equals(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())) {
                 tmpToggleGroup.selectToggle(tmpRadioMenuItem);
             }
         }
@@ -792,6 +794,12 @@ public class MainViewController {
                     if (tmpPageIndex > tmpPageCount) {
                         tmpPageIndex = tmpPageCount;
                     }
+                    /*
+                    the following might cause "javafx.scene.control.skin.VirtualFlow addTrailingCells
+                    INFO: index exceeds maxCellCount. Check size calculations for class javafx.scene.control.TableRow"
+                    when the new rows per page value is smaller than the older one, but it is not a real problem;
+                    the refreshed GUI just needs to "scroll" to a different position
+                    */
                     ((GridTabForTableView) tmpTab).getPagination().setPageCount(tmpPageCount);
                     ((GridTabForTableView) tmpTab).getPagination().setCurrentPageIndex(tmpPageIndex);
                     ((GridTabForTableView) tmpTab).getTableView().refresh();
