@@ -818,12 +818,12 @@ public class HistogramViewController implements IViewToolController {
         this.histogramView.getDisplayedFragmentsNumberTextField().setTextFormatter(
                 new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
                         this.displayedFragmentsNumberSetting.get(), //default value
-                        GuiUtil.getPositiveIntegerWithoutZeroFilter())
+                        GuiUtil.getPositiveIntegerFilter(false))
         );
         this.histogramView.getMaximumSMILESLengthTextField().setTextFormatter(
                 new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
                         this.maximumSMILESLengthSetting.get(), //default value
-                        GuiUtil.getPositiveIntegerWithoutZeroFilter())
+                        GuiUtil.getPositiveIntegerFilter(false))
         );
         //disable apply button if both(!) text fields are empty
         this.histogramView.getApplyButton().disableProperty().bind(

@@ -221,7 +221,12 @@ public class SettingsView extends AnchorPane {
                     tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
                     tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
-                    TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
+                    int tmpDefaultValue = 0;
+                    //note: setting the filter to only accept positive integers including zero is an assumption that is true
+                    // for all settings so far but might have to be changed in the future
+                    TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                            tmpDefaultValue,
+                            GuiUtil.getPositiveIntegerFilter(true));
                     tmpIntegerTextField.setTextFormatter(tmpFormatter);
                     tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
                     tmpIntegerTextField.setTooltip(tmpTooltip);

@@ -227,7 +227,7 @@ public class OverviewView extends AnchorPane {
         this.columnsPerPageTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.columnsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         this.columnsPerPageTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aColumnsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+                aColumnsPerPage, GuiUtil.getPositiveIntegerFilter(false)));
         this.columnsPerPageTextField.setTooltip(tmpColumnsPerPageTooltip);
         Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
         tmpRowsPerPageLabel.setMinWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
@@ -244,7 +244,7 @@ public class OverviewView extends AnchorPane {
         this.rowsPerPageTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.rowsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         this.rowsPerPageTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aRowsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+                aRowsPerPage, GuiUtil.getPositiveIntegerFilter(false)));
         this.rowsPerPageTextField.setTooltip(tmpRowsPerPageTooltip);
         //
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.applyButton.text"));

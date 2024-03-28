@@ -114,7 +114,10 @@ public class CustomPaginationSkin extends PaginationSkin {
         this.jumpToTextField.setMinWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
         this.jumpToTextField.setPrefWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
         this.jumpToTextField.setAlignment(Pos.CENTER_RIGHT);
-        this.jumpToTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), tmpPagination.getCurrentPageIndex()+1, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+        int tmpDefaultValue = tmpPagination.getCurrentPageIndex() + 1;
+        this.jumpToTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                tmpDefaultValue,
+                GuiUtil.getPositiveIntegerFilter(false)));
         this.jumpToTextField.setOnKeyPressed(key -> {
             if (key.getCode().equals(KeyCode.ENTER)) {
                 int tmpPageNumber = Integer.parseInt(jumpToTextField.getText()) - 1;

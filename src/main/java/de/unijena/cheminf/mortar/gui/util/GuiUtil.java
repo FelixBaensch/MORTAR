@@ -293,14 +293,15 @@ public class GuiUtil {
     //
     /**
      * Method that creates an Integer filter to prevent the entry of unwanted
-     * characters such as Strings or special characters and also 0 for first entry.
+     * characters such as Strings or special characters and also 0 for first entry if specified.
      *
+     * @param anIsZeroIncluded true if zero should be allowed as value (text: "0")
      * @return GUI input filter for positive integer values
      */
-    public static UnaryOperator<TextFormatter.Change> getPositiveIntegerWithoutZeroFilter() {
+    public static UnaryOperator<TextFormatter.Change> getPositiveIntegerFilter(boolean anIsZeroIncluded) {
         return c -> {
             String tmpText = c.getControlNewText();
-            if (tmpText.equals("0")) {
+            if (tmpText.equals("0") && !anIsZeroIncluded) {
                 return null;
             }
             if (GuiUtil.getPositiveIntegerInclZeroPattern().matcher(tmpText).matches()) {
