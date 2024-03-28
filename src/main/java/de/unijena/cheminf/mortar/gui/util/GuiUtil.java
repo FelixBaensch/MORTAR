@@ -276,6 +276,15 @@ public class GuiUtil {
     }
     //
     /**
+     * Returns an input pattern for positive double values, including 0.0 and equal notations of zero.
+     *
+     * @return GUI input pattern for positive double values
+     */
+    public static Pattern getPositiveDoublePattern() {
+        return Pattern.compile("(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
+    }
+    //
+    /**
      * Returns an input filter for integer values. "-" may be the first sign, the first number may not be 0.
      *
      * @return GUI input filter for integer values
@@ -320,6 +329,22 @@ public class GuiUtil {
         return c -> {
             String text = c.getControlNewText();
             if (GuiUtil.getDoublePattern().matcher(text).matches()) {
+                return c;
+            } else {
+                return null;
+            }
+        };
+    }
+    //
+    /**
+     * Returns an input filter for positive double values, including 0.0 and equal notations of zero.
+     *
+     * @return GUI input filter for positive double values
+     */
+    public static UnaryOperator<TextFormatter.Change> getPositiveDoubleFilter() {
+        return c -> {
+            String text = c.getControlNewText();
+            if (GuiUtil.getPositiveDoublePattern().matcher(text).matches()) {
                 return c;
             } else {
                 return null;

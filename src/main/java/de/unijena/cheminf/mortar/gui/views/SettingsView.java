@@ -239,7 +239,12 @@ public class SettingsView extends AnchorPane {
                     tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
                     tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
-                    TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(), 0.0, GuiUtil.getDoubleFilter());
+                    double tmpDefaultValue = 0.0;
+                    //note: setting the filter to only accept positive double values including zero is an assumption that is true
+                    // for all settings so far but might have to be changed in the future
+                    TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(),
+                            tmpDefaultValue,
+                            GuiUtil.getPositiveDoubleFilter());
                     tmpDoubleTextField.setTextFormatter(tmpFormatter);
                     tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
                     tmpDoubleTextField.setTooltip(tmpTooltip);
