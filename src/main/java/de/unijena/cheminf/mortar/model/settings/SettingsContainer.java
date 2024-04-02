@@ -649,7 +649,9 @@ public class SettingsContainer {
                 if (SettingsContainer.this.isLegalRecentDirectoryPath(newValue)) {
                     super.set(newValue);
                 } else {
-                    IllegalArgumentException tmpException = new IllegalArgumentException("An illegal number of tasks for fragmentation was given: " + newValue);
+                    IllegalArgumentException tmpException = new IllegalArgumentException(String.format(
+                            "An illegal recent directory path was given: \"%s\". " +
+                                    "It must be not null, not empty, existing, a directory, and readable", newValue));
                     SettingsContainer.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                     //no GUI alert here because this is an internal setting
                     //re-throws the exception to properly reset the binding
