@@ -68,6 +68,7 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -100,13 +101,15 @@ public class GuiUtil {
     /**
      * Creates and shows an alert with arbitrary alert type.
      *
-     * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate
-     *                    various properties, chosen of an enumeration containing the available
-     * @param aTitle Title of the alert message
-     * @param aHeaderText Header of the alert message
+     * @param anAlertType  - pre-built alert type of the alert message that the Alert class can use to pre-populate
+     *                     various properties, chosen of an enumeration containing the available
+     * @param aTitle       Title of the alert message
+     * @param aHeaderText  Header of the alert message
      * @param aContentText Text that the alert message contains
+     * @return ButtonType selected by user, options depend on the given alert type (INFORMATION, WARNING, ERROR -> OK,
+     * CONFIRMATION -> OK / CANCEL)
      */
-    public static void guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
+    public static Optional<ButtonType> guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -114,7 +117,7 @@ public class GuiUtil {
         //tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        tmpAlert.showAndWait();
+        return tmpAlert.showAndWait();
     }
     //
     /**
@@ -122,11 +125,16 @@ public class GuiUtil {
      *
      * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate
      *                    various properties, chosen of an enumeration containing the available
-     * @param aTitle Title of the alert message
+     * @param aTitle      Title of the alert message
      * @param aHeaderText Header of the alert message
-     * @param aHyperlink Hyperlink that the alert message contains
+     * @param aHyperlink  Hyperlink that the alert message contains
+     * @return ButtonType selected by user, options depend on the given alert type (INFORMATION, WARNING, ERROR -> OK,
+     * CONFIRMATION -> OK / CANCEL)
      */
-    public static void guiMessageAlertWithHyperlink(Alert.AlertType anAlertType, String aTitle, String aHeaderText, Hyperlink aHyperlink) {
+    public static Optional<ButtonType> guiMessageAlertWithHyperlink(Alert.AlertType anAlertType,
+                                                                    String aTitle,
+                                                                    String aHeaderText,
+                                                                    Hyperlink aHyperlink) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -134,7 +142,7 @@ public class GuiUtil {
         //tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        tmpAlert.showAndWait();
+        return tmpAlert.showAndWait();
     }
     //
     /**
@@ -152,6 +160,26 @@ public class GuiUtil {
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
         tmpAlert.setContentText(aContentText);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
+    }
+    //
+    /**
+     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
+     * Three buttons are possible - ButtonType.YES, ButtonType.NO, and ButtonType.CANCEL.
+     *
+     * @param aTitle Title of the confirmation alert
+     * @param aHeaderText Header of the confirmation alert
+     * @param aContentText Text that the confirmation alert contains
+     * @return ButtonType selected by user - ButtonType.YES, ButtonType.NO, or ButtonType.CANCEL.
+     */
+    public static ButtonType guiYesNoCancelConfirmationAlert(String aTitle, String aHeaderText, String aContentText) {
+        Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        tmpAlert.setTitle(aTitle);
+        tmpAlert.setHeaderText(aHeaderText);
+        tmpAlert.setContentText(aContentText);
+        tmpAlert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
@@ -212,8 +240,11 @@ public class GuiUtil {
             //Show and wait alert
             tmpAlert.showAndWait();
         } catch(Exception aNewThrownException) {
-            guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), aNewThrownException.toString());
             GuiUtil.LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR,
+                    Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    aNewThrownException.toString());
         }
     }
     //

@@ -601,12 +601,20 @@ public class MainViewController {
                 || anExportType.equals(Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE)
                 || anExportType.equals(Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES))
                 && (!ChemUtil.checkMoleculeListForCoordinates(this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS)))) {
-            ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
+            ButtonType tmpConfirmationResult = GuiUtil.guiYesNoCancelConfirmationAlert(
                     Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.title"),
                     Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.header"),
                     Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.text")
             );
-            tmpGenerate2dAtomCoordinates = tmpConfirmationResult == ButtonType.OK;
+            /*
+            yes -> generate coordinates
+            no -> export but do not generate coordinates
+            cancel -> abort export
+             */
+            if (tmpConfirmationResult == ButtonType.CANCEL) {
+                return;
+            }
+            tmpGenerate2dAtomCoordinates = tmpConfirmationResult == ButtonType.YES;
         }
         //reassigned because variable needs to be effectively final to be used in the inner classes below
         boolean tmpGenerate2dAtomCoordinatesFinal = tmpGenerate2dAtomCoordinates;
