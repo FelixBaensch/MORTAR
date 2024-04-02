@@ -335,19 +335,28 @@ public class Exporter {
     }
     //
     /**
-     * Exports depending on aFragmentationName the results as displayed on the Itemisation tab or on the Fragments tab as a chemical file.
-     * Returns a list containing SMILES of the molecules that caused an error when exported. The fragments are exported into separate files.
+     * Exports depending on aFragmentationName the results as displayed on the Itemisation tab or on the Fragments tab
+     * as a chemical file.
+     * Returns a list containing SMILES of the molecules that caused an error when exported. The fragments are exported
+     * into separate files (single export is set to false).
      *
-     * @param aFile                  the file/directory to export to
+     * @param aFile the file/directory to export to
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
-     * @param generate2dAtomCoordinates boolean value whether to generate 2D coordinates
+     * @param aGenerate2dAtomCoordinates boolean value whether to generate 2D coordinates
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws IOException if sth goes wrong
      */
-    public List<String> exportFragmentsAsChemicalFile(File aFile, List<MoleculeDataModel> aFragmentDataModelList, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates)
+    public List<String> exportFragmentsAsChemicalFile(File aFile,
+                                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                                      ChemFileTypes aChemFileType,
+                                                      boolean aGenerate2dAtomCoordinates)
             throws IOException {
-        return this.exportFragmentsAsChemicalFile(aFile, aFragmentDataModelList, aChemFileType, generate2dAtomCoordinates, false);
+        return this.exportFragmentsAsChemicalFile(aFile,
+                aFragmentDataModelList,
+                aChemFileType,
+                aGenerate2dAtomCoordinates,
+                false);
     }
     //
     /**
@@ -357,26 +366,26 @@ public class Exporter {
      * @param aFile the file/directory to export to
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
-     * @param generate2dAtomCoordinates boolean value whether to generate 2D coordinates
-     * @param isSingleExport true if fragments should be exported into one single file; false if separated, one file for each fragment
+     * @param aGenerate2dAtomCoordinates boolean value whether to generate 2D coordinates
+     * @param anIsSingleExport true if fragments should be exported into one single file; false if separated, one file for each fragment
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws IOException if sth goes wrong
      */
     public List<String> exportFragmentsAsChemicalFile(File aFile,
                                                       List<MoleculeDataModel> aFragmentDataModelList,
                                                       ChemFileTypes aChemFileType,
-                                                      boolean generate2dAtomCoordinates,
-                                                      boolean isSingleExport) throws IOException {
+                                                      boolean aGenerate2dAtomCoordinates,
+                                                      boolean anIsSingleExport) throws IOException {
         if (aFile == null) {
             return null;
         }
         List<String> tmpReturnedList;
-        if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
-            tmpReturnedList = this.createFragmentationTabSingleSDFile(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
+        if (aChemFileType == ChemFileTypes.SDF && anIsSingleExport) {
+            tmpReturnedList = this.createFragmentationTabSingleSDFile(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
         } else if (aChemFileType == ChemFileTypes.SDF) {
-            tmpReturnedList = this.createFragmentationTabSeparateSDFiles(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
+            tmpReturnedList = this.createFragmentationTabSeparateSDFiles(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
         } else if (aChemFileType == ChemFileTypes.PDB) {
-            tmpReturnedList = this.createFragmentationTabPDBFiles(aFile, aFragmentDataModelList, generate2dAtomCoordinates);
+            tmpReturnedList = this.createFragmentationTabPDBFiles(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
         } else {
             tmpReturnedList = null;
         }
