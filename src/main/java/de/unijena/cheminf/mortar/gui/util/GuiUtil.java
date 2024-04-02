@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.gui.util;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.IDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
@@ -57,12 +59,14 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
@@ -86,6 +90,20 @@ public class GuiUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(GuiUtil.class.getName());
+    //
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private static final IConfiguration CONFIGURATION;
+    static {
+        try {
+            CONFIGURATION = Configuration.getInstance();
+        } catch (IOException anIOException) {
+            //when MORTAR is run via MainApp.start(), the correct initialization of Configuration is checked there before
+            // GuiUtil is accessed and this static initializer called
+            throw new NullPointerException("Configuration could not be initialized");
+        }
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Private constructor">
@@ -117,6 +135,10 @@ public class GuiUtil {
         //tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait();
     }
     //
@@ -142,6 +164,10 @@ public class GuiUtil {
         //tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait();
     }
     //
@@ -162,6 +188,10 @@ public class GuiUtil {
         tmpAlert.setContentText(aContentText);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
     //
@@ -182,6 +212,10 @@ public class GuiUtil {
         tmpAlert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
     //
@@ -237,6 +271,10 @@ public class GuiUtil {
             tmpGridPane.add(tmpExpandableTextArea, 0, 1);
             //Add expandable text to the dialog/alert pane
             tmpAlert.getDialogPane().setExpandableContent(tmpGridPane);
+            Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+            String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                    GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+            tmpAlertStage.getIcons().add(new Image(tmpIconURL));
             //Show and wait alert
             tmpAlert.showAndWait();
         } catch(Exception aNewThrownException) {
