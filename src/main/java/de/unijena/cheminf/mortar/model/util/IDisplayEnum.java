@@ -23,20 +23,22 @@
  * SOFTWARE.
  */
 
-package de.unijena.cheminf.mortar.model.io;
+package de.unijena.cheminf.mortar.model.util;
 
 /**
- * Enum for types of supported file formats for chemical structure information.
- *
- * @author Felix Baensch
+ * Interface for enums to extend in order to provide a language-specific display name and a tooltip text for their constants.
  */
-public enum ChemFileTypes {
+public interface IDisplayEnum {
     /**
-     * enum value for SDF.
+     * Returns the language-specific display name of the enum constant for using it in the GUI.
+     *
+     * @return String display name
      */
-    SDF,
+    public String getDisplayName();
     /**
-     * enum value for PDB.
+     * Returns the language-specific tooltip text of the enum constant for using it in the GUI.
+     *
+     * @return String tooltip text
      */
-    PDB;
+    public String getTooltipText();
 }

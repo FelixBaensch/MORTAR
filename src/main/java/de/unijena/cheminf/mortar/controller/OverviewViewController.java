@@ -25,12 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
-/**
- * TODO:
- * - add export functionality to overview view
- * - extract enlarged structure view, so that it can also be used in other places
- */
-
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -79,7 +74,6 @@ import javafx.stage.WindowEvent;
 
 import org.openscience.cdk.exception.CDKException;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -116,11 +110,7 @@ public class OverviewViewController implements IViewToolController {
         /**
          * Enum value for an item of an items tab as data source.
          */
-        ITEM_WITH_FRAGMENTS_SAMPLE,
-        /**
-         * Enum value for any other data source.
-         */
-        ANY;
+        ITEM_WITH_FRAGMENTS_SAMPLE;
     }
     //</editor-fold>
     //
@@ -130,45 +120,45 @@ public class OverviewViewController implements IViewToolController {
      */
     public static final String VIEW_TOOL_NAME_FOR_DISPLAY = Message.get("MainView.menuBar.viewsMenu.overviewViewMenuItem.text");
     /**
-     * Width of grid lines of the structure grid pane in overview view
+     * Width of grid lines of the structure grid pane in overview view.
      */
     public static final double OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH = 8.0;
     /**
-     * Minimum value for the width of structure images displayed in the overview view
+     * Minimum value for the width of structure images displayed in the overview view.
      */
     public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH = 30.0;
     /**
-     * Minimum value for the height of structure images displayed in the overview view
+     * Minimum value for the height of structure images displayed in the overview view.
      */
     public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = 20.0;
     /**
-     * Default value for columns of structure images per overview view page
+     * Default value for columns of structure images per overview view page.
      */
     public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT = 5;
     /**
-     * Default value for rows of structure images per overview view page
+     * Default value for rows of structure images per overview view page.
      */
     public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT = 5;
     /**
-     * Minimum value for the width of the enlarged structure view
+     * Minimum value for the width of the enlarged structure view.
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE = 250.0;
     /**
-     * Minimum value for the height of the enlarged structure view
+     * Minimum value for the height of the enlarged structure view.
      */
     public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
     /**
-     * Initial width of the enlarged structure view's scene
+     * Initial width of the enlarged structure view's scene.
      */
     public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH = 500.0;
     /**
-     * Initial height of the enlarged structure view's scene
+     * Initial height of the enlarged structure view's scene.
      */
     public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT = 400.0;
     /**
-     * Ratio of width and height of the enlarged structure view's structure image to the one of its parent stack pane
+     * Ratio of width and height of the enlarged structure view's structure image to the one of its parent stack pane.
      */
-    public static final double ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO = 0.9;
+    public static final double ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO = 0.9;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">
@@ -180,6 +170,10 @@ public class OverviewViewController implements IViewToolController {
     //
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    /**
      * Integer property that holds the number of rows of structure images to be displayed per page.
      */
     private final SimpleIntegerProperty rowsPerPageSetting;
@@ -190,7 +184,7 @@ public class OverviewViewController implements IViewToolController {
     /**
      * All settings of this view tool, encapsulated in JavaFX properties for binding in GUI and persistence.
      */
-    private final List<Property> settings;
+    private final List<Property<?>> settings;
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -234,8 +228,13 @@ public class OverviewViewController implements IViewToolController {
      * Boolean value saying whether the option to show a specific structure in the main view via double-click or context menu
      * should be available. The value depends on the given data source.
      */
-    //TODO: separate this into two variables? One for highlighting the first structure, one for being able to jump to structures in the main view?
     private boolean withShowInMainViewOption;
+    /**
+     * Boolean value saying whether the first structure in the overview should be highlighted, e.g. because it is
+     * a fragment and all other structures are its parents or because it is the parent structure and all other structures
+     * are its fragments.
+     */
+    private boolean withFirstStructureHighlight;
     /**
      * Boolean value whether an event to return to a specific structure in the MainView occurred.
      */
@@ -253,7 +252,7 @@ public class OverviewViewController implements IViewToolController {
      */
     private ScheduledFuture<?> scheduledFuture;
     /**
-     * Boolean value to distinguish between drag from mouse click events.
+     * Boolean value to distinguish between drag and mouse click events.
      */
     private boolean dragFlag;
     //</editor-fold>
@@ -261,8 +260,11 @@ public class OverviewViewController implements IViewToolController {
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor, initialises all settings with their default values. Does *not* open the view.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public OverviewViewController() {
+    public OverviewViewController(IConfiguration aConfiguration) {
+        this.configuration = aConfiguration;
         this.settings = new ArrayList<>(2);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
@@ -304,6 +306,7 @@ public class OverviewViewController implements IViewToolController {
      * Returns the index of the structure in the MoleculeDataModelList that has been the latest target to a left- or
      * right-click on its image view if an event to return to a specific structure in the main view occurred; else -1
      * is returned.
+     *
      * @return Integer value of the cached index of structure or -1
      */
     public int getCachedIndexOfStructureInMoleculeDataModelList() {
@@ -333,13 +336,10 @@ public class OverviewViewController implements IViewToolController {
      * </p>
      */
     @Override
-    public List<Property> settingsProperties() {
+    public List<Property<?>> settingsProperties() {
         //note: see comments in constructor for how the setting values are transferred in both directions (GUI <-> Properties)
         return this.settings;
     }
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getViewToolNameForDisplay() {
         return OverviewViewController.VIEW_TOOL_NAME_FOR_DISPLAY;
@@ -356,9 +356,6 @@ public class OverviewViewController implements IViewToolController {
         this.rowsPerPageSetting.set(OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT);
         this.columnsPerPageSetting.set(OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT);
     }
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant) {
         return switch (aTabNameEnumConstant) {
@@ -400,6 +397,7 @@ public class OverviewViewController implements IViewToolController {
                                 ? "OverviewView.titleOfView.molecule" : "OverviewView.titleOfView.fragment")
                                 + (aMoleculeDataModelList.size() != 1 ? "s" : ""));
                 this.withShowInMainViewOption = true;
+                this.withFirstStructureHighlight = false;
             }
             case PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
@@ -408,6 +406,7 @@ public class OverviewViewController implements IViewToolController {
                         Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.molecule"
                                 : "OverviewView.titleOfView.molecules"));
                 this.withShowInMainViewOption = false;
+                this.withFirstStructureHighlight = true;
             }
             case ITEM_WITH_FRAGMENTS_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
@@ -416,19 +415,18 @@ public class OverviewViewController implements IViewToolController {
                         Message.get(((aMoleculeDataModelList.size() - 1 == 1) ? "OverviewView.titleOfView.fragment"
                                 : "OverviewView.titleOfView.fragments"));
                 this.withShowInMainViewOption = false;
-            }
-            case ANY -> {
-                this.setOverviewViewTitleForDefaultOrAnyDataSource(aTabName, aMoleculeDataModelList.size());
+                this.withFirstStructureHighlight = true;
             }
             default -> {
-                this.setOverviewViewTitleForDefaultOrAnyDataSource(aTabName, aMoleculeDataModelList.size());
+                this.setOverviewViewTitleForDefaultDataSource(aTabName, aMoleculeDataModelList.size());
             }
         }
         this.mainStage = aMainStage;
         this.dataSource = aDataSource;
         this.moleculeDataModelList = aMoleculeDataModelList;
-        if (this.overviewView == null)
+        if (this.overviewView == null) {
             this.overviewView = new OverviewView(this.columnsPerPageSetting.get(), this.rowsPerPageSetting.get());
+        }
         this.overviewViewStage = new Stage();
         Scene tmpScene = new Scene(this.overviewView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
@@ -436,14 +434,10 @@ public class OverviewViewController implements IViewToolController {
         this.overviewViewStage.initModality(Modality.WINDOW_MODAL);
         this.overviewViewStage.initOwner(this.mainStage);
         this.overviewViewStage.setTitle(this.overviewViewTitle);
-        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
-                "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
-        );
-        if (tmpImageInputStream != null) {
-            this.overviewViewStage.getIcons().add(new Image(tmpImageInputStream));
-        } else {
-            OverviewViewController.LOGGER.log(Level.WARNING, "MORTAR icon could not be imported.");
-        }
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.overviewViewStage.getIcons().add(new Image(tmpIconURL));
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //
@@ -451,12 +445,12 @@ public class OverviewViewController implements IViewToolController {
         if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get()) > 0) {
             tmpPageCount++;
         }
-        if(this.moleculeDataModelList.size() == 0){
+        if (this.moleculeDataModelList.isEmpty()) {
             tmpPageCount = 1;
         }
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
-        tmpPagination.setPageFactory((aPageIndex) -> this.createOverviewViewPage(aPageIndex,
+        tmpPagination.setPageFactory(aPageIndex -> this.createOverviewViewPage(aPageIndex,
                 this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get()));
         VBox.setVgrow(tmpPagination, Priority.ALWAYS);
         HBox.setHgrow(tmpPagination, Priority.ALWAYS);
@@ -481,7 +475,7 @@ public class OverviewViewController implements IViewToolController {
      * @param aTabName given title for the overview view, derived from the tab name where it was opened
      * @throws NullPointerException if tab name is null
      */
-    private void setOverviewViewTitleForDefaultOrAnyDataSource(String aTabName, int aMoleculeDataModelListSize)
+    private void setOverviewViewTitleForDefaultDataSource(String aTabName, int aMoleculeDataModelListSize)
             throws NullPointerException {
         Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
         if (aTabName.isBlank()) {
@@ -493,18 +487,15 @@ public class OverviewViewController implements IViewToolController {
                 Message.get(((aMoleculeDataModelListSize - 1 == 1) ? "OverviewView.titleOfView.molecule"
                         : "OverviewView.titleOfView.molecules"));
         this.withShowInMainViewOption = false;
+        this.withFirstStructureHighlight = false;
     }
     /**
      * Adds listeners and event handlers to elements of the overview view.
      */
     private void addListeners() {
         //listener for resize events
-        ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> {
-            Platform.runLater(() -> {
-                this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
-                        this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get());
-            });
-        };
+        ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> Platform.runLater(() -> this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
+                this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get()));
         this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
         this.overviewViewStage.widthProperty().addListener(tmpStageSizeListener);
         //
@@ -512,16 +503,14 @@ public class OverviewViewController implements IViewToolController {
         this.overviewViewStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, event -> this.closeOverviewViewEvent());
         //
         //close button listener
-        this.overviewView.getCloseButton().setOnAction((actionEvent) -> {
-            this.closeOverviewViewEvent();
-        });
+        this.overviewView.getCloseButton().setOnAction(actionEvent -> this.closeOverviewViewEvent());
         //
         //listener to distinguish a drag from a click event (on the image views)
         /*
          * The following block of code was inspired by a post of the user "mipa" of the stackoverflow community;
          * link to their answer / comment: https://stackoverflow.com/a/36245807 (2022_12_01; 12:00 GMT)
          */
-        this.overviewView.getStructureGridPane().setOnMouseDragged((aMouseEvent) -> {
+        this.overviewView.getStructureGridPane().setOnMouseDragged(aMouseEvent -> {
             if (aMouseEvent.getButton().equals(MouseButton.PRIMARY)) {
                 this.dragFlag = true;
             }
@@ -532,7 +521,7 @@ public class OverviewViewController implements IViewToolController {
          * The following block of code was inspired by a post of the user "mipa" of the stackoverflow community;
          * link to their answer / comment: https://stackoverflow.com/a/36245807 (2022_12_01; 12:00 GMT)
          */
-        this.overviewView.getStructureGridPane().setOnMouseClicked((aMouseEvent) -> {
+        this.overviewView.getStructureGridPane().setOnMouseClicked(aMouseEvent -> {
             if (aMouseEvent.getButton().equals(MouseButton.PRIMARY)
                     && (aMouseEvent.getTarget().getClass().equals(ImageView.class)
                             || (aMouseEvent.getTarget().getClass().equals(StackPane.class)
@@ -557,20 +546,18 @@ public class OverviewViewController implements IViewToolController {
                                     TimeUnit.MILLISECONDS
                             );
                         }
-                    } else if (aMouseEvent.getClickCount() > 1) {
-                        if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()
+                    } else if (aMouseEvent.getClickCount() > 1
+                                && this.scheduledFuture != null
+                                && !this.scheduledFuture.isCancelled()
                                 && !this.scheduledFuture.isDone()) {
-                            //terminating the scheduled single-click action
-                            this.scheduledFuture.cancel(false);
-                            //check whether it is the same structure
-                            if (this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent)
-                                    == this.cachedIndexOfStructureInMoleculeDataModelList) {
-                                //double-click action
-                                if (this.withShowInMainViewOption) {
-                                    this.returnToStructureEventOccurred = true;
-                                    this.closeOverviewViewEvent();
-                                }
-                            }
+                        //terminating the scheduled single-click action
+                        this.scheduledFuture.cancel(false);
+                        //check whether it is the same structure
+                        if (this.getIndexOfStructureInMoleculeDataModelList(aMouseEvent)
+                                == this.cachedIndexOfStructureInMoleculeDataModelList
+                                && (this.withShowInMainViewOption)) {
+                            this.returnToStructureEventOccurred = true;
+                            this.closeOverviewViewEvent();
                         }
                     }
                 }
@@ -596,35 +583,27 @@ public class OverviewViewController implements IViewToolController {
         });
         //
         //apply new grid configuration event handler
-        EventHandler<ActionEvent> tmpApplyNewGridConfigurationEventHandler = (actionEvent) -> {
-            this.applyChangeOfGridConfiguration(false);
-        };
+        EventHandler<ActionEvent> tmpApplyNewGridConfigurationEventHandler = actionEvent -> this.applyChangeOfGridConfiguration(false);
         //listeners for apply new grid configuration events
         this.overviewView.getApplyButton().setOnAction(tmpApplyNewGridConfigurationEventHandler);
         this.overviewView.getColumnsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
         this.overviewView.getRowsPerPageTextField().setOnAction(tmpApplyNewGridConfigurationEventHandler);
         //
         //default button listener
-        this.overviewView.getDefaultButton().setOnAction((actionEvent) -> {
-            this.applyChangeOfGridConfiguration(true);
-        });
+        this.overviewView.getDefaultButton().setOnAction(actionEvent -> this.applyChangeOfGridConfiguration(true));
         //
         //focused property change listener for columns per page text field
         this.overviewView.getColumnsPerPageTextField().focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue) {
-                if (this.overviewView.getColumnsPerPageTextField().getText().isBlank()
-                        || Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText()) == 0) {
-                    this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting.get()));
-                }
+            if (Boolean.FALSE.equals(newValue) && (this.overviewView.getColumnsPerPageTextField().getText().isBlank()
+                        || Integer.parseInt(this.overviewView.getColumnsPerPageTextField().getText()) == 0)) {
+                this.overviewView.getColumnsPerPageTextField().setText(Integer.toString(this.columnsPerPageSetting.get()));
             }
         });
         //focused property change listener for rows per page text field
         this.overviewView.getRowsPerPageTextField().focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue) {
-                if (this.overviewView.getRowsPerPageTextField().getText().isBlank()
-                        || Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText()) == 0) {
-                    this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting.get()));
-                }
+            if (Boolean.FALSE.equals(newValue) && (this.overviewView.getRowsPerPageTextField().getText().isBlank()
+                        || Integer.parseInt(this.overviewView.getRowsPerPageTextField().getText()) == 0)) {
+                this.overviewView.getRowsPerPageTextField().setText(Integer.toString(this.rowsPerPageSetting.get()));
             }
         });
         //
@@ -690,6 +669,7 @@ public class OverviewViewController implements IViewToolController {
         this.moleculeDataModelList = null;
         this.createStructureImages = false;
         this.withShowInMainViewOption = false;
+        this.withFirstStructureHighlight = false;
         if (!this.returnToStructureEventOccurred) {
             this.resetCachedIndexOfStructureInMoleculeDataModelList();
         }
@@ -752,7 +732,7 @@ public class OverviewViewController implements IViewToolController {
             //check if the limits for the image dimensions are being exceeded
             if ((tmpImageHeight >= OverviewViewController.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT)
                     && (tmpImageWidth >= OverviewViewController.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH)) {
-                //optional setting for change in usage of shadow effect
+                //optional setting for change in usage of shadow effect - deprecated
                 boolean tmpDrawImagesWithShadow = true;
                 //main loop for generation of the page content
                 generationOfStructureImagesLoop:
@@ -770,7 +750,7 @@ public class OverviewViewController implements IViewToolController {
                             }
                             //depiction of structure image
                             final Node tmpFinalContentNode;
-                            if (!(tmpIterator == 0 && !this.withShowInMainViewOption)) {
+                            if (!(tmpIterator == 0 && this.withFirstStructureHighlight)) {
                                 tmpFinalContentNode = new ImageView(
                                         DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                 tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
@@ -797,7 +777,7 @@ public class OverviewViewController implements IViewToolController {
                                 tmpFinalContentNode = tmpStackPane;
                             }
                             //changing the shadow effects at mouse entering an image
-                            tmpFinalContentNode.setOnMouseEntered((aMouseEvent) -> {
+                            tmpFinalContentNode.setOnMouseEntered(aMouseEvent -> {
                                 if (tmpDrawImagesWithShadow) {
                                     tmpFinalContentNode.setStyle("-fx-effect: null" +
                                             ((tmpFinalContentNode.getClass() == StackPane.class)
@@ -805,7 +785,7 @@ public class OverviewViewController implements IViewToolController {
                                                     : ""));
                                 } else {
                                     tmpFinalContentNode.setStyle(
-                                            "-fx-effect: dropshadow(gaussian, rgba(100, 100, 100, 0.8), " +
+                                            "-fx-effect: dropshadow(gaussian, rgba(100, 100, 100, 0.6), " +
                                                     OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH +
                                                     ", 0, 0, 0)" +
                                             ((tmpFinalContentNode.getClass() == StackPane.class)
@@ -815,7 +795,7 @@ public class OverviewViewController implements IViewToolController {
                                 }
                             });
                             //resetting the shadow effects at mouse leaving the image
-                            tmpFinalContentNode.setOnMouseExited((aMouseEvent) -> {
+                            tmpFinalContentNode.setOnMouseExited(aMouseEvent -> {
                                 if (tmpDrawImagesWithShadow) {
                                     tmpFinalContentNode.setStyle(
                                             "-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
@@ -847,7 +827,7 @@ public class OverviewViewController implements IViewToolController {
                             tmpErrorLabel.setMinHeight(tmpImageHeight);
                             tmpErrorLabel.setMaxHeight(tmpImageHeight);
                             tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
-                            Tooltip tmpErrorLabelTooltip = new Tooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
+                            Tooltip tmpErrorLabelTooltip = GuiUtil.createTooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
                             tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
                             tmpContentNode = new StackPane(tmpErrorLabel);
                             tmpContentNode.disableProperty().set(true);
@@ -1001,15 +981,20 @@ public class OverviewViewController implements IViewToolController {
         ContextMenu tmpContextMenu = new ContextMenu();
         //copyImageMenuItem
         MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
-        try {
-            tmpCopyImageMenuItem.setGraphic(new ImageView(new Image("de/unijena/cheminf/mortar/images/copy_icon_16x16.png")));
-        } catch (NullPointerException anException) {
-            OverviewViewController.LOGGER.log(Level.WARNING, "Copy icon could not be imported.");
-        }
         //copySmilesMenuItem
         MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
         //copyNameMenuItem
         MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        try {
+            String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
+                    this.configuration.getProperty("mortar.imagesFolder")
+                            + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
+            tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+            tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+            tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        } catch (NullPointerException anException) {
+            OverviewViewController.LOGGER.log(Level.WARNING, "Copy icon could not be imported.");
+        }
         //adding Listeners to MenuItems
         //copyImageMenuItem listener
         tmpCopyImageMenuItem.setOnAction((ActionEvent anActionEvent) -> {
@@ -1230,14 +1215,10 @@ public class OverviewViewController implements IViewToolController {
         tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
         tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
         tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
-        InputStream tmpImageInputStream = MainViewController.class.getResourceAsStream(
-                "/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png"
-        );
-        if (tmpImageInputStream != null) {
-            tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpImageInputStream));
-        } else {
-            OverviewViewController.LOGGER.log(Level.WARNING, "MORTAR icon could not be imported");
-        }
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
         tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
         //
@@ -1251,47 +1232,41 @@ public class OverviewViewController implements IViewToolController {
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                     aMoleculeDataModel.getAtomContainer(),1.0,
                     OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH
-                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
+                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
                     OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT
-                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
+                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
                     true, true
             ));
             tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);
-            tmpStructureImage.setOnContextMenuRequested((event) -> {
-                tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY());
-            });
+            tmpStructureImage.setOnContextMenuRequested(event -> tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY()));
             //listener for resize events to fit the structure depiction to the view size
-            ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) -> {
-                Platform.runLater(() -> {
-                    tmpEnlargedStructureViewStackPane.getChildren().clear();
-                    try {
-                        ImageView tmpUpdatedStructureImage = new ImageView(
-                                DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
-                                        aMoleculeDataModel.getAtomContainer(), 1.0,
-                                        tmpEnlargedStructureViewStackPane.getWidth()
-                                                * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
-                                        tmpEnlargedStructureViewStackPane.getHeight()
-                                                * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACKPANE_SIZE_RATIO,
-                                        true, true
-                                )
-                        );
-                        tmpEnlargedStructureViewStackPane.getChildren().add(tmpUpdatedStructureImage);
-                        tmpUpdatedStructureImage.setOnContextMenuRequested((event) -> {
-                            tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY());
-                        });
-                    } catch (CDKException aCDKException) {
-                        //logging and guiMessageAlert at issues with structure depiction
-                        OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-                        GuiUtil.guiMessageAlert(
-                                Alert.AlertType.WARNING,
-                                Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.title"),
-                                Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.header"),
-                                Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.text")
-                        );
-                        tmpEnlargedStructureViewStage.close();
-                    }
-                });
-            };
+            ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) -> Platform.runLater(() -> {
+                tmpEnlargedStructureViewStackPane.getChildren().clear();
+                try {
+                    ImageView tmpUpdatedStructureImage = new ImageView(
+                            DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                                    aMoleculeDataModel.getAtomContainer(), 1.0,
+                                    tmpEnlargedStructureViewStackPane.getWidth()
+                                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                                    tmpEnlargedStructureViewStackPane.getHeight()
+                                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                                    true, true
+                            )
+                    );
+                    tmpEnlargedStructureViewStackPane.getChildren().add(tmpUpdatedStructureImage);
+                    tmpUpdatedStructureImage.setOnContextMenuRequested(event -> tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY()));
+                } catch (CDKException aCDKException) {
+                    //logging and guiMessageAlert at issues with structure depiction
+                    OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+                    GuiUtil.guiMessageAlert(
+                            Alert.AlertType.WARNING,
+                            Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.title"),
+                            Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.header"),
+                            Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.text")
+                    );
+                    tmpEnlargedStructureViewStage.close();
+                }
+            });
             tmpEnlargedStructureViewStage.heightProperty().addListener(tmpStageResizeEventListener);
             tmpEnlargedStructureViewStage.widthProperty().addListener(tmpStageResizeEventListener);
         } catch (CDKException aCDKException) {

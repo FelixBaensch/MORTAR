@@ -32,7 +32,6 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
 import javafx.scene.control.Alert;
@@ -48,6 +47,7 @@ import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -57,6 +57,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 
 import org.openscience.cdk.exception.CDKException;
@@ -64,8 +65,8 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
@@ -73,7 +74,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
- * GUI utility
+ * GUI utility.
  *
  * @author Jonas Schaub, Felix Baensch
  * @version 1.0.0.0
@@ -86,7 +87,7 @@ public class GuiUtil {
     private static final Logger LOGGER = Logger.getLogger(GuiUtil.class.getName());
     //</editor-fold>
     //
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold desc="Private constructor">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -105,7 +106,7 @@ public class GuiUtil {
      * @param aHeaderText Header of the alert message
      * @param aContentText Text that the alert message contains
      */
-    public static void guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText){
+    public static void guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -125,7 +126,7 @@ public class GuiUtil {
      * @param aHeaderText Header of the alert message
      * @param aHyperlink Hyperlink that the alert message contains
      */
-    public static void guiMessageAlertWithHyperlink(Alert.AlertType anAlertType, String aTitle, String aHeaderText, Hyperlink aHyperlink){
+    public static void guiMessageAlertWithHyperlink(Alert.AlertType anAlertType, String aTitle, String aHeaderText, Hyperlink aHyperlink) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -145,7 +146,7 @@ public class GuiUtil {
      * @param aContentText Text that the confirmation alert contains
      * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
      */
-    public static ButtonType guiConfirmationAlert(String aTitle, String aHeaderText, String aContentText){
+    public static ButtonType guiConfirmationAlert(String aTitle, String aHeaderText, String aContentText) {
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
         //tmpAlert.setResizable(true);
         tmpAlert.setTitle(aTitle);
@@ -165,9 +166,9 @@ public class GuiUtil {
      * @param aContentText Text of the alert dialog
      * @param anException exception to report, may be null
      */
-    public static void guiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException){
+    public static void guiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException) {
         String tmpExceptionString;
-        if(Objects.isNull(anException)){
+        if (Objects.isNull(anException)) {
             tmpExceptionString = "Exception is null.";
         } else {
             StringWriter tmpStringWriter = new StringWriter();
@@ -188,8 +189,8 @@ public class GuiUtil {
      * @param aLabelText Text to show above expandable area
      * @param anExpandableString Text to show in expandable area
      */
-    public static void guiExpandableAlert(String aTitle, String aHeaderText, String aContentText, String aLabelText, String anExpandableString){
-        try{
+    public static void guiExpandableAlert(String aTitle, String aHeaderText, String aContentText, String aLabelText, String anExpandableString) {
+        try {
             Alert tmpAlert = new Alert(Alert.AlertType.ERROR);
             tmpAlert.setTitle(aTitle);
             tmpAlert.setHeaderText(aHeaderText);
@@ -210,24 +211,25 @@ public class GuiUtil {
             tmpAlert.getDialogPane().setExpandableContent(tmpGridPane);
             //Show and wait alert
             tmpAlert.showAndWait();
-        }catch(Exception aNewThrownException){
+        } catch(Exception aNewThrownException) {
             guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), aNewThrownException.toString());
-            LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
+            GuiUtil.LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
         }
     }
     //
     /**
-     * Sorts the items of the TableView over all pages of the pagination and adds
+     * Sorts the items of the TableView over all pages of the pagination and adds.
      *
      * @param anEvent SortEvent {@literal <}TableView {@literal >}
      * @param tmpPagination Pagination
      * @param tmpRowsPerPage int
      */
-    public static void sortTableViewGlobally(SortEvent<TableView> anEvent, Pagination tmpPagination, int tmpRowsPerPage){
-        if(anEvent == null || anEvent.getSource().getSortOrder().size() == 0)
+    public static void sortTableViewGlobally(SortEvent<TableView> anEvent, Pagination tmpPagination, int tmpRowsPerPage) {
+        if (anEvent == null || anEvent.getSource().getSortOrder().isEmpty()) {
             return;
-        String tmpSortProp = ((PropertyValueFactory)((TableColumn) anEvent.getSource().getSortOrder().get(0)).cellValueFactoryProperty().getValue()).getProperty().toString();
-        TableColumn.SortType tmpSortType = ((TableColumn) anEvent.getSource().getSortOrder().get(0)).getSortType();
+        }
+        String tmpSortProp = ((PropertyValueFactory)((TableColumn) anEvent.getSource().getSortOrder().getFirst()).cellValueFactoryProperty().getValue()).getProperty().toString();
+        TableColumn.SortType tmpSortType = ((TableColumn) anEvent.getSource().getSortOrder().getFirst()).getSortType();
         CollectionUtil.sortGivenFragmentListByPropertyAndSortType(((IDataTableView)anEvent.getSource()).getItemsList(), tmpSortProp, tmpSortType == TableColumn.SortType.ASCENDING);
         int fromIndex = tmpPagination.getCurrentPageIndex() * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, ((IDataTableView)anEvent.getSource()).getItemsList().size());
@@ -236,12 +238,12 @@ public class GuiUtil {
     }
     //
     /**
-     * Binds height and width property of the child control to the parent pane properties
+     * Binds height and width property of the child control to the parent pane properties.
      *
      * @param aParentPane Pane
      * @param aChildControl Control
      */
-    public static void guiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl){
+    public static void guiBindControlSizeToParentPane(Pane aParentPane, Control aChildControl) {
         aChildControl.prefHeightProperty().bind(aParentPane.heightProperty());
         aChildControl.prefWidthProperty().bind(aParentPane.widthProperty());
     }
@@ -251,7 +253,7 @@ public class GuiUtil {
      *
      * @return GUI input pattern for integer values
      */
-    public static Pattern getIntegerPattern(){
+    public static Pattern getIntegerPattern() {
         return Pattern.compile("-?(([1-9][0-9]*)|0)?");
     }
     //
@@ -260,7 +262,7 @@ public class GuiUtil {
      *
      * @return GUI input pattern for positive integer values
      */
-    public static Pattern getPositiveIntegerInclZeroPattern(){
+    public static Pattern getPositiveIntegerInclZeroPattern() {
         return Pattern.compile("[0-9]*");
     }
     //
@@ -269,8 +271,17 @@ public class GuiUtil {
      *
      * @return GUI input pattern for double values
      */
-    public static Pattern getDoublePattern(){
+    public static Pattern getDoublePattern() {
         return Pattern.compile("-?(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
+    }
+    //
+    /**
+     * Returns an input pattern for positive double values, including 0.0 and equal notations of zero.
+     *
+     * @return GUI input pattern for positive double values
+     */
+    public static Pattern getPositiveDoublePattern() {
+        return Pattern.compile("(([1-9][0-9]*)|0)?(\\.[0-9]*)?");
     }
     //
     /**
@@ -278,10 +289,10 @@ public class GuiUtil {
      *
      * @return GUI input filter for integer values
      */
-    public static UnaryOperator<TextFormatter.Change> getIntegerFilter(){
-        return c ->{
+    public static UnaryOperator<TextFormatter.Change> getIntegerFilter() {
+        return c -> {
             String tmpText = c.getControlNewText();
-            if(GuiUtil.getIntegerPattern().matcher(tmpText).matches()) {
+            if (GuiUtil.getIntegerPattern().matcher(tmpText).matches()) {
                 return c;
             } else {
                 return null;
@@ -290,16 +301,16 @@ public class GuiUtil {
     }
     //
     /**
-     *
      * Method that creates an Integer filter to prevent the entry of unwanted
-     * characters such as Strings or special characters and also 0 for first entry.
+     * characters such as Strings or special characters and also 0 for first entry if specified.
      *
+     * @param anIsZeroIncluded true if zero should be allowed as value (text: "0")
      * @return GUI input filter for positive integer values
      */
-    public static UnaryOperator<TextFormatter.Change> getPositiveIntegerWithoutZeroFilter() {
+    public static UnaryOperator<TextFormatter.Change> getPositiveIntegerFilter(boolean anIsZeroIncluded) {
         return c -> {
             String tmpText = c.getControlNewText();
-            if (tmpText.equals("0")) {
+            if (tmpText.equals("0") && !anIsZeroIncluded) {
                 return null;
             }
             if (GuiUtil.getPositiveIntegerInclZeroPattern().matcher(tmpText).matches()) {
@@ -314,14 +325,30 @@ public class GuiUtil {
      *
      * @return GUI input filter for double values
      */
-    public static UnaryOperator<TextFormatter.Change> getDoubleFilter(){
-        return c ->{
-          String text = c.getControlNewText();
-          if(getDoublePattern().matcher(text).matches()) {
-              return c;
-          } else {
-              return null;
-          }
+    public static UnaryOperator<TextFormatter.Change> getDoubleFilter() {
+        return c -> {
+            String text = c.getControlNewText();
+            if (GuiUtil.getDoublePattern().matcher(text).matches()) {
+                return c;
+            } else {
+                return null;
+            }
+        };
+    }
+    //
+    /**
+     * Returns an input filter for positive double values, including 0.0 and equal notations of zero.
+     *
+     * @return GUI input filter for positive double values
+     */
+    public static UnaryOperator<TextFormatter.Change> getPositiveDoubleFilter() {
+        return c -> {
+            String text = c.getControlNewText();
+            if (GuiUtil.getPositiveDoublePattern().matcher(text).matches()) {
+                return c;
+            } else {
+                return null;
+            }
         };
     }
     //
@@ -331,7 +358,7 @@ public class GuiUtil {
      *
      * @return String-Integer converter
      */
-    public static StringConverter<Integer> getStringToIntegerConverter(){
+    public static StringConverter<Integer> getStringToIntegerConverter() {
         return new StringConverter<Integer>() {
             @Override
             public String toString(Integer anObject) {
@@ -339,9 +366,9 @@ public class GuiUtil {
             }
             @Override
             public Integer fromString(String aString) {
-                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString) || "0.".equals(aString)){
+                if (aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString) || "0.".equals(aString)) {
                     return 0;
-                } else{
+                } else {
                     return Integer.valueOf(aString);
                 }
             }
@@ -354,7 +381,7 @@ public class GuiUtil {
      *
      * @return String-Double converter
      */
-    public static StringConverter<Double> getStringToDoubleConverter(){
+    public static StringConverter<Double> getStringToDoubleConverter() {
         return new StringConverter<Double>() {
             @Override
             public String toString(Double anObject) {
@@ -362,10 +389,9 @@ public class GuiUtil {
             }
             @Override
             public Double fromString(String aString) {
-                if(aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString)){
+                if (aString.isEmpty() || "-".equals(aString) || ".".equals(aString) || "-.".equals(aString)) {
                     return 0.0;
-                }
-                else {
+                } else {
                     return Double.valueOf(aString);
                 }
             }
@@ -373,52 +399,45 @@ public class GuiUtil {
     }
     //
     /**
-     * Copies content of selected cell to system clipboard
+     * Copies content of selected cell to system clipboard.
      *
      * @param aTableView TableView to copy from
      */
-    public static void copySelectedTableViewCellsToClipboard(TableView<?> aTableView){
-        for(TablePosition tmpPos :aTableView.getSelectionModel().getSelectedCells()){
+    public static void copySelectedTableViewCellsToClipboard(TableView<?> aTableView) {
+        for (TablePosition tmpPos : aTableView.getSelectionModel().getSelectedCells()) {
             int tmpRowIndex = tmpPos.getRow();
             int tmpColIndex = tmpPos.getColumn();
             int tmpFragmentColIndexItemsTab = 2;
             Object tmpCell;
-            if(aTableView.getClass() == ItemizationDataTableView.class && tmpColIndex > tmpFragmentColIndexItemsTab -1){
+            if (aTableView.getClass() == ItemizationDataTableView.class && tmpColIndex > tmpFragmentColIndexItemsTab -1) {
                 tmpCell = aTableView.getColumns().get(tmpFragmentColIndexItemsTab).getColumns().get(tmpColIndex - 2).getCellData(tmpRowIndex);
-            }else{
+            } else {
                 tmpCell = aTableView.getColumns().get(tmpColIndex).getCellData(tmpRowIndex);
             }
-            if(tmpCell == null){
+            if (tmpCell == null) {
                 return;
-            }
-            else{
+            } else {
                 ClipboardContent tmpClipboardContent = new ClipboardContent();
-                if(tmpCell.getClass() == String.class){
+                if (tmpCell.getClass() == String.class) {
                     tmpClipboardContent.putString((String) tmpCell);
-                }
-                else if(tmpCell.getClass() == Integer.class){
+                } else if(tmpCell.getClass() == Integer.class) {
                     tmpClipboardContent.putString(((Integer)tmpCell).toString());
-                }
-                else if(tmpCell.getClass() == Double.class){
+                } else if(tmpCell.getClass() == Double.class) {
                     tmpClipboardContent.putString(((Double)tmpCell).toString());
-                }
-                else if(tmpCell.getClass() == ImageView.class){
+                } else if(tmpCell.getClass() == ImageView.class) {
                     Image tmpImage;
                     IAtomContainer tmpAtomContainer;
                     try {
-                        if(aTableView.getClass() == FragmentsDataTableView.class){
+                        if (aTableView.getClass() == FragmentsDataTableView.class) {
                             tmpAtomContainer = ((FragmentDataModel) aTableView.getItems().get(tmpRowIndex)).getFirstParentMolecule().getAtomContainer();
-                        }
-                        else if(aTableView.getClass() == ItemizationDataTableView.class){
-                            if(tmpColIndex > 1){
+                        } else if(aTableView.getClass() == ItemizationDataTableView.class) {
+                            if (tmpColIndex > 1) {
                                 String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
-                                tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getFragmentsOfSpecificAlgorithm(tmpFragmentationName).get(tmpColIndex-2).getAtomContainer(); //magic number
-                            }
-                            else {
+                                tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getFragmentsOfSpecificFragmentation(tmpFragmentationName).get(tmpColIndex-2).getAtomContainer(); //magic number
+                            } else {
                                 tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
                             }
-                        }
-                        else {
+                        } else {
                             tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
                         }
                         tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,true, true);
@@ -426,8 +445,7 @@ public class GuiUtil {
                     } catch (CDKException e) {
                         tmpClipboardContent.putImage(((ImageView) tmpCell).getImage());
                     }
-                }
-                else{
+                } else {
                     return;
                 }
                 Clipboard.getSystemClipboard().setContent(tmpClipboardContent);
@@ -437,58 +455,58 @@ public class GuiUtil {
     //
     /**
      * Sets the height for structure images to each MoleculeDataModel object of the items list of the tableView.
-     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0)
+     * If image height is too small it will be set to GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT (50.0).
      *
      * @param aTableView TableView
      * @param aHeight double
-     * @param aSettingsContainer SettingsContainer
+     * @param aRowsPerPage int
      */
-    public static void setImageStructureHeight(TableView aTableView, double aHeight, SettingsContainer aSettingsContainer){
+    public static void setImageStructureHeight(TableView aTableView, double aHeight, int aRowsPerPage) {
         double tmpHeight =
                 (aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                        / aSettingsContainer.getRowsPerPageSetting();
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
+                        / aRowsPerPage;
+        if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
             tmpHeight =
                     (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                            / aSettingsContainer.getRowsPerPageSetting();
+                            / aRowsPerPage;
         }
-        if(tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT){
+        if (tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT) {
             tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
         }
-        if(aTableView.getClass().equals(ItemizationDataTableView.class)){
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+        if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
+            for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
                 String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
-                if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)){
+                if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)) {
                     continue;
                 }
-                for(FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(tmpFragmentationName)){
+                for (FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(tmpFragmentationName)) {
                     tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
                 }
             }
-        }
-        else{
-            for(MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()){
+        } else {
+            for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
             }
         }
     }
     //
     /**
-     * Returns the largest number of fragments of one molecule found in the given list for the given fragmentation name
+     * Returns the largest number of fragments of one molecule found in the given list for the given fragmentation name.
      *
      * @param aListOfMolecules List of MoleculeDataModels
      * @param aFragmentationName String for the fragmentation name
      * @return largest number of fragments of one molecule
      */
-    public static int getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(List<MoleculeDataModel> aListOfMolecules, String aFragmentationName){
-        int tmpAmount = 0; //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
-        for (int i = 0; i < aListOfMolecules.size(); i++) {
-            if(!aListOfMolecules.get(i).hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
+    public static int getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(List<MoleculeDataModel> aListOfMolecules, String aFragmentationName) {
+        //tmpAmount is the number of fragments appearing in the molecule with the highest number of fragments
+        int tmpAmount = 0;
+        for (MoleculeDataModel aListOfMolecule : aListOfMolecules) {
+            if (!aListOfMolecule.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                 continue;
             }
-            HashMap<String, Integer> tmpCurrentFragmentsMap = aListOfMolecules.get(i).getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName);
-            if (tmpCurrentFragmentsMap == null) { //redundant, see if clause above
+            Map<String, Integer> tmpCurrentFragmentsMap = aListOfMolecule.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName);
+            if (tmpCurrentFragmentsMap == null) { //redundant, see if-clause above
                 continue;
             }
             int tmpNrOfFragmentsOfCurrentMolecule = tmpCurrentFragmentsMap.size();
@@ -510,6 +528,21 @@ public class GuiUtil {
         tmpButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         tmpButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         return tmpButton;
+    }
+    //
+    /**
+     * Returns a new tooltip with the given text, configured with a fixed maximum width, text wrap activated, and
+     * a set show duration.
+     *
+     * @param aText text for the tooltip
+     * @return new tooltip instance
+     */
+    public static Tooltip createTooltip(String aText) {
+        Tooltip tmpTooltip = new Tooltip(aText);
+        tmpTooltip.setMaxWidth(GuiDefinitions.GUI_TOOLTIP_MAX_WIDTH);
+        tmpTooltip.setWrapText(true);
+        tmpTooltip.setShowDuration(Duration.seconds(GuiDefinitions.GUI_TOOLTIP_SHOW_DURATION));
+        return tmpTooltip;
     }
     //</editor-fold>
 }

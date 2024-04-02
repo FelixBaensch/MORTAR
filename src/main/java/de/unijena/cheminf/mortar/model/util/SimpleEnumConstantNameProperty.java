@@ -25,8 +25,6 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
-import javafx.beans.property.SimpleStringProperty;
-
 import java.util.Objects;
 
 /**
@@ -37,14 +35,7 @@ import java.util.Objects;
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
-public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
-    //<editor-fold desc="Private final variables">
-    /**
-     * The enum class the constant name belongs to.
-     */
-    private final Class associatedEnum;
-    //</editor-fold>
-    //
+public class SimpleEnumConstantNameProperty extends SimpleEnumConstantPropertyBase {
     //<editor-fold desc="Constructors">
     /**
      * Constructor with all parameters.
@@ -59,23 +50,11 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
      */
     public SimpleEnumConstantNameProperty(Object bean, String name, String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
-        super(bean, name, initialValue);
-        Objects.requireNonNull(associatedEnum, "Given enum class is null.");
-        Objects.requireNonNull(initialValue, "Given initial value is null.");
-        Objects.requireNonNull(name, "Given name is null.");
-        Objects.requireNonNull(bean, "Given bean is null.");
-        if (!associatedEnum.isEnum()) {
-            throw new IllegalArgumentException("Given class must be an enum.");
-        }
-        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
-        if (tmpEnumConstants.length == 0) {
-            throw new IllegalArgumentException("The given enum class has no constants declared in it.");
-        }
-        this.associatedEnum = associatedEnum;
+        super(bean, name, initialValue, associatedEnum);
         //throws IllegalArgumentException if initial value is no enum constant name
         Enum.valueOf(associatedEnum, initialValue);
     }
-
+    //
     /**
      * Constructor without an initial value.
      *
@@ -87,22 +66,11 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
      */
     public SimpleEnumConstantNameProperty(Object bean, String name, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
-        super(bean, name);
-        Objects.requireNonNull(associatedEnum, "Given enum class is null.");
-        Objects.requireNonNull(name, "Given name is null.");
-        Objects.requireNonNull(bean, "Given bean is null.");
-        if (!associatedEnum.isEnum()) {
-            throw new IllegalArgumentException("Given class must be an enum.");
-        }
-        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
-        if (tmpEnumConstants.length == 0) {
-            throw new IllegalArgumentException("The given enum class has no constants declared in it.");
-        }
-        this.associatedEnum = associatedEnum;
+        super(bean, name, associatedEnum);
     }
-
+    //
     /**
-     * Constructor without bean and name.
+     * Constructor without bean and property name.
      *
      * @param initialValue the initial value of the wrapped value
      * @param associatedEnum the enum class of which a constant name should be wrapped
@@ -112,23 +80,13 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
      */
     public SimpleEnumConstantNameProperty(String initialValue, Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
-        super(initialValue);
-        Objects.requireNonNull(associatedEnum, "Given enum class is null.");
-        Objects.requireNonNull(initialValue, "Given initial value is null.");
-        if (!associatedEnum.isEnum()) {
-            throw new IllegalArgumentException("Given class must be an enum.");
-        }
-        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
-        if (tmpEnumConstants.length == 0) {
-            throw new IllegalArgumentException("The given enum class has no constants declared in it.");
-        }
-        this.associatedEnum = associatedEnum;
+        super(initialValue, associatedEnum);
         //throws IllegalArgumentException if initial value is no enum constant name
         Enum.valueOf(associatedEnum, initialValue);
     }
-
+    //
     /**
-     * Constructor without bean, name, and initial value. Only the associated enum class must be given.
+     * Constructor without bean, property name, and initial value. Only the associated enum class must be given.
      *
      * @param associatedEnum the enum class of which a constant name should be wrapped
      * @throws NullPointerException if a parameter is null
@@ -136,16 +94,7 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
      */
     public SimpleEnumConstantNameProperty(Class associatedEnum)
             throws NullPointerException, IllegalArgumentException {
-        super();
-        Objects.requireNonNull(associatedEnum, "Given enum class is null.");
-        if (!associatedEnum.isEnum()) {
-            throw new IllegalArgumentException("Given class must be an enum.");
-        }
-        Enum[] tmpEnumConstants = (Enum[]) associatedEnum.getEnumConstants();
-        if (tmpEnumConstants.length == 0) {
-            throw new IllegalArgumentException("The given enum class has no constants declared in it.");
-        }
-        this.associatedEnum = associatedEnum;
+        super(associatedEnum);
     }
     //</editor-fold>
     //
@@ -172,53 +121,21 @@ public class SimpleEnumConstantNameProperty extends SimpleStringProperty {
      *
      * @param v the new value
      * @throws NullPointerException if the parameter is null
-     * @throws IllegalArgumentException if the associated enum class has no constant with the name specified in newValue
+     * @throws IllegalArgumentException if the associated enum class has no constant with the name specified in v
      */
     @Override
     public void setValue(String v) throws NullPointerException, IllegalArgumentException {
-        Objects.requireNonNull(v, "Given value is null.");
-        //throws IllegalArgumentException if value is no enum constant name
-        Enum.valueOf(this.associatedEnum, v);
-        super.setValue(v);
+        this.set(v);
     }
 
-    /**
-     * Convenience method that accepts an enum constant object directly instead of its name as new value for this property.
-     *
-     * @param newValue the new value will be the name of the given enum constant object
-     * @throws NullPointerException if the parameter is null
-     * @throws IllegalArgumentException if the given enum constant object does not belong to the associated enum class of
-     * this property
-     */
+    @Override
     public void setEnumValue(Enum newValue) throws NullPointerException, IllegalArgumentException {
         this.set(newValue.name());
     }
 
-    /**
-     * Convenience method that returns an enum constant object directly instead of its name for the wrapped value.
-     *
-     * @return the enum constant object whose name is currently wrapped in this property
-     */
+    @Override
     public Enum getEnumValue() {
         return Enum.valueOf(this.associatedEnum, this.get());
-    }
-
-    /**
-     * Returns the enum class of which a constant name is wrapped in this property.
-     *
-     * @return the associated enum class
-     */
-    public Class getAssociatedEnum() {
-        return this.associatedEnum;
-    }
-
-    /**
-     * Convenience method that returns an array containing all enum constants of the associated enum class.
-     *
-     * @return all constants of the associated enum
-     */
-    public Enum[] getAssociatedEnumConstants() {
-        return (Enum[]) this.associatedEnum.getEnumConstants();
     }
 
     /**

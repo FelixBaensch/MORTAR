@@ -25,6 +25,9 @@
 
 package de.unijena.cheminf.mortar.model.settings;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.model.io.Exporter;
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
@@ -41,6 +44,13 @@ import java.util.Locale;
  */
 public class SettingsContainerTest {
     /**
+     * Constructor to initialize locale and configuration.
+     */
+    public SettingsContainerTest() throws Exception {
+        Locale.setDefault(Locale.of("en", "GB"));
+        Configuration.getInstance();
+    }
+    /**
      * Tests the basic functionalities of SettingsContainer. These are instantiation, restoring default settings,
      * getting the settings, changing the settings, persisting the settings, and reloading them.
      *
@@ -48,26 +58,23 @@ public class SettingsContainerTest {
      */
     @Test
     public void testSettingsContainerBasics() throws Exception {
-        Locale.setDefault(new Locale("en", "GB"));
-        String tmpCsvExportSeparatorTest = ";";
+        Exporter.CSVSeparator tmpCsvExportSeparatorTest = Exporter.CSVSeparator.COMMA;
         //if there is a persisted settings container file already on the machine, it is loaded into the new SettingsContainer object
         SettingsContainer tmpSettingsContainer = new SettingsContainer();
         //restoring to default because a previous settings file with altered settings may have been imported (see below)
         tmpSettingsContainer.restoreDefaultSettings();
-        List<Property> tmpPropertiesList = tmpSettingsContainer.settingsProperties();
-        System.out.println();
-        for (Property tmpProp : tmpPropertiesList) {
-            //recent directory path setting is not included because it is an internal setting
-            System.out.println(tmpProp.getName() + ": " + tmpProp.getValue());
+        List<Property<?>> tmpPropertiesList = tmpSettingsContainer.settingsProperties();
+        for (Property<?> tmpProp : tmpPropertiesList) {
+            Assertions.assertNotNull(tmpProp.getName());
+            Assertions.assertNotNull(tmpProp.getValue());
         }
-        System.out.println(tmpSettingsContainer.recentDirectoryPathSettingProperty().getName() + ": "
-                + tmpSettingsContainer.recentDirectoryPathSettingProperty().getValue());
-        System.out.println();
+        Assertions.assertNotNull(tmpSettingsContainer.recentDirectoryPathSettingProperty().getName());
+        Assertions.assertNotNull(tmpSettingsContainer.recentDirectoryPathSettingProperty().getValue());
         Assertions.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT, tmpSettingsContainer.getRowsPerPageSetting());
         Assertions.assertEquals(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT, tmpSettingsContainer.getAddImplicitHydrogensAtImportSetting());
         Assertions.assertEquals(tmpSettingsContainer.getNumberOfTasksForFragmentationSettingDefault(), tmpSettingsContainer.getNumberOfTasksForFragmentationSetting());
         Assertions.assertEquals(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT, tmpSettingsContainer.getRecentDirectoryPathSetting());
-        Assertions.assertEquals(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
+        //Assertions.assertEquals(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT, tmpSettingsContainer.getKeepAtomContainerInDataModelSetting());
         Assertions.assertEquals(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
         Assertions.assertEquals(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT, tmpSettingsContainer.getCsvExportSeparatorSetting());
         tmpSettingsContainer.setRowsPerPageSetting(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5);

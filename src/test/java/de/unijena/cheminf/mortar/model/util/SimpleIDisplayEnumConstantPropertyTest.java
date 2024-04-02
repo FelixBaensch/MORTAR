@@ -25,19 +25,30 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Locale;
+
 /**
- * Test class for the custom-made {@link de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty} JavaFx
- * property wrapping an enum constant name.
+ * Test class for the custom-made {@link SimpleIDisplayEnumConstantProperty} JavaFx
+ * property wrapping an enum constant display name.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
-public class SimpleEnumConstantNamePropertyTest {
+public class SimpleIDisplayEnumConstantPropertyTest {
+    /**
+     * Constructor setting the default locale.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    public SimpleIDisplayEnumConstantPropertyTest() throws Exception {
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
     /**
      * Basic test for retrieval of associated enum, currently set option, and available options.
      *
@@ -45,17 +56,15 @@ public class SimpleEnumConstantNamePropertyTest {
      */
     @Test
     public void test() throws Exception {
-        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(this, "testProp",
-                IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION.name(),
+        SimpleIDisplayEnumConstantProperty tmpEnumProperty = new SimpleIDisplayEnumConstantProperty(this, "testProp",
+                IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION,
                 IMoleculeFragmenter.FragmentSaturationOption.class);
         Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.class, tmpEnumProperty.getAssociatedEnum());
-        Assertions.assertEquals("HYDROGEN_SATURATION", tmpEnumProperty.get());
-        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION, tmpEnumProperty.getEnumValue());
-        Enum[] tmpAvailableOptions = tmpEnumProperty.getAssociatedEnumConstants();
-        for (Enum tmpOption : tmpAvailableOptions) {
-            Assertions.assertDoesNotThrow(() -> {IMoleculeFragmenter.FragmentSaturationOption.valueOf(tmpOption.name());});
-            Assertions.assertDoesNotThrow(() -> tmpEnumProperty.setEnumValue(tmpOption));
-            Assertions.assertDoesNotThrow(() -> tmpEnumProperty.set(tmpOption.name()));
+        Assertions.assertEquals(Message.get("IMoleculeFragmenter.FragmentSaturationOption.hydrogenSaturation.displayName"), tmpEnumProperty.get().getDisplayName());
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION, tmpEnumProperty.get());
+        IDisplayEnum[] tmpAvailableOptions = (IDisplayEnum[]) tmpEnumProperty.getAssociatedEnumConstants();
+        for (IDisplayEnum tmpOption : tmpAvailableOptions) {
+            Assertions.assertDoesNotThrow(() -> tmpEnumProperty.set(tmpOption));
         }
     }
 }
