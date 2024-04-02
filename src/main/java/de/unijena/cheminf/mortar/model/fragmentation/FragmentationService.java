@@ -193,9 +193,9 @@ public class FragmentationService {
     private final SettingsContainer settingsContainer;
     //
     /**
-     * Property of name of selected fragmenter.
+     * Property of display name of selected fragmenter.
      */
-    private final SimpleStringProperty selectedFragmenterNameProperty;
+    private final SimpleStringProperty selectedFragmenterDisplayNameProperty;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors">
@@ -216,7 +216,7 @@ public class FragmentationService {
         //
         Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
         this.settingsContainer = aSettingsContainer;
-        this.selectedFragmenterNameProperty = new SimpleStringProperty();
+        this.selectedFragmenterDisplayNameProperty = new SimpleStringProperty();
         try {
             this.checkFragmenters();
         } catch (Exception anException) {
@@ -234,7 +234,7 @@ public class FragmentationService {
         if (Objects.isNull(this.selectedFragmenter)) {
             this.selectedFragmenter = this.ertlFGF;
         }
-        this.setSelectedFragmenterNameProperty(this.selectedFragmenter.getFragmentationAlgorithmName());
+        this.setSelectedFragmenterDisplayName(this.selectedFragmenter.getFragmentationAlgorithmDisplayName());
         try {
             this.pipelineFragmenter = new IMoleculeFragmenter[] {
                     this.createNewFragmenterObjectByAlgorithmName(this.selectedFragmenter.getFragmentationAlgorithmName())
@@ -265,7 +265,7 @@ public class FragmentationService {
             aNumberOfTasks = 1;
         }
         //</editor-fold>
-        String tmpFragmentationName = this.createAndCheckFragmentationName(this.selectedFragmenter.getFragmentationAlgorithmName());
+        String tmpFragmentationName = this.createAndCheckFragmentationName(this.selectedFragmenter.getFragmentationAlgorithmDisplayName());
         this.existingFragmentations.add(tmpFragmentationName);
         this.currentFragmentationName = tmpFragmentationName;
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
@@ -445,7 +445,7 @@ public class FragmentationService {
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName);
 
         for(int i = 1; i < this.pipelineFragmenter.length; i++){
-            String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmName());
+            String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmDisplayName());
 
             for(MoleculeDataModel tmpParentMol : aListOfMolecules){
                 if(!tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
@@ -753,7 +753,7 @@ public class FragmentationService {
                 for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
                     if (tmpFragmenter.getFragmentationAlgorithmName().equals(tmpSelectedFragmenterAlgorithmName)) {
                         this.selectedFragmenter = tmpFragmenter;
-                        this.selectedFragmenterNameProperty.set(this.selectedFragmenter.getFragmentationAlgorithmName());
+                        this.selectedFragmenterDisplayNameProperty.set(this.selectedFragmenter.getFragmentationAlgorithmDisplayName());
                         break;
                     }
                 }
@@ -858,7 +858,7 @@ public class FragmentationService {
         return this.fragments;
     }
     /**
-     * Returns name of the running fragmentation
+     * Returns name of the running fragmentation.
      *
      * @return currentFragmentation
      */
@@ -866,7 +866,7 @@ public class FragmentationService {
         return this.currentFragmentationName;
     }
     /**
-     * Returns name of the current pipeline configuration
+     * Returns name of the current pipeline configuration.
      *
      * @return pipeline name
      */
@@ -874,19 +874,19 @@ public class FragmentationService {
         return this.pipeliningFragmentationName;
     }
     /**
-     * Sets the selectedFragmenter.
+     * Sets the selectedFragmenter using the display name.
      *
-     * @param anAlgorithmName must be retrieved using the respective method of the fragmenter object
+     * @param anAlgorithmDisplayName must be retrieved using the respective method of the fragmenter object
      */
-    public void setSelectedFragmenter(String anAlgorithmName) {
+    public void setSelectedFragmenter(String anAlgorithmDisplayName) {
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-            if (anAlgorithmName.equals(tmpFragmenter.getFragmentationAlgorithmName()))
+            if (anAlgorithmDisplayName.equals(tmpFragmenter.getFragmentationAlgorithmDisplayName()))
                 this.selectedFragmenter = tmpFragmenter;
         }
     }
 
     /**
-     * Sets the fragmenters to use for pipeline fragmentation
+     * Sets the fragmenters to use for pipeline fragmentation.
      *
      * @param anArrayOfFragmenter IMolecueFragmenter[]
      */
@@ -894,7 +894,7 @@ public class FragmentationService {
         this.pipelineFragmenter = anArrayOfFragmenter;
     }
     /**
-     * Sets the pipeline name
+     * Sets the pipeline name.
      *
      * @param aName pipeline name
      */
@@ -902,34 +902,35 @@ public class FragmentationService {
         this.pipeliningFragmentationName = aName;
     }
     /**
-     * Gets the name of the selected fragmenter
+     * Gets the display name of the selected fragmenter.
      *
      * @return String
      */
-    public String getSelectedFragmenterNameProperty() {
-        return this.selectedFragmenterNameProperty.get();
+    public String getSelectedFragmenterDisplayName() {
+        return this.selectedFragmenterDisplayNameProperty.get();
     }
     /**
-     * Returns the property of the name of the selected fragmenter
+     * Returns the property of the display name of the selected fragmenter.
      *
      * @return SimpleStringProperty
      */
-    public SimpleStringProperty selectedFragmenterNamePropertyProperty() {
-        return this.selectedFragmenterNameProperty;
+    public SimpleStringProperty selectedFragmenterDisplayNameProperty() {
+        return this.selectedFragmenterDisplayNameProperty;
     }
     /**
-     * Sets the name of the selected fragmenter
+     * Sets the display name of the selected fragmenter.
      *
-     * @param aFragmenterName String for the name of the fragmenter
+     * @param aFragmenterDisplayName String for the display name of the fragmenter
      */
-    public void setSelectedFragmenterNameProperty(String aFragmenterName) {
-        this.selectedFragmenterNameProperty.set(aFragmenterName);
+    public void setSelectedFragmenterDisplayName(String aFragmenterDisplayName) {
+        this.selectedFragmenterDisplayNameProperty.set(aFragmenterDisplayName);
     }
     //</editor-fold>
     //
     //<editor-fold desc="private methods">
     /**
-     * Checks whether the name exists, if so, a consecutive number is appended, if not, the name is returned unchanged
+     * Checks whether the name exists, if so, a consecutive number is appended, if not, the name is returned unchanged.
+     *
      * @param anAlgorithmName String
      * @return String algorithm name
      */
@@ -986,7 +987,7 @@ public class FragmentationService {
             }
         }; */
         List<FragmentationTask> tmpFragmentationTaskList = new LinkedList<>();
-        for(int i = 1; i <= tmpNumberOfTasks; i++){
+        for (int i = 1; i <= tmpNumberOfTasks; i++) {
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
             IMoleculeFragmenter tmpFragmenterForTask = aFragmenter.copy();
             tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, aFragmentationName));
@@ -1002,7 +1003,8 @@ public class FragmentationService {
         }
         List<Future<Integer>> tmpFuturesList;
         long tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
-        FragmentationService.LOGGER.log(Level.INFO, "Fragmentation \"{0}\" starting. Current memory consumption: {1} MB", new Object[]{aFragmentationName, tmpMemoryConsumption});
+        FragmentationService.LOGGER.log(Level.INFO, "Fragmentation \"{0}\" ({1}) starting. Current memory consumption: {2} MB",
+                new Object[]{aFragmentationName, aFragmenter.getFragmentationAlgorithmDisplayName(), tmpMemoryConsumption});
         long tmpStartTime = System.currentTimeMillis();
         int tmpExceptionsCounter = 0;
         tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
@@ -1040,15 +1042,16 @@ public class FragmentationService {
             FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
         if (tmpExceptionsCounter > 0) {
-            FragmentationService.LOGGER.log(Level.WARNING, "Fragmentation \"{0}\" caused {1} exceptions", new Object[]{aFragmentationName, tmpExceptionsCounter});
+            FragmentationService.LOGGER.log(Level.WARNING, "Fragmentation \"{0}\" ({1}) caused {2} exceptions",
+                    new Object[]{aFragmentationName, aFragmenter.getFragmentationAlgorithmDisplayName(), tmpExceptionsCounter});
         }
         this.executorService.shutdown();
         tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
         long tmpEndTime = System.currentTimeMillis();
         long tmpDuration = tmpEndTime - tmpStartTime;
         FragmentationService.LOGGER.log(Level.INFO,
-                "Fragmentation \"{0}\" of {1} molecules complete. It took {2} ms. Current memory consumption: {3} MB",
-                new Object[]{aFragmentationName, aListOfMolecules.size(), tmpDuration, tmpMemoryConsumption});
+                "Fragmentation \"{0}\" ({1}) of {2} molecules complete. It took {3} ms. Current memory consumption: {4} MB",
+                new Object[]{aFragmentationName, aFragmenter.getFragmentationAlgorithmDisplayName(), aListOfMolecules.size(), tmpDuration, tmpMemoryConsumption});
         return tmpFragmentHashtable;
     }
     //
@@ -1065,6 +1068,7 @@ public class FragmentationService {
         int tmpAlgorithmNamesSetInitCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(this.fragmenters.length,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         HashSet<String> tmpAlgorithmNamesSet = new HashSet<>(tmpAlgorithmNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        HashSet<String> tmpAlgorithmDisplayNamesSet = new HashSet<>(tmpAlgorithmNamesSetInitCapacity, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             //algorithm name should be singleton and must be persistable
             String tmpAlgName = tmpFragmenter.getFragmentationAlgorithmName();
@@ -1075,6 +1079,16 @@ public class FragmentationService {
                 throw new UnsupportedOperationException("Algorithm name " + tmpAlgName + " is used multiple times.");
             } else {
                 tmpAlgorithmNamesSet.add(tmpAlgName);
+            }
+            //algorithm display name should be singleton and must be persistable
+            String tmpAlgDisplayName = tmpFragmenter.getFragmentationAlgorithmDisplayName();
+            if (!PreferenceUtil.isValidName(tmpAlgDisplayName) || !SingleTermPreference.isValidContent(tmpAlgDisplayName)) {
+                throw new UnsupportedOperationException("Algorithm name " + tmpAlgDisplayName + " is invalid.");
+            }
+            if (tmpAlgorithmDisplayNamesSet.contains(tmpAlgDisplayName)) {
+                throw new UnsupportedOperationException("Algorithm name " + tmpAlgDisplayName + " is used multiple times.");
+            } else {
+                tmpAlgorithmDisplayNamesSet.add(tmpAlgDisplayName);
             }
             //setting names must be singletons within the respective class
             //setting names and values must adhere to the preference input restrictions

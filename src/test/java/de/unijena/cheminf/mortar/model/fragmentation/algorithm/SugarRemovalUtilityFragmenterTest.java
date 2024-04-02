@@ -63,6 +63,7 @@ public class SugarRemovalUtilityFragmenterTest {
     public void basicTest() throws Exception {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
         Assertions.assertDoesNotThrow(tmpFragmenter::getSugarTypeToRemoveSetting);
         for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
             Assertions.assertDoesNotThrow(tmpSetting::getName);

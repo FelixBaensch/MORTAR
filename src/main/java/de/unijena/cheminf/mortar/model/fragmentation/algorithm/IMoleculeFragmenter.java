@@ -296,7 +296,8 @@ public interface IMoleculeFragmenter {
 
     /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
-     * The given name must be unique among the available fragmentation algorithms!
+     * The given name must be unique among the available fragmentation algorithms! It is mostly used internal for
+     * persistence. For other functionalities, the display name (see below) is used.
      *
      * @return algorithm name
      */

@@ -64,6 +64,7 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
     public void basicTest() throws Exception {
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
         Assertions.assertDoesNotThrow(tmpFragmenter::getElectronDonationModelSetting);
         Assertions.assertDoesNotThrow(tmpFragmenter::getEnvironmentModeSetting);
         for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {

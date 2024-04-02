@@ -724,7 +724,7 @@ public class MainViewController {
     private void openFragmentationSettingsView() {
         new FragmentationSettingsViewController(this.primaryStage,
                 this.fragmentationService.getFragmenters(),
-                this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName(),
+                this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmDisplayName(),
                 this.configuration);
     }
     //
@@ -757,19 +757,19 @@ public class MainViewController {
     private void addFragmentationAlgorithmCheckMenuItems() {
         ToggleGroup tmpToggleGroup = new ToggleGroup();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()) {
-            RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmName());
+            RadioMenuItem tmpRadioMenuItem = new RadioMenuItem(tmpFragmenter.getFragmentationAlgorithmDisplayName());
             tmpRadioMenuItem.setToggleGroup(tmpToggleGroup);
             this.mainView.getMainMenuBar().getFragmentationAlgorithmMenu().getItems().add(tmpRadioMenuItem);
             if (!Objects.isNull(this.fragmentationService.getSelectedFragmenter())
-                    && tmpFragmenter.getFragmentationAlgorithmName()
-                        .equals(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName())) {
+                    && tmpFragmenter.getFragmentationAlgorithmDisplayName()
+                        .equals(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmDisplayName())) {
                 tmpToggleGroup.selectToggle(tmpRadioMenuItem);
             }
         }
         tmpToggleGroup.selectedToggleProperty().addListener((observableValue, oldValue, newValue) -> {
             if (tmpToggleGroup.getSelectedToggle() != null) {
                 this.fragmentationService.setSelectedFragmenter(((RadioMenuItem) newValue).getText());
-                this.fragmentationService.setSelectedFragmenterNameProperty(((RadioMenuItem) newValue).getText());
+                this.fragmentationService.setSelectedFragmenterDisplayName(((RadioMenuItem) newValue).getText());
             }
         });
     }
@@ -957,17 +957,17 @@ public class MainViewController {
         tmpFragmentationButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpFragmentationButtonsHBox.setAlignment(Pos.CENTER_LEFT);
         this.fragmentationButton = new Button();
-        this.fragmentationButton.textProperty().bind(this.fragmentationService.selectedFragmenterNamePropertyProperty());
+        this.fragmentationButton.textProperty().bind(this.fragmentationService.selectedFragmenterDisplayNameProperty());
         Tooltip tmpTooltip = GuiUtil.createTooltip("");
-        tmpTooltip.textProperty().bind(Bindings.format(Message.get("MainTabPane.moleculesTab.fragmentButton.text"), this.fragmentationService.selectedFragmenterNamePropertyProperty()));
+        tmpTooltip.textProperty().bind(Bindings.format(Message.get("MainTabPane.moleculesTab.fragmentButton.text"), this.fragmentationService.selectedFragmenterDisplayNameProperty()));
         this.fragmentationButton.setTooltip(tmpTooltip);
-        double tmpTextWidth = new Text(this.fragmentationService.getSelectedFragmenterNameProperty()).getLayoutBounds().getWidth() + 20;
+        double tmpTextWidth = new Text(this.fragmentationService.getSelectedFragmenterDisplayName()).getLayoutBounds().getWidth() + 20;
         this.fragmentationButton.setPrefWidth(tmpTextWidth);
         this.fragmentationButton.setMinWidth(tmpTextWidth);
         this.fragmentationButton.setMaxWidth(tmpTextWidth);
         this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.fragmentationService.selectedFragmenterNamePropertyProperty().addListener((observable, oldValue, newValue) -> {
-            double tmpTextWidthChange = new Text(this.fragmentationService.getSelectedFragmenterNameProperty()).getLayoutBounds().getWidth() + 20;
+        this.fragmentationService.selectedFragmenterDisplayNameProperty().addListener((observable, oldValue, newValue) -> {
+            double tmpTextWidthChange = new Text(newValue).getLayoutBounds().getWidth() + 20;
             this.fragmentationButton.setPrefWidth(tmpTextWidthChange);
             this.fragmentationButton.setMinWidth(tmpTextWidthChange);
             this.fragmentationButton.setMaxWidth(tmpTextWidthChange);

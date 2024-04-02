@@ -72,9 +72,9 @@ public class FragmentationSettingsViewController {
      */
     private final IMoleculeFragmenter[] fragmenters;
     /**
-     * Name of the selected fragmentation algorithm.
+     * Display name of the selected fragmentation algorithm.
      */
-    private final String selectedFragmenterName;
+    private final String selectedFragmenterDisplayName;
     /**
      * Configuration class to read resource file paths from.
      */
@@ -89,14 +89,14 @@ public class FragmentationSettingsViewController {
      *
      * @param aStage Stage
      * @param anArrayOfFragmenters IMoleculeFragmenter[]
-     * @param aSelectedFragmenterAlgorithmName String
+     * @param aSelectedFragmenterAlgorithmDisplayName display name of selected fragmenter (display name, not internal name!)
      * @param aConfiguration configuration instance to read resource file paths from
      */
-    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmName, IConfiguration aConfiguration) {
+    public FragmentationSettingsViewController(Stage aStage, IMoleculeFragmenter[] anArrayOfFragmenters, String aSelectedFragmenterAlgorithmDisplayName, IConfiguration aConfiguration) {
         this.mainStage = aStage;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(anArrayOfFragmenters.length));
         this.fragmenters = anArrayOfFragmenters;
-        this.selectedFragmenterName = aSelectedFragmenterAlgorithmName;
+        this.selectedFragmenterDisplayName = aSelectedFragmenterAlgorithmDisplayName;
         this.configuration = aConfiguration;
         this.openFragmentationSettingsView();
     }
@@ -125,12 +125,12 @@ public class FragmentationSettingsViewController {
         this.addListener();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             HashMap<String, Object> tmpRecentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmenter.settingsProperties().size()));
-            this.recentProperties.put(tmpFragmenter.getFragmentationAlgorithmName(), tmpRecentProperties);
+            this.recentProperties.put(tmpFragmenter.getFragmentationAlgorithmDisplayName(), tmpRecentProperties);
             Tab tmpTab = this.settingsView.addTab(
-                    tmpFragmenter.getFragmentationAlgorithmName(), tmpFragmenter.settingsProperties(),
+                    tmpFragmenter.getFragmentationAlgorithmDisplayName(), tmpFragmenter.settingsProperties(),
                     tmpFragmenter.getSettingNameToDisplayNameMap(),
                     tmpFragmenter.getSettingNameToTooltipTextMap(), tmpRecentProperties);
-            if (tmpFragmenter.getFragmentationAlgorithmName().equals(this.selectedFragmenterName)) {
+            if (tmpFragmenter.getFragmentationAlgorithmDisplayName().equals(this.selectedFragmenterDisplayName)) {
                 this.settingsView.getSelectionModel().select(tmpTab);
             }
         }
@@ -143,7 +143,7 @@ public class FragmentationSettingsViewController {
         //fragmentationSettingsViewStage close request
         this.fragmentationSettingsViewStage.setOnCloseRequest(event -> {
             for (IMoleculeFragmenter fragmenter : this.fragmenters) {
-                if (fragmenter.getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
+                if (fragmenter.getFragmentationAlgorithmDisplayName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
                     this.setRecentProperties(fragmenter, this.recentProperties.get(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId()));
                 }
             }
@@ -154,14 +154,14 @@ public class FragmentationSettingsViewController {
         //cancelButton
         this.settingsView.getCancelButton().setOnAction(event -> {
             for (IMoleculeFragmenter fragmenter : this.fragmenters) {
-                this.setRecentProperties(fragmenter, this.recentProperties.get(fragmenter.getFragmentationAlgorithmName()));
+                this.setRecentProperties(fragmenter, this.recentProperties.get(fragmenter.getFragmentationAlgorithmDisplayName()));
             }
             this.fragmentationSettingsViewStage.close();
         });
         //defaultButton
         this.settingsView.getDefaultButton().setOnAction(event -> {
             for (IMoleculeFragmenter fragmenter : this.fragmenters) {
-                if (fragmenter.getFragmentationAlgorithmName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
+                if (fragmenter.getFragmentationAlgorithmDisplayName().equals(this.settingsView.getTabPane().getSelectionModel().getSelectedItem().getId())) {
                     fragmenter.restoreDefaultSettings();
                 }
             }

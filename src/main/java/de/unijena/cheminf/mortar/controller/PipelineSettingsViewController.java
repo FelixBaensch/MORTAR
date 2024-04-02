@@ -171,7 +171,7 @@ public class PipelineSettingsViewController {
             this.pipelineSettingsView.addGrid(this.pipelineSettingsViewStage);
             this.addListenerAndBindings();
             for(IMoleculeFragmenter tmpFragmenter : this.fragmenterList){
-                this.addNewChoiceRow(tmpFragmenter.getFragmentationAlgorithmName());
+                this.addNewChoiceRow(tmpFragmenter.getFragmentationAlgorithmDisplayName());
             }
             this.setPipelineName(this.fragmentationService.getPipeliningFragmentationName());
             this.pipelineSettingsView.getFragmentButton().setDisable(!this.isMoleculeDataLoaded || this.isFragmentationRunning);
@@ -221,7 +221,7 @@ public class PipelineSettingsViewController {
     private void addNewChoiceRow(String aFragmenterName) {
         ComboBox<String> tmpComboBox = new ComboBox<>();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-            tmpComboBox.getItems().add(tmpFragmenter.getFragmentationAlgorithmName());
+            tmpComboBox.getItems().add(tmpFragmenter.getFragmentationAlgorithmDisplayName());
         }
         tmpComboBox.setPromptText(Message.get("PipelineSettingsView.comboBox.promptText"));
         if (aFragmenterName != null) {
@@ -231,12 +231,14 @@ public class PipelineSettingsViewController {
             Object tmpSelectedFragmenterString = tmpComboBox.getSelectionModel().getSelectedItem();
             int tmpIndex = GridPane.getRowIndex(tmpComboBox) - 1;
             for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
-                if (tmpSelectedFragmenterString.equals(tmpFragmenter.getFragmentationAlgorithmName())) {
+                if (tmpSelectedFragmenterString.equals(tmpFragmenter.getFragmentationAlgorithmDisplayName())) {
                     // will not work cause size of list is set - why not, it is in case a fragmenter that has already been set is changed
                     if (this.fragmenterList.size() > tmpIndex) {
-                        this.fragmenterList.set(tmpIndex, Arrays.stream(this.fragmenters).filter(x -> x.getFragmentationAlgorithmName().equals(tmpSelectedFragmenterString)).findFirst().orElse(null));
+                        this.fragmenterList.set(tmpIndex, Arrays.stream(this.fragmenters)
+                                .filter(x -> x.getFragmentationAlgorithmDisplayName().equals(tmpSelectedFragmenterString)).findFirst().orElse(null));
                     } else {
-                        this.fragmenterList.add(Arrays.stream(this.fragmenters).filter(x -> x.getFragmentationAlgorithmName().equals(tmpSelectedFragmenterString)).findFirst().orElse(null));
+                        this.fragmenterList.add(Arrays.stream(this.fragmenters)
+                                .filter(x -> x.getFragmentationAlgorithmDisplayName().equals(tmpSelectedFragmenterString)).findFirst().orElse(null));
                     }
                     break;
                 }
@@ -262,7 +264,7 @@ public class PipelineSettingsViewController {
             IMoleculeFragmenter[] tmpArray = new IMoleculeFragmenter[1];
             tmpArray[0] = this.fragmenterList.get(tmpFragmenterListIndex);
             FragmentationSettingsViewController tmpFragmentationSettingsViewController
-                    = new FragmentationSettingsViewController(this.pipelineSettingsViewStage, tmpArray, this.fragmenterList.get(tmpFragmenterListIndex).getFragmentationAlgorithmName(), this.configuration);
+                    = new FragmentationSettingsViewController(this.pipelineSettingsViewStage, tmpArray, this.fragmenterList.get(tmpFragmenterListIndex).getFragmentationAlgorithmDisplayName(), this.configuration);
         });
         Label tmpLabel = new Label(String.valueOf(++this.algorithmCounter));
         //remove removeButton from upper Row
@@ -326,8 +328,9 @@ public class PipelineSettingsViewController {
             //
             this.algorithmCounter--;
             this.fragmenterList.removeLast();
-            if(this.algorithmCounter > 1)
+            if (this.algorithmCounter > 1) {
                 this.addRemoveRowButton(this.algorithmCounter);
+            }
         });
         this.pipelineSettingsView.addRemoveRowButton(tmpRemoveButton, aRowNumber);
     }
@@ -366,7 +369,7 @@ public class PipelineSettingsViewController {
         this.algorithmCounter = 1;
         ComboBox<String> tmpBox = (ComboBox<String>) this.pipelineSettingsView.getGridPane().getChildren().stream().filter(node -> GridPane.getRowIndex(node) == 1 && (node instanceof ComboBox)).findFirst().orElse(null);
         if (tmpBox != null) {
-            tmpBox.getSelectionModel().select(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmName());
+            tmpBox.getSelectionModel().select(this.fragmentationService.getSelectedFragmenter().getFragmentationAlgorithmDisplayName());
         }
     }
     //</editor-fold>
