@@ -488,7 +488,26 @@ public class MainViewController {
                             anException);
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                 }
-                if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
+                int tmpExceptionCount = 0;
+                if (tmpAtomContainerSet != null && !tmpAtomContainerSet.isEmpty()) {
+                    for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
+                        //returns null if no SMILES code could be created
+                        String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
+                        if (tmpSmiles == null) {
+                            tmpExceptionCount++;
+                            continue;
+                        }
+                        MoleculeDataModel tmpMoleculeDataModel;
+                        if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
+                            tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
+                        } else {
+                            tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
+                        }
+                        tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                        this.moleculeDataModelList.add(tmpMoleculeDataModel);
+                    }
+                }
+                if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty() || this.moleculeDataModelList.isEmpty()) {
                     MainViewController.LOGGER.log(Level.WARNING, "Import failed, set of imported molecules is null or empty");
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                     this.isImportRunningProperty.setValue(false);
@@ -505,23 +524,6 @@ public class MainViewController {
                 this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() +
                         " " + Message.get((tmpAtomContainerSet.getAtomContainerCount() == 1 ? "Title.molecule" : "Title.molecules")));
-                int tmpExceptionCount = 0;
-                for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-                    //returns null if no SMILES code could be created
-                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
-                    if (tmpSmiles == null) {
-                        tmpExceptionCount++;
-                        continue;
-                    }
-                    MoleculeDataModel tmpMoleculeDataModel;
-                    if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                        tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
-                    } else {
-                        tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
-                    }
-                    tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-                    this.moleculeDataModelList.add(tmpMoleculeDataModel);
-                }
                 this.importedFileName = tmpImporter.getFileName();
                 MainViewController.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
                         "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
