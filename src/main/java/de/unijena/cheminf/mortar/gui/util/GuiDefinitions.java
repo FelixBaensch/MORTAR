@@ -87,15 +87,15 @@ public final class GuiDefinitions {
     /**
      * Value for the preference width of a text field.
      */
-    public static final double GUI_TEXT_FIELD_PREF_WIDTH_VALUE = 50.0;
+    public static final double GUI_TEXT_FIELD_PREF_WIDTH_VALUE = 60.0;
     /**
      * Value for the maximum width of a text field.
      */
-    public static final double GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE = 70.0;
+    public static final double GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE = 120.0;
     /**
      * Value for the preferred width of a combo box in the settings view.
      */
-    public static final double GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE = 210.0;
+    public static final double GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE = 180.0;
     /**
      * Value for the maximum width of a combo box in the settings view.
      */
