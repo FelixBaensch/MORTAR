@@ -36,9 +36,11 @@ import javafx.stage.Stage;
 
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.FormatFactory;
@@ -439,6 +441,12 @@ public class Importer {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
                 if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
                     CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
+                } else {
+                    for (IAtom tmpAtom : tmpMolecule.atoms()) {
+                        if (tmpAtom.getImplicitHydrogenCount() == CDKConstants.UNSET) {
+                            tmpAtom.setImplicitHydrogenCount(0);
+                        }
+                    }
                 }
                 /* note: the doc says: "Suppress any explicit hydrogens in the provided container. Only hydrogens that
                 can be represented as a hydrogen count value on the atom are suppressed." Therefore, there will
