@@ -138,7 +138,7 @@ public class Importer {
     public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException, IOException, CDKException {
         Objects.requireNonNull(aFile, "aFile is null");
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
-        if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
+        if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
             Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }

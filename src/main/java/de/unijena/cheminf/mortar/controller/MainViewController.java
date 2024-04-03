@@ -531,9 +531,16 @@ public class MainViewController {
             this.isImportRunningProperty.setValue(false);
         });
         this.importTask.setOnFailed(event -> {
+            Exception tmpCause = (Exception) event.getSource().getException();
+            MainViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
             this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
             this.isImportRunningProperty.setValue(false);
-            LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
+            Platform.runLater(() -> {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Importer.FileImportExceptionAlert.Header"),
+                        Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + LogUtil.getLogFileDirectoryPath(),
+                        tmpCause);
+            });
         });
         this.importerThread = new Thread(importTask);
         this.importerThread.setName(ThreadType.IMPORT_THREAD.getThreadName());
@@ -1088,7 +1095,6 @@ public class MainViewController {
                     }
                     return null;
                 }
-
                 //
                 @Override
                 public boolean cancel(boolean anInterruptThread) {
@@ -1115,7 +1121,7 @@ public class MainViewController {
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
-                        LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
+                        MainViewController.LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
@@ -1134,7 +1140,14 @@ public class MainViewController {
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
-                LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), new Exception(event.getSource().toString()));
+                Exception tmpCause = (Exception) event.getSource().getException();
+                MainViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
+                Platform.runLater(() -> {
+                    GuiUtil.guiExceptionAlert(Message.get("MainViewController.FragmentationError.Title"),
+                            Message.get("MainViewController.FragmentationError.Header"),
+                            Message.get("MainViewController.FragmentationError.Content"),
+                            tmpCause);
+                });
             });
             this.fragmentationThread = new Thread(this.parallelFragmentationMainTask);
             this.fragmentationThread.setName(ThreadType.FRAGMENTATION_THREAD.getThreadName());
