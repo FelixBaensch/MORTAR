@@ -69,6 +69,10 @@ public final class GuiDefinitions {
      */
     public static final double GUI_BUTTON_HEIGHT_VALUE = 25.0;
     /**
+     * Value for the width of buttons in the pipeline settings view.
+     */
+    public static final double GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE = 50.0;
+    /**
      * Value for the distance between the buttons.
      */
     public static final double GUI_BUTTON_SPACING_VALUE = 5.0;
