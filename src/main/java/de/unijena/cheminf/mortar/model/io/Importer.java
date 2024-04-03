@@ -284,6 +284,9 @@ public class Importer {
                     //skip if it is an erroneous entry
                     tmpSDFReader.setSkip(true);
                     if (!tmpSDFReader.hasNext()) {
+                        if (tmpCounter == 0) {
+                            Importer.LOGGER.log(Level.WARNING, "Import failed for first and only structure in the file");
+                        }
                         // there is no next, end of file!
                         break;
                     }

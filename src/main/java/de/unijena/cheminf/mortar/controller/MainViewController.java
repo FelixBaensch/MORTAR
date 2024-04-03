@@ -484,13 +484,20 @@ public class MainViewController {
                     MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                             Message.get("Importer.FileImportExceptionAlert.Header"),
-                            Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + LogUtil.getLogFileDirectoryPath(),
+                            Message.get("Importer.FileImportExceptionAlert.Text"),
                             anException);
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                 }
                 if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
+                    MainViewController.LOGGER.log(Level.WARNING, "Import failed, set of imported molecules is null or empty");
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                     this.isImportRunningProperty.setValue(false);
+                    Platform.runLater(() -> {
+                        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                                Message.get("Error.ExceptionAlert.Title"),
+                                Message.get("Importer.FileImportEmptyAlert.Header"),
+                                Message.get("Importer.FileImportEmptyAlert.Content"));
+                    });
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
@@ -538,7 +545,7 @@ public class MainViewController {
             Platform.runLater(() -> {
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Importer.FileImportExceptionAlert.Header"),
-                        Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + LogUtil.getLogFileDirectoryPath(),
+                        Message.get("Importer.FileImportExceptionAlert.Text"),
                         tmpCause);
             });
         });
