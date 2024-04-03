@@ -386,7 +386,8 @@ public class Exporter {
     //
     //<editor-fold desc="Private methods" defaultstate="collapsed">
     /**
-     * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file.
+     * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file. In the molecule names,
+     * the given separator character is replaced by a placeholder character ('_').
      *
      * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
      * @param aFragmentationName     fragmentation name to retrieve the specific set of fragments from the molecule data models
@@ -403,6 +404,8 @@ public class Exporter {
             return null;
         }
         List<String> tmpFailedExportFragments = new LinkedList<>();
+        //the character used to replace all occurrences of the given separator char in the exported strings
+        final char tmpReplacementChar = '_';
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
             String tmpCsvHeader = Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
@@ -414,7 +417,12 @@ public class Exporter {
                     return null;
                 }
                 try {
-                    tmpWriter.printf("%n%s%s%s", tmpMoleculeDataModel.getName(), aSeparator, tmpMoleculeDataModel.getUniqueSmiles());
+                    tmpWriter.printf("%n%s%s%s",
+                            tmpMoleculeDataModel.getName().replace(aSeparator, tmpReplacementChar),
+                            aSeparator,
+                            //note to developers: make sure no chars are offered as separator char options that can
+                            // also occur in SMILES strings!
+                            tmpMoleculeDataModel.getUniqueSmiles());
                 } catch (Exception anException) {
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpMoleculeDataModel.getName()), anException);
                     tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
@@ -474,8 +482,10 @@ public class Exporter {
                 try {
                     FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
                     tmpWriter.printf("%n%s%s%d%s%.4f%s%d%s%.4f",
-                            tmpFragmentDataModel.getUniqueSmiles(), aSeparator, tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
-                            tmpFragmentDataModel.getAbsolutePercentage(), aSeparator, tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
+                            tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
+                            tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
+                            tmpFragmentDataModel.getAbsolutePercentage(), aSeparator,
+                            tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
                             tmpFragmentDataModel.getMoleculePercentage());
                 } catch (Exception anException) {
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpDataModel.getName()), anException);
