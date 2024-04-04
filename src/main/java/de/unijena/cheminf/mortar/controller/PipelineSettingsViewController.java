@@ -295,6 +295,7 @@ public class PipelineSettingsViewController {
         Button tmpAddButton = new Button();
         tmpAddButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.addNewRowButton.toolTip")));
         tmpAddButton.setText("+");
+        tmpAddButton.setStyle("-fx-font-weight: bold");
         tmpAddButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpAddButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpAddButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
@@ -314,6 +315,7 @@ public class PipelineSettingsViewController {
         Button tmpRemoveButton = new Button();
         tmpRemoveButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.removeRowButton.toolTip")));
         tmpRemoveButton.setText("-");
+        tmpRemoveButton.setStyle("-fx-font-weight: bold");
         tmpRemoveButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpRemoveButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpRemoveButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
