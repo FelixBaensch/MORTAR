@@ -257,6 +257,9 @@ public class PipelineSettingsViewController {
         tmpFragmenterSettingsButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpFragmenterSettingsButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpFragmenterSettingsButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpFragmenterSettingsButton.setMinWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
+        tmpFragmenterSettingsButton.setPrefWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
+        tmpFragmenterSettingsButton.setMaxWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
         BooleanBinding tmpBooleanBinding = Bindings.isNull(tmpComboBox.getSelectionModel().selectedItemProperty());
         tmpFragmenterSettingsButton.disableProperty().bind(tmpBooleanBinding);
         tmpFragmenterSettingsButton.setOnAction(anActionEvent -> {
@@ -292,12 +295,13 @@ public class PipelineSettingsViewController {
         Button tmpAddButton = new Button();
         tmpAddButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.addNewRowButton.toolTip")));
         tmpAddButton.setText("+");
+        tmpAddButton.setStyle("-fx-font-weight: bold");
         tmpAddButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpAddButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpAddButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpAddButton.setMinWidth(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpAddButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpAddButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpAddButton.setMinWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
+        tmpAddButton.setPrefWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
+        tmpAddButton.setMaxWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
         tmpAddButton.setOnAction(anActionEvent -> this.addNewChoiceRow(null));
         this.pipelineSettingsView.addAddRowButton(tmpAddButton, aRowNumber);
     }
@@ -311,12 +315,13 @@ public class PipelineSettingsViewController {
         Button tmpRemoveButton = new Button();
         tmpRemoveButton.setTooltip(GuiUtil.createTooltip(Message.get("PipelineSettingsView.removeRowButton.toolTip")));
         tmpRemoveButton.setText("-");
+        tmpRemoveButton.setStyle("-fx-font-weight: bold");
         tmpRemoveButton.setMinHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpRemoveButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpRemoveButton.setMaxHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpRemoveButton.setMinWidth(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpRemoveButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        tmpRemoveButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpRemoveButton.setMinWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
+        tmpRemoveButton.setPrefWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
+        tmpRemoveButton.setMaxWidth(GuiDefinitions.GUI_PIPELINE_SETTINGS_VIEW_BUTTON_WIDTH_VALUE);
         tmpRemoveButton.setOnAction(anActionEvent -> {
             int tmpRowIndex = GridPane.getRowIndex(tmpRemoveButton);
             //remove addButton

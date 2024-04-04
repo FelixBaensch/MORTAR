@@ -137,8 +137,8 @@ public class PipelineSettingsView extends AnchorPane {
      */
     public void addGrid(Stage aStage) {
         ScrollPane tmpScrollPane = new ScrollPane();
-        HBox.setHgrow(tmpScrollPane,Priority.ALWAYS);
-        VBox.setVgrow(tmpScrollPane,Priority.ALWAYS);
+        HBox.setHgrow(tmpScrollPane, Priority.ALWAYS);
+        VBox.setVgrow(tmpScrollPane, Priority.ALWAYS);
         this.borderPane.setCenter(tmpScrollPane);
         this.createGridPane(aStage);
         tmpScrollPane.setContent(this.gridPane);
@@ -193,6 +193,7 @@ public class PipelineSettingsView extends AnchorPane {
         this.gridPane.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         this.gridPane.setVgap(GuiDefinitions.GUI_INSETS_VALUE);
         this.gridPane.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
+        final double tmpColumnWidth = 60;
         //0th column (numbering)
         ColumnConstraints tmpColCon0 = new ColumnConstraints();
         tmpColCon0.setHalignment(HPos.CENTER);
@@ -200,9 +201,9 @@ public class PipelineSettingsView extends AnchorPane {
 //        tmpColCon0.prefWidthProperty().bind(
 //                aStage.widthProperty().multiply(0.05)
 //        );
-        tmpColCon0.setPrefWidth(40);
-        tmpColCon0.setMinWidth(40);
-        tmpColCon0.setMaxWidth(40);
+        tmpColCon0.setPrefWidth(tmpColumnWidth);
+        tmpColCon0.setMinWidth(tmpColumnWidth);
+        tmpColCon0.setMaxWidth(tmpColumnWidth);
         this.gridPane.getColumnConstraints().add(tmpColCon0);
         //1st column (choicebox for algorithm)
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
@@ -210,16 +211,16 @@ public class PipelineSettingsView extends AnchorPane {
         tmpColCon1.setHgrow(Priority.ALWAYS);
         tmpColCon1.prefWidthProperty().bind(
 //                aStage.widthProperty().multiply(0.8)
-                aStage.widthProperty().subtract(200) //magic number
+                aStage.widthProperty().subtract(260) //magic number
         );
         this.gridPane.getColumnConstraints().add(tmpColCon1);
         //2nd column (settings button or add new algorithm button)
         ColumnConstraints tmpColCon2 = new ColumnConstraints();
         tmpColCon2.setHalignment(HPos.CENTER);
         tmpColCon2.setHgrow(Priority.ALWAYS);
-        tmpColCon2.setPrefWidth(40);
-        tmpColCon2.setMinWidth(40);
-        tmpColCon2.setMaxWidth(40);
+        tmpColCon2.setPrefWidth(tmpColumnWidth);
+        tmpColCon2.setMinWidth(tmpColumnWidth);
+        tmpColCon2.setMaxWidth(tmpColumnWidth);
 //        tmpColCon2.prefWidthProperty().bind(
 //                aStage.widthProperty().multiply(0.175)
 //        );
@@ -228,9 +229,9 @@ public class PipelineSettingsView extends AnchorPane {
         ColumnConstraints tmpColCon3 = new ColumnConstraints();
         tmpColCon3.setHalignment(HPos.CENTER);
         tmpColCon3.setHgrow(Priority.ALWAYS);
-        tmpColCon3.setPrefWidth(40);
-        tmpColCon3.setMinWidth(40);
-        tmpColCon3.setMaxWidth(40);
+        tmpColCon3.setPrefWidth(tmpColumnWidth - 10.0);
+        tmpColCon3.setMinWidth(tmpColumnWidth - 10.0);
+        tmpColCon3.setMaxWidth(tmpColumnWidth - 10.0);
 //        tmpColCon3.prefWidthProperty().bind(
 //                aStage.widthProperty().multiply(0.175)
 //        );
@@ -240,9 +241,9 @@ public class PipelineSettingsView extends AnchorPane {
         tmpRowCon1.setValignment(VPos.CENTER);
         tmpRowCon1.setVgrow(Priority.ALWAYS);
         this.gridPane.getRowConstraints().add(tmpRowCon1);
-        tmpRowCon1.setPrefHeight(50);
-        tmpRowCon1.setMaxHeight(50);
-        tmpRowCon1.setMinHeight(50);
+        tmpRowCon1.setPrefHeight(tmpColumnWidth);
+        tmpRowCon1.setMaxHeight(tmpColumnWidth);
+        tmpRowCon1.setMinHeight(tmpColumnWidth);
         //name textfield
         this.textField = new TextField();
         this.textField.setMaxWidth(250);
