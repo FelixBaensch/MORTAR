@@ -181,11 +181,21 @@ public class HistogramView extends AnchorPane {
         this.displayedFragmentsNumberTextField = new TextField();
         this.displayedFragmentsNumberTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.displayedFragmentsNumberTextField.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.textField.toolTip") + " " + aMaxFragmentNumber));
+        this.displayedFragmentsNumberTextField.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.displayedFragmentsNumberTextField.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.displayedFragmentsNumberTextField.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.displayedFragmentsNumberTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.displayedFragmentsNumberTextField.setAlignment(Pos.CENTER_RIGHT);
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.refreshButton.text"));
         this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.maximumSMILESLengthTextField = new TextField();
         this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.maximumSMILESLengthTextField.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.smilesField.toolTip")));
+        this.maximumSMILESLengthTextField.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.maximumSMILESLengthTextField.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.maximumSMILESLengthTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.maximumSMILESLengthTextField.setAlignment(Pos.CENTER_RIGHT);
         this.maximumSMILESLengthLabel = new Label(Message.get("HistogramView.smilesLabel.text"));
         this.maximumSMILESLengthLabel.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.smilesField.toolTip")));
         this.displayedFragmentsNumberLabel = new Label(Message.get("HistogramView.displayedFragmentsTextFieldLabel.text"));
@@ -195,6 +205,8 @@ public class HistogramView extends AnchorPane {
             this.barWidthsComboBox.getItems().add(tmpBarWidthOptionConstant.getDisplayName());
         }
         this.barWidthsComboBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.comboBox.toolTip")));
+        this.barWidthsComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+        this.barWidthsComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
         this.barWidthsLabel = new Label(Message.get("HistogramView.gapSettingLabel.text"));
         this.barWidthsLabel.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.comboBox.toolTip")));
         this.frequencyLabel = new Label(Message.get("HistogramView.chooseDataComboBox.text"));
@@ -204,6 +216,8 @@ public class HistogramView extends AnchorPane {
             this.frequencyComboBox.getItems().add(tmpFrequencyOptionConstant.getDisplayName());
         }
         this.frequencyComboBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.chooseDataComboBox.toolTip")));
+        this.frequencyComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+        this.frequencyComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
         tmpLeftSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
