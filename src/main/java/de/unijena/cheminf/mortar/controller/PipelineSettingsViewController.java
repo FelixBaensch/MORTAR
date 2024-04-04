@@ -170,7 +170,7 @@ public class PipelineSettingsViewController {
         Platform.runLater(()->{
             this.pipelineSettingsView.addGrid(this.pipelineSettingsViewStage);
             this.addListenerAndBindings();
-            for(IMoleculeFragmenter tmpFragmenter : this.fragmenterList){
+            for (IMoleculeFragmenter tmpFragmenter : this.fragmenterList) {
                 this.addNewChoiceRow(tmpFragmenter.getFragmentationAlgorithmDisplayName());
             }
             this.setPipelineName(this.fragmentationService.getPipeliningFragmentationName());
@@ -214,18 +214,18 @@ public class PipelineSettingsViewController {
     //
     /**
      * Adds a new row to the pipeline settings view, which allows to add a new fragmentation algorithms. ComboBox is
-     * initially set to fragmentation algorithm corresponding to the given name.
+     * initially set to fragmentation algorithm corresponding to the given display name.
      *
-     * @param aFragmenterName name of Fragmenter to initially set ComboBox
+     * @param aFragmenterDisplayName display name of Fragmenter to initially set ComboBox
      */
-    private void addNewChoiceRow(String aFragmenterName) {
+    private void addNewChoiceRow(String aFragmenterDisplayName) {
         ComboBox<String> tmpComboBox = new ComboBox<>();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmenters) {
             tmpComboBox.getItems().add(tmpFragmenter.getFragmentationAlgorithmDisplayName());
         }
         tmpComboBox.setPromptText(Message.get("PipelineSettingsView.comboBox.promptText"));
-        if (aFragmenterName != null) {
-            tmpComboBox.getSelectionModel().select(aFragmenterName);
+        if (aFragmenterDisplayName != null) {
+            tmpComboBox.getSelectionModel().select(aFragmenterDisplayName);
         }
         tmpComboBox.setOnAction(anActionEvent -> {
             Object tmpSelectedFragmenterString = tmpComboBox.getSelectionModel().getSelectedItem();
