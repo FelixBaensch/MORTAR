@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.gui.util;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.IDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
@@ -57,17 +59,20 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,6 +90,20 @@ public class GuiUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(GuiUtil.class.getName());
+    //
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private static final IConfiguration CONFIGURATION;
+    static {
+        try {
+            CONFIGURATION = Configuration.getInstance();
+        } catch (IOException anIOException) {
+            //when MORTAR is run via MainApp.start(), the correct initialization of Configuration is checked there before
+            // GuiUtil is accessed and this static initializer called
+            throw new NullPointerException("Configuration could not be initialized");
+        }
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Private constructor">
@@ -100,13 +119,15 @@ public class GuiUtil {
     /**
      * Creates and shows an alert with arbitrary alert type.
      *
-     * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate
-     *                    various properties, chosen of an enumeration containing the available
-     * @param aTitle Title of the alert message
-     * @param aHeaderText Header of the alert message
+     * @param anAlertType  - pre-built alert type of the alert message that the Alert class can use to pre-populate
+     *                     various properties, chosen of an enumeration containing the available
+     * @param aTitle       Title of the alert message
+     * @param aHeaderText  Header of the alert message
      * @param aContentText Text that the alert message contains
+     * @return ButtonType selected by user, options depend on the given alert type (INFORMATION, WARNING, ERROR -> OK,
+     * CONFIRMATION -> OK / CANCEL)
      */
-    public static void guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
+    public static Optional<ButtonType> guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -114,7 +135,11 @@ public class GuiUtil {
         //tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        tmpAlert.showAndWait();
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        return tmpAlert.showAndWait();
     }
     //
     /**
@@ -122,11 +147,16 @@ public class GuiUtil {
      *
      * @param anAlertType - pre-built alert type of the alert message that the Alert class can use to pre-populate
      *                    various properties, chosen of an enumeration containing the available
-     * @param aTitle Title of the alert message
+     * @param aTitle      Title of the alert message
      * @param aHeaderText Header of the alert message
-     * @param aHyperlink Hyperlink that the alert message contains
+     * @param aHyperlink  Hyperlink that the alert message contains
+     * @return ButtonType selected by user, options depend on the given alert type (INFORMATION, WARNING, ERROR -> OK,
+     * CONFIRMATION -> OK / CANCEL)
      */
-    public static void guiMessageAlertWithHyperlink(Alert.AlertType anAlertType, String aTitle, String aHeaderText, Hyperlink aHyperlink) {
+    public static Optional<ButtonType> guiMessageAlertWithHyperlink(Alert.AlertType anAlertType,
+                                                                    String aTitle,
+                                                                    String aHeaderText,
+                                                                    Hyperlink aHyperlink) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -134,7 +164,11 @@ public class GuiUtil {
         //tmpAlert.setResizable(true);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        tmpAlert.showAndWait();
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        return tmpAlert.showAndWait();
     }
     //
     /**
@@ -154,6 +188,34 @@ public class GuiUtil {
         tmpAlert.setContentText(aContentText);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
+    }
+    //
+    /**
+     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
+     * Three buttons are possible - ButtonType.YES, ButtonType.NO, and ButtonType.CANCEL.
+     *
+     * @param aTitle Title of the confirmation alert
+     * @param aHeaderText Header of the confirmation alert
+     * @param aContentText Text that the confirmation alert contains
+     * @return ButtonType selected by user - ButtonType.YES, ButtonType.NO, or ButtonType.CANCEL.
+     */
+    public static ButtonType guiYesNoCancelConfirmationAlert(String aTitle, String aHeaderText, String aContentText) {
+        Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        tmpAlert.setTitle(aTitle);
+        tmpAlert.setHeaderText(aHeaderText);
+        tmpAlert.setContentText(aContentText);
+        tmpAlert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
     //
@@ -209,11 +271,18 @@ public class GuiUtil {
             tmpGridPane.add(tmpExpandableTextArea, 0, 1);
             //Add expandable text to the dialog/alert pane
             tmpAlert.getDialogPane().setExpandableContent(tmpGridPane);
+            Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+            String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                    GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+            tmpAlertStage.getIcons().add(new Image(tmpIconURL));
             //Show and wait alert
             tmpAlert.showAndWait();
         } catch(Exception aNewThrownException) {
-            guiMessageAlert(Alert.AlertType.ERROR, Message.get("Error.ExceptionAlert.Title"), Message.get("Error.ExceptionAlert.Header"), aNewThrownException.toString());
             GuiUtil.LOGGER.log(Level.SEVERE, aNewThrownException.toString(), aNewThrownException);
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR,
+                    Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    aNewThrownException.toString());
         }
     }
     //
