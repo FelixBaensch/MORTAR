@@ -36,9 +36,11 @@ import javafx.stage.Stage;
 
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.FormatFactory;
@@ -138,7 +140,7 @@ public class Importer {
     public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException, IOException, CDKException {
         Objects.requireNonNull(aFile, "aFile is null");
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
-        if(tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
+        if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
             Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
@@ -284,6 +286,9 @@ public class Importer {
                     //skip if it is an erroneous entry
                     tmpSDFReader.setSkip(true);
                     if (!tmpSDFReader.hasNext()) {
+                        if (tmpCounter == 0) {
+                            Importer.LOGGER.log(Level.WARNING, "Import failed for first and only structure in the file");
+                        }
                         // there is no next, end of file!
                         break;
                     }
@@ -436,6 +441,12 @@ public class Importer {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
                 if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
                     CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
+                } else {
+                    for (IAtom tmpAtom : tmpMolecule.atoms()) {
+                        if (tmpAtom.getImplicitHydrogenCount() == CDKConstants.UNSET) {
+                            tmpAtom.setImplicitHydrogenCount(0);
+                        }
+                    }
                 }
                 /* note: the doc says: "Suppress any explicit hydrogens in the provided container. Only hydrogens that
                 can be represented as a hydrogen count value on the atom are suppressed." Therefore, there will

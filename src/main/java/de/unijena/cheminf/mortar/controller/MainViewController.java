@@ -484,13 +484,39 @@ public class MainViewController {
                     MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                             Message.get("Importer.FileImportExceptionAlert.Header"),
-                            Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + LogUtil.getLogFileDirectoryPath(),
+                            Message.get("Importer.FileImportExceptionAlert.Text"),
                             anException);
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                 }
-                if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty()) {
+                int tmpExceptionCount = 0;
+                if (tmpAtomContainerSet != null && !tmpAtomContainerSet.isEmpty()) {
+                    for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
+                        //returns null if no SMILES code could be created
+                        String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
+                        if (tmpSmiles == null) {
+                            tmpExceptionCount++;
+                            continue;
+                        }
+                        MoleculeDataModel tmpMoleculeDataModel;
+                        if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
+                            tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
+                        } else {
+                            tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
+                        }
+                        tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                        this.moleculeDataModelList.add(tmpMoleculeDataModel);
+                    }
+                }
+                if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty() || this.moleculeDataModelList.isEmpty()) {
+                    MainViewController.LOGGER.log(Level.WARNING, "Import failed, set of imported molecules is null or empty");
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                     this.isImportRunningProperty.setValue(false);
+                    Platform.runLater(() -> {
+                        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                                Message.get("Error.ExceptionAlert.Title"),
+                                Message.get("Importer.FileImportEmptyAlert.Header"),
+                                Message.get("Importer.FileImportEmptyAlert.Content"));
+                    });
                     return;
                 }
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
@@ -498,23 +524,6 @@ public class MainViewController {
                 this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() +
                         " " + Message.get((tmpAtomContainerSet.getAtomContainerCount() == 1 ? "Title.molecule" : "Title.molecules")));
-                int tmpExceptionCount = 0;
-                for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-                    //returns null if no SMILES code could be created
-                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
-                    if (tmpSmiles == null) {
-                        tmpExceptionCount++;
-                        continue;
-                    }
-                    MoleculeDataModel tmpMoleculeDataModel;
-                    if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                        tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
-                    } else {
-                        tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
-                    }
-                    tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-                    this.moleculeDataModelList.add(tmpMoleculeDataModel);
-                }
                 this.importedFileName = tmpImporter.getFileName();
                 MainViewController.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
                         "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
@@ -531,9 +540,16 @@ public class MainViewController {
             this.isImportRunningProperty.setValue(false);
         });
         this.importTask.setOnFailed(event -> {
+            Exception tmpCause = (Exception) event.getSource().getException();
+            MainViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
             this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
             this.isImportRunningProperty.setValue(false);
-            LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), event.getSource().getException());
+            Platform.runLater(() -> {
+                GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Importer.FileImportExceptionAlert.Header"),
+                        Message.get("Importer.FileImportExceptionAlert.Text"),
+                        tmpCause);
+            });
         });
         this.importerThread = new Thread(importTask);
         this.importerThread.setName(ThreadType.IMPORT_THREAD.getThreadName());
@@ -1100,7 +1116,6 @@ public class MainViewController {
                     }
                     return null;
                 }
-
                 //
                 @Override
                 public boolean cancel(boolean anInterruptThread) {
@@ -1127,7 +1142,7 @@ public class MainViewController {
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
-                        LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
+                        MainViewController.LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
@@ -1146,7 +1161,14 @@ public class MainViewController {
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
-                LogUtil.getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), new Exception(event.getSource().toString()));
+                Exception tmpCause = (Exception) event.getSource().getException();
+                MainViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
+                Platform.runLater(() -> {
+                    GuiUtil.guiExceptionAlert(Message.get("MainViewController.FragmentationError.Title"),
+                            Message.get("MainViewController.FragmentationError.Header"),
+                            Message.get("MainViewController.FragmentationError.Content"),
+                            tmpCause);
+                });
             });
             this.fragmentationThread = new Thread(this.parallelFragmentationMainTask);
             this.fragmentationThread.setName(ThreadType.FRAGMENTATION_THREAD.getThreadName());

@@ -91,10 +91,11 @@ public final class ChemUtil {
         try {
             try {
                 tmpSmiles = tmpSmilesGen.create(anAtomContainer);
-            } catch (CDKException anException){
+            } catch (CDKException anException) {
                 IAtomContainer tmpAtomContainer = anAtomContainer.clone();
                 Kekulization.kekulize(tmpAtomContainer);
                 tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                ChemUtil.LOGGER.log(Level.INFO, String.format("Kekulized molecule %s", anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
             }
         } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException anException){
             ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s; molecule name: %s", anException.toString(), anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anException);
