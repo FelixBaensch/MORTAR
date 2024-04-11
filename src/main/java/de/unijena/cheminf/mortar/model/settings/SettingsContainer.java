@@ -371,16 +371,21 @@ public class SettingsContainer {
      * Returns the current value of the keep last fragment setting.
      *
      * @return keep last fragment setting value
+     * @deprecated currently not in use, returns always false
      */
+    @Deprecated
     public boolean isKeepLastFragmentSetting() {
-        return this.keepLastFragmentSetting.get();
+        //return this.keepLastFragmentSetting.get();
+        return false;
     }
 
     /**
      * Return the property wrapping the keep last fragment setting.
      *
      * @return keep last fragment setting property
+     * @deprecated currently not in use, returns always false
      */
+    @Deprecated
     public SimpleBooleanProperty keepLastFragmentSettingProperty() {
         return this.keepLastFragmentSetting;
     }
@@ -487,7 +492,9 @@ public class SettingsContainer {
      * pipeline fragmentation step or whether it is discarded.
      *
      * @param aBoolean whether to keep last fragment or to discard
+     * @deprecated setting is currently unused
      */
+    @Deprecated
     public void setKeepLastFragmentSetting(boolean aBoolean){
         this.keepLastFragmentSetting.set(aBoolean);
     }
@@ -504,7 +511,8 @@ public class SettingsContainer {
         //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
-        this.keepLastFragmentSetting.set(SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
+        //DEPRECATED
+        //this.keepLastFragmentSetting.set(SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
     }
     //</editor-fold>
     //
@@ -708,11 +716,20 @@ public class SettingsContainer {
         };
         this.settingNameTooltipTextMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.displayName"));
-        this.keepLastFragmentSetting = new SimpleBooleanProperty(this,
+        //DEPRECATED
+        /*this.keepLastFragmentSetting = new SimpleBooleanProperty(this,
                 "Keep last fragment in pipelining",
-                SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
-        this.settingNameTooltipTextMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.tooltip"));
-        this.settingNameDisplayNameMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.displayName"));
+                SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);*/
+        //Dummy:
+        this.keepLastFragmentSetting = new SimpleBooleanProperty(this,
+                "Keep last fragment in pipelining", false) {
+            @Override
+            public void set(boolean newValue) {
+                //do nothing, the value should remain false!
+            }
+        };
+        //this.settingNameTooltipTextMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.tooltip"));
+        //this.settingNameDisplayNameMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.displayName"));
         this.settings = new ArrayList<>(tmpNumberOfSettings);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
@@ -720,7 +737,8 @@ public class SettingsContainer {
         //DEPRECATED
         //this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
-        this.settings.add(this.keepLastFragmentSetting);
+        //DEPRECATED
+        //this.settings.add(this.keepLastFragmentSetting);
         this.settings.add(this.csvExportSeparatorSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
     }

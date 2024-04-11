@@ -323,7 +323,7 @@ public class FragmentationService {
                     List<FragmentDataModel> tmpChildFragmentsList = tmpParentFragment.getFragmentsOfSpecificFragmentation(tmpPipelineFragmentationName);
                     //if parent fragment has no children, parent fragment is child fragment
                     if (tmpChildFragmentsList == null || tmpChildFragmentsList.isEmpty()) {
-                        //if settingsContainer.isKeepLastFragmentSetting == true or parent fragment is part of the results of fragmentation the parent fragment will be set as new fragment if no new fragment is found
+                        //if settingsContainer.isKeepLastFragmentSetting == true (DEPRECATED, always false) or parent fragment is part of the results of fragmentation, the parent fragment will be set as new fragment if no new fragment is found
                         if (this.settingsContainer.isKeepLastFragmentSetting() || (tmpFragmentHashtable != null && tmpFragmentHashtable.containsKey(tmpParentFragment.getUniqueSmiles()))) {
                             if (tmpNewFragmentsOfMol.stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpParentFragment.getUniqueSmiles())) && tmpFragmentHashtable != null) {
                                 tmpNewFragmentsOfMol.add(tmpFragmentHashtable.get(tmpParentFragment.getUniqueSmiles()));
