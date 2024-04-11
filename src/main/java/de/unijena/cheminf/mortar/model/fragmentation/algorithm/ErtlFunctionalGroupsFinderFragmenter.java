@@ -755,7 +755,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         //throws IllegalArgumentException if anything goes wrong
-        ErtlFunctionalGroupsFinder.applyPreprocessing(tmpMoleculeClone, this.aromaticityModelInstance);
+        //ErtlFunctionalGroupsFinder.applyPreprocessing(tmpMoleculeClone, this.aromaticityModelInstance); - Jonas: don't know why this was here (preprocessing is done in FragmentationTask) but let's keep it for now
         int tmpInitialCapacityForIdToAtomMap = CollectionUtil.calculateInitialHashCollectionCapacity(tmpMoleculeClone.getAtomCount(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(tmpInitialCapacityForIdToAtomMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (int i = 0; i < tmpMoleculeClone.getAtomCount(); i++) {
