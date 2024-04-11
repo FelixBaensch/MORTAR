@@ -1122,6 +1122,7 @@ public class Exporter {
         if (!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Exporter.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpDirectoryChooser.setInitialDirectory(tmpRecentDirectory);
         File tmpDirectory = tmpDirectoryChooser.showDialog(aParentStage);
