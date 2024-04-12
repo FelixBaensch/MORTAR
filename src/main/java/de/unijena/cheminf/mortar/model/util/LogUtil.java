@@ -107,7 +107,8 @@ public final class LogUtil {
                 System.exit(-1);
         } else {
             //the JavaFx GUI thread deals with such exceptions by resetting the binding to a previous value. No need to intervene here
-            if (aThrowable.getMessage().equals("Bidirectional binding failed, setting to the previous value")) {
+            String tmpMessage = aThrowable.getMessage();
+            if (tmpMessage != null && tmpMessage.equals("Bidirectional binding failed, setting to the previous value")) {
                 return;
             }
             //it is an exception (runtime- or IO-), no error

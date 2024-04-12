@@ -96,6 +96,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * MainViewController controls  {@link MainView}.
@@ -1279,7 +1280,8 @@ public class MainViewController {
     private Tab createItemsTab(String aFragmentationName){
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(aFragmentationName, this.configuration);
         tmpItemizationDataTableView.setItemsList(
-                this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).toList());
+                //developers note: a modifiable list is needed for sorting, so don't let SonarCloud tell you that the Collectors are not needed here!
+                this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
         Pagination tmpPagination = this.createPaginationWithSuitablePageCount(this.moleculeDataModelList.size());
