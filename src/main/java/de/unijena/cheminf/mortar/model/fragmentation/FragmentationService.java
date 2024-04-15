@@ -363,8 +363,9 @@ public class FragmentationService {
                                         tmpNewFragmentFrequenciesOfMol.get(tmpChildFragment.getUniqueSmiles()) + tmpParentFragment.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(tmpChildFragment.getUniqueSmiles())
                                 );
                             } else {
-                                tmpChildFragment.getParentMolecules().clear();
-                                tmpChildFragment.getParentMolecules().add(tmpMolecule);
+                                if (tmpChildFragment.getParentMolecules().stream().noneMatch(x -> x.getUniqueSmiles().equals(tmpMolecule.getUniqueSmiles()))) {
+                                    tmpChildFragment.getParentMolecules().add(tmpMolecule);
+                                }
                                 tmpNewFragmentsOfMol.add(tmpChildFragment);
                                 tmpNewFragmentFrequenciesOfMol.put(
                                         tmpChildFragment.getUniqueSmiles(),
