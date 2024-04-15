@@ -126,6 +126,53 @@ public class Exporter {
     }
     //</editor-fold>
     //
+    /**
+     * Enum for different file extension
+     */
+    public enum FileExtension {
+        /**
+         * Enum for csv extension
+         */
+        CSV(".csv"),
+        /**
+         * Enum for pdf extension
+         */
+        PDF(".pdf"),
+        /**
+         * Enum for sdf extension
+         */
+        SDF(".sdf"),
+        /**
+         * Enum for pdb extension
+         */
+        PDB(".pdb"),
+        ;
+        //
+        /**
+         * String value of enum
+         */
+        private final String extension;
+        //
+        /**
+         * Enum for different file extension
+         *
+         * @param anExtension String value of extension
+         */
+        FileExtension (final String anExtension) {
+            this.extension = anExtension;
+        }
+        //
+        /**
+         * Returns the string value of extension
+         *
+         * @return String value of extension
+         */
+        @Override
+        public String toString() {
+            return extension;
+        }
+    }
+    //
     //<editor-fold desc="Enum CSVSeparator">
     /**
      * Enum for allowed CSV file export separator chars.
@@ -248,25 +295,45 @@ public class Exporter {
         tmpFile = switch (anExportType) {
             case ExportTypes.FRAGMENT_CSV_FILE -> {
                 tmpFileName = "Fragments_" + tmpFragmentationName;
-                yield this.chooseFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                tmpFile = this.chooseFile(aParentStage, "CSV", "*" + FileExtension.CSV, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.CSV.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
+                }
+                yield tmpFile;
             }
             case ExportTypes.FRAGMENT_PDB_FILE, ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
                     this.chooseDirectory(aParentStage);
             case ExportTypes.FRAGMENT_PDF_FILE -> {
                 tmpFileName = "Fragments_" + tmpFragmentationName;
-                yield this.chooseFile(aParentStage, "PDF", "*.pdf", tmpFileName);
+                tmpFile = this.chooseFile(aParentStage, "PDF", "*" + FileExtension.PDF, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.PDF.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.PDF);
+                }
+                yield tmpFile;
             }
             case ExportTypes.FRAGMENT_SINGLE_SD_FILE -> {
                 tmpFileName = "Fragments_Export_" + tmpFragmentationName;
-                yield this.chooseFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
+                tmpFile = this.chooseFile(aParentStage, "SD-File", "*" + FileExtension.SDF, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.SDF.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.SDF);
+                }
+                yield tmpFile;
             }
             case ExportTypes.ITEM_CSV_FILE -> {
                 tmpFileName = "Items_" + tmpFragmentationName;
-                yield this.chooseFile(aParentStage, "CSV", "*.csv", tmpFileName);
+                tmpFile = this.chooseFile(aParentStage, "CSV", "*" + FileExtension.CSV, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.CSV.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
+                }
+                yield tmpFile;
             }
             case ExportTypes.ITEM_PDF_FILE -> {
                 tmpFileName = "Items_" + tmpFragmentationName;
-                yield this.chooseFile(aParentStage, "PDF", "*.pdf", tmpFileName);
+                tmpFile = this.chooseFile(aParentStage, "PDF", "*" + FileExtension.PDF, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.PDF.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.PDF);
+                }
+                yield tmpFile;
             }
             default ->
                     throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
