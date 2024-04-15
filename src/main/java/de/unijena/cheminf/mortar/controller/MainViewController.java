@@ -47,6 +47,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 
 import javafx.application.Platform;
@@ -74,8 +75,10 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -281,7 +284,7 @@ public class MainViewController {
         );
         this.mainView.getMainMenuBar().getOpenMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.importMoleculeFile(this.primaryStage)
+                anEvent -> this.chooseAndImportMoleculeFile(this.primaryStage)
         );
         this.mainView.getMainMenuBar().getCancelImportMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -384,6 +387,29 @@ public class MainViewController {
             this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(newValue.getId().equals(TabNames.MOLECULES.toString()));
             this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(newValue.getId().equals(TabNames.ITEMIZATION.toString()));
         }));
+        this.mainView.getMainCenterPane().setOnDragOver(aDragEvent -> {
+            if (aDragEvent.getGestureSource() != this.mainView.getMainCenterPane() && aDragEvent.getDragboard().hasFiles()){
+                if (
+                  aDragEvent.getDragboard().getFiles().size() > 1 ||
+                  !BasicDefinitions.VALID_IMPORT_EXTENSION.contains(FileUtil.getFileExtension(aDragEvent.getDragboard().getFiles().getFirst().getName()))
+                ) {
+                    aDragEvent.consume();
+                    return;
+                }
+                aDragEvent.acceptTransferModes(TransferMode.COPY);
+            }
+            aDragEvent.consume();
+        });
+        this.mainView.getMainCenterPane().setOnDragDropped(aDragEvent -> {
+            Dragboard tmpDragboard = aDragEvent.getDragboard();
+            boolean tmpSucceeded = false;
+            if (tmpDragboard.hasFiles()) {
+                this.importMoleculeFile(tmpDragboard.getFiles().getFirst());
+                tmpSucceeded = true;
+            }
+            aDragEvent.setDropCompleted(tmpSucceeded);
+            aDragEvent.consume();
+        });
     }
     //
     /**
@@ -440,12 +466,13 @@ public class MainViewController {
         anEvent.consume();
     }
     //
+
     /**
-     * Loads molecule file and opens molecules tab.
+     * Opens a file choose, loads the chosen file and opens molecules tab
      *
      * @param aParentStage Stage where to open the file chooser dialog
      */
-    private void importMoleculeFile(Stage aParentStage) {
+    private void chooseAndImportMoleculeFile(Stage aParentStage) {
         if (!this.moleculeDataModelList.isEmpty()) {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
@@ -454,7 +481,23 @@ public class MainViewController {
         }
         Importer tmpImporter = new Importer(this.settingsContainer);
         File tmpFile = tmpImporter.openFile(aParentStage);
-        if (Objects.isNull(tmpFile)) {
+        this.importMoleculeFile(tmpFile);
+    }
+    //
+    /**
+     * Loads molecule file and opens molecules tab.
+     *
+     * @param aFile File that contains molecular data
+     */
+    private void importMoleculeFile(File aFile) {
+        if (!this.moleculeDataModelList.isEmpty()) {
+            if (!this.isFragmentationStopAndDataLossConfirmed()) {
+                return;
+            }
+            this.fragmentationService.clearCache();
+        }
+        Importer tmpImporter = new Importer(this.settingsContainer);
+        if (Objects.isNull(aFile)) {
             return;
         }
         if (this.isFragmentationRunning) {
@@ -470,7 +513,7 @@ public class MainViewController {
         this.importTask = new Task<>() {
             @Override
             protected IAtomContainerSet call() throws Exception {
-                IAtomContainerSet tmpSet = tmpImporter.importMoleculeFile(tmpFile);
+                IAtomContainerSet tmpSet = tmpImporter.importMoleculeFile(aFile);
                 return tmpSet;
             }
         };
