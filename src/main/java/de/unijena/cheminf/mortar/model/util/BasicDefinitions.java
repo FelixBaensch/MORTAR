@@ -99,7 +99,7 @@ public final class BasicDefinitions {
     public static final String PREFERENCE_CONTAINER_FILE_EXTENSION = ".txt";
     //
     /**
-     * Set of valid files extensions for file import
+     * Set of valid files extensions for file import.
      */
     public static final Set<String> VALID_IMPORT_EXTENSION = new HashSet<>(List.of(".mol", ".sdf", ".smi", ".txt", ".csv"));
     //</editor-fold>
