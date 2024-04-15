@@ -47,6 +47,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 
 import javafx.application.Platform;
@@ -283,7 +284,7 @@ public class MainViewController {
         );
         this.mainView.getMainMenuBar().getOpenMenuItem().addEventHandler(
                 EventType.ROOT,
-                anEvent -> this.importMoleculeFile(this.primaryStage)
+                anEvent -> this.chooseAndImportMoleculeFile(this.primaryStage)
         );
         this.mainView.getMainMenuBar().getCancelImportMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -387,7 +388,14 @@ public class MainViewController {
             this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(newValue.getId().equals(TabNames.ITEMIZATION.toString()));
         }));
         this.mainView.getMainCenterPane().setOnDragOver(aDragEvent -> {
-            if (aDragEvent.getGestureSource() != mainView.getMainCenterPane() && aDragEvent.getDragboard().hasFiles()){
+            if (aDragEvent.getGestureSource() != this.mainView.getMainCenterPane() && aDragEvent.getDragboard().hasFiles()){
+                if (
+                  aDragEvent.getDragboard().getFiles().size() > 1 ||
+                  !BasicDefinitions.VALID_IMPORT_EXTENSION.contains(FileUtil.getFileExtension(aDragEvent.getDragboard().getFiles().getFirst().getName()))
+                ) {
+                    aDragEvent.consume();
+                    return;
+                }
                 aDragEvent.acceptTransferModes(TransferMode.COPY);
             }
             aDragEvent.consume();
@@ -396,7 +404,7 @@ public class MainViewController {
             Dragboard tmpDragboard = aDragEvent.getDragboard();
             boolean tmpSucceeded = false;
             if (tmpDragboard.hasFiles()) {
-                importMoleculeFile(tmpDragboard.getFiles().getFirst());
+                this.importMoleculeFile(tmpDragboard.getFiles().getFirst());
                 tmpSucceeded = true;
             }
             aDragEvent.setDropCompleted(tmpSucceeded);
@@ -462,9 +470,9 @@ public class MainViewController {
     /**
      * Opens a file choose, loads the chosen file and opens molecules tab
      *
-     * @param aParentStage aParentStage Stage where to open the file chooser dialog
+     * @param aParentStage Stage where to open the file chooser dialog
      */
-    private void importMoleculeFile(Stage aParentStage) {
+    private void chooseAndImportMoleculeFile(Stage aParentStage) {
         if (!this.moleculeDataModelList.isEmpty()) {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
