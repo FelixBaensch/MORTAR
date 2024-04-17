@@ -57,7 +57,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -420,6 +419,7 @@ public class FragmentationService {
         for (String tmpKey : tmpKeySet) {
             tmpFragmentAmount += this.fragments.get(tmpKey).getAbsoluteFrequency();
         }
+        // remove parent molecules that are not included in the original list
         for (String tmpKey : tmpKeySet) {
             this.fragments.get(tmpKey).getParentMolecules().removeIf(moleculeDataModel -> !aListOfMolecules.contains(moleculeDataModel));
         }
