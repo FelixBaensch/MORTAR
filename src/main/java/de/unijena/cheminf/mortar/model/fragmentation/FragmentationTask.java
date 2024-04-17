@@ -117,7 +117,8 @@ public class FragmentationTask implements Callable<Integer> {
                 IAtomContainer tmpAtomContainer;
                 try {
                     tmpAtomContainer = tmpMolecule.getAtomContainer();
-                } catch(CDKException anException) {
+                }
+                catch(CDKException anException) {
                     this.exceptionsCounter++;
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(
                             Level.SEVERE, String.format("%s Molecule name: %s", anException.toString(), tmpMolecule.getName()), anException);
@@ -135,30 +136,37 @@ public class FragmentationTask implements Callable<Integer> {
                 List<IAtomContainer> tmpFragmentsList;
                 try {
                     tmpFragmentsList = this.fragmenter.fragmentMolecule(tmpAtomContainer);
-                } catch (NullPointerException | IllegalArgumentException | CloneNotSupportedException anException) {
+                }
+                catch (NullPointerException | IllegalArgumentException | CloneNotSupportedException anException) {
                     FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     this.exceptionsCounter++;
                     tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
                     tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                     continue;
                 }
+                // list of all fragments for this molecule
                 List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpFragmentsList.size());
+                // map of the frequency with which this molecule contains a specific fragment
                 HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size()));
+                // iterate through list of resulting fragments
                 for (IAtomContainer tmpFragment : tmpFragmentsList) {
                     String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
                     if (tmpSmiles == null) {
                         this.exceptionsCounter++;
                         continue;
                     }
+                    // create new FragmentDataModel
                     FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
                     // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
                     FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel);
                     if (tmpFragmentDataModel == null) {
                         tmpFragmentDataModel = tmpNewFragmentDataModel;
                     }
+                    // increment the absolute frequency of this fragment
                     FragmentationTask.LOCK.lock();
                     tmpFragmentDataModel.incrementAbsoluteFrequency();
                     FragmentationTask.LOCK.unlock();
+                    // add the initial molecule as a parent molecule
                     tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                     if (tmpFragmentsOfMolList.contains(tmpFragmentDataModel)) {
                         tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
@@ -172,7 +180,8 @@ public class FragmentationTask implements Callable<Integer> {
                 }
                 tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, tmpFragmentFrequenciesOfMoleculeMap);
                 tmpMolecule.getAllFragments().put(this.fragmentationName, tmpFragmentsOfMolList);
-            } catch(Exception anException) {
+            }
+            catch(Exception anException) {
                 this.exceptionsCounter++;
                 FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                 if (tmpMolecule.getAllFragments() != null && !tmpMolecule.getAllFragments().containsKey(this.fragmentationName)) {
