@@ -101,7 +101,7 @@ public final class BasicDefinitions {
     /**
      * Set of valid files extensions for file import.
      */
-    public static final Set<String> VALID_IMPORT_EXTENSION = new HashSet<>(List.of(".mol", ".sdf", ".smi", ".txt", ".csv"));
+    public static final Set<String> VALID_IMPORT_EXTENSION = new HashSet<>(List.of(".mol", ".sdf", ".smi", ".txt", ".csv", ".tsv"));
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Session">

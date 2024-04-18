@@ -159,7 +159,7 @@ public class Importer {
             /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
                 break;*/
-            case ".smi", ".txt", ".csv":
+            case ".smi", ".txt", ".csv", ".tsv":
                 tmpImportedMoleculesSet = this.importSMILESFile(aFile);
                 break;
             default:
@@ -190,7 +190,7 @@ public class Importer {
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
         //to make PDB available, add "*.pdb" here
-        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt", "*.csv"));
+        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt", "*.csv", "*.tsv"));
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if (!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
