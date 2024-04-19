@@ -1,29 +1,29 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
-
-/**
- * TODO:
- * - Implement clone()
- */
 
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
@@ -54,7 +54,7 @@ public class RGBColorPreference extends BasePreference {
 
     /**
      * Character to separate the different color components when writing a representation of this object to file.
-     * If this is altered, older versions can not be read any more! So should you change this, hard-code the ':'
+     * If this is altered, older versions can not be read anymore! So should you change this, hard-code the ':'
      * character in reloadVersion1000() and introduce a new version!
      */
     private static final String PERSISTENCE_VALUE_SEPARATOR = ":";
@@ -173,7 +173,7 @@ public class RGBColorPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             RGBColorPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -183,6 +183,7 @@ public class RGBColorPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getContentRepresentative() {
         String tmpContentRepresentative = "RGB Color [red=" + RGBColorPreference.FORMAT_FOR_REPRESENTATIVE.format(this.red)
@@ -285,19 +286,15 @@ public class RGBColorPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public RGBColorPreference copy() {
-        RGBColorPreference tmpCopy = new RGBColorPreference(new String(this.name),
-                Double.valueOf(this.red),
-                Double.valueOf(this.green),
-                Double.valueOf(this.blue),
-                Double.valueOf(alpha));
-        tmpCopy.guid = new String(this.guid);
+        RGBColorPreference tmpCopy = new RGBColorPreference(this.name,
+                this.red,
+                this.green,
+                this.blue,
+                alpha);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -386,11 +383,10 @@ public class RGBColorPreference extends BasePreference {
     /**
      * (Re-)instantiates a new RGBColorPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
-        //If RGBColorPreference.PERSISTENCE_VALUE_SEPARATOR is altered this will not work anymore, see above.
-        String[] tmpColorComponents = aReader.readLine().split(RGBColorPreference.PERSISTENCE_VALUE_SEPARATOR);
+        String[] tmpColorComponents = aReader.readLine().split(":");
         this.red = Double.parseDouble(tmpColorComponents[0]);
         this.green = Double.parseDouble(tmpColorComponents[1]);
         this.blue = Double.parseDouble(tmpColorComponents[2]);

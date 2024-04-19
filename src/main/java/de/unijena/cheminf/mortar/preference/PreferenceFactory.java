@@ -1,37 +1,37 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
-
-/**
- * TODO:
- * - implement method that initializes a whole new IPreference object?
- * - newly added preference classes need to be added to 'reinitializePreference()' method
- */
 
 import java.io.BufferedReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Utility class for creating IPreference objects.
+ * Utility class for creating IPreference objects. Note for developers: newly added preference classes need to be added
+ * to 'reinitializePreference()' method.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
@@ -42,6 +42,15 @@ public final class PreferenceFactory {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(PreferenceFactory.class.getName());
+    //</editor-fold>
+    //
+    //<editor-fold defaultstate="collapsed" desc="Private constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private PreferenceFactory() {
+    }
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">

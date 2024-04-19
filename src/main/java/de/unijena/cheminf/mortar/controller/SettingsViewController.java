@@ -1,25 +1,31 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.views.SettingsView;
 import de.unijena.cheminf.mortar.message.Message;
@@ -33,72 +39,74 @@ import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SettingsViewController
- * controls {@link SettingsView} for {@link SettingsContainer}
+ * SettingsViewController controls {@link SettingsView} for {@link SettingsContainer}.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class SettingsViewController {
-
     //<editor-fold desc="private and private final class variables">
     /**
-     * SettingsContainer
+     * SettingsContainer.
      */
     private final SettingsContainer settingsContainer;
-    private final SettingsContainer recentSettingsContainer;
     /**
-     * Main stage object of the application
+     * Main stage object of the application.
      */
     private final Stage mainStage;
     /**
-     * Stage for the SettingsView
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
+    /**
+     * Stage for the SettingsView.
      */
     private Stage settingsViewStage;
     /**
-     * SettingsView
+     * SettingsView.
      */
     private SettingsView settingsView;
     /**
-     * Map to hold the initial settings properties
+     * Map to hold the initial settings properties.
      */
-    private Map<String, Object> recentProperties;
+    private final Map<String, Object> recentProperties;
     /**
-     * Boolean value to check if the rowsPerPage property has changed
+     * Boolean value to check if the rowsPerPage property has changed.
      */
     private boolean hasRowsPerPageChanged;
     /**
-     * Boolean value to check if the keepAtomContainerInDataModel property has changed
+     * Boolean value to check if the keepAtomContainerInDataModel property has changed.
      */
     private boolean hasKeepAtomContainerInDataModelChanged;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      *
      * @param aStage Parent stage
      * @param aSettingsContainer SettingsContainer
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public SettingsViewController(Stage aStage, SettingsContainer aSettingsContainer){
+    public SettingsViewController(Stage aStage, SettingsContainer aSettingsContainer, IConfiguration aConfiguration) {
         this.mainStage = aStage;
         this.settingsContainer = aSettingsContainer;
-        this.recentSettingsContainer = aSettingsContainer;
+        this.configuration = aConfiguration;
         this.recentProperties = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(this.settingsContainer.settingsProperties().size()));
         this.showSettingsView();
     }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
-     * Initialises and opens settingsView
+     * Initialises and opens settingsView.
      */
-    private void showSettingsView(){
-        if(this.settingsView == null)
+    private void showSettingsView() {
+        if (this.settingsView == null) {
             this.settingsView = new SettingsView();
+        }
         this.settingsViewStage = new Stage();
         Scene tmpScene = new Scene(this.settingsView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.settingsViewStage.setScene(tmpScene);
@@ -107,21 +115,23 @@ public class SettingsViewController {
         this.settingsViewStage.setTitle(Message.get("SettingsView.title.default.text"));
         this.settingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.settingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        InputStream tmpImageInputStream = SettingsViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
-        this.settingsViewStage.getIcons().add(new Image(tmpImageInputStream));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.settingsViewStage.getIcons().add(new Image(tmpIconURL));
         Platform.runLater(()->{
             this.addListeners();
-            this.settingsView.addTab(this.settingsViewStage, Message.get("GlobalSettingsView.title.text"),
-                    this.settingsContainer.settingsProperties(), this.settingsContainer.getSettingNameToTooltipTextMap(),
-                    this.recentProperties);
+            this.settingsView.addTab(Message.get("GlobalSettingsView.title.text"),
+                    this.settingsContainer.settingsProperties(), this.settingsContainer.getSettingNameToDisplayNameMap(),
+                    this.settingsContainer.getSettingNameToTooltipTextMap(), this.recentProperties);
         });
         this.settingsViewStage.showAndWait();
     }
     //
     /**
-     * Adds listeners and event handlers to the buttons of the settings view
+     * Adds listeners and event handlers to the buttons of the settings view.
      */
-    private void addListeners(){
+    private void addListeners() {
         //stage close request
         this.settingsViewStage.setOnCloseRequest(event -> {
             this.setRecentProperties();
@@ -129,27 +139,25 @@ public class SettingsViewController {
         });
         //apply button
         this.settingsView.getApplyButton().setOnAction(event -> {
-            this.hasRowsPerPageChanged = (int) this.settingsContainer.rowsPerPageSettingProperty().getValue()
+            this.hasRowsPerPageChanged = this.settingsContainer.rowsPerPageSettingProperty().getValue()
                     != (int) this.recentProperties.get(this.settingsContainer.rowsPerPageSettingProperty().getName());
             this.hasKeepAtomContainerInDataModelChanged = this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getValue()
                     != this.recentProperties.get(this.settingsContainer.keepAtomContainerInDataModelSettingProperty().getName());
             this.settingsViewStage.close();
         });
         //cancel button
-        this.settingsView.getCancelButton().setOnAction(event ->{
+        this.settingsView.getCancelButton().setOnAction(event -> {
             this.setRecentProperties();
             this.settingsViewStage.close();
         });
         //default button
-        this.settingsView.getDefaultButton().setOnAction(event -> {
-            this.settingsContainer.restoreDefaultSettings();
-        });
+        this.settingsView.getDefaultButton().setOnAction(event -> this.settingsContainer.restoreDefaultSettings());
     }
     //
     /**
-     * Sets the properties to the values of the 'recentPropertiesMap'
+     * Sets the properties to the values of the 'recentPropertiesMap'.
      */
-    private void setRecentProperties(){
+    private void setRecentProperties() {
         Platform.runLater(()->{
             for (Property tmpProperty : this.settingsContainer.settingsProperties()) {
                 if (this.recentProperties.containsKey(tmpProperty.getName())){
@@ -162,7 +170,8 @@ public class SettingsViewController {
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns boolean value whether if rowsPerPage property has changed or not
+     * Returns boolean value whether if rowsPerPage property has changed or not.
+     *
      * @return hasRowsPerPageChanged
      */
     public boolean hasRowsPerPageChanged() {
@@ -171,6 +180,7 @@ public class SettingsViewController {
     //
     /**
      * Returns boolean value whether if keepAtomContainerInDataModel property has changed or not.
+     *
      * @return hasKeepAtomContainerInDataModelChanged
      */
     public boolean hasKeepAtomContainerInDataModelChanged() {

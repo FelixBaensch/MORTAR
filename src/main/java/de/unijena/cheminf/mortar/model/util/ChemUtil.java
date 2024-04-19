@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.util;
@@ -26,7 +31,6 @@ import de.unijena.cheminf.mortar.model.io.Importer;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
@@ -62,11 +66,21 @@ public final class ChemUtil {
     private static final Logger LOGGER = Logger.getLogger(ChemUtil.class.getName());
     //</editor-fold>
     //
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private ChemUtil() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
      * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
      * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
-     * container. Aromaticity information is encoded in the returned SMILES string, if there is any given.
+     * container. Aromaticity information is encoded in the returned SMILES string, if there is any given. Unique SMILES
+     * codes do NOT encode stereochemistry!
      *
      * @param anAtomContainer atom container the unique SMILES should be created of
      * @return unique SMILES of the given atom container or 'null' if no creation was possible
@@ -77,17 +91,14 @@ public final class ChemUtil {
         try {
             try {
                 tmpSmiles = tmpSmilesGen.create(anAtomContainer);
-            } catch (CDKException anException){
-                try {
-                    IAtomContainer tmpAtomContainer = anAtomContainer.clone();
-                    Kekulization.kekulize(tmpAtomContainer);
-                    tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
-                } catch (CDKException anInnerException){
-                    throw anInnerException;
-                }
+            } catch (CDKException anException) {
+                IAtomContainer tmpAtomContainer = anAtomContainer.clone();
+                Kekulization.kekulize(tmpAtomContainer);
+                tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                ChemUtil.LOGGER.log(Level.INFO, String.format("Kekulized molecule %s", anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
             }
         } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException anException){
-            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "; molecule name: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
+            ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s; molecule name: %s", anException.toString(), anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anException);
         }
         return tmpSmiles;
     }
@@ -102,12 +113,11 @@ public final class ChemUtil {
      *                          does not affect aromaticity flags
      * @param shouldAtomTypesBePerceived whether atom types should be perceived and configured
      * @return IAtomContainer atom container of the molecule
-     * @throws InvalidSmilesException if the given SMILES is invalid
-     * @throws CDKException if kekulization or atom type matching fails
+     * @throws CDKException if the given SMILES is invalid or if kekulization or atom type matching fails
      */
     public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode, boolean shouldBeKekulized, boolean shouldAtomTypesBePerceived)
-            throws InvalidSmilesException, CDKException {
-        //no checks because .parseSmiles() checks and throws InvalidSmilesException if the SMILES cannot be parsed
+            throws CDKException {
+        //no checks because .parseSmiles() checks and throws InvalidSmilesException (subclass of CDKException) if the SMILES cannot be parsed
         IAtomContainer tmpAtomContainer;
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         tmpSmiPar.kekulise(false);
@@ -130,10 +140,9 @@ public final class ChemUtil {
      *
      * @param aSmilesCode SMILES representation
      * @return IAtomContainer atom container of the molecule
-     * @throws InvalidSmilesException if the given SMILES is invalid
-     * @throws CDKException if kekulization or atom type matching fails
+     * @throws CDKException if the given SMILES is invalid or if kekulization or atom type matching fails
      */
-    public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode) throws InvalidSmilesException, CDKException {
+    public static IAtomContainer parseSmilesToAtomContainer(String aSmilesCode) throws CDKException {
         return ChemUtil.parseSmilesToAtomContainer(aSmilesCode, true, true);
     }
 
@@ -146,7 +155,7 @@ public final class ChemUtil {
      * @author Samuel Behr
      */
     public static String generateMolecularFormula(IAtomContainer anAtomContainer) {
-        IAtomContainer tmpAtomContainerClone = null;
+        IAtomContainer tmpAtomContainerClone;
         String tmpMolecularFormulaString = null;
         try {
             tmpAtomContainerClone = anAtomContainer.clone();
@@ -154,8 +163,8 @@ public final class ChemUtil {
             IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(tmpAtomContainerClone);
             tmpMolecularFormulaString = MolecularFormulaManipulator.getString(tmpMolecularFormula);
         } catch (CloneNotSupportedException anException) {
-            ChemUtil.LOGGER.log(Level.WARNING, anException.toString() + " molecule name: "
-                    + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
+            ChemUtil.LOGGER.log(Level.WARNING, String.format("%s molecule name: %s", anException.toString(),
+                    anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anException);
         }
         return tmpMolecularFormulaString;
     }
@@ -166,19 +175,17 @@ public final class ChemUtil {
      * @param aMolecule to check for 3D coordinates
      * @return true if 3D coordinates are set for ALL atoms in the given molecule
      */
-    public static boolean has3DCoordinates(MoleculeDataModel aMolecule){
+    public static boolean has3DCoordinates(MoleculeDataModel aMolecule) {
         IAtomContainer tmpFragment;
-        try{
+        try {
             tmpFragment = aMolecule.getAtomContainer();
         } catch(CDKException anException){
-            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "_" + aMolecule.getName(), anException);
+            ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), aMolecule.getName()), anException);
             return false;
         }
         boolean tmpHas3DCoords = true;
-        for(IAtom tmpAtom : tmpFragment.atoms()){
-            if(tmpAtom.getPoint3d() != null){
-                continue;
-            } else {
+        for (IAtom tmpAtom : tmpFragment.atoms()) {
+            if (tmpAtom.getPoint3d() == null) {
                 tmpHas3DCoords = false;
                 break;
             }
@@ -192,19 +199,17 @@ public final class ChemUtil {
      * @param aMolecule to check for 2D coordinates
      * @return true if 2D coordinates are set for ALL atoms in the given molecule
      */
-    public static boolean has2DCoordinates(MoleculeDataModel aMolecule){
+    public static boolean has2DCoordinates(MoleculeDataModel aMolecule) {
         IAtomContainer tmpFragment;
-        try{
+        try {
             tmpFragment = aMolecule.getAtomContainer();
         } catch(CDKException anException){
-            ChemUtil.LOGGER.log(Level.SEVERE, anException.toString() + "_" + aMolecule.getName(), anException);
+            ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), aMolecule.getName()), anException);
             return false;
         }
         boolean tmpHas2DCoords = true;
-        for(IAtom tmpAtom : tmpFragment.atoms()){
-            if(tmpAtom.getPoint2d() != null){
-                continue;
-            } else {
+        for (IAtom tmpAtom : tmpFragment.atoms()) {
+            if (tmpAtom.getPoint2d() == null) {
                 tmpHas2DCoords = false;
                 break;
             }
@@ -219,13 +224,13 @@ public final class ChemUtil {
      * @param aListOfMolecules to check for 2D or 3D coordinates
      * @return true if 2D or 3D coordinates are set for EVERY atom in EVERY molecule in the given list
      */
-    public static boolean checkMoleculeListForCoordinates(List<MoleculeDataModel> aListOfMolecules){
-        if(aListOfMolecules == null || aListOfMolecules.size() == 0){
+    public static boolean checkMoleculeListForCoordinates(List<MoleculeDataModel> aListOfMolecules) {
+        if (aListOfMolecules == null || aListOfMolecules.isEmpty()) {
             return false;
         }
         boolean tmpHasCoords = true;
-        for(MoleculeDataModel tmpMolecule : aListOfMolecules){
-            if(!ChemUtil.has3DCoordinates(tmpMolecule) && !ChemUtil.has2DCoordinates(tmpMolecule)){
+        for (MoleculeDataModel tmpMolecule : aListOfMolecules) {
+            if (!ChemUtil.has3DCoordinates(tmpMolecule) && !ChemUtil.has2DCoordinates(tmpMolecule)) {
                 tmpHasCoords = false;
                 break;
             }
@@ -317,7 +322,7 @@ public final class ChemUtil {
 
     /**
      * Checks whether atoms in the given molecule have free atom pairs correctly assigned if chemically needed. If not,
-     * they are added.
+     * they are added. Note: it does not work really well on most fragments...
      *
      * @param aMolecule to check for missing free electron pairs
      * @throws NullPointerException if the given molecule is null

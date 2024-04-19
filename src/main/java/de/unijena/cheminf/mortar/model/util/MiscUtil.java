@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.util;
@@ -29,7 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Miscellaneous utilities
+ * Miscellaneous utilities.
  *
  * @author Achim Zielesny, Jonas Schaub
  * @version 1.0.0.0
@@ -42,9 +47,18 @@ public final class MiscUtil {
     private static final Logger LOGGER = Logger.getLogger(MiscUtil.class.getName());
     //</editor-fold>
     //
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private MiscUtil() {
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
     /**
-     * String with globally unique ID
+     * String with globally unique ID.
      *
      * @return String with globally unique ID
      */
@@ -53,10 +67,9 @@ public final class MiscUtil {
     }
     //
     /**
-     * Returns current timestamp in standard form (see code)
+     * Returns current timestamp in standard form (see code).
      *
-     * @return Current timestamp in standard form or null if none could be
-     * created
+     * @return Current timestamp in standard form or a placeholder string if none could be created
      */
     public static String getTimestampInStandardFormat() {
         try {
@@ -66,7 +79,7 @@ public final class MiscUtil {
             return tmpSimpleDateFormat.format(tmpDate);
         } catch (Exception anException) {
             MiscUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return null;
+            return BasicDefinitions.STANDARD_TIMESTAMP_FORMAT;
         }
     }
     //
@@ -89,7 +102,7 @@ public final class MiscUtil {
         }
         String[] tmpSeparateNumbersV1 = aVersionString1.split("\\.");
         String[] tmpSeparateNumbersV2 = aVersionString2.split("\\.");
-        int tmpIterations = tmpSeparateNumbersV1.length < tmpSeparateNumbersV2.length ? tmpSeparateNumbersV1.length : tmpSeparateNumbersV2.length;
+        int tmpIterations = Math.min(tmpSeparateNumbersV1.length, tmpSeparateNumbersV2.length);
         for (int i = 0; i < tmpIterations; i++) {
             int tmpV1Int = Integer.parseInt(tmpSeparateNumbersV1[i]);
             int tmpV2Int = Integer.parseInt(tmpSeparateNumbersV2[i]);

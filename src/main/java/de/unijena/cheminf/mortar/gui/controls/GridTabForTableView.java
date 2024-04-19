@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.gui.controls;
@@ -33,48 +38,47 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 
 /**
- * Custom tab which contains a grid pane
+ * Custom tab which contains a grid pane.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class GridTabForTableView extends Tab {
-
     //<editor-fold desc="private class variables">
     /**
-     * GridPane to align nodes
+     * GridPane to align nodes.
      */
-    private GridPane gridPane;
+    private final GridPane gridPane;
     /**
-     * Pagination for table view
+     * Pagination for table view.
      */
     private Pagination pagination;
     /**
-     *
+     * Encapsulated table view.
      */
-    private TableView tableView;
+    private final TableView tableView;
     //</editor-fold>
     //
+    //<editor-fold desc="Constructors">
     /**
-     * Constructor
-     *
-     * Creates a 'No Title' grid tab
+     * Constructor. Creates a 'No Title' grid tab
      *
      * @param aTableView TableView to add
      */
-    public GridTabForTableView(TableView aTableView){
+    public GridTabForTableView(TableView aTableView) {
         this("No Title", "", aTableView);
     }
     //
     /**
-     * Constructor
+     * Constructor.
+     *
      * @param aTitle String title of Tab
      * @param anIdString String ID of Tab
      * @param aTableView TableView to add
      */
-    public GridTabForTableView(String aTitle, String anIdString, TableView aTableView){
+    public GridTabForTableView(String aTitle, String anIdString, TableView aTableView) {
         super();
-        setText(aTitle);
+        this.setText(aTitle);
         this.setClosable(false);
         this.setId(anIdString);
         this.tableView = aTableView;
@@ -84,34 +88,36 @@ public class GridTabForTableView extends Tab {
         RowConstraints tmpRowCon1 = new RowConstraints();
         tmpRowCon1.setFillHeight(true);
         tmpRowCon1.setVgrow(Priority.ALWAYS);
-        gridPane.getRowConstraints().add(tmpRowCon1);
+        this.gridPane.getRowConstraints().add(tmpRowCon1);
         RowConstraints tmpRowCon2 = new RowConstraints();
         tmpRowCon2.setMaxHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
         tmpRowCon2.setMinHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
         tmpRowCon2.setPrefHeight(GuiDefinitions.GUI_CONTROL_CONTAINER_HEIGHT);
         tmpRowCon2.setVgrow(Priority.ALWAYS);
-        gridPane.getRowConstraints().add(tmpRowCon2);
+        this.gridPane.getRowConstraints().add(tmpRowCon2);
         ColumnConstraints tmpColCon1 = new ColumnConstraints();
         tmpColCon1.setHgrow(Priority.ALWAYS);
         tmpColCon1.setMaxWidth(GuiDefinitions.GUI_SPACING_VALUE);
         tmpColCon1.setMinWidth(GuiDefinitions.GUI_SPACING_VALUE);
         tmpColCon1.setPrefWidth(GuiDefinitions.GUI_SPACING_VALUE);
-        gridPane.getColumnConstraints().add(tmpColCon1);
+        this.gridPane.getColumnConstraints().add(tmpColCon1);
         ColumnConstraints tmpColCon2 = new ColumnConstraints();
         tmpColCon2.setFillWidth(true);
         tmpColCon2.setHgrow(Priority.ALWAYS);
-        gridPane.getColumnConstraints().add(tmpColCon2);
+        this.gridPane.getColumnConstraints().add(tmpColCon2);
         ColumnConstraints tmpColCon3 = new ColumnConstraints();
         tmpColCon3.setHgrow(Priority.ALWAYS);
         tmpColCon3.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         tmpColCon3.setMinWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         tmpColCon3.setPrefWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         tmpColCon3.setHalignment(HPos.RIGHT);
-        gridPane.getColumnConstraints().add(tmpColCon3);
+        this.gridPane.getColumnConstraints().add(tmpColCon3);
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="Public methods">
     /**
-     * Adds given Node (aNode) to specified column (aColIndex) and row (aRowIndex) to GridPane
+     * Adds given Node (aNode) to specified column (aColIndex) and row (aRowIndex) to GridPane.
      * Necessary to add nodes via  MainViewController
      *
      * @param aNode Node to add
@@ -120,12 +126,12 @@ public class GridTabForTableView extends Tab {
      * @param aColSpan index how many cols should this node span
      * @param aRowSpan index how many rows should this node span
      */
-    public void addNodeToGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
+    public void addNodeToGridPane(javafx.scene.Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan) {
         this.gridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }
     //
     /**
-     * Adds given Pagination to GridPane
+     * Adds given Pagination to GridPane.
      * Necessary to add the pagination via MainViewController
      *
      * @param aPagination Pagination to add
@@ -136,48 +142,51 @@ public class GridTabForTableView extends Tab {
     }
     //
     /**
-     * Sets the given string as title of this tab
+     * Sets the given string as title of this tab.
      *
      * @param aTitle String
      */
-    public void setTitle(String aTitle){
+    public void setTitle(String aTitle) {
         this.setText(aTitle);
     }
     //
     /**
-     * Returns Pagination
+     * Returns Pagination.
+     *
      * @return pagination
      */
-    public Pagination getPagination(){
+    public Pagination getPagination() {
         return this.pagination;
     }
     //
     /**
-     * Returns TableView
+     * Returns TableView.
+     *
      * @return tableView
      */
-    public TableView getTableView(){
+    public TableView getTableView() {
         return this.tableView;
     }
     //
     /**
-     * Returns the title of this tab
+     * Returns the title of this tab.
      *
      * @return title
      */
-    public String getTitle(){
+    public String getTitle() {
         return this.getText();
     }
     //
-
     /**
-     * Returns the name of the fragmentation used
+     * Returns the name of the fragmentation used.
      *
      * @return fragmentation name
      */
-    public String getFragmentationNameOutOfTitle(){
-        if(this.getId().equals(TabNames.MOLECULES.name()))
+    public String getFragmentationNameOutOfTitle() {
+        if (this.getId().equals(TabNames.MOLECULES.name())) {
             return TabNames.MOLECULES.name();
+        }
         return this.getText().split("-", 2)[1].trim();
     }
+    //</editor-fold>
 }

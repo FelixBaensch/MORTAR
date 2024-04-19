@@ -1,27 +1,34 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 
@@ -38,7 +45,6 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -51,8 +57,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
-import java.io.InputStream;
-
 /**
  * "About" window view.
  *
@@ -60,49 +64,55 @@ import java.io.InputStream;
  * @version 1.0.0.0
  */
 public class AboutView extends AnchorPane {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
-     * TableView to show ExternalTool properties
+     * TableView to show ExternalTool properties.
      */
-    private TableView<ExternalTool> tableView;
+    private final TableView<ExternalTool> tableView;
     /**
-     * Button to open log file directory
+     * Button to open log file directory.
      */
-    private Button logFileButton;
+    private final Button logFileButton;
     /**
-     * Button to open GitHub repository
+     * Button to open GitHub repository.
      */
-    private Button gitHubButton;
+    private final Button gitHubButton;
     /**
-     * Button to close this view
+     * Button to close this view.
      */
-    private Button closeButton;
+    private final Button closeButton;
     /**
-     * Button to open tutorial pdf
+     * Button to open tutorial pdf.
      */
-    private Button tutorialButton;
+    private final Button tutorialButton;
     /**
-     * ImageView for application logo
+     * ImageView for application logo.
      */
-    private ImageView logoImageView;
+    private final ImageView logoImageView;
     /**
-     * GridPane to align information and logo
+     * GridPane to align information and logo.
      */
-    private GridPane gridPane;
+    private final GridPane gridPane;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public AboutView(){
+    public AboutView(IConfiguration aConfiguration) {
         super();
+        this.configuration = aConfiguration;
         //borderPane
         BorderPane borderPane = new BorderPane();
-        AboutView.setTopAnchor(borderPane, 0.0);
-        AboutView.setRightAnchor(borderPane, 0.0);
-        AboutView.setLeftAnchor(borderPane, 0.0);
-        AboutView.setBottomAnchor(borderPane, 0.0);
+        AnchorPane.setTopAnchor(borderPane, 0.0);
+        AnchorPane.setRightAnchor(borderPane, 0.0);
+        AnchorPane.setLeftAnchor(borderPane, 0.0);
+        AnchorPane.setBottomAnchor(borderPane, 0.0);
         //borderPane bottom -> buttons
         HBox hBoxButtonsHBox = new HBox();
         hBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
@@ -110,12 +120,12 @@ public class AboutView extends AnchorPane {
         hBoxButtonsHBox.prefWidthProperty().bind(this.widthProperty());
         hBoxButtonsHBox.maxWidthProperty().bind(this.widthProperty());
         //-left side
-        this.logFileButton = new Button(Message.get("AboutView.logFileButton.text"));
-        this.logFileButton.setTooltip(new Tooltip(Message.get("AboutView.logFileButton.tooltip")));
-        this.gitHubButton = new Button(Message.get("AboutView.gitHubButton.text"));
-        this.gitHubButton.setTooltip(new Tooltip(Message.get("AboutView.gitHubButton.tooltip")));
-        this.tutorialButton = new Button(Message.get("AboutView.tutorialButton.text"));
-        this.tutorialButton.setTooltip(new Tooltip(Message.get("AboutView.tutorialButton.tooltip")));
+        this.logFileButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.logFileButton.text"));
+        this.logFileButton.setTooltip(GuiUtil.createTooltip(Message.get("AboutView.logFileButton.tooltip")));
+        this.gitHubButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.gitHubButton.text"));
+        this.gitHubButton.setTooltip(GuiUtil.createTooltip(Message.get("AboutView.gitHubButton.tooltip")));
+        this.tutorialButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.tutorialButton.text"));
+        this.tutorialButton.setTooltip(GuiUtil.createTooltip(Message.get("AboutView.tutorialButton.tooltip")));
         HBox hBoxLeftSideButtons = new HBox();
         hBoxLeftSideButtons.getChildren().addAll(this.logFileButton, this.gitHubButton, this.tutorialButton);
         hBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);
@@ -124,7 +134,7 @@ public class AboutView extends AnchorPane {
         HBox.setHgrow(hBoxLeftSideButtons, Priority.ALWAYS);
         hBoxButtonsHBox.getChildren().add(hBoxLeftSideButtons);
         //-right side
-        this.closeButton = new Button(Message.get("AboutView.closeButton.text"));
+        this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("AboutView.closeButton.text"));
         HBox hBoxRightSideButtons = new HBox();
         hBoxRightSideButtons.getChildren().addAll(this.closeButton);
         hBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
@@ -146,7 +156,7 @@ public class AboutView extends AnchorPane {
         tmpTextCol.prefWidthProperty().bind(
                 this.gridPane.widthProperty().multiply(0.4975)
         );
-        this.gridPane.getColumnConstraints().add(0, tmpTextCol);
+        this.gridPane.getColumnConstraints().addFirst(tmpTextCol);
 
         ColumnConstraints tmpLogoCol = new ColumnConstraints();
         tmpLogoCol.prefWidthProperty().bind(
@@ -158,7 +168,7 @@ public class AboutView extends AnchorPane {
         this.gridPane.setVgap(GuiDefinitions.GUI_SPACING_VALUE);
         this.gridPane.setHgap(GuiDefinitions.GUI_SPACING_VALUE);
         this.gridPane.setAlignment(Pos.TOP_LEFT);
-        tmpSplitPane.getItems().add(0, this.gridPane);
+        tmpSplitPane.getItems().addFirst(this.gridPane);
         //text
         //-title
         Text tmpAppTitle = new Text(Message.get("AboutView.appTitle.text"));
@@ -192,9 +202,11 @@ public class AboutView extends AnchorPane {
         tmpTitledPaneAcknowledgement.setExpanded(false);
         this.gridPane.add(tmpTitledPaneAcknowledgement,0,5);
         //-image
-        InputStream tmpImageInputStream = AboutView.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo1.png");
-        Double tmpImageSize = 495.3125; // magic number, do not touch
-        Image tmpLogo = new Image(tmpImageInputStream,tmpImageSize,tmpImageSize/1.414, true,true );
+        String tmpLogoURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.name")).toExternalForm();
+        double tmpImageSize = 495.3125; // magic number, do not touch
+        Image tmpLogo = new Image(tmpLogoURL, tmpImageSize, tmpImageSize/1.414, true,true );
         this.logoImageView = new ImageView(tmpLogo);
         this.gridPane.add(this.logoImageView, 1,0, 1, 6);
         GridPane.setHalignment(this.logoImageView, HPos.CENTER);
@@ -253,17 +265,13 @@ public class AboutView extends AnchorPane {
             tmpTitledPaneAcknowledgement.setMinWidth(newValue.doubleValue() * 0.5);
             tmpTitledPaneAcknowledgement.setMaxWidth(newValue.doubleValue() * 0.5);
         }));
-        tmpTitledPaneLicense.expandedProperty().addListener((obs, oldValue, newValue) ->{
-            tmpTitledPaneAcknowledgement.setExpanded(!newValue);
-        });
-        tmpTitledPaneAcknowledgement.expandedProperty().addListener((obs, oldValue, newValue) ->{
-            tmpTitledPaneLicense.setExpanded(!newValue);
-        });
+        tmpTitledPaneLicense.expandedProperty().addListener((obs, oldValue, newValue) -> tmpTitledPaneAcknowledgement.setExpanded(!newValue));
+        tmpTitledPaneAcknowledgement.expandedProperty().addListener((obs, oldValue, newValue) -> tmpTitledPaneLicense.setExpanded(!newValue));
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * Returns button to open log files directory
+     * Returns button to open log files directory.
      *
      * @return button
      */
@@ -272,7 +280,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns button to open GitHub repository
+     * Returns button to open GitHub repository.
      *
      * @return button
      */
@@ -281,7 +289,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns button to open tutorial
+     * Returns button to open tutorial.
      *
      * @return Button to open the MORTAR tutorial
      */
@@ -290,7 +298,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns button to close this view
+     * Returns button to close this view.
      *
      * @return button
      */
@@ -299,7 +307,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns the TableView which shows ExternalTool properties
+     * Returns the TableView which shows ExternalTool properties.
      * @return TableView {@literal <}ExternalTool {@literal >}
      */
     public TableView<ExternalTool> getTableView(){
@@ -307,7 +315,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns grid pane to hold application information and logo
+     * Returns grid pane to hold application information and logo.
      *
      * @return GridPane
      */
@@ -316,7 +324,7 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Returns the ImageView for the logo image
+     * Returns the ImageView for the logo image.
      *
      * @return ImageView
      */
@@ -325,11 +333,11 @@ public class AboutView extends AnchorPane {
     }
     //
     /**
-     * Sets given image to image vie
+     * Sets given image to image view.
      *
      * @param anImage Image to set as logo
      */
-    public void setLogoImageView(Image anImage){
+    public void setLogoImageViewImage(Image anImage){
         this.logoImageView.setImage(anImage);
     }
     //</editor-fold>

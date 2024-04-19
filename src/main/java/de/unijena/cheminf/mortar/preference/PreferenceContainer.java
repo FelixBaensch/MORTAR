@@ -1,29 +1,29 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
-
-/**
- * TODO:
- * - Add lz4 compression (and zip compression?)
- */
 
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
@@ -34,13 +34,17 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -149,11 +153,11 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
     private ConcurrentSkipListMap<PreferenceType, IPreference[]> preferenceTypeMapCache;
     //</editor-fold>
     //
-    //<editor-fold defaultstate="collapsed" desc="Contructors">
+    //<editor-fold defaultstate="collapsed" desc="Constructors">
     /**
      * Initializes an empty preference container with the given file pathname.
      *
-     * @param aContainerFilePathname pathname denoting the file where the container will write its persistent representation to;
+     * @param aContainerFilePathname pathname denoting the file where the container will write its persistent representation to
      * @throws IllegalArgumentException if aContainerFilePathname is not valid
      */
     public PreferenceContainer(String aContainerFilePathname) throws IllegalArgumentException {
@@ -182,8 +186,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * method denies read access to the file
      */
     public PreferenceContainer(File aFile) throws IOException, SecurityException {
-        BufferedReader tmpReader = this.constructDecompressedBufferedReaderForContainerFile(aFile.getPath());
-        try {
+        try (BufferedReader tmpReader = this.constructDecompressedBufferedReaderForContainerFile(aFile.getPath())) {
             this.containerFile = aFile;
             //Can throw IOException
             String tmpVersion = tmpReader.readLine();
@@ -195,12 +198,10 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
-            tmpReader.close();
         } catch (Exception anException) {
             PreferenceContainer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            tmpReader.close();
             throw new IOException("Preference container can not be instantiated from given reader.");
         }
     }
@@ -308,7 +309,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
             return new IPreference[0];
         }
         if (Objects.isNull(this.allPreferencesCache)) {
-            this.allPreferencesCache = this.preferenceMasterMap.values().toArray(new IPreference[this.preferenceMasterMap.size()]);
+            this.allPreferencesCache = this.preferenceMasterMap.values().toArray(new IPreference[0]);
         }
         return this.allPreferencesCache;
     }
@@ -332,10 +333,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
             return new IPreference[0];
         }
         if (this.containsPreferenceName(aPreferenceName)) {
-            if (!this.preferenceNameMapCache.containsKey(aPreferenceName)) {
-                ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceNameMap.get(aPreferenceName);
-                this.preferenceNameMapCache.put(aPreferenceName, tmpSet.toArray(new IPreference[tmpSet.size()]));
-            }
+            this.preferenceNameMapCache.computeIfAbsent(aPreferenceName, v -> this.preferenceNameMap.get(aPreferenceName).toArray(new IPreference[0]));
             return this.preferenceNameMapCache.get(aPreferenceName);
         } else {
             return new IPreference[0];
@@ -360,10 +358,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
             return new IPreference[0];
         }
         if (this.preferenceTypeMap.containsKey(aType)) {
-            if (!this.preferenceTypeMapCache.containsKey(aType)) {
-                ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceTypeMap.get(aType);
-                this.preferenceTypeMapCache.put(aType, tmpSet.toArray(new IPreference[tmpSet.size()]));
-            }
+            this.preferenceTypeMapCache.computeIfAbsent(aType, v -> this.preferenceTypeMap.get(aType).toArray(new IPreference[0]));
             return this.preferenceTypeMapCache.get(aType);
         } else {
             return new IPreference[0];
@@ -389,12 +384,12 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
             if (!Objects.isNull(this.preferencesSortedNameDescendingCache)) {
                 List<IPreference> tmpDescendingList = Arrays.asList(this.preferencesSortedNameDescendingCache);
                 Collections.reverse(tmpDescendingList);
-                this.preferencesSortedNameAscendingCache = tmpDescendingList.toArray(new IPreference[tmpDescendingList.size()]);
+                this.preferencesSortedNameAscendingCache = tmpDescendingList.toArray(new IPreference[0]);
             } else {
-                StringSortWrapper[] tmpArray = this.preferenceNameWrapperSet.toArray(new StringSortWrapper[this.preferenceNameWrapperSet.size()]);
+                StringSortWrapper<IPreference>[] tmpArray = this.preferenceNameWrapperSet.toArray(new StringSortWrapper[0]);
                 IPreference[] tmpPreferenceArray = new IPreference[tmpArray.length];
                 for (int i = 0; i < tmpArray.length; i++) {
-                    tmpPreferenceArray[i] = (IPreference) tmpArray[i].getWrappedObject();
+                    tmpPreferenceArray[i] = tmpArray[i].getWrappedObject();
                 }
                 this.preferencesSortedNameAscendingCache = tmpPreferenceArray;
             }
@@ -424,15 +419,14 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
             if (!Objects.isNull(this.preferencesSortedNameAscendingCache)) {
                 List<IPreference> tmpAscendingList = Arrays.asList(this.preferencesSortedNameAscendingCache);
                 Collections.reverse(tmpAscendingList);
-                this.preferencesSortedNameDescendingCache = tmpAscendingList.toArray(new IPreference[tmpAscendingList.size()]);
+                this.preferencesSortedNameDescendingCache = tmpAscendingList.toArray(new IPreference[0]);
             } else {
-                //TODO: Is there a better way to do this?
-                List<StringSortWrapper> tmpWrapperList = Arrays.asList(this.preferenceNameWrapperSet.toArray(new StringSortWrapper[this.preferenceNameWrapperSet.size()]));
+                List<StringSortWrapper<IPreference>> tmpWrapperList = new ArrayList<>(this.preferenceNameWrapperSet);
                 Collections.reverse(tmpWrapperList);
-                StringSortWrapper[] tmpArray = tmpWrapperList.toArray(new StringSortWrapper[tmpWrapperList.size()]);
+                StringSortWrapper<IPreference>[] tmpArray = tmpWrapperList.toArray(new StringSortWrapper[0]);
                 IPreference[] tmpPreferenceArray = new IPreference[tmpArray.length];
                 for (int i = 0; i < tmpArray.length; i++) {
-                    tmpPreferenceArray[i] = (IPreference) tmpArray[i].getWrappedObject();
+                    tmpPreferenceArray[i] = tmpArray[i].getWrappedObject();
                 }
                 this.preferencesSortedNameDescendingCache = tmpPreferenceArray;
             }
@@ -464,7 +458,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * Replaces a preference in this container with another one.
      * <br>The central preference management of this class is backed by a ConcurrentSkipListMap.
      * <br>The time consumption of this method scales log(size) on average (worst case O(size) for both the addition
-     * operation and the deletion operation.
+     * operation and the deletion operation).
      *
      * @param anOldPreference the preference to delete from this container
      * @param aNewPreference the preference to add to this container in place of the first parameter
@@ -487,7 +481,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * Replaces a preference in this container with another one.
      * <br>The central preference management of this class is backed by a ConcurrentSkipListMap.
      * <br>The time consumption of this method scales log(size) on average (worst case O(size) for both the addition
-     * operation and the deletion operation.
+     * operation and the deletion operation).
      *
      * @param aPreferenceGUID GUID string of the preference to delete from this container
      * @param aPreference the preference to add to this container in place of the preference with the given GUID string
@@ -520,7 +514,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         if (!this.contains(aPreferenceGUID)) {
             return false;
         }
-        boolean tmpWasDeletionSuccessful = delete(aPreferenceGUID);
+        boolean tmpWasDeletionSuccessful = this.delete(this.preferenceMasterMap.get(aPreferenceGUID));
         return tmpWasDeletionSuccessful;
     }
 
@@ -535,7 +529,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * @throws NullPointerException if aPreference is 'null'
      */
     public boolean delete(IPreference aPreference) throws NullPointerException {
-        Objects.requireNonNull(aPreference, "aPrference is 'null'.");
+        Objects.requireNonNull(aPreference, "aPreference is 'null'.");
         if (!this.contains(aPreference.getGUID())) {
             return false;
         }
@@ -614,7 +608,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         }
         boolean tmpContains = this.preferenceNameMap.containsKey(aPreferenceName);
         if (tmpContains) {
-            ConcurrentSkipListSet tmpSet = this.preferenceNameMap.get(aPreferenceName);
+            ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceNameMap.get(aPreferenceName);
             if (tmpSet.isEmpty()) {
                 tmpContains = false;
             }
@@ -630,7 +624,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      *
      * @param aPreferenceType the preference type to check for
      * @return true, if this container contains one or more preference(s) with the given type; false, if otherwise or if
-     * apreferenceType is 'null'
+     * aPreferenceType is 'null'
      */
     public boolean containsPreferenceType(PreferenceType aPreferenceType) {
         if (Objects.isNull(aPreferenceType)) {
@@ -641,7 +635,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         }
         boolean tmpContains = this.preferenceTypeMap.containsKey(aPreferenceType);
         if (tmpContains) {
-            ConcurrentSkipListSet tmpSet = this.preferenceTypeMap.get(aPreferenceType);
+            ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceTypeMap.get(aPreferenceType);
             if (tmpSet.isEmpty()) {
                 tmpContains = false;
             }
@@ -680,9 +674,9 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * object
      */
     public PreferenceContainer copy() throws CloneNotSupportedException {
-        PreferenceContainer tmpCopy = new PreferenceContainer(new String(this.containerFile.getPath()));
-        tmpCopy.guid = new String(this.guid);
-        tmpCopy.timeStamp = new String(this.timeStamp);
+        PreferenceContainer tmpCopy = new PreferenceContainer(this.containerFile.getPath());
+        tmpCopy.guid = this.guid;
+        tmpCopy.timeStamp = this.timeStamp;
         if (this.isEmpty()) {
             return tmpCopy;
         }
@@ -724,8 +718,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
      * denies read access to the file or directory
      */
     public void writeRepresentationTo(String aFilePathname) throws IOException, SecurityException {
-        PrintWriter tmpPrintWriter = this.constructCompressedPrintWriterForContainerFile(aFilePathname);
-        try {
+        try (PrintWriter tmpPrintWriter = this.constructCompressedPrintWriterForContainerFile(aFilePathname)) {
             tmpPrintWriter.println(PreferenceContainer.VERSION);
             tmpPrintWriter.println(this.guid);
             tmpPrintWriter.println(this.timeStamp);
@@ -733,16 +726,13 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
                 tmpPrintWriter.println(PreferenceContainer.CONTAINER_END);
                 return;
             }
-            for (String tmpKey : this.preferenceMasterMap.keySet()) {
-                IPreference tmpPreference = this.preferenceMasterMap.get(tmpKey);
-                tmpPrintWriter.println(tmpPreference.getType().name());
-                tmpPreference.writeRepresentation(tmpPrintWriter);
+            for (Map.Entry<String, IPreference> tmpEntry : this.preferenceMasterMap.entrySet()) {
+                tmpPrintWriter.println(tmpEntry.getValue().getType().name());
+                tmpEntry.getValue().writeRepresentation(tmpPrintWriter);
             }
             tmpPrintWriter.println(PreferenceContainer.CONTAINER_END);
-            tmpPrintWriter.close();
         } catch (Exception anException) {
             PreferenceContainer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            tmpPrintWriter.close();
             throw new IOException("Project object can not be written to file.");
         }
     }
@@ -865,9 +855,10 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
     private boolean addWithoutChecks(IPreference aPreference) {
         this.preferenceMasterMap.put(aPreference.getGUID(), aPreference);
         PreferenceType tmpType = aPreference.getType();
+        boolean tmpDidAdditionToPreferenceTypeMapFail = false;
         if (this.preferenceTypeMap.containsKey(tmpType)) {
             ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceTypeMap.get(tmpType);
-            tmpSet.add(aPreference);
+            tmpDidAdditionToPreferenceTypeMapFail = !tmpSet.add(aPreference);
         } else {
             ConcurrentSkipListSet<IPreference> tmpNewSet = new ConcurrentSkipListSet<>();
             tmpNewSet.add(aPreference);
@@ -875,15 +866,16 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         }
         this.preferenceNameWrapperSet.add(new StringSortWrapper<>(aPreference, aPreference.getName()));
         String tmpName = aPreference.getName();
+        boolean tmpDidAdditionToPreferenceNameMapFail = false;
         if (this.preferenceNameMap.containsKey(tmpName)) {
             ConcurrentSkipListSet<IPreference> tmpSet = this.preferenceNameMap.get(tmpName);
-            tmpSet.add(aPreference);
+            tmpDidAdditionToPreferenceNameMapFail = !tmpSet.add(aPreference);
         } else {
             ConcurrentSkipListSet<IPreference> tmpNewSet = new ConcurrentSkipListSet<>();
             tmpNewSet.add(aPreference);
             this.preferenceNameMap.put(tmpName, tmpNewSet);
         }
-        return true;
+        return !(tmpDidAdditionToPreferenceTypeMapFail || tmpDidAdditionToPreferenceNameMapFail);
     }
 
     /**
@@ -901,7 +893,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
     /**
      * (Re-)instantiates a new PreferenceContainer object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.initializeCollections();
         this.clearCache();
         this.guid = aReader.readLine();
@@ -915,7 +907,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
             IPreference tmpPreference = PreferenceFactory.reinitializePreference(tmpPreferenceTypeOrContainerEnd, aReader);
             boolean tmpWasLoadingSuccessful = this.addWithoutChecks(tmpPreference);
             if (!tmpWasLoadingSuccessful) {
-                throw new Exception();
+                throw new IOException();
             }
             tmpPreferenceTypeOrContainerEnd = aReader.readLine();
         }
@@ -923,6 +915,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
 
     /**
      * Constructs a compressing (if necessary) PrintWriter object that can be used to write a preference container file.
+     * Note that calling code must take care of closing the PrintWriter!
      *
      * @param aFilePathname the destined file
      * @return a compressed (if necessary) PrintWriter object
@@ -950,7 +943,12 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         if (!tmpContainerFile.canWrite()) {
             throw new IOException("Unable to modify the destined container file.");
         }
-        FileOutputStream tmpFileOut = new FileOutputStream(tmpContainerFile, false);
+        FileOutputStream tmpFileOut;
+        try {
+            tmpFileOut = new FileOutputStream(tmpContainerFile, false);
+        } catch (FileNotFoundException e) {
+            throw new IOException("Container file cannot be found.");
+        }
         BufferedOutputStream tmpBufOut;
         if (tmpFileExtension.equals(PreferenceContainer.VALID_FILE_EXTENSIONS[0])) {
             tmpBufOut = new BufferedOutputStream(tmpFileOut, BasicDefinitions.BUFFER_SIZE);
@@ -958,7 +956,11 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
             GZIPOutputStream tmpGzipOut = new GZIPOutputStream(tmpFileOut, BasicDefinitions.BUFFER_SIZE, false);
             tmpBufOut = new BufferedOutputStream(tmpGzipOut, BasicDefinitions.BUFFER_SIZE);
         } else {
-            tmpFileOut.close();
+            try {
+                tmpFileOut.close();
+            } catch (IOException e) {
+                //exception thrown in the next line anyway
+            }
             throw new IOException("Invalid file extension.");
         }
         PrintWriter tmpPrintWriter = new PrintWriter(tmpBufOut, false);
@@ -967,6 +969,7 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
 
     /**
      * Constructs a decompressing (if necessary) BufferedReader object that can be used to open and read container files.
+     * Note that calling code must take care of closing the BufferedReader!
      *
      * @param aFilePathname representing the persisted container file
      * @return buffered reader reading from the container file
@@ -986,17 +989,24 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         if (!tmpIsFile || !tmpCanRead) {
             throw new IOException("Given file does not exist, does not represent a file or can not be read.");
         }
-        FileInputStream tmpFileIn = new FileInputStream(tmpContainerFile);
+        FileInputStream tmpFileIn;
+        try {
+            tmpFileIn = new FileInputStream(tmpContainerFile);
+        } catch (FileNotFoundException e) {
+            throw new IOException("Container file cannot be found.");
+        }
         InputStreamReader tmpInStreamReader;
         if (tmpFileExtension.equals(PreferenceContainer.VALID_FILE_EXTENSIONS[0])) {
-            //TODO: Specify charset? Uses class of nio package...
-            tmpInStreamReader = new InputStreamReader(tmpFileIn, System.getProperty("file.encoding"));
+            tmpInStreamReader = new InputStreamReader(tmpFileIn, Charset.defaultCharset().displayName());
         } else if (tmpFileExtension.equals(PreferenceContainer.VALID_FILE_EXTENSIONS[1])) {
             GZIPInputStream tmpGzipIn = new GZIPInputStream(tmpFileIn, BasicDefinitions.BUFFER_SIZE);
-            //TODO: Specify charset? Uses class of nio package...
-            tmpInStreamReader = new InputStreamReader(tmpGzipIn, System.getProperty("file.encoding"));
+            tmpInStreamReader = new InputStreamReader(tmpGzipIn, Charset.defaultCharset().displayName());
         } else {
-            tmpFileIn.close();
+            try {
+                tmpFileIn.close();
+            } catch (IOException e) {
+                //exception thrown in next line anyway
+            }
             throw new IOException("Invalid file extension.");
         }
         BufferedReader tmpReader = new BufferedReader(tmpInStreamReader, BasicDefinitions.BUFFER_SIZE);

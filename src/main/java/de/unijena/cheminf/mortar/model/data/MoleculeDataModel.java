@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.data;
@@ -45,7 +50,7 @@ import java.util.logging.Logger;
  * @version 1.0.1.0
  */
 public class MoleculeDataModel {
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    //<editor-fold desc="private (final) class variables" defaultstate="collapsed">
     /**
      * Name of molecule.
      */
@@ -54,12 +59,9 @@ public class MoleculeDataModel {
     /**
      * Unique SMILES code of molecule.
      */
-    private String uniqueSmiles;
+    private final String uniqueSmiles;
     //
-    /**
-     * Property whether the molecule is selected or not.
-     */
-    private BooleanProperty selection;
+    private final BooleanProperty selection;
     //
     /**
      * Boolean, whether to keep the atom container of the molecule.
@@ -74,32 +76,34 @@ public class MoleculeDataModel {
     /**
      * Fragments map containing names of fragmentations done to the molecule as keys and lists of
      * {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that resulted from these fragmentations
-     * as values.
+     * as values. {@literal Map<FragmentationName, List<Fragments>>}
      */
-    private HashMap<String, List<FragmentDataModel>> fragments; // HashMap<FragmentationAlgorithmName, List<Fragments>>
+    private final Map<String, List<FragmentDataModel>> fragments;
     //
     /**
      * Fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique SMILES
      * representations of the fragments and values are the frequencies of the respective fragments in the molecule.
+     * {@literal Map<FragmentationName, Map<uniqueSMILES, frequency in this molecule>>}
      */
-    private HashMap<String, HashMap<String, Integer>> fragmentFrequencies; // HashMap<FragmentationAlgorithmName, Map<uniqueSMILES, frequency in this molecule>>
+    private final Map<String, Map<String, Integer>> fragmentFrequencies;
     //
     /**
      * Property map of this molecule.
      */
-    private Map<Object, Object> properties;
+    private final Map<Object, Object> properties;
     //
     /**
-     * Height value for image of structure
+     * Height value for image of structure.
      */
     private double structureImageHeight;
     //
     /**
-     * Width value for image of structure
+     * Width value for image of structure.
      */
     private double structureImageWidth;
     //</editor-fold>
     //
+    //<editor-fold desc="constructors">
     /**
      * Constructor for MoleculeDataModel. Molecular information is taken from the given unique SMILES code. The data
      * is not kept as atom container.
@@ -116,8 +120,10 @@ public class MoleculeDataModel {
         this.properties = aPropertyMap;
         this.uniqueSmiles = aUniqueSmiles;
         this.selection = new SimpleBooleanProperty(true);
-        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
-        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY);
+        this.fragments = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.fragmentFrequencies = new HashMap<>(BasicDefinitions.DEFAULT_INITIAL_MAP_CAPACITY,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
     }
     //
     /**
@@ -131,15 +137,22 @@ public class MoleculeDataModel {
         this.keepAtomContainer = true;
         this.atomContainer = anAtomContainer;
     }
+    //</editor-fold>
     //
-    //<editor-fold desc="public properties">
+    //<editor-fold desc="public properties get/set">
     /**
-     * Returns name (String) of the molecule, if it is null, "NoName" will be returned
+     * Returns name (String) of the molecule. If it is null, "NoName" will be returned.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in MoleculesDataTableView, the
+     * CellValueFactory of the name column is set to a PropertyValueFactory that uses "name" as
+     * property string to invoke this method; same usage in ItemizationDataTableView; see also
+     * DataModelPropertiesForTableView enum).
+     *
      * @return String name of molecule
      */
-    public String getName(){
-        if(this.name == null || this.name.isEmpty())
+    public String getName() {
+        if (this.name == null || this.name.isEmpty()) {
             this.name = "NoName";
+        }
         return this.name;
     }
     //
@@ -153,7 +166,7 @@ public class MoleculeDataModel {
      * @throws CDKException if SMILES parsing fails
      */
     public IAtomContainer getAtomContainer() throws CDKException {
-        if(this.atomContainer != null){
+        if (this.atomContainer != null) {
             return this.atomContainer;
         }
         IAtomContainer tmpAtomContainer;
@@ -164,35 +177,37 @@ public class MoleculeDataModel {
             tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(this.uniqueSmiles, false, false);
         }
         tmpAtomContainer.addProperties(this.properties);
-        if(this.keepAtomContainer){
+        if (this.keepAtomContainer) {
             this.atomContainer = tmpAtomContainer;
         }
         return tmpAtomContainer;
     }
     //
     /**
-     * Returns unique SMILES
+     * Returns unique SMILES.
      *
      * @return String uniqueSmiles
      */
-    public String getUniqueSmiles(){
+    public String getUniqueSmiles() {
         return this.uniqueSmiles;
     }
     //
     /**
-     * Returns boolean telling whether molecule is selected or not
+     * Returns boolean telling whether molecule is selected or not.
+     *
      * @return true if molecule is selected
      */
-    public boolean isSelected(){
+    public boolean isSelected() {
         return this.selection.get();
     }
     //
     /**
-     * Returns BooleanProperty whether molecule is selected or not
+     * Returns BooleanProperty whether molecule is selected or not.
+     *
      * @return BooleanProperty
      */
-    public BooleanProperty selectionProperty(){
-        return selection;
+    public BooleanProperty selectionProperty() {
+        return this.selection;
     }
     //
     /**
@@ -200,18 +215,19 @@ public class MoleculeDataModel {
      * the molecule and as values lists of {@link de.unijena.cheminf.mortar.model.data.FragmentDataModel} objects that
      * resulted from these fragmentations.
      *
-     * @return HashMap {@literal <}fragmentationName, List {@literal <}FragmentDataModel {@literal >>}
+     * @return Map {@literal <}fragmentationName, List {@literal <}FragmentDataModel {@literal >>}
      */
-    public HashMap<String, List<FragmentDataModel>> getAllFragments(){
+    public Map<String, List<FragmentDataModel>> getAllFragments() {
         return this.fragments;
     }
     //
     /**
      * Returns a list of unique fragments that resulted from the fragmentation of the molecule with the given name.
-     * @param aKey String specifies fragmentation or fragmentation algorithm
+     *
+     * @param aKey String specifies fragmentation
      * @return List {@literal <}FragmentDataModel {@literal >}
      */
-    public List<FragmentDataModel> getFragmentsOfSpecificAlgorithm(String aKey){
+    public List<FragmentDataModel> getFragmentsOfSpecificFragmentation(String aKey) {
         Objects.requireNonNull(aKey, "Key must not be null");
         return this.fragments.get(aKey);
     }
@@ -221,9 +237,9 @@ public class MoleculeDataModel {
      * done to the molecule and as values maps that in turn contain as keys unique SMILES representations of fragments
      * that resulted from the respective fragmentation and as objects the frequencies of the specific fragment in the molecule.
      *
-     * @return HashMap {@literal <}fragmentationName, HashMap {@literal <}uniqueSmiles, frequency {@literal >>}
+     * @return Map {@literal <}fragmentationName, Map {@literal <}uniqueSmiles, frequency {@literal >>}
      */
-    public HashMap<String, HashMap<String, Integer>> getFragmentFrequencies(){
+    public Map<String, Map<String, Integer>> getFragmentFrequencies() {
         return this.fragmentFrequencies;
     }
     //
@@ -231,10 +247,10 @@ public class MoleculeDataModel {
      * Returns the fragment frequencies map of a specific fragmentation with the given name. Keys of the map are unique
      * SMILES representations of the fragments and values are the frequencies of the respective fragments in the molecule.
      *
-     * @param aKey String specifies fragmentation or fragmentation algorithm
-     * @return HashMap {@literal <}uniqueSmiles, frequency {@literal >}
+     * @param aKey String specifies fragmentation
+     * @return Map {@literal <}uniqueSmiles, frequency {@literal >}
      */
-    public HashMap<String, Integer> getFragmentFrequencyOfSpecificAlgorithm(String aKey){
+    public Map<String, Integer> getFragmentFrequencyOfSpecificFragmentation(String aKey) {
         Objects.requireNonNull(aKey, "Key must not be null");
         return this.fragmentFrequencies.get(aKey);
     }
@@ -245,13 +261,18 @@ public class MoleculeDataModel {
      * @param aKey fragmentation name
      * @return true if the molecule has undergone the fragmentation with the specified name
      */
-    public boolean hasMoleculeUndergoneSpecificFragmentation(String aKey){
+    public boolean hasMoleculeUndergoneSpecificFragmentation(String aKey) {
         Objects.requireNonNull(aKey, "aKey must not be null");
         return this.fragments.containsKey(aKey);
     }
     //
     /**
-     * Creates and returns an ImageView of this molecule as 2D structure
+     * Creates and returns an ImageView of this molecule as 2D structure.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in MoleculesDataTableView, the
+     * CellValueFactory of the structure column is set to a PropertyValueFactory that uses "name" as
+     * property string to invoke this method; same usage in ItemizationDataTableView molecule structure column; see also
+     * DataModelPropertiesForTableView enum).
+     *
      * @return ImageView
      */
     public ImageView getStructure() {
@@ -266,7 +287,8 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Creates and returns an ImageView of this molecule as 2D structure with the given text below the structure
+     * Creates and returns an ImageView of this molecule as 2D structure with the given text below the structure.
+     * Mainly used for fragments in items tab.
      *
      * @param aText to show below structure
      * @return ImageView with text
@@ -282,43 +304,49 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Returns property map of this molecule
+     * Returns property map of this molecule.
+     *
      * @return property map
      */
-    public Map getProperties() {
+    public Map<Object, Object> getProperties() {
         return this.properties;
     }
     //
     /**
-     * Returns whether the atom container of the molecule should be kept or not
+     * Returns whether the atom container of the molecule should be kept or not.
+     *
      * @return boolean keepAtomContainer
      */
-    public boolean isKeepAtomContainer(){
+    public boolean isKeepAtomContainer() {
         return this.keepAtomContainer;
     }
     //
     /**
-     * Sets given String as name of this molecule
+     * Sets given String as name of this molecule.
+     *
      * @param aName String
      */
-    public void setName(String aName){
+    public void setName(String aName) {
         this.name = aName;
     }
     //
     /**
-     * Sets selection state of this molecule depending on the specified boolean
+     * Sets selection state of this molecule depending on the specified boolean.
+     *
      * @param aValue boolean
      */
-    public void setSelection(boolean aValue){
+    public void setSelection(boolean aValue) {
         this.selection.set(aValue);
     }
     //
     /**
-     * Sets whether the molecule's atom container should be kept. If not, the atom container is set to null
+     * Sets whether the molecule's atom container should be kept. If not, the atom container is set to null.
+     *
      * @param aValue boolean
      */
-    public void setKeepAtomContainer(boolean aValue){
-        if(!(this.keepAtomContainer = aValue)){
+    public void setKeepAtomContainer(boolean aValue) {
+        this.keepAtomContainer = aValue;
+        if (!this.keepAtomContainer) {
             this.atomContainer = null;
         }
     }
@@ -330,7 +358,7 @@ public class MoleculeDataModel {
      * @return height of image
      */
     public double getStructureImageHeight() {
-        if(this.structureImageHeight == 0.0) {
+        if (this.structureImageHeight == 0.0) {
             return BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT;
         } else {
             return this.structureImageHeight;
@@ -344,7 +372,7 @@ public class MoleculeDataModel {
      * @return width of image
      */
     public double getStructureImageWidth() {
-        if(this.structureImageWidth == 0.0) {
+        if (this.structureImageWidth == 0.0) {
             return BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT;
         } else {
             return this.structureImageWidth;
@@ -352,7 +380,7 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Sets the height of the image of the molecular structure
+     * Sets the height of the image of the molecular structure.
      *
      * @param aStructureImageHeight double
      */
@@ -361,7 +389,7 @@ public class MoleculeDataModel {
     }
     //
     /**
-     * Sets the width of the image of the molecular structure
+     * Sets the width of the image of the molecular structure.
      *
      * @param aStructureImageWidth double
      */

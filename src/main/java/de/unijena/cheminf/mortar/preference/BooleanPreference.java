@@ -1,29 +1,29 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
-
-/**
- * TODO:
- * - Implement clone()
- */
 
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
@@ -59,7 +59,7 @@ public class BooleanPreference extends BasePreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Private class variables">
     /**
-     * Boolean content of this preference
+     * Boolean content of this preference.
      */
     private boolean content;
     //</editor-fold>
@@ -102,7 +102,7 @@ public class BooleanPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             BooleanPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -112,6 +112,7 @@ public class BooleanPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getContentRepresentative() {
         return Boolean.toString(this.content);
@@ -149,15 +150,11 @@ public class BooleanPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public BooleanPreference copy() {
-        BooleanPreference tmpCopy = new BooleanPreference(new String(this.name), Boolean.valueOf(this.content));
-        tmpCopy.guid = new String(this.guid);
+        BooleanPreference tmpCopy = new BooleanPreference(this.name, this.content);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -166,12 +163,12 @@ public class BooleanPreference extends BasePreference {
         aPrintWriter.println(BooleanPreference.VERSION);
         aPrintWriter.println(this.name);
         aPrintWriter.println(this.guid);
-        aPrintWriter.println(Boolean.toString(this.content));
+        aPrintWriter.println(this.content);
     }
 
     @Override
     public String toString() {
-        return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + Boolean.toString(this.content);
+        return this.getClass().getName() + "_'" + this.name + "'_" + "Content:" + this.content;
     }
     //</editor-fold>
     //
@@ -179,7 +176,7 @@ public class BooleanPreference extends BasePreference {
     /**
      * (Re-)instantiates a new BooleanPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         this.content = Boolean.parseBoolean(aReader.readLine());

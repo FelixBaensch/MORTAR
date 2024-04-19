@@ -1,31 +1,37 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.ExternalTool;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.AboutView;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 
 import javafx.application.Platform;
@@ -34,7 +40,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Hyperlink;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -54,42 +59,39 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Controller class for AboutView
+ * Controller class for AboutView.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class AboutViewController {
-
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
+    //<editor-fold desc="private (final) class variables" defaultstate="collapsed">
     /**
-     * Main Stage / parent Stage
+     * Main Stage / parent Stage.
      */
-    private Stage mainStage;
+    private final Stage mainStage;
     /**
-     * View to controll
+     * View to control.
      */
     private AboutView aboutView;
     /**
-     * Stage to show AboutView
+     * Stage to show AboutView.
      */
     private Stage aboutViewStage;
     /**
-     * path to xml file which contains information about external tools
+     * ObservableList to show properties of ExternalTools.
      */
-    private String toolsXmlFileName = "de/unijena/cheminf/mortar/descriptions/tools_description.xml";
+    private final ObservableList<ExternalTool> toolObservableList;
     /**
-     * ObservableList to show properties of ExternalTools
+     * Configuration class to read resource file paths from.
      */
-    private ObservableList<ExternalTool> toolObservableList;
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class variables" defaultstate="collapsed">
@@ -100,23 +102,25 @@ public class AboutViewController {
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor, shows about view on the given stage.
      *
      * @param aStage Stage
+     * @param aConfiguration configuration class reading from properties file
      */
-    public AboutViewController(Stage aStage){
+    public AboutViewController(Stage aStage, IConfiguration aConfiguration) {
         this.mainStage = aStage;
         this.toolObservableList = FXCollections.observableArrayList();
+        this.configuration = aConfiguration;
         this.showAboutView();
     }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
-     * Sets stage, scene and gui properties and shows view
+     * Sets stage, scene, and gui properties and shows view.
      */
-    private void showAboutView(){
-        if(this.aboutView == null){
-            this.aboutView = new AboutView();
+    private void showAboutView() {
+        if (this.aboutView == null) {
+            this.aboutView = new AboutView(this.configuration);
         }
         this.aboutViewStage = new Stage();
         Scene tmpScene = new Scene(this.aboutView, GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE, GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
@@ -126,92 +130,63 @@ public class AboutViewController {
         this.aboutViewStage.setTitle(Message.get("AboutView.title.text"));
         this.aboutViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.aboutViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
-        InputStream tmpImageInputStream = AboutViewController.class.getResourceAsStream("/de/unijena/cheminf/mortar/images/Mortar_Logo_Icon1.png");
-        this.aboutViewStage.getIcons().add(new Image(tmpImageInputStream));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder") + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.aboutViewStage.getIcons().add(new Image(tmpIconURL));
         Platform.runLater(()->{
             this.addListeners();
-            this.getExternalToolInfosFromXml();
+            this.getExternalToolInfoFromXml();
             this.aboutView.getTableView().setItems(this.toolObservableList);
         });
         this.aboutViewStage.showAndWait();
     }
     //
     /**
-     * Adds event handlers and listeners
+     * Adds event handlers and listeners.
      */
-    private void addListeners(){
+    private void addListeners() {
         //close button
-        this.aboutView.getCloseButton().setOnAction(actionEvent -> {
-            this.aboutViewStage.close();
-        });
+        this.aboutView.getCloseButton().setOnAction(actionEvent -> this.aboutViewStage.close());
         //log file button
-        this.aboutView.getLogFileButton().setOnAction(actionEvent -> {
-            this.openFilePathInExplorer(LogUtil.getLogFileDirectoryPath());
-        });
+        this.aboutView.getLogFileButton().setOnAction(actionEvent -> FileUtil.openFilePathInExplorer(LogUtil.getLogFileDirectoryPath()));
         //gitHUb button
-        this.aboutView.getGitHubButton().setOnAction(actionEvent -> {
-            this.openGitHubRepositoryInDefaultBrowser();
-        });
+        this.aboutView.getGitHubButton().setOnAction(actionEvent -> this.openGitHubRepositoryInDefaultBrowser());
         //tutorial button
-        this.aboutView.getTutorialButton().setOnAction(actionEvent -> {
-            this.openTutorialInDefaultPdfViewer();
-        });
+        this.aboutView.getTutorialButton().setOnAction(actionEvent -> this.openTutorialInDefaultPdfViewer());
     }
     //
     /**
-     * Opens given path in OS depending explorer equivalent
+     * Opens GitHub repository website in system default browser. Developers note: Does not really fit in FileUtil.
      *
-     * @param aPath path to open
+     * @throws SecurityException if URL could not be opened
      */
-    private void openFilePathInExplorer(String aPath){
-        if (Objects.isNull(aPath) || aPath.isEmpty() || aPath.isBlank())
-            throw new IllegalArgumentException("Given file path is null or empty.");
-        String tmpOS = System.getProperty("os.name").toUpperCase();
+    private void openGitHubRepositoryInDefaultBrowser() throws SecurityException {
         try{
-            if (tmpOS.contains("WIN"))
-                Runtime.getRuntime().exec("explorer /open," + aPath);
-            else if (tmpOS.contains("MAC"))
-                Runtime.getRuntime().exec("open -R " + aPath);
-            else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
-                Runtime.getRuntime().exec("gio open " + aPath);
-            else
-                throw new SecurityException("OS name " + tmpOS + " unknown.");
-        } catch (IOException anException) {
-            LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            throw new SecurityException("Could not open directory path");
-        }
-    }
-    //
-    /**
-     * Opens GitHub repository website in system default browser
-     *
-     * Note: Does not really fit in FileUtil
-     */
-    private void openGitHubRepositoryInDefaultBrowser(){
-        try{
-            Desktop.getDesktop().browse(new URI(BasicDefinitions.GITHUB_REPOSITORY_URL));
+            Desktop.getDesktop().browse(new URI(this.configuration.getProperty("mortar.github.repository.url")));
         } catch (IOException | URISyntaxException anException) {
-            LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            throw new SecurityException("Could not open directory path");
+            AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            throw new SecurityException("Could not open repository URL");
         }
     }
     //
     /**
-     * Opens the MORTAR tutorial in system default browser
+     * Opens the MORTAR tutorial in system default browser.
+     *
+     * @throws SecurityException if URL could not be opened
      */
     private void openTutorialInDefaultPdfViewer() {
         //Note: Does not work when started from IDE, only in built version started from JAR
         try {
-            Desktop.getDesktop().open(new File(BasicDefinitions.MORTAR_TUTORIAL_RELATIVE_FILE_PATH));
+            Desktop.getDesktop().open(new File(this.configuration.getProperty("mortar.tutorial.relativeFilePath")));
         } catch (IOException | IllegalArgumentException anException) {
-            LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             Hyperlink tmpLinkToTutorial = new Hyperlink(Message.get("AboutView.tutorialButton.alert.hyperlink.text"));
-            tmpLinkToTutorial.setTooltip(new Tooltip(BasicDefinitions.MORTAR_TUTORIAL_URL));
+            tmpLinkToTutorial.setTooltip(GuiUtil.createTooltip(this.configuration.getProperty("mortar.tutorial.url")));
             tmpLinkToTutorial.setOnAction(event -> {
                 try {
-                    Desktop.getDesktop().browse(new URI(BasicDefinitions.MORTAR_TUTORIAL_URL));
+                    Desktop.getDesktop().browse(new URI(this.configuration.getProperty("mortar.tutorial.url")));
                 } catch (IOException | URISyntaxException e) {
-                    LOGGER.log(Level.SEVERE, anException.toString(), anException);
+                    AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     throw new SecurityException("Could not open URI");
                 }
             });
@@ -221,26 +196,34 @@ public class AboutViewController {
     }
     //
     /**
-     * Reads xml file (tools_description.xml in resources) which contains information about the used external tools
+     * Reads xml file (tools_description.xml in resources) which contains information about the used external tools.
      */
-    private void getExternalToolInfosFromXml(){
-        DocumentBuilderFactory tmpDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
-        try{
+    private void getExternalToolInfoFromXml() {
+        try {
+            DocumentBuilderFactory tmpDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
             // optional, but recommended
             // process XML securely, avoid attacks like XML External Entities (XXE)
             tmpDocumentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            tmpDocumentBuilderFactory.setExpandEntityReferences(false);
+            tmpDocumentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            tmpDocumentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            tmpDocumentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            tmpDocumentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            tmpDocumentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             DocumentBuilder tmpDocBuilder = tmpDocumentBuilderFactory.newDocumentBuilder();
-            Document tmpDoc = tmpDocBuilder.parse(getClass().getClassLoader().getResourceAsStream(this.toolsXmlFileName));
-            if(tmpDoc == null){
-                throw new FileNotFoundException("File not found " + this.toolsXmlFileName);
+            Document tmpDoc = tmpDocBuilder.parse(this.getClass().getClassLoader().getResource(
+                    this.configuration.getProperty("mortar.descriptionsFolder")
+                            + this.configuration.getProperty("mortar.tools.description.name")).toExternalForm());
+            if (tmpDoc == null) {
+                throw new FileNotFoundException("Tools description XML file not found.");
             }
             // optional, but recommended
             // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
             tmpDoc.getDocumentElement().normalize();
             NodeList tmpList = tmpDoc.getElementsByTagName("externalTool");
-            for(int i = 0; i < tmpList.getLength(); i++){
+            for (int i = 0; i < tmpList.getLength(); i++) {
                 Node tmpNode = tmpList.item(i);
-                if(tmpNode.getNodeType() == Node.ELEMENT_NODE){
+                if (tmpNode.getNodeType() == Node.ELEMENT_NODE) {
                     Element tmpElem = (Element) tmpNode;
                     String tmpName = tmpElem.getElementsByTagName("name").item(0).getTextContent();
                     String tmpVersion = tmpElem.getElementsByTagName("version").item(0).getTextContent();
@@ -250,8 +233,13 @@ public class AboutViewController {
                     this.toolObservableList.add(tmpTool);
                 }
             }
-        } catch (ParserConfigurationException | IOException | SAXException anException) {
-            LOGGER.log(Level.SEVERE, anException.toString(), anException);
+        } catch (ParserConfigurationException | IOException | SAXException | NullPointerException anException) {
+            AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            ExternalTool tmpTool = new ExternalTool(Message.get("AboutViewController.Error.XMLParsing.Name"),
+                    Message.get("AboutViewController.Error.XMLParsing.Version"),
+                    Message.get("AboutViewController.Error.XMLParsing.Author"),
+                    Message.get("AboutViewController.Error.XMLParsing.License"));
+            this.toolObservableList.add(tmpTool);
         }
     }
     //</editor-fold>

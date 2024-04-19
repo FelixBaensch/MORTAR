@@ -1,25 +1,31 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -40,19 +46,19 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class PreferenceContainerTest {
-
     /**
-     * Constructor (empty).
+     * Constructor to initialize locale and configuration.
      */
-    public PreferenceContainerTest() {
-
+    public PreferenceContainerTest() throws Exception {
+        Locale.setDefault(Locale.of("en", "GB"));
+        Configuration.getInstance();
     }
     //
     /**
      * Tests basic functionalities of PreferenceContainer class/objects, like preference management, management of
      * public properties and persistence.
      *
-     * @throws Exception
+     * @throws Exception if anything goes wrong
      */
     @Test
     public void testPreferenceContainerBasics() throws Exception {
@@ -89,13 +95,14 @@ public class PreferenceContainerTest {
         Assertions.assertEquals(tmpPreference3, tmpSortedNameAscending[3]);
         Assertions.assertEquals(tmpPreference5, tmpSortedNameAscending[4]);
 
-        System.out.println(tmpContainer.getGUID());
-        System.out.println(tmpContainer.getTimeStamp());
-        System.out.println(tmpContainer.getVersion());
-        System.out.println(tmpContainer.toString());
+        Assertions.assertDoesNotThrow(tmpContainer::getGUID);
+        Assertions.assertDoesNotThrow(tmpContainer::getTimeStamp);
+        Assertions.assertDoesNotThrow(tmpContainer::getVersion);
+        Assertions.assertDoesNotThrow(tmpContainer::toString);
         IPreference[] tmpPreferences = tmpContainer.getPreferences();
         for (IPreference tmpPreference : tmpPreferences) {
-            System.out.println(tmpPreference.getName() + " : " + tmpPreference.getContentRepresentative());
+            Assertions.assertNotNull(tmpPreference.getName());
+            Assertions.assertNotNull(tmpPreference.getContentRepresentative());
         }
 
         tmpContainer.writeRepresentation();
@@ -107,7 +114,6 @@ public class PreferenceContainerTest {
         Assertions.assertEquals(tmpContainer.getTimeStamp(), tmpReloadedContainer.getTimeStamp());
         Assertions.assertEquals(tmpContainer.toString(), tmpReloadedContainer.toString());
         Assertions.assertEquals(tmpContainer, tmpReloadedContainer);
-        System.out.println();
     }
     //
     /**
@@ -119,7 +125,6 @@ public class PreferenceContainerTest {
      */
     @Test
     public void testPropertyToPreferenceConversion() throws Exception {
-        Locale.setDefault(new Locale("en", "GB"));
         SugarRemovalUtilityFragmenter tmpSRUFragmenter = new SugarRemovalUtilityFragmenter();
         String tmpDir = FileUtil.getAppDirPath()
                 + File.separatorChar
@@ -127,11 +132,11 @@ public class PreferenceContainerTest {
                 + File.separatorChar;
         (new File(tmpDir)).mkdirs();
         String tmpFilePathname = tmpDir + "SRUFragmenterSettings.txt";
-        PreferenceContainer tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSRUFragmenter.settingsProperties(), tmpFilePathname);
-        tmpContainer.writeRepresentation();
-        tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new ErtlFunctionalGroupsFinderFragmenter().settingsProperties(), tmpDir + "EFGFFragmenterSettings.txt");
-        tmpContainer.writeRepresentation();
-        tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new SettingsContainer().settingsProperties(), tmpDir + "SettingContainer.txt");
-        tmpContainer.writeRepresentation();
+        final PreferenceContainer tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSRUFragmenter.settingsProperties(), tmpFilePathname);
+        Assertions.assertDoesNotThrow(tmpContainer::writeRepresentation);
+        final PreferenceContainer tmpNewContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new ErtlFunctionalGroupsFinderFragmenter().settingsProperties(), tmpDir + "EFGFFragmenterSettings.txt");
+        Assertions.assertDoesNotThrow(tmpNewContainer::writeRepresentation);
+        final PreferenceContainer tmpNewNewContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(new SettingsContainer().settingsProperties(), tmpDir + "SettingContainer.txt");
+        Assertions.assertDoesNotThrow(tmpNewNewContainer::writeRepresentation);
     }
 }

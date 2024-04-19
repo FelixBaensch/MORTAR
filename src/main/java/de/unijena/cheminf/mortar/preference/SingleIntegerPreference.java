@@ -1,29 +1,29 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
-
-/**
- * TODO:
- * - Implement clone()
- */
 
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
@@ -60,7 +60,7 @@ public class SingleIntegerPreference extends BasePreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Private class variables">
     /**
-     * Single integer content of this preference
+     * Single integer content of this preference.
      */
     private int content;
     //</editor-fold>
@@ -129,7 +129,7 @@ public class SingleIntegerPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             SingleIntegerPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -139,6 +139,7 @@ public class SingleIntegerPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getContentRepresentative() {
         return Integer.toString(this.content);
@@ -193,15 +194,11 @@ public class SingleIntegerPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public SingleIntegerPreference copy() {
-        SingleIntegerPreference tmpCopy = new SingleIntegerPreference(new String(this.name), this.content);
-        tmpCopy.guid = new String(this.guid);
+        SingleIntegerPreference tmpCopy = new SingleIntegerPreference(this.name, this.content);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -242,7 +239,7 @@ public class SingleIntegerPreference extends BasePreference {
     /**
      * (Re-)instantiates a new SingleIntegerPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         this.content = Integer.parseInt(aReader.readLine());

@@ -1,27 +1,31 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.preference;
 
 import java.util.Objects;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -38,11 +42,11 @@ public abstract class BasePreference implements IPreference {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
      * Preference name regex pattern.
-     * Allowed characters: 1-9, a-z, A-z, -, [], (), {}, ., space (ASCII 32, hexadecimal value: 20, see below) and ,.
+     * Allowed characters: 1-9, a-z, A-z, -, [], (), {}, ., space (ASCII 32, hexadecimal value: 20, see below), and ,.
      * The first character must be a capital letter.
      * '#' is reserved for comments in text files for persisting objects.
      */
-    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z]{1}+[0-9a-zA-Z\\.\\,\\-\\[\\]\\(\\)\\{\\}\\x20]*+\\z");
+    private static final Pattern PREFERENCE_NAME_PATTERN = Pattern.compile("\\A[A-Z][0-9a-zA-Z.,\\-\\[\\](){}\\x20]*+\\z");
 
     /**
      * Seed for hashCode() method.
@@ -53,11 +57,6 @@ public abstract class BasePreference implements IPreference {
      * Factor for including GUID string in hash code produced by hashCode() method.
      */
     private static final int HASH_FACTOR_GUID = 919;
-
-    /**
-     * Logger of this class.
-     */
-    private static final Logger LOGGER = Logger.getLogger(BasePreference.class.getName());
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Protected class variables">
@@ -72,15 +71,24 @@ public abstract class BasePreference implements IPreference {
     protected String guid;
     //</editor-fold>
     //
+    //<editor-fold desc="Protected constructor">
+    /**
+     * Protected parameter-less constructor that simply calls super() (Object class default constructor).
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    protected BasePreference() {
+        super();
+    }
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Public abstract methods">
-    @Override
-    public abstract IPreference clone() throws CloneNotSupportedException;
 
     @Override
     public abstract String toString();
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getName() {
         return this.name;
@@ -94,6 +102,7 @@ public abstract class BasePreference implements IPreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
     //<editor-fold defaultstate="collapsed" desc="Comparing and sorting">
+
     @Override
     public int compareTo(IPreference aPreference) throws NullPointerException {
         Objects.requireNonNull(aPreference, "aPreference is 'null'");
@@ -116,7 +125,7 @@ public abstract class BasePreference implements IPreference {
     @Override
     public int hashCode() {
         int tmpHash = BasePreference.HASH_SEED;
-        tmpHash = BasePreference.HASH_FACTOR_GUID * tmpHash + Objects.hashCode(this.guid);
+        tmpHash = BasePreference.HASH_FACTOR_GUID * tmpHash + this.guid.hashCode();
         return tmpHash;
     }
     //</editor-fold>
