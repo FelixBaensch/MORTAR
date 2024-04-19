@@ -475,6 +475,8 @@ public class MainViewController {
     private void chooseAndImportMoleculeFile(Stage aParentStage) {
         Importer tmpImporter = new Importer(this.settingsContainer);
         File tmpFile = tmpImporter.openFile(aParentStage);
+        if (tmpFile == null)
+            return;
         this.importMoleculeFile(tmpFile, tmpImporter);
     }
     //
@@ -494,6 +496,9 @@ public class MainViewController {
      * @param aFile File that contains molecular data
      */
     private void importMoleculeFile(File aFile, Importer anImporter) {
+        if (Objects.isNull(aFile)) {
+            return;
+        }
         if (!this.moleculeDataModelList.isEmpty()) {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
@@ -501,9 +506,6 @@ public class MainViewController {
             this.fragmentationService.clearCache();
         }
         Importer tmpImporter = Objects.requireNonNullElseGet(anImporter, () -> new Importer(this.settingsContainer));
-        if (Objects.isNull(aFile)) {
-            return;
-        }
         if (this.isFragmentationRunning) {
             this.interruptFragmentation();
         }
