@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.io;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 
@@ -64,6 +65,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -77,11 +82,77 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class Importer {
+    //<editor-fold desc="Enum ValidImportFileTypes">
+    /**
+     * Enum of file types that can be imported with their specific file extensions.
+     */
+    public enum ValidImportFileTypes {
+        /**
+         * MDL MOL file V2000 or V3000.
+         */
+        MOL_FILE(".mol"),
+        /**
+         * Structure-data format file, concatenation of MOL files.
+         */
+        STRUCTURE_DATA_FORMAT_FILE(".sdf"),
+        /**
+         * A SMILES file, i.e. each line of the text-based file should contain one SMILES code. This is the minimum
+         * requirement, all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
+         */
+        SMILES_FILE(".smi"),
+        /**
+         * Text file that will be read as SMILES / delimiter-separated value file. Each line should contain one SMILES code,
+         * all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
+         */
+        TEXT_FILE(".txt"),
+        /**
+         * Comma-separated value file where each line should contain one SMILES code,
+         * all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
+         */
+        COMMA_SEPARATED_VALUES_FILE(".csv"),
+        /**
+         * Tab-separated value file where each line should contain one SMILES code,
+         * all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
+         */
+        TAB_SEPARATED_VALUES_FILE(".tsv"),
+        ;
+        /**
+         * File extension of the respective file type.
+         */
+        private final String fileExtension;
+        /**
+         * Constructor.
+         */
+        private ValidImportFileTypes(String aFileExtension) {
+            this.fileExtension = aFileExtension;
+        }
+        /**
+         * Get the file extension of this file type, formatted as ".xyz".
+         *
+         * @return associated file extension as ".xyz"
+         */
+        public String getFileExtension() {
+            return this.fileExtension;
+        }
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="public static final class constants">
     /**
      * Property key that is used to store the detected molecule names on the imported atom containers.
      */
     public static final String MOLECULE_NAME_PROPERTY_KEY = "MORTAR_IMPORTER_NAME";
+    /**
+     * Unmodifiable Set of valid files extensions for file import.
+     */
+    public static final Set<String> VALID_IMPORT_FILE_EXTENSIONS_SET;
+    static {
+        HashSet<String> tmpSet = new HashSet<>(10, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        for (Importer.ValidImportFileTypes tmpType : Importer.ValidImportFileTypes.values()) {
+            tmpSet.add(tmpType.getFileExtension());
+        }
+        VALID_IMPORT_FILE_EXTENSIONS_SET = Collections.unmodifiableSet(tmpSet);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">
@@ -125,7 +196,7 @@ public class Importer {
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
      * Imports a molecule file, user can choose between three types - mol, sdf, and smi. A text file (.txt) and a
-     * CSV file will be treated
+     * CSV/TSV/DSV file will be treated
      * as a SMILES file. If the respective setting is activated, incomplete valences of the imported atoms are filled
      * with implicit hydrogen atoms. If no molecule name or ID is given in the input file, the file name with an appended
      * counter is used as such and added to the returned atom containers as a property.
@@ -146,31 +217,44 @@ public class Importer {
         }
         String tmpFilePath = aFile.getPath();
         String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
-        this.fileName = aFile.getName();
+        Importer.ValidImportFileTypes tmpInputFileType = null;
+        for (Importer.ValidImportFileTypes tmpType : Importer.ValidImportFileTypes.values()) {
+            if (tmpType.getFileExtension().equals(tmpFileExtension)) {
+                tmpInputFileType = tmpType;
+            }
+        }
+        if (tmpInputFileType == null) {
+            return null;
+        }
         IAtomContainerSet tmpImportedMoleculesSet;
-        switch (tmpFileExtension) {
-            case ".mol":
+        switch (tmpInputFileType) {
+            case Importer.ValidImportFileTypes.MOL_FILE:
                 tmpImportedMoleculesSet = this.importMolFile(aFile);
                 break;
-            case ".sdf":
+            case ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE:
                 tmpImportedMoleculesSet = this.importSDFile(aFile);
                 break;
             //Needs more work before it can be made available
             /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
                 break;*/
-            case ".smi", ".txt", ".csv", ".tsv":
+            case ValidImportFileTypes.SMILES_FILE,
+                 ValidImportFileTypes.TEXT_FILE,
+                 ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE,
+                 ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE:
                 tmpImportedMoleculesSet = this.importSMILESFile(aFile);
                 break;
             default:
-                return null;
+                throw new UnsupportedOperationException(String.format("Input file type %s is defined but not treated " +
+                        "in Importer.importMoleculeFile() yet.", tmpInputFileType.toString()));
         }
         this.preprocessMoleculeSet(tmpImportedMoleculesSet);
+        this.fileName = aFile.getName();
         return tmpImportedMoleculesSet;
     }
     //
     /**
-     * Returns the name of the last imported file. Might be null if no file was imported yet.
+     * Returns the name of the last successfully imported file. Might be null if no file was imported yet.
      *
      * @return file name
      */
@@ -189,8 +273,13 @@ public class Importer {
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
-        //to make PDB available, add "*.pdb" here
-        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Molecules", "*.mol", "*.sdf", "*.smi", "*.txt", "*.csv", "*.tsv"));
+        List<String> tmpFormattedExtensionsList = new ArrayList<>(10);
+        for (String tmpUnformattedExtension : Importer.VALID_IMPORT_FILE_EXTENSIONS_SET) {
+            tmpFormattedExtensionsList.add("*" + tmpUnformattedExtension);
+        }
+        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                Message.get("Importer.fileChooser.MoleculeFilter.Description"),
+                tmpFormattedExtensionsList));
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if (!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
@@ -324,7 +413,7 @@ public class Importer {
      * an exception gets thrown. If no name can be detected for a structure, the structure
      * is assigned the name of the file extended with the index of the structure in the file as name.
      *
-     * @param aFile a SMILES codes-containing *.txt, *.csv, or *.smi file
+     * @param aFile a SMILES codes-containing *.txt, *.csv, *.tsv, or *.smi file
      * @return the imported molecules in an IAtomContainerSet
      * @throws IOException if the given file does not fit to the expected format of a SMILES file
      * @author Samuel Behr, Jonas Schaub

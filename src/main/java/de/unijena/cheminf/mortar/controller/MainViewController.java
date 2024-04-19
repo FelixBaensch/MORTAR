@@ -391,7 +391,7 @@ public class MainViewController {
             if (aDragEvent.getGestureSource() != this.mainView.getMainCenterPane() && aDragEvent.getDragboard().hasFiles()){
                 if (
                   aDragEvent.getDragboard().getFiles().size() > 1 ||
-                  !BasicDefinitions.VALID_IMPORT_EXTENSION.contains(FileUtil.getFileExtension(aDragEvent.getDragboard().getFiles().getFirst().getName()))
+                  !Importer.VALID_IMPORT_FILE_EXTENSIONS_SET.contains(FileUtil.getFileExtension(aDragEvent.getDragboard().getFiles().getFirst().getName()))
                 ) {
                     aDragEvent.consume();
                     return;
