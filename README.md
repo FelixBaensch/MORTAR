@@ -79,7 +79,11 @@ As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch fil
 and adjust the line
 </p>
 
-<p><code>set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"</code></p>
+<p>
+```shell
+set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"
+```
+</p>
 
 with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.<br>
 
@@ -94,7 +98,11 @@ automatically download the JAR of the latest version).
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
-<p><code>java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.2.0.0-beta.jar</code></p>
+<p>
+```shell
+java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.2.0.0-beta.jar
+```
+</p>
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.<br>
