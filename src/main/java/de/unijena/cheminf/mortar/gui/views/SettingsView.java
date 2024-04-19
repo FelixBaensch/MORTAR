@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
@@ -44,6 +45,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Group;
+import javafx.scene.control.Control;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -65,6 +67,7 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -85,6 +88,7 @@ public class SettingsView extends AnchorPane {
     private final HBox hBoxLeftSideButtons;
     private final HBox hBoxButtonsHBox;
     private final SelectionModel<Tab> selectionModel;
+    private Map<Property<?>, Control> propertyControlMap;
     //</editor-fold>
     //
     /**
@@ -188,7 +192,8 @@ public class SettingsView extends AnchorPane {
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      */
     private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
-        int tmpRowIndex = 0;
+        this.propertyControlMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(aPropertiesList.size()));
+            int tmpRowIndex = 0;
         for (Property tmpProperty : aPropertiesList) {
             RowConstraints tmpRow = new RowConstraints();
             tmpRow.setVgrow(Priority.ALWAYS);
@@ -215,8 +220,10 @@ public class SettingsView extends AnchorPane {
                     //add to gridpane
                     aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    //
+                    this.propertyControlMap.putIfAbsent(tmpSimpleBooleanProperty, tmpBooleanComboBox);
                 }
-                case SimpleIntegerProperty simpleIntegerProperty -> {
+                case SimpleIntegerProperty tmpSimpleIntegerProperty -> {
                     TextField tmpIntegerTextField = new TextField();
                     tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
@@ -233,8 +240,10 @@ public class SettingsView extends AnchorPane {
                     //add to gridpane
                     aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    //
+                    this.propertyControlMap.putIfAbsent(tmpSimpleIntegerProperty, tmpIntegerTextField);
                 }
-                case SimpleDoubleProperty simpleDoubleProperty -> {
+                case SimpleDoubleProperty tmpSimpleDoubleProperty -> {
                     TextField tmpDoubleTextField = new TextField();
                     tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
@@ -251,6 +260,8 @@ public class SettingsView extends AnchorPane {
                     //add to gridpane
                     aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    //
+                    this.propertyControlMap.putIfAbsent(tmpSimpleDoubleProperty, tmpDoubleTextField);
                 }
                 case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
                     ComboBox<IDisplayEnum> tmpEnumComboBox = new ComboBox<>();
@@ -285,6 +296,8 @@ public class SettingsView extends AnchorPane {
                     //add to gridpane
                     aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    //
+                    this.propertyControlMap.putIfAbsent(tmpSimpleIDisplayEnumConstantProperty, tmpEnumComboBox);
                 }
                 case SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty -> {
                     ComboBox<String> tmpEnumComboBox = new ComboBox<>();
@@ -296,8 +309,10 @@ public class SettingsView extends AnchorPane {
                     //add to gridpane
                     aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    //
+                    this.propertyControlMap.putIfAbsent(tmpSimpleEnumConstantNameProperty, tmpEnumComboBox);
                 }
-                case SimpleStringProperty simpleStringProperty -> {
+                case SimpleStringProperty tmpSimpleStringProperty -> {
                     TextField tmpStringTextField = new TextField();
                     tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
@@ -307,6 +322,8 @@ public class SettingsView extends AnchorPane {
                     //add to gridpane
                     aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    //
+                    this.propertyControlMap.putIfAbsent(tmpSimpleStringProperty, tmpStringTextField);
                 }
                 default ->
                         throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
@@ -360,6 +377,10 @@ public class SettingsView extends AnchorPane {
      */
     public Button getDefaultButton() {
         return this.defaultButton;
+    }
+    //
+    public Map<Property<?>, Control> getPropertyControlMap() {
+        return this.propertyControlMap;
     }
     //</editor-fold>
 }
