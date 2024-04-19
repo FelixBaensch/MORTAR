@@ -91,17 +91,19 @@ described below. As an alternative way, they should also work on Windows.
 
 <p><b>Linux and macOS:</b> Every release has the executable Java ARchive (JAR) "MORTAR-fat-1.2.0.0-beta.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0-beta/MORTAR-fat-1.2.0.0-beta.jar">here</a> to 
-automatically download the JAR of the latest version). 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0-beta/MORTAR-fat-1.2.0.0-beta.jar">here</a>
+to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g [path to]MORTAR-fat-1.2.0.0-beta.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.0.0-beta.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.<br>
+Execute the command in the directory where the JAR is situated or use its explicit path instead of ```<path to>```.<br>
+Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx) according to your preferences.
 
 <p>Please note that MORTAR only supports x64 (on all three platforms) and AArch64 (on macOS and Linux) architectures in general. 
 For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.0.0-beta.jar" is available from the distributions attached to the releases and must be used 
