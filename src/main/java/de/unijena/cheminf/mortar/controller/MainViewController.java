@@ -473,15 +473,21 @@ public class MainViewController {
      * @param aParentStage Stage where to open the file chooser dialog
      */
     private void chooseAndImportMoleculeFile(Stage aParentStage) {
-        if (!this.moleculeDataModelList.isEmpty()) {
-            if (!this.isFragmentationStopAndDataLossConfirmed()) {
-                return;
-            }
-            this.fragmentationService.clearCache();
-        }
         Importer tmpImporter = new Importer(this.settingsContainer);
         File tmpFile = tmpImporter.openFile(aParentStage);
-        this.importMoleculeFile(tmpFile);
+        if (tmpFile == null)
+            return;
+        this.importMoleculeFile(tmpFile, tmpImporter);
+    }
+    //
+    /**
+     * Loads molecule file and opens molecules tab.
+     * Convenient method to avoid using a null parameter for the importer.
+     *
+     * @param aFile File that contains molecular data
+     */
+    private void importMoleculeFile(File aFile) {
+        this.importMoleculeFile(aFile, new Importer(this.settingsContainer));
     }
     //
     /**
@@ -489,17 +495,17 @@ public class MainViewController {
      *
      * @param aFile File that contains molecular data
      */
-    private void importMoleculeFile(File aFile) {
+    private void importMoleculeFile(File aFile, Importer anImporter) {
+        if (Objects.isNull(aFile)) {
+            return;
+        }
         if (!this.moleculeDataModelList.isEmpty()) {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
             }
             this.fragmentationService.clearCache();
         }
-        Importer tmpImporter = new Importer(this.settingsContainer);
-        if (Objects.isNull(aFile)) {
-            return;
-        }
+        Importer tmpImporter = Objects.requireNonNullElseGet(anImporter, () -> new Importer(this.settingsContainer));
         if (this.isFragmentationRunning) {
             this.interruptFragmentation();
         }
