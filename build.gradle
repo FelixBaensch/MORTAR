@@ -2,7 +2,7 @@ import java.util.regex.Matcher
 
 plugins {
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.14'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'com.diffplug.spotless' version '6.25.0'
 }
 
@@ -53,6 +53,10 @@ dependencies {
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'mac'
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'linux-aarch64'
     implementation group: 'org.openjfx', name: 'javafx-base', version: javaFxVersion, classifier: 'mac-aarch64'
+}
+
+javafx {
+    modules = ['javafx.base','javafx.graphics', 'javafx.controls', 'javafx.swing']
 }
 
 test {
