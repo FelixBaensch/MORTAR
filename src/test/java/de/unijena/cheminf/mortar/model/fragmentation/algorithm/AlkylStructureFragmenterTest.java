@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
@@ -55,6 +60,7 @@ import java.util.Locale;
  * @version 1.1.1.0
  */
 public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
+
     /**
      * File containing the structure data for the expected fragments of structures used in this test.
      */
@@ -66,7 +72,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
      * File containing the structure data of the structures used in this test.
      */
-    public final File testStructuresFile = new File("src/test/resources/ASF_Test_Structures.sdf");
+    public final File testStructuresFile = new File("./test/resources/ASF_Test_Structures.sdf");
     /**
      * IteratingSDFReader for the structure data file testStructuresFile.
      */
@@ -99,7 +105,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             this.testStructuresList.add(tmpAtomContainer);
         }
         Locale.setDefault(new Locale("en", "GB"));
+
     }
+
 
     private AtomContainerSet readStructureToACSet(File aFile) throws FileNotFoundException {
         IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileReader(aFile), new SilentChemObjectBuilder());
@@ -127,12 +135,14 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @return List containing the generated Strings
      * @throws CDKException if SmilesGenerator is unable to generate String from structure
      */
+
     private List<String> generateSMILESFromACSet(IAtomContainer anAtomContainer) throws CDKException {
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Canonical);
         List<String> tmpSmilesList = new ArrayList<>(anAtomContainer.getAtomCount());
         tmpSmilesList.add(tmpSmilesGenerator.create(anAtomContainer));
         return tmpSmilesList;
     }
+
 
     /**
      * Tests correct instantiation and basic settings retrieval.
@@ -158,6 +168,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws InvocationTargetException if target method cannot be invoked
      * @throws IllegalAccessException if method cannot be accessed
      */
+
     @Test
     public void markRingsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         IAtomContainer tmpRingsAC = this.testStructuresList.get(0);
@@ -171,6 +182,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter.markRings(tmpRingsAC, this.testAtomArray, this.testBondArray);
         //ToDo: find way to compare structures without extracting tested substructures
     }
+
+
     /**
      * Test method for AlkylStructureFragmenter.markConjugatedPiSystems().
      *
@@ -178,6 +191,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws InvocationTargetException if target method cannot be invoked
      * @throws IllegalAccessException if method cannot be accessed
      */
+
     @Test
     public void markConjugatedPiSystemsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         IAtomContainer tmpConjugatedAC = this.testStructuresList.get(0);
@@ -187,6 +201,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpMarkConjugated.invoke(this.basicAlkylStructureFragmenter, tmpConjugatedAC);
         //ToDo: find way to compare structures without extracting tested substructures
     }
+
+
     /**
      * Test method for AlkylStructureFragmenter.saturateWithImplicitHydrogen().
      *
@@ -194,6 +210,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws InvocationTargetException if target method cannot be invoked
      * @throws IllegalAccessException if method cannot be accessed
      */
+
     @Test
     public void saturateWithImplicitHydrogenTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         IAtomContainerSet tmpSaturateACSet = new AtomContainerSet();
@@ -204,6 +221,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<IAtomContainer> tmpACList = (List<IAtomContainer>) tmpSaturate.invoke(this.basicAlkylStructureFragmenter, tmpSaturateACSet);
         //ToDo: generate test structures with open valences to be saturated
     }
+
+
     /**
      * Test method for AlkylStructureFragmenter.separateDisconnectedStructures().
      *
@@ -211,6 +230,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws InvocationTargetException if target method cannot be invoked
      * @throws IllegalAccessException if method cannot be accessed
      */
+
     @Test
     public void separateDisconnectedStructuresTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         IAtomContainer tmpDisconnectedAC = this.testStructuresList.get(0);
@@ -219,6 +239,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         IAtomContainerSet tmpDisconnectedACSet = (IAtomContainerSet) tmpSeparateDisconnectedAC.invoke(this.basicAlkylStructureFragmenter, tmpDisconnectedAC);
         //ToDo: generate disconnected structures in one AtomContainer
     }
+
+
     /**
      * Test method for AlkylStructureFragmenter.extractFragments().
      *
@@ -226,6 +248,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws InvocationTargetException if target method cannot be invoked
      * @throws IllegalAccessException if method cannot be accessed
      */
+
     @Test
     public void extractFragmentsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         //problem: no way to take input AC as they are local(ASF) private variables
@@ -235,6 +258,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         IAtomContainerSet tmpExtractedACSet = (IAtomContainerSet) tmpExtractFragments.invoke(this.basicAlkylStructureFragmenter);
         //ToDo: generate structures with marked substructures (mark with code)
     }
+
+
     /**
      * Test method for AlkylStructureFragmenter.dissectLinearChain().
      *

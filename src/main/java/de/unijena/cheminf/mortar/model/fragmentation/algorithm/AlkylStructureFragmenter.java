@@ -1,21 +1,26 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2023  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
@@ -35,7 +40,8 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
-import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -120,7 +126,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * A property that has a constant fragment hydrogen saturation setting.
      */
-    private final SimpleEnumConstantNameProperty fragmentSaturationSetting;
+    private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
     /**
      * A property that has a constant boolean value determining whether side chains should be fragmented.
      */
@@ -136,7 +142,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding to GUI.
      */
-    private final List<Property> settings;
+    private final List<Property<?>> settings;
+    private final HashMap<String, String> settingNameDisplayNameMap;
     /**
      * Logger of this class.
      */
@@ -154,16 +161,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpSettingsNameTooltipNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacitySettingsNameTooltipHashMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.fragmentSaturationSetting = new SimpleEnumConstantNameProperty(this, "Fragment saturation setting",
-                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name(), IMoleculeFragmenter.FragmentSaturationOption.class) {
+        this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacitySettingsNameTooltipHashMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.fragmentSaturationSetting = new SimpleIDisplayEnumConstantProperty(this, "Fragment saturation setting",
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT, IMoleculeFragmenter.FragmentSaturationOption.class) {
             @Override
-            public void set(String newValue) throws NullPointerException, IllegalArgumentException {
+            public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
                     //call to super.set() for parameter checks
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
@@ -171,15 +182,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         };
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.fragmentSaturationSetting.getName(),
+                Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.displayName"));
         this.fragmentSideChainsSetting = new SimpleBooleanProperty(this, "Fragmentation of hydrocarbon side chains setting",
                 AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.fragmentSideChainsSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSideChainsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.fragmentSideChainsSetting.getName(),
+                Message.get("AlkylStructureFragmenter.fragmentSideChainsSetting.displayName"));
         this.maxChainLengthSetting = new SimpleIntegerProperty(this, "Carbon side chains maximum length setting",
                 AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
-        this.settings = new ArrayList<Property>(3);
+        this.settingNameDisplayNameMap.put(this.maxChainLengthSetting.getName(),
+                Message.get("AlkylStructureFragmenter.maxChainLengthSetting.displayName"));
+        this.settings = new ArrayList<>(3);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
@@ -188,7 +205,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
     //<editor-fold desc="Public Properties Get">
     @Override
-    public List<Property> settingsProperties() {
+    public List<Property<?>> settingsProperties() {
        return this.settings;
     }
 
@@ -197,14 +214,36 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return settingNameTooltipTextMap;
     }
 
+    /**
+     * Returns a map containing language-specific names (values) for the settings with the given names (keys) to be used
+     * in the GUI.
+     *
+     * @return map with display names
+     */
+    @Override
+    public Map<String, String> getSettingNameToDisplayNameMap() {
+        return this.settingNameDisplayNameMap;
+    }
+
     @Override
     public String getFragmentationAlgorithmName() {
         return AlkylStructureFragmenter.ALGORITHM_NAME;
     }
 
+    /**
+     * Returns a language-specific name of the fragmenter to be used in the GUI.
+     * The given name must be unique among the available fragmentation algorithms!
+     *
+     * @return language-specific name for display in GUI
+     */
     @Override
-    public String getFragmentSaturationSetting() {
-        return this.fragmentSaturationSetting.get();
+    public String getFragmentationAlgorithmDisplayName() {
+        return Message.get("AlkylStructureFragmenter.displayName");
+    }
+
+    @Override
+    public FragmentSaturationOption getFragmentSaturationSetting() {
+        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }
 
     /**
@@ -226,17 +265,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     @Override
-    public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty() {
+    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
     }
 
+    /*
     @Override
     public FragmentSaturationOption getFragmentSaturationSettingConstant() {
         return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
     }
+    */
+
     //</editor-fold>
     //
     //<editor-fold desc="Public Properties Set">
+    /*
     @Override
     public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
@@ -244,11 +287,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         FragmentSaturationOption tmpConstant = FragmentSaturationOption.valueOf(anOptionName);
         this.fragmentSaturationSetting.set(tmpConstant.name());
     }
+    */
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationSetting.set(anOption.name());
+        this.fragmentSaturationSetting.set(anOption);
     }
 
     /**
@@ -280,7 +324,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public IMoleculeFragmenter copy() {
         AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
-        tmpCopy.setFragmentSaturationSetting(this.fragmentSaturationSetting.get());
+        tmpCopy.setFragmentSaturationSetting((IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get());
         tmpCopy.setFragmentSideChainsSetting(this.fragmentSideChainsSetting.get());
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
         return tmpCopy;
@@ -288,7 +332,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
     @Override
     public void restoreDefaultSettings() {
-        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT.name());
+        this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.fragmentSideChainsSetting.set(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
     }
