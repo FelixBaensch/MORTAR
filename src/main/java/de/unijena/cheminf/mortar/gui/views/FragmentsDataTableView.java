@@ -165,28 +165,13 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         });
         this.smilesColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.smilesColumn);
-        //-parentMolColumn
-        this.parentMolColumn = new TableColumn<>();
-        Label tmpParentMolLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.header"));
-        tmpParentMolLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
-        this.parentMolColumn.setGraphic(tmpParentMolLabel);
-        this.parentMolColumn.setMinWidth(150); //magic number
-        this.parentMolColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.2475) //magic number
-        );
-        this.parentMolColumn.setResizable(true);
-        this.parentMolColumn.setEditable(false);
-        this.parentMolColumn.setSortable(false);
-        this.parentMolColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.PARENT_MOLECULE_STRUCTURE.getText()));
-        this.parentMolColumn.setStyle("-fx-alignment: CENTER");
-        this.getColumns().add(this.parentMolColumn);
         //-parentMolNameColumn
         this.parentMolNameColumn = new TableColumn<>();
         Label tmpParentNameLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.header"));
         tmpParentNameLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
         this.parentMolNameColumn.setGraphic(tmpParentNameLabel);
         this.parentMolNameColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.075) //magic number
+                this.widthProperty().multiply(0.12) //magic number
         );
         this.parentMolNameColumn.setResizable(true);
         this.parentMolNameColumn.setEditable(false);
@@ -194,6 +179,21 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.parentMolNameColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.PARENT_MOLECULE_NAME.getText()));
         this.parentMolNameColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.parentMolNameColumn);
+        //-parentMolColumn
+        this.parentMolColumn = new TableColumn<>();
+        Label tmpParentMolLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.header"));
+        tmpParentMolLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolColumn.tooltip")));
+        this.parentMolColumn.setGraphic(tmpParentMolLabel);
+        this.parentMolColumn.setMinWidth(150); //magic number
+        this.parentMolColumn.prefWidthProperty().bind(
+                this.widthProperty().multiply(0.2025) //magic number
+        );
+        this.parentMolColumn.setResizable(true);
+        this.parentMolColumn.setEditable(false);
+        this.parentMolColumn.setSortable(false);
+        this.parentMolColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.PARENT_MOLECULE_STRUCTURE.getText()));
+        this.parentMolColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.parentMolColumn);
         //-frequencyColumn
         this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
         this.frequencyColumn.setMinWidth(50); //magic number
@@ -229,8 +229,11 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         });
         this.percentageColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.percentageColumn);
-        //-frequencyColumn
-        this.moleculeFrequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.header"));
+        //-moleculeFrequencyColumn
+        this.moleculeFrequencyColumn = new TableColumn<>();
+        Label tmpMolFrequencyLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.header"));
+        tmpMolFrequencyLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.moleculeFrequencyColumn.tooltip")));
+        this.moleculeFrequencyColumn.setGraphic(tmpMolFrequencyLabel);
         this.moleculeFrequencyColumn.setMinWidth(50); //magic number
         this.moleculeFrequencyColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.1) //magic number
@@ -241,8 +244,11 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculeFrequencyColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.MOLECULE_FREQUENCY.getText()));
         this.moleculeFrequencyColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.moleculeFrequencyColumn);
-        //-percentageColumn
-        this.moleculePercentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
+        //-moleculePercentageColumn
+        this.moleculePercentageColumn = new TableColumn<>();
+        Label tmpMolPercentageLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
+        tmpMolPercentageLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.tooltip")));
+        this.moleculePercentageColumn.setGraphic(tmpMolPercentageLabel);
         this.moleculePercentageColumn.setMinWidth(20); //magic number
         this.moleculePercentageColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.0975) //magic number
