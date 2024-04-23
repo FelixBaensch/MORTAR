@@ -44,17 +44,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Group;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SelectionModel;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
@@ -206,8 +196,25 @@ public class SettingsView extends AnchorPane {
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             switch (tmpProperty) {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                    /*implement toggle switch here*/
-                    ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
+                    //implement toggle switch here
+                    ToggleButton tmpToggleButton = new ToggleButton("OFF");
+                    tmpToggleButton.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpToggleButton.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpToggleButton.selectedProperty().bindBidirectional(tmpSimpleBooleanProperty);
+                    tmpToggleButton.setTooltip(tmpTooltip);
+                    //listen to changes in the SimpleBooleanProperty
+                    tmpSimpleBooleanProperty.addListener((observable, oldValue, newValue) -> {
+                        if (newValue) {
+                            tmpToggleButton.setText("ON");
+                        } else {
+                            tmpToggleButton.setText("OFF");
+
+                        }
+                            });
+                    //add to gridpane
+                    aGridPane.add(tmpToggleButton, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpToggleButton, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    /*ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
                     tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
                     tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
@@ -215,7 +222,7 @@ public class SettingsView extends AnchorPane {
                     tmpBooleanComboBox.setTooltip(tmpTooltip);
                     //add to gridpane
                     aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
-                    GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));*/
                 }
                 case SimpleIntegerProperty simpleIntegerProperty -> {
                     TextField tmpIntegerTextField = new TextField();
