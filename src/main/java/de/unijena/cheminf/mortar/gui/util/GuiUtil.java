@@ -544,13 +544,13 @@ public class GuiUtil {
         }
         if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
             for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
-                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
+                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight - 2.67); //magic number to prevent vertical scroll bar
                 String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
                 if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)) {
                     continue;
                 }
                 for (FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(tmpFragmentationName)) {
-                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
+                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight - 2.67); //magic number to prevent vertical scroll bar
                 }
             }
         } else {
