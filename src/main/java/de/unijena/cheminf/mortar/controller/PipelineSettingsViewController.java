@@ -31,7 +31,6 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.PipelineSettingsView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
-import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
 import javafx.application.Platform;
@@ -421,7 +420,7 @@ public class PipelineSettingsViewController {
             }
         }
         if (this.selectedPipelineFragmentersList.isEmpty()) {
-            this.selectedPipelineFragmentersList.add(new ErtlFunctionalGroupsFinderFragmenter());
+            this.selectedPipelineFragmentersList.add(this.fragmentationService.getFragmenters()[0].copy());
         }
     }
     //
