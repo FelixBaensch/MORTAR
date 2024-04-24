@@ -139,7 +139,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.structureColumn = new TableColumn<>(Message.get("MainTabPane.moleculesTab.tableView.structureColumn.header"));
         this.structureColumn.setMinWidth(150); //magic number
         this.structureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.7975) //magic number
+                this.widthProperty().multiply(0.796) //magic number
         );
         this.structureColumn.setResizable(true);
         this.structureColumn.setEditable(false);

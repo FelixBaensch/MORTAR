@@ -1303,7 +1303,7 @@ public class MainViewController {
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage));
         tmpFragmentsDataTableView.widthProperty().addListener((observable, oldValue, newValue) -> {
-            for(Object tmpObject : tmpFragmentsDataTableView.getItems()) {
+            for (Object tmpObject : tmpFragmentsDataTableView.getItems()) {
                 ((MoleculeDataModel) tmpObject).setStructureImageWidth(tmpFragmentsDataTableView.getStructureColumn().getWidth());
                 ((FragmentDataModel) tmpObject).getFirstParentMolecule().setStructureImageWidth(tmpFragmentsDataTableView.getParentMolColumn().getWidth());
             }

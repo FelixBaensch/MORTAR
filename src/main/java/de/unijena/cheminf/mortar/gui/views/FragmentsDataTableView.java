@@ -170,13 +170,24 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         Label tmpParentNameLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.header"));
         tmpParentNameLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
         this.parentMolNameColumn.setGraphic(tmpParentNameLabel);
+        this.parentMolNameColumn.setMinWidth(50);
         this.parentMolNameColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.12) //magic number
+                this.widthProperty().multiply(0.075) //magic number
         );
         this.parentMolNameColumn.setResizable(true);
         this.parentMolNameColumn.setEditable(false);
         this.parentMolNameColumn.setSortable(true);
         this.parentMolNameColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.PARENT_MOLECULE_NAME.getText()));
+        this.parentMolNameColumn.setCellFactory(tableColumn ->{
+            TableCell<FragmentDataModel, String> tmpCell = new TableCell<>();
+            Text tmpText = new Text();
+            tmpText.setTextAlignment(TextAlignment.CENTER);
+            tmpCell.setGraphic(tmpText);
+            tmpCell.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            tmpText.wrappingWidthProperty().bind(this.parentMolNameColumn.widthProperty());
+            tmpText.textProperty().bind(tmpCell.itemProperty());
+            return tmpCell;
+        });
         this.parentMolNameColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.parentMolNameColumn);
         //-parentMolColumn
@@ -186,7 +197,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.parentMolColumn.setGraphic(tmpParentMolLabel);
         this.parentMolColumn.setMinWidth(150); //magic number
         this.parentMolColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.2025) //magic number
+                this.widthProperty().multiply(0.2475) //magic number
         );
         this.parentMolColumn.setResizable(true);
         this.parentMolColumn.setEditable(false);
