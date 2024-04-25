@@ -536,7 +536,7 @@ public class GuiUtil {
                         / aRowsPerPage;
         if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
             tmpHeight =
-                    (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                    (aHeight - 2 * GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
                             / aRowsPerPage;
         }
         if (tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT) {
@@ -544,13 +544,13 @@ public class GuiUtil {
         }
         if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
             for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
-                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight - 2.67); //magic number to prevent vertical scroll bar
+                tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
                 String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
                 if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName)) {
                     continue;
                 }
                 for (FragmentDataModel tmpFragmentDataModel : tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(tmpFragmentationName)) {
-                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight - 2.67); //magic number to prevent vertical scroll bar
+                    tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
                 }
             }
         } else {

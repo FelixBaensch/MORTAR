@@ -184,7 +184,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
             }
             this.selectionAllCheckBoxAction = false;
         });
-        this.itemsObservableList.addListener((ListChangeListener) change -> {
+        this.itemsObservableList.addListener((ListChangeListener<? super MoleculeDataModel>) change -> {
             if (this.selectionAllCheckBoxAction) {
                 // No further action needed with column checkbox data when the select all checkbox is operated on
                 return;
