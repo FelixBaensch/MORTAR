@@ -30,6 +30,7 @@ import javafx.beans.property.Property;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -39,6 +40,7 @@ import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.File;
@@ -46,6 +48,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -58,61 +63,61 @@ import java.util.Locale;
  * @version 1.1.1.0
  */
 public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
-
     /**
-     * File containing the structure data for the expected fragments of structures used in this test.
+     * Private AtomContainerSet containing the test structures.
      */
-    public final File testExpectedFragmentsFile = new File("src\\test\\resources\\ASF_Expected_Fragments.sdf");
+    private IAtomContainerSet testStructuresACSet;
     /**
-     * IteratingSDFReader for the structure data file testExpectedFragmentsFile.
+     * Private AtomContainer List containing the resulting fragments after fragmentation.
      */
-    public final IteratingSDFReader testExpectedSDFReader = new IteratingSDFReader(new FileReader(this.testExpectedFragmentsFile), new SilentChemObjectBuilder());
+    private List<IAtomContainer> testResultFragmentsACList;
     /**
-     * File containing the structure data of the structures used in this test.
+     * Private AtomContainerSet containing the resulting fragments after fragmentation.
      */
-    public final File testStructuresFile = new File("src\\test\\resources\\ASF_Test_Structures.sdf");
+    private IAtomContainerSet testResultACSet;
     /**
-     * IteratingSDFReader for the structure data file testStructuresFile.
+     * Private AtomContainerSet containing the expected fragments.
      */
-    public final IteratingSDFReader testStructuresSDFReader = new IteratingSDFReader(new FileReader(this.testStructuresFile), new SilentChemObjectBuilder());
+    private IAtomContainerSet testExpectedFragmentsACSet;
     /**
      * Private AtomContainerSet containing the expected structures as AtomContainers.
      */
-    private IAtomContainerSet testStructuresACSet;
-    private List<IAtomContainer> testResultFragmentsACList;
-    private IAtomContainerSet testResultACSet;
-    private IAtomContainerSet testExpectedFragmentsACSet;
     private List<IAtomContainer> testExpectedFragmentsACList;
-    /**
-     * Private List containing test structures.
-     */
-    //private Hash<IAtomContainer> testStructuresHashSet;
     /**
      * Private AlkylStructureFragmenter used in this test, currently without special parameters.
      */
-    private final AlkylStructureFragmenter basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
+    private final AlkylStructureFragmenter basicAlkylStructureFragmenter;
+    /**
+     * Private IAtom Array containing the atoms of a given structure, used in unit testing of internal
+     * AlkylStructureFragmenter methods.
+     */
     private IAtom[] testAtomArray;
+    /**
+     * Private IBond Array containing the bonds of a given structure, used in unit testing of internal
+     * AlkylStructureFragmenter methods.
+     */
     private IBond[] testBondArray;
+    /**
+     * Static Locale set to its default: "en" and "GB".
+     */
     static {
         Locale.setDefault(Locale.of("en", "GB"));
     }
 
     /**
-     * Constructor that sets the default locale to british english, which is needed for correct functioning of the
-     * fragmenter as the settings tooltips are imported from the message.properties file.
+     * Constructor of AlkylStructureFragmenter test class, setting all necessary settings in order of correct functionality
+     * during testing.
      */
-    public AlkylStructureFragmenterTest() throws FileNotFoundException
-    {
+    public AlkylStructureFragmenterTest() throws FileNotFoundException, URISyntaxException {
+        this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
         this.testStructuresACSet = new AtomContainerSet();
-        this.testStructuresACSet = readStructureToACSet(this.testStructuresFile);
-        this.testExpectedFragmentsACSet = readStructureToACSet(this.testExpectedFragmentsFile);
+        this.testStructuresACSet = readStructureToACSet("ASF_Test_Structures.sdf");
+        this.testExpectedFragmentsACSet = readStructureToACSet("ASF_Expected_Fragments.sdf");
         this.testExpectedFragmentsACList = new ArrayList<>(this.testExpectedFragmentsACSet.getAtomContainerCount());
         //this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpAC);
         this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(this.testStructuresACSet.getAtomContainer(0));
         //this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpAC);
         this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(this.testStructuresACSet.getAtomContainer(0));
-        //Locale.setDefault(new Locale("en", "GB"));
-
     }
 
     //<editor-fold desc="@Test Public Methods">
@@ -258,15 +263,19 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             Assertions.assertTrue(this.basicAlkylStructureFragmenter.canBeFragmented(tmpAtomContainer));
         }
         this.testResultFragmentsACList = this.basicAlkylStructureFragmenter.fragmentMolecule(this.testStructuresACSet.getAtomContainer(0));
-        for (IAtomContainer tmpAC : this.testExpectedFragmentsACSet.atomContainers()) {
-            this.testExpectedFragmentsACList.add(tmpAC);
+        this.testResultACSet = new AtomContainerSet();
+        for (int i = 0; i < this.testResultFragmentsACList.size(); i++) {
+            this.testResultACSet.addAtomContainer(this.testResultFragmentsACList.get(i));
         }
-        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(this.testResultFragmentsACList),
-                new ArrayList<>(this.testExpectedFragmentsACList)));
+        List<String> tmpExpectedSMILESList = this.generateSMILESFromACSet(this.testExpectedFragmentsACSet);
+        List<String> tmpResultSMILESList = this.generateSMILESFromACSet(this.testResultACSet);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
     }
     //</editor-fold>
 
     //<editor-fold desc="Private Methods">
+    // alternative: canonical smiles for comparison
     private boolean compareListsIgnoringOrder(ArrayList aList1, ArrayList aList2) {
         if (aList1 == null || aList2 == null) return false;
         if (aList1.size() != aList2.size()) return false;
@@ -279,19 +288,27 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
      * Utility method generating SMILES notation strings for a given AtomContainerSet.
      *
-     * @param anAtomContainer given AtomContainerSet
+     * @param anACSet given AtomContainerSet
      * @return List containing the generated Strings
      * @throws CDKException if SmilesGenerator is unable to generate String from structure
      */
-    private List<String> generateSMILESFromACSet(IAtomContainer anAtomContainer) throws CDKException {
+    private List<String> generateSMILESFromACSet(IAtomContainerSet anACSet) throws CDKException {
         SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Canonical);
-        List<String> tmpSmilesList = new ArrayList<>(anAtomContainer.getAtomCount());
-        tmpSmilesList.add(tmpSmilesGenerator.create(anAtomContainer));
+        List<String> tmpSmilesList = new ArrayList<>(anACSet.getAtomContainerCount());
+        CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(new SilentChemObjectBuilder());
+        for (IAtomContainer tmpAC : anACSet.atomContainers()) {
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAC);
+            tmpAdder.addImplicitHydrogens(tmpAC);
+            Kekulization.kekulize(tmpAC);
+            tmpSmilesList.add(tmpSmilesGenerator.create(tmpAC));
+        }
         return tmpSmilesList;
     }
 
-    private IAtomContainerSet readStructureToACSet(File aFile) throws FileNotFoundException {
-        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileReader(aFile), new SilentChemObjectBuilder());
+    private IAtomContainerSet readStructureToACSet(String aFileName) throws FileNotFoundException, URISyntaxException {
+        URL tmpURL = this.getClass().getResource("/" + aFileName);
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileReader(tmpResourceFile), new SilentChemObjectBuilder());
         AtomContainerSet tmpACSet = new AtomContainerSet();
         String tmpIndexString = "ASFTest.AtomContainerIndex";
         int tmpIndex = 0;
