@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.gui.controls.ToggleSwitch;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -209,8 +210,16 @@ public class SettingsView extends AnchorPane {
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             switch (tmpProperty) {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                    //implement toggle switch here
-                    Rectangle tmpSwitchBackground = new Rectangle(130, 25);
+                    //implement toggle switch here; write own class that implements a toggle switch
+                    ToggleSwitch tmpSwitch = new ToggleSwitch();
+                    tmpSwitch.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpSwitch.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpSwitch.visibleProperty().bindBidirectional(tmpSimpleBooleanProperty);
+                    tmpSwitch.setTooltip(tmpTooltip);
+                    //add to grid pane
+                    aGridPane.add(tmpSwitch, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpSwitch, new Insets(GuiDefinitions.GUI_BUTTON_INSETS_VALUE));
+                    /*Rectangle tmpSwitchBackground = new Rectangle(130, 25);
                     tmpSwitchBackground.setArcHeight(15);
                     tmpSwitchBackground.setArcWidth(25);
                     tmpSwitchBackground.setFill(Color.WHITE);
@@ -220,8 +229,8 @@ public class SettingsView extends AnchorPane {
                     tmpSwitchButton.setCenterY(15);
                     tmpSwitchButton.setFill(Color.LIGHTGRAY);
                     tmpSwitchButton.setStroke(Color.LIGHTGRAY);
-                    aGridPane.add(tmpSwitchButton, 1, tmpRowIndex);
                     aGridPane.add(tmpSwitchBackground, 1, tmpRowIndex++);
+                    aGridPane.add(tmpSwitchButton, 1, tmpRowIndex++);*/
                     /*ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
                     tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
