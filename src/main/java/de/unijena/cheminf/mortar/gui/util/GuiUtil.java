@@ -536,7 +536,7 @@ public class GuiUtil {
                         / aRowsPerPage;
         if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
             tmpHeight =
-                    (aHeight - 2*GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                    (aHeight - 2 * GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
                             / aRowsPerPage;
         }
         if (tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT) {
