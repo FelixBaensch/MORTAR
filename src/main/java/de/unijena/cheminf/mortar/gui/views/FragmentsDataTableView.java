@@ -131,21 +131,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         //activate for future bulk export?
         //this.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
-        //-structureColumn
-        this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
-        this.structureColumn.setMinWidth(150); //magic number
-        this.structureColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.2)
-        );
-        this.structureColumn.setResizable(true);
-        this.structureColumn.setEditable(false);
-        this.structureColumn.setSortable(false);
-        this.structureColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.STRUCTURE.getText()));
-        this.structureColumn.setStyle("-fx-alignment: CENTER");
-        this.getColumns().add(this.structureColumn);
         //-smilesColumn
         this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
-        this.smilesColumn.setMinWidth(50);
+        this.smilesColumn.setMinWidth(80);
         this.smilesColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.075) //magic number
         );
@@ -165,12 +153,24 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         });
         this.smilesColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.smilesColumn);
+        //-structureColumn
+        this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
+        this.structureColumn.setMinWidth(150); //magic number
+        this.structureColumn.prefWidthProperty().bind(
+                this.widthProperty().multiply(0.2)
+        );
+        this.structureColumn.setResizable(true);
+        this.structureColumn.setEditable(false);
+        this.structureColumn.setSortable(false);
+        this.structureColumn.setCellValueFactory(new PropertyValueFactory(DataModelPropertiesForTableView.STRUCTURE.getText()));
+        this.structureColumn.setStyle("-fx-alignment: CENTER");
+        this.getColumns().add(this.structureColumn);
         //-parentMolNameColumn
         this.parentMolNameColumn = new TableColumn<>();
         Label tmpParentNameLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.header"));
         tmpParentNameLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.parentMolNameColumn.tooltip")));
         this.parentMolNameColumn.setGraphic(tmpParentNameLabel);
-        this.parentMolNameColumn.setMinWidth(50);
+        this.parentMolNameColumn.setMinWidth(80);
         this.parentMolNameColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.075) //magic number
         );
@@ -209,7 +209,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
         this.frequencyColumn.setMinWidth(50); //magic number
         this.frequencyColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1) //magic number
+                this.widthProperty().multiply(0.098) //magic number
         );
         this.frequencyColumn.setResizable(true);
         this.frequencyColumn.setEditable(false);
@@ -219,9 +219,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.getColumns().add(this.frequencyColumn);
         //-percentageColumn
         this.percentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.percentageColumn.header"));
-        this.percentageColumn.setMinWidth(20); //magic number
+        this.percentageColumn.setMinWidth(50); //magic number
         this.percentageColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1) //magic number
+                this.widthProperty().multiply(0.098) //magic number
         );
         this.percentageColumn.setResizable(true);
         this.percentageColumn.setEditable(false);
@@ -247,7 +247,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.moleculeFrequencyColumn.setGraphic(tmpMolFrequencyLabel);
         this.moleculeFrequencyColumn.setMinWidth(50); //magic number
         this.moleculeFrequencyColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.1) //magic number
+                this.widthProperty().multiply(0.098) //magic number
         );
         this.moleculeFrequencyColumn.setResizable(true);
         this.moleculeFrequencyColumn.setEditable(false);
@@ -260,9 +260,9 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         Label tmpMolPercentageLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.header"));
         tmpMolPercentageLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.moleculePercentageColumn.tooltip")));
         this.moleculePercentageColumn.setGraphic(tmpMolPercentageLabel);
-        this.moleculePercentageColumn.setMinWidth(20); //magic number
+        this.moleculePercentageColumn.setMinWidth(50); //magic number
         this.moleculePercentageColumn.prefWidthProperty().bind(
-                this.widthProperty().multiply(0.0975) //magic number
+                this.widthProperty().multiply(0.098) //magic number
         );
         this.moleculePercentageColumn.setResizable(true);
         this.moleculePercentageColumn.setEditable(false);
