@@ -64,9 +64,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 
 import java.util.Collections;
 import java.util.List;
@@ -211,26 +208,13 @@ public class SettingsView extends AnchorPane {
             switch (tmpProperty) {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
                     //implement toggle switch here; write own class that implements a toggle switch
-                    ToggleSwitch tmpSwitch = new ToggleSwitch();
-                    tmpSwitch.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                    tmpSwitch.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                    tmpSwitch.visibleProperty().bindBidirectional(tmpSimpleBooleanProperty);
-                    tmpSwitch.setTooltip(tmpTooltip);
-                    //add to grid pane
-                    aGridPane.add(tmpSwitch, 1, tmpRowIndex++);
-                    GridPane.setMargin(tmpSwitch, new Insets(GuiDefinitions.GUI_BUTTON_INSETS_VALUE));
-                    /*Rectangle tmpSwitchBackground = new Rectangle(130, 25);
-                    tmpSwitchBackground.setArcHeight(15);
-                    tmpSwitchBackground.setArcWidth(25);
-                    tmpSwitchBackground.setFill(Color.WHITE);
-                    tmpSwitchBackground.setStroke(Color.LIGHTGRAY);
-                    Circle tmpSwitchButton = new Circle(15);
-                    tmpSwitchButton.setCenterX(15);
-                    tmpSwitchButton.setCenterY(15);
-                    tmpSwitchButton.setFill(Color.LIGHTGRAY);
-                    tmpSwitchButton.setStroke(Color.LIGHTGRAY);
-                    aGridPane.add(tmpSwitchBackground, 1, tmpRowIndex++);
-                    aGridPane.add(tmpSwitchButton, 1, tmpRowIndex++);*/
+                    ToggleSwitch tmpToggle = new ToggleSwitch();
+                    tmpToggle.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpToggle.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpToggle.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpToggle, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                     /*ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
                     tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);

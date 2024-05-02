@@ -3,6 +3,7 @@ package de.unijena.cheminf.mortar.gui.controls;
 import javafx.animation.TranslateTransition;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Button;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
@@ -19,7 +20,7 @@ public class ToggleSwitch extends Button {
     /**
      * Button.
      */
-    private final Circle switchButton;
+    private final Button switchButton;
 
     /**
      * Background of the switch.
@@ -39,39 +40,35 @@ public class ToggleSwitch extends Button {
      */
     public ToggleSwitch() {
         //inspired by https://www.youtube.com/watch?v=maX5ymmQixM
-        this.switchButton = new Circle();
-        this.switchButton.setCenterX(15);
-        this.switchButton.setCenterY(15);
-        this.switchButton.setFill(Color.LIGHTGRAY);
-        this.switchBackground = new Rectangle();
+        this.switchButton = new Button();
+        this.switchBackground = new Rectangle(130, 15);
         this.switchBackground.setArcWidth(15);
-        this.switchBackground.setArcHeight(25);
+        this.switchBackground.setArcHeight(15);
         this.switchBackground.setFill(Color.LIGHTGRAY);
-        getChildren().addAll(this.switchBackground,this.switchButton);
+        this.switchBackground.setStroke(Color.GRAY);
         this.switchAnimation = new TranslateTransition(Duration.seconds(0.25));
         this.switchAnimation.setNode(this.switchButton);
         this.switchState = new SimpleBooleanProperty(false);
+        this.switchAnimation.setNode(this.switchButton);
         //Listener
         this.switchState.addListener((observable, oldValue, newValue) -> {
             boolean tmpIsOn = newValue.booleanValue();
-            this.switchAnimation.setToX( newValue ? (130 - 15) : 0);
+            this.switchAnimation.setToX(tmpIsOn ? (130 - 15) : 0);
             this.switchAnimation.play();
         });
         //Mouse listener.
-        setOnMouseClicked(event ->{
+        setOnMouseClicked(event -> {
             this.switchState.set(!this.switchState.get());
         });
-        }
-
-        //
-        //<editor-fold desc="properties" defaultstate="collapsed">
+    }
     //
+    //<editor-fold desc="properties" defaultstate="collapsed">
     /**
      * returns switchButton
      *
      * @return Circle
      */
-    public Circle getSwitchButton() { return this.switchButton; }
+    public Button getSwitchButton() { return this.switchButton; }
     /**
      * returns switchBackground
      *
@@ -90,6 +87,7 @@ public class ToggleSwitch extends Button {
      * @return TranslateTransition
      */
     public TranslateTransition getSwitchAnimation() {return switchAnimation;}
+    //</editor-fold>
 }
 
 
