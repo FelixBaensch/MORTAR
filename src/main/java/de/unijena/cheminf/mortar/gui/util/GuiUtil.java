@@ -537,7 +537,7 @@ public class GuiUtil {
         if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
             tmpHeight =
                     (aHeight - 2 * GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                            / aRowsPerPage;
+                            / aRowsPerPage - 3.0; //magic number to prevent unnecessary vertical scroll bar in items tab
         }
         if (tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT) {
             tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
@@ -553,7 +553,11 @@ public class GuiUtil {
                     tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
                 }
             }
-        } else {
+        } /*else if (aTableView.getClass().equals(FragmentsDataTableView.class)) {
+            for (MoleculeDataModel tmpFragmentDataModel : ((IDataTableView)aTableView).getItemsList()) {
+                ((FragmentDataModel) tmpFragmentDataModel).getFirstParentMolecule().setStructureImageHeight(tmpHeight);
+            }
+        }*/ else {
             for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
             }

@@ -322,7 +322,14 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
         int fromIndex = aPageIndex * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
-        this.setItems(FXCollections.observableArrayList(this.itemsList.subList(fromIndex, toIndex)));
+        List<MoleculeDataModel> tmpItems = this.itemsList.subList(fromIndex, toIndex);
+        for (MoleculeDataModel tmpMoleculeDataModel : tmpItems) {
+            tmpMoleculeDataModel.setStructureImageWidth(this.structureColumn.getWidth());
+            ((FragmentDataModel) tmpMoleculeDataModel).getFirstParentMolecule().setStructureImageWidth(this.parentMolColumn.getWidth());
+        }
+        //Todo: what about parent molecules?
+        GuiUtil.setImageStructureHeight(this, this.getHeight(), aSettingsContainer.getRowsPerPageSetting());
+        this.setItems(FXCollections.observableArrayList(tmpItems));
         this.scrollTo(0);
         return new BorderPane(this);
     }

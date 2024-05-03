@@ -170,13 +170,16 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
         int fromIndex = aPageIndex * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
-        int tmpItemAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(this.itemsList.subList(fromIndex, toIndex), aFragmentationName);
-        this.resetFragmentStructureColumns(tmpItemAmount);
         List<MoleculeDataModel> tmpList = this.itemsList.subList(fromIndex, toIndex);
+        int tmpItemAmount = GuiUtil.getLargestNumberOfFragmentsForGivenMoleculeListAndFragmentationName(tmpList, aFragmentationName);
+        this.resetFragmentStructureColumns(tmpItemAmount);
         for (MoleculeDataModel tmpMoleculeDataModel : tmpList) {
             tmpMoleculeDataModel.setStructureImageWidth(this.moleculeStructureColumn.getWidth());
+            //width of depictions of fragments does not need to be set, the fragment-sub-columns will adjust and have as much space as they need
         }
-        this.setItems(FXCollections.observableArrayList(this.itemsList.subList(fromIndex, toIndex)));
+        //also sets heights of fragment depictions for items tab
+        GuiUtil.setImageStructureHeight(this, this.getHeight(), aSettingsContainer.getRowsPerPageSetting());
+        this.setItems(FXCollections.observableArrayList(tmpList));
         this.scrollTo(0);
         return new BorderPane(this);
     }

@@ -214,6 +214,7 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         for (MoleculeDataModel tmpMoleculeDataModel : tmpItems) {
             tmpMoleculeDataModel.setStructureImageWidth(this.structureColumn.getWidth());
         }
+        GuiUtil.setImageStructureHeight(this, this.getHeight(), aSettingsContainer.getRowsPerPageSetting());
         this.setItems(FXCollections.observableArrayList(this.itemsObservableList.subList(tmpFromIndex, tmpToIndex)));
         this.scrollTo(0);
         return new BorderPane(this);
