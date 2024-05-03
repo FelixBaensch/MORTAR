@@ -132,7 +132,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         //this.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
         //-smilesColumn
-        this.smilesColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
+        this.smilesColumn = new TableColumn<>();
+        Label tmpSmilesLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.header"));
+        tmpSmilesLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.smilesColumn.tooltip")));
+        this.smilesColumn.setGraphic(tmpSmilesLabel);
         this.smilesColumn.setMinWidth(80);
         this.smilesColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.075) //magic number
@@ -154,7 +157,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.smilesColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.smilesColumn);
         //-structureColumn
-        this.structureColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
+        this.structureColumn = new TableColumn<>();
+        Label tmpStructureLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header"));
+        tmpStructureLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.tooltip")));
+        this.structureColumn.setGraphic(tmpStructureLabel);
         this.structureColumn.setMinWidth(150); //magic number
         this.structureColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.2)
@@ -206,7 +212,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.parentMolColumn.setStyle("-fx-alignment: CENTER");
         this.getColumns().add(this.parentMolColumn);
         //-frequencyColumn
-        this.frequencyColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
+        this.frequencyColumn = new TableColumn<>();
+        Label tmpFrequencyLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.header"));
+        tmpFrequencyLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.frequencyColumn.tooltip")));
+        this.frequencyColumn.setGraphic(tmpFrequencyLabel);
         this.frequencyColumn.setMinWidth(50); //magic number
         this.frequencyColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.098) //magic number
@@ -218,7 +227,10 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.frequencyColumn.setStyle("-fx-alignment: CENTER-RIGHT");
         this.getColumns().add(this.frequencyColumn);
         //-percentageColumn
-        this.percentageColumn = new TableColumn<>(Message.get("MainTabPane.fragmentsTab.tableView.percentageColumn.header"));
+        this.percentageColumn = new TableColumn<>();
+        Label tmpPercentageLabel = new Label(Message.get("MainTabPane.fragmentsTab.tableView.percentageColumn.header"));
+        tmpPercentageLabel.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragmentsTab.tableView.percentageColumn.tooltip")));
+        this.percentageColumn.setGraphic(tmpPercentageLabel);
         this.percentageColumn.setMinWidth(50); //magic number
         this.percentageColumn.prefWidthProperty().bind(
                 this.widthProperty().multiply(0.098) //magic number
