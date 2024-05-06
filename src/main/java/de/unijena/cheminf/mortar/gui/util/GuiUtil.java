@@ -531,13 +531,16 @@ public class GuiUtil {
      * @param aRowsPerPage int
      */
     public static void setImageStructureHeight(TableView aTableView, double aHeight, int aRowsPerPage) {
-        double tmpHeight =
-                (aHeight - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                        / aRowsPerPage;
+        double tmpHeight = (aHeight
+                            - GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT
+                            - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
+                            / aRowsPerPage;
         if (aTableView.getClass().equals(ItemizationDataTableView.class)) {
-            tmpHeight =
-                    (aHeight - 2 * GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT)
-                            / aRowsPerPage - 3.0; //magic number to prevent unnecessary vertical scroll bar in items tab
+            tmpHeight = (aHeight
+                            - 2 * GuiDefinitions.GUI_TABLE_VIEW_HEADER_HEIGHT
+                            - GuiDefinitions.GUI_PAGINATION_CONTROL_PANEL_HEIGHT
+                            - GuiDefinitions.GUI_SCROLL_BAR_HEIGHT)
+                            / aRowsPerPage;
         }
         if (tmpHeight < GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT) {
             tmpHeight = GuiDefinitions.GUI_STRUCTURE_IMAGE_MIN_HEIGHT;
@@ -553,11 +556,9 @@ public class GuiUtil {
                     tmpFragmentDataModel.setStructureImageHeight(tmpHeight);
                 }
             }
-        } /*else if (aTableView.getClass().equals(FragmentsDataTableView.class)) {
-            for (MoleculeDataModel tmpFragmentDataModel : ((IDataTableView)aTableView).getItemsList()) {
-                ((FragmentDataModel) tmpFragmentDataModel).getFirstParentMolecule().setStructureImageHeight(tmpHeight);
-            }
-        }*/ else {
+        } else {
+            //molecules tab or fragments tab; height of parent structures in fragments tab does not need to be set because
+            // it equals the height in the molecules tab (right?)
             for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
             }

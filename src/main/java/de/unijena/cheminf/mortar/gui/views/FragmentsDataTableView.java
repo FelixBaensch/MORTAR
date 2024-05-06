@@ -327,7 +327,6 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
             tmpMoleculeDataModel.setStructureImageWidth(this.structureColumn.getWidth());
             ((FragmentDataModel) tmpMoleculeDataModel).getFirstParentMolecule().setStructureImageWidth(this.parentMolColumn.getWidth());
         }
-        //Todo: what about parent molecules?
         GuiUtil.setImageStructureHeight(this, this.getHeight(), aSettingsContainer.getRowsPerPageSetting());
         this.setItems(FXCollections.observableArrayList(tmpItems));
         this.scrollTo(0);
