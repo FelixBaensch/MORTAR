@@ -71,21 +71,32 @@ applicationName = 'MORTAR'
 
 applicationDefaultJvmArgs = ["-Xms4g", "-Xmx4g"]
 
+
 /*
-* Merges the exact enumeration of all library jars into one single path giving all the files and subfolders in 'lib'.
-* This is necessary because lines that are too long cause errors in batch files.
 * The unix script still has to be tested!
 */
 startScripts {
     doLast {
-        windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
+        //suppress console window by using javaw instead of java
+        windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
+        //use JRE shipped with MORTAR instead of Java installed on the machine and rename method to set the java home to use
+        windowsScript.text = windowsScript.text.replace("if defined JAVA_HOME goto findJavaFromJavaHome", "goto setJavaFromAppHome\n\n@rem unused because Java home is set in method called above")
+        windowsScript.text = windowsScript.text.replace(":findJavaFromJavaHome", ":setJavaFromAppHome")
         windowsScript.text = windowsScript.text.replace("set JAVA_HOME=%JAVA_HOME:\"=%",
                 "set JAVA_HOME=%APP_HOME%\\jdk-21.0.1_12_jre\\")
-        windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
-        //windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
-        //dirty workaround to suppress command window and pass CMD options to MORTAR to suppress the Java version check
+        //Merges the exact enumeration of all library jars into one single path giving all the files and subfolders in 'lib'
+        // This is necessary because lines that are too long cause errors in batch files.
+        windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
+        //workaround to suppress command window by starting named process "MORTAR" - legacy
+        //windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%")
+        //workaround to suppress command window and pass CMD options to MORTAR to suppress the Java version check
         windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main %*",
                 "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main \"-skipJavaVersionCheck\"")
+        //adjusting error messages
+        windowsScript.text = windowsScript.text.replace("Please set the JAVA_HOME variable in your environment to match the", "Please check your MORTAR installation,")
+        windowsScript.text = windowsScript.text.replace("location of your Java installation.", "something must be wrong with the Java Runtime Environment shipped with MORTAR.")
+
+        //Merges the exact enumeration of all library jars into one single path giving all the files and subfolders in 'lib' for unix script
         unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
     }
 }
@@ -99,14 +110,26 @@ task updateHeapSpace20GbExtraRunApp(type: CreateStartScripts) {
 
     updateHeapSpace20GbExtraRunApp {
         doLast {
-            windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
+            //suppress console window by using javaw instead of java
+            windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
+            //use JRE shipped with MORTAR instead of Java installed on the machine and rename method to set the java home to use
+            windowsScript.text = windowsScript.text.replace("if defined JAVA_HOME goto findJavaFromJavaHome", "goto setJavaFromAppHome\n\n@rem unused because Java home is set in method called above")
+            windowsScript.text = windowsScript.text.replace(":findJavaFromJavaHome", ":setJavaFromAppHome")
             windowsScript.text = windowsScript.text.replace("set JAVA_HOME=%JAVA_HOME:\"=%",
                     "set JAVA_HOME=%APP_HOME%\\jdk-21.0.1_12_jre\\")
-            windowsScript.text = windowsScript.text.replaceAll("java.exe", "javaw.exe")
-            //windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%") //dirty workaround to suppress command window
-            //dirty workaround to suppress command window and pass CMD options to MORTAR to suppress the Java version check
+            //Merges the exact enumeration of all library jars into one single path giving all the files and subfolders in 'lib'
+            // This is necessary because lines that are too long cause errors in batch files.
+            windowsScript.text = windowsScript.text.replaceAll('set CLASSPATH=.*', 'set CLASSPATH=.;%APP_HOME%/lib/*')
+            //workaround to suppress command window by starting named process "MORTAR" - legacy
+            //windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%", "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%")
+            //workaround to suppress command window and pass CMD options to MORTAR to suppress the Java version check
             windowsScript.text = windowsScript.text.replace("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_20_GB_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main %*",
                     "start \"MORTAR\" \"%JAVA_EXE%\" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %MORTAR_20_GB_OPTS%  -classpath \"%CLASSPATH%\" de.unijena.cheminf.mortar.main.Main \"-skipJavaVersionCheck\"")
+            //adjusting error messages
+            windowsScript.text = windowsScript.text.replace("Please set the JAVA_HOME variable in your environment to match the", "Please check your MORTAR installation,")
+            windowsScript.text = windowsScript.text.replace("location of your Java installation.", "something must be wrong with the Java Runtime Environment shipped with MORTAR.")
+
+            //Merges the exact enumeration of all library jars into one single path giving all the files and subfolders in 'lib' for unix script
             unixScript.text = unixScript.text.replaceAll('CLASSPATH=\\Q$\\EAPP_HOME/lib.*', Matcher.quoteReplacement('CLASSPATH=$APP_HOME/lib/*'))
         }
     }
