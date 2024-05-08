@@ -557,8 +557,8 @@ public class GuiUtil {
                 }
             }
         } else {
-            //molecules tab or fragments tab; height of parent structures in fragments tab does not need to be set because
-            // it equals the height in the molecules tab (right?)
+            //case molecules tab or fragments tab
+            //note: height of parent structures in fragments tab does not need to be set because it equals the height in the molecules tab
             for (MoleculeDataModel tmpMoleculeDataModel : ((IDataTableView)aTableView).getItemsList()) {
                 tmpMoleculeDataModel.setStructureImageHeight(tmpHeight);
             }
