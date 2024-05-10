@@ -209,7 +209,7 @@ public class SettingsView extends AnchorPane {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
                     //implement toggle switch here; write own class that implements a toggle switch
                     ToggleSwitch tmpToggle = new ToggleSwitch();
-                    // cannot resolve Tooltip
+                    tmpToggle.setTooltip(tmpTooltip);
                     //add to gridpane
                     aGridPane.add(tmpToggle, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));

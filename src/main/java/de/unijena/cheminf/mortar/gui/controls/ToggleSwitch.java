@@ -30,7 +30,13 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Parent;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.Skin;
+import javafx.scene.effect.Blend;
+import javafx.scene.effect.Bloom;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
@@ -42,7 +48,7 @@ import javafx.util.Duration;
  * @author Zeynep Dagtekin
  * @version 1.0.0.0
  */
-public class ToggleSwitch extends Parent {
+public class ToggleSwitch extends Control {
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
      * Button.
@@ -80,42 +86,43 @@ public class ToggleSwitch extends Parent {
     public ToggleSwitch() {
         //inspired by https://www.youtube.com/watch?v=maX5ymmQixM
         super();
-        this.switchBackground = new Rectangle(120, 18);
-        this.switchBackground.setArcWidth(20);
-        this.switchBackground.setArcHeight(20);
+        this.switchBackground = new Rectangle(45, 18);
+        this.switchBackground.setArcWidth(18);
+        this.switchBackground.setArcHeight(18);
+        this.switchBackground.setLayoutX(-50);
         this.switchBackground.setFill(Color.LIGHTGRAY);
         this.switchBackground.setStroke(Color.DARKGRAY);
         this.switchButton = new Circle(10);
-        this.switchButton.setCenterX(10);
+        this.switchButton.setCenterX(-40);
         this.switchButton.setCenterY(9);
         this.switchButton.setFill(Color.WHITE);
         this.switchButton.setStroke(Color.DARKGRAY);
-        this.switchLabel = new Label("off");
+        this.switchButton.setEffect(new DropShadow(5, Color.GRAY));
+        this.switchLabel = new Label("OFF");
         this.switchLabel.setTextFill(Color.BLACK);
-        this.switchLabel.setLayoutX(100);
+        this.switchLabel.setLayoutX(-60);
         this.switchAnimation = new TranslateTransition(Duration.seconds(0.25));
         this.switchAnimation.setNode(this.switchButton);
         this.switchState = new SimpleBooleanProperty(false);
         this.fillAnimation = new FillTransition(Duration.seconds(0.25));
         this.switchTransition = new ParallelTransition(this.switchAnimation, this.fillAnimation);
-        ;
         this.switchAnimation.setNode(this.switchButton);
         this.fillAnimation.setShape(this.switchBackground);
         getChildren().addAll(this.switchBackground, this.switchButton, this.switchLabel);
         //Listener
         this.switchState.addListener((observable, oldValue, newValue) -> {
             boolean tmpIsOn = newValue.booleanValue();
-            this.switchAnimation.setToX(tmpIsOn ? (119 - 19) : 0);
+            this.switchAnimation.setToX(tmpIsOn ? (44 - 18) : 0);
             this.fillAnimation.setFromValue(tmpIsOn ? Color.LIGHTGRAY : Color.web("#6495ED"));
             this.fillAnimation.setToValue(tmpIsOn ? Color.web("#6495ED") : Color.LIGHTGRAY);
             if (newValue) {
-                this.switchLabel.setText("on");
+                this.switchLabel.setText("ON");
                 this.switchLabel.setTextFill(Color.WHITE);
-                this.switchLabel.setLayoutX(5);
+                this.switchLabel.setLayoutX(-30);
             } else {
-                this.switchLabel.setText("off");
+                this.switchLabel.setText("OFF");
                 this.switchLabel.setTextFill(Color.BLACK);
-                this.switchLabel.setLayoutX(100);
+                this.switchLabel.setLayoutX(-35);
             }
             this.switchTransition.play();
         });
