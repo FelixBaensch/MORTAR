@@ -28,9 +28,9 @@ package de.unijena.cheminf.mortar.gui.controls;
 import javafx.animation.FillTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Control;
-import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -57,7 +57,7 @@ public class ToggleSwitch extends Control {
     /**
      * Boolean property to keep track of the state.
      */
-    private final SimpleBooleanProperty switchState;
+    private final SimpleBooleanProperty switchedOn;
     /**
      * transition of the switch from one side to the other.
      */
@@ -70,10 +70,6 @@ public class ToggleSwitch extends Control {
      * Parallel transition.
      */
     private final ParallelTransition switchTransition;
-    /**
-     * Label.
-     */
-    private final Label switchLabel;
     //</editor-fold>
     /**
      * Constructor.
@@ -81,6 +77,8 @@ public class ToggleSwitch extends Control {
     public ToggleSwitch() {
         //inspired by https://www.youtube.com/watch?v=maX5ymmQixM
         super();
+        //blaue Farbe anpassen
+        this.switchedOn = new SimpleBooleanProperty(false);
         this.switchBackground = new Rectangle(45, 18);
         this.switchBackground.setArcWidth(18);
         this.switchBackground.setArcHeight(18);
@@ -93,36 +91,23 @@ public class ToggleSwitch extends Control {
         this.switchButton.setFill(Color.WHITE);
         this.switchButton.setStroke(Color.DARKGRAY);
         this.switchButton.setEffect(new DropShadow(5, Color.GRAY));
-        this.switchLabel = new Label("OFF");
-        this.switchLabel.setTextFill(Color.BLACK);
-        this.switchLabel.setLayoutX(-60);
         this.switchAnimation = new TranslateTransition(Duration.seconds(0.25));
         this.switchAnimation.setNode(this.switchButton);
-        this.switchState = new SimpleBooleanProperty(false);
         this.fillAnimation = new FillTransition(Duration.seconds(0.25));
         this.switchTransition = new ParallelTransition(this.switchAnimation, this.fillAnimation);
         this.switchAnimation.setNode(this.switchButton);
         this.fillAnimation.setShape(this.switchBackground);
-        getChildren().addAll(this.switchBackground, this.switchButton, this.switchLabel);
+        getChildren().addAll(this.switchBackground, this.switchButton);
         //Listener
-        this.switchState.addListener((observable, oldValue, newValue) -> {
+        this.switchedOn.addListener((observable, oldValue, newValue) -> {
             boolean tmpIsOn = newValue.booleanValue();
             this.switchAnimation.setToX(tmpIsOn ? (44 - 18) : 0);
             this.fillAnimation.setFromValue(tmpIsOn ? Color.LIGHTGRAY : Color.web("#6495ED"));
             this.fillAnimation.setToValue(tmpIsOn ? Color.web("#6495ED") : Color.LIGHTGRAY);
-            if (newValue) {
-                this.switchLabel.setText("ON");
-                this.switchLabel.setTextFill(Color.WHITE);
-                this.switchLabel.setLayoutX(-30);
-            } else {
-                this.switchLabel.setText("OFF");
-                this.switchLabel.setTextFill(Color.BLACK);
-                this.switchLabel.setLayoutX(-35);
-            }
             this.switchTransition.play();
         });
         //Mouse listener.
-        setOnMouseClicked(event -> this.switchState.set(!this.switchState.get()));
+        setOnMouseClicked(event -> this.switchedOn.set(!this.switchedOn.get()));
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
@@ -139,11 +124,11 @@ public class ToggleSwitch extends Control {
      */
     public Rectangle getSwitchBackground() { return this.switchBackground; }
     /**
-     * returns switchState.
+     * returns switchedOn.
      *
      * @return SimpleBooleanProperty
      */
-    public SimpleBooleanProperty getSwitchState() { return this.switchState; }
+    public SimpleBooleanProperty getSwitchedOn() { return this.switchedOn; }
     /**
      * returns switchAnimation.
      *
@@ -163,9 +148,29 @@ public class ToggleSwitch extends Control {
      */
     public ParallelTransition getSwitchTransition() { return this.switchTransition; }
     /**
-     * returns Label.
+     * returns  switchedOnProperty.
      *
-     * @return Label
+     * @return BooleanProperty
      */
-    public Label getSwitchLabel() { return this.switchLabel; }} // ?
+    public BooleanProperty getSwitchedOnProperty() {return switchedOn;}
+    /**
+     * returns isSwitchedOn.
+     *
+     * @return Schalterwert
+     */
+    public boolean isSwitchedOn() {return switchedOn.get();}
+    /**
+     * sets boolean isSwitchedOn.
+     *
+     * @param switchedOn
+     */
+    public void setSwitchedOn(boolean switchedOn) {this.switchedOn.set(switchedOn);}
+    /**
+     * sets valueProperty
+     *
+     * @return BooleanProperty
+     */
+    public BooleanProperty valueProperty() {return switchedOn;}
     //</editor-fold>
+}
+
