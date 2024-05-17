@@ -102,8 +102,8 @@ public class ToggleSwitch extends Control {
         this.switchedOn.addListener((observable, oldValue, newValue) -> {
             boolean tmpIsOn = newValue.booleanValue();
             this.switchAnimation.setToX(tmpIsOn ? (44 - 18) : 0);
-            this.fillAnimation.setFromValue(tmpIsOn ? Color.LIGHTGRAY : Color.web("#6495ED"));
-            this.fillAnimation.setToValue(tmpIsOn ? Color.web("#6495ED") : Color.LIGHTGRAY);
+            this.fillAnimation.setFromValue(tmpIsOn ? Color.LIGHTGRAY : Color.web("#0099cc"));
+            this.fillAnimation.setToValue(tmpIsOn ? Color.web("#0099cc") : Color.LIGHTGRAY);
             this.switchTransition.play();
         });
         //Mouse listener.
@@ -160,13 +160,13 @@ public class ToggleSwitch extends Control {
      */
     public boolean isSwitchedOn() {return switchedOn.get();}
     /**
-     * sets boolean isSwitchedOn.
+     * sets switchedOn
      *
      * @param switchedOn
      */
     public void setSwitchedOn(boolean switchedOn) {this.switchedOn.set(switchedOn);}
     /**
-     * sets valueProperty
+     * returns valueProperty
      *
      * @return BooleanProperty
      */
