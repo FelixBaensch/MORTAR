@@ -49,7 +49,6 @@ public class ToggleSwitch extends Control {
      * Button.
      */
     private final Circle switchButton;
-
     /**
      * Background of the switch.
      */
@@ -59,7 +58,7 @@ public class ToggleSwitch extends Control {
      */
     private final SimpleBooleanProperty switchedOn;
     /**
-     * transition of the switch from one side to the other.
+     * transition of the Circle from one side to the other.
      */
     private final TranslateTransition switchAnimation;
     /**
@@ -67,7 +66,7 @@ public class ToggleSwitch extends Control {
      */
     private final FillTransition fillAnimation;
     /**
-     * Parallel transition.
+     * Parallel transition of color and Circle.
      */
     private final ParallelTransition switchTransition;
     //</editor-fold>
@@ -75,9 +74,11 @@ public class ToggleSwitch extends Control {
      * Constructor.
      */
     public ToggleSwitch() {
-        //inspired by https://www.youtube.com/watch?v=maX5ymmQixM
+        /**
+         * code inspired by "JavaFX UI: iOS Style Toggle Switch", uploaded by Almas Baimagambetov on YouTube
+         * https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf, 05/17/2024, 10:33
+         */
         super();
-        //blaue Farbe anpassen
         this.switchedOn = new SimpleBooleanProperty(false);
         this.switchBackground = new Rectangle(45, 18);
         this.switchBackground.setArcWidth(18);
@@ -112,65 +113,84 @@ public class ToggleSwitch extends Control {
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
     /**
-     * returns switchButton
+     * returns switchButton.
      *
      * @return Circle
      */
-    public Circle getSwitchButton() { return this.switchButton; }
+    public Circle getSwitchButton() {
+        return this.switchButton;
+    }
     /**
-     * returns switchBackground
+     * returns switchBackground.
      *
      * @return Rectangle
      */
-    public Rectangle getSwitchBackground() { return this.switchBackground; }
+    public Rectangle getSwitchBackground() {
+        return this.switchBackground;
+    }
     /**
-     * returns switchedOn.
+     * returns switchedOn to change the boolean state of the switch.
      *
      * @return SimpleBooleanProperty
      */
-    public SimpleBooleanProperty getSwitchedOn() { return this.switchedOn; }
+    public SimpleBooleanProperty getSwitchedOn() {
+        return this.switchedOn;
+    }
     /**
-     * returns switchAnimation.
+     * returns switchAnimation which shows the visual transition of the Circle switchButton.
      *
      * @return TranslateTransition
      */
-    public TranslateTransition getSwitchAnimation() { return this.switchAnimation; }
+    public TranslateTransition getSwitchAnimation() {
+        return this.switchAnimation;
+    }
     /**
-     * returns fillAnimation.
+     * returns fillAnimation to show the color change when clicked on.
      *
      * @return FillTransition
      */
-    public FillTransition getFillAnimation() { return this.fillAnimation; }
+    public FillTransition getFillAnimation() {
+        return this.fillAnimation;
+    }
     /**
-     * returns switchTransition.
+     * returns switchTransition to maintain a parallel animation for fillAnimation and switchAnimation.
      *
      * @return ParallelTransition
      */
-    public ParallelTransition getSwitchTransition() { return this.switchTransition; }
+    public ParallelTransition getSwitchTransition() {
+        return this.switchTransition;
+    }
     /**
      * returns  switchedOnProperty.
      *
      * @return BooleanProperty
      */
-    public BooleanProperty getSwitchedOnProperty() {return switchedOn;}
+    public BooleanProperty getSwitchedOnProperty() {
+        return this.switchedOn;
+    }
     /**
-     * returns isSwitchedOn.
+     * returns isSwitchedOn to change boolean state to true.
      *
-     * @return Schalterwert
+     * @return switch value.
      */
-    public boolean isSwitchedOn() {return switchedOn.get();}
+    public boolean isSwitchedOn() {
+        return this.switchedOn.get();
+    }
     /**
-     * sets switchedOn
+     * sets switchedOn to update new value.
      *
-     * @param switchedOn
+     * @param switchedOn boolean
      */
-    public void setSwitchedOn(boolean switchedOn) {this.switchedOn.set(switchedOn);}
+    public void setSwitchedOn(boolean switchedOn) {
+        this.switchedOn.set(switchedOn);
+    }
     /**
-     * returns valueProperty
+     * returns valueProperty.
      *
      * @return BooleanProperty
      */
-    public BooleanProperty valueProperty() {return switchedOn;}
+    public BooleanProperty valueProperty() {
+        return this.switchedOn;
+    }
     //</editor-fold>
 }
-
