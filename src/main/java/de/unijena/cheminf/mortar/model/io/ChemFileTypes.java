@@ -32,11 +32,11 @@ package de.unijena.cheminf.mortar.model.io;
  */
 public enum ChemFileTypes {
     /**
-     * enum value for SDF
+     * enum value for SDF.
      */
     SDF,
     /**
-     * enum value for PDB
+     * enum value for PDB.
      */
-    PDB
+    PDB;
 }

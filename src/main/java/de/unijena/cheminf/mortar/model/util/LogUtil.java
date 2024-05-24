@@ -25,13 +25,14 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 
 import javafx.scene.control.Alert;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -57,15 +58,34 @@ import java.util.logging.SimpleFormatter;
 public final class LogUtil {
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
-     * Root logger
+     * Root logger.
      */
     private static final Logger ROOT_LOGGER = LogManager.getLogManager().getLogger("");
-
     /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
-
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private static final IConfiguration CONFIGURATION;
+    static {
+        try {
+            CONFIGURATION = Configuration.getInstance();
+        } catch (IOException anIOException) {
+            //when MORTAR is run via MainApp.start(), the correct initialization of Configuration is checked there before
+            // LogUtil is accessed and this static initializer called
+            throw new NullPointerException("Configuration could not be initialized");
+        }
+    }
+    /**
+     * Name for Log files.
+     */
+    private static final String LOG_FILE_NAME = "MORTAR_Log";
+    /**
+     * Name extension (denoting the file type) of log files.
+     */
+    private static final String LOG_FILE_NAME_EXTENSION = ".txt";
     /**
      * Uncaught exception handler to be used in MORTAR. IMPORTANT: Threads running parallel to the JavaFX GUI thread
      * must be assigned this uncaught exception handler manually. BUT this handler tries to display an exception
@@ -87,7 +107,8 @@ public final class LogUtil {
                 System.exit(-1);
         } else {
             //the JavaFx GUI thread deals with such exceptions by resetting the binding to a previous value. No need to intervene here
-            if (aThrowable.getMessage().equals("Bidirectional binding failed, setting to the previous value")) {
+            String tmpMessage = aThrowable.getMessage();
+            if (tmpMessage != null && tmpMessage.equals("Bidirectional binding failed, setting to the previous value")) {
                 return;
             }
             //it is an exception (runtime- or IO-), no error
@@ -97,31 +118,29 @@ public final class LogUtil {
                             Message.get("Error.UnexpectedError.Header"),
                             Message.get("Error.UnexpectedError.Content"),
                             (Exception) aThrowable);
-            } else {
-                //logging is enough in this case
-            }
+            } //else: logging is enough in this case, done in first line of this method
         }
     };
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Private static class variables">
     /**
-     * File handler added to the root logger
+     * File handler added to the root logger.
      */
     private static FileHandler fileHandler;
 
     /**
-     * Log file that is currently logged in
+     * Log file that is currently logged in.
      */
     private static File logFile;
 
     /**
-     * Storage for exceptions thrown in the process of managing the log-files' folder
+     * Storage for exceptions thrown in the process of managing the log files folder.
      */
     private static ArrayList<Exception> storedExceptions;
     //</editor-fold>
     //
-    //<editor-fold desc="Protected constructor">
+    //<editor-fold desc="Private constructor" defaultstate="collapsed">
     /**
      * Private parameter-less constructor.
      * Introduced because javadoc build complained about classes without declared default constructor.
@@ -154,23 +173,23 @@ public final class LogUtil {
             //Messages of levels INFO, WARNING and SEVERE will be logged only
             LogUtil.ROOT_LOGGER.setLevel(Level.INFO);
             String tmpLoggingDirectoryPathName = FileUtil.getAppDirPath() + File.separator
-                    + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator;
+                    + LogUtil.CONFIGURATION.getProperty("mortar.logDirectory.name") + File.separator;
             File tmpLoggingDirectoryFile = new File(tmpLoggingDirectoryPathName);
             //If the directories do not exist already they are created
             if (!tmpLoggingDirectoryFile.exists()) {
                 FileUtil.createDirectory(tmpLoggingDirectoryFile.getAbsolutePath());
             }
-            String tmpLogFilePathName = tmpLoggingDirectoryPathName + BasicDefinitions.LOG_FILE_NAME
+            String tmpLogFilePathName = tmpLoggingDirectoryPathName + LogUtil.LOG_FILE_NAME
                     + "_"
                     + FileUtil.getTimeStampFileNameExtension();
-            String tmpFinalLogFilePathName = FileUtil.getNonExistingFilePath(tmpLogFilePathName, BasicDefinitions.LOG_FILE_NAME_EXTENSION);
+            String tmpFinalLogFilePathName = FileUtil.getNonExistingFilePath(tmpLogFilePathName, LogUtil.LOG_FILE_NAME_EXTENSION);
             File tmpLogFile = new File(tmpFinalLogFilePathName);
             boolean tmpFileWasCreated = FileUtil.createEmptyFile(tmpLogFile.getAbsolutePath());
             if (!tmpFileWasCreated) {
-                throw new Exception("Log file " + tmpFinalLogFilePathName + " could not be created.");
+                throw new IOException("Log file " + tmpFinalLogFilePathName + " could not be created.");
             }
             if (!tmpLogFile.isFile() || !tmpLogFile.canWrite()) {
-                throw new Exception("The designated log file " + tmpFinalLogFilePathName + " is not a file or can not be written to.");
+                throw new IOException("The designated log file " + tmpFinalLogFilePathName + " is not a file or can not be written to.");
             }
             LogUtil.logFile = tmpLogFile;
             LogUtil.fileHandler = new FileHandler(tmpFinalLogFilePathName, true);
@@ -241,12 +260,13 @@ public final class LogUtil {
      * @author Samuel Behr
      */
     public static void manageLogFilesFolderIfExists() {
-        Path tmpLogFileDirectory = Paths.get(FileUtil.getAppDirPath() + File.separator + BasicDefinitions.LOG_FILES_DIRECTORY);
+        Path tmpLogFileDirectory = Paths.get(FileUtil.getAppDirPath() + File.separator +
+                LogUtil.CONFIGURATION.getProperty("mortar.logDirectory.name") + File.separator);
         if (!(Files.exists(tmpLogFileDirectory) && Files.isDirectory(tmpLogFileDirectory))) {
             return;
         }
         LogUtil.storedExceptions = new ArrayList<>();
-        //deleting all of the *.txt.lck files out of the log-files' folder
+        //deleting all of the *.txt.lck files out of the log files folder
         try (DirectoryStream<Path> tmpLCKFilePaths = Files.newDirectoryStream(tmpLogFileDirectory, "*.txt.lck")) {
             for (Path tmpLCKFilePath : tmpLCKFilePaths) {
                 try {
@@ -264,7 +284,7 @@ public final class LogUtil {
         }
         int tmpTotalOfBytesUsed = 0;
         for (File tmpLogFile : tmpLogFiles) {
-            tmpTotalOfBytesUsed += tmpLogFile.length();
+            tmpTotalOfBytesUsed += (int) tmpLogFile.length();
         }
         //managing the log-files if the limits are exceeded
         //the parameters of this if statement's condition should be changed with caution or otherwise an infinite loop is risked
@@ -297,12 +317,7 @@ public final class LogUtil {
         if (!tmpLoggingDirFile.exists() || !tmpLoggingDirFile.isDirectory()) {
             return false;
         }
-        return tmpLoggingDirFile.listFiles(new FilenameFilter() {
-           @Override
-           public boolean accept(File dir, String name) {
-               return FileUtil.getFileExtension(dir + File.separator + name).equals(".lck");
-           }
-        }).length > 0;
+        return tmpLoggingDirFile.listFiles((dir, name) -> FileUtil.getFileExtension(dir + File.separator + name).equals(".lck")).length > 0;
     }
     // </editor-fold>
     //
@@ -312,9 +327,9 @@ public final class LogUtil {
      *
      * @return path (String) to log file directory
      */
-    public static String getLogFileDirectoryPath(){
+    public static String getLogFileDirectoryPath() {
         return FileUtil.getAppDirPath() + File.separator
-                + BasicDefinitions.LOG_FILES_DIRECTORY + File.separator;
+                + LogUtil.CONFIGURATION.getProperty("mortar.logDirectory.name") + File.separator;
 
     }
 

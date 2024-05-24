@@ -47,6 +47,8 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
+import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
@@ -73,6 +75,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -87,38 +90,177 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class Exporter {
-    //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
+    //<editor-fold desc="Enum ExportTypes" defaultstate="collapsed">
     /**
-     * Logger of this class
+     * Enum for different file types to export.
      */
-    private static final Logger LOGGER = Logger.getLogger(Exporter.class.getName());
-
-    /**
-     * Name of directory generated for exporting a stream of fragment files
-     */
-    private static final String FRAGMENTS_EXPORT_DIRECTORY_NAME = "MORTAR_Fragments_Export";
-
-    /**
-     * Font for cells in exported PDF files
-     */
-    private final Font fontFactory = FontFactory.getFont(FontFactory.TIMES, 12, Font.BOLD);
+    public enum ExportTypes {
+        /**
+         * enum value for item csv file.
+         */
+        ITEM_CSV_FILE,
+        /**
+         * enum value for item pdf file.
+         */
+        ITEM_PDF_FILE,
+        /**
+         * enum value for fragments csv file.
+         */
+        FRAGMENT_CSV_FILE,
+        /**
+         * enum value for fragments pdf file.
+         */
+        FRAGMENT_PDF_FILE,
+        /**
+         * enum value for single sd file.
+         */
+        FRAGMENT_SINGLE_SD_FILE,
+        /**
+         * enum value for sd file.
+         */
+        FRAGMENT_MULTIPLE_SD_FILES,
+        /**
+         * enum value for pdb file.
+         */
+        FRAGMENT_PDB_FILE;
+    }
     //</editor-fold>
     //
-    // <editor-fold defaultstate="collapsed" desc="Private variables">
     /**
-     * Container for general settings for managing, preserving, and reloading application settings
+     * Enum for different file extension
      */
-    private SettingsContainer settingsContainer;
+    public enum FileExtension {
+        /**
+         * Enum for csv extension
+         */
+        CSV(".csv"),
+        /**
+         * Enum for pdf extension
+         */
+        PDF(".pdf"),
+        /**
+         * Enum for sdf extension
+         */
+        SDF(".sdf"),
+        /**
+         * Enum for pdb extension
+         */
+        PDB(".pdb"),
+        ;
+        //
+        /**
+         * String value of enum
+         */
+        private final String extension;
+        //
+        /**
+         * Enum for different file extension
+         *
+         * @param anExtension String value of extension
+         */
+        FileExtension (final String anExtension) {
+            this.extension = anExtension;
+        }
+        //
+        /**
+         * Returns the string value of extension
+         *
+         * @return String value of extension
+         */
+        @Override
+        public String toString() {
+            return extension;
+        }
+    }
+    //
+    //<editor-fold desc="Enum CSVSeparator">
+    /**
+     * Enum for allowed CSV file export separator chars.
+     */
+    public enum CSVSeparator implements IDisplayEnum {
+        /**
+         * Comma.
+         */
+        COMMA(',', Message.get("Exporter.CSVSeparator.Comma.displayName"), Message.get("Exporter.CSVSeparator.Comma.tooltip")),
+        /**
+         * Semicolon.
+         */
+        SEMICOLON(';', Message.get("Exporter.CSVSeparator.Semicolon.displayName"), Message.get("Exporter.CSVSeparator.Semicolon.tooltip")),
+        /**
+         * Tab.
+         */
+        TAB('\t', Message.get("Exporter.CSVSeparator.Tab.displayName"), Message.get("Exporter.CSVSeparator.Tab.tooltip")),
+        /**
+         * Space.
+         */
+        SPACE(' ', Message.get("Exporter.CSVSeparator.Space.displayName"), Message.get("Exporter.CSVSeparator.Space.tooltip"));
+        /**
+         * Character representation of the wrapped separator char.
+         */
+        private final char separatorChar;
+        /**
+         * Language-specific name for display in GUI.
+         */
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor setting the wrapped separator char, display name, and tooltip text.
+         *
+         * @param aSeparatorChar CSV separator character to use when this option is selected
+         * @param aDisplayName display name
+         * @param aTooltipText tooltip text
+         */
+        private CSVSeparator(char aSeparatorChar, String aDisplayName, String aTooltipText) {
+            this.separatorChar = aSeparatorChar;
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltipText;
+        }
+        /**
+         * Returns the character representation of this separator.
+         *
+         * @return CSV separator char
+         */
+        public char getSeparatorChar() {
+            return this.separatorChar;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
+        }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
+    /**
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(Exporter.class.getName());
     //
     /**
-     * PDF Document for export
+     * Name of directory generated for exporting a stream of fragment files.
      */
-    private Document document;
+    private static final String FRAGMENTS_EXPORT_DIRECTORY_NAME = "MORTAR_Fragments_Export";
     //
     /**
-     * Destination file for export
+     * Font for cells in exported PDF files.
      */
-    private File file;
+    private static final Font PDF_CELL_FONT = FontFactory.getFont(FontFactory.TIMES, 12, Font.BOLD);
+    //</editor-fold>
+    //
+    // <editor-fold defaultstate="collapsed" desc="Private final variables">
+    /**
+     * Container for general settings for managing, preserving, and reloading application settings.
+     */
+    private final SettingsContainer settingsContainer;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors">
@@ -138,223 +280,297 @@ public class Exporter {
     //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
     /**
-     * Opens FileChooser for export destination file
+     * Opens FileChooser to enable the user to choose an export destination file.
      *
      * @param aParentStage Stage
      * @param anExportType enum ExportType specifies file type
-     * @param aFragmentationName String for name of fragmentation
+     * @param aFragmentationName String for name of fragmentation to be used as file name proposal
+     * @return the chosen file or directory or null if the user chose to cancel the export in the file chooser dialog
      */
-    public void saveFile(Stage aParentStage, ExportTypes anExportType, String aFragmentationName){
+    public File openFileChooserForExportFileOrDir(Stage aParentStage, ExportTypes anExportType, String aFragmentationName){
         Objects.requireNonNull(aParentStage, "aParentStage must not be null");
-        this.file = null;
-        String tmpFileName = "";
+        File tmpFile;
+        String tmpFileName;
         String tmpFragmentationName = aFragmentationName.replaceAll("\\s+", "_");
-        switch (anExportType) {
-            case FRAGMENT_CSV_FILE:
+        tmpFile = switch (anExportType) {
+            case ExportTypes.FRAGMENT_CSV_FILE -> {
                 tmpFileName = "Fragments_" + tmpFragmentationName;
-                this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
-                break;
-            case PDB_FILE:
-            case SD_FILE:
-                this.file = this.chooseDirectory(aParentStage);
-                break;
-            case FRAGMENT_PDF_FILE:
+                tmpFile = this.chooseFile(aParentStage, "CSV", "*" + FileExtension.CSV, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.CSV.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
+                }
+                yield tmpFile;
+            }
+            case ExportTypes.FRAGMENT_PDB_FILE, ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
+                    this.chooseDirectory(aParentStage);
+            case ExportTypes.FRAGMENT_PDF_FILE -> {
                 tmpFileName = "Fragments_" + tmpFragmentationName;
-                this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
-                break;
-            case SINGLE_SD_FILE:
+                tmpFile = this.chooseFile(aParentStage, "PDF", "*" + FileExtension.PDF, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.PDF.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.PDF);
+                }
+                yield tmpFile;
+            }
+            case ExportTypes.FRAGMENT_SINGLE_SD_FILE -> {
                 tmpFileName = "Fragments_Export_" + tmpFragmentationName;
-                this.file = this.saveFile(aParentStage, "SD-File", "*.sdf", tmpFileName);
-                break;
-            case ITEM_CSV_FILE:
+                tmpFile = this.chooseFile(aParentStage, "SD-File", "*" + FileExtension.SDF, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.SDF.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.SDF);
+                }
+                yield tmpFile;
+            }
+            case ExportTypes.ITEM_CSV_FILE -> {
                 tmpFileName = "Items_" + tmpFragmentationName;
-                this.file = this.saveFile(aParentStage, "CSV", "*.csv", tmpFileName);
-                break;
-            case ITEM_PDF_FILE:
+                tmpFile = this.chooseFile(aParentStage, "CSV", "*" + FileExtension.CSV, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.CSV.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
+                }
+                yield tmpFile;
+            }
+            case ExportTypes.ITEM_PDF_FILE -> {
                 tmpFileName = "Items_" + tmpFragmentationName;
-                this.file = this.saveFile(aParentStage, "PDF", "*.pdf", tmpFileName);
-                break;
-        }
+                tmpFile = this.chooseFile(aParentStage, "PDF", "*" + FileExtension.PDF, tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().endsWith(FileExtension.PDF.extension)) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.PDF);
+                }
+                yield tmpFile;
+            }
+            default ->
+                    throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
+        };
+        return tmpFile;
     }
     //
     /**
-     * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or
-     * on the Fragments tab as a CSV file.
-     * Returns a list containing SMILES of the molecules that cause an error when exported
+     * Exports the fragmentation results as displayed on the Itemisation tab or
+     * on the Fragments tab, depending on aTabName, to a CSV file.
+     * Returns a list containing SMILES of the molecules that cause an error when exported.
      *
+     * @param aFile                  the file to export to; method returns null if the file is null
      * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
      * @param aFragmentationName     fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aSeparator             the separator for the csv file
      * @param aTabName               TabName to identify type of tab
-     * @return List {@literal <}String {@literal >}
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportCsvFile(List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, String aSeparator, TabNames aTabName) {
-        try {
-            if (this.file == null)
-                return null;
-            if (aTabName.equals(TabNames.FRAGMENTS)) {
-                //can throw FileNotFoundException, gets handled in setOnFailed()
-                this.createFragmentationTabCsvFile(this.file, aMoleculeDataModelList, aSeparator);
-            } else if (aTabName.equals(TabNames.ITEMIZATION)) {
-                //can throw FileNotFoundException, gets handled in setOnFailed()
-                this.createItemizationTabCsvFile(this.file, aMoleculeDataModelList, aFragmentationName, aSeparator);
-            }
-        } catch (Exception anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+    public List<String> exportCsvFile(File aFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator, TabNames aTabName)
+            throws FileNotFoundException {
+        if (aFile == null) {
+            return null;
+        }
+        if (aTabName.equals(TabNames.FRAGMENTS)) {
+            //can throw FileNotFoundException, gets handled in setOnFailed()
+            return this.createFragmentsTabCsvFile(aFile, aMoleculeDataModelList, aSeparator);
+        } else if (aTabName.equals(TabNames.ITEMIZATION)) {
+            //can throw FileNotFoundException, gets handled in setOnFailed()
+            return this.createItemizationTabCsvFile(aFile, aMoleculeDataModelList, aFragmentationName, aSeparator);
         }
         return new ArrayList<>(0);
     }
     //
-
     /**
-     * Exports in a new thread depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file.
-     * Returns a list containing SMILES of the molecules that cause an error when exported
+     * Exports depending on aTabName the fragmentation results as displayed on the Itemisation tab or on the Fragments tab as a CSV file.
+     * Returns a list containing SMILES of the molecules that caused an error when exported.
      *
+     * @param aFile                  the file to export to
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
-     * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
+     * @param aMoleculeDataModelList a list MoleculeDataModel to export items
      * @param aFragmentationName     fragmentation name to be displayed in the header of the PDF file
+     * @param anImportedFileName name of the input file whose molecules were fragmented
      * @param aTabName               TabName to identify type of tab
-     * @return List {@literal <}String {@literal >}
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportPdfFile(List<MoleculeDataModel> aFragmentDataModelList, ObservableList<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, TabNames aTabName) {
-        try {
-            if (this.file == null)
-                return null;
-            if (aTabName.equals(TabNames.FRAGMENTS)) {
-                //throws FileNotFoundException, gets handled in setOnFailed()
-                return this.createFragmentationTabPdfFile(this.file, aFragmentDataModelList, aMoleculeDataModelList, aFragmentationName);
-            } else if (aTabName.equals(TabNames.ITEMIZATION)) {
-                //throws FileNotFoundException, gets handled in setOnFailed()
-                return this.createItemizationTabPdfFile(this.file, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName);
-            }
-        } catch (Exception anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+    public List<String> exportPdfFile(File aFile,
+                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                      ObservableList<MoleculeDataModel> aMoleculeDataModelList,
+                                      String aFragmentationName,
+                                      String anImportedFileName,
+                                      TabNames aTabName) throws FileNotFoundException {
+        if (aFile == null) {
+            return null;
+        }
+        if (aTabName.equals(TabNames.FRAGMENTS)) {
+            //throws FileNotFoundException, gets handled in setOnFailed()
+            return this.createFragmentsTabPdfFile(aFile, aFragmentDataModelList, aMoleculeDataModelList.size(), aFragmentationName, anImportedFileName);
+        } else if (aTabName.equals(TabNames.ITEMIZATION)) {
+            //throws FileNotFoundException, gets handled in setOnFailed()
+            return this.createItemizationTabPdfFile(aFile, aFragmentDataModelList.size(), aMoleculeDataModelList, aFragmentationName, anImportedFileName);
         }
         return null;
     }
     //
     /**
-     * Exports in a new thread depending on aFragmentationName the results as displayed on the Itemisation tab or on the Fragments tab as a chemical file.
-     * Returns a list containing SMILES of the molecules that cause an error when exported
+     * Exports depending on aFragmentationName the results as displayed on the Itemisation tab or on the Fragments tab
+     * as a chemical file.
+     * Returns a list containing SMILES of the molecules that caused an error when exported. The fragments are exported
+     * into separate files (single export is set to false).
      *
+     * @param aFile the file/directory to export to
      * @param aFragmentDataModelList list of FragmentDataModel instances
-     * @param aFragmentationName     name of fragmentation
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
-     * @param generate2dAtomCoordinates boolean value whether to generate 2D coordinates
-     * @return List {@literal <}String {@literal >}
+     * @param aGenerate2dAtomCoordinates boolean value whether to generate 2D coordinates
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws IOException if sth goes wrong
      */
-    public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates) {
-        return this.exportFragmentsAsChemicalFile(aFragmentDataModelList, aFragmentationName, aChemFileType, generate2dAtomCoordinates, false);
+    public List<String> exportFragmentsAsChemicalFile(File aFile,
+                                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                                      ChemFileTypes aChemFileType,
+                                                      boolean aGenerate2dAtomCoordinates)
+            throws IOException {
+        return this.exportFragmentsAsChemicalFile(aFile,
+                aFragmentDataModelList,
+                aChemFileType,
+                aGenerate2dAtomCoordinates,
+                false);
     }
     //
     /**
-     * Exports in a new thread depending on aFragmentationName the results as displayed on the Itemisation tab or on the Fragments tab as a chemical file.
-     * Returns a list containing SMILES of the molecules that cause an error when exported
+     * Exports in a new thread the results as displayed on the Itemisation tab or on the Fragments tab as a chemical file.
+     * Returns a list containing SMILES of the molecules that caused an error when exported.
      *
+     * @param aFile the file/directory to export to
      * @param aFragmentDataModelList list of FragmentDataModel instances
-     * @param aFragmentationName     name of fragmentation
      * @param aChemFileType ChemFileTypes specifies which file type should be exported
-     * @param generate2dAtomCoordinates boolean value whether to generate 2D coordinates
-     * @param isSingleExport         boolean if fragments should be exported in one file or seperated, one file each fragment
-     * @return List {@literal <}String {@literal >}
+     * @param aGenerate2dAtomCoordinates boolean value whether to generate 2D coordinates
+     * @param anIsSingleExport true if fragments should be exported into one single file; false if separated, one file for each fragment
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws IOException if sth goes wrong
      */
-    public List<String> exportFragmentsAsChemicalFile(List<MoleculeDataModel> aFragmentDataModelList, String aFragmentationName, ChemFileTypes aChemFileType, boolean generate2dAtomCoordinates, boolean isSingleExport) {
-        try {
-            if (this.file == null)
-                return null;
-            if (aChemFileType == ChemFileTypes.SDF && isSingleExport) {
-                return this.createFragmentationTabSingleSDFile(this.file, aFragmentDataModelList, generate2dAtomCoordinates);
-            } else if (aChemFileType == ChemFileTypes.SDF) {
-                return this.createFragmentationTabSeparateSDFiles(this.file, aFragmentDataModelList, generate2dAtomCoordinates);
-            } else if (aChemFileType == ChemFileTypes.PDB) {
-                return this.createFragmentationTabPDBFiles(this.file, aFragmentDataModelList, generate2dAtomCoordinates);
-            }
-        } catch (Exception anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+    public List<String> exportFragmentsAsChemicalFile(File aFile,
+                                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                                      ChemFileTypes aChemFileType,
+                                                      boolean aGenerate2dAtomCoordinates,
+                                                      boolean anIsSingleExport) throws IOException {
+        if (aFile == null) {
+            return null;
         }
-        return null;
+        List<String> tmpReturnedList;
+        if (aChemFileType == ChemFileTypes.SDF && anIsSingleExport) {
+            tmpReturnedList = this.createFragmentationTabSingleSDFile(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
+        } else if (aChemFileType == ChemFileTypes.SDF) {
+            tmpReturnedList = this.createFragmentationTabSeparateSDFiles(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
+        } else if (aChemFileType == ChemFileTypes.PDB) {
+            tmpReturnedList = this.createFragmentationTabPDBFiles(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
+        } else {
+            tmpReturnedList = null;
+        }
+        return tmpReturnedList;
     }
     //</editor-fold>
     //
-    //<editor-fold desc="private methods" defaultstate="collapsed">
+    //<editor-fold desc="Private methods" defaultstate="collapsed">
     /**
-     * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file.
+     * Exports the fragmentation results as they are displayed on the itemization tab as a CSV file. In the molecule names,
+     * the given separator character is replaced by a placeholder character ('_').
      *
      * @param aMoleculeDataModelList a list of MoleculeDataModel instances to export along with their fragments
      * @param aFragmentationName     fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aSeparator             the separator for the csv file
-     * @throws FileNotFoundException
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws FileNotFoundException if given file cannot be found
      * @author Betül Sevindik
      */
-    private void createItemizationTabCsvFile(File aCsvFile,
+    private List<String> createItemizationTabCsvFile(File aCsvFile,
                                              List<MoleculeDataModel> aMoleculeDataModelList,
                                              String aFragmentationName,
-                                             String aSeparator)
-            throws FileNotFoundException {
+                                             char aSeparator) throws FileNotFoundException {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
-            return;
+            return null;
         }
-        PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
-        StringBuilder tmpCsvHeader = new StringBuilder();
-        tmpCsvHeader.append(Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
-                Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
-                Message.get("Exporter.itemsTab.csvHeader.smilesOfFragmentsAndFrequency") + "\n");
-        tmpWriter.write(tmpCsvHeader.toString());
-        for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
-            if(Thread.currentThread().isInterrupted()){
-                return;
-            }
-            tmpWriter.printf("%s" + aSeparator + "%s", tmpMoleculeDataModel.getName(), tmpMoleculeDataModel.getUniqueSmiles());
-            if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
-                continue;
-            }
-            List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
-            for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
-                if(Thread.currentThread().isInterrupted() ||
-                        !tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)
-                ){
-                    return;
+        List<String> tmpFailedExportFragments = new LinkedList<>();
+        //the character used to replace all occurrences of the given separator char in the exported strings
+        final char tmpReplacementChar = '_';
+        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+            String tmpCsvHeader = Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.smilesOfFragment") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.frequencyOfFragment");
+            tmpWriter.write(tmpCsvHeader);
+            for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
                 }
-                tmpWriter.append(aSeparator);
-                tmpWriter.printf("%s" + aSeparator + "%s", tmpFragmentDataModel.getUniqueSmiles(), tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
+                try {
+                    tmpWriter.printf("%n%s%s%s",
+                            tmpMoleculeDataModel.getName().replace(aSeparator, tmpReplacementChar),
+                            aSeparator,
+                            //note to developers: make sure no chars are offered as separator char options that can
+                            // also occur in SMILES strings!
+                            tmpMoleculeDataModel.getUniqueSmiles());
+                } catch (Exception anException) {
+                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpMoleculeDataModel.getName()), anException);
+                    tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
+                    continue;
+                }
+                if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
+                    continue;
+                }
+                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(aFragmentationName);
+                for (FragmentDataModel tmpFragmentDataModel : tmpFragmentList) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        return null;
+                    }
+                    tmpWriter.append(aSeparator);
+                    try {
+                        tmpWriter.printf("%s%s%s",
+                                tmpFragmentDataModel.getUniqueSmiles(),
+                                aSeparator,
+                                tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
+                    } catch (Exception anException) {
+                        Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
+                        tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
+                        //continue;
+                    }
+                }
             }
-            tmpWriter.append("\n");
+            return tmpFailedExportFragments;
         }
-        tmpWriter.close();
     }
     //
     /**
      * Exports the fragmentation results as they are displayed on the fragments tab as a CSV file.
      *
-     * @param aList      a list of FragmentDataModel instances to export
+     * @param aList a list of FragmentDataModel instances to export
      * @param aSeparator the separator for the csv file
-     * @throws FileNotFoundException
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws FileNotFoundException if given file cannot be found
      * @author Betül Sevindik
      */
-    private void createFragmentationTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, String aSeparator)
+    private List<String> createFragmentsTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, char aSeparator)
             throws FileNotFoundException {
         if (aCsvFile == null || aList == null) {
-            return;
+            return null;
         }
-        PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath());
-        StringBuilder tmpFragmentationCsvHeader = new StringBuilder();
-        tmpFragmentationCsvHeader.append(Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.frequency") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.percentage") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + aSeparator +
-                Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage") + ("\n"));
-        tmpWriter.write(tmpFragmentationCsvHeader.toString());
-        for (MoleculeDataModel tmpDataModel : aList) {
-            if(Thread.currentThread().isInterrupted()){
-                return;
+        List<String> tmpFailedExportFragments = new LinkedList<>();
+        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+            String tmpFragmentationCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.frequency") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.percentage") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage");
+            tmpWriter.write(tmpFragmentationCsvHeader);
+            for (MoleculeDataModel tmpDataModel : aList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                try {
+                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
+                    tmpWriter.printf("%n%s%s%d%s%.4f%s%d%s%.4f",
+                            tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
+                            tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
+                            tmpFragmentDataModel.getAbsolutePercentage(), aSeparator,
+                            tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
+                            tmpFragmentDataModel.getMoleculePercentage());
+                } catch (Exception anException) {
+                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpDataModel.getName()), anException);
+                    tmpFailedExportFragments.add(tmpDataModel.getUniqueSmiles());
+                    //continue;
+                }
             }
-            FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-            tmpWriter.printf("%s" + aSeparator + "%d" + aSeparator + "%.3f" + aSeparator + "%d" + aSeparator + "%.2f\n",
-                    tmpFragmentDataModel.getUniqueSmiles(), tmpFragmentDataModel.getAbsoluteFrequency(),
-                    tmpFragmentDataModel.getAbsolutePercentage(), tmpFragmentDataModel.getMoleculeFrequency(),
-                    tmpFragmentDataModel.getMoleculePercentage());
+            return tmpFailedExportFragments;
         }
-        tmpWriter.close();
     }
     //
     /**
@@ -362,95 +578,98 @@ public class Exporter {
      * dialog for the user to determine a directory and file for the exported data.
      *
      * @param aFragmentDataModelList a list of FragmentDataModel instances to export
-     * @param aMoleculeDataModelList a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
-     * @param aFragmentationName     fragmentation name to be displayed in the header of the PDF file
-     * @return PDF file which contains the results of the fragmentation
-     * @throws FileNotFoundException
-     * @throws DocumentException
+     * @param aMoleculeDataModelListSize size of imported molecule list to display in the PDF document header
+     * @param aFragmentationName fragmentation name to be displayed in the header of the PDF file
+     * @param anImportedFileName name of the input file whose molecules were fragmented
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws FileNotFoundException if given file cannot be found
+     * @throws DocumentException if something goes wrong writing the document
      * @author Betül Sevindik
      */
-    private List<String> createFragmentationTabPdfFile(File aPdfFile,
-                                               List<MoleculeDataModel> aFragmentDataModelList,
-                                               ObservableList<MoleculeDataModel> aMoleculeDataModelList,
-                                               String aFragmentationName) throws FileNotFoundException, DocumentException {
-        if (aPdfFile == null || aFragmentDataModelList == null || aMoleculeDataModelList == null ||
-                aFragmentationName == null) {
+    private List<String> createFragmentsTabPdfFile(File aPdfFile,
+                                                   List<MoleculeDataModel> aFragmentDataModelList,
+                                                   int aMoleculeDataModelListSize,
+                                                   String aFragmentationName,
+                                                   String anImportedFileName) throws FileNotFoundException, DocumentException {
+        if (aPdfFile == null || aFragmentDataModelList == null || aMoleculeDataModelListSize == 0 ||
+                aFragmentationName == null || anImportedFileName == null) {
             return null;
         }
-        List<String> tmpFailedExportFragments = new LinkedList<>();
-        this.document = new Document(PageSize.A4);
-        this.document.setPageSize(this.document.getPageSize().rotate());
-        PdfWriter.getInstance(this.document, new FileOutputStream(aPdfFile.getPath()));
-        this.document.open();
-        float tmpCellLength[] = {70f, 120f, 50f, 50f, 55f, 55f}; // relative sizes
-        PdfPTable tmpFragmentationTable = new PdfPTable(tmpCellLength);
-        PdfPCell tmpSmilesStringCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.smiles"), fontFactory));
-        PdfPCell tmpFrequencyCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.frequency"), this.fontFactory));
-        PdfPCell tmpPercentageCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.percentage"), this.fontFactory));
-        PdfPCell tmpMolFrequencyCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.moleculeFrequency"), this.fontFactory));
-        PdfPCell tmpMolPercentageCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.moleculePercentage"), this.fontFactory));
-        PdfPCell tmpFragmentCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.fragment"), this.fontFactory));
-        Chunk tmpHeader = new Chunk(Message.get("Exporter.fragmentationTab.pdfCellHeader.header"),
-                FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
-        Paragraph tmpSpace = new Paragraph(" ");
-        tmpFragmentationTable.addCell(tmpFragmentCell);
-        tmpFragmentationTable.addCell(tmpSmilesStringCell);
-        tmpFragmentationTable.addCell(tmpFrequencyCell);
-        tmpFragmentationTable.addCell(tmpPercentageCell);
-        tmpFragmentationTable.addCell(tmpMolFrequencyCell);
-        tmpFragmentationTable.addCell(tmpMolPercentageCell);
-        for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
-            if(Thread.currentThread().isInterrupted()){
-                return null;
+        try (Document tmpPDFDocument = new Document(PageSize.A4)) {
+            List<String> tmpFailedExportFragments = new LinkedList<>();
+            tmpPDFDocument.setPageSize(tmpPDFDocument.getPageSize().rotate());
+            PdfWriter.getInstance(tmpPDFDocument, new FileOutputStream(aPdfFile.getPath()));
+            tmpPDFDocument.open();
+            float[] tmpCellLength = {70f, 120f, 50f, 50f, 55f, 55f}; // relative sizes, magic numbers
+            PdfPTable tmpFragmentationTable = new PdfPTable(tmpCellLength);
+            PdfPCell tmpSmilesStringCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.smiles"), Exporter.PDF_CELL_FONT));
+            PdfPCell tmpFrequencyCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.frequency"), Exporter.PDF_CELL_FONT));
+            PdfPCell tmpPercentageCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.percentage"), Exporter.PDF_CELL_FONT));
+            PdfPCell tmpMolFrequencyCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.moleculeFrequency"), Exporter.PDF_CELL_FONT));
+            PdfPCell tmpMolPercentageCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.moleculePercentage"), Exporter.PDF_CELL_FONT));
+            PdfPCell tmpFragmentCell = new PdfPCell(new Paragraph(Message.get("Exporter.fragmentationTab.pdfCellHeader.fragment"), Exporter.PDF_CELL_FONT));
+            Chunk tmpHeader = new Chunk(Message.get("Exporter.fragmentationTab.pdfCellHeader.header"),
+                    FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
+            Paragraph tmpSpace = new Paragraph(" ");
+            tmpFragmentationTable.addCell(tmpSmilesStringCell);
+            tmpFragmentationTable.addCell(tmpFragmentCell);
+            tmpFragmentationTable.addCell(tmpFrequencyCell);
+            tmpFragmentationTable.addCell(tmpPercentageCell);
+            tmpFragmentationTable.addCell(tmpMolFrequencyCell);
+            tmpFragmentationTable.addCell(tmpMolPercentageCell);
+            DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
+            for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
+                int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
+                String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
+                double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
+                int tmpMoleculeFrequency = tmpFragmentDataModel.getMoleculeFrequency();
+                String tmpStringMoleculeFrequency = String.format("%d", tmpMoleculeFrequency);
+                String tmpStringAbsolutePercentage = tmpPercentageForm.format(tmpAbsolutePercentage);
+                double tmpMoleculePercentage = tmpFragmentDataModel.getMoleculePercentage();
+                String tmpStringMoleculePercentage = tmpPercentageForm.format(tmpMoleculePercentage);
+                //creates an image of the fragment
+                PdfPCell tmpImageFragmentCell = new PdfPCell();
+                tmpImageFragmentCell.setFixedHeight(85f);
+                IAtomContainer tmpStructureOfFragment;
+                try {
+                    tmpStructureOfFragment = tmpFragmentDataModel.getAtomContainer();
+                } catch (CDKException anException) {
+                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
+                    tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
+                    continue;
+                }
+                //cannot be imported because com.lowagie.text.Image is already imported
+                javafx.scene.image.Image tmpImageStructureOfFragment = DepictionUtil.depictImageWithZoom(tmpStructureOfFragment, 4.0);
+                BufferedImage tmpBufferedImageFragment = SwingFXUtils.fromFXImage(tmpImageStructureOfFragment, null);
+                Image tmpImageFragment = this.convertToITextImage(tmpBufferedImageFragment);
+                //inserts the data into the table
+                PdfPCell tmpCellOfFrequency = new PdfPCell(new Paragraph(tmpStringAbsoluteFrequency));
+                tmpCellOfFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfPercentage = new PdfPCell(new Paragraph(tmpStringAbsolutePercentage));
+                tmpCellOfPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfMolFrequency = new PdfPCell(new Paragraph(tmpStringMoleculeFrequency));
+                tmpCellOfMolFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                PdfPCell tmpCellOfMolPercentage = new PdfPCell(new Paragraph(tmpStringMoleculePercentage));
+                tmpCellOfMolPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                tmpImageFragmentCell.addElement(tmpImageFragment);
+                tmpFragmentationTable.addCell(tmpFragmentDataModel.getUniqueSmiles());
+                tmpFragmentationTable.addCell(tmpImageFragmentCell);
+                tmpFragmentationTable.addCell(tmpCellOfFrequency);
+                tmpFragmentationTable.addCell(tmpCellOfPercentage);
+                tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
+                tmpFragmentationTable.addCell(tmpCellOfMolPercentage);
             }
-            FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
-            int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
-            String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
-            double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
-            int tmpMoleculeFrequency = tmpFragmentDataModel.getMoleculeFrequency();
-            String tmpStringMoleculeFrequency = String.format("%d", tmpMoleculeFrequency);
-            String tmpStringAbsolutePercentage = String.format("%.3f", tmpAbsolutePercentage);
-            double tmpMoleculePercentage = tmpFragmentDataModel.getMoleculePercentage();
-            String tmpStringMoleculePercentage = String.format("%.2f", tmpMoleculePercentage);
-            //creates an image of the fragment
-            PdfPCell tmpImageFragmentCell = new PdfPCell();
-            tmpImageFragmentCell.setFixedHeight(85f);
-            IAtomContainer tmpStructureOfFragment;
-            try {
-                tmpStructureOfFragment = tmpFragmentDataModel.getAtomContainer();
-            } catch (CDKException anException) {
-                Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDataModel.getName(), anException);
-                tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                continue;
-            }
-            javafx.scene.image.Image tmpImageStructureOfFragment = DepictionUtil.depictImageWithZoom(tmpStructureOfFragment,
-                    4.0);
-            BufferedImage tmpBufferedImageFragment = SwingFXUtils.fromFXImage(tmpImageStructureOfFragment, null);
-            Image tmpImageFragment = this.getITextImage(tmpBufferedImageFragment);
-            //inserts the data into the table
-            PdfPCell tmpCellOfFrequency = new PdfPCell(new Paragraph(tmpStringAbsoluteFrequency));
-            tmpCellOfFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPCell tmpCellOfPercentage = new PdfPCell(new Paragraph(tmpStringAbsolutePercentage));
-            tmpCellOfPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPCell tmpCellOfMolFrequency = new PdfPCell(new Paragraph(tmpStringMoleculeFrequency));
-            tmpCellOfMolFrequency.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPCell tmpCellOfMolPercentage = new PdfPCell(new Paragraph(tmpStringMoleculePercentage));
-            tmpCellOfMolPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            tmpImageFragmentCell.addElement(tmpImageFragment);
-            tmpFragmentationTable.addCell(tmpImageFragmentCell);
-            tmpFragmentationTable.addCell(tmpFragmentDataModel.getUniqueSmiles());
-            tmpFragmentationTable.addCell(tmpCellOfFrequency);
-            tmpFragmentationTable.addCell(tmpCellOfPercentage);
-            tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
-            tmpFragmentationTable.addCell(tmpCellOfMolPercentage);
+            tmpPDFDocument.add(tmpHeader);
+            tmpPDFDocument.add(tmpSpace);
+            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelListSize, aFragmentationName, anImportedFileName));
+            tmpPDFDocument.add(tmpSpace);
+            tmpPDFDocument.add(tmpFragmentationTable);
+            return tmpFailedExportFragments;
         }
-        this.document.add(tmpHeader);
-        this.document.add(tmpSpace);
-        this.document.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelList.size(), aFragmentationName));
-        this.document.add(tmpSpace);
-        this.document.add(tmpFragmentationTable);
-        this.document.close();
-        return tmpFailedExportFragments;
     }
     //
     /**
@@ -460,123 +679,133 @@ public class Exporter {
      * @param aFragmentDataModelListSize size of list of FragmentDataModel instances to export
      * @param aMoleculeDataModelList     a list MoleculeDataModel needed for the fragmentation report at the head of the exported document
      * @param aFragmentationName         fragmentation name to retrieve the specific set of fragments from the molecule data models
-     * @throws FileNotFoundException
-     * @throws DocumentException
+     * @param anImportedFileName name of the input file whose molecules were fragmented
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws FileNotFoundException if given file cannot be found
+     * @throws DocumentException if something goes wrong writing the document
      * @author Betül Sevindik
      */
     private List<String> createItemizationTabPdfFile(File aPdfFile,
                                              int aFragmentDataModelListSize,
                                              ObservableList<MoleculeDataModel> aMoleculeDataModelList,
-                                             String aFragmentationName) throws FileNotFoundException, DocumentException {
+                                             String aFragmentationName,
+                                             String anImportedFileName) throws FileNotFoundException, DocumentException {
         if (aPdfFile == null || aFragmentDataModelListSize == 0 ||
-                aMoleculeDataModelList == null || aMoleculeDataModelList.size() == 0 ||
-                aFragmentationName == null || aFragmentationName.isEmpty()) {
+                aMoleculeDataModelList == null || aMoleculeDataModelList.isEmpty() ||
+                aFragmentationName == null || aFragmentationName.isEmpty() ||
+                anImportedFileName == null || anImportedFileName.isEmpty()) {
             return null;
         }
-        List<String> tmpFailedExportFragments = new LinkedList<>();
-        this.document = new Document(PageSize.A4);
-        PdfWriter.getInstance(this.document, new FileOutputStream(aPdfFile.getPath()));
-        this.document.open();
-        // creates the pdf table
-        Chunk tmpItemizationTabHeader = new Chunk(Message.get("Exporter.itemsTab.pdfCellHeader.header"),
-                FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
-        Paragraph tmpSpace = new Paragraph(" ");
-        this.document.add(tmpItemizationTabHeader);
-        this.document.add(tmpSpace);
-        this.document.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName));
-        this.document.add(tmpSpace);
-        for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
-            if(Thread.currentThread().isInterrupted()){
-                return null;
-            }
-            PdfPTable tmpTable = new PdfPTable(2);
-            PdfPTable tmpFragmentTable = new PdfPTable(1);
-            tmpTable.setWidths(new int[]{40, 80});
-            PdfPCell tmpNameCell = new PdfPCell(new Paragraph(Message.get("Exporter.itemsTab.pdfCellHeader.name"), this.fontFactory));
-            tmpNameCell.setFixedHeight(55f);
-            PdfPCell tmpStructureCell = new PdfPCell(new Paragraph(Message.get("Exporter.itemsTab.pdfCellHeader.structure"), this.fontFactory));
-            tmpStructureCell.setFixedHeight(120f);
-            tmpTable.addCell(tmpNameCell);
-            String tmpName = tmpMoleculeDataModel.getName();
-            tmpTable.addCell(tmpName);
-            tmpTable.addCell(tmpStructureCell);
-            // Image of molecule
-            IAtomContainer tmpMoleculeStructure;
-            try {
-                tmpMoleculeStructure = tmpMoleculeDataModel.getAtomContainer();
-            } catch (CDKException anException) {
-                Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpMoleculeDataModel.getName(), anException);
-                tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
-                continue;
-            }
-            PdfPCell tmpMoleculeStructureCell = new PdfPCell();
-            tmpMoleculeStructureCell.setFixedHeight(120f);
-            javafx.scene.image.Image tmpMoleculeImage = DepictionUtil.depictImageWithZoom(tmpMoleculeStructure,
-                    3.0);
-            BufferedImage tmpBufferedImageOfMolecule = SwingFXUtils.fromFXImage(tmpMoleculeImage, null);
-            Image tmpMolecule = this.getITextImage(tmpBufferedImageOfMolecule);
-            tmpMoleculeStructureCell.addElement(tmpMolecule);
-            tmpTable.addCell(tmpMoleculeStructureCell);
-            PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph(Message.get("Exporter.itemsTab.pdfCellHeader.fragments"), this.fontFactory));
-            tmpCellOfFragment.setHorizontalAlignment(Element.ALIGN_CENTER);
-            tmpFragmentTable.addCell(tmpCellOfFragment);
-            this.document.add(tmpTable);
-            this.document.add(tmpFragmentTable);
-            if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
-                continue;
-            }
-            List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificAlgorithm(aFragmentationName);
-            PdfPTable tmpFragmentationTable2 = new PdfPTable(3);
-            for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
-                if(Thread.currentThread().isInterrupted()){
+        try (Document tmpPDFDocument = new Document(PageSize.A4)) {
+            List<String> tmpFailedExportFragments = new LinkedList<>();
+            PdfWriter.getInstance(tmpPDFDocument, new FileOutputStream(aPdfFile.getPath()));
+            tmpPDFDocument.open();
+            // creates the pdf table
+            Chunk tmpItemizationTabHeader = new Chunk(Message.get("Exporter.itemsTab.pdfCellHeader.header"),
+                    FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
+            Paragraph tmpSpace = new Paragraph(" ");
+            tmpPDFDocument.add(tmpItemizationTabHeader);
+            tmpPDFDocument.add(tmpSpace);
+            tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelListSize, aMoleculeDataModelList.size(), aFragmentationName, anImportedFileName));
+            tmpPDFDocument.add(tmpSpace);
+            for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
+                if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
-                ArrayList<PdfPCell> tmpCell = new ArrayList<PdfPCell>(3); //magic number, see line 487 (loop below): "for (; tmpImagesNumbers < 3; tmpImagesNumbers++){"
-                int tmpImagesNumbers = 0;
-                for (; tmpImagesNumbers < 3; tmpImagesNumbers++) {
-                    if(Thread.currentThread().isInterrupted()){
+                PdfPTable tmpTable = new PdfPTable(2);
+                PdfPTable tmpFragmentTable = new PdfPTable(1);
+                tmpTable.setWidths(new int[]{40, 80});
+                PdfPCell tmpNameCell = new PdfPCell(new Paragraph(Message.get("Exporter.itemsTab.pdfCellHeader.name"), Exporter.PDF_CELL_FONT));
+                tmpNameCell.setFixedHeight(55f);
+                PdfPCell tmpStructureCell = new PdfPCell(new Paragraph(Message.get("Exporter.itemsTab.pdfCellHeader.structure"), Exporter.PDF_CELL_FONT));
+                tmpStructureCell.setFixedHeight(120f);
+                tmpTable.addCell(tmpNameCell);
+                String tmpName = tmpMoleculeDataModel.getName();
+                tmpTable.addCell(tmpName);
+                tmpTable.addCell(tmpStructureCell);
+                // Image of molecule
+                IAtomContainer tmpMoleculeStructure;
+                try {
+                    tmpMoleculeStructure = tmpMoleculeDataModel.getAtomContainer();
+                } catch (CDKException anException) {
+                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpMoleculeDataModel.getName()), anException);
+                    tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
+                    continue;
+                }
+                PdfPCell tmpMoleculeStructureCell = new PdfPCell();
+                tmpMoleculeStructureCell.setFixedHeight(120f);
+                //cannot be imported because com.lowagie.text.Image is already imported
+                javafx.scene.image.Image tmpMoleculeImage = DepictionUtil.depictImageWithZoom(tmpMoleculeStructure, 3.0);
+                BufferedImage tmpBufferedImageOfMolecule = SwingFXUtils.fromFXImage(tmpMoleculeImage, null);
+                Image tmpMolecule = this.convertToITextImage(tmpBufferedImageOfMolecule);
+                tmpMoleculeStructureCell.addElement(tmpMolecule);
+                tmpTable.addCell(tmpMoleculeStructureCell);
+                PdfPCell tmpCellOfFragment = new PdfPCell(new Paragraph(Message.get("Exporter.itemsTab.pdfCellHeader.fragments"), Exporter.PDF_CELL_FONT));
+                tmpCellOfFragment.setHorizontalAlignment(Element.ALIGN_CENTER);
+                tmpFragmentTable.addCell(tmpCellOfFragment);
+                tmpPDFDocument.add(tmpTable);
+                tmpPDFDocument.add(tmpFragmentTable);
+                if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
+                    continue;
+                }
+                List<FragmentDataModel> tmpFragmentList = tmpMoleculeDataModel.getFragmentsOfSpecificFragmentation(aFragmentationName);
+                int tmpFragmentsPerLine = 3; //magic number
+                PdfPTable tmpFragmentationTable2 = new PdfPTable(tmpFragmentsPerLine);
+                for (int tmpFragmentNumber = 0; tmpFragmentNumber < tmpFragmentList.size(); ) {
+                    if (Thread.currentThread().isInterrupted()) {
                         return null;
                     }
-                    if (tmpFragmentNumber >= tmpFragmentList.size()) {
-                        break;
+                    ArrayList<PdfPCell> tmpCell = new ArrayList<>(3);
+                    int tmpImagesNumbers = 0;
+                    for (; tmpImagesNumbers < tmpFragmentsPerLine; tmpImagesNumbers++) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            return null;
+                        }
+                        if (tmpFragmentNumber >= tmpFragmentList.size()) {
+                            break;
+                        }
+                        FragmentDataModel tmpFragmentDatModel = tmpFragmentList.get(tmpFragmentNumber);
+                        IAtomContainer tmpFragmentStructure;
+                        try {
+                            tmpFragmentStructure = tmpFragmentDatModel.getAtomContainer();
+                        } catch (CDKException anException) {
+                            Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpMoleculeDataModel.getName()), anException);
+                            tmpFailedExportFragments.add(tmpFragmentDatModel.getUniqueSmiles());
+                            continue;
+                        }
+                        if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
+                            continue;
+                        }
+                        String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
+                        javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithText(
+                                tmpFragmentStructure,
+                                3.0,
+                                BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT,
+                                BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT,
+                                tmpFrequency);
+                        BufferedImage tmpBufferedImageOfFragment = SwingFXUtils.fromFXImage(tmpFragmentImage, null);
+                        Image tmpFragment = this.convertToITextImage(tmpBufferedImageOfFragment);
+                        PdfPCell cell = new PdfPCell();
+                        cell.addElement(tmpFragment);
+                        tmpCell.add(cell);
+                        tmpFragmentNumber++;
                     }
-                    FragmentDataModel tmpFragmentDatModel = tmpFragmentList.get(tmpFragmentNumber);
-                    IAtomContainer tmpFragmentStructure;
-                    try {
-                        tmpFragmentStructure = tmpFragmentDatModel.getAtomContainer();
-                    } catch (CDKException anException) {
-                        Exporter.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDatModel.getName(), anException);
-                        tmpFailedExportFragments.add(tmpFragmentDatModel.getUniqueSmiles());
-                        continue;
+                    for (int tmpCellIterator = 0; tmpCellIterator < tmpFragmentsPerLine; tmpCellIterator++) {
+                        if(Thread.currentThread().isInterrupted()){
+                            return null;
+                        }
+                        if (tmpCellIterator < tmpImagesNumbers) {
+                            tmpFragmentationTable2.addCell(tmpCell.get(tmpCellIterator));
+                        } else {
+                            tmpFragmentationTable2.addCell(new Paragraph(""));
+                        }
                     }
-                    if(!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)){
-                        continue;
-                    }
-                    String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificAlgorithm(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
-                    javafx.scene.image.Image tmpFragmentImage = DepictionUtil.depictImageWithText(tmpFragmentStructure, 3.0, BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT, BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT, tmpFrequency);
-                    BufferedImage tmpBufferedImageOfFragment = SwingFXUtils.fromFXImage(tmpFragmentImage, null);
-                    Image tmpFragment = this.getITextImage(tmpBufferedImageOfFragment);
-                    PdfPCell cell = new PdfPCell();
-                    cell.addElement(tmpFragment);
-                    tmpCell.add(cell);
-                    tmpFragmentNumber++;
                 }
-                for (int tmpCellIterator = 0; tmpCellIterator < 3; tmpCellIterator++) {
-                    if(Thread.currentThread().isInterrupted()){
-                        return null;
-                    }
-                    if (tmpCellIterator < tmpImagesNumbers) {
-                        tmpFragmentationTable2.addCell(tmpCell.get(tmpCellIterator));
-                    } else {
-                        tmpFragmentationTable2.addCell(new Paragraph(""));
-                    }
-                }
+                tmpPDFDocument.add(tmpFragmentationTable2);
+                tmpPDFDocument.newPage();
             }
-            this.document.add(tmpFragmentationTable2);
-            this.document.newPage();
+            return tmpFailedExportFragments;
         }
-        this.document.close();
-        return tmpFailedExportFragments;
     }
     //
     /**
@@ -594,88 +823,81 @@ public class Exporter {
      * @param aFile                  File to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param generate2DCoordinates  boolean value whether to generate 2D coordinates
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws IOException if sth goes wrong
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabSingleSDFile(File aFile,
                                                             List<MoleculeDataModel> aFragmentDataModelList,
-                                                            boolean generate2DCoordinates) {
-        if (aFragmentDataModelList == null) {
+                                                            boolean generate2DCoordinates) throws IOException {
+        if (aFile == null || aFragmentDataModelList == null) {
             return null;
         }
-        try {
-            if (aFile != null) {
-                List<String> tmpFailedExportFragments = new LinkedList<>();
-                int tmpExportedFragmentsCounter = 0;
-                int tmpFailedFragmentExportCounter = 0;
-                try (
-                        PrintWriter tmpWriter = new PrintWriter(aFile.getPath());
-                        BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
-                        SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
-                ) {
-                    //specifying format of export
-                    //setting whether to always use MDL V3000 format
-                    tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
-                    //accessing the WriteAromaticBondType setting
-                    tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
-                    //iterating through the fragments held by the list of fragments
-                    for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
-                        if(Thread.currentThread().isInterrupted()){
-                            return null;
-                        }
-                        IAtomContainer tmpFragment;
-                        try {
-                            tmpFragment = tmpFragmentDataModel.getAtomContainer();
-                        } catch (CDKException anException) {
-                            Exporter.LOGGER.log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDataModel.getName(), anException);
-                            tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                            tmpFailedFragmentExportCounter++;
-                            continue;
-                        }
-                        IAtomContainer tmpFragmentClone = null;
-                        boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
-                        boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
-                        if (!tmpPoint3dAvailable) {
-                            tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
-                                    tmpPoint2dAvailable, generate2DCoordinates);
-                        } //else: given 3D info is used
-                        //writing to file
-                        try {
-                            if (tmpPoint3dAvailable) {
-                                tmpSDFWriter.write(tmpFragment);
-                            } else {
-                                tmpSDFWriter.write(tmpFragmentClone);
-                            }
-                            tmpExportedFragmentsCounter++;
-                        } catch (CDKException anException) {
-                            //retrying with a kekulized clone of the fragment
-                            try {
-                                if (tmpPoint3dAvailable) {
-                                    tmpFragmentClone = tmpFragment.clone();
-                                }
-                                Kekulization.kekulize(tmpFragmentClone);
-                                tmpSDFWriter.write(tmpFragmentClone);
-                                tmpExportedFragmentsCounter++;
-                            } catch (CDKException | CloneNotSupportedException anInnerException) {
-                                Exporter.LOGGER.log(Level.SEVERE, anInnerException.toString(), anInnerException);
-                                tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                                tmpFailedFragmentExportCounter++;
-                            }
-                        }
-                    }
-                }
-                Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as single SD file " +
-                                "(export of %d fragments failed). File name: %s", tmpExportedFragmentsCounter,
-                        tmpFailedFragmentExportCounter, aFile.getName()));
-                return tmpFailedExportFragments;
+        List<String> tmpFailedExportFragments = new LinkedList<>();
+        int tmpExportedFragmentsCounter = 0;
+        int tmpFailedFragmentExportCounter = 0;
+        try (
+                PrintWriter tmpWriter = new PrintWriter(aFile.getPath());
+                BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
+        ) {
+            //specifying format of export
+            //setting whether to always use MDL V3000 format
+            tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+            //accessing the WriteAromaticBondType setting
+            try {
+                tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
+            } catch (CDKException anException) {
+                Exporter.LOGGER.log(Level.WARNING, "Exporting fragments with aromatic bond types not possible", anException);
             }
-        } catch (NullPointerException | IOException | CDKException anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return null;
+            //iterating through the fragments held by the list of fragments
+            for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                IAtomContainer tmpFragment;
+                try {
+                    tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                    IAtomContainer tmpFragmentClone = null;
+                    boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
+                    boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
+                    if (!tmpPoint3dAvailable) {
+                        tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
+                                tmpPoint2dAvailable, generate2DCoordinates);
+                    } //else: given 3D info is used
+                    //writing to file
+                    try {
+                        if (tmpPoint3dAvailable) {
+                            tmpSDFWriter.write(tmpFragment);
+                        } else {
+                            tmpSDFWriter.write(tmpFragmentClone);
+                        }
+                        tmpExportedFragmentsCounter++;
+                    } catch (CDKException anException) {
+                        //retrying with a kekulized clone of the fragment - going to main catch block if sth goes wrong
+                        if (tmpPoint3dAvailable) {
+                            tmpFragmentClone = tmpFragment.clone();
+                        }
+                        Kekulization.kekulize(tmpFragmentClone);
+                        tmpSDFWriter.write(tmpFragmentClone);
+                        tmpExportedFragmentsCounter++;
+                    }
+                } catch (CDKException | CloneNotSupportedException anException) {
+                    Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
+                    tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
+                    tmpFailedFragmentExportCounter++;
+                    //continue;
+                }
+            }
+            int finalTmpExportedFragmentsCounter = tmpExportedFragmentsCounter;
+            int finalTmpFailedFragmentExportCounter = tmpFailedFragmentExportCounter;
+            Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d fragments as single SD file " +
+                            "(export of %d fragments failed). File name: %s", finalTmpExportedFragmentsCounter,
+                    finalTmpFailedFragmentExportCounter, aFile.getName()));
+            return tmpFailedExportFragments;
         }
-        return null;
     }
     //
-
     /**
      * Exports the chemical data of the given fragments as separate MDL SD files to an
      * empty folder generated at the chosen path. The molecular formula of each fragment is used as name for each respective
@@ -692,96 +914,93 @@ public class Exporter {
      * @param aDirectory             directory to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param generate2DCoordinates  boolean value whether to generate 2D coordinates
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws IOException if sth goes wrong
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabSeparateSDFiles(File aDirectory,
                                                                List<MoleculeDataModel> aFragmentDataModelList,
-                                                               boolean generate2DCoordinates) {
-        if (aFragmentDataModelList == null) {
+                                                               boolean generate2DCoordinates) throws IOException {
+        if (aDirectory == null || !aDirectory.isDirectory() || aFragmentDataModelList == null) {
             return null;
         }
-        try {
-            if (aDirectory != null && aDirectory.isDirectory()) {
-                List<String> tmpFailedExportFragments = new LinkedList<>();
-                String tmpSDFFilesDirectoryPathName = aDirectory
-                        + File.separator
-                        + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
-                String tmpFinalSDFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpSDFFilesDirectoryPathName, File.separator);
-                File tmpSDFilesDirectory = Files.createDirectory(Paths.get(tmpFinalSDFilesDirectoryPathName)).toFile();
-                int tmpExportedFragmentsCounter = 0;
-                int tmpFailedFragmentExportCounter = 0;
-                //iterating through the fragments held by the list of fragments
-                for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
-                    if(Thread.currentThread().isInterrupted()){
-                        return null;
-                    }
-                    IAtomContainer tmpFragment;
+        List<String> tmpFailedExportFragments = new LinkedList<>();
+        String tmpSDFFilesDirectoryPathName = aDirectory
+                + File.separator
+                + Exporter.FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
+        // this is not how this FileUtil method should be used, but I'll allow it
+        String tmpFinalSDFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpSDFFilesDirectoryPathName, File.separator);
+        File tmpSDFilesDirectory = Files.createDirectory(Paths.get(tmpFinalSDFilesDirectoryPathName)).toFile();
+        int tmpExportedFragmentsCounter = 0;
+        int tmpFailedFragmentExportCounter = 0;
+        //iterating through the fragments held by the list of fragments
+        for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
+            IAtomContainer tmpFragment;
+            try {
+                tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                IAtomContainer tmpFragmentClone = null;
+                boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
+                boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
+                //checking whether 3D information are available
+                if (!tmpPoint3dAvailable) {
+                    tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
+                            tmpPoint2dAvailable, generate2DCoordinates);
+                } //else: given 3D info is used
+                //generating file
+                String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
+                String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
+                        + File.separator + tmpMolecularFormula, ".sdf");
+                File tmpSDFile = new File(tmpSDFilePathName);
+                //writing to file
+                try (
+                        PrintWriter tmpWriter = new PrintWriter(tmpSDFile);
+                        BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                        SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
+                ) {
+                    //specifying format of export
+                    //setting whether to always use MDL V3000 format
+                    tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+                    //accessing the WriteAromaticBondType setting
                     try {
-                        tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                        tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
                     } catch (CDKException anException) {
-                        Exporter.LOGGER.log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDataModel.getName(), anException);
-                        tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                        tmpFailedFragmentExportCounter++;
-                        continue;
+                        Exporter.LOGGER.log(Level.WARNING, "Exporting fragments with aromatic bond types not possible", anException);
                     }
-                    IAtomContainer tmpFragmentClone = null;
-                    boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
-                    boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
-                    if (!tmpPoint3dAvailable) {
-                        tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
-                                tmpPoint2dAvailable, generate2DCoordinates);
-                    }
-                    //generating file
-                    String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
-                    String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
-                            + File.separator + tmpMolecularFormula, ".sdf");
-                    File tmpSDFile = new File(tmpSDFilePathName);
-                    //writing to file
-                    try (
-                            PrintWriter tmpWriter = new PrintWriter(tmpSDFile);
-                            BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
-                            SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
-                    ) {
-                        try {
-                            //specifying format of export
-                            tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());   //setting whether to always use MDL V3000 format
-                            tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");   //accessing the WriteAromaticBondType setting
-                            if (tmpPoint3dAvailable) {
-                                tmpSDFWriter.write(tmpFragment);
-                            } else {
-                                tmpSDFWriter.write(tmpFragmentClone);
-                            }
-                            tmpExportedFragmentsCounter++;
-                        } catch (CDKException anException) {
-                            //retrying with a kekulized clone of the fragment
-                            try {
-                                if (tmpPoint3dAvailable) {
-                                    tmpFragmentClone = tmpFragment.clone();
-                                }
-                                Kekulization.kekulize(tmpFragmentClone);
-                                tmpSDFWriter.write(tmpFragmentClone);
-                                tmpExportedFragmentsCounter++;
-                            } catch (CDKException | CloneNotSupportedException anInnerException) {
-                                Exporter.LOGGER.log(Level.SEVERE, anInnerException.toString(), anInnerException);
-                                tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                                tmpFailedFragmentExportCounter++;
-                            }
+                    try {
+                        if (tmpPoint3dAvailable) {
+                            tmpSDFWriter.write(tmpFragment);
+                        } else {
+                            tmpSDFWriter.write(tmpFragmentClone);
                         }
+                        tmpExportedFragmentsCounter++;
+                    } catch (CDKException anException) {
+                        //retrying with a kekulized clone of the fragment - going to main catch block if sth goes wrong
+                        if (tmpPoint3dAvailable) {
+                            tmpFragmentClone = tmpFragment.clone();
+                        }
+                        Kekulization.kekulize(tmpFragmentClone);
+                        tmpSDFWriter.write(tmpFragmentClone);
+                        tmpExportedFragmentsCounter++;
                     }
                 }
-                Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as separate SD files " +
-                                "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
-                        tmpFailedFragmentExportCounter, tmpSDFilesDirectory.getName()));
-                return tmpFailedExportFragments;
+            } catch (CDKException | CloneNotSupportedException anException) {
+                Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
+                tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
+                tmpFailedFragmentExportCounter++;
+                //continue;
             }
-        } catch (NullPointerException | IOException | IllegalArgumentException anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return null;
         }
-        return null;
+        int finalTmpExportedFragmentsCounter = tmpExportedFragmentsCounter;
+        int finalTmpFailedFragmentExportCounter = tmpFailedFragmentExportCounter;
+        Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d fragments as separate SD files " +
+                        "(export of %d fragments failed). Folder name: %s", finalTmpExportedFragmentsCounter,
+                finalTmpFailedFragmentExportCounter, tmpSDFilesDirectory.getName()));
+        return tmpFailedExportFragments;
     }
     //
-
     /**
      * Opens a directory chooser and exports the chemical data of the given fragments as PDB files to an empty folder
      * generated at the chosen path. The molecular formula of each fragment is used as name for the associated file. In
@@ -793,55 +1012,51 @@ public class Exporter {
      * @param aDirectory             directory to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param generate2DCoordinates  boolean value whether to generate 2D coordinates
+     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
+     * @throws IOException if sth goes wrong
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabPDBFiles(File aDirectory,
                                                         List<MoleculeDataModel> aFragmentDataModelList,
-                                                        boolean generate2DCoordinates) {
-        if (aFragmentDataModelList == null) {
+                                                        boolean generate2DCoordinates) throws IOException {
+        if (aDirectory == null || !aDirectory.isDirectory() || aFragmentDataModelList == null) {
             return null;
         }
-        try {
-            if (aDirectory != null && aDirectory.isDirectory()) {
-                List<String> tmpFailedExportFragments = new LinkedList<>();
-                String tmpPDBFilesDirectoryPathName = aDirectory
-                        + File.separator
-                        + FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
-                String tmpFinalPDBFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectoryPathName, File.separator);
-                File tmpPDBFilesDirectory = Files.createDirectory(Paths.get(tmpFinalPDBFilesDirectoryPathName)).toFile();
-                int tmpExportedFragmentsCounter = 0;
-                int tmpFailedFragmentExportCounter = 0;
-                //iterating through the fragments held by the list of fragments
-                for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
-                    if(Thread.currentThread().isInterrupted()){
-                        return null;
-                    }
-                    IAtomContainer tmpFragment;
+        List<String> tmpFailedExportFragments = new LinkedList<>();
+        String tmpPDBFilesDirectoryPathName = aDirectory
+                + File.separator
+                + Exporter.FRAGMENTS_EXPORT_DIRECTORY_NAME + "_" + FileUtil.getTimeStampFileNameExtension();
+        // this is not how this FileUtil method should be used, but I'll allow it
+        String tmpFinalPDBFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectoryPathName, File.separator);
+        File tmpPDBFilesDirectory = Files.createDirectory(Paths.get(tmpFinalPDBFilesDirectoryPathName)).toFile();
+        int tmpExportedFragmentsCounter = 0;
+        int tmpFailedFragmentExportCounter = 0;
+        //iterating through the fragments held by the list of fragments
+        for (MoleculeDataModel tmpFragmentDataModel : aFragmentDataModelList) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
+            IAtomContainer tmpFragment;
+            try {
+                tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                IAtomContainer tmpFragmentClone = null;
+                boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
+                boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
+                //checking whether 3D information are available
+                if (!tmpPoint3dAvailable) {
+                    tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
+                            tmpPoint2dAvailable, generate2DCoordinates);
+                } //else: given 3D info is used
+                //generating file
+                String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
+                String tmpPDBFilePathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectory
+                        + File.separator + tmpMolecularFormula, ".pdb");
+                File tmpPDBFile = new File(tmpPDBFilePathName);
+                //writing to file
+                try (
+                        PDBWriter tmpPDBWriter = new PDBWriter(new FileOutputStream(tmpPDBFile));
+                ) {
                     try {
-                        tmpFragment = tmpFragmentDataModel.getAtomContainer();
-                    } catch (CDKException anException) {
-                        Exporter.LOGGER.log(Level.SEVERE, anException.toString() + "_" + tmpFragmentDataModel.getName(), anException);
-                        tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                        tmpFailedFragmentExportCounter++;
-                        continue;
-                    }
-                    IAtomContainer tmpFragmentClone = null;
-                    boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
-                    boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
-                    //checking whether 3D information are available
-                    if (!tmpPoint3dAvailable) {
-                        tmpFragmentClone = this.handleFragmentWithNo3dInformationAvailable(tmpFragment,
-                                tmpPoint2dAvailable, generate2DCoordinates);
-                    }
-                    //generating file
-                    String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
-                    String tmpPDBFilePathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectory
-                            + File.separator + tmpMolecularFormula, ".pdb");
-                    File tmpPDBFile = new File(tmpPDBFilePathName);
-                    //writing to file
-                    try (
-                            PDBWriter tmpPDBWriter = new PDBWriter(new FileOutputStream(tmpPDBFile));
-                    ) {
                         if (tmpPoint3dAvailable) {
                             tmpPDBWriter.writeMolecule(tmpFragment);
                         } else {
@@ -849,31 +1064,37 @@ public class Exporter {
                         }
                         tmpExportedFragmentsCounter++;
                     } catch (CDKException anException) {
-                        Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                        tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                        tmpFailedFragmentExportCounter++;
+                        //retrying with a kekulized clone of the fragment - going to main catch block if sth goes wrong
+                        if (tmpPoint3dAvailable) {
+                            tmpFragmentClone = tmpFragment.clone();
+                        }
+                        Kekulization.kekulize(tmpFragmentClone);
+                        tmpPDBWriter.write(tmpFragmentClone);
+                        tmpExportedFragmentsCounter++;
                     }
                 }
-                Exporter.LOGGER.log(Level.INFO, String.format("Exported %d fragments as PDB files " +
-                                "(export of %d fragments failed). Folder name: %s", tmpExportedFragmentsCounter,
-                        tmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
-                return tmpFailedExportFragments;
+            } catch (CDKException | CloneNotSupportedException anException) {
+                Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
+                tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
+                tmpFailedFragmentExportCounter++;
+                //continue;
             }
-        } catch (NullPointerException | IOException | IllegalArgumentException anException) {
-            Exporter.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            return null;
         }
-        return null;
+        int finalTmpFailedFragmentExportCounter = tmpFailedFragmentExportCounter;
+        int finalTmpExportedFragmentsCounter = tmpExportedFragmentsCounter;
+        Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d fragments as PDB files " +
+                        "(export of %d fragments failed). Folder name: %s", finalTmpExportedFragmentsCounter,
+                finalTmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
+        return tmpFailedExportFragments;
     }
     //
-
     /**
-     * Converts a buffered image into a com.lowagie.text image (necessary for pdf export with iText) and returns it.
+     * Converts a buffered image into a com.lowagie.text.Image (necessary for pdf export with iText) and returns it.
      *
      * @param aBufferedImage buffered image to be converted
-     * @return com.lowagie.text image
+     * @return com.lowagie.text.Image
      */
-    private Image getITextImage(BufferedImage aBufferedImage) {
+    private Image convertToITextImage(BufferedImage aBufferedImage) {
         try {
             ByteArrayOutputStream tmpByteArrayOS = new ByteArrayOutputStream();
             ImageIO.write(aBufferedImage, "png", tmpByteArrayOS);
@@ -885,43 +1106,49 @@ public class Exporter {
         }
     }
     //
-
     /**
      * Creates a header with general information for the PDf files.
      *
      * @param aFragmentDataModelListSize size of list of fragments
      * @param aMoleculeDataModelListSize size of list of molecules
-     * @param anAlgorithmName name of the used algorithm
+     * @param aFragmentationName name of the fragmentation task to display in the header
+     * @param anImportedFileName name of the input file whose molecules were fragmented
      * @return fragmentation report table for a PDF file header
      * @author Betül Sevindik
      */
     private PdfPTable createHeaderTable(
             int aFragmentDataModelListSize,
             int aMoleculeDataModelListSize,
-            String anAlgorithmName) {
-        int tmpFragmentNumbers = aFragmentDataModelListSize;
-        int tmpMoleculeNumbers = aMoleculeDataModelListSize;
+            String aFragmentationName,
+            String anImportedFileName) {
         //creates the header
-        float tmpCellLengthIntro[] = {60f, 60f}; // relative sizes
+        float[] tmpCellLengthIntro = {60f, 60f}; // relative sizes
         PdfPTable tmpTableIntro = new PdfPTable(tmpCellLengthIntro);
-        PdfPCell tmpIntroCell1 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.algorithmUsed"), this.fontFactory));
-        PdfPCell tmpIntroCell2 = new PdfPCell(new Paragraph(anAlgorithmName));
-        PdfPCell tmpIntroCell3 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.numberOfMolecules"), this.fontFactory));
-        PdfPCell tmpIntroCell4 = new PdfPCell(new Paragraph(String.valueOf(tmpMoleculeNumbers)));
-        PdfPCell tmpIntroCell5 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.numberOfFragments"), this.fontFactory));
-        PdfPCell tmpIntroCell6 = new PdfPCell(new Paragraph(String.valueOf(tmpFragmentNumbers)));
+        PdfPCell tmpIntroCell1 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.fragmentationName"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell2 = new PdfPCell(new Paragraph(aFragmentationName));
+        PdfPCell tmpIntroCell3 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.numberOfMolecules"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell4 = new PdfPCell(new Paragraph(String.valueOf(aMoleculeDataModelListSize)));
+        PdfPCell tmpIntroCell5 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.numberOfFragments"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell6 = new PdfPCell(new Paragraph(String.valueOf(aFragmentDataModelListSize)));
+        PdfPCell tmpIntroCell7 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.fileName"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell8 = new PdfPCell(new Paragraph(anImportedFileName));
+        PdfPCell tmpIntroCell9 = new PdfPCell(new Paragraph(Message.get("Exporter.pdfHeader.timeStamp"), Exporter.PDF_CELL_FONT));
+        PdfPCell tmpIntroCell10 = new PdfPCell(new Paragraph(MiscUtil.getTimestampInStandardFormat()));
         tmpTableIntro.addCell(tmpIntroCell1);
         tmpTableIntro.addCell(tmpIntroCell2);
         tmpTableIntro.addCell(tmpIntroCell3);
         tmpTableIntro.addCell(tmpIntroCell4);
         tmpTableIntro.addCell(tmpIntroCell5);
         tmpTableIntro.addCell(tmpIntroCell6);
+        tmpTableIntro.addCell(tmpIntroCell7);
+        tmpTableIntro.addCell(tmpIntroCell8);
+        tmpTableIntro.addCell(tmpIntroCell9);
+        tmpTableIntro.addCell(tmpIntroCell10);
         return tmpTableIntro;
     }
     //
-
     /**
-     * Opens a FileChooser to be able to save a file.
+     * Opens a FileChooser to be able to save a file. Returns null if the user cancelled the dialog.
      *
      * @param aParentStage Stage where the FileChooser should be shown
      * @param aDescription file type description to be used in the dialog (not the file extension)
@@ -931,17 +1158,17 @@ public class Exporter {
      * @throws NullPointerException if the given stage is null
      * @author Betül Sevindik
      */
-    private File saveFile(Stage aParentStage, String aDescription, String anExtension, String aFileName) throws NullPointerException {
+    private File chooseFile(Stage aParentStage, String aDescription, String anExtension, String aFileName) throws NullPointerException {
         Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
         FileChooser tmpFileChooser = new FileChooser();
         tmpFileChooser.setTitle((Message.get("Exporter.fileChooser.title")));
-        FileChooser.ExtensionFilter tmpExtensionfilter2 = new FileChooser.ExtensionFilter(aDescription, anExtension);
-        tmpFileChooser.getExtensionFilters().addAll(tmpExtensionfilter2);
+        FileChooser.ExtensionFilter tmpExtensionFilter2 = new FileChooser.ExtensionFilter(aDescription, anExtension);
+        tmpFileChooser.getExtensionFilters().addAll(tmpExtensionFilter2);
         tmpFileChooser.setInitialFileName(aFileName);
         tmpFileChooser.setInitialDirectory(new File(this.settingsContainer.getRecentDirectoryPathSetting()));
         File tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         if (tmpFile != null) {
-            this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent());
+            this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent() + File.separator);
         }
         return tmpFile;
     }
@@ -962,6 +1189,7 @@ public class Exporter {
         if (!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Exporter.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpDirectoryChooser.setInitialDirectory(tmpRecentDirectory);
         File tmpDirectory = tmpDirectoryChooser.showDialog(aParentStage);
@@ -974,14 +1202,14 @@ public class Exporter {
     /**
      * Optionally completes 2D coordinates of a given fragment by setting all z-coordinates to 0 or generates new
      * pseudo-3D-coordinates for it using a structure diagram generator. As a third option, all coordinates of the given
-     * atoms can be set to 0 (or if an exception occurs at coordinate generation. Which option is applied depends on the
+     * atoms can be set to 0 (or if an exception occurs at coordinate generation). Which option is applied depends on the
      * given parameters. Initially, the given fragment is cloned but if this fails, the original, given atom container
      * is processed and the exception logged.
      *
      * @param aFragment                  atom container of a fragment to handle
      * @param aPoint2dAvailable          whether 2D atom coordinates are available; this is not checked by this method!
      * @param aGenerate2dAtomCoordinates whether 2D atom coordinates should be generated (if the first parameter is true,
-     *                                   this parameter does not matter
+     *                                   this parameter does not matter)
      * @return a clone of the given fragment with 3D atom coordinates created according to the given parameters
      * @author Samuel Behr
      */
@@ -1018,62 +1246,6 @@ public class Exporter {
             ChemUtil.generateZero3DCoordinates(tmpFragmentClone);
         }
         return tmpFragmentClone;
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="public properties" defaultstate="collapsed">
-    /**
-     * Returns Document for pdf export
-     *
-     * @return Document
-     */
-    public Document getDocument(){
-        return this.document;
-    }
-    //
-    /**
-     * Returns export destination file
-     *
-     * @return destination File
-     */
-    public File getFile() {
-        return this.file;
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="enum" defaultstate="collapsed">
-    /**
-     * Enum for different file types to export
-     */
-    public enum ExportTypes {
-        /**
-         * enum value for item csv file
-         */
-        ITEM_CSV_FILE,
-        /**
-         * enum value for item pdf file
-         */
-        ITEM_PDF_FILE,
-        /**
-         * enum value for fragments csv file
-         */
-        FRAGMENT_CSV_FILE,
-        /**
-         * enum value for fragments pdf file
-         */
-        FRAGMENT_PDF_FILE,
-        /**
-         * enum value for single sd file
-         */
-        SINGLE_SD_FILE,
-        /**
-         * enum value for sd file
-         */
-        SD_FILE,
-        /**
-         * enum value for pdb file
-         */
-        PDB_FILE
     }
     //</editor-fold>
 }

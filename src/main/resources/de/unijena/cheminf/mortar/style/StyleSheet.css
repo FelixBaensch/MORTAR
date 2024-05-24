@@ -23,10 +23,13 @@
  * SOFTWARE.
  */
 
+/*hides empty cells and rows in the MORTAR data tables*/
 .table-row-cell:empty {
     -fx-background-color: white;
 }
-
 .table-row-cell:empty .table-cell {
     -fx-border-width: 0px;
+}
+.root{
+    -fx-font-size: 9pt;
 }

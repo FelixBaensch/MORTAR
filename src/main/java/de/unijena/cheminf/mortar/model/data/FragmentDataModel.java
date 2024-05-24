@@ -68,20 +68,24 @@ public class FragmentDataModel extends MoleculeDataModel {
     private double moleculePercentage;
     //
     /**
-     * List of parent molecules, which contains this fragment
+     * List of parent molecules, which contain this fragment.
      */
-    private Set<MoleculeDataModel> parentMolecules;
+    private final Set<MoleculeDataModel> parentMolecules;
     //
     /**
-     * First or random parent molecule which contains this fragment
+     * First or random parent molecule which contains this fragment.
      */
     private MoleculeDataModel parentMolecule;
     //</editor-fold>
+    //
+    //<editor-fold desc="private static final class constants">
     /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentDataModel.class.getName());
+    //</editor-fold>
     //
+    //<editor-fold desc="constructors">
     /**
      * Constructor, sets absolute frequency to 0. Molecular information is taken from the given unique SMILES code. The
      * data is not kept as atom container.
@@ -97,7 +101,8 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = ConcurrentHashMap.newKeySet(); // sounds weird but to set the number of the total molecule set kills the performance
+        // sounds weird but to set the number of the total molecule set as expected size kills the performance
+        this.parentMolecules = ConcurrentHashMap.newKeySet();
     }
     //
     /**
@@ -112,26 +117,34 @@ public class FragmentDataModel extends MoleculeDataModel {
         this.absolutePercentage = 0.;
         this.moleculeFrequency = 0;
         this.moleculePercentage = 0.;
-        this.parentMolecules = ConcurrentHashMap.newKeySet(); // sounds weird but to set the number of the total molecule set kills the performance
+        // sounds weird but to set the number of the total molecule set as expected size kills the performance
+        this.parentMolecules = ConcurrentHashMap.newKeySet();
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="public methods">
     /**
      * Increases the absolute frequency by one.
      */
-    public void incrementAbsoluteFrequency(){
+    public void incrementAbsoluteFrequency() {
         this.absoluteFrequency += 1;
     }
     //
     /**
      * Increases the molecule frequency by one.
      */
-    public void incrementMoleculeFrequency(){
+    public void incrementMoleculeFrequency() {
         this.moleculeFrequency += 1;
     }
+    //</editor-fold>
     //
-    //<editor-fold desc="public properties" defaultstate="collapsed">
+    //<editor-fold desc="public properties get" defaultstate="collapsed">
     /**
-     * Returns absolute frequency of this fragment
+     * Returns absolute frequency of this fragment.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
+     * CellValueFactory of the frequency column is set to a PropertyValueFactory that uses "absoluteFrequency" as
+     * property string to invoke this method; see also DataModelPropertiesForTableView enum).
+     *
      * @return int absoluteFrequency
      */
     public int getAbsoluteFrequency() {
@@ -139,7 +152,11 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
-     * Returns absolute frequency of this fragment as a percentage
+     * Returns absolute frequency of this fragment as a percentage.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
+     * CellValueFactory of the percentage column is set to a PropertyValueFactory that uses "absolutePercentage" as
+     * property string to invoke this method; see also DataModelPropertiesForTableView enum).
+     *
      * @return double absolutePercentage
      */
     public double getAbsolutePercentage() {
@@ -147,7 +164,11 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
-     * Returns molecule frequency of this fragment
+     * Returns molecule frequency of this fragment.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
+     * CellValueFactory of the molecule frequency column is set to a PropertyValueFactory that uses "moleculeFrequency" as
+     * property string to invoke this method; see also DataModelPropertiesForTableView enum).
+     *
      * @return int moleculeFrequency
      */
     public int getMoleculeFrequency() {
@@ -155,7 +176,11 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
-     * Returns molecule frequency of this fragment as a percentage
+     * Returns molecule frequency of this fragment as a percentage.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
+     * CellValueFactory of the molecule percentage column is set to a PropertyValueFactory that uses "moleculePercentage" as
+     * property string to invoke this method; see also DataModelPropertiesForTableView enum).
+     *
      * @return double moleculePercentage
      */
     public double getMoleculePercentage() {
@@ -163,121 +188,134 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
-     * Returns list of parent molecules which contains this fragment
-     * @return list of parent molecules
+     * Returns list of parent molecules which contains this fragment.
+     *
+     * @return set of parent molecules
      */
-    public Set<MoleculeDataModel> getParentMolecules(){
+    public Set<MoleculeDataModel> getParentMolecules() {
         return this.parentMolecules;
     }
     //
     /**
-     * Returns the MoleculeDataModel that occurs at first pos in the list of parent molecules
+     * Returns the MoleculeDataModel that occurs at first pos in the list of parent molecules. Returns null if no parent
+     * molecules are set.
      *
      * @return MoleculeDataModel first molecule of list of parent molecules
      */
     public MoleculeDataModel getFirstParentMolecule() {
-        if(this.parentMolecules.size() < 1){
+        if (this.parentMolecules.isEmpty()) {
             return null;
         }
-        if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
+        if (this.parentMolecule == null) {
+            this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
         }
         return this.parentMolecule;
     }
     //
     /**
-     * Creates and returns an ImageView of first parent molecule as 2D structure of this fragment
+     * Creates and returns an ImageView of first parent molecule as 2D structure of this fragment.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
+     * CellValueFactory of the parents column is set to a PropertyValueFactory that uses "parentMoleculeStructure" as
+     * property string to invoke this method; see also DataModelPropertiesForTableView enum).
      *
-     * NOTE: Do not delete or comment this method, it is used by reflection
-     * @return ImageView
+     * @return ImageView of the first parent molecule or error image if none is set
      */
-    public ImageView getParentMoleculeStructure() {
-        if(this.parentMolecules.size() < 1){
-            return null;
+    public ImageView getParentMoleculeStructure() throws NullPointerException {
+        if (this.parentMolecules.isEmpty()) {
+            return new ImageView(DepictionUtil.depictErrorImage("No parent molecules", 250, 250));
         }
-        if(this.parentMolecule == null){
-            this.parentMolecule = this.parentMolecules.stream().findFirst().get();
+        if (this.parentMolecule == null) {
+            this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
         }
         try {
+            // throws NullPointerException if parent molecule is null
             IAtomContainer tmpAtomContainer = this.parentMolecule.getAtomContainer();
             return new ImageView(DepictionUtil.depictImageWithHeight(tmpAtomContainer, super.getStructureImageHeight()));
-        } catch (CDKException aCDKException) {
-            FragmentDataModel.LOGGER.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString() + "_" + this.parentMolecule.getName(), aCDKException);
-            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
+        } catch (CDKException | NullPointerException anException) {
+            FragmentDataModel.LOGGER.log(
+                    Level.SEVERE,
+                    String.format("Molecule name: %s; exception: %s", this.parentMolecule.getName(), anException.toString()),
+                    anException);
+            return new ImageView(DepictionUtil.depictErrorImage(anException.getMessage(), 250, 250));
         }
     }
     //
     /**
-     * Returns the name of first parent molecule of this fragment
+     * Returns the name of first parent molecule of this fragment.
+     * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
+     * CellValueFactory of the parent mol name column is set to a PropertyValueFactory that uses "parentMoleculeName" as
+     * property string to invoke this method; see also DataModelPropertiesForTableView enum).
      *
-     * @return String
+     * @return parent molecule name or an empty string if no parent molecule is set
      */
-    public String getParentMoleculeName(){
-        if(this.parentMolecules.size() < 1){
-            return null;
+    public String getParentMoleculeName() {
+        if (this.parentMolecules.isEmpty()) {
+            return "";
         }
-        if(this.parentMolecule == null){
-           this.parentMolecule = this.parentMolecules.stream().findFirst().get();
+        if (this.parentMolecule == null) {
+            this.parentMolecule = this.parentMolecules.stream().findFirst().orElse(null);
         }
-        return this.parentMolecule.getName();
+        return this.parentMolecule == null ? "" : this.parentMolecule.getName();
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="public properties set">
     /**
-     * Sets the absolute frequency
+     * Sets the absolute frequency.
      *
      * @param aValue absolute frequency
      */
     public void setAbsoluteFrequency(int aValue) {
-        if(aValue < 0 ){
+        if (aValue < 0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
         this.absoluteFrequency = aValue;
     }
     //
     /**
-     * Sets the molecule frequency
+     * Sets the molecule frequency.
      *
      * @param aValue molecule frequency
      */
     public void setMoleculeFrequency(int aValue) {
-        if(aValue < 0 ){
+        if (aValue < 0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
         this.moleculeFrequency = aValue;
     }
     //
     /**
-     * Sets the absolute frequency percentage
+     * Sets the absolute frequency percentage.
      *
      * @param aValue absolute frequency percentage
      */
-    public void setAbsolutePercentage(double aValue){
-        if(aValue < 0.0 ){
+    public void setAbsolutePercentage(double aValue) {
+        if (aValue < 0.0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
-        if(!Double.isFinite(aValue)){
+        if (!Double.isFinite(aValue)) {
             throw new IllegalArgumentException("aValue must be finite.");
         }
         this.absolutePercentage = aValue;
     }
     //
     /**
-     * Sets the molecule frequency percentage
+     * Sets the molecule frequency percentage.
      *
      * @param aValue molecule frequency percentage
      */
-    public void setMoleculePercentage(double aValue){
-        if(aValue < 0.0 ){
+    public void setMoleculePercentage(double aValue) {
+        if (aValue < 0.0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
-        if(!Double.isFinite(aValue)){
+        if (!Double.isFinite(aValue)) {
             throw new IllegalArgumentException("aValue must be finite.");
         }
         this.moleculePercentage = aValue;
     }
     //
     /**
-     * Sets the parent molecule of this fragment
+     * Sets the parent molecule of this fragment.
      *
      * @param aParentMolecule parent molecule
      */

@@ -26,22 +26,22 @@
 package de.unijena.cheminf.mortar.controller;
 
 /**
- * Enum for tab names
+ * Enum for tab names.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public enum TabNames {
     /**
-     * enum value for molecules tab
+     * enum value for molecules tab.
      */
     MOLECULES,
     /**
-     * enum value for fragments tab
+     * enum value for fragments tab.
      */
     FRAGMENTS,
     /**
-     * enum value for items tab
+     * enum value for items tab.
      */
     ITEMIZATION;
 }

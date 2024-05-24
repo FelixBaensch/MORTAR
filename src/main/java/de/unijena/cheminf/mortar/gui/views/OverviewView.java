@@ -60,15 +60,16 @@ import java.util.Objects;
 public class OverviewView extends AnchorPane {
     //<editor-fold desc="public static final class constants", defaultstate="collapsed">
     /**
-     * Width of columns and rows per page label of the overview view
+     * Width of columns and rows per page label of the overview view.
      */
     public static final double OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH = 10.0;
     //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     /**
      * Grid pane used to style the view.
      */
-    private GridPane mainGridPane;
+    private final GridPane mainGridPane;
     /**
      * Grid pane that holds the displayed structure images and can be reconfigured by the user.
      */
@@ -77,31 +78,31 @@ public class OverviewView extends AnchorPane {
      * Horizontal box that holds the nodes placed in the bottom-left corner of the view being the text fields and
      * apply button for the reconfiguration of the structure grid pane.
      */
-    private HBox bottomLeftHBox;
+    private final HBox bottomLeftHBox;
     /**
      * Horizontal box that holds the nodes placed in the bottom-right corner of the view.
      */
-    private HBox bottomRightHBox;
+    private final HBox bottomRightHBox;
     /**
      * Text field for columns per page input.
      */
-    private TextField columnsPerPageTextField;
+    private final TextField columnsPerPageTextField;
     /**
      * Text field for rows per page input.
      */
-    private TextField rowsPerPageTextField;
+    private final TextField rowsPerPageTextField;
     /**
      * Button to apply changes to the structure grid pane configuration.
      */
-    private Button applyButton;
+    private final Button applyButton;
     /**
      * Button to apply the default configuration to the structure grid pane.
      */
-    private Button defaultButton;
+    private final Button defaultButton;
     /**
      * Button to close the view.
      */
-    private Button closeButton;
+    private final Button closeButton;
     /**
      * Pagination that holds the structure grid pane and enables the user to switch pages.
      */
@@ -109,13 +110,12 @@ public class OverviewView extends AnchorPane {
     /**
      * Vertical box to be shown when the dimensions of the structure images fell below a limit.
      */
-    private VBox imageDimensionsBelowLimitVBox;
+    private final VBox imageDimensionsBelowLimitVBox;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor.
-     *
      * Initializes the main components of the overview view and does the basic styling. The grid pane to display the
      * structure images that is to be hold by the pagination node of the overview view gets generated, configured and
      * styled. The horizontal boxes holding the text fields and buttons of the lower side of the view are not yet being
@@ -133,10 +133,12 @@ public class OverviewView extends AnchorPane {
         super();
         //
         //<editor-fold desc="checks" defaultstate="collapsed">
-        if (aColumnsPerPage <= 0)
+        if (aColumnsPerPage <= 0) {
             throw new IllegalArgumentException("aColumnsPerPage (Integer value) was <= to 0.");
-        if (aRowsPerPage <= 0)
+        }
+        if (aRowsPerPage <= 0) {
             throw new IllegalArgumentException("aRowsPerPage (Integer value) was <= to 0.");
+        }
         //</editor-fold>
         //
         //mainGridPane to style the view and set up its components
@@ -216,7 +218,7 @@ public class OverviewView extends AnchorPane {
         tmpColumnsPerPageLabel.setMaxWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
         tmpColumnsPerPageLabel.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpColumnsPerPageLabel.setAlignment(Pos.CENTER_LEFT);
-        Tooltip tmpColumnsPerPageTooltip = new Tooltip(Message.get("OverviewView.columnsPerPageLabel.tooltip"));
+        Tooltip tmpColumnsPerPageTooltip = GuiUtil.createTooltip(Message.get("OverviewView.columnsPerPageLabel.tooltip"));
         tmpColumnsPerPageLabel.setTooltip(tmpColumnsPerPageTooltip);
         this.columnsPerPageTextField = new TextField();
         this.columnsPerPageTextField.setMinWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
@@ -225,7 +227,7 @@ public class OverviewView extends AnchorPane {
         this.columnsPerPageTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.columnsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         this.columnsPerPageTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aColumnsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+                aColumnsPerPage, GuiUtil.getPositiveIntegerFilter(false)));
         this.columnsPerPageTextField.setTooltip(tmpColumnsPerPageTooltip);
         Label tmpRowsPerPageLabel = new Label(Message.get("OverviewView.rowsPerPageLabel.text"));
         tmpRowsPerPageLabel.setMinWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
@@ -233,7 +235,7 @@ public class OverviewView extends AnchorPane {
         tmpRowsPerPageLabel.setMaxWidth(OverviewView.OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH);
         tmpRowsPerPageLabel.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         tmpRowsPerPageLabel.setAlignment(Pos.CENTER_LEFT);
-        Tooltip tmpRowsPerPageTooltip = new Tooltip(Message.get("OverviewView.rowsPerPageLabel.tooltip"));
+        Tooltip tmpRowsPerPageTooltip = GuiUtil.createTooltip(Message.get("OverviewView.rowsPerPageLabel.tooltip"));
         tmpRowsPerPageLabel.setTooltip(tmpRowsPerPageTooltip);
         this.rowsPerPageTextField = new TextField();
         this.rowsPerPageTextField.setMinWidth(GuiDefinitions.PAGINATION_TEXT_FIELD_WIDTH);
@@ -242,22 +244,14 @@ public class OverviewView extends AnchorPane {
         this.rowsPerPageTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.rowsPerPageTextField.setAlignment(Pos.CENTER_RIGHT);
         this.rowsPerPageTextField.setTextFormatter(new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                aRowsPerPage, GuiUtil.getPositiveIntegerWithoutZeroFilter()));
+                aRowsPerPage, GuiUtil.getPositiveIntegerFilter(false)));
         this.rowsPerPageTextField.setTooltip(tmpRowsPerPageTooltip);
         //
-        this.applyButton = new Button(Message.get("OverviewView.applyButton.text"));
-        this.applyButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.applyButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.applyButton.setTooltip(new Tooltip(Message.get("OverviewView.applyButton.tooltip")));
+        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.applyButton.text"));
+        this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("OverviewView.applyButton.tooltip")));
         //
-        this.defaultButton = new Button(Message.get("OverviewView.defaultButton.text"));
-        this.defaultButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.defaultButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.defaultButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.defaultButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.defaultButton.setTooltip(new Tooltip(Message.get("OverviewView.defaultButton.tooltip")));
+        this.defaultButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.defaultButton.text"));
+        this.defaultButton.setTooltip(GuiUtil.createTooltip(Message.get("OverviewView.defaultButton.tooltip")));
         //
         this.bottomLeftHBox.getChildren().addAll(
                 tmpColumnsPerPageLabel, this.columnsPerPageTextField,
@@ -278,12 +272,8 @@ public class OverviewView extends AnchorPane {
         this.bottomRightHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         this.bottomRightHBox.setAlignment(Pos.CENTER_RIGHT);
         //
-        this.closeButton = new Button(Message.get("OverviewView.closeButton.text"));
-        this.closeButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.closeButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.closeButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
-        this.closeButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.closeButton.setTooltip(new Tooltip(Message.get("OverviewView.closeButton.tooltip")));
+        this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.closeButton.text"));
+        this.closeButton.setTooltip(GuiUtil.createTooltip(Message.get("OverviewView.closeButton.tooltip")));
         //
         this.bottomRightHBox.getChildren().add(this.closeButton);
         //
@@ -389,7 +379,7 @@ public class OverviewView extends AnchorPane {
      * @param aColSpan Integer value for number of columns for the node to span
      * @param aRowSpan Integer value for number of rows for the node to span
      */
-    private void addNodeToMainGridPane(Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan){
+    private void addNodeToMainGridPane(Node aNode, int aColIndex, int aRowIndex, int aColSpan, int aRowSpan) {
         //method is private and only called with magic numbers
         this.mainGridPane.add(aNode, aColIndex, aRowIndex, aColSpan, aRowSpan);
     }

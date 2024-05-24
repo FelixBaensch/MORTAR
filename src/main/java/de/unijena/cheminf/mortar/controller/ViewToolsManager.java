@@ -25,26 +25,18 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
-import de.unijena.cheminf.mortar.preference.BooleanPreference;
-import de.unijena.cheminf.mortar.preference.IPreference;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
 import de.unijena.cheminf.mortar.preference.PreferenceUtil;
-import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
-import de.unijena.cheminf.mortar.preference.SingleNumberPreference;
 import de.unijena.cheminf.mortar.preference.SingleTermPreference;
 
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
@@ -90,18 +82,25 @@ public class ViewToolsManager {
      * OverviewViewController instance.
      */
     private final OverviewViewController overviewViewController;
+    /**
+     * Configuration class to read resource file paths from.
+     */
+    private final IConfiguration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
     /**
      * Constructor that initialises the view tool instances and checks whether they are all valid (see {@link #checkViewTools()}).
      * Opens a GUI exception alert if they are not.
+     *
+     * @param aConfiguration configuration instance to read resource file paths from
      */
-    public ViewToolsManager() {
+    public ViewToolsManager(IConfiguration aConfiguration) {
+        this.configuration = aConfiguration;
         this.viewToolsArray = new IViewToolController[2];
-        this.histogramViewController = new HistogramViewController();
+        this.histogramViewController = new HistogramViewController(this.configuration);
         this.viewToolsArray[0] = this.histogramViewController;
-        this.overviewViewController = new OverviewViewController();
+        this.overviewViewController = new OverviewViewController(this.configuration);
         this.viewToolsArray[1] = this.overviewViewController;
         try {
             this.checkViewTools();
@@ -191,7 +190,7 @@ public class ViewToolsManager {
             if (Objects.isNull(tmpViewTool)) {
                 continue;
             }
-            List<Property> tmpSettings = tmpViewTool.settingsProperties();
+            List<Property<?>> tmpSettings = tmpViewTool.settingsProperties();
             if (Objects.isNull(tmpSettings)) {
                 continue;
             }
@@ -202,13 +201,14 @@ public class ViewToolsManager {
                 PreferenceContainer tmpPrefContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSettings, tmpFilePath);
                 tmpPrefContainer.writeRepresentation();
             } catch (NullPointerException | IllegalArgumentException | IOException | SecurityException anException) {
-                ViewToolsManager.LOGGER.log(Level.WARNING, "View tools settings persistence went wrong, exception: "
-                        + anException.toString(), anException);
+                ViewToolsManager.LOGGER.log(Level.WARNING,
+                        String.format("View tools settings persistence went wrong, exception: %s", anException.toString()),
+                        anException);
                 GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
                         Message.get("Error.ExceptionAlert.Header"),
                         Message.get("ViewToolsManager.Error.settingsPersistence"),
                         anException);
-                continue;
+                //continue;
             }
         }
     }
@@ -228,14 +228,15 @@ public class ViewToolsManager {
                 try {
                     tmpContainer = new PreferenceContainer(tmpViewToolsSettingsFile);
                 } catch (IllegalArgumentException | IOException anException) {
-                    ViewToolsManager.LOGGER.log(Level.WARNING, "Unable to reload settings of view tool "
-                            + tmpClassName + " : " + anException.toString(), anException);
+                    ViewToolsManager.LOGGER.log(Level.WARNING,
+                            String.format("Unable to reload settings of view tool %s: %s", tmpClassName, anException.toString()),
+                            anException);
                     continue;
                 }
-                this.updatePropertiesFromPreferences(tmpViewTool.settingsProperties(), tmpContainer);
+                PreferenceUtil.updatePropertiesFromPreferences(tmpViewTool.settingsProperties(), tmpContainer);
             } else {
                 //settings will remain in default
-                ViewToolsManager.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpClassName + " available.");
+                ViewToolsManager.LOGGER.log(Level.WARNING, "No persisted settings for {0} available.", tmpClassName);
             }
         }
     }
@@ -243,90 +244,28 @@ public class ViewToolsManager {
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
     /**
-     * Sets the values of the given properties according to the preferences in the given container with the same name.
-     * If no matching preference for a given property is found, the value will remain in its default setting.
-     */
-    private void updatePropertiesFromPreferences(List<Property> aPropertiesList, PreferenceContainer aPreferenceContainer) {
-        for (Property tmpSettingProperty : aPropertiesList) {
-            String tmpPropertyName = tmpSettingProperty.getName();
-            if (aPreferenceContainer.containsPreferenceName(tmpPropertyName)) {
-                IPreference[] tmpPreferences = aPreferenceContainer.getPreferences(tmpPropertyName);
-                try {
-                    if (tmpSettingProperty instanceof SimpleBooleanProperty) {
-                        BooleanPreference tmpBooleanPreference = (BooleanPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpBooleanPreference.getContent());
-                    } else if (tmpSettingProperty instanceof SimpleIntegerProperty) {
-                        SingleIntegerPreference tmpIntPreference = (SingleIntegerPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpIntPreference.getContent());
-                    } else if (tmpSettingProperty instanceof SimpleDoubleProperty) {
-                        SingleNumberPreference tmpDoublePreference = (SingleNumberPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpDoublePreference.getContent());
-                    } else if (tmpSettingProperty instanceof SimpleEnumConstantNameProperty || tmpSettingProperty instanceof SimpleStringProperty) {
-                        SingleTermPreference tmpStringPreference = (SingleTermPreference) tmpPreferences[0];
-                        tmpSettingProperty.setValue(tmpStringPreference.getContent());
-                    } else {
-                        //setting will remain in default
-                        ViewToolsManager.LOGGER.log(Level.WARNING, "Setting " + tmpPropertyName + " is of unknown type.");
-                    }
-                } catch (ClassCastException | IllegalArgumentException anException) {
-                    //setting will remain in default
-                    ViewToolsManager.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                }
-            } else {
-                //setting will remain in default
-                ViewToolsManager.LOGGER.log(Level.WARNING, "No persisted settings for " + tmpPropertyName + " available.");
-            }
-        }
-    }
-    /**
-     * Checks the available view tools and their settings for restrictions imposed by persistence. Throws an exception if
+     * Checks the available view tools and their settings for restrictions imposed by persistence. Throws an IOException if
      * anything does not meet the requirements.
+     * - setting names must be singletons
+     * - setting names and values must adhere to the preference input restrictions
+     * - setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
+     *
+     * @throws UnsupportedOperationException if a setting does not fulfil the requirements
      */
-    private void checkViewTools() throws Exception {
+    private void checkViewTools() throws UnsupportedOperationException {
         HashSet<String> tmpViewToolNames = new HashSet<>((int)(this.viewToolsArray.length * 1.5), 0.75f);
         for (IViewToolController tmpViewTool : this.viewToolsArray) {
             //view tool name should be singleton and must be persistable
             String tmpViewToolName = tmpViewTool.getViewToolNameForDisplay();
             if (!PreferenceUtil.isValidName(tmpViewToolName) || !SingleTermPreference.isValidContent(tmpViewToolName)) {
-                throw new Exception("View tool name " + tmpViewToolName + " is invalid.");
+                throw new UnsupportedOperationException(String.format("View tool name %s is invalid.", tmpViewToolName));
             }
             if (tmpViewToolNames.contains(tmpViewToolName)) {
-                throw new Exception("View tool name " + tmpViewToolName + " is used multiple times.");
+                throw new UnsupportedOperationException(String.format("View tool name %s is used multiple times.", tmpViewToolName));
             } else {
                 tmpViewToolNames.add(tmpViewToolName);
             }
-            //setting names must be singletons within the respective class
-            //setting names and values must adhere to the preference input restrictions
-            //setting values are only tested for their current state, not the entire possible input space! It is tested again at persistence
-            List<Property> tmpSettingsList = tmpViewTool.settingsProperties();
-            HashSet<String> tmpSettingNames = new HashSet<>((int) (tmpSettingsList.size() * 1.5), 0.75f);
-            for (Property tmpSetting : tmpSettingsList) {
-                if (!PreferenceUtil.isValidName(tmpSetting.getName())) {
-                    throw new Exception("Setting " + tmpSetting.getName() + " has an invalid name.");
-                }
-                if (tmpSettingNames.contains(tmpSetting.getName())) {
-                    throw new Exception("Setting name " + tmpSetting.getName() + " is used multiple times.");
-                } else {
-                    tmpSettingNames.add(tmpSetting.getName());
-                }
-                if (tmpSetting instanceof SimpleBooleanProperty) {
-                    //nothing to do here, booleans cannot have invalid values
-                } else if (tmpSetting instanceof SimpleIntegerProperty) {
-                    if (!SingleIntegerPreference.isValidContent(Integer.toString(((SimpleIntegerProperty) tmpSetting).get()))) {
-                        throw new Exception("Setting value " + ((SimpleIntegerProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                    }
-                } else if (tmpSetting instanceof SimpleDoubleProperty) {
-                    if (!SingleNumberPreference.isValidContent(((SimpleDoubleProperty) tmpSetting).get())) {
-                        throw new Exception("Setting value " + ((SimpleDoubleProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                    }
-                } else if (tmpSetting instanceof SimpleEnumConstantNameProperty || tmpSetting instanceof SimpleStringProperty) {
-                    if (!SingleTermPreference.isValidContent(((SimpleStringProperty) tmpSetting).get())) {
-                        throw new Exception("Setting value " + ((SimpleStringProperty) tmpSetting).get() + " of setting name " + tmpSetting.getName() + " is invalid.");
-                    }
-                } else {
-                    throw new Exception("Setting " + tmpSetting.getName() + " is of an invalid type.");
-                }
-            }
+            PreferenceUtil.checkPropertiesForPreferenceRestrictions(tmpViewTool.settingsProperties());
         }
     }
     //</editor-fold>

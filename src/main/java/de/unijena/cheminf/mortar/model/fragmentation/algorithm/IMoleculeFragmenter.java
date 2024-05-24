@@ -25,8 +25,11 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 
@@ -54,11 +57,13 @@ import java.util.Map;
  * {@link IMoleculeFragmenter#settingsProperties()}. Boolean settings must be implemented as
  * {@link javafx.beans.property.SimpleBooleanProperty}, integer settings as
  * {@link javafx.beans.property.SimpleIntegerProperty} etc. For settings where an option must be chosen from multiple
- * available ones, a special Property class is implemented in MORTAR, {@link SimpleEnumConstantNameProperty}. The
+ * available ones, two special Property classes are implemented in MORTAR, {@link SimpleEnumConstantNameProperty}
+ * and {@link SimpleIDisplayEnumConstantProperty}. The
  * options to choose from must be implemented as enum constants and the setting property linked to the enum. If changes
  * to the settings done in the GUI must be tested, it is recommended to override the Property.set() method and implement
  * the parameter test logic there. Tooltip texts for the settings must be given in a HashMap with setting (property) names
- * as keys and tooltip text as values (see {@link IMoleculeFragmenter#getSettingNameToTooltipTextMap()}). One setting that
+ * as keys and tooltip text as values (see {@link IMoleculeFragmenter#getSettingNameToTooltipTextMap()}).
+ * Similarly, names for the settings that are language-specific and can be displayed in the GUI must be given. One setting that
  * must be available is the fragment saturation setting that is already laid out in this interface, see below.
  * <br>
  * <br>More details can be found in the method documentations of this interface.
@@ -70,22 +75,188 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public interface IMoleculeFragmenter {
-    //<editor-fold desc="FragmentSaturationOption enum">
+    //<editor-fold desc="Enum FragmentSaturationOption">
     /**
-     * Enumeration of different ways to saturate free valences of returned fragment molecules
+     * Enumeration of different ways to saturate free valences of returned fragment molecules.
      */
-    public static enum FragmentSaturationOption {
+    public static enum FragmentSaturationOption implements IDisplayEnum {
         /**
          * Do not saturate free valences or use default of the respective fragmenter.
          */
-        NO_SATURATION,
-
+        NO_SATURATION(Message.get("IMoleculeFragmenter.FragmentSaturationOption.noSaturation.displayName"),
+                Message.get("IMoleculeFragmenter.FragmentSaturationOption.noSaturation.tooltip")),
         /**
          * Saturate free valences with (implicit) hydrogen atoms.
          */
-        HYDROGEN_SATURATION;
+        HYDROGEN_SATURATION(Message.get("IMoleculeFragmenter.FragmentSaturationOption.hydrogenSaturation.displayName"),
+                Message.get("IMoleculeFragmenter.FragmentSaturationOption.hydrogenSaturation.tooltip"));
+        /**
+         * Language-specific name for display in GUI.
+         */
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor setting the display name and tooltip.
+         *
+         * @param aDisplayName display name
+         * @param aTooltip tooltip text
+         */
+        private FragmentSaturationOption(String aDisplayName, String aTooltip) {
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltip;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
+        }
     }
     //</editor-fold>
+    //
+    //<editor-fold desc="Enum ElectronDonationModelOption">
+    /**
+     * Enum for available electron donation models that combined with a cycle finder algorithm is used to define an
+     * aromaticity model to use. Utility for defining the options in a GUI. The electron
+     * donation model specified in the constant name is used and a cycle finder algorithm set via the respective option.
+     */
+    public static enum ElectronDonationModelOption implements IDisplayEnum {
+        /**
+         * Daylight electron donation model.
+         */
+        DAYLIGHT(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.tooltip")),
+        /**
+         * CDK electron donation model.
+         */
+        CDK(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.tooltip")),
+        /**
+         * CDK electron donation model that additionally allows exocyclic bonds to contribute electrons to the aromatic system.
+         */
+        CDK_ALLOWING_EXOCYCLIC(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.tooltip")),
+        /**
+         * Pi bonds electron donation model.
+         */
+        PI_BONDS(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.tooltip"));
+        /**
+         * Language-specific name for display in GUI.
+         */
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor setting the display name and tooltip.
+         *
+         * @param aDisplayName display name
+         * @param aTooltip tooltip text
+         */
+        private ElectronDonationModelOption(String aDisplayName, String aTooltip) {
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltip;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
+        }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Enum CycleFinderOption">
+    /**
+     * Enum for defining which cycle finder algorithm should be used to define an aromaticity model. The electron
+     * donation model is set via the respective option. See CDK class "Cycles" for more detailed descriptions of the
+     * available cycle finders.
+     */
+    public static enum CycleFinderOption implements IDisplayEnum {
+        /**
+         * Algorithm that tries to find all possible rings in a given structure. Might cause IntractableException.
+         */
+        ALL(Message.get("IMoleculeFragmenter.CycleFinderOption.all.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.all.tooltip")),
+        /**
+         * Algorithm that looks for cycles usually checked by the CDK when detecting aromaticity.
+         */
+        CDK_AROMATIC_SET(Message.get("IMoleculeFragmenter.CycleFinderOption.cdkAromaticSet.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.cdkAromaticSet.tooltip")),
+        /**
+         * Gives the shortest cycles through each edge.
+         */
+        EDGE_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.edgeShort.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.edgeShort.tooltip")),
+        /**
+         * Unique set of essential cycles of a molecule.
+         */
+        ESSENTIAL(Message.get("IMoleculeFragmenter.CycleFinderOption.essential.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.essential.tooltip")),
+        /**
+         * Minimum Cycle Basis (MCB, aka. SSSR - smallest set of smallest rings).
+         */
+        MCB(Message.get("IMoleculeFragmenter.CycleFinderOption.mcb.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.mcb.tooltip")),
+        /**
+         * Union of all possible MCB cycle sets of a molecule.
+         */
+        RELEVANT(Message.get("IMoleculeFragmenter.CycleFinderOption.relevant.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.relevant.tooltip")),
+        /**
+         *  Shortest cycle through each triple of vertices.
+         */
+        TRIPLET_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.tripletShort.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.tripletShort.tooltip")),
+        /**
+         * Shortest cycles through each vertex.
+         */
+        VERTEX_SHORT(Message.get("IMoleculeFragmenter.CycleFinderOption.vertexShort.displayName"),
+                Message.get("IMoleculeFragmenter.CycleFinderOption.vertexShort.tooltip"));
+        /**
+         * Language-specific name for display in GUI.
+         */
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor setting the display name and tooltip.
+         *
+         * @param aDisplayName display name
+         * @param aTooltip tooltip text
+         */
+        private CycleFinderOption(String aDisplayName, String aTooltip) {
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltip;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
+        }
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Public static final constants">
     /**
      * Property key/name to assign a category to a fragment, represented by an IAtomContainer, e.g. 'aglycone' or
@@ -105,7 +276,7 @@ public interface IMoleculeFragmenter {
      *
      * @return list of settings represented by properties
      */
-    public List<Property> settingsProperties();
+    public List<Property<?>> settingsProperties();
 
     /**
      * Returns a map containing descriptive texts (values) for the settings with the given names (keys) to be used as
@@ -116,42 +287,43 @@ public interface IMoleculeFragmenter {
     public Map<String, String> getSettingNameToTooltipTextMap();
 
     /**
+     * Returns a map containing language-specific names (values) for the settings with the given names (keys) to be used
+     * in the GUI.
+     *
+     * @return map with display names
+     */
+    public Map<String, String> getSettingNameToDisplayNameMap();
+
+    /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
-     * The given name must be unique among the available fragmentation algorithms!
+     * The given name must be unique among the available fragmentation algorithms! It is mostly used internal for
+     * persistence. For other functionalities, the display name (see below) is used.
      *
      * @return algorithm name
      */
     public String getFragmentationAlgorithmName();
 
     /**
+     * Returns a language-specific name of the fragmenter to be used in the GUI.
+     * The given name must be unique among the available fragmentation algorithms!
+     *
+     * @return language-specific name for display in GUI
+     */
+    public String getFragmentationAlgorithmDisplayName();
+
+    /**
      * Returns the currently set option for saturating free valences on returned fragment molecules.
      *
      * @return the set option
      */
-    public String getFragmentSaturationSetting();
+    public FragmentSaturationOption getFragmentSaturationSetting();
 
     /**
      * Returns the property representing the setting for fragment saturation.
      *
      * @return setting property for fragment saturation
      */
-    public SimpleEnumConstantNameProperty fragmentSaturationSettingProperty();
-
-    /**
-     * Returns the currently set fragment saturation option as the respective enum constant.
-     *
-     * @return fragment saturation setting enum constant
-     */
-    public FragmentSaturationOption getFragmentSaturationSettingConstant();
-
-    /**
-     * Sets the option for saturating free valences on returned fragment molecules.
-     *
-     * @param anOptionName constant name (use name()) from FragmentSaturationOption enum
-     * @throws NullPointerException if the given name is null
-     * @throws IllegalArgumentException if the given string does not represent an enum constant
-     */
-    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException;
+    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty();
 
     /**
      * Sets the option for saturating free valences on returned fragment molecules.

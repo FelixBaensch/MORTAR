@@ -28,13 +28,17 @@ package de.unijena.cheminf.mortar.gui.views;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
+import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -43,6 +47,7 @@ import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.control.Tab;
@@ -58,8 +63,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -70,30 +75,29 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public class SettingsView extends AnchorPane {
-
     //<editor-fold desc="private class variables" defaultstate="collapsed">
-    private TabPane tabPane;
-    private BorderPane borderPane;
-    private Button cancelButton;
-    private Button applyButton;
-    private Button defaultButton;
-    private HBox hBoxRightSideButtons;
-    private HBox hBoxLeftSideButtons;
-    private HBox hBoxButtonsHBox;
-    private SelectionModel<Tab> selectionModel;
+    private final TabPane tabPane;
+    private final BorderPane borderPane;
+    private final Button cancelButton;
+    private final Button applyButton;
+    private final Button defaultButton;
+    private final HBox hBoxRightSideButtons;
+    private final HBox hBoxLeftSideButtons;
+    private final HBox hBoxButtonsHBox;
+    private final SelectionModel<Tab> selectionModel;
     //</editor-fold>
     //
     /**
-     * Constructor
+     * Constructor.
      */
     public SettingsView(){
         super();
         //borderPane
         this.borderPane = new BorderPane();
-        SettingsView.setTopAnchor(this.borderPane, 0.0);
-        SettingsView.setRightAnchor(this.borderPane, 0.0);
-        SettingsView.setLeftAnchor(this.borderPane, 0.0);
-        SettingsView.setBottomAnchor(this.borderPane, 0.0);
+        AnchorPane.setTopAnchor(this.borderPane, 0.0);
+        AnchorPane.setRightAnchor(this.borderPane, 0.0);
+        AnchorPane.setLeftAnchor(this.borderPane, 0.0);
+        AnchorPane.setBottomAnchor(this.borderPane, 0.0);
         //tabPane
         this.tabPane =  new TabPane();
         this.selectionModel = this.tabPane.getSelectionModel();
@@ -104,8 +108,8 @@ public class SettingsView extends AnchorPane {
         this.hBoxButtonsHBox.setStyle("-fx-background-color: LightGrey");
         this.borderPane.setBottom(hBoxButtonsHBox);
         //-left side
-        this.defaultButton = new Button(Message.get("SettingsView.defaultButton.text"));
-        this.defaultButton.setTooltip(new Tooltip(Message.get("SettingsView.defaultButton.toolTip")));
+        this.defaultButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.defaultButton.text"));
+        this.defaultButton.setTooltip(GuiUtil.createTooltip(Message.get("SettingsView.defaultButton.toolTip")));
         this.hBoxLeftSideButtons = new HBox();
         this.hBoxLeftSideButtons.getChildren().add(this.defaultButton);
         this.hBoxLeftSideButtons.setAlignment(Pos.CENTER_LEFT);
@@ -115,10 +119,10 @@ public class SettingsView extends AnchorPane {
         this.hBoxButtonsHBox.getChildren().add(this.hBoxLeftSideButtons);
         //-right side
         this.hBoxRightSideButtons = new HBox();
-        this.cancelButton = new Button(Message.get("SettingsView.cancelButton.text"));
-        this.cancelButton.setTooltip(new Tooltip(Message.get("SettingsView.cancelButton.toolTip")));
-        this.applyButton = new Button(Message.get("SettingsView.applyButton.text"));
-        this.applyButton.setTooltip(new Tooltip(Message.get("SettingsView.applyButton.toolTip")));
+        this.cancelButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.cancelButton.text"));
+        this.cancelButton.setTooltip(GuiUtil.createTooltip(Message.get("SettingsView.cancelButton.toolTip")));
+        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("SettingsView.applyButton.text"));
+        this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("SettingsView.applyButton.toolTip")));
         this.hBoxRightSideButtons.getChildren().addAll(this.applyButton, this.cancelButton);
         this.hBoxRightSideButtons.setAlignment(Pos.CENTER_RIGHT);
         this.hBoxRightSideButtons.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
@@ -131,15 +135,16 @@ public class SettingsView extends AnchorPane {
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
-     * Adds a tab which contains the properties of the given properties list
-     * @param aStage Stage to bind width and height
+     * Adds a tab which contains the properties of the given properties list.
+     *
      * @param aLabel Label for the tab title and the tab Id
      * @param aPropertiesList List of properties to show in created tab
+     * @param aDisplayNamesMap Map containing setting names as keys and language-specific names for the settings to display in the GUI
      * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      * @return Tab
      */
-    public Tab addTab(Stage aStage, String aLabel, List<Property> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
+    public Tab addTab(String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         tmpTab.setId(aLabel);
@@ -166,7 +171,7 @@ public class SettingsView extends AnchorPane {
                 tmpScrollPane.widthProperty().multiply(0.5)
         );
         tmpGridPane.getColumnConstraints().add(tmpColCon2);
-        this.addPropertyItems(tmpGridPane, aPropertiesList, aTooltipTextsMap, aRecentPropertiesMap);
+        this.addPropertyItems(tmpGridPane, aPropertiesList, aDisplayNamesMap, aTooltipTextsMap, aRecentPropertiesMap);
         tmpScrollPane.setContent(tmpGridPane);
         tmpTab.setContent(tmpScrollPane);
         this.tabPane.getTabs().add(tmpTab);
@@ -174,85 +179,137 @@ public class SettingsView extends AnchorPane {
     }
     //
     /**
-     * Adds a row for each {@link Property} of given List which contains of properties name and a control to change properties value
+     * Adds a row for each {@link Property} of given List which contains the property name and a control to change the property value.
+     *
      * @param aGridPane GridPane to add row
      * @param aPropertiesList List of properties to show in created tab
+     * @param aDisplayNamesMap Map containing setting names as keys and language-specific names for the settings to display in the GUI
      * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      */
-    private void addPropertyItems(GridPane aGridPane, List<Property> aPropertiesList, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap){
+    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
         int tmpRowIndex = 0;
-        for(Property tmpProperty : aPropertiesList){
+        for (Property tmpProperty : aPropertiesList) {
             RowConstraints tmpRow = new RowConstraints();
             tmpRow.setVgrow(Priority.ALWAYS);
-            tmpRow.setPrefHeight(50);
-            tmpRow.setMaxHeight(50);
-            tmpRow.setMinHeight(50);
+            tmpRow.setPrefHeight(50); //magic number
+            tmpRow.setMaxHeight(50); //magic number
+            tmpRow.setMinHeight(50); //magic number
             aGridPane.getRowConstraints().add(tmpRow);
             String tmpPropName = tmpProperty.getName();
-            Label tmpNameLabel = new Label(tmpPropName);
-            Tooltip tmpTooltip = new Tooltip(aTooltipTextsMap.get(tmpProperty.getName()));
-            tmpTooltip.setMaxWidth(GuiDefinitions.GUI_TOOLTIP_MAX_WIDTH);
-            tmpTooltip.setWrapText(true);
+            Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpPropName));
+            Tooltip tmpTooltip = GuiUtil.createTooltip(aTooltipTextsMap.get(tmpPropName));
             tmpNameLabel.setTooltip(tmpTooltip);
             aGridPane.add(tmpNameLabel, 0, tmpRowIndex);
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
             Object tmpRecentValue = tmpProperty.getValue();
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
-            if(tmpProperty instanceof SimpleBooleanProperty){
-                ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
-                tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
-                tmpBooleanComboBox.valueProperty().bindBidirectional(tmpProperty);
-                tmpBooleanComboBox.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleIntegerProperty){
-                TextField tmpIntegerTextField = new TextField();
-                tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
-                TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(), 0, GuiUtil.getIntegerFilter());
-                tmpIntegerTextField.setTextFormatter(tmpFormatter);
-                tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
-                tmpIntegerTextField.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleDoubleProperty){
-                TextField tmpDoubleTextField = new TextField();
-                tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
-                TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(), 0.0, GuiUtil.getDoubleFilter());
-                tmpDoubleTextField.setTextFormatter(tmpFormatter);
-                tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
-                tmpDoubleTextField.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleEnumConstantNameProperty){
-                ComboBox<String> tmpEnumComboBox = new ComboBox();
-                tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
-                tmpEnumComboBox.valueProperty().bindBidirectional(tmpProperty);
-                tmpEnumComboBox.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-            }
-            else if(tmpProperty instanceof SimpleStringProperty){
-                TextField tmpStringTextField = new TextField();
-                tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
-                tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
-                tmpStringTextField.setTooltip(tmpTooltip);
-                //add to gridpane
-                aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
-                GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+            switch (tmpProperty) {
+                case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
+                    ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
+                    tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
+                    tmpBooleanComboBox.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
+                    tmpBooleanComboBox.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleIntegerProperty simpleIntegerProperty -> {
+                    TextField tmpIntegerTextField = new TextField();
+                    tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
+                    int tmpDefaultValue = 0;
+                    //note: setting the filter to only accept positive integers including zero is an assumption that is true
+                    // for all settings so far but might have to be changed in the future
+                    TextFormatter<Integer> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                            tmpDefaultValue,
+                            GuiUtil.getPositiveIntegerFilter(true));
+                    tmpIntegerTextField.setTextFormatter(tmpFormatter);
+                    tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
+                    tmpIntegerTextField.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleDoubleProperty simpleDoubleProperty -> {
+                    TextField tmpDoubleTextField = new TextField();
+                    tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
+                    double tmpDefaultValue = 0.0;
+                    //note: setting the filter to only accept positive double values including zero is an assumption that is true
+                    // for all settings so far but might have to be changed in the future
+                    TextFormatter<Double> tmpFormatter = new TextFormatter<>(GuiUtil.getStringToDoubleConverter(),
+                            tmpDefaultValue,
+                            GuiUtil.getPositiveDoubleFilter());
+                    tmpDoubleTextField.setTextFormatter(tmpFormatter);
+                    tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
+                    tmpDoubleTextField.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
+                    ComboBox<IDisplayEnum> tmpEnumComboBox = new ComboBox<>();
+                    tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+                    tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
+                    final ObservableList<IDisplayEnum> tmpItems = FXCollections.observableArrayList();
+                    Collections.addAll(tmpItems, (IDisplayEnum[]) tmpSimpleIDisplayEnumConstantProperty.getAssociatedEnumConstants());
+                    tmpEnumComboBox.setItems(tmpItems);
+                    tmpEnumComboBox.setCellFactory(param -> new ListCell<>() {
+                        @Override
+                        protected void updateItem(IDisplayEnum iDisplayEnum, boolean empty) {
+                            super.updateItem(iDisplayEnum, empty);
+                            if (!empty) {
+                                this.setText(iDisplayEnum.getDisplayName());
+                                this.setTooltip(GuiUtil.createTooltip(iDisplayEnum.getTooltipText()));
+                            }
+                        }
+                    });
+                    //note this is called to set the initial value, so yes, we need to overwrite both methods with the same functionality here
+                    tmpEnumComboBox.setButtonCell(new ListCell<>() {
+                        @Override
+                        protected void updateItem(IDisplayEnum item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (!empty) {
+                                this.setText(item.getDisplayName());
+                                this.setTooltip(GuiUtil.createTooltip(item.getTooltipText()));
+                            }
+                        }
+                    });
+                    tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleIDisplayEnumConstantProperty);
+                    tmpEnumComboBox.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty -> {
+                    ComboBox<String> tmpEnumComboBox = new ComboBox<>();
+                    tmpEnumComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+                    tmpEnumComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
+                    tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
+                    tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleEnumConstantNameProperty);
+                    tmpEnumComboBox.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                case SimpleStringProperty simpleStringProperty -> {
+                    TextField tmpStringTextField = new TextField();
+                    tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
+                    tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
+                    tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
+                    tmpStringTextField.setTooltip(tmpTooltip);
+                    //add to gridpane
+                    aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                }
+                default ->
+                        throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
             }
         }
     }
@@ -260,48 +317,48 @@ public class SettingsView extends AnchorPane {
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">
     /**
-     * Returns the tab pane, holding tabs for the settings of the different fragmenters
+     * Returns the tab pane, holding tabs for the settings of the different fragmenters.
      *
      * @return TabPane
      */
-    public TabPane getTabPane(){
+    public TabPane getTabPane() {
         return this.tabPane;
     }
     //
     /**
      * Returns selection model, holding the active tab.
-     * Used to set tab of the selected fragmenter as active tab
+     * Used to set tab of the selected fragmenter as active tab.
      *
      * @return SelectionModel {@literal <} Tab {@literal >}
      */
-    public SelectionModel<Tab> getSelectionModel(){
+    public SelectionModel<Tab> getSelectionModel() {
         return this.selectionModel;
     }
     //
     /**
-     * Returns cancel button, which closes the view without saving changes
+     * Returns cancel button, which closes the view without saving changes.
      *
      * @return CancelButton
      */
-    public Button getCancelButton(){
+    public Button getCancelButton() {
         return this.cancelButton;
     }
     //
     /**
-     * Returns apply button, which applies changes and closes the view
+     * Returns apply button, which applies changes and closes the view.
      *
      * @return ApplyButton
      */
-    public Button getApplyButton(){
+    public Button getApplyButton() {
         return this.applyButton;
     }
     //
     /**
-     * Returns default button, which sets all options of active tab to default values
+     * Returns default button, which sets all options of active tab to default values.
      *
      * @return DefaultButton
      */
-    public Button getDefaultButton(){
+    public Button getDefaultButton() {
         return this.defaultButton;
     }
     //</editor-fold>

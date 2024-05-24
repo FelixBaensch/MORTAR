@@ -25,11 +25,6 @@
 
 package de.unijena.cheminf.mortar.preference;
 
-/**
- * TODO:
- * - Implement clone()
- */
-
 import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import java.io.BufferedReader;
@@ -65,7 +60,7 @@ public class SingleIntegerPreference extends BasePreference {
     //
     //<editor-fold defaultstate="collapsed" desc="Private class variables">
     /**
-     * Single integer content of this preference
+     * Single integer content of this preference.
      */
     private int content;
     //</editor-fold>
@@ -134,7 +129,7 @@ public class SingleIntegerPreference extends BasePreference {
                 //...
                 //break;
                 default:
-                    throw new Exception("Invalid version.");
+                    throw new IOException("Invalid version.");
             }
         } catch (Exception anException) {
             SingleIntegerPreference.LOGGER.log(Level.SEVERE, anException.toString(), anException);
@@ -144,6 +139,7 @@ public class SingleIntegerPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public properties (get)">
+
     @Override
     public String getContentRepresentative() {
         return Integer.toString(this.content);
@@ -198,15 +194,11 @@ public class SingleIntegerPreference extends BasePreference {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
-    @Override
-    public IPreference clone() throws CloneNotSupportedException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public SingleIntegerPreference copy() {
-        SingleIntegerPreference tmpCopy = new SingleIntegerPreference(new String(this.name), this.content);
-        tmpCopy.guid = new String(this.guid);
+        SingleIntegerPreference tmpCopy = new SingleIntegerPreference(this.name, this.content);
+        tmpCopy.guid = this.guid;
         return tmpCopy;
     }
 
@@ -247,7 +239,7 @@ public class SingleIntegerPreference extends BasePreference {
     /**
      * (Re-)instantiates a new SingleIntegerPreference object of version 1.0.0.0 from a line-based text file.
      */
-    private void reloadVersion1000(BufferedReader aReader) throws Exception {
+    private void reloadVersion1000(BufferedReader aReader) throws IOException {
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         this.content = Integer.parseInt(aReader.readLine());
