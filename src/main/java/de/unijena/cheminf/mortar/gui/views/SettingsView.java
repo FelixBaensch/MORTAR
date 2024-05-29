@@ -207,22 +207,13 @@ public class SettingsView extends AnchorPane {
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             switch (tmpProperty) {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                    //implement toggle switch here; write own class that implements a toggle switch
-                    ToggleSwitch tmpToggle = new ToggleSwitch();
+                    boolean tmpInitialBooleanState = false;
+                    ToggleSwitch tmpToggle = new ToggleSwitch(tmpInitialBooleanState);
                     tmpToggle.setTooltip(tmpTooltip);
                     tmpToggle.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
                     //add to gridpane
                     aGridPane.add(tmpToggle, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
-                    /*ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
-                    tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                    tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                    tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
-                    tmpBooleanComboBox.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
-                    tmpBooleanComboBox.setTooltip(tmpTooltip);
-                    //add to gridpane
-                    aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
-                    GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));*/
                 }
                 case SimpleIntegerProperty simpleIntegerProperty -> {
                     TextField tmpIntegerTextField = new TextField();
