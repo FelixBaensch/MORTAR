@@ -38,14 +38,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 /**
- * This class implements a toggle switch to en- and disable features in settings. The toggle switch is built by putting
- * a circle on Itop of a rectangle. The corners of the rectangle were adjusted to fit the round shape of the circle.
- * The transition of the position of the circle is animated and parallel to the rectangle's color change
- * which demonstrates the current state. For example, blue and circle on the right means "on"/grey and circle
- * transitions to left means "off". This class extends Control, however methods for resizing the switch
- * are not implemented yet.
- * The following code is inspired by "JavaFX UI: iOS Style Toggle Switch", uploaded by Almas Baimagambetov on YouTube.
- * See https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf, (last time viewed on 05/17/2024, 10:33)
+ * A toggle switch to en- and disable features in settings.
  *
  * @author Zeynep Dagtekin
  * @version 1.0.0.0
@@ -63,9 +56,9 @@ public class ToggleSwitch extends Control {
     /**
      * Boolean property to keep track of the state.
      */
-    private final SimpleBooleanProperty switchStateBooleanProperty;
+    private final SimpleBooleanProperty switchedOn;
     /**
-     * Transition of the Circle from one side to the other.
+     * transition of the Circle from one side to the other.
      */
     private final TranslateTransition switchAnimation;
     /**
@@ -79,14 +72,14 @@ public class ToggleSwitch extends Control {
     //</editor-fold>
     /**
      * Constructor.
-     * The toggle switch is built by initializing a layout which includes the sizing of the background (a rectangle)
-     * and the sizing of the button (a circle), as well as their colors. The transition of the button is initialized by
-     * adding an animation which also entails a color change. A listener and a mouse listener trigger the animation
-     * when the button (circle) is clicked on.
      */
-    public ToggleSwitch(boolean anInitialStateOfBooleanProperty) {
+    public ToggleSwitch() {
+        /**
+         * code inspired by "JavaFX UI: iOS Style Toggle Switch", uploaded by Almas Baimagambetov on YouTube
+         * https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf, 05/17/2024, 10:33
+         */
         super();
-        this.switchStateBooleanProperty = new SimpleBooleanProperty(anInitialStateOfBooleanProperty);
+        this.switchedOn = new SimpleBooleanProperty(false);
         this.switchBackground = new Rectangle(45, 18);
         this.switchBackground.setArcWidth(18);
         this.switchBackground.setArcHeight(18);
@@ -105,25 +98,20 @@ public class ToggleSwitch extends Control {
         this.switchTransition = new ParallelTransition(this.switchAnimation, this.fillAnimation);
         this.switchAnimation.setNode(this.switchButton);
         this.fillAnimation.setShape(this.switchBackground);
-        this.getChildren().addAll(this.switchBackground, this.switchButton);
+        getChildren().addAll(this.switchBackground, this.switchButton);
         //Listener
-        this.switchStateBooleanProperty.addListener((observable, oldValue, newValue) -> {
+        this.switchedOn.addListener((observable, oldValue, newValue) -> {
             boolean tmpIsOn = newValue.booleanValue();
-            this.switchAnimation.setToX(tmpIsOn ? (44 - 18) : 0); //?
+            this.switchAnimation.setToX(tmpIsOn ? (44 - 18) : 0);
             this.fillAnimation.setFromValue(tmpIsOn ? Color.LIGHTGRAY : Color.web("#0099cc"));
             this.fillAnimation.setToValue(tmpIsOn ? Color.web("#0099cc") : Color.LIGHTGRAY);
             this.switchTransition.play();
         });
         //Mouse listener.
-        this.setOnMouseClicked(event -> this.switchStateBooleanProperty.set(!this.switchStateBooleanProperty.get()));
+        setOnMouseClicked(event -> this.switchedOn.set(!this.switchedOn.get()));
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">
-    //
-    //public setRectangleWidth(int aRectangleWidth) {
-    //this.switchedBackground.setWidth(aRectangleWidth);
-    //this.switchedButton.setCenterX(this.switchedButton.setConfigurableCenterX(50))
-    //private final const RECTANGLE_HEIGHT = 45
     /**
      * returns switchButton.
      *
@@ -139,6 +127,14 @@ public class ToggleSwitch extends Control {
      */
     public Rectangle getSwitchBackground() {
         return this.switchBackground;
+    }
+    /**
+     * returns switchedOn to change the boolean state of the switch.
+     *
+     * @return SimpleBooleanProperty
+     */
+    public SimpleBooleanProperty getSwitchedOn() {
+        return this.switchedOn;
     }
     /**
      * returns switchAnimation which shows the visual transition of the Circle switchButton.
@@ -165,21 +161,28 @@ public class ToggleSwitch extends Control {
         return this.switchTransition;
     }
     /**
-     * returns isSwitchedOn, the current boolean state of the Toggleswitch,
-     * if it is turned on it returns true, otherwise false.
+     * returns  switchedOnProperty.
      *
-     * @return switch value
+     * @return BooleanProperty
      */
-    public boolean getSwitchStateBooleanProperty() {
-        return this.switchStateBooleanProperty.get();
+    public BooleanProperty getSwitchedOnProperty() {
+        return this.switchedOn;
     }
     /**
-     * sets switchStateBooleanProperty to update new value.
+     * returns isSwitchedOn to change boolean state to true.
      *
-     * @param switchStateBooleanProperty boolean
+     * @return switch value.
      */
-    public void setSwitchStateBooleanProperty(boolean switchStateBooleanProperty) {
-        this.switchStateBooleanProperty.set(switchStateBooleanProperty);
+    public boolean isSwitchedOn() {
+        return this.switchedOn.get();
+    }
+    /**
+     * sets switchedOn to update new value.
+     *
+     * @param switchedOn boolean
+     */
+    public void setSwitchedOn(boolean switchedOn) {
+        this.switchedOn.set(switchedOn);
     }
     /**
      * returns valueProperty.
@@ -187,7 +190,7 @@ public class ToggleSwitch extends Control {
      * @return BooleanProperty
      */
     public BooleanProperty valueProperty() {
-        return this.switchStateBooleanProperty;
+        return this.switchedOn;
     }
     //</editor-fold>
 }
