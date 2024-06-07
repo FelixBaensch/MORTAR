@@ -39,13 +39,13 @@ import javafx.util.Duration;
 
 /**
  * This class implements a toggle switch to en- and disable features in settings. The toggle switch is built by putting
- * a circle on Itop of a rectangle. The corners of the rectangle were adjusted to fit the round shape of the circle.
+ * a circle on top of a rectangle. The corners of the rectangle were adjusted to fit the round shape of the circle.
  * The transition of the position of the circle is animated and parallel to the rectangle's color change
  * which demonstrates the current state. For example, blue and circle on the right means "on"/grey and circle
  * transitions to left means "off". This class extends Control, however methods for resizing the switch
  * are not implemented yet.
  * The following code is inspired by "JavaFX UI: iOS Style Toggle Switch", uploaded by Almas Baimagambetov on YouTube.
- * See https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf, (last time viewed on 05/17/2024, 10:33)
+ * See https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf, (last time viewed on 06/06/2024, 18:10)
  *
  * @author Zeynep Dagtekin
  * @version 1.0.0.0
@@ -109,7 +109,7 @@ public class ToggleSwitch extends Control {
         //Listener
         this.switchStateBooleanProperty.addListener((observable, oldValue, newValue) -> {
             boolean tmpIsOn = newValue.booleanValue();
-            this.switchAnimation.setToX(tmpIsOn ? (44 - 18) : 0); //?
+            this.switchAnimation.setToX(tmpIsOn ? (45 - 20) : 0); //?
             this.fillAnimation.setFromValue(tmpIsOn ? Color.LIGHTGRAY : Color.web("#0099cc"));
             this.fillAnimation.setToValue(tmpIsOn ? Color.web("#0099cc") : Color.LIGHTGRAY);
             this.switchTransition.play();
