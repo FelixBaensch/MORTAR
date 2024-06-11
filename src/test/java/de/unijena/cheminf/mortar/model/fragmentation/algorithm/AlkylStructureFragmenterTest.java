@@ -25,12 +25,13 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
-import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -38,9 +39,6 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
-import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.File;
@@ -60,7 +58,7 @@ import java.util.Locale;
  * {@link de.unijena.cheminf.mortar.model.fragmentation.algorithm.AlkylStructureFragmenter}.
  *
  * @author Maximilian Rottmann
- * @version 1.1.1.0
+ * @version 1.0.0.0
  */
 public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
@@ -253,7 +251,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     @Test
     public void defaultFragmentationTest() throws Exception {
-        this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(AlkylStructureFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         for (IAtomContainer tmpAtomContainer :
@@ -275,14 +273,20 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     //</editor-fold>
 
     //<editor-fold desc="Private Methods">
-    // alternative: canonical smiles for comparison
     private boolean compareListsIgnoringOrder(ArrayList aList1, ArrayList aList2) {
-        if (aList1 == null || aList2 == null) return false;
-        if (aList1.size() != aList2.size()) return false;
+        System.out.println("Comparison!");
+        if (aList1 == null || aList2 == null) {
+            System.out.println("List null!");
+            return false;
+        }
+        if (aList1.size() != aList2.size()) {
+            System.out.println("Size difference!");
+            return false;
+        }
         for (Object o : aList1) {
             aList2.remove(o);
         }
-        return !aList2.isEmpty();
+        return aList2.isEmpty();
     }
 
     /**
@@ -293,14 +297,10 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws CDKException if SmilesGenerator is unable to generate String from structure
      */
     private List<String> generateSMILESFromACSet(IAtomContainerSet anACSet) throws CDKException {
-        SmilesGenerator tmpSmilesGenerator = new SmilesGenerator(SmiFlavor.Canonical);
         List<String> tmpSmilesList = new ArrayList<>(anACSet.getAtomContainerCount());
-        CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(new SilentChemObjectBuilder());
         for (IAtomContainer tmpAC : anACSet.atomContainers()) {
-            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAC);
-            tmpAdder.addImplicitHydrogens(tmpAC);
-            Kekulization.kekulize(tmpAC);
-            tmpSmilesList.add(tmpSmilesGenerator.create(tmpAC));
+            ChemUtil.saturateWithHydrogen(tmpAC);
+            tmpSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC));
         }
         return tmpSmilesList;
     }

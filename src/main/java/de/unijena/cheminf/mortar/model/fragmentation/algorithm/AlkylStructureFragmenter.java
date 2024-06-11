@@ -27,12 +27,8 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 //<editor-fold desc="Future Development">
 /*
-TODO: 26.10.2023
-    -preserveRingSystemMaxSetting restrictions (smaller 0 nonsense)
-    -complete pseudo atom handling (*-atoms)
-    -for future fragmentation: properties for single rings, ring systems and conjugated pi systems
-    -some dbs may be definable as tertiary/quaternary carbons in some configurations (atom & bond handling!)
-*/
+TODO:
+ */
 //</editor-fold>
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -80,7 +76,7 @@ import java.util.logging.Logger;
  * structures in MORTAR using the CDK.
  *
  * @author Maximilian Rottmann (maximilian.rottmann@studmail.w-hs.de)
- * @version 1.1.1.0
+ * @version 1.0.0.0
  */
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
@@ -429,7 +425,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
             IAtomContainerSet tmpFragmentSet = this.extractFragments((IAtom[]) tmpObject[0],(IBond[]) tmpObject[1]);
-            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+
+            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
                 return this.saturateWithImplicitHydrogen(tmpFragmentSet);
             }
             ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
@@ -569,7 +566,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Protected method to mark all atoms and bonds of any conjugated pi systems in the given atomcontainer.
      *
      * @param anAtomContainer IAtomContainer to mark atoms and bonds in
+     * @param anAtomArray Array containing the atoms of a given fragmentation molecule
+     * @param aBondArray Array containing the bonds of a given fragmentation molecule
+     *
+     * @return new {@link java.lang.Object} for easy array transfer, containing the atom and bond array
      */
+    //test performance if pi system detection should be relocated to standard ring detection
     protected Object[] markConjugatedPiSystems(IAtomContainer anAtomContainer, IAtom[] anAtomArray, IBond[] aBondArray) throws IllegalArgumentException{
         //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
         Objects.requireNonNull(anAtomArray);
@@ -643,6 +645,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(anUnsaturatedACSet.getAtomContainer(0).getBuilder());
                 for (IAtomContainer tmpAtomContainer: anUnsaturatedACSet.atomContainers()) {
                     if (tmpAtomContainer != null && !tmpAtomContainer.isEmpty()) {
+                        //if future problems should arise from this HydrogenAdder -> use ChemUtil.saturateWithHydrogen() instead
                         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
                         tmpAdder.addImplicitHydrogens(tmpAtomContainer);
                         tmpSaturatedFragments.add(tmpAtomContainer);
@@ -661,6 +664,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Protected method to extract detected molecules via properties.
      *
+     * @param anAtomArray Array containing the atoms of a given fragmentation molecule
+     * @param aBondArray Array containing the bonds of a given fragmentation molecule
      * @return IAtomContainerSet with extracted molecules
      * @throws CloneNotSupportedException if input cannot be cloned
      */
