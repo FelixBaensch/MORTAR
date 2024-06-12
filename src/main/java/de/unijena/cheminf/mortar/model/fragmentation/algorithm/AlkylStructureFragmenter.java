@@ -410,7 +410,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
-        int preFragmentationAtomCount = tmpClone.getAtomCount();
+        int tmpPreFragmentationAtomCount = 0;
+        for (IAtom tmpAtom: tmpClone.atoms()) {
+            if (tmpAtom.getAtomicNumber() != 0) {
+                tmpPreFragmentationAtomCount++;
+            }
+        }
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
         } catch (CDKException aCDKException) {
@@ -426,15 +431,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
-            int postFragmentationAtomCount = 0;
+            int tmpPostFragmentationAtomCount = 0;
             IAtomContainerSet tmpFragmentSet = this.extractFragments((IAtom[]) tmpObject[0],(IBond[]) tmpObject[1]);
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
                     if (tmpAtom.getAtomicNumber() != 0)
-                    postFragmentationAtomCount++;
+                    tmpPostFragmentationAtomCount++;
                 }
             }
-            if (postFragmentationAtomCount != preFragmentationAtomCount) {
+            if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount) {
                 throw new Exception("Molecular formula is not the same between original molecule and received fragments!");
             }
             if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
