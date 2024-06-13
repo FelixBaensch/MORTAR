@@ -77,6 +77,20 @@ public class ToggleSwitch extends Control {
      */
     private final ParallelTransition switchTransition;
     //</editor-fold>
+    //<editor-fold desc="default values" defaultstate="collapsed">
+    /**
+     * Default value for the height if the Background.
+     */
+    private final int RECTANGLE_HEIGHT_VALUE = 45;
+    /**
+     * Default value for the width of the Background.
+     */
+    private final int RECTANGLE_WIDTH_VALUE = 18;
+    /**
+     * Default value for the radius of the Button.
+     */
+    private final int CIRCLE_RADIUS_VALUE = 10;
+    //</editor-fold>
     /**
      * Constructor.
      * The toggle switch is built by initializing a layout which includes the sizing of the background (a rectangle)
