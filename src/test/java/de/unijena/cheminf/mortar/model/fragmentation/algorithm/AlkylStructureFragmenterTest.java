@@ -131,6 +131,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectList.add("Fragment saturation setting");
         tmpExpectList.add("Fragmentation of hydrocarbon side chains setting");
         tmpExpectList.add("Carbon side chains maximum length setting");
+        tmpExpectList.add("Single carbon handling setting");
         for (Property tmpSetting: this.basicAlkylStructureFragmenter.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());
         }
@@ -254,6 +255,11 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        //currently alternative handling is explicitly ACTIVATED for testing purposes until new expected fragments are created
+        this.basicAlkylStructureFragmenter.setAlternativeSingleCarbonHandlingSetting(
+                //AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT
+                true
+        );
         for (IAtomContainer tmpAtomContainer :
                 this.testStructuresACSet.atomContainers()) {
             Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBeFiltered(tmpAtomContainer));

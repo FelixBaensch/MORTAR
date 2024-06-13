@@ -93,6 +93,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default boolean value for determination of further side chain dissection.
      */
     public static final boolean FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT = false;
+    /**
+     * Default boolean value for determining whether alternative or standard single carbon handling should be used.
+     */
+    public static final boolean ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT = false;
     //<editor-fold desc="Property Keys">
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
@@ -128,9 +132,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final SimpleBooleanProperty fragmentSideChainsSetting;
     /**
-     * A Property that has a constant carbon side chain setting.
+     * A property that has a constant carbon side chain setting.
      */
     private final SimpleIntegerProperty maxChainLengthSetting;
+    /**
+     * A property that has a constant boolean value determining which single carbon handling to use during fragmentation.
+     */
+    private final SimpleBooleanProperty alternativeSingleCarbonHandlingSetting;
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -152,7 +160,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        int tmpSettingsNameTooltipNumber = 3;
+        int tmpSettingsNameTooltipNumber = 4;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNameTooltipNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -192,10 +200,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.displayName"));
-        this.settings = new ArrayList<>(3);
+
+        this.alternativeSingleCarbonHandlingSetting = new SimpleBooleanProperty(this, "Single carbon handling setting",
+                AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.alternativeSingleCarbonHandlingSetting.getName(),
+                Message.get("AlkylStructureFragmenter.alternativeSingleCarbonHandlingSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.alternativeSingleCarbonHandlingSetting.getName(),
+                Message.get("AlkylStructureFragmenter.alternativeSingleCarbonHandlingSetting.displayName"));
+
+        this.settings = new ArrayList<>(4);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
+        this.settings.add(this.alternativeSingleCarbonHandlingSetting);
     }
     //</editor-fold>
     //
@@ -260,6 +277,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return this.maxChainLengthSetting;
     }
 
+    /**
+     * Public get method for alternative single carbon handling setting property.
+     *
+     * @return SimpleBooleanProperty alternativeSingleCarbonHandlingSetting
+     */
+    public SimpleBooleanProperty getAlternativeSingleCarbonHandlingSettingProperty() {return this.alternativeSingleCarbonHandlingSetting;}
+
     @Override
     public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
@@ -314,6 +338,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.maxChainLengthSetting.set(aValue);
     }
 
+    /**
+     * Set method for setting defining whether alternative single carbon handling should be used.
+     *
+     * @param aBoolean the given boolean value for switching handling
+     */
+    public void setAlternativeSingleCarbonHandlingSetting(boolean aBoolean){
+        Objects.requireNonNull(aBoolean, "Given boolean is null.");
+        this.alternativeSingleCarbonHandlingSetting.set(aBoolean);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public Methods">
@@ -323,6 +356,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpCopy.setFragmentSaturationSetting((IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get());
         tmpCopy.setFragmentSideChainsSetting(this.fragmentSideChainsSetting.get());
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
+        tmpCopy.setAlternativeSingleCarbonHandlingSetting(this.alternativeSingleCarbonHandlingSetting.get());
         return tmpCopy;
     }
 
@@ -331,6 +365,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.fragmentSideChainsSetting.set(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.alternativeSingleCarbonHandlingSetting.set(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
     }
     //
     //<editor-fold desc="Pre-Fragmentation Tasks">
@@ -700,17 +735,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
                     tmpSingleCarbonContainer.addAtom(tmpAtom);
-                    for (int i = 0; i < 3; i++) {
-                        PseudoAtom tmpPseudoAtom = new PseudoAtom();
-                        tmpSingleCarbonContainer.addAtom(tmpPseudoAtom);
-                        tmpSingleCarbonContainer.addBond(new Bond(tmpAtom, tmpPseudoAtom));
+                    if (this.alternativeSingleCarbonHandlingSetting.get()) {
+                        for (int i = 0; i < 3; i++) {
+                            PseudoAtom tmpPseudoAtom = new PseudoAtom();
+                            tmpSingleCarbonContainer.addAtom(tmpPseudoAtom);
+                            tmpSingleCarbonContainer.addBond(new Bond(tmpAtom, tmpPseudoAtom));
+                        }
                     }
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
                     tmpSingleCarbonContainer.addAtom(tmpAtom);
-                    for (int i = 0; i < 4; i++) {
-                        PseudoAtom tmpPseudoAtom = new PseudoAtom();
-                        tmpSingleCarbonContainer.addAtom(tmpPseudoAtom);
-                        tmpSingleCarbonContainer.addBond(new Bond(tmpAtom, tmpPseudoAtom));
+                    if (this.alternativeSingleCarbonHandlingSetting.get()) {
+                        for (int i = 0; i < 4; i++) {
+                            PseudoAtom tmpPseudoAtom = new PseudoAtom();
+                            tmpSingleCarbonContainer.addAtom(tmpPseudoAtom);
+                            tmpSingleCarbonContainer.addBond(new Bond(tmpAtom, tmpPseudoAtom));
+                        }
                     }
                 } else {
                     tmpChainFragmentationContainer.addAtom(tmpAtom);
