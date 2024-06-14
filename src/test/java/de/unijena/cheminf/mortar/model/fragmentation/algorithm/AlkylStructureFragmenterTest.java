@@ -39,7 +39,6 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -280,13 +279,10 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
 
     //<editor-fold desc="Private Methods">
     private boolean compareListsIgnoringOrder(ArrayList aList1, ArrayList aList2) {
-        System.out.println("Comparison!");
         if (aList1 == null || aList2 == null) {
-            System.out.println("List null!");
             return false;
         }
         if (aList1.size() != aList2.size()) {
-            System.out.println("Size difference!");
             return false;
         }
         for (Object o : aList1) {
@@ -305,7 +301,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     private List<String> generateSMILESFromACSet(IAtomContainerSet anACSet) throws CDKException {
         List<String> tmpSmilesList = new ArrayList<>(anACSet.getAtomContainerCount());
         for (IAtomContainer tmpAC : anACSet.atomContainers()) {
-            ChemUtil.saturateWithHydrogen(tmpAC);
             tmpSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC));
         }
         return tmpSmilesList;
@@ -322,7 +317,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             IAtomContainer tmpAtomContainer = tmpSDFReader.next();
             tmpAtomContainer.setProperty(tmpIndexString, tmpIndex);
             try {
-                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
+                ChemUtil.saturateWithHydrogen(tmpAtomContainer);
             } catch (CDKException aCDKException) {
                 throw new RuntimeException(aCDKException);
             }

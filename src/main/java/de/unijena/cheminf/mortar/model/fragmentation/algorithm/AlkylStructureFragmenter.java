@@ -35,6 +35,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
@@ -59,7 +60,6 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IElement;
 import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.ringsearch.RingSearch;
-import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
@@ -693,12 +693,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         try {
             List<IAtomContainer> tmpSaturatedFragments = new ArrayList<>(anUnsaturatedACSet.getAtomContainerCount());
             if (!anUnsaturatedACSet.isEmpty() && !anUnsaturatedACSet.getAtomContainer(0).isEmpty()) {
-                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(anUnsaturatedACSet.getAtomContainer(0).getBuilder());
                 for (IAtomContainer tmpAtomContainer: anUnsaturatedACSet.atomContainers()) {
                     if (tmpAtomContainer != null && !tmpAtomContainer.isEmpty()) {
-                        //if future problems should arise from this HydrogenAdder -> use ChemUtil.saturateWithHydrogen() instead
-                        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
-                        tmpAdder.addImplicitHydrogens(tmpAtomContainer);
+                        ChemUtil.saturateWithHydrogen(tmpAtomContainer);
                         tmpSaturatedFragments.add(tmpAtomContainer);
                     }
                 }
