@@ -207,8 +207,7 @@ public class SettingsView extends AnchorPane {
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             switch (tmpProperty) {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                    boolean tmpInitialBooleanState = false;
-                    ToggleSwitch tmpToggle = new ToggleSwitch(tmpInitialBooleanState);
+                    ToggleSwitch tmpToggle = new ToggleSwitch();
                     tmpToggle.setTooltip(tmpTooltip);
                     tmpToggle.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
                     //add to gridpane
