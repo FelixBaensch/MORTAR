@@ -79,65 +79,65 @@ public class ToggleSwitch extends Control {
     //</editor-fold>
     //<editor-fold desc="Default values" defaultstate="collapsed">
     /**
-     * Default value for the height of the Background.
-     */
-    private static final int RECTANGLE_WIDTH_VALUE = 45;
-    /**
      * Default value for the width of the Background.
      */
-    private static final int RECTANGLE_HEIGHT_VALUE = 18;
+    public static final int RECTANGLE_WIDTH_VALUE = 45;
+    /**
+     * Default value for the height of the Background.
+     */
+    public static final int RECTANGLE_HEIGHT_VALUE = 18;
     /**
      * Default value for the radius of the Button.
      */
-    private static final int CIRCLE_RADIUS_VALUE = 10;
+    public static final int CIRCLE_RADIUS_VALUE = 10;
     /**
-     * Default value for the Layout which sets the position of the Background of the switch on the x-axis.
+     * Default value for the Layout which sets the position of the Background of the switch on the x-axis of the dialogue box.
      */
-    private static final int RECTANGLE_POSITION_VALUE = -50;
+    public static final int RECTANGLE_POSITION_VALUE = -50;
     /**
-     * Default value for the Layout which sets the position of the button on the x-axis.
+     * Default value for the Layout which sets the position of the button on the x-axis of the dialogue box.
      */
-    private static final int CIRCLE_POSITION_X_VALUE = -40;
+    public static final int CIRCLE_POSITION_X_VALUE = -40;
     /**
-     * Default value for the position of the Button on the y-axis.
+     * Default value for the position of the Button on the y-axis of the dialogue box.
      */
-    private static final int CIRCLE_POSITION_Y_VALUE = 9;
+    public static final int CIRCLE_POSITION_Y_VALUE = 9;
     /**
      * Default value for the radius of the shadow on the button.
      */
-    private static final int CIRCLE_SHADOW_RADIUS = 5;
+    public static final int CIRCLE_SHADOW_RADIUS = 5;
     /**
      * Default value for the duration of the animated transition in seconds.
      */
-    private static final double DURATION_VALUE = 0.25;
+    public static final double DURATION_VALUE = 0.25;
     /**
      * Default color of the background when the toggle switch is turned off.
      */
-    private static final Color RECTANGLE_COLOR_OFF = Color.LIGHTGRAY;
+    public static final Color RECTANGLE_COLOR_OFF = Color.LIGHTGRAY;
     /**
      * Default color for the outline of the Background.
      */
-    private static final Color RECTANGLE_OUTLINE_COLOR = Color.DARKGRAY;
+    public static final Color RECTANGLE_OUTLINE_COLOR = Color.DARKGRAY;
     /**
      * Default color of the button.
      */
-    private static final Color CIRCLE_COLOR = Color.WHITE;
+    public static final Color CIRCLE_COLOR = Color.WHITE;
     /**
      * Default color for the outline of the button.
      */
-    private static final Color CIRCLE_OUTLINE_COLOR = Color.DARKGRAY;
+    public static final Color CIRCLE_OUTLINE_COLOR = Color.DARKGRAY;
     /**
-     * Default color for the background when turned on.
+     * Default color for the background when turned on which is "Rich Electric Blue".
      */
-    private static final Color RECTANGLE_COLOR_ON = Color.web("#0099cc");
+    public static final Color RECTANGLE_COLOR_ON = Color.web("#0099cc");
     /**
      * Default color of the shadow on the button.
      */
-    private static final Color CIRCLE_SHADOW_COLOR = Color.GRAY;
+    public static final Color CIRCLE_SHADOW_COLOR = Color.GRAY;
     /**
      * Default boolean state of the switch.
      */
-    private static final boolean SWITCH_STATE = false;
+    public static final boolean SWITCH_STATE = false;
     //</editor-fold>
     //<editor-fold desc="Constructor with default values" defaultstate="collapsed">
     /**
@@ -236,10 +236,11 @@ public class ToggleSwitch extends Control {
         });
         //Mouse listener.
         this.setOnMouseClicked(event -> this.switchStateBooleanProperty.set(!this.switchStateBooleanProperty.get()));
+
     }
     //</editor-fold>
     //
-    //<editor-fold desc="properties" defaultstate="collapsed">
+    //<editor-fold desc="Properties" defaultstate="collapsed">
     /**
      * returns switchButton.
      *
@@ -286,7 +287,7 @@ public class ToggleSwitch extends Control {
      *
      * @return switch value
      */
-    public boolean getSwitchStateBooleanProperty() {
+    public boolean getSwitchState() {
         return this.switchStateBooleanProperty.get();
     }
     /**
@@ -294,7 +295,7 @@ public class ToggleSwitch extends Control {
      *
      * @param switchStateBooleanProperty boolean
      */
-    public void setSwitchStateBooleanProperty(boolean switchStateBooleanProperty) {
+    public void setSwitchState(boolean switchStateBooleanProperty) {
         this.switchStateBooleanProperty.set(switchStateBooleanProperty);
     }
     /**
@@ -302,7 +303,7 @@ public class ToggleSwitch extends Control {
      *
      * @return BooleanProperty
      */
-    public BooleanProperty valueProperty() {
+    public BooleanProperty getSwitchStateProperty() {
         return this.switchStateBooleanProperty;
     }
     //</editor-fold>
