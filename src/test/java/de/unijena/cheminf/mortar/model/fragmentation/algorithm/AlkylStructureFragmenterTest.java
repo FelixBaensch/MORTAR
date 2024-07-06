@@ -33,11 +33,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.Intractable;
+import org.openscience.cdk.graph.CycleFinder;
+import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
+import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 
 import java.io.File;
@@ -108,8 +112,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     public AlkylStructureFragmenterTest() throws FileNotFoundException, URISyntaxException {
         this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
         this.testStructuresACSet = new AtomContainerSet();
-        this.testStructuresACSet = readStructureToACSet("ASF_Test_Structures.sdf");
-        this.testExpectedFragmentsACSet = readStructureToACSet("ASF_Expected_Fragments.sdf");
+        this.testStructuresACSet = readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Test_Structures.sdf");
+        this.testExpectedFragmentsACSet = readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments.sdf");
         this.testExpectedFragmentsACList = new ArrayList<>(this.testExpectedFragmentsACSet.getAtomContainerCount());
         //this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpAC);
         this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(this.testStructuresACSet.getAtomContainer(0));
@@ -149,9 +153,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpRingsAC);
         this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpRingsAC);
 
-
-        //protected methods & variables -> test class extends origin class
-        //problem: marking on local(ASF) private variables
         //ToDo: write test structure in fragmenter arrays; create array for comparison with expected markings
         this.basicAlkylStructureFragmenter.markRings(tmpRingsAC, this.testAtomArray, this.testBondArray);
         //ToDo: find way to compare structures without extracting tested substructures
@@ -277,7 +278,63 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     }
     //</editor-fold>
 
+    //<editor-fold desc="@Test Custom Methods">
+    @Test
+    public void detectRingsWithMCBTest() {
+        CycleFinder tmpCycleFinder = Cycles.mcb();
+        IAtomContainerSet tmpACSet;
+        try {
+            tmpACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Spiro_Test_Structure1.mol");
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        for (IAtomContainer tmpAC: tmpACSet.atomContainers()) {
+            try {
+                Cycles tmpMCBCycles = tmpCycleFinder.find(tmpAC);
+                System.out.println("MCB number of detected Cycles: " + tmpMCBCycles.numberOfCycles());
+                System.out.println("MCB detected ring atomcontainer below:");
+                System.out.println(tmpAC);
+                System.out.println("-----");
+            } catch (Intractable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+    @Test
+    public void detectRingsWithRingSearchTest() {
+        IAtomContainerSet tmpACSet;
+        try {
+            tmpACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Spiro_Test_Structure1.mol");
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        for (IAtomContainer tmpAC: tmpACSet.atomContainers()) {
+            RingSearch tmpRingSearch = new RingSearch(tmpAC);
+            List<IAtomContainer> tmpACList = tmpRingSearch.isolatedRingFragments();
+            int i = 0;
+            System.out.println("RingSearch isolated ring count from List " + i + ": " + tmpACList.size());
+            System.out.println("RingSearch detected ring atomcontainer below:");
+            System.out.println(tmpAC);
+            System.out.println("-----");
+            i++;
+        }
+    }
+    //</editor-fold>
+
     //<editor-fold desc="Private Methods">
+
+    /**
+     * Compares two provided lists on equality while ignoring the lists' orders.
+     *
+     * @param aList1 First given list to compare
+     * @param aList2 Second given list to compare
+     * @return boolean whether given lists are equal
+     */
     private boolean compareListsIgnoringOrder(ArrayList aList1, ArrayList aList2) {
         if (aList1 == null || aList2 == null) {
             return false;
@@ -306,7 +363,15 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         return tmpSmilesList;
     }
 
-    private IAtomContainerSet readStructureToACSet(String aFileName) throws FileNotFoundException, URISyntaxException {
+    /**
+     * Private method to read a given structure file to a CDK atomcontainer set.
+     *
+     * @param aFileName Name of the file to read from
+     * @return IAtomContainerSet with the read structures as AtomContainers
+     * @throws FileNotFoundException if no file with the given name can be located
+     * @throws URISyntaxException if given name of file cannot be parsed as URI reference
+     */
+    private IAtomContainerSet readStructuresToACSet(String aFileName) throws FileNotFoundException, URISyntaxException {
         URL tmpURL = this.getClass().getResource("/" + aFileName);
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileReader(tmpResourceFile), new SilentChemObjectBuilder());
