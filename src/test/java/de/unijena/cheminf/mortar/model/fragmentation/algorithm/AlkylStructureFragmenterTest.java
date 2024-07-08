@@ -129,12 +129,14 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     @Test
     public void basicSettingsTest() throws Exception {
-        List<String> tmpCheckList = new ArrayList<>();
-        List<String> tmpExpectList = new ArrayList<>();
+        List<String> tmpCheckList = new ArrayList<>(6);
+        List<String> tmpExpectList = new ArrayList<>(6);
         tmpExpectList.add("Fragment saturation setting");
         tmpExpectList.add("Fragmentation of hydrocarbon side chains setting");
         tmpExpectList.add("Carbon side chains maximum length setting");
         tmpExpectList.add("Single carbon handling setting");
+        tmpExpectList.add("Single ring detection setting");
+        tmpExpectList.add("Keep rings setting");
         for (Property tmpSetting: this.basicAlkylStructureFragmenter.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());
         }
@@ -260,6 +262,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 //AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT
                 true
         );
+        this.basicAlkylStructureFragmenter.setAlternativeSingleRingDetectionSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         for (IAtomContainer tmpAtomContainer :
                 this.testStructuresACSet.atomContainers()) {
             Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBeFiltered(tmpAtomContainer));

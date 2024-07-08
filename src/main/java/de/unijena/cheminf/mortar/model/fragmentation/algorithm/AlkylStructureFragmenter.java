@@ -97,6 +97,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default boolean value for determining whether alternative or standard single carbon handling should be used.
      */
     public static final boolean ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT = false;
+    /**
+     * Default boolean value for determining which single ring detection method should be used.
+     */
+    public static final boolean ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT = false;
+    /**
+     * Default boolean value for setting keeping rings intact.
+     */
+    public static final boolean KEEP_RINGS_SETTING_DEFAULT = true;
     //<editor-fold desc="Property Keys">
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
@@ -119,6 +127,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Key for an internal boolean property used in identifying quaternary carbon atoms.
      */
     public static final String INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY = "ASF.QUATERNARY_CARBON";
+    /**
+     * Key for an internal integer property used in indexing detected fused rings.
+     */
+    public static final String INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY = "ASF.FUSED_RING_INDEX";
+    /**
+     * Key for an internal integer property used in indexing detected isolated rings.
+     */
+    public static final String INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY = "ASF.ISOLATED_RING_INDEX";
     //</editor-fold>
     //</editor-fold>
     //
@@ -140,6 +156,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final SimpleBooleanProperty alternativeSingleCarbonHandlingSetting;
     /**
+     * A property that has a constant boolean value determining which single ring detection method to use during fragmentation.
+     */
+    private final SimpleBooleanProperty alternativeSingleRingDetectionSetting;
+    /**
+     * A property that has a constant boolean value defining if rings should be dissected further.
+     */
+    private final SimpleBooleanProperty keepRingsSetting;
+    /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
     private final HashMap<String, String> settingNameTooltipTextMap;
@@ -160,7 +184,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        int tmpSettingsNameTooltipNumber = 4;
+        int tmpSettingsNameTooltipNumber = 6;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNameTooltipNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -200,19 +224,31 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.displayName"));
-
         this.alternativeSingleCarbonHandlingSetting = new SimpleBooleanProperty(this, "Single carbon handling setting",
                 AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.alternativeSingleCarbonHandlingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.alternativeSingleCarbonHandlingSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.alternativeSingleCarbonHandlingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.alternativeSingleCarbonHandlingSetting.displayName"));
-
-        this.settings = new ArrayList<>(4);
+        this.alternativeSingleRingDetectionSetting = new SimpleBooleanProperty(this, "Single ring detection setting",
+                AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.alternativeSingleRingDetectionSetting.getName(),
+                Message.get("AlkylStructureFragmenter.alternativeSingleRingDetectionSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.alternativeSingleRingDetectionSetting.getName(),
+                Message.get("AlkylStructureFragmenter.alternativeSingleRingDetectionSetting.displayName"));
+        this.keepRingsSetting = new SimpleBooleanProperty(this, "Keep rings setting",
+                AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.keepRingsSetting.getName(),
+                Message.get("AlkylStructureFragmenter.keepRingsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.keepRingsSetting.getName(),
+                Message.get("AlkylStructureFragmenter.keepRingsSetting.displayName"));
+        this.settings = new ArrayList<>(6);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
         this.settings.add(this.alternativeSingleCarbonHandlingSetting);
+        this.settings.add(this.alternativeSingleRingDetectionSetting);
+        this.settings.add(this.keepRingsSetting);
     }
     //</editor-fold>
     //
@@ -346,6 +382,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public void setAlternativeSingleCarbonHandlingSetting(boolean aBoolean){
         Objects.requireNonNull(aBoolean, "Given boolean is null.");
         this.alternativeSingleCarbonHandlingSetting.set(aBoolean);
+    }
+
+    /**
+     * Set method for setting defining whether alternative single ring detection should be used.
+     *
+     * @param aBoolean the given boolean value for switching between alternative and default detection
+     */
+    public void setAlternativeSingleRingDetectionSetting(boolean aBoolean) {
+        Objects.requireNonNull(aBoolean, "Given boolean is null");
+        this.alternativeSingleRingDetectionSetting.set(aBoolean);
+    }
+    public void setKeepRingsSetting(boolean aBoolean) {
+        Objects.requireNonNull(aBoolean);
+        this.keepRingsSetting.set(aBoolean);
     }
     //</editor-fold>
     //
@@ -560,18 +610,22 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
         Objects.requireNonNull(anAtomArray);
         Objects.requireNonNull(aBondArray);
+        RingSearch tmpRingSearch = new RingSearch(anAtomContainer);
         try {
-            RingSearch tmpRingSearch = new RingSearch(anAtomContainer);
             List<IAtomContainer> tmpFusedList = tmpRingSearch.fusedRingFragments();
             if (!tmpFusedList.isEmpty()) {
+                int[] tmpRingIndexArray = new int[tmpFusedList.size()];
                 for (int tmpFusedCount = 0; tmpFusedCount < tmpFusedList.size(); tmpFusedCount++) {
                     for (IAtom tmpFusedAtom: tmpFusedList.get(tmpFusedCount).atoms()) {
                         int tmpAtomInteger = tmpFusedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
                         anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                        //ToDo: currently ring index gets overwritten during marking -> use tmpRingIndexArray instead where ring affection is stored (possibly multiple)
+                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY, tmpFusedCount);
                     }
                     for (IBond tmpFusedBond: tmpFusedList.get(tmpFusedCount).bonds()) {
                         int tmpBondInteger = tmpFusedBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
                         aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY, tmpFusedCount);
                     }
                 }
             }
@@ -582,27 +636,60 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //</editor-fold>
         //
-        //<editor-fold desc="CycleFinder (Single Rings)" defaultstate="collapsed">
-        CycleFinder tmpMCBCycleFinder = Cycles.mcb();
-        IRingSet tmpMCBCyclesSet;
-        try {
-            Cycles tmpMCBCycles = tmpMCBCycleFinder.find(anAtomContainer);
-            tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
-            for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
-                for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
-                    int tmpAtomInteger = tmpSingleRingAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                    anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+        //<editor-fold desc="Single Ring Detection" defaultstate="collapsed">
+        if (this.alternativeSingleRingDetectionSetting.get()) {
+            //<editor-fold desc="CycleFinder (MCB)">
+            CycleFinder tmpMCBCycleFinder = Cycles.mcb();
+            IRingSet tmpMCBCyclesSet;
+            try {
+                Cycles tmpMCBCycles = tmpMCBCycleFinder.find(anAtomContainer);
+                tmpMCBCyclesSet = tmpMCBCycles.toRingSet();
+                int tmpSingleRingCount = 0;
+                for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
+                    for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
+                        int tmpAtomInteger = tmpSingleRingAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpSingleRingCount);
+                    }
+                    for (IBond tmpSingleRingBond: tmpContainer.bonds()) {
+                        int tmpBondInteger = tmpSingleRingBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpSingleRingCount);
+                    }
+                    tmpSingleRingCount++;
                 }
-                for (IBond tmpSingleRingBond: tmpContainer.bonds()) {
-                    int tmpBondInteger = tmpSingleRingBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                    aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+            } catch (Exception anException) {
+                AlkylStructureFragmenter.this.logger.log(Level.WARNING,
+                        anException + " MoleculeID: " + anAtomContainer.getID(), anException);
+                throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
+                        + anAtomContainer.getID() + ", at cyclefinder : " + anException.toString());
+            }
+            //</editor-fold>
+        } else {
+            //<editor-fold desc="RingSearch (isolated)">
+        try {
+            List<IAtomContainer> tmpIsolatedRingList = tmpRingSearch.isolatedRingFragments();
+            if (!tmpIsolatedRingList.isEmpty()) {
+                for (int tmpIsolatedCount = 0; tmpIsolatedCount < tmpIsolatedRingList.size(); tmpIsolatedCount++) {
+                    for (IAtom tmpIsolatedAtom: tmpIsolatedRingList.get(tmpIsolatedCount).atoms()) {
+                        int tmpAtomInteger = tmpIsolatedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpIsolatedCount);
+                    }
+                    for (IBond tmpFusedBond: tmpIsolatedRingList.get(tmpIsolatedCount).bonds()) {
+                        int tmpBondInteger = tmpFusedBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpIsolatedCount);
+                    }
                 }
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " MoleculeID: " + anAtomContainer.getID(), anException);
             throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + anAtomContainer.getID() + ", at cyclefinder : " + anException.toString());
+                    + anAtomContainer.getID() + ", at isolated RingSearch : " + anException.toString());
+        }
+        //</editor-fold>
         }
         //returns object containing atoms array and bonds array
         Object[] tmpObject = new Object[2];

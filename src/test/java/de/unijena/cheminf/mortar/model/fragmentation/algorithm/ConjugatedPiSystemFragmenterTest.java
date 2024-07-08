@@ -82,7 +82,7 @@ public class ConjugatedPiSystemFragmenterTest {
      */
     @Test
     public void defaultFragmentationTest() throws Exception {
-        try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader("src/test/resources/TestCPSFStructure.mol"))) {
+        try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader("src/test/resources/de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/TestCPSFStructure.mol"))) {
             IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
             ConjugatedPiSystemFragmenter tmpFragmenter = new ConjugatedPiSystemFragmenter();
             tmpFragmenter.setFragmentSaturationSetting(ConjugatedPiSystemFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
