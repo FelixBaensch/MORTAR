@@ -393,6 +393,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aBoolean, "Given boolean is null");
         this.alternativeSingleRingDetectionSetting.set(aBoolean);
     }
+
+    /**
+     * Set method for setting defining if rings should be dissected or kept intact.
+     *
+     * @param aBoolean the given boolean value for switching between dissecting rings and keeping them intact
+     */
     public void setKeepRingsSetting(boolean aBoolean) {
         Objects.requireNonNull(aBoolean);
         this.keepRingsSetting.set(aBoolean);
@@ -514,6 +520,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Object[] tmpObject = this.markRings(tmpClone, this.fillAtomArray(tmpClone), this.fillBondArray(tmpClone));
         tmpObject = this.markConjugatedPiSystems(tmpClone, (IAtom[]) tmpObject[0], (IBond[]) tmpObject[1]);
         //</editor-fold>
+        //
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
             int tmpPostFragmentationAtomCount = 0;
@@ -812,8 +819,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
         IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
         IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
+        IAtomContainer tmpIsolatedMultiBondsContainer = new AtomContainer();
         IAtomContainer tmpSingleCarbonContainer = new AtomContainer();
-        //atom extraction
+        //
+        //<editor-fold desc="atom extraction">
         //superior performance compared to normal for iteration over Array length
         for (IAtom tmpAtom : anAtomArray) {
             if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
@@ -842,19 +851,45 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpRingFragmentationContainer.addAtom(tmpAtom);
             }
         }
-        //bond extraction
+        //</editor-fold>
+        //
+        //<editor-fold desc="bond extraction">
         //superior performance compared to normal for iteration over Array length
         for (IBond tmpBond : aBondArray) {
             if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                 IAtom tmpBeginAtom = tmpBond.getBegin();
                 IAtom tmpEndAtom = tmpBond.getEnd();
+                boolean tmpBool = true;
+                if (tmpBond.getOrder().numeric() == 2) {
+                    System.out.println(tmpBond.getIndex() + " 2");
+                    //tmpIsolatedMultiBondsContainer.addAtom(tmpBeginAtom);
+                    //tmpIsolatedMultiBondsContainer.addAtom(tmpEndAtom);
+                    //IBond tmpNewBond = new Bond();
+                    //tmpNewBond.setOrder(IBond.Order.DOUBLE);
+                    //tmpIsolatedMultiBondsContainer.addBond(tmpNewBond);
+                    //ToDo: weird stuff happening when adding bond in way below
+                    //tmpIsolatedMultiBondsContainer.addBond(
+                            //tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)
+                            //tmpBeginAtom.getIndex(),
+                            //tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)
+                            //tmpEndAtom.getIndex(),
+                            //IBond.Order.DOUBLE);
+                    tmpIsolatedMultiBondsContainer.addBond(tmpBond);
+                    tmpBool = false;
+                } /*
+                else if (tmpBond.getOrder().numeric() == 3) {
+                    System.out.println(tmpBond.getIndex() + " 3");
+                    tmpIsolatedMultiBondsContainer.addBond(tmpBond);
+                    tmpBool = false;
+                }
+                */
                 boolean tmpIsBeginFragPlacement = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY);
                 boolean tmpIsEndFragPlacement = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY);
                 boolean tmpIsBeginTertiary = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
                 boolean tmpIsEndTertiary = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
                 boolean tmpIsBeginQuaternary = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
                 boolean tmpIsEndQuaternary = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
-                if (tmpIsBeginFragPlacement && tmpIsEndFragPlacement) {
+                if (tmpIsBeginFragPlacement && tmpIsEndFragPlacement && tmpBool) {
                     if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary)) {
                         tmpChainFragmentationContainer.addBond(tmpBond);
                     }
@@ -864,6 +899,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpRingFragmentationContainer.addBond(tmpBond);
             }
         }
+        //</editor-fold>
         //</editor-fold>
         //
         IAtomContainerSet tmpRingACSet = this.separateDisconnectedStructures(tmpRingFragmentationContainer);
@@ -876,6 +912,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //remnants after ring, conj. system and tertiary/quaternary carbon extractions
         //expected to be only linear carbohydrates
+        tmpExtractionSet.add(this.separateDisconnectedStructures(tmpIsolatedMultiBondsContainer));
+
         IAtomContainerSet tmpChainACSet = this.separateDisconnectedStructures(tmpChainFragmentationContainer);
         //ACSet for dissected chains
         IAtomContainerSet tmpDissectedChainACSet = new AtomContainerSet();
