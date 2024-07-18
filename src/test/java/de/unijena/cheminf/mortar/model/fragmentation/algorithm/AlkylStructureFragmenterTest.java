@@ -112,8 +112,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     public AlkylStructureFragmenterTest() throws FileNotFoundException, URISyntaxException {
         this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
         this.testStructuresACSet = new AtomContainerSet();
-        this.testStructuresACSet = readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Test_Structures.sdf");
-        this.testExpectedFragmentsACSet = readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments.sdf");
+        this.testStructuresACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Test_Structures.sdf");
+        this.testExpectedFragmentsACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments.sdf");
         this.testExpectedFragmentsACList = new ArrayList<>(this.testExpectedFragmentsACSet.getAtomContainerCount());
         //this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpAC);
         this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(this.testStructuresACSet.getAtomContainer(0));
