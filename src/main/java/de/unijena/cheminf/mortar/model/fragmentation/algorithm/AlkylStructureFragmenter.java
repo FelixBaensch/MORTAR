@@ -627,7 +627,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //set general atom and specific bond properties
         for (int tmpAtomIndex = 0; tmpAtomIndex < anAtomArray.length; tmpAtomIndex++) {
             IAtom tmpAtom = anAtomArray[tmpAtomIndex];
-            System.out.println(tmpAtomIndex);
+            System.out.println("markNeighbor Index: " + tmpAtomIndex);
             if (tmpAtom != null) {
                 //marking of tertiary or quaternary carbons together with their neighbor atoms
                 if (tmpAtom.getBondCount() == 3 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
@@ -914,11 +914,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="atom extraction">
         //superior performance compared to normal for iteration over Array length
         for (IAtom tmpAtom : anAtomArray) {
-            System.out.println(tmpAtom.getProperties());
+            //System.out.println(tmpAtom.getProperties());
             //checks atom if not part of ring or conjugated pi system
             if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
-                    tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                    //tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                    //ToDo
+                    tmpRingFragmentationContainer.addAtom(tmpAtom);
                     System.out.println("tert atom added");
                     if (this.alternativeSingleCarbonHandlingSetting.get()) {
                         for (int i = 0; i < 3; i++) {
@@ -928,7 +930,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         }
                     }
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
-                    tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                    //tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                    tmpRingFragmentationContainer.addAtom(tmpAtom);
                     System.out.println("quart atom added");
                     if (this.alternativeSingleCarbonHandlingSetting.get()) {
                         for (int i = 0; i < 4; i++) {
@@ -948,7 +951,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 //extract neighbor atoms of tertiary or quaternary carbon atoms
                 else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
                     if (this.alternativeSingleCarbonHandlingSetting.get()) {continue;}
-                    tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                    //tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                    //ToDo
+                    tmpRingFragmentationContainer.addAtom(tmpAtom);
                     System.out.println("neighbor atom added");
                 }
                 //extract residue atoms as linear chain atoms
@@ -998,13 +1003,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     System.out.println("triple bond added");
                 }
                 else if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
-                    tmpTertQuatCarbonContainer.addBond(tmpBond);
+                    //tmpTertQuatCarbonContainer.addBond(tmpBond);
+                    //ToDo
+                    //leads to falsely connected isolated rings!
+                    // -> connection out of ring can (when not double bond) be tertiary carbon configuration!
+                    //solution: rework general extraction and ring extraction (internal_fragmentation_placement needs to go)
+                    tmpRingFragmentationContainer.addBond(tmpBond);
                     System.out.println("neighbor bond added");
-                    /*
-                    if ((tmpIsBeginNeighbor || tmpIsEndNeighbor) && (tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary)) {
-                        tmpTertQuatCarbonContainer.addBond(tmpBond);
-                    }
-                    */
                 }
                 if (tmpIsBeginFragPlacement && tmpIsEndFragPlacement && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
                     if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary || tmpIsBeginNeighbor || tmpIsEndNeighbor)) {
