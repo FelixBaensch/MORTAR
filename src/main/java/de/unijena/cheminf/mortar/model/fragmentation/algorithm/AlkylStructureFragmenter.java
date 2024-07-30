@@ -27,7 +27,9 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 //<editor-fold desc="Future Development">
 /*
-TODO:
+TODO: (30|07|24):   -bug fix for isolated rings falsely being placed in fused systems
+                    -implement spiro carbon detection + ring integrity setting
+                    -overhaul test class (with new functionalities)
  */
 //</editor-fold>
 
@@ -115,11 +117,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final String INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY = "ASF.BOND_INDEX";
     /**
-     * Key for an internal boolean property used in identifying whether an atom or bond has been placed in the
-     * corresponding fragmentation array. It is further used during fragmentation.
-     */
-    public static final String INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY = "ASF.FRAGMENTATION_PLACEMENT";
-    /**
      * Key for an internal boolean property, used in identifying tertiary carbon atoms.
      */
     public static final String INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY = "ASF.TERTIARY_CARBON";
@@ -147,7 +144,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Key for an internal boolean property used in identifying neighboring atoms of tertiary or quaternary carbon atoms
      * during fragmentation.
      */
-    public static final String INTERNAL_ASF_NEIGHBOR_MARKER_KEY = "ASF_NEIGHBOR_MARKER";
+    public static final String INTERNAL_ASF_NEIGHBOR_MARKER_KEY = "ASF.NEIGHBOR_MARKER";
+    /**
+     * Key for an internal boolean property used in identifying ring structure atoms and bonds during fragmentation.
+     */
+    public static final String INTERNAL_ASF_RING_MARKER_KEY = "ASF.RING_MARKER";
+    /**
+     * Key for an internal boolean property used in identifying conjugated pi bond systems during fragmentation.
+     */
+    public static final String INTERNAL_ASF_CONJ_PI_MARKER_KEY = "ASF:CONJ_PI_MARKER";
     //</editor-fold>
     //</editor-fold>
     //
@@ -579,9 +584,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (tmpAtom != null) {
                 //set atom properties, IMPORTANT: this needs to be done in array filling step for correct function of tertiary or quaternary carbon atoms and neighbors
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, false);
+                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, false);
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, false);
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, false);
-                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, false);
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, false);
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY, false);
@@ -604,7 +610,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             IBond tmpBond = aClone.getBond(tmpAlkylSFBondIndex);
             if (tmpBond != null) {
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpAlkylSFBondIndex);
-                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, true);
+                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, false);
+                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, false);
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, false);
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, false);
                 tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY, false);
@@ -710,14 +717,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 for (int tmpFusedCount = 0; tmpFusedCount < tmpFusedList.size(); tmpFusedCount++) {
                     for (IAtom tmpFusedAtom: tmpFusedList.get(tmpFusedCount).atoms()) {
                         int tmpAtomInteger = tmpFusedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                        //ToDo: currently ring index gets overwritten during marking -> use tmpRingIndexArray instead where ring affection is stored (possibly multiple)
-                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY, tmpFusedCount);
+                        IAtom tmpAtom = anAtomArray[tmpAtomInteger];
+                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
+                        //currently ring index gets overwritten during marking -> use tmpRingIndexArray instead where ring affection is stored (possibly multiple)
+                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY, tmpFusedCount);
                     }
                     for (IBond tmpFusedBond: tmpFusedList.get(tmpFusedCount).bonds()) {
                         int tmpBondInteger = tmpFusedBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY, tmpFusedCount);
+                        IBond tmpBond = aBondArray[tmpBondInteger];
+                        tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
+                        tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY, tmpFusedCount);
                     }
                 }
             }
@@ -740,13 +749,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 for (IAtomContainer tmpContainer: tmpMCBCyclesSet.atomContainers()) {
                     for (IAtom tmpSingleRingAtom: tmpContainer.atoms()) {
                         int tmpAtomInteger = tmpSingleRingAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpSingleRingCount);
+                        IAtom tmpAtom = anAtomArray[tmpAtomInteger];
+                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
+                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpSingleRingCount);
                     }
                     for (IBond tmpSingleRingBond: tmpContainer.bonds()) {
                         int tmpBondInteger = tmpSingleRingBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpSingleRingCount);
+                        IBond tmpBond = aBondArray[tmpBondInteger];
+                        tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
+                        tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpSingleRingCount);
                     }
                     tmpSingleRingCount++;
                 }
@@ -765,13 +776,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 for (int tmpIsolatedCount = 0; tmpIsolatedCount < tmpIsolatedRingList.size(); tmpIsolatedCount++) {
                     for (IAtom tmpIsolatedAtom: tmpIsolatedRingList.get(tmpIsolatedCount).atoms()) {
                         int tmpAtomInteger = tmpIsolatedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                        anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpIsolatedCount);
+                        IAtom tmpAtom = anAtomArray[tmpAtomInteger];
+                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
+                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpIsolatedCount);
                     }
                     for (IBond tmpFusedBond: tmpIsolatedRingList.get(tmpIsolatedCount).bonds()) {
                         int tmpBondInteger = tmpFusedBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
-                        aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpIsolatedCount);
+                        IBond tmpBond = aBondArray[tmpBondInteger];
+                        tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
+                        tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpIsolatedCount);
                     }
                 }
             }
@@ -814,11 +827,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
                 for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
                     int tmpAtomInteger = tmpConjAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                    anAtomArray[tmpAtomInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                    IAtom tmpAtom = anAtomArray[tmpAtomInteger];
+                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
                 }
                 for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
                     int tmpBondInteger = tmpConjBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-                    aBondArray[tmpBondInteger].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY, false);
+                    IBond tmpBond = aBondArray[tmpBondInteger];
+                    tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
                 }
             }
             return new Object[] {anAtomArray, aBondArray};
@@ -916,10 +931,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         for (IAtom tmpAtom : anAtomArray) {
             //System.out.println(tmpAtom.getProperties());
             //checks atom if not part of ring or conjugated pi system
-            if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
+            if (!((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
+                    || (boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY))) {
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
-                    //tmpTertQuatCarbonContainer.addAtom(tmpAtom);
-                    //ToDo
                     tmpRingFragmentationContainer.addAtom(tmpAtom);
                     System.out.println("tert atom added");
                     if (this.alternativeSingleCarbonHandlingSetting.get()) {
@@ -930,7 +944,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         }
                     }
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
-                    //tmpTertQuatCarbonContainer.addAtom(tmpAtom);
                     tmpRingFragmentationContainer.addAtom(tmpAtom);
                     System.out.println("quart atom added");
                     if (this.alternativeSingleCarbonHandlingSetting.get()) {
@@ -951,8 +964,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 //extract neighbor atoms of tertiary or quaternary carbon atoms
                 else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
                     if (this.alternativeSingleCarbonHandlingSetting.get()) {continue;}
-                    //tmpTertQuatCarbonContainer.addAtom(tmpAtom);
-                    //ToDo
                     tmpRingFragmentationContainer.addAtom(tmpAtom);
                     System.out.println("neighbor atom added");
                 }
@@ -971,13 +982,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="bond extraction">
         //superior performance compared to normal for iteration over Array length
         for (IBond tmpBond : aBondArray) {
-            if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY)) {
+            if (!((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
+                    || (boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY))) {
                 IAtom tmpBeginAtom = tmpBond.getBegin();
                 IAtom tmpEndAtom = tmpBond.getEnd();
                 //<editor-fold desc="Bond Atoms Booleans">
                 //booleans for bond begin and end atom properties used in fragmentation, self-explanatory
-                boolean tmpIsBeginFragPlacement = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY);
-                boolean tmpIsEndFragPlacement = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_FRAGMENTATION_PLACEMENT_KEY);
+                boolean tmpIsBeginRing = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+                boolean tmpIsEndRing = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+                //
+                boolean tmpIsBeginConjPi = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+                boolean tmpIsEndConjPi = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
                 //
                 boolean tmpIsBeginTertiary = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
                 boolean tmpIsEndTertiary = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
@@ -1003,15 +1018,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     System.out.println("triple bond added");
                 }
                 else if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
-                    //tmpTertQuatCarbonContainer.addBond(tmpBond);
-                    //ToDo
                     //leads to falsely connected isolated rings!
                     // -> connection out of ring can (when not double bond) be tertiary carbon configuration!
-                    //solution: rework general extraction and ring extraction (internal_fragmentation_placement needs to go)
                     tmpRingFragmentationContainer.addBond(tmpBond);
                     System.out.println("neighbor bond added");
                 }
-                if (tmpIsBeginFragPlacement && tmpIsEndFragPlacement && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
+                if (!(tmpIsBeginRing && tmpIsEndRing && tmpIsBeginConjPi && tmpIsEndConjPi)
+                        && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
                     if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary || tmpIsBeginNeighbor || tmpIsEndNeighbor)) {
                         tmpChainFragmentationContainer.addBond(tmpBond);
                         System.out.println("chain residue bond added");
