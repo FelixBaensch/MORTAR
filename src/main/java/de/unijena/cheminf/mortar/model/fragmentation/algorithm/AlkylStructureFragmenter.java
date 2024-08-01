@@ -27,9 +27,9 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 //<editor-fold desc="Future Development">
 /*
-TODO: (30|07|24):   -bug fix for isolated rings falsely being placed in fused systems
-                    -implement spiro carbon detection + ring integrity setting
+TODO: (01|08|24):   -implement spiro carbon detection + ring integrity setting
                     -overhaul test class (with new functionalities)
+                    -large scale testing of fragmentation (regarding correct fragmentation and performance)
  */
 //</editor-fold>
 
@@ -929,7 +929,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="atom extraction">
         //superior performance compared to normal for iteration over Array length
         for (IAtom tmpAtom : anAtomArray) {
-            //System.out.println(tmpAtom.getProperties());
             //checks atom if not part of ring or conjugated pi system
             if (!((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
                     || (boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY))) {
@@ -1017,9 +1016,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpIsolatedMultiBondsContainer.addBond(tmpBond);
                     System.out.println("triple bond added");
                 }
-                else if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
-                    //leads to falsely connected isolated rings!
-                    // -> connection out of ring can (when not double bond) be tertiary carbon configuration!
+                else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)
+                        && !((tmpIsBeginRing && tmpIsBeginTertiary) || (tmpIsEndRing && tmpIsEndTertiary)
+                            || (tmpIsBeginRing && tmpIsBeginQuaternary) || (tmpIsEndRing && tmpIsEndQuaternary))) {
                     tmpRingFragmentationContainer.addBond(tmpBond);
                     System.out.println("neighbor bond added");
                 }
