@@ -29,6 +29,8 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.AlkylStructureFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ConjugatedPiSystemFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGeneratorFragmenter;
@@ -152,6 +154,14 @@ public class FragmentationService {
      */
     private String currentFragmentationName;
     /**
+     * Alkyl Structure Fragmenter
+     */
+    private IMoleculeFragmenter AlkylSF;
+    /**
+     * Conjugated Pi System Fragmenter
+     */
+    private IMoleculeFragmenter ConjPiSysF;
+    /**
      * String for the name of the current pipeline fragmentation.
      */
     private String pipeliningFragmentationName;
@@ -206,13 +216,17 @@ public class FragmentationService {
      */
     public FragmentationService(SettingsContainer aSettingsContainer) {
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
-        this.fragmenters = new IMoleculeFragmenter[3];
+        this.fragmenters = new IMoleculeFragmenter[5];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
         this.fragmenters[1] = this.sugarRUF;
         this.scaffoldGF = new ScaffoldGeneratorFragmenter();
         this.fragmenters[2] = this.scaffoldGF;
+        this.AlkylSF = new AlkylStructureFragmenter();
+        this.fragmenters[3] = this.AlkylSF;
+        this.ConjPiSysF = new ConjugatedPiSystemFragmenter();
+        this.fragmenters[4] = this.ConjPiSysF;
         //
         Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
         this.settingsContainer = aSettingsContainer;
