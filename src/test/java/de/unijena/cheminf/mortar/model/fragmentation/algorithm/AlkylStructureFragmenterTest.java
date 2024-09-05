@@ -113,8 +113,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
         this.testStructuresACSet = new AtomContainerSet();
         this.testStructuresACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Test_Structures.sdf");
-        this.testExpectedFragmentsACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments.sdf");
+        this.testExpectedFragmentsACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments_Natural_Compound.sdf");
         this.testExpectedFragmentsACList = new ArrayList<>(this.testExpectedFragmentsACSet.getAtomContainerCount());
+        //ToDo: read structures into arrays in each test method, not in general test!
         //this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpAC);
         this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(this.testStructuresACSet.getAtomContainer(0));
         //this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpAC);
@@ -257,11 +258,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        //currently alternative handling is explicitly ACTIVATED for testing purposes until new expected fragments are created
-        this.basicAlkylStructureFragmenter.setAlternativeSingleCarbonHandlingSetting(
-                //AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT
-                true
-        );
+        this.basicAlkylStructureFragmenter.setAlternativeSingleCarbonHandlingSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setAlternativeSingleRingDetectionSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         for (IAtomContainer tmpAtomContainer :
@@ -270,13 +267,47 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBePreprocessed(tmpAtomContainer));
             Assertions.assertTrue(this.basicAlkylStructureFragmenter.canBeFragmented(tmpAtomContainer));
         }
-        this.testResultFragmentsACList = this.basicAlkylStructureFragmenter.fragmentMolecule(this.testStructuresACSet.getAtomContainer(0));
-        this.testResultACSet = new AtomContainerSet();
-        for (int i = 0; i < this.testResultFragmentsACList.size(); i++) {
-            this.testResultACSet.addAtomContainer(this.testResultFragmentsACList.get(i));
+        List<IAtomContainer> tmpResultList = this.basicAlkylStructureFragmenter.fragmentMolecule(this.testStructuresACSet.getAtomContainer(1));
+        IAtomContainerSet tmpResultACSet = new AtomContainerSet();
+        for (int i = 0; i < tmpResultList.size(); i++) {
+            tmpResultACSet.addAtomContainer(tmpResultList.get(i));
         }
-        List<String> tmpExpectedSMILESList = this.generateSMILESFromACSet(this.testExpectedFragmentsACSet);
-        List<String> tmpResultSMILESList = this.generateSMILESFromACSet(this.testResultACSet);
+        List<String> tmpResultSMILESList = this.generateSMILESFromACSet(tmpResultACSet);
+        IAtomContainerSet tmpExpectedACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments_Test_Structure.sdf");
+        List<String> tmpExpectedSMILESList = this.generateSMILESFromACSet(tmpExpectedACSet);
+        //System.out.println("expected: " + tmpExpectedSMILESList);
+        //System.out.println("result: " + tmpResultSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Method to test alkyl fragmentation on real compound">
+    //ToDo: change current placeholder molecule to fitting natural compound
+    @Test
+    public void naturalCompoundFragmentationTest() throws Exception {
+        this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setAlternativeSingleCarbonHandlingSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setAlternativeSingleRingDetectionSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
+        for (IAtomContainer tmpAtomContainer :
+                this.testStructuresACSet.atomContainers()) {
+            Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBeFiltered(tmpAtomContainer));
+            Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBePreprocessed(tmpAtomContainer));
+            Assertions.assertTrue(this.basicAlkylStructureFragmenter.canBeFragmented(tmpAtomContainer));
+        }
+        List<IAtomContainer> tmpAtomContainerList = this.basicAlkylStructureFragmenter.fragmentMolecule(this.testStructuresACSet.getAtomContainer(0));
+        IAtomContainerSet tmpResultACSet = new AtomContainerSet();
+        for (int i = 0; i < tmpAtomContainerList.size(); i++) {
+            tmpResultACSet.addAtomContainer(tmpAtomContainerList.get(i));
+        }
+        List<String> tmpResultSMILESList = this.generateSMILESFromACSet(tmpResultACSet);
+        IAtomContainerSet tmpExpectedACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments_Natural_Compound.sdf");
+        List<String> tmpExpectedSMILESList = this.generateSMILESFromACSet(tmpExpectedACSet);
+        //System.out.println("expected: " + tmpExpectedSMILESList);
+        //System.out.println("result: " + tmpResultSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
