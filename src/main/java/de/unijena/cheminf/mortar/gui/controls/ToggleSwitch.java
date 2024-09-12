@@ -187,15 +187,7 @@ public class ToggleSwitch extends Control {
      * Second constructor with parameters to make the toggle switch configurable. This way if it is needed in different
      * classes, the switch can be customized by calling for this constructor and passing preferred values to
      * the parameters.
-     * @param anInitialStateOfBooleanProperty initial boolean state of the switch.
-     * @param aRectangleWidth the width of the rectangle that is used as the background of the switch.
-     * @param aRectangleHeight the height of the rectangle that is used as the background of the switch.
-     * @param aRectanglePositionX the position of the rectangle on the GUI.
-     * @param aCircleRadius radius of the button.
-     * @param aCirclePositionX position of the button on the x-axis of the layout of the GUI.
-     * @param aCirclePositionY position of the button on the y-axis of the layout of the GUI.
      * @param aDropShadowRadius the radius of the shadow around the circle.
-     * @param aDurationOfTransitionInSeconds the duration of the transition in seconds.
      * @param aRectangleColorOff the color of the background whe the switch is turned off.
      * @param aRectangleOutline the color of the outline of the background.
      * @param aCircleColor the color of the button.
@@ -203,40 +195,21 @@ public class ToggleSwitch extends Control {
      * @param aCircleShadowColor the color of the shadow around the button.
      * @param aRectangleColorOn the color of the background when the switch is turned on.
      */
-    public ToggleSwitch(boolean anInitialStateOfBooleanProperty, int aRectangleWidth, int aRectangleHeight, int aRectanglePositionX, int aCircleRadius,
-                        int aCirclePositionX, int aCirclePositionY, int aDropShadowRadius, double aDurationOfTransitionInSeconds, Color aRectangleColorOff,
-                        Color aRectangleOutline, Color aCircleColor, Color aCircleOutline, Color aCircleShadowColor, Color aRectangleColorOn){
-        this.switchStateBooleanProperty = new SimpleBooleanProperty(anInitialStateOfBooleanProperty);
-        this.switchBackground = new Rectangle(aRectangleWidth, aRectangleHeight);
-        this.switchBackground.setArcWidth(aRectangleHeight);
-        this.switchBackground.setArcHeight(aRectangleHeight);
-        this.switchBackground.setLayoutX(aRectanglePositionX);
+    public ToggleSwitch( int aDropShadowRadius, Color aRectangleColorOff, Color aRectangleOutline, Color aCircleColor,
+                         Color aCircleOutline, Color aCircleShadowColor, Color aRectangleColorOn){
+        this();
         this.switchBackground.setFill(aRectangleColorOff);
         this.switchBackground.setStroke(aRectangleOutline);
-        this.switchButton = new Circle(aCircleRadius);
-        this.switchButton.setCenterX(aCirclePositionX);
-        this.switchButton.setCenterY(aCirclePositionY);
         this.switchButton.setFill(aCircleColor);
         this.switchButton.setStroke(aCircleOutline);
         this.switchButton.setEffect(new DropShadow(aDropShadowRadius, aCircleShadowColor));
-        this.switchAnimation = new TranslateTransition(Duration.seconds(aDurationOfTransitionInSeconds));
-        this.switchAnimation.setNode(this.switchButton);
-        this.fillAnimation = new FillTransition(Duration.seconds(aDurationOfTransitionInSeconds));
-        this.switchTransition = new ParallelTransition(this.switchAnimation, this.fillAnimation);
-        this.switchAnimation.setNode(this.switchButton);
-        this.fillAnimation.setShape(this.switchBackground);
-        this.getChildren().addAll(this.switchBackground, this.switchButton);
         //Listener
         this.switchStateBooleanProperty.addListener((observable, oldValue, newValue) -> {
             boolean tmpIsOn = newValue.booleanValue();
-            this.switchAnimation.setToX(tmpIsOn ? (aRectangleWidth - (2 * aCircleRadius)) : 0); //?
             this.fillAnimation.setFromValue(tmpIsOn ? aRectangleColorOff : aRectangleColorOn);
             this.fillAnimation.setToValue(tmpIsOn ? aRectangleColorOn : aRectangleColorOff);
             this.switchTransition.play();
         });
-        //Mouse listener.
-        this.setOnMouseClicked(event -> this.switchStateBooleanProperty.set(!this.switchStateBooleanProperty.get()));
-
     }
     //</editor-fold>
     //

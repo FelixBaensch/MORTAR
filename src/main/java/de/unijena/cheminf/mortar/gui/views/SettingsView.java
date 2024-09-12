@@ -64,6 +64,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 
 import java.util.Collections;
 import java.util.List;
@@ -209,7 +210,7 @@ public class SettingsView extends AnchorPane {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
                     ToggleSwitch tmpToggle = new ToggleSwitch();
                     tmpToggle.setTooltip(tmpTooltip);
-                    tmpToggle.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
+                    tmpToggle.getSwitchStateProperty().bindBidirectional(tmpSimpleBooleanProperty);
                     //add to gridpane
                     aGridPane.add(tmpToggle, 1, tmpRowIndex++);
                     GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
