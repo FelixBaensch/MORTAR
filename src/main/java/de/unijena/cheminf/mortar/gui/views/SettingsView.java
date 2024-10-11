@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
+import de.unijena.cheminf.mortar.gui.controls.ToggleSwitch;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -206,15 +207,12 @@ public class SettingsView extends AnchorPane {
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             switch (tmpProperty) {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
-                    ComboBox<Boolean> tmpBooleanComboBox = new ComboBox<>();
-                    tmpBooleanComboBox.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
-                    tmpBooleanComboBox.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                    tmpBooleanComboBox.getItems().addAll(Boolean.FALSE, Boolean.TRUE);
-                    tmpBooleanComboBox.valueProperty().bindBidirectional(tmpSimpleBooleanProperty);
-                    tmpBooleanComboBox.setTooltip(tmpTooltip);
+                    ToggleSwitch tmpToggle = new ToggleSwitch();
+                    tmpToggle.setTooltip(tmpTooltip);
+                    tmpToggle.getSwitchStateProperty().bindBidirectional(tmpSimpleBooleanProperty);
                     //add to gridpane
-                    aGridPane.add(tmpBooleanComboBox, 1, tmpRowIndex++);
-                    GridPane.setMargin(tmpBooleanComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    aGridPane.add(tmpToggle, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleIntegerProperty simpleIntegerProperty -> {
                     TextField tmpIntegerTextField = new TextField();
