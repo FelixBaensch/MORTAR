@@ -40,12 +40,12 @@ import javafx.util.Duration;
 /**
  * This class implements a toggle switch to en- and disable features in settings. The toggle switch is built by putting
  * a circle on top of a rectangle. The corners of the rectangle were adjusted to fit the round shape of the circle.
- * The transition of the position of the circle is animated and parallel to the rectangle's color change
- * which demonstrates the current state. For example, blue and circle on the right means "on"/grey and circle
- * transitions to left means "off". This class extends Control, however methods for resizing the switch
+ * The transition of the position of the circle is animated and accompanied by the rectangle's color change
+ * which demonstrates the current state. For example, blue and circle on the right means "on", grey and circle
+ * transitions to left means "off". This class extends Control. However, methods for resizing the switch
  * are not implemented yet.
  * The following code is inspired by "JavaFX UI: iOS Style Toggle Switch", uploaded by Almas Baimagambetov on YouTube.
- * See https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf, (last time viewed on 06/06/2024, 18:10)
+ * See <a href="https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf">link here</a>, (last time viewed on 06/06/2024, 18:10)
  *
  * @author Zeynep Dagtekin
  * @version 1.0.0.0
@@ -53,169 +53,180 @@ import javafx.util.Duration;
 public class ToggleSwitch extends Control {
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
-     * Button.
+     * Circle that serves as button of the switch.
      */
     private final Circle switchButton;
     /**
-     * Background of the switch.
+     * Rectangle that serves as background of the switch.
      */
     private final Rectangle switchBackground;
     /**
-     * Boolean property to keep track of the state.
+     * Boolean property that represents the switch state, on vs. off.
      */
     private final SimpleBooleanProperty switchStateBooleanProperty;
     /**
-     * Transition of the Circle from one side to the other.
+     * Transition animation of the Circle from one side to the other.
      */
-    private final TranslateTransition switchAnimation;
+    private final TranslateTransition switchCircleTranslateTransition;
     /**
-     * Color transition.
+     * Color transition of the switch background.
      */
-    private final FillTransition fillAnimation;
+    private final FillTransition switchBackgroundColorFillTransition;
     /**
-     * Parallel transition of color and Circle.
+     * Combined transition of background color and circle position.
      */
     private final ParallelTransition switchTransition;
     //</editor-fold>
+    //
     //<editor-fold desc="Default values" defaultstate="collapsed">
     /**
-     * Default value for the width of the Background.
+     * Default value for the width of the background.
      */
-    public static final int RECTANGLE_WIDTH_VALUE = 45;
+    public static final int DEFAULT_RECTANGLE_WIDTH_VALUE = 45;
     /**
-     * Default value for the height of the Background.
+     * Default value for the height of the background.
      */
-    public static final int RECTANGLE_HEIGHT_VALUE = 18;
+    public static final int DEFAULT_RECTANGLE_HEIGHT_VALUE = 18;
     /**
-     * Default value for the radius of the Button.
+     * Default value for the radius of the button.
      */
-    public static final int CIRCLE_RADIUS_VALUE = 10;
+    public static final int DEFAULT_CIRCLE_RADIUS_VALUE = 10;
     /**
-     * Default value for the Layout which sets the position of the Background of the switch on the x-axis of the dialogue box.
+     * Default value for the layout which sets the position of the background
+     * of the switch on the x-axis of the dialogue box.
      */
-    public static final int RECTANGLE_POSITION_VALUE = -50;
+    public static final int DEFAULT_RECTANGLE_POSITION_X_VALUE = -50;
     /**
-     * Default value for the Layout which sets the position of the button on the x-axis of the dialogue box.
+     * Default value for the layout which sets the position of the button on
+     * the x-axis of the dialogue box.
      */
-    public static final int CIRCLE_POSITION_X_VALUE = -40;
+    public static final int DEFAULT_CIRCLE_POSITION_X_VALUE = -40;
     /**
-     * Default value for the position of the Button on the y-axis of the dialogue box.
+     * Default value for the position of the button on the y-axis of the dialogue box.
      */
-    public static final int CIRCLE_POSITION_Y_VALUE = 9;
+    public static final int DEFAULT_CIRCLE_POSITION_Y_VALUE = 9;
     /**
      * Default value for the radius of the shadow on the button.
      */
-    public static final int CIRCLE_SHADOW_RADIUS = 5;
+    public static final int DEFAULT_CIRCLE_SHADOW_RADIUS = 5;
     /**
      * Default value for the duration of the animated transition in seconds.
      */
-    public static final double DURATION_VALUE = 0.25;
+    public static final double DEFAULT_DURATION_VALUE = 0.25;
     /**
      * Default color of the background when the toggle switch is turned off.
      */
-    public static final Color RECTANGLE_COLOR_OFF = Color.LIGHTGRAY;
+    public static final Color DEFAULT_RECTANGLE_COLOR_OFF = Color.LIGHTGRAY;
     /**
      * Default color for the outline of the Background.
      */
-    public static final Color RECTANGLE_OUTLINE_COLOR = Color.DARKGRAY;
+    public static final Color DEFAULT_RECTANGLE_OUTLINE_COLOR = Color.DARKGRAY;
     /**
      * Default color of the button.
      */
-    public static final Color CIRCLE_COLOR = Color.WHITE;
+    public static final Color DEFAULT_CIRCLE_COLOR = Color.WHITE;
     /**
      * Default color for the outline of the button.
      */
-    public static final Color CIRCLE_OUTLINE_COLOR = Color.DARKGRAY;
+    public static final Color DEFAULT_CIRCLE_OUTLINE_COLOR = Color.DARKGRAY;
     /**
-     * Default color for the background when turned on which is "Rich Electric Blue".
+     * Default color for the background when turned on, encodes "Rich Electric Blue".
      */
-    public static final Color RECTANGLE_COLOR_ON = Color.web("#0099cc");
+    public static final Color DEFAULT_RECTANGLE_COLOR_ON = Color.web("#0099cc");
     /**
      * Default color of the shadow on the button.
      */
-    public static final Color CIRCLE_SHADOW_COLOR = Color.GRAY;
+    public static final Color DEFAULT_CIRCLE_SHADOW_COLOR = Color.GRAY;
     /**
      * Default boolean state of the switch.
      */
-    public static final boolean SWITCH_STATE = false;
+    public static final boolean DEFAULT_SWITCH_STATE = false;
     //</editor-fold>
-    //<editor-fold desc="Constructor with default values" defaultstate="collapsed">
+    //
+    //<editor-fold desc="Constructors" defaultstate="collapsed">
     /**
      * Constructor.
      * The toggle switch is built by initializing a layout which includes the sizing of the background (a rectangle)
      * and the sizing of the button (a circle), as well as their colors. The transition of the button is initialized by
      * adding an animation which also entails a color change. The transition works by subtracting the diameter of the
      * circle from the width of the rectangle. A listener and a mouse listener trigger the animation
-     * when the button (circle) is clicked on. The rectangle height variable is used for its arc width and arc height,
+     * when the switch is clicked. The rectangle height variable is used for its arc width and arc height,
      * which provides the rounded shape of the switch.
      */
     public ToggleSwitch() {
-        super();
-        this.switchStateBooleanProperty = new SimpleBooleanProperty(SWITCH_STATE);
-        this.switchBackground = new Rectangle(RECTANGLE_WIDTH_VALUE, RECTANGLE_HEIGHT_VALUE);
-        this.switchBackground.setArcWidth(RECTANGLE_HEIGHT_VALUE);
-        this.switchBackground.setArcHeight(RECTANGLE_HEIGHT_VALUE);
-        this.switchBackground.setLayoutX(RECTANGLE_POSITION_VALUE);
-        this.switchBackground.setFill(RECTANGLE_COLOR_OFF);
-        this.switchBackground.setStroke(RECTANGLE_OUTLINE_COLOR);
-        this.switchButton = new Circle(CIRCLE_RADIUS_VALUE);
-        this.switchButton.setCenterX(CIRCLE_POSITION_X_VALUE);
-        this.switchButton.setCenterY(CIRCLE_POSITION_Y_VALUE);
-        this.switchButton.setFill(CIRCLE_COLOR);
-        this.switchButton.setStroke(CIRCLE_OUTLINE_COLOR);
-        this.switchButton.setEffect(new DropShadow(CIRCLE_SHADOW_RADIUS, CIRCLE_SHADOW_COLOR));
-        this.switchAnimation = new TranslateTransition(Duration.seconds(DURATION_VALUE));
-        this.switchAnimation.setNode(this.switchButton);
-        this.fillAnimation = new FillTransition(Duration.seconds(DURATION_VALUE));
-        this.switchTransition = new ParallelTransition(this.switchAnimation, this.fillAnimation);
-        this.switchAnimation.setNode(this.switchButton);
-        this.fillAnimation.setShape(this.switchBackground);
-        this.getChildren().addAll(this.switchBackground, this.switchButton);
-        //Listener
-        this.switchStateBooleanProperty.addListener((observable, oldValue, newValue) -> {
-            boolean tmpIsOn = newValue.booleanValue();
-            this.switchAnimation.setToX(tmpIsOn ? (RECTANGLE_WIDTH_VALUE - (2 * CIRCLE_RADIUS_VALUE)) : 0);
-            this.fillAnimation.setFromValue(tmpIsOn ? RECTANGLE_COLOR_OFF : RECTANGLE_COLOR_ON);
-            this.fillAnimation.setToValue(tmpIsOn ? RECTANGLE_COLOR_ON : RECTANGLE_COLOR_OFF);
-            this.switchTransition.play();
-        });
-        //Mouse listener.
-        this.setOnMouseClicked(event -> this.switchStateBooleanProperty.set(!this.switchStateBooleanProperty.get()));
-    }//</editor-fold>
-    //<editor-fold desc="Constructor with parameters" defaultstate="collapsed">
+        this(ToggleSwitch.DEFAULT_CIRCLE_COLOR,
+                ToggleSwitch.DEFAULT_CIRCLE_OUTLINE_COLOR,
+                ToggleSwitch.DEFAULT_CIRCLE_SHADOW_COLOR,
+                ToggleSwitch.DEFAULT_CIRCLE_SHADOW_RADIUS,
+                ToggleSwitch.DEFAULT_RECTANGLE_COLOR_ON,
+                ToggleSwitch.DEFAULT_RECTANGLE_COLOR_OFF,
+                ToggleSwitch.DEFAULT_RECTANGLE_OUTLINE_COLOR);
+    }
+    //
     /**
      * Second constructor with parameters to make the toggle switch configurable. This way if it is needed in different
      * classes, the switch can be customized by calling for this constructor and passing preferred values to
      * the parameters.
-     * @param aDropShadowRadius the radius of the shadow around the circle.
-     * @param aRectangleColorOff the color of the background whe the switch is turned off.
-     * @param aRectangleOutline the color of the outline of the background.
-     * @param aCircleColor the color of the button.
-     * @param aCircleOutline the color of the outline of the button.
-     * @param aCircleShadowColor the color of the shadow around the button.
-     * @param aRectangleColorOn the color of the background when the switch is turned on.
+     *
+     * @param aCircleColor the color of the button
+     * @param aCircleOutline the color of the outline of the button
+     * @param aCircleShadowColor the color of the shadow around the button
+     * @param aDropShadowRadius the radius of the shadow around the circle
+     * @param aRectangleColorOn the color of the background when the switch is turned on
+     * @param aRectangleColorOff the color of the background whe the switch is turned off
+     * @param aRectangleOutline the color of the outline of the background
      */
-    public ToggleSwitch( int aDropShadowRadius, Color aRectangleColorOff, Color aRectangleOutline, Color aCircleColor,
-                         Color aCircleOutline, Color aCircleShadowColor, Color aRectangleColorOn){
-        this();
-        this.switchBackground.setFill(aRectangleColorOff);
+    public ToggleSwitch(Color aCircleColor, Color aCircleOutline, Color aCircleShadowColor, int aDropShadowRadius,
+                        Color aRectangleColorOn, Color aRectangleColorOff, Color aRectangleOutline){
+        super();
+        this.switchStateBooleanProperty = new SimpleBooleanProperty(ToggleSwitch.DEFAULT_SWITCH_STATE);
+        this.switchBackground = new Rectangle(
+                ToggleSwitch.DEFAULT_RECTANGLE_WIDTH_VALUE,
+                ToggleSwitch.DEFAULT_RECTANGLE_HEIGHT_VALUE);
+        this.switchBackground.setArcWidth(ToggleSwitch.DEFAULT_RECTANGLE_HEIGHT_VALUE);
+        this.switchBackground.setArcHeight(ToggleSwitch.DEFAULT_RECTANGLE_HEIGHT_VALUE);
+        this.switchBackground.setLayoutX(ToggleSwitch.DEFAULT_RECTANGLE_POSITION_X_VALUE);
+        this.switchBackground.setFill(this.switchStateBooleanProperty.get() ? aRectangleColorOn : aRectangleColorOff);
         this.switchBackground.setStroke(aRectangleOutline);
+        this.switchButton = new Circle(ToggleSwitch.DEFAULT_CIRCLE_RADIUS_VALUE);
+        this.switchButton.setCenterX(ToggleSwitch.DEFAULT_CIRCLE_POSITION_X_VALUE);
+        this.switchButton.setCenterY(ToggleSwitch.DEFAULT_CIRCLE_POSITION_Y_VALUE);
         this.switchButton.setFill(aCircleColor);
         this.switchButton.setStroke(aCircleOutline);
         this.switchButton.setEffect(new DropShadow(aDropShadowRadius, aCircleShadowColor));
+        this.switchCircleTranslateTransition = new TranslateTransition(
+                Duration.seconds(ToggleSwitch.DEFAULT_DURATION_VALUE));
+        this.switchCircleTranslateTransition.setNode(this.switchButton);
+        this.switchBackgroundColorFillTransition = new FillTransition(
+                Duration.seconds(ToggleSwitch.DEFAULT_DURATION_VALUE));
+        this.switchTransition = new ParallelTransition(
+                this.switchCircleTranslateTransition,
+                this.switchBackgroundColorFillTransition);
+        this.switchCircleTranslateTransition.setNode(this.switchButton);
+        this.switchBackgroundColorFillTransition.setShape(this.switchBackground);
+        this.getChildren().addAll(this.switchBackground, this.switchButton);
         //Listener
         this.switchStateBooleanProperty.addListener((observable, oldValue, newValue) -> {
-            boolean tmpIsOn = newValue.booleanValue();
-            this.fillAnimation.setFromValue(tmpIsOn ? aRectangleColorOff : aRectangleColorOn);
-            this.fillAnimation.setToValue(tmpIsOn ? aRectangleColorOn : aRectangleColorOff);
+            if (oldValue.booleanValue() == newValue.booleanValue()) {
+                return;
+            }
+            this.switchCircleTranslateTransition.setToX(newValue ?
+                    (this.switchBackground.getWidth() - 2 * this.switchButton.getRadius()) : 0);
+            this.switchBackgroundColorFillTransition.setFromValue(newValue ?
+                    aRectangleColorOff : aRectangleColorOn);
+            this.switchBackgroundColorFillTransition.setToValue(newValue ?
+                    aRectangleColorOn : aRectangleColorOff);
             this.switchTransition.play();
         });
+        //Mouse listener.
+        this.setOnMouseClicked(event -> this.switchStateBooleanProperty.set(
+                !this.switchStateBooleanProperty.get()));
     }
     //</editor-fold>
     //
     //<editor-fold desc="Properties" defaultstate="collapsed">
     /**
-     * returns switchButton.
+     * Returns the circle that serves as switch button.
      *
      * @return Circle
      */
@@ -223,7 +234,7 @@ public class ToggleSwitch extends Control {
         return this.switchButton;
     }
     /**
-     * returns switchBackground.
+     * Returns the rectangle that serves as switch background.
      *
      * @return Rectangle
      */
@@ -231,23 +242,23 @@ public class ToggleSwitch extends Control {
         return this.switchBackground;
     }
     /**
-     * returns switchAnimation which shows the visual transition of the Circle switchButton.
+     * Returns the translation transition of the circle button.
      *
      * @return TranslateTransition
      */
-    public TranslateTransition getSwitchAnimation() {
-        return this.switchAnimation;
+    public TranslateTransition getSwitchCircleTranslateTransition() {
+        return this.switchCircleTranslateTransition;
     }
     /**
-     * returns fillAnimation to show the color change when clicked on.
+     * Returns the color change transition of the rectangle switch background.
      *
      * @return FillTransition
      */
-    public FillTransition getFillAnimation() {
-        return this.fillAnimation;
+    public FillTransition getSwitchBackgroundColorFillTransition() {
+        return this.switchBackgroundColorFillTransition;
     }
     /**
-     * returns switchTransition to maintain a parallel animation for fillAnimation and switchAnimation.
+     * Returns the combined transition of translation and filling transition.
      *
      * @return ParallelTransition
      */
@@ -255,16 +266,15 @@ public class ToggleSwitch extends Control {
         return this.switchTransition;
     }
     /**
-     * returns isSwitchedOn, the current boolean state of the Toggleswitch,
-     * if it is turned on it returns true, otherwise false.
+     * Returns the current boolean state of the toggle switch.
      *
-     * @return switch value
+     * @return true if the switch is turned on, false otherwise
      */
     public boolean getSwitchState() {
         return this.switchStateBooleanProperty.get();
     }
     /**
-     * sets switchStateBooleanProperty to update new value.
+     * Turns the switch on or off.
      *
      * @param switchStateBooleanProperty boolean
      */
@@ -272,7 +282,7 @@ public class ToggleSwitch extends Control {
         this.switchStateBooleanProperty.set(switchStateBooleanProperty);
     }
     /**
-     * returns valueProperty.
+     * Returns boolean property that wraps the switch state.
      *
      * @return BooleanProperty
      */
