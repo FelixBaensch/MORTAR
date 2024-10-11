@@ -611,8 +611,8 @@ public class Exporter {
             Chunk tmpHeader = new Chunk(Message.get("Exporter.fragmentationTab.pdfCellHeader.header"),
                     FontFactory.getFont(FontFactory.TIMES_ROMAN, 18, Font.UNDERLINE));
             Paragraph tmpSpace = new Paragraph(" ");
-            tmpFragmentationTable.addCell(tmpFragmentCell);
             tmpFragmentationTable.addCell(tmpSmilesStringCell);
+            tmpFragmentationTable.addCell(tmpFragmentCell);
             tmpFragmentationTable.addCell(tmpFrequencyCell);
             tmpFragmentationTable.addCell(tmpPercentageCell);
             tmpFragmentationTable.addCell(tmpMolFrequencyCell);
@@ -656,8 +656,8 @@ public class Exporter {
                 PdfPCell tmpCellOfMolPercentage = new PdfPCell(new Paragraph(tmpStringMoleculePercentage));
                 tmpCellOfMolPercentage.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 tmpImageFragmentCell.addElement(tmpImageFragment);
-                tmpFragmentationTable.addCell(tmpImageFragmentCell);
                 tmpFragmentationTable.addCell(tmpFragmentDataModel.getUniqueSmiles());
+                tmpFragmentationTable.addCell(tmpImageFragmentCell);
                 tmpFragmentationTable.addCell(tmpCellOfFrequency);
                 tmpFragmentationTable.addCell(tmpCellOfPercentage);
                 tmpFragmentationTable.addCell(tmpCellOfMolFrequency);
@@ -1189,6 +1189,7 @@ public class Exporter {
         if (!tmpRecentDirectory.isDirectory()) {
             tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
             this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            Exporter.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpDirectoryChooser.setInitialDirectory(tmpRecentDirectory);
         File tmpDirectory = tmpDirectoryChooser.showDialog(aParentStage);

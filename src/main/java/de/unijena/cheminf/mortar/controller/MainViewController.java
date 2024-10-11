@@ -391,7 +391,7 @@ public class MainViewController {
             if (aDragEvent.getGestureSource() != this.mainView.getMainCenterPane() && aDragEvent.getDragboard().hasFiles()){
                 if (
                   aDragEvent.getDragboard().getFiles().size() > 1 ||
-                  !BasicDefinitions.VALID_IMPORT_EXTENSION.contains(FileUtil.getFileExtension(aDragEvent.getDragboard().getFiles().getFirst().getName()))
+                  !Importer.VALID_IMPORT_FILE_EXTENSIONS_SET.contains(FileUtil.getFileExtension(aDragEvent.getDragboard().getFiles().getFirst().getName()))
                 ) {
                     aDragEvent.consume();
                     return;
@@ -473,15 +473,21 @@ public class MainViewController {
      * @param aParentStage Stage where to open the file chooser dialog
      */
     private void chooseAndImportMoleculeFile(Stage aParentStage) {
-        if (!this.moleculeDataModelList.isEmpty()) {
-            if (!this.isFragmentationStopAndDataLossConfirmed()) {
-                return;
-            }
-            this.fragmentationService.clearCache();
-        }
         Importer tmpImporter = new Importer(this.settingsContainer);
         File tmpFile = tmpImporter.openFile(aParentStage);
-        this.importMoleculeFile(tmpFile);
+        if (tmpFile == null)
+            return;
+        this.importMoleculeFile(tmpFile, tmpImporter);
+    }
+    //
+    /**
+     * Loads molecule file and opens molecules tab.
+     * Convenient method to avoid using a null parameter for the importer.
+     *
+     * @param aFile File that contains molecular data
+     */
+    private void importMoleculeFile(File aFile) {
+        this.importMoleculeFile(aFile, new Importer(this.settingsContainer));
     }
     //
     /**
@@ -489,17 +495,17 @@ public class MainViewController {
      *
      * @param aFile File that contains molecular data
      */
-    private void importMoleculeFile(File aFile) {
+    private void importMoleculeFile(File aFile, Importer anImporter) {
+        if (Objects.isNull(aFile)) {
+            return;
+        }
         if (!this.moleculeDataModelList.isEmpty()) {
             if (!this.isFragmentationStopAndDataLossConfirmed()) {
                 return;
             }
             this.fragmentationService.clearCache();
         }
-        Importer tmpImporter = new Importer(this.settingsContainer);
-        if (Objects.isNull(aFile)) {
-            return;
-        }
+        Importer tmpImporter = Objects.requireNonNullElseGet(anImporter, () -> new Importer(this.settingsContainer));
         if (this.isFragmentationRunning) {
             this.interruptFragmentation();
         }
@@ -1297,7 +1303,7 @@ public class MainViewController {
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage));
         tmpFragmentsDataTableView.widthProperty().addListener((observable, oldValue, newValue) -> {
-            for(Object tmpObject : tmpFragmentsDataTableView.getItems()) {
+            for (Object tmpObject : tmpFragmentsDataTableView.getItems()) {
                 ((MoleculeDataModel) tmpObject).setStructureImageWidth(tmpFragmentsDataTableView.getStructureColumn().getWidth());
                 ((FragmentDataModel) tmpObject).getFirstParentMolecule().setStructureImageWidth(tmpFragmentsDataTableView.getParentMolColumn().getWidth());
             }
@@ -1359,7 +1365,7 @@ public class MainViewController {
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage));
         tmpItemizationDataTableView.widthProperty().addListener((observable, oldValue, newValue) -> {
-            for(Object tmpObject : tmpItemizationDataTableView.getItems()) {
+            for (Object tmpObject : tmpItemizationDataTableView.getItems()) {
                 ((MoleculeDataModel) tmpObject).setStructureImageWidth(tmpItemizationDataTableView.getMoleculeStructureColumn().getWidth());
             }
         });

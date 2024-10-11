@@ -113,6 +113,10 @@ public final class GuiDefinitions {
      */
     public static final double GUI_TABLE_VIEW_HEADER_HEIGHT = 24.0;
     /**
+     * Height of a (horizontal) scroll bar.
+     */
+    public static final double GUI_SCROLL_BAR_HEIGHT = 14.0;
+    /**
      * Min height for a structure image of a molecule shown in gui.
      */
     public static final double GUI_STRUCTURE_IMAGE_MIN_HEIGHT = 50.0;
