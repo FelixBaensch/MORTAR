@@ -37,6 +37,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -99,25 +101,37 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Constructor">
     /**
-     * TODO: Fix the case where the application crashes with a StackOverflow when closing the Exhaustive fragmenter settings
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
-        int tmpNumberOfSettings = 1;
-        this.settings = new ArrayList<>(tmpNumberOfSettings);
+        int tmpNumberOfSettings = 2;
         this.settingNameTooltipTextMap = new HashMap<>(tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameDisplayNameMap = new HashMap<>(tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.cdkExhaustiveFragmenter = new ExhaustiveFragmenter();
         this.minimumFragmentSize = new SimpleIntegerProperty(this,
                 "Minimum Size for the returned fragments",
-                6) {
+                DEFAULT_MINIMUM_FRAGMENT_SIZE) {
             @Override
             public void set(int newValue) {
-                try {
-                    //throws IllegalArgumentException
-                    CDKExhaustiveFragmenter.this.minimumFragmentSize.set(newValue);
-                } catch (IllegalArgumentException anException) {
+                if (newValue != 0) {
+                    try {
+                        //throws IllegalArgumentException
+                        CDKExhaustiveFragmenter.this.cdkExhaustiveFragmenter.setMinimumFragmentSize(newValue);
+                    } catch (IllegalArgumentException anException) {
+                        CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                        GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                                Message.get("Fragmenter.IllegalSettingValue.Header"),
+                                anException.toString(),
+                                anException);
+                        //re-throws the exception to properly reset the binding
+                        throw anException;
+                    }
+                    super.set(newValue);
+                }
+                else {
+                    IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size can not be zero");
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
                             Message.get("Fragmenter.IllegalSettingValue.Header"),
@@ -126,10 +140,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                     //re-throws the exception to properly reset the binding
                     throw anException;
                 }
-                super.set(newValue);
             }
         };
-        this.settings.add(this.minimumFragmentSize);
         this.settingNameTooltipTextMap.put(this.minimumFragmentSize.getName(),
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.tooltip"));
         this.settingNameDisplayNameMap.put(this.minimumFragmentSize.getName(),
@@ -151,12 +163,13 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
-        this.settings.add(this.fragmentSaturationSetting);
         this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
-                Message.get("SugarRemovalUtilityFragmenter.fragmentSaturationSetting.tooltip"));
+                Message.get("CDKExhaustiveFragmenter.fragmentSaturationSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.fragmentSaturationSetting.getName(),
-                Message.get("SugarRemovalUtilityFragmenter.fragmentSaturationSetting.displayName"));
-        this.cdkExhaustiveFragmenter = new ExhaustiveFragmenter(this.minimumFragmentSize.get());
+                Message.get("CDKExhaustiveFragmenter.fragmentSaturationSetting.displayName"));
+        this.settings = new ArrayList<>(tmpNumberOfSettings);
+        this.settings.add(this.fragmentSaturationSetting);
+        this.settings.add(this.minimumFragmentSize);
     }
 
     @Override
@@ -226,6 +239,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         try {
             this.cdkExhaustiveFragmenter.generateFragments(tmpMoleculeClone);
             tmpFragments.addAll(List.of(this.cdkExhaustiveFragmenter.getFragmentsAsContainers()));
+            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                for (IAtomContainer fragment : tmpFragments) {
+                    CDKHydrogenAdder.getInstance(fragment.getBuilder()).addImplicitHydrogens(fragment);
+                    AtomContainerManipulator.convertImplicitToExplicitHydrogens(fragment);
+                }
+            }
         } catch (Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString() + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
