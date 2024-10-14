@@ -25,9 +25,6 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -97,11 +94,6 @@ public final class BasicDefinitions {
      * For the moment, we are not using compression here in MORTAR for persisting settings.
      */
     public static final String PREFERENCE_CONTAINER_FILE_EXTENSION = ".txt";
-    //
-    /**
-     * Set of valid files extensions for file import.
-     */
-    public static final Set<String> VALID_IMPORT_EXTENSION = new HashSet<>(List.of(".mol", ".sdf", ".smi", ".txt", ".csv"));
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Session">
@@ -119,7 +111,7 @@ public final class BasicDefinitions {
     /**
      * Version of application.
      */
-    public static final String MORTAR_VERSION = "1.2.0.0-beta";
+    public static final String MORTAR_VERSION = "1.2.0.0";
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Model constants and magic numbers">
