@@ -37,8 +37,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.tools.CDKHydrogenAdder;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -261,12 +259,17 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         try {
             this.cdkExhaustiveFragmenter.generateFragments(tmpMoleculeClone);
             tmpFragments.addAll(List.of(this.cdkExhaustiveFragmenter.getFragmentsAsContainers()));
-            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
-                for (IAtomContainer fragment : tmpFragments) {
-                    CDKHydrogenAdder.getInstance(fragment.getBuilder()).addImplicitHydrogens(fragment);
-                    AtomContainerManipulator.convertImplicitToExplicitHydrogens(fragment);
-                }
-            }
+            // the fragmenter saturates by default and cant be modified to not to, so we need to revert this somehow
+            //TODO: find out if there is a way to revert the implicitly added hydrogens, following is not working right now
+//            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION)) {
+//                for (IAtomContainer fragment : tmpFragments) {
+//                    AtomContainerManipulator.clearAtomConfigurations(fragment);
+//                    for (IAtom atom : fragment.atoms()) {
+//                        atom.setImplicitHydrogenCount(null);
+//                    }
+//                    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(fragment);
+//                }
+//            }
         } catch (Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString() + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
