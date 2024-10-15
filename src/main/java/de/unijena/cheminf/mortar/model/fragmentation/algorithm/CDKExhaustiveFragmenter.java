@@ -49,20 +49,29 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Wrapper class that makes the exhaustive fragmentation from the CDK, available for MORTAR.
+ * Wrapper class that makes the
+ * <a href="https://cdk.github.io/cdk/latest/docs/api/org/openscience/cdk/fragment/ExhaustiveFragmenter.html">
+ *     exhaustive fragmentation
+ * </a>
+ * from the CDK, available for MORTAR.
+ *
+ * @author Tom Weiß
+ * @version 1.0.0.0
  */
 public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
-
+    //<editor-fold desc="Private static final variables">
     /**
      * The default value for the minimum fragment size used for the fragmentation.
      */
-    public static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
+    private static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
     //
     /**
      * The name of the algorithm used for fragmentation.
      */
-    public static final String ALGORITHM_NAME = "Exhaustive Fragmenter";
+    private static final String ALGORITHM_NAME = "Exhaustive Fragmenter";
+    //</editor-fold>
     //
+    //<editor-fold desc="Private final variables">
     /**
      * The minimum size of the returned fragments.
      */
@@ -115,7 +124,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 DEFAULT_MINIMUM_FRAGMENT_SIZE) {
             @Override
             public void set(int newValue) {
-                if (newValue != 0) {
+                if (newValue > 0) {
                     try {
                         //throws IllegalArgumentException
                         CDKExhaustiveFragmenter.this.cdkExhaustiveFragmenter.setMinimumFragmentSize(newValue);
@@ -147,7 +156,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap.put(this.minimumFragmentSize.getName(),
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.displayName"));
         this.fragmentSaturationSetting = new SimpleIDisplayEnumConstantProperty(this, "Fragment saturation setting",
-                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT, IMoleculeFragmenter.FragmentSaturationOption.class) {
+                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT, FragmentSaturationOption.class) {
             @Override
             public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
@@ -171,7 +180,20 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.minimumFragmentSize);
     }
-
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public properties get">
+    /**
+     * Returns the minimum fragment size currently set.
+     *
+     * @return the currently set minimum fragment size.
+     */
+    public int getMinimumFragmentSize() {
+        return this.minimumFragmentSize.get();
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="IMoleculeFragmenter methods">
     @Override
     public List<Property<?>> settingsProperties() {
         return this.settings;
@@ -198,8 +220,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public IMoleculeFragmenter.FragmentSaturationOption getFragmentSaturationSetting() {
-        return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
+    public FragmentSaturationOption getFragmentSaturationSetting() {
+        return (FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }
 
     @Override
@@ -235,7 +257,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         }
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
-        List<IAtomContainer> tmpFragments = new ArrayList<>();
+        List<IAtomContainer> tmpFragments = new ArrayList<>(0);
         try {
             this.cdkExhaustiveFragmenter.generateFragments(tmpMoleculeClone);
             tmpFragments.addAll(List.of(this.cdkExhaustiveFragmenter.getFragmentsAsContainers()));
@@ -282,4 +304,5 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         }
         return aMolecule.clone();
     }
+    //</editor-fold>
 }
