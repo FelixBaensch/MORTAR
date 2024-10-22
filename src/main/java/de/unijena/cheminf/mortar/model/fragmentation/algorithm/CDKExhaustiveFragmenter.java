@@ -95,7 +95,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Instance of ExhaustiveFragmenter class to fragment a molecule.
      */
-    private final ExhaustiveFragmenter cdkExhaustiveFragmenter;
+    private final ExhaustiveFragmenter cdkEFInstance;
     //
     /**
      * Logger of this class.
@@ -113,7 +113,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameDisplayNameMap = new HashMap<>(tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.cdkExhaustiveFragmenter = new ExhaustiveFragmenter();
+        this.cdkEFInstance = new ExhaustiveFragmenter();
         this.minimumFragmentSize = new SimpleIntegerProperty(this,
                 "Minimum Size for the returned fragments",
                 DEFAULT_MINIMUM_FRAGMENT_SIZE) {
@@ -122,7 +122,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 if (newValue > 0) {
                     try {
                         //throws IllegalArgumentException
-                        CDKExhaustiveFragmenter.this.cdkExhaustiveFragmenter.setMinimumFragmentSize(newValue);
+                        CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
                     } catch (IllegalArgumentException anException) {
                         CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                         GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
@@ -234,10 +234,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         List<IAtomContainer> tmpFragments = new ArrayList<>(0);
         try {
             SmilesParser tmpSmilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-            this.cdkExhaustiveFragmenter.generateFragments(tmpMoleculeClone);
+            this.cdkEFInstance.generateFragments(tmpMoleculeClone);
             // there is also an option to extract atom containers directly with getFragmentsAsContainers but this oversaturates
             // fragments described in this issue https://github.com/cdk/cdk/issues/1119.
-            List<String> tmpSmiles = new ArrayList<>(List.of(this.cdkExhaustiveFragmenter.getFragments()));
+            List<String> tmpSmiles = new ArrayList<>(List.of(this.cdkEFInstance.getFragments()));
             for (String smile : tmpSmiles) {
                 tmpFragments.add(tmpSmilesParser.parseSmiles(smile));
             }
