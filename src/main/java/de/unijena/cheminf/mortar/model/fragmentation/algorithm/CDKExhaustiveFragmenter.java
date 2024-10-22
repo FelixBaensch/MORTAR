@@ -29,14 +29,15 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
 
+import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -96,11 +97,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     private final ExhaustiveFragmenter cdkExhaustiveFragmenter;
     //
     /**
-     * A property that has a constant from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
-     */
-    private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
-    //
-    /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(CDKExhaustiveFragmenter.class.getName());
@@ -153,29 +149,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.tooltip"));
         this.settingNameDisplayNameMap.put(this.minimumFragmentSize.getName(),
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.displayName"));
-        this.fragmentSaturationSetting = new SimpleIDisplayEnumConstantProperty(this, "Fragment saturation setting",
-                IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT, FragmentSaturationOption.class) {
-            @Override
-            public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
-                try {
-                    super.set(newValue);
-                } catch (NullPointerException | IllegalArgumentException anException) {
-                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
-                            Message.get("Fragmenter.IllegalSettingValue.Header"),
-                            anException.toString(),
-                            anException);
-                    //re-throws the exception to properly reset the binding
-                    throw anException;
-                }
-            }
-        };
-        this.settingNameTooltipTextMap.put(this.fragmentSaturationSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.fragmentSaturationSetting.tooltip"));
-        this.settingNameDisplayNameMap.put(this.fragmentSaturationSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.fragmentSaturationSetting.displayName"));
         this.settings = new ArrayList<>(tmpNumberOfSettings);
-        this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.minimumFragmentSize);
     }
     //</editor-fold>
@@ -219,18 +193,19 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
 
     @Override
     public FragmentSaturationOption getFragmentSaturationSetting() {
-        return (FragmentSaturationOption) this.fragmentSaturationSetting.get();
+        //TODO: there is currently no option to set the saturation in the exhaustive fragmenter of the cdk
+        return null;
     }
 
     @Override
     public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
-        return this.fragmentSaturationSetting;
+        //TODO: there is currently no option to set the saturation in the exhaustive fragmenter of the cdk
+        return null;
     }
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
-        Objects.requireNonNull(anOption, "Given saturation option is null.");
-        this.fragmentSaturationSetting.set(anOption);
+        //TODO: there is currently no option to set the saturation in the exhaustive fragmenter of the cdk
     }
 
     @Override
@@ -257,19 +232,16 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         List<IAtomContainer> tmpFragments = new ArrayList<>(0);
         try {
+            List<String> tmpSmiles = new ArrayList<>();
+            SmilesParser tmpSmilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
             this.cdkExhaustiveFragmenter.generateFragments(tmpMoleculeClone);
-            tmpFragments.addAll(List.of(this.cdkExhaustiveFragmenter.getFragmentsAsContainers()));
-            // the fragmenter saturates by default and cant be modified to not to, so we need to revert this somehow
-            //TODO: find out if there is a way to revert the implicitly added hydrogens, following is not working right now
-//            if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.NO_SATURATION)) {
-//                for (IAtomContainer fragment : tmpFragments) {
-//                    AtomContainerManipulator.clearAtomConfigurations(fragment);
-//                    for (IAtom atom : fragment.atoms()) {
-//                        atom.setImplicitHydrogenCount(null);
-//                    }
-//                    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(fragment);
-//                }
-//            }
+            // there is also an option to extract atom containers directly with getFragmentsAsContainers but this oversaturates
+            // fragments described in this issue https://github.com/cdk/cdk/issues/1119
+            tmpSmiles.addAll(List.of(this.cdkExhaustiveFragmenter.getFragments()));
+            for (String smile : tmpSmiles) {
+                tmpFragments.add(tmpSmilesParser.parseSmiles(smile));
+            }
+
         } catch (Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString() + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
