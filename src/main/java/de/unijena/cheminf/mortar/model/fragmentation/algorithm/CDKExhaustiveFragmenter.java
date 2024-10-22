@@ -72,7 +72,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Private final variables">
     /**
-     * The minimum size of the returned fragments.
+     * The minimum size of the returned fragments. This size consists of all atoms, that are connected by more than
+     * a single bond or have more than one single bond.
      */
     private final SimpleIntegerProperty minimumFragmentSize;
     //
@@ -193,19 +194,19 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
 
     @Override
     public FragmentSaturationOption getFragmentSaturationSetting() {
-        //TODO: there is currently no option to set the saturation in the exhaustive fragmenter of the cdk
+        //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
         return null;
     }
 
     @Override
     public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
-        //TODO: there is currently no option to set the saturation in the exhaustive fragmenter of the cdk
+        //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
         return null;
     }
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
-        //TODO: there is currently no option to set the saturation in the exhaustive fragmenter of the cdk
+        //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
     }
 
     @Override
@@ -232,12 +233,11 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
         List<IAtomContainer> tmpFragments = new ArrayList<>(0);
         try {
-            List<String> tmpSmiles = new ArrayList<>();
             SmilesParser tmpSmilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
             this.cdkExhaustiveFragmenter.generateFragments(tmpMoleculeClone);
             // there is also an option to extract atom containers directly with getFragmentsAsContainers but this oversaturates
-            // fragments described in this issue https://github.com/cdk/cdk/issues/1119
-            tmpSmiles.addAll(List.of(this.cdkExhaustiveFragmenter.getFragments()));
+            // fragments described in this issue https://github.com/cdk/cdk/issues/1119.
+            List<String> tmpSmiles = new ArrayList<>(List.of(this.cdkExhaustiveFragmenter.getFragments()));
             for (String smile : tmpSmiles) {
                 tmpFragments.add(tmpSmilesParser.parseSmiles(smile));
             }
