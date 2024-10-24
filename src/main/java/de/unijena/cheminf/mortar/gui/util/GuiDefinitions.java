@@ -52,10 +52,12 @@ public final class GuiDefinitions {
      * Value for the GUI spacing.
      */
     public static final double GUI_SPACING_VALUE = 5.0;
+    //TODO: Betuel set this to 1037.0, investigate why
     /**
      * Value for the width of the main view.
      */
     public static final double GUI_MAIN_VIEW_WIDTH_VALUE = 1024.0;
+    //TODO: Betuel set this to 770.0, investigate why
     /**
      * Value for the height of the main view.
      */
