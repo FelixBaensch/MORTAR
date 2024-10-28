@@ -29,14 +29,15 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
 
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.ArrayList;
@@ -52,22 +53,22 @@ import java.util.logging.Logger;
  * <a href="https://cdk.github.io/cdk/latest/docs/api/org/openscience/cdk/fragment/ExhaustiveFragmenter.html">
  *     exhaustive fragmentation
  * </a>
- * from the CDK, available for MORTAR.
+ * from the CDK available for MORTAR.
  *
  * @author Tom Weiß
  * @version 1.0.0.0
  */
 public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
-    //<editor-fold desc="Private static final variables">
+    //<editor-fold desc="Public static final variables">
     /**
      * The default value for the minimum fragment size used for the fragmentation.
      */
-    private static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
+    public static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
     //
     /**
      * The name of the algorithm used for fragmentation.
      */
-    private static final String ALGORITHM_NAME = "Exhaustive Fragmenter";
+    public static final String ALGORITHM_NAME = "Exhaustive Fragmenter";
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
@@ -75,7 +76,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * The minimum size of the returned fragments. This size consists of all atoms, that are connected by more than
      * a single bond or have more than one single bond.
      */
-    private final SimpleIntegerProperty minimumFragmentSize;
+    private final SimpleIntegerProperty minimumFragmentSizeSetting;
     //
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
@@ -108,30 +109,22 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Constructor, all settings are initialised with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
-        int tmpNumberOfSettings = 2;
-        this.settingNameTooltipTextMap = new HashMap<>(tmpNumberOfSettings,
+        int tmpNumberOfSettingsForTooltipMapSize = 1;
+        int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.settingNameDisplayNameMap = new HashMap<>(tmpNumberOfSettings,
+        this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap,
+                BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.cdkEFInstance = new ExhaustiveFragmenter();
-        this.minimumFragmentSize = new SimpleIntegerProperty(this,
+        this.minimumFragmentSizeSetting = new SimpleIntegerProperty(this,
                 "Minimum Size for the returned fragments",
-                DEFAULT_MINIMUM_FRAGMENT_SIZE) {
+                CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE) {
             @Override
             public void set(int newValue) {
                 if (newValue > 0) {
-                    try {
-                        //throws IllegalArgumentException
-                        CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
-                    } catch (IllegalArgumentException anException) {
-                        CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                        GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
-                                Message.get("Fragmenter.IllegalSettingValue.Header"),
-                                anException.toString(),
-                                anException);
-                        //re-throws the exception to properly reset the binding
-                        throw anException;
-                    }
+                    CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
                     super.set(newValue);
                 }
                 else {
@@ -146,27 +139,48 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
-        this.settingNameTooltipTextMap.put(this.minimumFragmentSize.getName(),
+        this.settingNameTooltipTextMap.put(this.minimumFragmentSizeSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.tooltip"));
-        this.settingNameDisplayNameMap.put(this.minimumFragmentSize.getName(),
+        this.settingNameDisplayNameMap.put(this.minimumFragmentSizeSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.displayName"));
-        this.settings = new ArrayList<>(tmpNumberOfSettings);
-        this.settings.add(this.minimumFragmentSize);
+        this.settings = new ArrayList<>(tmpNumberOfSettingsForTooltipMapSize);
+        this.settings.add(this.minimumFragmentSizeSetting);
     }
     //</editor-fold>
     //
     //<editor-fold desc="Public properties get">
+    /**
+     * Returns the setting for the minimum fragment size.
+     *
+     * @return the setting for the minimum fragment size.
+     */
+    public SimpleIntegerProperty getMinimumFragmentSizeSetting() {
+        return this.minimumFragmentSizeSetting;
+    }
     /**
      * Returns the minimum fragment size currently set.
      *
      * @return the currently set minimum fragment size.
      */
     public int getMinimumFragmentSize() {
-        return this.minimumFragmentSize.get();
+        return this.minimumFragmentSizeSetting.get();
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public properties set">
+
+    /**
+     * Returns the minimum fragment size currently set.
+     *
+     * @param minimumFragmentSize the new minimum fragment size.
+     */
+    public void setMinimumFragmentSize(int minimumFragmentSize) {
+        this.minimumFragmentSizeSetting.set(minimumFragmentSize);
     }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+
     @Override
     public List<Property<?>> settingsProperties() {
         return this.settings;
@@ -193,32 +207,36 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     }
 
     @Override
-    public FragmentSaturationOption getFragmentSaturationSetting() {
+    public FragmentSaturationOption getFragmentSaturationSetting() throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        return null;
+        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not modifiable.
+        throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
     @Override
-    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
+    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        return null;
+        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not modifiable.
+        throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
     @Override
-    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
+    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
+        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not modifiable.
+        throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
     @Override
     public IMoleculeFragmenter copy() {
         CDKExhaustiveFragmenter tmpCopy = new CDKExhaustiveFragmenter();
-        tmpCopy.minimumFragmentSize.set(this.minimumFragmentSize.get());
+        tmpCopy.minimumFragmentSizeSetting.set(this.minimumFragmentSizeSetting.get());
         return tmpCopy;
     }
 
     @Override
     public void restoreDefaultSettings() {
-        this.minimumFragmentSize.set(CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE);
+        this.minimumFragmentSizeSetting.set(CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE);
     }
 
     @Override
@@ -231,12 +249,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         }
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
-        List<IAtomContainer> tmpFragments = new ArrayList<>(0);
+        List<IAtomContainer> tmpFragments = new ArrayList<>(tmpMoleculeClone.getAtomCount() / 2);
         try {
-            SmilesParser tmpSmilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+            SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             this.cdkEFInstance.generateFragments(tmpMoleculeClone);
-            // there is also an option to extract atom containers directly with getFragmentsAsContainers but this oversaturates
-            // fragments described in this issue https://github.com/cdk/cdk/issues/1119.
+            // TODO: there is also an option to extract atom containers directly with getFragmentsAsContainers but this
+            //  oversaturates fragments described in this issue https://github.com/cdk/cdk/issues/1119.
             List<String> tmpSmiles = new ArrayList<>(List.of(this.cdkEFInstance.getFragments()));
             for (String smile : tmpSmiles) {
                 tmpFragments.add(tmpSmilesParser.parseSmiles(smile));
@@ -273,9 +291,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
-        }
-        if (!this.shouldBePreprocessed(aMolecule)) {
-            return aMolecule.clone();
         }
         return aMolecule.clone();
     }

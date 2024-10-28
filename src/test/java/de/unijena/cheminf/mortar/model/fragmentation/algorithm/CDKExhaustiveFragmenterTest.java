@@ -82,17 +82,20 @@ public class CDKExhaustiveFragmenterTest {
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
         CDKExhaustiveFragmenter tmpFragmenter = new CDKExhaustiveFragmenter();
-        tmpFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION);
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 //CNP0151033
                 "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4");
         Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
         Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
         Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
+        Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSizeSetting);
         Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSize);
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {
             Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
         }
+        int tmpMinimumFragmentSize = 8;
+        tmpFragmenter.setMinimumFragmentSize(tmpMinimumFragmentSize);
+        Assertions.assertEquals(tmpMinimumFragmentSize, tmpFragmenter.getMinimumFragmentSize());
     }
 }
