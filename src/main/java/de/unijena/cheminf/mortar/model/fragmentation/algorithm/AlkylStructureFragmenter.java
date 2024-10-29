@@ -104,9 +104,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final boolean ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT = false;
     /**
-     * Default boolean value for setting keeping rings intact.
+     * Default boolean value for keeping rings intact setting .
      */
     public static final boolean KEEP_RINGS_SETTING_DEFAULT = true;
+    /**
+     * Default boolean value for separating tertiary and quaternary carbon atoms from ring setting.
+     */
+    public static final boolean SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT = true;
     //<editor-fold desc="Property Keys">
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
@@ -159,7 +163,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public static final String INTERNAL_ASF_RING_ATOM_LIST_KEY = "ASF.RING_ATOM_LIST";
     //</editor-fold>
     //</editor-fold>
-    //
     //<editor-fold desc="Private Class Variables">
     /**
      * A property that has a constant fragment hydrogen saturation setting.
@@ -186,6 +189,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final SimpleBooleanProperty keepRingsSetting;
     /**
+     * A property that has a constant boolean value defining if tertiary and quaternary carbon atoms should be separated
+     * from ring structures.
+     */
+    private final SimpleBooleanProperty separateTertQuatCarbonFromRingSetting;
+    /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
     private final HashMap<String, String> settingNameTooltipTextMap;
@@ -209,7 +217,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        int tmpSettingsNameTooltipNumber = 6;
+        int tmpSettingsNameTooltipNumber = 7;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNameTooltipNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -267,27 +275,33 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.keepRingsSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.keepRingsSetting.getName(),
                 Message.get("AlkylStructureFragmenter.keepRingsSetting.displayName"));
-        this.settings = new ArrayList<>(6);
+        this.separateTertQuatCarbonFromRingSetting = new SimpleBooleanProperty(this, "Separate tertiary and " +
+                "quaternary carbon atoms from ring structures", AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
+                Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
+                Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.displayName"));
+        this.settings = new ArrayList<>(7);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
         this.settings.add(this.alternativeSingleCarbonHandlingSetting);
         this.settings.add(this.alternativeSingleRingDetectionSetting);
         this.settings.add(this.keepRingsSetting);
+        this.settings.add(this.separateTertQuatCarbonFromRingSetting);
     }
     //</editor-fold>
     //
     //<editor-fold desc="Public Properties Get">
+
     @Override
     public List<Property<?>> settingsProperties() {
        return this.settings;
     }
-
     @Override
     public Map<String, String> getSettingNameToTooltipTextMap() {
-        return settingNameTooltipTextMap;
+        return this.settingNameTooltipTextMap;
     }
-
     /**
      * Returns a map containing language-specific names (values) for the settings with the given names (keys) to be used
      * in the GUI.
@@ -298,12 +312,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public Map<String, String> getSettingNameToDisplayNameMap() {
         return this.settingNameDisplayNameMap;
     }
-
     @Override
     public String getFragmentationAlgorithmName() {
         return AlkylStructureFragmenter.ALGORITHM_NAME;
     }
-
     /**
      * Returns a language-specific name of the fragmenter to be used in the GUI.
      * The given name must be unique among the available fragmentation algorithms!
@@ -314,12 +326,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public String getFragmentationAlgorithmDisplayName() {
         return Message.get("AlkylStructureFragmenter.displayName");
     }
-
     @Override
     public FragmentSaturationOption getFragmentSaturationSetting() {
         return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
     }
-
     /**
      * Public get method for maximum chain length setting.
      *
@@ -328,7 +338,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public int getMaxChainLengthSetting() {
         return this.maxChainLengthSetting.get();
     }
-
     /**
      * Public get method for maximum chain length setting property.
      *
@@ -337,14 +346,30 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public SimpleIntegerProperty getMaxChainLengthSettingProperty() {
         return this.maxChainLengthSetting;
     }
-
     /**
      * Public get method for alternative single carbon handling setting property.
      *
      * @return SimpleBooleanProperty alternativeSingleCarbonHandlingSetting
      */
-    public SimpleBooleanProperty getAlternativeSingleCarbonHandlingSettingProperty() {return this.alternativeSingleCarbonHandlingSetting;}
-
+    public SimpleBooleanProperty getAlternativeSingleCarbonHandlingSettingProperty() {
+        return this.alternativeSingleCarbonHandlingSetting;
+    }
+    /**
+     * Public get method for keep rings setting property.
+     *
+     * @return SimpleBooleanProperty keepRingsSetting
+     */
+    public SimpleBooleanProperty getKeepRingsSettingProperty() {
+        return this.keepRingsSetting;
+    }
+    /**
+     * Public get method for separate tertiary and quaternary carbon atoms from ring structures setting property.
+     *
+     * @return SimpleBooleanProperty separateTertQuatCarbonFromRingSetting
+     */
+    public SimpleBooleanProperty getSeparateTertQuatCarbonFromRingSettingProperty() {
+        return this.separateTertQuatCarbonFromRingSetting;
+    }
     @Override
     public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
@@ -438,6 +463,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * <p>
      *     Checks the given IAtomContainer aMolecule for non-carbon and non-hydrogen atoms and returns true if
      *     non-conforming atoms are found, otherwise false is returned and the molecule can be fragmented.
+     *
+     *     An if-condition at the end checks for the special case of explicit hydrogens and filtering them out if no
+     *     carbon is present in aMolecule, as they pass the actual filter.
      * </p>
      *
      * @param aMolecule the molecule to check
@@ -449,12 +477,24 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return true;
         }
         try {
+            int tmpHydrogenCount = 0;
+            int tmpCarbonCount = 0;
             for (IAtom tmpAtom : aMolecule.atoms()) {
-                if (tmpAtom.getAtomicNumber() != IElement.H && tmpAtom.getAtomicNumber() != IElement.C) {
-                    return true;
+                switch (tmpAtom.getAtomicNumber()) {
+                    case IElement.H -> tmpHydrogenCount++;
+                    case IElement.C -> tmpCarbonCount++;
+                    default -> {
+                        return true;
+                    }
                 }
             }
-            return false;
+            if (tmpCarbonCount != 0 ) {
+                return false;
+            }
+            //the else condition is only meant to filter out explicit hydrogen (setting for on/off could be implemented)
+            else {
+                return true;
+            }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " Molecule ID: " + aMolecule.getID(), anException);
@@ -511,6 +551,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         System.out.println("PreFragAtomCount: " + tmpPreFragmentationAtomCount);
         System.out.println("PreFragBondCount: " + tmpClone.getBondCount());
+        //move percieveAtomType to preprocessing
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
             //add ChemUtils atom checks?
@@ -1115,7 +1156,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //ACSet for dissected chains
         IAtomContainerSet tmpDissectedChainACSet = new AtomContainerSet();
         int tmpMaxChainLengthInteger = this.getMaxChainLengthSetting();
-        if (this.fragmentSideChainsSetting.get()) {
+        //not sure about this Exception Handling
+        try {
+            if (tmpMaxChainLengthInteger < 1) {
+                throw new IllegalArgumentException();
+            }
+        } catch (IllegalArgumentException tmpIllegalMaxChainLength) {
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING, "Illegal restriction argument", new IllegalArgumentException());
+            //tmpMaxChainLengthInteger = AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT;
+        }
+        //checks for applied restrictions
+        if (this.fragmentSideChainsSetting.get() && tmpMaxChainLengthInteger > 0) {
             //check maxchainlength
             switch (tmpMaxChainLengthInteger) {
                 default -> {
@@ -1124,11 +1175,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         tmpDissectedChainACSet.add(this.separateDisconnectedStructures(this.dissectLinearChain(tmpAtomContainer,
                                 tmpMaxChainLengthInteger)));
                     }
-                }
-                case 0 -> {
-                    //if int maxChainLength gives 0 throw IllegalArgumentException
-                    //not happy with how this works, preferably a gui warning would be nice
-                    AlkylStructureFragmenter.this.logger.log(Level.WARNING, "Illegal restriction argument", new IllegalArgumentException());
                 }
                 case 1 -> {
                     //single methane molecules

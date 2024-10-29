@@ -129,7 +129,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void basicSettingsTest() throws Exception {
+    public void defaultSettingsTest() throws Exception {
         List<String> tmpCheckList = new ArrayList<>(6);
         List<String> tmpExpectList = new ArrayList<>(6);
         tmpExpectList.add("Fragment saturation setting");
@@ -138,6 +138,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectList.add("Single carbon handling setting");
         tmpExpectList.add("Single ring detection setting");
         tmpExpectList.add("Keep rings setting");
+        tmpExpectList.add("Separate tertiary and quaternary carbon atoms from ring structures");
         for (Property tmpSetting: this.basicAlkylStructureFragmenter.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());
         }
