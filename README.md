@@ -65,12 +65,12 @@ Pre-compiled and executable MORTAR distributions can be found attached to the
 
 <p>
 <b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0/MORTAR_v1.2.0.0_WINx64_installer.exe">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR_v1.2.1.0_WINx64_installer.exe">here</a> to 
 automatically download the installer .exe of the latest version). Download the installer 
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.2.0.0\bin" or the path specified at 
+located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.2.1.0\bin" or the path specified at 
 installation). To start MORTAR, double-click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>
@@ -89,15 +89,24 @@ with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) acco
 described below. As an alternative way, they should also work on Windows.
 </p>
 
-<p><b>Linux and macOS:</b> Every release has the executable Java ARchive (JAR) "MORTAR-fat-1.2.0.0.jar"
+<p><b>Linux and macOS:</b> On macOS, MORTAR can be installed using the .dmg files attached to every 
+<a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> 
+since v1.2 (one for x64 and one for AArch64 architectures). Download the right file for your system and double-click 
+on it. In the window that opens, drag the MORTAR icon into the Applications folder to install it. 
+<br>
+Should you not want to install MORTAR this way but rather execute the Java ARchive (JAR) 
+directly, follow the instructions below:
+</p>
+
+<p>Every release has the executable JAR "MORTAR-fat-1.2.1.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0/MORTAR-fat-1.2.0.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR-fat-1.2.1.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.0.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.1.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
@@ -106,8 +115,8 @@ Execute the command in the directory where the JAR is situated or use its explic
 Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx) according to your preferences.
 
 <p>Please note that MORTAR only supports x64 (on all three platforms) and AArch64 (on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.0.0.jar" is available from the distributions attached to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0/MORTAR-fat-aarch64-1.2.0.0.jar">here</a> to 
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.1.0.jar" is available from the distributions attached to the releases and must be used 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR-fat-aarch64-1.2.1.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
