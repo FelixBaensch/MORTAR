@@ -51,34 +51,7 @@ import javafx.util.Duration;
  * @version 1.0.0.0
  */
 public class ToggleSwitch extends Control {
-    //<editor-fold desc="private final class constants" defaultstate="collapsed">
-    /**
-     * Circle that serves as button of the switch.
-     */
-    private final Circle switchButton;
-    /**
-     * Rectangle that serves as background of the switch.
-     */
-    private final Rectangle switchBackground;
-    /**
-     * Boolean property that represents the switch state, on vs. off.
-     */
-    private final SimpleBooleanProperty switchStateBooleanProperty;
-    /**
-     * Transition animation of the Circle from one side to the other.
-     */
-    private final TranslateTransition switchCircleTranslateTransition;
-    /**
-     * Color transition of the switch background.
-     */
-    private final FillTransition switchBackgroundColorFillTransition;
-    /**
-     * Combined transition of background color and circle position.
-     */
-    private final ParallelTransition switchTransition;
-    //</editor-fold>
-    //
-    //<editor-fold desc="Default values" defaultstate="collapsed">
+    //<editor-fold desc="Public static final constants" defaultstate="collapsed">
     /**
      * Default value for the width of the background.
      */
@@ -141,6 +114,33 @@ public class ToggleSwitch extends Control {
      * Default boolean state of the switch.
      */
     public static final boolean DEFAULT_SWITCH_STATE = false;
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private final class constants" defaultstate="collapsed">
+    /**
+     * Circle that serves as button of the switch.
+     */
+    private final Circle switchButton;
+    /**
+     * Rectangle that serves as background of the switch.
+     */
+    private final Rectangle switchBackground;
+    /**
+     * Boolean property that represents the switch state, on vs. off.
+     */
+    private final SimpleBooleanProperty switchStateBooleanProperty;
+    /**
+     * Transition animation of the Circle from one side to the other.
+     */
+    private final TranslateTransition switchCircleTranslateTransition;
+    /**
+     * Color transition of the switch background.
+     */
+    private final FillTransition switchBackgroundColorFillTransition;
+    /**
+     * Combined transition of background color and circle position.
+     */
+    private final ParallelTransition switchTransition;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
