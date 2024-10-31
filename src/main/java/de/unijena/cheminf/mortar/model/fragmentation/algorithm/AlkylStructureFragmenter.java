@@ -302,12 +302,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public Map<String, String> getSettingNameToTooltipTextMap() {
         return this.settingNameTooltipTextMap;
     }
-    /**
-     * Returns a map containing language-specific names (values) for the settings with the given names (keys) to be used
-     * in the GUI.
-     *
-     * @return map with display names
-     */
     @Override
     public Map<String, String> getSettingNameToDisplayNameMap() {
         return this.settingNameDisplayNameMap;
@@ -316,12 +310,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public String getFragmentationAlgorithmName() {
         return AlkylStructureFragmenter.ALGORITHM_NAME;
     }
-    /**
-     * Returns a language-specific name of the fragmenter to be used in the GUI.
-     * The given name must be unique among the available fragmentation algorithms!
-     *
-     * @return language-specific name for display in GUI
-     */
     @Override
     public String getFragmentationAlgorithmDisplayName() {
         return Message.get("AlkylStructureFragmenter.displayName");
@@ -431,6 +419,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aBoolean, "Given boolean is null");
         this.keepRingsSetting.set(aBoolean);
     }
+
+    /**
+     * Set method for setting defining if tertiary and quaternary carbon atoms should be separated from ring structures.
+     *
+     * @param aBoolean the given boolean value defining if tertiary and quaternary carbon atoms should be separated from ring structures
+     */
+    public void setSeparateTertQuatCarbonFromRingSetting(boolean aBoolean) {
+        this.separateTertQuatCarbonFromRingSetting.set(aBoolean);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public Methods">
@@ -443,6 +440,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpCopy.setAlternativeSingleCarbonHandlingSetting(this.alternativeSingleCarbonHandlingSetting.get());
         tmpCopy.setAlternativeSingleRingDetectionSetting(this.alternativeSingleRingDetectionSetting.get());
         tmpCopy.setKeepRingsSetting(this.keepRingsSetting.get());
+        tmpCopy.setSeparateTertQuatCarbonFromRingSetting(this.separateTertQuatCarbonFromRingSetting.get());
         return tmpCopy;
     }
 
@@ -454,6 +452,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.alternativeSingleCarbonHandlingSetting.set(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
         this.alternativeSingleRingDetectionSetting.set(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
         this.keepRingsSetting.set(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
+        this.separateTertQuatCarbonFromRingSetting.set(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
     }
     //
     //<editor-fold desc="Pre-Fragmentation Tasks">
@@ -497,7 +496,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + " Molecule ID: " + aMolecule.getID(), anException);
+                    anException + " Molecule ID: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                    anException);
             return true;
         }
     }
@@ -557,7 +557,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //add ChemUtils atom checks?
         } catch (CDKException aCDKException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    aCDKException + " Molecule ID: " + aMolecule.getID(), aCDKException);
+                    aCDKException + " Molecule ID: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                    aCDKException);
             throw new IllegalArgumentException();
         }
         //</editor-fold>
