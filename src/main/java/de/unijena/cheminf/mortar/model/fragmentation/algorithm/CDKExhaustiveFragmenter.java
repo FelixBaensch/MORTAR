@@ -53,7 +53,8 @@ import java.util.logging.Logger;
  * <a href="https://cdk.github.io/cdk/latest/docs/api/org/openscience/cdk/fragment/ExhaustiveFragmenter.html">
  *     exhaustive fragmentation
  * </a>
- * from the CDK available for MORTAR.
+ * from the CDK available for MORTAR. It has a runtime of O(n²) where n is the number of splittable bonds. Splittable
+ * bonds are defined as non-ring, single bonds that are connected to at least one other atom by an additional bond
  *
  * @author Tom Weiß
  * @version 1.0.0.0
@@ -209,21 +210,21 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     @Override
     public FragmentSaturationOption getFragmentSaturationSetting() throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not modifiable.
+        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
         throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
     @Override
     public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not modifiable.
+        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
         throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not modifiable.
+        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
         throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
@@ -249,7 +250,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         }
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
-        List<IAtomContainer> tmpFragments = new ArrayList<>(tmpMoleculeClone.getAtomCount() / 2);
+        // a rough estimation of the number of unique fragments produced by this fragmenter.
+        int fragmentListSizeEstimation = tmpMoleculeClone.getAtomCount() / 2;
+        List<IAtomContainer> tmpFragments = new ArrayList<>(fragmentListSizeEstimation);
         try {
             SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             this.cdkEFInstance.generateFragments(tmpMoleculeClone);
