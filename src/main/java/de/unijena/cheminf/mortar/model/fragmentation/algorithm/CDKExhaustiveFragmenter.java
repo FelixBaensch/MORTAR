@@ -53,8 +53,9 @@ import java.util.logging.Logger;
  * <a href="https://cdk.github.io/cdk/latest/docs/api/org/openscience/cdk/fragment/ExhaustiveFragmenter.html">
  *     exhaustive fragmentation
  * </a>
- * from the CDK available for MORTAR. It has a runtime of O(n²) where n is the number of splittable bonds. Splittable
- * bonds are defined as non-ring, single bonds that are connected to at least one other atom by an additional bond
+ * from the CDK available for MORTAR. It has a performance of O(n!) where n is the number of splittable bonds. Splittable
+ * bonds are defined as non-ring, single bonds that are connected to at least one other atom, that is <b>not</b> an
+ * implicit hydrogen.
  *
  * @author Tom Weiß
  * @version 1.0.0.0
