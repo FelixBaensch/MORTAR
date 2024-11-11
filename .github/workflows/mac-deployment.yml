@@ -1,0 +1,39 @@
+name: Gradle JPackage Build for Mac x64
+
+on:
+  push:
+    branches: [ "main", "production" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-13]
+        java: [ '21.0.1' ]
+      fail-fast: false
+    name: ${{ matrix.os }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Echo JAVA_HOME
+        run: echo $JAVA_HOME
+      - name: Verify Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Execute build
+        run: ./gradlew --info --stacktrace build
+      - name: Execute runtime
+        run: ./gradlew --info --stacktrace runtime
+      - name: Execute jpackage
+        run: ./gradlew --info --stacktrace jpackage -n MORTAR --icon ./Images/MORTAR-icon.icns --main-jar ./build/libs/MORTAR-fat-1.2.0.0.jar
+      - name: Upload DMG as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MORTAR-1.2.0.dmg
+          path: build/jpackage/*.dmg
