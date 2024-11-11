@@ -29,8 +29,6 @@ jobs:
         run: chmod +x gradlew
       - name: Execute build
         run: ./gradlew --info --stacktrace build
-      - name: Execute runtime
-        run: ./gradlew --info --stacktrace runtime
       - name: Execute jpackage
         run: ./gradlew --info --stacktrace jpackage -n MORTAR --icon ./Images/MORTAR-icon.icns --main-jar ./build/libs/MORTAR-fat-1.2.0.0.jar
       - name: Upload DMG as an artifact
