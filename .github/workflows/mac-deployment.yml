@@ -30,7 +30,7 @@ jobs:
       - name: Execute build
         run: ./gradlew --info --stacktrace build
       - name: Execute jpackage
-        run: jpackage -i . -n MORTAR --icon ./Images/MORTAR-icon.icns --main-jar ./build/libs/MORTAR-fat-1.2.0.0.jar
+        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-1.2.0.0.jar
       - name: Upload DMG as an artifact
         uses: actions/upload-artifact@v4
         with:
