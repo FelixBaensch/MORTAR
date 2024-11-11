@@ -30,9 +30,11 @@ jobs:
       - name: Execute build
         run: ./gradlew --info --stacktrace build
       - name: Execute jpackage
-        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-1.2.0.0.jar
+        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-1.2.0.0.jar -t dmg
       - name: Upload DMG as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MORTAR-1.2.0.dmg
-          path: ./*.dmg
+          name: MORTAR-1.2.0.dmg.zip
+          path: MORTAR-1.2.0.dmg.zip
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference
