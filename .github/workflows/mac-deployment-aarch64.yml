@@ -42,7 +42,7 @@ jobs:
       - name: Upload DMG as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MORTAR-aarch64-1.2.0.dmg.zip
+          name: MORTAR-aarch64-1.2.0.dmg
           path: ./*.dmg
           retention-days: 30
           compression-level: 0 # no compression since it makes no difference
