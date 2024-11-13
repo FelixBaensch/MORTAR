@@ -38,11 +38,11 @@ jobs:
       - name: Execute fatJar
         run: ./gradlew --info --stacktrace fatJar
       - name: Execute jpackage
-        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-1.2.0.0.jar -t dmg
+        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-1.2.1.0.jar -t dmg
       - name: Upload DMG as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MORTAR-1.2.0.dmg
+          name: MORTAR-1.2.1.dmg
           path: ./*.dmg
           retention-days: 30
           compression-level: 0 # no compression since it makes no difference
