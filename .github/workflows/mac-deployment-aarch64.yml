@@ -1,0 +1,48 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+
+name: Gradle JPackage Build for Mac AArch64
+
+on:
+  push:
+    branches: [ "main", "production" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest]
+        java: [ '21.0.1' ]
+      fail-fast: false
+    name: ${{ matrix.os }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+      - name: Echo JAVA_HOME
+        run: echo $JAVA_HOME
+      - name: Verify Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Execute fatJarAarch64
+        run: ./gradlew --info --stacktrace fatJarAarch64
+      - name: Execute jpackage
+        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-aarch64-1.2.0.0.jar -t dmg
+      - name: Upload DMG as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MORTAR-aarch64-1.2.0.dmg
+          path: ./*.dmg
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference
