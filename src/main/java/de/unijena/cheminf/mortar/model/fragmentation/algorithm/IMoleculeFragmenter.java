@@ -70,6 +70,10 @@ import java.util.Map;
  * Examples for how to implement this interface to make a new fragmentation algorithm available, can be found in
  * the classes {@link ErtlFunctionalGroupsFinderFragmenter}, {@link SugarRemovalUtilityFragmenter}, and
  * {@link ScaffoldGeneratorFragmenter}.
+ * <br>
+ * <br>Language-specific texts that are displayed in the GUI are fetched via the
+ * {@link de.unijena.cheminf.mortar.message.Message} class from a resource file in
+ * /src/main/resources/de/unijena/cheminf/mortar/message/.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
