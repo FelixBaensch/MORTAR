@@ -49,6 +49,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.Bond;
+import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -87,6 +88,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Name of the fragmenter.
      */
     public static final String ALGORITHM_NAME = "Alkyl Fragmenter";
+    /**
+     * Default boolean value to deter keeping non-fragmentable molecules in the fragmenter pipeline.
+     */
+    public static final boolean KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT = true;
     /**
      * Default value for maximum length of carbon side chains.
      */
@@ -173,6 +178,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
     /**
+     * A property that has a constant boolean value defining if non-fragmentable molecules should be kept in the
+     * fragmenter pipeline.
+     */
+    private final SimpleBooleanProperty keepNonFragmentableMoleculesSetting;
+    /**
      * A property that has a constant boolean value determining whether side chains should be fragmented.
      */
     private final SimpleBooleanProperty fragmentSideChainsSetting;
@@ -197,6 +207,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * from ring structures.
      */
     private final SimpleBooleanProperty separateTertQuatCarbonFromRingSetting;
+
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -221,7 +232,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
-        int tmpSettingsNameTooltipNumber = 7;
+        int tmpSettingsNameTooltipNumber = 8;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNameTooltipNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -249,6 +260,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.fragmentSaturationSetting.getName(),
                 Message.get("AlkylStructureFragmenter.fragmentSaturationSetting.displayName"));
+        this.keepNonFragmentableMoleculesSetting = new SimpleBooleanProperty(this, "Retention setting for non-fragmentable molecules",
+                AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.keepNonFragmentableMoleculesSetting.getName(),
+                Message.get("AlkylStructureFragmenter.keepNonFragmentableMoleculesSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.keepNonFragmentableMoleculesSetting.getName(),
+                Message.get("AlkylStructureFragmenter.keepNonFragmentableMoleculesSetting.displayName"));
         this.fragmentSideChainsSetting = new SimpleBooleanProperty(this, "Fragmentation of hydrocarbon side chains setting",
                 AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.fragmentSideChainsSetting.getName(),
@@ -280,13 +297,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settingNameDisplayNameMap.put(this.keepRingsSetting.getName(),
                 Message.get("AlkylStructureFragmenter.keepRingsSetting.displayName"));
         this.separateTertQuatCarbonFromRingSetting = new SimpleBooleanProperty(this, "Separate tertiary and " +
-                "quaternary carbon atoms from ring structures", AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
+                "quaternary carbon atoms from ring structures setting", AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.displayName"));
-        this.settings = new ArrayList<>(7);
+        this.settings = new ArrayList<>(8);
         this.settings.add(this.fragmentSaturationSetting);
+        this.settings.add(this.keepNonFragmentableMoleculesSetting);
         this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
         this.settings.add(this.alternativeSingleCarbonHandlingSetting);
@@ -321,6 +339,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public FragmentSaturationOption getFragmentSaturationSetting() {
         return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
+    }
+
+    /**
+     * Public get method for retention setting for non-fragmentable molecules.
+     *
+     * @return boolean value of keepNonFragmentableMoleculesSetting
+     */
+    public boolean getKeepNonFragmentableMoleculesSetting() {
+        return this.keepNonFragmentableMoleculesSetting.get();
     }
     /**
      * Public get method for maximum chain length setting.
@@ -373,6 +400,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
         this.fragmentSaturationSetting.set(anOption);
+    }
+
+    /**
+     * Set method for retention setting for non-fragmentable molecules.
+     *
+     * @param aBoolean keep non-fragmentable molecules
+     */
+    public void setKeepNonFragmentableMoleculesSetting(boolean aBoolean) {
+        this.keepNonFragmentableMoleculesSetting.set(aBoolean);
     }
     /**
      * Set method for setting defining whether side chains should be fragmented.
@@ -487,21 +523,25 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     case IElement.H -> tmpHydrogenCount++;
                     case IElement.C -> tmpCarbonCount++;
                     default -> {
+                        aMolecule.setFlag(CDKConstants.VISITED, true);
                         return true;
                     }
                 }
             }
             if (tmpCarbonCount != 0 ) {
+                aMolecule.setFlag(CDKConstants.VISITED, false);
                 return false;
             }
             //the else condition is only meant to filter out explicit hydrogen (setting for on/off could be implemented)
             else {
+                aMolecule.setFlag(CDKConstants.VISITED, true);
                 return true;
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " Molecule ID: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                     anException);
+            aMolecule.setFlag(CDKConstants.VISITED, true);
             return true;
         }
     }
@@ -546,6 +586,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
+        if (aMolecule.getFlag(16) && this.keepNonFragmentableMoleculesSetting.get()) {
+            List<IAtomContainer> tmpNonFragACList = new ArrayList<>();
+            tmpNonFragACList.add(aMolecule);
+            return tmpNonFragACList;
+        }
         IAtomContainer tmpClone = aMolecule.clone();
         int tmpPreFragmentationAtomCount = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {

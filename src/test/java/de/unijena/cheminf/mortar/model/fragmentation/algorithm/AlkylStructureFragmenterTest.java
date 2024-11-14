@@ -130,15 +130,16 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     @Test
     public void defaultSettingsTest() throws Exception {
-        List<String> tmpCheckList = new ArrayList<>(6);
-        List<String> tmpExpectList = new ArrayList<>(6);
+        List<String> tmpCheckList = new ArrayList<>(8);
+        List<String> tmpExpectList = new ArrayList<>(8);
         tmpExpectList.add("Fragment saturation setting");
+        tmpExpectList.add("Retention setting for non-fragmentable molecules");
         tmpExpectList.add("Fragmentation of hydrocarbon side chains setting");
         tmpExpectList.add("Carbon side chains maximum length setting");
         tmpExpectList.add("Single carbon handling setting");
         tmpExpectList.add("Single ring detection setting");
         tmpExpectList.add("Keep rings setting");
-        tmpExpectList.add("Separate tertiary and quaternary carbon atoms from ring structures");
+        tmpExpectList.add("Separate tertiary and quaternary carbon atoms from ring structures setting");
         for (Property tmpSetting: this.basicAlkylStructureFragmenter.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());
         }
@@ -257,6 +258,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     @Test
     public void defaultFragmentationTest() throws Exception {
         this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.basicAlkylStructureFragmenter.setKeepNonFragmentableMoleculesSetting(false);
         this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setAlternativeSingleCarbonHandlingSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
