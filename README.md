@@ -4,7 +4,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/issues/)
 [![GitHub contributors](https://img.shields.io/github/contributors/FelixBaensch/MORTAR.svg)](https://GitHub.com/FelixBaensch/MORTAR/graphs/contributors/)
 [![GitHub release](https://img.shields.io/github/release/FelixBaensch/MORTAR.svg)](https://github.com/FelixBaensch/MORTAR/releases/)
-[![build](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml/badge.svg)](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml)
+[![Java CI with Gradle](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml/badge.svg?branch=main)](https://github.com/FelixBaensch/MORTAR/actions/workflows/gradle.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FelixBaensch_MORTAR&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FelixBaensch_MORTAR)
 [![Software Article - JChemInf](https://img.shields.io/badge/Software_Article-JChemInf-blue)](https://doi.org/10.1186/s13321-022-00674-9)
 [![Tutorial - Tutorial folder](https://img.shields.io/badge/Tutorial-Tutorial_folder-2ea44f)](https://github.com/FelixBaensch/MORTAR/tree/main/Tutorial)
@@ -61,17 +61,23 @@ If you are using MORTAR for your own projects, feel free to acknowledge it by us
 
 ## Installation
 ### Application
-Pre-compiled and executable MORTAR distributions can be found attached to the 
-<a href="https://github.com/FelixBaensch/MORTAR/releases">marked releases</a>.
+Pre-compiled and executable MORTAR distributions can be found attached as assets to the 
+<a href="https://github.com/FelixBaensch/MORTAR/releases">marked releases</a> (below the change notes).
+<br>In short (more details in the dedicated sections below), a graphical installer executable is available for Windows and 
+a disk image (DMG) file is given for installation on macOS.
+On all three operating systems (Windows, macOS, and Linux), MORTAR can also be run from the command line using the 
+supplied “fat” Java ARchive (JAR) which gives you full control, e.g., over how much memory should be used. A Java 
+Development Kit or Runtime Environment (JDK/JRE) of version 21.0.1 or higher must be pre-installed on your system.
+
 
 <p>
 <b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0/MORTAR_v1.2.0.0_WINx64_installer.exe">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR_v1.2.1.0_WINx64_installer.exe">here</a> to 
 automatically download the installer .exe of the latest version). Download the installer 
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.2.0.0\bin" or the path specified at 
+located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.2.1.0\bin" or the path specified at 
 installation). To start MORTAR, double-click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>
@@ -86,19 +92,32 @@ set DEFAULT_JVM_OPTS="-Xms4g" "-Xmx4g"
 
 with your chosen initially allocated memory (-Xms) and maximum value (-Xmx) accordingly.<br>
 
-<p>Should this installation or the execution of the batch files not work for you, try the guidelines for Linux and MaxOS 
-described below. As an alternative way, they should also work on Windows.
+<p>Should this installation or the execution of the batch files not work for you, you can also run MORTAR directly from 
+the command line (see below).
+<br>Please note that x32 processor architectures are not supported by MORTAR.
 </p>
 
-<p><b>Linux and macOS:</b> Every release has the executable Java ARchive (JAR) "MORTAR-fat-1.2.0.0.jar"
+<p><b>MacOS:</b> On macOS, MORTAR can be installed using the disk image (.dmg) files attached to every 
+<a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> 
+since v1.2 (one for devices with an x86 processor architecture and one for ARM/AArch64-based systems). 
+Download the right file for your system and double-click on it. In the window that opens, drag the MORTAR icon 
+into the Applications folder to install it. It might be necessary to 
+<a href="https://support.apple.com/en-gb/guide/mac-help/mh40620/mac">adjust your security settings</a> to allow MORTAR to run.
+<br>
+The disk images are configured to allocate up to 4 gigabytes of RAM to MORTAR. Should you want to assign more memory to 
+analyse bigger data sets or should this installation not work for you, you can run MORTAR directly from the command line 
+(see below).
+</p>
+
+<p><b>Linux (JAR execution via command line)</b>: Every release has the executable JAR "MORTAR-fat-1.2.1.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0/MORTAR-fat-1.2.0.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR-fat-1.2.1.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.0.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.1.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
@@ -106,12 +125,20 @@ Otherwise, replace "java" with the path to the java command of your JDK or JRE.<
 Execute the command in the directory where the JAR is situated or use its explicit path instead of ```<path to>```.<br>
 Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx) according to your preferences.
 
-<p>Please note that MORTAR only supports x64 (on all three platforms) and AArch64 (on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.0.0.jar" is available from the distributions attached to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.0.0/MORTAR-fat-aarch64-1.2.0.0.jar">here</a> to 
+<p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all three platforms) and AArch64/ARM 
+(on macOS and Linux) architectures in general. 
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.1.0.jar" is available from the distributions attached 
+to the releases and must be used 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR-fat-aarch64-1.2.1.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
+<p>The <a href="https://www.x.org/wiki/">X / X11 / X Window System</a> can be used to run a graphical application like 
+MORTAR on a remote server while displaying the graphical user interface on the local machine / personal computer. 
+This setup can be beneficial if more computing power or memory is required to analyse large data sets. However, please 
+note that while this is possible in principle, unexpected behaviour from MORTAR may occur. We cannot take responsibility 
+for or recommend this way of deployment, similar to using the WSL as mentioned above.
+</p>
 
 ### Source code
 This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
@@ -189,6 +216,7 @@ fragmentation (Baensch et al. 2023)).
 * Betuel Sevindik
 * Samuel Behr
 * Julian Zander
+* Zeynep Dagtekin
 
 **Logo:**
 * Kohulan Rajan
