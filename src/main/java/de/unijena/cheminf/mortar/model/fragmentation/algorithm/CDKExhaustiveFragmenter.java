@@ -54,8 +54,8 @@ import java.util.logging.Logger;
  *     exhaustive fragmentation
  * </a>
  * from the CDK available for MORTAR. It has a performance of O(n!) where n is the number of splittable bonds. Splittable
- * bonds are defined as non-ring, single bonds that are connected to at least one other atom, that is <b>not</b> an
- * implicit hydrogen.
+ * bonds are defined as non-ring, single bonds that are not connected to non-terminal atoms. Here, Non-terminal refers
+ * to atoms that are connected to at least one other atom, which itself is connected to other atoms.
  *
  * @author Tom Weiß
  * @version 1.0.0.0
@@ -172,7 +172,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="Public properties set">
 
     /**
-     * Returns the minimum fragment size currently set.
+     * Sets the minimum fragment size.
      *
      * @param minimumFragmentSize the new minimum fragment size.
      */
