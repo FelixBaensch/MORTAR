@@ -494,11 +494,17 @@ public class GuiUtil {
                 } else if(tmpCell.getClass() == Double.class) {
                     tmpClipboardContent.putString(((Double)tmpCell).toString());
                 } else if(tmpCell.getClass() == ImageView.class) {
-                    Image tmpImage;
                     IAtomContainer tmpAtomContainer;
                     try {
                         if (aTableView.getClass() == FragmentsDataTableView.class) {
-                            tmpAtomContainer = ((FragmentDataModel) aTableView.getItems().get(tmpRowIndex)).getFirstParentMolecule().getAtomContainer();
+                            // Check if header of column equals "Structure", then use AtomContainer of structure,
+                            // else use AtomContainer of first parent molecule.
+                            // If "label cast" throws an exception it is caught below.
+                            if(Message.get("MainTabPane.fragmentsTab.tableView.structureColumn.header").equals(((Label)(tmpPos.getTableColumn().getGraphic())).getText())) {
+                                tmpAtomContainer = ((FragmentDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
+                            } else {
+                                tmpAtomContainer = ((FragmentDataModel) aTableView.getItems().get(tmpRowIndex)).getFirstParentMolecule().getAtomContainer();
+                            }
                         } else if(aTableView.getClass() == ItemizationDataTableView.class) {
                             if (tmpColIndex > 1) {
                                 String tmpFragmentationName = ((ItemizationDataTableView) aTableView).getFragmentationName();
@@ -509,9 +515,9 @@ public class GuiUtil {
                         } else {
                             tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
                         }
-                        tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,true, true);
+                        Image tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,true, true);
                         tmpClipboardContent.putImage(tmpImage);
-                    } catch (CDKException e) {
+                    } catch (CDKException | ClassCastException tmpException) {
                         tmpClipboardContent.putImage(((ImageView) tmpCell).getImage());
                     }
                 } else {
