@@ -49,7 +49,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.Bond;
-import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -502,7 +501,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * <p>
      *     Checks the given IAtomContainer aMolecule for non-carbon and non-hydrogen atoms and returns true if
      *     non-conforming atoms are found, otherwise false is returned and the molecule can be fragmented.
-     *
+     *     In order to enable the user to let non-fragmented molecules be retained in the pipeline, the filter can be
+     *     switched off via setting keepNonFragmentableMoleculesSetting.
      *     An if-condition at the end checks for the special case of explicit hydrogens and filtering them out if no
      *     carbon is present in aMolecule, as they pass the actual filter.
      * </p>
@@ -523,25 +523,28 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     case IElement.H -> tmpHydrogenCount++;
                     case IElement.C -> tmpCarbonCount++;
                     default -> {
-                        aMolecule.setFlag(CDKConstants.VISITED, true);
+                        if (this.keepNonFragmentableMoleculesSetting.get()) {
+                            aMolecule.setProperty("ASF.FilterMarker", true);
+                            return false;
+                        }
                         return true;
                     }
                 }
             }
             if (tmpCarbonCount != 0 ) {
-                aMolecule.setFlag(CDKConstants.VISITED, false);
+                aMolecule.setProperty("ASF.FilterMarker", false);
                 return false;
             }
             //the else condition is only meant to filter out explicit hydrogen (setting for on/off could be implemented)
             else {
-                aMolecule.setFlag(CDKConstants.VISITED, true);
+                aMolecule.setProperty("ASF.FilterMarker", true);
                 return true;
             }
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " Molecule ID: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                     anException);
-            aMolecule.setFlag(CDKConstants.VISITED, true);
+            aMolecule.setProperty("ASF.FilterMarker", true);
             return true;
         }
     }
@@ -562,6 +565,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
         //throws NullpointerException if molecule is null
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        System.out.println("canBeFragmented");
+        if (aMolecule.getProperty("ASF.FilterMarker")) {
+            return true;
+        }
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
         return !tmpShouldBeFiltered && !tmpShouldBePreprocessed;
@@ -586,7 +593,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
-        if (aMolecule.getFlag(16) && this.keepNonFragmentableMoleculesSetting.get()) {
+        if ((boolean) aMolecule.getProperty("ASF.FilterMarker") && this.keepNonFragmentableMoleculesSetting.get()) {
             List<IAtomContainer> tmpNonFragACList = new ArrayList<>();
             tmpNonFragACList.add(aMolecule);
             return tmpNonFragACList;
