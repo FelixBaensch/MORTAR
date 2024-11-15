@@ -25,14 +25,6 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-//<editor-fold desc="Future Development">
-/*
-TODO: (01|08|24):   -implement spiro carbon detection + ring integrity setting
-                    -overhaul test class (with new functionalities)
-                    -large scale testing of fragmentation (regarding correct fragmentation and performance)
- */
-//</editor-fold>
-
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
@@ -102,11 +94,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Default boolean value for determining whether alternative or standard single carbon handling should be used.
      */
-    public static final boolean ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT = false;
+    public static final boolean ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT = false;
     /**
      * Default boolean value for determining which single ring detection method should be used.
      */
-    public static final boolean ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT = false;
+    public static final boolean MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT = false;
     /**
      * Default boolean value for keeping rings intact setting .
      */
@@ -192,11 +184,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * A property that has a constant boolean value determining which single carbon handling to use during fragmentation.
      */
-    private final SimpleBooleanProperty alternativeSingleCarbonHandlingSetting;
+    private final SimpleBooleanProperty altHandlingSingleTertQuatCarbonsSetting;
     /**
      * A property that has a constant boolean value determining which single ring detection method to use during fragmentation.
      */
-    private final SimpleBooleanProperty alternativeSingleRingDetectionSetting;
+    private final SimpleBooleanProperty mcbSingleRingDetectionSetting;
     /**
      * A property that has a constant boolean value defining if rings should be dissected further.
      */
@@ -277,18 +269,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.displayName"));
-        this.alternativeSingleCarbonHandlingSetting = new SimpleBooleanProperty(this, "Single carbon handling setting",
-                AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
-        this.settingNameTooltipTextMap.put(this.alternativeSingleCarbonHandlingSetting.getName(),
-                Message.get("AlkylStructureFragmenter.alternativeSingleCarbonHandlingSetting.tooltip"));
-        this.settingNameDisplayNameMap.put(this.alternativeSingleCarbonHandlingSetting.getName(),
-                Message.get("AlkylStructureFragmenter.alternativeSingleCarbonHandlingSetting.displayName"));
-        this.alternativeSingleRingDetectionSetting = new SimpleBooleanProperty(this, "Single ring detection setting",
-                AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
-        this.settingNameTooltipTextMap.put(this.alternativeSingleRingDetectionSetting.getName(),
-                Message.get("AlkylStructureFragmenter.alternativeSingleRingDetectionSetting.tooltip"));
-        this.settingNameDisplayNameMap.put(this.alternativeSingleRingDetectionSetting.getName(),
-                Message.get("AlkylStructureFragmenter.alternativeSingleRingDetectionSetting.displayName"));
+        this.altHandlingSingleTertQuatCarbonsSetting = new SimpleBooleanProperty(this, "Single carbon handling setting",
+                AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.altHandlingSingleTertQuatCarbonsSetting.getName(),
+                Message.get("AlkylStructureFragmenter.altHandlingSingleTertQuatCarbonsSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.altHandlingSingleTertQuatCarbonsSetting.getName(),
+                Message.get("AlkylStructureFragmenter.altHandlingSingleTertQuatCarbonsSetting.displayName"));
+        this.mcbSingleRingDetectionSetting = new SimpleBooleanProperty(this, "Single ring detection setting",
+                AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.mcbSingleRingDetectionSetting.getName(),
+                Message.get("AlkylStructureFragmenter.mcbSingleRingDetectionSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.mcbSingleRingDetectionSetting.getName(),
+                Message.get("AlkylStructureFragmenter.mcbSingleRingDetectionSetting.displayName"));
         this.keepRingsSetting = new SimpleBooleanProperty(this, "Keep rings setting",
                 AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.keepRingsSetting.getName(),
@@ -306,8 +298,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settings.add(this.keepNonFragmentableMoleculesSetting);
         this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
-        this.settings.add(this.alternativeSingleCarbonHandlingSetting);
-        this.settings.add(this.alternativeSingleRingDetectionSetting);
+        this.settings.add(this.altHandlingSingleTertQuatCarbonsSetting);
+        this.settings.add(this.mcbSingleRingDetectionSetting);
         this.settings.add(this.keepRingsSetting);
         this.settings.add(this.separateTertQuatCarbonFromRingSetting);
     }
@@ -365,12 +357,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return this.maxChainLengthSetting;
     }
     /**
-     * Public get method for alternative single carbon handling setting property.
+     * Public get method for alternative handling of tertiary and quaternary carbon atoms setting property.
      *
-     * @return SimpleBooleanProperty alternativeSingleCarbonHandlingSetting
+     * @return SimpleBooleanProperty altHandlingSingleTertQuatCarbonsSetting
      */
-    public SimpleBooleanProperty getAlternativeSingleCarbonHandlingSettingProperty() {
-        return this.alternativeSingleCarbonHandlingSetting;
+    public SimpleBooleanProperty getAltHandlingSingleTertQuatCarbonsSettingProperty() {
+        return this.altHandlingSingleTertQuatCarbonsSetting;
+    }
+
+    /**
+     * Public get method for alternative single ring detection with MCB algorithm setting property.
+     *
+     * @return SimpleBooleanProperty mcbSingleRingDetectionSetting
+     */
+    public SimpleBooleanProperty getMcbSingleRingDetectionSettingProperty() {
+        return this.mcbSingleRingDetectionSetting;
     }
     /**
      * Public get method for keep rings setting property.
@@ -436,18 +437,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @param aBoolean the given boolean value for switching handling
      */
-    public void setAlternativeSingleCarbonHandlingSetting(boolean aBoolean){
+    public void setAltHandlingTertQuatCarbonsSetting(boolean aBoolean){
         Objects.requireNonNull(aBoolean, "Given boolean is null.");
-        this.alternativeSingleCarbonHandlingSetting.set(aBoolean);
+        this.altHandlingSingleTertQuatCarbonsSetting.set(aBoolean);
     }
     /**
      * Set method for setting defining whether alternative single ring detection should be used.
      *
      * @param aBoolean the given boolean value for switching between alternative and default detection
      */
-    public void setAlternativeSingleRingDetectionSetting(boolean aBoolean) {
+    public void setMcbSingleRingDetectionSetting(boolean aBoolean) {
         Objects.requireNonNull(aBoolean, "Given boolean is null");
-        this.alternativeSingleRingDetectionSetting.set(aBoolean);
+        this.mcbSingleRingDetectionSetting.set(aBoolean);
     }
     /**
      * Set method for setting defining if rings should be dissected or kept intact.
@@ -476,8 +477,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpCopy.setFragmentSaturationSetting((IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get());
         tmpCopy.setFragmentSideChainsSetting(this.fragmentSideChainsSetting.get());
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
-        tmpCopy.setAlternativeSingleCarbonHandlingSetting(this.alternativeSingleCarbonHandlingSetting.get());
-        tmpCopy.setAlternativeSingleRingDetectionSetting(this.alternativeSingleRingDetectionSetting.get());
+        tmpCopy.setAltHandlingTertQuatCarbonsSetting(this.altHandlingSingleTertQuatCarbonsSetting.get());
+        tmpCopy.setMcbSingleRingDetectionSetting(this.mcbSingleRingDetectionSetting.get());
         tmpCopy.setKeepRingsSetting(this.keepRingsSetting.get());
         tmpCopy.setSeparateTertQuatCarbonFromRingSetting(this.separateTertQuatCarbonFromRingSetting.get());
         return tmpCopy;
@@ -488,8 +489,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.fragmentSideChainsSetting.set(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        this.alternativeSingleCarbonHandlingSetting.set(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
-        this.alternativeSingleRingDetectionSetting.set(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.altHandlingSingleTertQuatCarbonsSetting.set(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
+        this.mcbSingleRingDetectionSetting.set(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
         this.keepRingsSetting.set(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         this.separateTertQuatCarbonFromRingSetting.set(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
     }
@@ -592,12 +593,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
-        //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
+        //skip fragmentation if molecule is not fragmentable and just return it as one fragment to keep it in pipeline
         if ((boolean) aMolecule.getProperty("ASF.FilterMarker") && this.keepNonFragmentableMoleculesSetting.get()) {
             List<IAtomContainer> tmpNonFragACList = new ArrayList<>();
             tmpNonFragACList.add(aMolecule);
             return tmpNonFragACList;
         }
+        //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
         int tmpPreFragmentationAtomCount = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
@@ -632,17 +634,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
             int tmpPostFragmentationAtomCount = 0;
-            int tmpPostFragmentationBondCount = 0;
             IAtomContainerSet tmpFragmentSet = this.extractFragments((IAtom[]) tmpObject[0],(IBond[]) tmpObject[1]);
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
                     if (tmpAtom.getAtomicNumber() != 0)
                     tmpPostFragmentationAtomCount++;
                 }
-                tmpPostFragmentationBondCount += tmpAtomContainer.getBondCount();
             }
             System.out.println("PostFragAtomCount: " + tmpPostFragmentationAtomCount);
-            //System.out.println("PostFragBondCount: " + tmpPostFragmentationBondCount);
             if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount && !this.ASFDebugBoolean) {
                 throw new Exception("Molecular formula is not the same between original molecule and received fragments!");
             }
@@ -850,7 +849,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
         //
         //<editor-fold desc="Single Ring Detection" defaultstate="collapsed">
-        if (this.alternativeSingleRingDetectionSetting.get()) {
+        if (this.mcbSingleRingDetectionSetting.get()) {
             //<editor-fold desc="CycleFinder (MCB)">
             CycleFinder tmpMCBCycleFinder = Cycles.mcb();
             IRingSet tmpMCBCyclesSet;
@@ -1054,7 +1053,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
                     tmpRingFragmentationContainer.addAtom(tmpAtom);
                     //System.out.println("tert atom added");
-                    if (this.alternativeSingleCarbonHandlingSetting.get()) {
+                    if (this.altHandlingSingleTertQuatCarbonsSetting.get()) {
                         for (int i = 0; i < 3; i++) {
                             PseudoAtom tmpPseudoAtom = new PseudoAtom();
                             tmpTertQuatCarbonContainer.addAtom(tmpPseudoAtom);
@@ -1064,7 +1063,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
                     tmpRingFragmentationContainer.addAtom(tmpAtom);
                     //System.out.println("quart atom added");
-                    if (this.alternativeSingleCarbonHandlingSetting.get()) {
+                    if (this.altHandlingSingleTertQuatCarbonsSetting.get()) {
                         for (int i = 0; i < 4; i++) {
                             PseudoAtom tmpPseudoAtom = new PseudoAtom();
                             tmpTertQuatCarbonContainer.addAtom(tmpPseudoAtom);
@@ -1100,7 +1099,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
                 //extract neighbor atoms of tertiary or quaternary carbon atoms
                 else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
-                    if (this.alternativeSingleCarbonHandlingSetting.get()) {continue;}
+                    if (this.altHandlingSingleTertQuatCarbonsSetting.get()) {continue;}
                     tmpRingFragmentationContainer.addAtom(tmpAtom);
                     //System.out.println("neighbor atom added");
                 }

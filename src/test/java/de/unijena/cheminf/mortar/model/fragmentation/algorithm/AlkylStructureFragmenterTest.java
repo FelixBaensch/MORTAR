@@ -33,15 +33,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.Intractable;
-import org.openscience.cdk.graph.CycleFinder;
-import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
-import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 
 import java.io.File;
@@ -261,8 +257,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter.setKeepNonFragmentableMoleculesSetting(false);
         this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        this.basicAlkylStructureFragmenter.setAlternativeSingleCarbonHandlingSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
-        this.basicAlkylStructureFragmenter.setAlternativeSingleRingDetectionSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMcbSingleRingDetectionSetting(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         for (IAtomContainer tmpAtomContainer :
                 this.testStructuresACSet.atomContainers()) {
@@ -280,8 +276,42 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<String> tmpExpectedSMILESList = this.generateSMILESFromACSet(tmpExpectedACSet);
         //System.out.println("expected: " + tmpExpectedSMILESList);
         //System.out.println("result: " + tmpResultSMILESList);
+        boolean tmpChemicalFormulaCheck = this.checkChemicalFormula(this.testStructuresACSet.getAtomContainer(1),
+                tmpExpectedACSet, tmpResultACSet);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
-                new ArrayList<>(tmpExpectedSMILESList)));
+                new ArrayList<>(tmpExpectedSMILESList)) && tmpChemicalFormulaCheck);
+    }
+
+    private boolean checkChemicalFormula(IAtomContainer aMolecule, IAtomContainerSet anExpectedACSet, IAtomContainerSet aResultACSet) {
+        int tmpPreFragmentationAtomCount = 0;
+        for (IAtom tmpAtom: aMolecule.atoms()) {
+            if (tmpAtom.getAtomicNumber() != 0) {
+                tmpPreFragmentationAtomCount++;
+            }
+        }
+        int tmpResultPostFragmentationAtomCount = 0;
+        int tmpExpPostFragmentationAtomCount = 0;
+        for (IAtomContainer tmpAtomContainer: anExpectedACSet.atomContainers()) {
+            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
+                if (tmpAtom.getAtomicNumber() != 0) {
+                    tmpExpPostFragmentationAtomCount++;
+                }
+            }
+        }
+        for (IAtomContainer tmpAtomContainer: aResultACSet.atomContainers()) {
+            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
+                if (tmpAtom.getAtomicNumber() != 0)
+                    tmpResultPostFragmentationAtomCount++;
+            }
+        }
+        System.out.println(tmpPreFragmentationAtomCount);
+        System.out.println(tmpExpPostFragmentationAtomCount);
+        System.out.println(tmpResultPostFragmentationAtomCount);
+        if (tmpResultPostFragmentationAtomCount != tmpPreFragmentationAtomCount
+                || tmpResultPostFragmentationAtomCount != tmpExpPostFragmentationAtomCount) {
+            return false;
+        }
+        return true;
     }
     //</editor-fold>
 
@@ -292,8 +322,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        this.basicAlkylStructureFragmenter.setAlternativeSingleCarbonHandlingSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_CARBON_HANDLING_SETTING_DEFAULT);
-        this.basicAlkylStructureFragmenter.setAlternativeSingleRingDetectionSetting(AlkylStructureFragmenter.ALTERNATIVE_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMcbSingleRingDetectionSetting(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         for (IAtomContainer tmpAtomContainer :
                 this.testStructuresACSet.atomContainers()) {
@@ -313,54 +343,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         //System.out.println("result: " + tmpResultSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
-    }
-    //</editor-fold>
-
-    //<editor-fold desc="@Test Custom Methods">
-    @Test
-    public void detectRingsWithMCBTest() {
-        CycleFinder tmpCycleFinder = Cycles.mcb();
-        IAtomContainerSet tmpACSet;
-        try {
-            tmpACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Spiro_Test_Structure1.mol");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        for (IAtomContainer tmpAC: tmpACSet.atomContainers()) {
-            try {
-                Cycles tmpMCBCycles = tmpCycleFinder.find(tmpAC);
-                System.out.println("MCB number of detected Cycles: " + tmpMCBCycles.numberOfCycles());
-                System.out.println("MCB detected ring atomcontainer below:");
-                System.out.println(tmpAC);
-                System.out.println("-----");
-            } catch (Intractable e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-    }
-    @Test
-    public void detectRingsWithRingSearchTest() {
-        IAtomContainerSet tmpACSet;
-        try {
-            tmpACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Spiro_Test_Structure1.mol");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        for (IAtomContainer tmpAC: tmpACSet.atomContainers()) {
-            RingSearch tmpRingSearch = new RingSearch(tmpAC);
-            List<IAtomContainer> tmpACList = tmpRingSearch.isolatedRingFragments();
-            int i = 0;
-            System.out.println("RingSearch isolated ring count from List " + i + ": " + tmpACList.size());
-            System.out.println("RingSearch detected ring atomcontainer below:");
-            System.out.println(tmpAC);
-            System.out.println("-----");
-            i++;
-        }
     }
     //</editor-fold>
 
