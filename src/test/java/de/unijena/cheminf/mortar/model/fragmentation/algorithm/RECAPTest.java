@@ -25,8 +25,6 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class RECAPTest extends RECAP {
 
 }
