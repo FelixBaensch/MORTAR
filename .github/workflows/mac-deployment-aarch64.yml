@@ -8,7 +8,7 @@ name: Gradle JPackage Build for Mac AArch64
 
 on:
   push:
-    branches: [ "main", "production" ]
+    branches: [ "main", "production", "issue-123" ]
   pull_request:
     branches: [ "main" ]
 
