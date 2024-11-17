@@ -84,7 +84,6 @@ public class MainView extends AnchorPane {
         //menuBar
         this.mainMenuBar = new MainMenuBar();
         //on Mac, show as a standard OS X menu bar, at the top of the screen
-        //
         String tmpOS = System.getProperty("os.name").toUpperCase();
         if (tmpOS != null && tmpOS.contains("MAC")) {
             this.mainMenuBar.useSystemMenuBarProperty().set(true);
