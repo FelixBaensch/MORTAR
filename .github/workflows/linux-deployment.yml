@@ -8,9 +8,9 @@ name: Gradle JPackage Build for Ubuntu x64
 
 on:
   push:
-    branches: [ "main", "production", "issue-142" ] #TODO remove after testing
+    branches: [ "main", "production" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main", "production" ]
 
 jobs:
   build:
