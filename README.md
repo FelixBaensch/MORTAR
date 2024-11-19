@@ -73,12 +73,12 @@ Development Kit or Runtime Environment (JDK/JRE) of version 21.0.1 or higher mus
 
 <p>
 <b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR_v1.2.1.0_WINx64_installer.exe">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.2/MORTAR_v1.2.2.0_WINx64_installer.exe">here</a> to 
 automatically download the installer .exe of the latest version). Download the installer 
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.2.1.0\bin" or the path specified at 
+located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.2.2.0\bin" or the path specified at 
 installation). To start MORTAR, double-click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>
@@ -113,13 +113,13 @@ analyse bigger data sets or should this installation not work for you, you can r
 <p><b>Linux</b>:
 On Debian-based Linux distributions like Ubuntu, MORTAR can be installed using 
 the Debian package (.deb) attached to every 
-<a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> since v1.2.1 
+<a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> since v1.2.2 
 (only one for devices with an x86 processor architecture). Download the package 
 and double-click on it to install it. Alternatively, you can install it via the 
 command line:
 
 ```shell
-sudo dpkg -i <path to>MORTAR-1.2.1.deb
+sudo dpkg -i <path to>MORTAR-1.2.2.deb
 ```
 Execute the command in the directory where the JAR is situated or use its explicit 
 path instead of ```<path to>```.
@@ -130,15 +130,15 @@ installation not work for you, you can run MORTAR directly from the command line
 </p>
 
 <p><b>JAR execution via command line (all platforms)</b>: 
-Every release has the executable JAR "MORTAR-fat-1.2.1.0.jar"
+Every release has the executable JAR "MORTAR-fat-1.2.2.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR-fat-1.2.1.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.2/MORTAR-fat-1.2.2.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.1.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.2.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
@@ -148,9 +148,9 @@ Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx
 
 <p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all three platforms) and AArch64/ARM 
 (on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.1.0.jar" is available from the distributions attached 
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.2.0.jar" is available from the distributions attached 
 to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR-fat-aarch64-1.2.1.0.jar">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.2/MORTAR-fat-aarch64-1.2.2.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
