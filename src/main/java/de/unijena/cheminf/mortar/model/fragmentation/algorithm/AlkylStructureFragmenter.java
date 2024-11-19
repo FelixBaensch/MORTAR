@@ -396,6 +396,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //</editor-fold>
     //
     //<editor-fold desc="Public Properties Set">
+
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given saturation option is null.");
@@ -471,10 +472,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //</editor-fold>
     //
     //<editor-fold desc="Public Methods">
+
     @Override
     public IMoleculeFragmenter copy() {
         AlkylStructureFragmenter tmpCopy = new AlkylStructureFragmenter();
         tmpCopy.setFragmentSaturationSetting((IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get());
+        tmpCopy.setKeepNonFragmentableMoleculesSetting(this.keepNonFragmentableMoleculesSetting.get());
         tmpCopy.setFragmentSideChainsSetting(this.fragmentSideChainsSetting.get());
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
         tmpCopy.setAltHandlingTertQuatCarbonsSetting(this.altHandlingSingleTertQuatCarbonsSetting.get());
@@ -525,6 +528,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     case IElement.C -> tmpCarbonCount++;
                     default -> {
                         if (this.keepNonFragmentableMoleculesSetting.get()) {
+                            System.out.println("filter + posSetting");
                             aMolecule.setProperty("ASF.FilterMarker", true);
                             return false;
                         }
@@ -566,8 +570,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
         //throws NullpointerException if molecule is null
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        System.out.println("canBeFragmented");
         if (aMolecule.getProperty("ASF.FilterMarker")) {
+            System.out.println("if canBeFrag");
             return true;
         }
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
@@ -590,6 +594,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //</editor-fold>
     //
     //<editor-fold desc="Fragmentation">
+
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
@@ -607,8 +612,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpPreFragmentationAtomCount++;
             }
         }
-        System.out.println("PreFragAtomCount: " + tmpPreFragmentationAtomCount);
-        //System.out.println("PreFragBondCount: " + tmpClone.getBondCount());
+        AlkylStructureFragmenter.this.logger.log(Level.INFO, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
         //move percieveAtomType to preprocessing
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
@@ -641,7 +645,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpPostFragmentationAtomCount++;
                 }
             }
-            System.out.println("PostFragAtomCount: " + tmpPostFragmentationAtomCount);
+            AlkylStructureFragmenter.this.logger.log(Level.INFO, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
             if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount && !this.ASFDebugBoolean) {
                 throw new Exception("Molecular formula is not the same between original molecule and received fragments!");
             }
@@ -704,7 +708,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpAtomArray[tmpAlkylSFAtomIndex] = tmpAtom;
             }
         }
-        return tmpAtomArray;
+        ArrayList<IAtom> tmpRemovedNull = new ArrayList<IAtom>();
+        for (IAtom tmpAtom: tmpAtomArray)
+            if (tmpAtom != null)
+                tmpRemovedNull.add(tmpAtom);
+        return tmpRemovedNull.toArray(new IAtom[0]);
+        //return tmpAtomArray;
     }
     /**
      * Method to fill an IBond array with the bonds of the input IAtomContainer
@@ -1085,12 +1094,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             boolean tmpEnd = tmpDoubleToRingBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                             if (tmpBegin || tmpEnd) {
                                 tmpRingFragmentationContainer.addAtom(tmpAtom);
-                                System.out.println("double bond to ring atom added");
+                                //System.out.println("double bond to ring atom added");
                             } else {
                                 tmpIsolatedMultiBondsContainer.addAtom(tmpAtom);
-                                System.out.println("double bond atom added");
+                                //System.out.println("double bond atom added");
                             }
-                            //if (tmpAtom.getBond(tmpArrayAtom).)
                         }
                     }
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
@@ -1165,10 +1173,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     boolean tmpEnd = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                     if (tmpBegin || tmpEnd) {
                         tmpRingFragmentationContainer.addBond(tmpBond);
-                        System.out.println("double bond to ring added");
+                        //System.out.println("double bond to ring added");
                     } else {
                         tmpIsolatedMultiBondsContainer.addBond(tmpBond);
-                        System.out.println("double bond added");
+                        //System.out.println("double bond added");
                     }
                 }
                 else if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
