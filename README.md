@@ -121,6 +121,7 @@ command line:
 ```shell
 sudo dpkg -i <path to>MORTAR-1.2.2.deb
 ```
+
 Execute the command in the directory where the JAR is situated or use its explicit 
 path instead of ```<path to>```.
 The package is configured to allocate up to 4 gigabytes of RAM to MORTAR. Should 
