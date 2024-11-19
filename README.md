@@ -117,6 +117,7 @@ the Debian package (.deb) attached to every
 (only one for devices with an x86 processor architecture). Download the package 
 and double-click on it to install it. Alternatively, you can install it via the 
 command line:
+</p>
 
 ```shell
 sudo dpkg -i <path to>MORTAR-1.2.2.deb
@@ -128,7 +129,7 @@ The package is configured to allocate up to 4 gigabytes of RAM to MORTAR. Should
 you want to assign more memory to analyse bigger data sets or should this 
 installation not work for you, you can run MORTAR directly from the command line 
 (see below).
-</p>
+
 
 <p><b>JAR execution via command line (all platforms)</b>: 
 Every release has the executable JAR "MORTAR-fat-1.2.2.0.jar"
