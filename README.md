@@ -62,8 +62,10 @@ If you are using MORTAR for your own projects, feel free to acknowledge it by us
 ### Application
 Pre-compiled and executable MORTAR distributions can be found attached as assets to the 
 <a href="https://github.com/FelixBaensch/MORTAR/releases">marked releases</a> (below the change notes).
-<br>In short (more details in the dedicated sections below), a graphical installer executable is available for Windows and 
-a disk image (DMG) file is given for installation on macOS.
+<br>In short (more details in the dedicated sections below), a graphical installer 
+executable is available for Windows, a disk image (DMG) file is given for installation 
+on macOS, and a Debian package (DEB) is available for installation on Debian-based 
+Linux distributions like Ubuntu.
 On all three operating systems (Windows, macOS, and Linux), MORTAR can also be run from the command line using the 
 supplied “fat” Java ARchive (JAR) which gives you full control, e.g., over how much memory should be used. A Java 
 Development Kit or Runtime Environment (JDK/JRE) of version 21.0.1 or higher must be pre-installed on your system.
@@ -108,7 +110,27 @@ analyse bigger data sets or should this installation not work for you, you can r
 (see below).
 </p>
 
-<p><b>Linux (JAR execution via command line)</b>: Every release has the executable JAR "MORTAR-fat-1.2.1.0.jar"
+<p><b>Linux</b>:
+On Debian-based Linux distributions like Ubuntu, MORTAR can be installed using 
+the Debian package (.deb) attached to every 
+<a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> since v1.2.1 
+(only one for devices with an x86 processor architecture). Download the package 
+and double-click on it to install it. Alternatively, you can install it via the 
+command line:
+
+```shell
+sudo dpkg -i <path to>MORTAR-1.2.1.deb
+```
+Execute the command in the directory where the JAR is situated or use its explicit 
+path instead of ```<path to>```.
+The package is configured to allocate up to 4 gigabytes of RAM to MORTAR. Should 
+you want to assign more memory to analyse bigger data sets or should this 
+installation not work for you, you can run MORTAR directly from the command line 
+(see below).
+</p>
+
+<p><b>JAR execution via command line (all platforms)</b>: 
+Every release has the executable JAR "MORTAR-fat-1.2.1.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
 (click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.1.0/MORTAR-fat-1.2.1.0.jar">here</a>
 to automatically download the JAR of the latest version). 

@@ -4,7 +4,7 @@
 # documentation.
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 
-name: Gradle JPackage Build for Mac AArch64
+name: Gradle JPackage Build for Ubuntu x64
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
+        os: [ubuntu-latest]
         java: [ '21.0.1' ]
       fail-fast: false
     name: ${{ matrix.os }}
@@ -35,14 +35,14 @@ jobs:
         uses: gradle/actions/wrapper-validation@v3
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Execute fatJarAarch64
-        run: ./gradlew --info --stacktrace fatJarAarch64
+      - name: Execute fatJar
+        run: ./gradlew --info --stacktrace fatJar
       - name: Execute jpackage
-        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-aarch64-1.2.1.0.jar -t dmg --app-version 1.2.1 --copyright "Copyright (C) 2024  Felix Baensch, Jonas Schaub; licensed under MIT license" --description "MORTAR - MOlecule fRagmenTAtion fRamework" --java-options "-Xms512m -Xmx4g" --about-url "https://github.com/FelixBaensch/MORTAR"
-      - name: Upload DMG as an artifact
+        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-1.2.1.0.jar -t deb --app-version 1.2.1 --copyright "Copyright (C) 2024  Felix Baensch, Jonas Schaub; licensed under MIT license" --description "MORTAR - MOlecule fRagmenTAtion fRamework" --java-options "-Xms512m -Xmx4g" --about-url "https://github.com/FelixBaensch/MORTAR"
+      - name: Upload DEB as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MORTAR-aarch64-1.2.1.dmg
-          path: ./*.dmg
+          name: MORTAR-1.2.1.deb
+          path: ./*.deb
           retention-days: 30
           compression-level: 0 # no compression since it makes no difference
