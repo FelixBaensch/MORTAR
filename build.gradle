@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'de.unijena.cheminf'
-version '1.2.1.0'
+version '1.2.2.0'
 
 sourceCompatibility = 1.21
 
