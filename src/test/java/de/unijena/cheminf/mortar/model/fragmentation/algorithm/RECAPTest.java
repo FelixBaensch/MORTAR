@@ -25,6 +25,36 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-class RECAPTest extends RECAP {
+import org.junit.jupiter.api.Test;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.aromaticity.Aromaticity;
+import org.openscience.cdk.aromaticity.ElectronDonation;
+import org.openscience.cdk.graph.CycleFinder;
+import org.openscience.cdk.graph.Cycles;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
+import java.util.List;
+
+class RECAPTest extends RECAP {
+    @Test
+    void test1() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        IAtomContainer mol = smiPar.parseSmiles("C1CC1Oc1ccccc1-c1ncc(OC)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+        cycles.find(mol);
+        arom.apply(mol);
+        RECAP recap = new RECAP();
+        List<IAtomContainer> fragments = recap.fragment(mol);
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique);
+        for (IAtomContainer fragment : fragments) {
+            System.out.println(smiGen.create(fragment));
+        }
+
+    }
 }
