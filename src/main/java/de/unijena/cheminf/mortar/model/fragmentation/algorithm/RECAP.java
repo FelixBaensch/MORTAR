@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.isomorphism.Pattern;
 import org.openscience.cdk.isomorphism.Transform;
@@ -39,10 +40,8 @@ import org.openscience.cdk.smirks.SmirksTransform;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Implementation of the
@@ -71,7 +70,11 @@ public class RECAP {
 
         private final SmirksTransform transformation;
 
-        private Pattern eductPattern;
+        private final Pattern eductPattern;
+
+        private CleavageRule(String smirksCode, String name) {
+            this(smirksCode.split(">>")[0], smirksCode.split(">>")[1], name);
+        }
 
         private CleavageRule(String eductSmarts, String productSmarts, String name) {
             this.EDUCT_SMARTS_CODE = eductSmarts;
@@ -103,12 +106,16 @@ public class RECAP {
         private Pattern getEductPattern() {
             return this.eductPattern;
         }
+
+        private String getSmirksCode() {
+            return this.SMIRKS_CODE;
+        }
     }
     //TODO option for minimum fragment size (also described in RECAP paper)
-    //TODO option for "exhaustive" fragmentation
     //TODO implement tests from RECAP paper and RDKit
     //TODO make individual rules able to be turned off and on?
     //TODO give option to add rules
+    //TODO check whether atoms, bonds, etc are copied or whether they are new
 
     /**
      *
@@ -118,15 +125,27 @@ public class RECAP {
     }
 
     /**
-     * rings must be detected before aromaticity must be detected before
+     * Settings closest to original RECAP.
+     *
+     * @param mol
+     * @return
+     * @throws CDKException
      */
     public List<IAtomContainer> fragment(IAtomContainer mol) throws CDKException {
+        return this.fragment(mol, false, 5);
+    }
+
+    /**
+     * rings must be detected before aromaticity must be detected before
+     */
+    public List<IAtomContainer> fragment(IAtomContainer mol, boolean includeIntermediates, int minimumFragmentSize) throws CDKException {
+        //TODO reject input mols with dummy atoms
         if (mol == null)
             throw new NullPointerException("No molecule provided");
         if (mol.isEmpty())
             return Collections.emptyList();
         State state = new State();
-        return state.applyTransformations(mol);
+        return includeIntermediates? state.applyTransformationsWithAllIntermediates(mol, minimumFragmentSize) : state.applyTransformationsSinglePass(mol, minimumFragmentSize);
     }
 
     /**
@@ -274,31 +293,82 @@ public class RECAP {
         /**
          *
          */
-        private List<IAtomContainer> applyTransformations(IAtomContainer mol) throws CDKException {
+        private List<IAtomContainer> applyTransformationsSinglePass(IAtomContainer mol, int minimumFragmentSize) {
+            //TODO what if mol has no cleaving bonds?
+            //TODO this still includes intermediates!
+            List<IAtomContainer> lastRoundFragments = new ArrayList<>(mol.getAtomCount() * 2);
+            lastRoundFragments.add(mol);
+            List<IAtomContainer> newRoundFragments = new ArrayList<>(mol.getAtomCount() * 2);
+            for (CleavageRule rule : this.CLEAVAGE_RULES) {
+                for (IAtomContainer fragment : lastRoundFragments) {
+                    if (rule.getEductPattern().matches(fragment)) {
+                        //mode unique returns as many products as there are splittable bonds, so one product for every bond split
+                        Iterable<IAtomContainer> products = rule.getTransformation().apply(fragment, Transform.Mode.Unique);
+                        for (IAtomContainer product : products) {
+                            //TODO if it is connected, it was not split, so this should not happen!
+                            if (ConnectivityChecker.isConnected(product)) {
+                                if (!this.isFragmentForbidden(product, minimumFragmentSize)) {
+                                    newRoundFragments.add(product);
+                                }
+                            } else {
+                                List<IAtomContainer> parts = new ArrayList<>(mol.getAtomCount());
+                                boolean containsForbiddenFragment = false;
+                                for (IAtomContainer part : ConnectivityChecker.partitionIntoMolecules(product).atomContainers()) {
+                                    parts.add(part);
+                                    if (this.isFragmentForbidden(part, minimumFragmentSize)) {
+                                        containsForbiddenFragment = true;
+                                        break;
+                                    }
+                                }
+                                if (!containsForbiddenFragment) {
+                                    newRoundFragments.addAll(parts);
+                                }
+                            }
+                        }
+                    } else {
+                        newRoundFragments.add(fragment);
+                    }
+                }
+                if (!newRoundFragments.isEmpty()) {
+                    lastRoundFragments = List.copyOf(newRoundFragments);
+                    newRoundFragments.clear();
+                }
+            }
+            return lastRoundFragments;
+        }
+
+        /**
+         *
+         */
+        private List<IAtomContainer> applyTransformationsWithAllIntermediates(IAtomContainer mol, int minimumFragmentSize) throws CDKException {
+            //TODO what if mol has no cleaving bonds?
             Map<String, IAtomContainer> finalFragments = new HashMap<>(mol.getAtomCount() * 2);
             SmilesGenerator smilesGenerator = new SmilesGenerator(SmiFlavor.Absolute | SmiFlavor.UseAromaticSymbols);
             //step 1 determine relevant transformation rules that have at least one match in the mol
             List<CleavageRule> matchingRules = new ArrayList<>(this.CLEAVAGE_RULES.length);
             for (CleavageRule rule : this.CLEAVAGE_RULES) {
-                if (rule.eductPattern.matches(mol)) {
+                if (rule.getEductPattern().matches(mol)) {
                     matchingRules.add(rule);
                 }
             }
-            //step 2 do the first round of fragmentation, split each splittable bond once
+            //step 2 do the first round of fragmentation, split each splittable bond once, determine nr of splittable bonds
             List<IAtomContainer> temporaryRoundFragments = new ArrayList<>(mol.getAtomCount());
             int splittableBondsNr = 0;
             for (CleavageRule transformation : matchingRules) {
-                //mode exclusive returns one(!) product, respectively, where every matching group has been split
                 //mode unique returns as many products as there are splittable bonds, so one product for every bond split
                 Iterable<IAtomContainer> products = transformation.getTransformation().apply(mol, Transform.Mode.Unique);
                 List<IAtomContainer> temporaryProductsList = new ArrayList<>(mol.getAtomCount());
                 for (IAtomContainer product : products) {
                     splittableBondsNr++;
                     if (ConnectivityChecker.isConnected(product)) {
-                        temporaryProductsList.add(product);
+                        if (!this.isFragmentForbidden(product, minimumFragmentSize)) {
+                            temporaryProductsList.add(product);
+                        }
                     } else {
                         for (IAtomContainer part : ConnectivityChecker.partitionIntoMolecules(product).atomContainers()) {
-                            temporaryProductsList.add(part);
+                            if (!this.isFragmentForbidden(part, minimumFragmentSize)) {
+                                temporaryProductsList.add(part);
+                            }
                         }
                     }
                 }
@@ -309,18 +379,23 @@ public class RECAP {
             for (IAtomContainer fragment: temporaryRoundFragments) {
                 finalFragments.putIfAbsent(smilesGenerator.create(fragment), fragment);
             }
+            //step 3 generate all intermediate and final fragments, starting with the fragments of round
             List<IAtomContainer> lastRoundFragments = List.copyOf(temporaryRoundFragments);
             temporaryRoundFragments.clear();
-            for (int i = 1; i <= splittableBondsNr; i++) {
+            for (int i = 1; i < splittableBondsNr; i++) {
                 for (IAtomContainer fragment : lastRoundFragments) {
                     for (CleavageRule transformation : matchingRules) {
                         Iterable<IAtomContainer> products = transformation.getTransformation().apply(fragment, Transform.Mode.Unique);
                         for (IAtomContainer product : products) {
                             if (ConnectivityChecker.isConnected(product)) {
-                                temporaryRoundFragments.add(product);
+                                if (!this.isFragmentForbidden(product, minimumFragmentSize)) {
+                                    temporaryRoundFragments.add(product);
+                                }
                             } else {
                                 for (IAtomContainer part : ConnectivityChecker.partitionIntoMolecules(product).atomContainers()) {
-                                    temporaryRoundFragments.add(part);
+                                    if (!this.isFragmentForbidden(part, minimumFragmentSize)) {
+                                        temporaryRoundFragments.add(part);
+                                    }
                                 }
                             }
                         }
@@ -410,6 +485,30 @@ public class RECAP {
 //                }
 //            }
 //            return fragments;
+        }
+
+        boolean isFragmentForbidden(IAtomContainer mol, int minimumFragmentSize) {
+            //TODO check for rings?
+            //TODO do not count pseudo atoms for the minimum fragment size!
+            if (mol.getAtomCount() >= minimumFragmentSize) {
+                return false;
+            }
+            int pseudoAtomCounter = 0;
+            int heteroAtomCounter = 0;
+            for (IAtom atom : mol.atoms()) {
+                if (atom.getSymbol().equals("R")) {
+                    pseudoAtomCounter++;
+                }
+                if (pseudoAtomCounter >= 2) {
+                    return false;
+                }
+                if (!(atom.getSymbol().equals("C") || atom.getSymbol().equals("H") || atom.getSymbol().equals("R"))) {
+                    heteroAtomCounter++;
+                }
+            }
+            //R count should be 1
+            //forbidden are too small terminal fragments that only consist of methyl, ethyl, propyl, etc.
+            return (heteroAtomCounter == 0);
         }
     }
 }
