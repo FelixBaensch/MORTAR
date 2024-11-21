@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.clustering.art2a.interfaces.IArt2aClusteringResult;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -83,6 +84,10 @@ public class ViewToolsManager {
      */
     private final OverviewViewController overviewViewController;
     /**
+     * ClusteringViewController instance.
+     */
+    private final ClusteringViewController clusteringViewController;
+    /**
      * Configuration class to read resource file paths from.
      */
     private final IConfiguration configuration;
@@ -97,11 +102,13 @@ public class ViewToolsManager {
      */
     public ViewToolsManager(IConfiguration aConfiguration) {
         this.configuration = aConfiguration;
-        this.viewToolsArray = new IViewToolController[2];
+        this.viewToolsArray = new IViewToolController[3];
         this.histogramViewController = new HistogramViewController(this.configuration);
         this.viewToolsArray[0] = this.histogramViewController;
         this.overviewViewController = new OverviewViewController(this.configuration);
         this.viewToolsArray[1] = this.overviewViewController;
+        this.clusteringViewController = new ClusteringViewController();
+        this.viewToolsArray[2] = this.clusteringViewController;
         try {
             this.checkViewTools();
         } catch (Exception anException) {
@@ -150,6 +157,38 @@ public class ViewToolsManager {
             List<MoleculeDataModel> aMoleculeDataModelList)
             throws NullPointerException {
         this.overviewViewController.initializeAndShowOverviewView(aMainStage, aDataSource, aTabName, aMoleculeDataModelList);
+    }
+    //TODO generate doc
+    /**
+     * See {@link ClusteringViewController#openClusteringView(Stage, IArt2aClusteringResult[], List, ViewToolsManager, String, String, String, OverviewViewController.DataSources)}.
+     *
+     * @param aMainStage todo
+     * @param aClusteringResults todo
+     * @param aMoleculeDataModelList todo
+     * @param aDataSource todo
+     * @param aTabName todo
+     * @param name todo
+     * @param aClusteringAlgorithmName todo
+     * @param manager todo
+     */
+    public void openClusteringView(
+            Stage aMainStage,
+            IArt2aClusteringResult[] aClusteringResults,
+            List<MoleculeDataModel> aMoleculeDataModelList,
+            OverviewViewController.DataSources aDataSource,
+            String aTabName,
+            String name,
+            String aClusteringAlgorithmName,
+            ViewToolsManager manager) {
+        this.clusteringViewController.openClusteringView(
+                aMainStage,
+                aClusteringResults,
+                aMoleculeDataModelList,
+                manager,
+                aTabName,
+                name,
+                aClusteringAlgorithmName,
+                aDataSource);
     }
     /**
      * See {@link OverviewViewController#getCachedIndexOfStructureInMoleculeDataModelList()}.

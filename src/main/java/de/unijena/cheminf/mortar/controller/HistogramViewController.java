@@ -240,6 +240,7 @@ public class HistogramViewController implements IViewToolController {
      * Value for the small bar gap.
      */
     public static final double GUI_HISTOGRAM_SMALL_BAR_GAP_CONST = 3.5416;
+    //TODO: correct to for
     /**
      * Value fpr the medium bar gap.
      */
