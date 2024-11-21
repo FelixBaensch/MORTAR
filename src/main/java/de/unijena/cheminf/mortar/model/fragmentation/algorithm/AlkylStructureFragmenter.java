@@ -215,7 +215,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Logger of this class.
      */
     private static final Logger logger = Logger.getLogger(AlkylStructureFragmenter.class.getName());
-
+    //WIP
+    private IAtomContainer builderInstanceAtomContainer;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -606,6 +607,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
+        //WIP
+        this.builderInstanceAtomContainer = null;
+        this.builderInstanceAtomContainer = tmpClone.getBuilder().newInstance(IAtomContainer.class);
+        //IAtomContainer tmpBuilderAtomContainer = tmpClone.getBuilder().newInstance(IAtomContainer.class);
         int tmpPreFragmentationAtomCount = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
             if (tmpAtom.getAtomicNumber() != 0) {
@@ -672,7 +677,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
     //</editor-fold>
     //
-    //<editor-fold desc="Private Methods" defaultstate="collapsed">
+    //<editor-fold desc="Protected Methods" defaultstate="collapsed">
 
     /**
      * Method to fill an IAtom array with the atoms of the input IAtomContainer
@@ -1047,7 +1052,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aBondArray);
         //<editor-fold desc="Extraction">
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
-        IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
+        //WIP
+        IAtomContainer tmpRingFragmentationContainer = this.builderInstanceAtomContainer.clone();
+        //IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
         IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
         IAtomContainer tmpIsolatedMultiBondsContainer = new AtomContainer();
         IAtomContainer tmpTertQuatCarbonContainer = new AtomContainer();
@@ -1094,6 +1101,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             boolean tmpEnd = tmpDoubleToRingBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                             if (tmpBegin || tmpEnd) {
                                 tmpRingFragmentationContainer.addAtom(tmpAtom);
+                                //WIP
                                 //System.out.println("double bond to ring atom added");
                             } else {
                                 tmpIsolatedMultiBondsContainer.addAtom(tmpAtom);
