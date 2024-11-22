@@ -50,11 +50,11 @@ class RECAPTest extends RECAP {
         cycles.find(mol);
         arom.apply(mol);
         RECAP recap = new RECAP();
-        List<IAtomContainer> fragments = recap.fragment(mol, false, 2);
-        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique);
-        for (IAtomContainer fragment : fragments) {
-            System.out.println(smiGen.create(fragment));
+        //List<IAtomContainer> fragments = recap.fragment(mol, false, 2);
+        HierarchyNode node = recap.buildHierarchy(mol, 1);
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+        for (HierarchyNode fragment : node.getOnlyTerminalChildren()) {
+            System.out.println(smiGen.create(fragment.getStructure()));
         }
-
     }
 }

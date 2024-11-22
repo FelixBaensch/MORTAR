@@ -148,6 +148,89 @@ public class RECAP {
         return includeIntermediates? state.applyTransformationsWithAllIntermediates(mol, minimumFragmentSize) : state.applyTransformationsSinglePass(mol, minimumFragmentSize);
     }
 
+    public HierarchyNode buildHierarchy(IAtomContainer mol, int minimumFragmentSize) {
+        State state = new State();
+        return state.buildHierarchy(mol, minimumFragmentSize);
+    }
+
+    public static class HierarchyNode {
+
+        private final IAtomContainer structure;
+
+        private final List<HierarchyNode> parents;
+
+        private final List<HierarchyNode> children;
+
+        private HierarchyNode(IAtomContainer molecule) {
+            this.structure = molecule;
+            this.parents = new ArrayList<>();
+            this.children = new ArrayList<>();
+        }
+
+        public IAtomContainer getStructure() {
+            return structure;
+        }
+
+        public List<HierarchyNode> getParents() {
+            return this.parents;
+        }
+
+        public List<IAtomContainer> getParentMolecules() {
+            List<IAtomContainer> list = new ArrayList<>(this.parents.size());
+            for (HierarchyNode node : this.parents) {
+                list.add(node.structure);
+            }
+            return list;
+        }
+
+        public List<HierarchyNode> getChildren() {
+            return this.children;
+        }
+
+        public List<IAtomContainer> getChildrenMolecules() {
+            List<IAtomContainer> list = new ArrayList<>(this.children.size());
+            for (HierarchyNode node : this.children) {
+                list.add(node.structure);
+            }
+            return list;
+        }
+
+        public boolean isTerminal() {
+            return this.children.isEmpty();
+        }
+
+        public List<HierarchyNode> getAllDescendants() {
+            List<HierarchyNode> desc = new ArrayList<>();
+            for (HierarchyNode child : this.children) {
+                child.collectAllChildrenRecursive(desc, false);
+            }
+            return desc;
+        }
+
+        public List<HierarchyNode> getOnlyTerminalChildren() {
+            List<HierarchyNode> desc = new ArrayList<>();
+            for (HierarchyNode child : this.children) {
+                if (child.isTerminal()) {
+                    desc.add(child);
+                } else {
+                    child.collectAllChildrenRecursive(desc, true);
+                }
+            }
+            return desc;
+        }
+
+        private void collectAllChildrenRecursive(List<HierarchyNode> childrenList, boolean onlyTerminal) {
+            for (HierarchyNode child : this.children) {
+                if (onlyTerminal && !child.getChildren().isEmpty()) {
+                    continue;
+                } else {
+                    childrenList.add(child);
+                }
+                child.collectAllChildrenRecursive(childrenList, onlyTerminal);
+            }
+        }
+    }
+
     /**
      * Encapsulating the state of the algorithm allows thread-safe calling.
      */
@@ -290,6 +373,45 @@ public class RECAP {
                 this.AROMATIC_NITROGEN_TO_AROMATIC_CARBON
         };
 
+        private HierarchyNode buildHierarchy(IAtomContainer inputMol, int minimumFragmentSize) {
+            HierarchyNode inputMolNode = new HierarchyNode(inputMol);
+            List<HierarchyNode> activePool = new ArrayList<>();
+            activePool.add(inputMolNode);
+            while (!activePool.isEmpty()) {
+                for (int i = 0; i < activePool.size(); i++) {
+                    HierarchyNode currentNode = activePool.get(i);
+                    activePool.remove(currentNode);
+                    i--;
+                    for (CleavageRule rule : this.CLEAVAGE_RULES) {
+                        if (rule.getEductPattern().matches(currentNode.getStructure())) {
+                            //mode unique returns as many products as there are splittable bonds, so one product for every bond split
+                            Iterable<IAtomContainer> products = rule.getTransformation().apply(currentNode.getStructure(), Transform.Mode.Unique);
+                            for (IAtomContainer product : products) {
+                                List<IAtomContainer> parts = new ArrayList<>();
+                                boolean containsForbiddenFragment = false;
+                                for (IAtomContainer part : ConnectivityChecker.partitionIntoMolecules(product).atomContainers()) {
+                                    parts.add(part);
+                                    if (this.isFragmentForbidden(part, minimumFragmentSize)) {
+                                        containsForbiddenFragment = true;
+                                        break;
+                                    }
+                                }
+                                if (!containsForbiddenFragment) {
+                                    for (IAtomContainer part : parts) {
+                                        HierarchyNode newNode = new HierarchyNode(part);
+                                        newNode.getParents().add(currentNode);
+                                        currentNode.getChildren().add(newNode);
+                                        activePool.add(newNode);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return inputMolNode;
+        }
+
         /**
          *
          */
@@ -298,8 +420,8 @@ public class RECAP {
             //TODO this still includes intermediates!
             List<IAtomContainer> lastRoundFragments = new ArrayList<>(mol.getAtomCount() * 2);
             lastRoundFragments.add(mol);
-            List<IAtomContainer> newRoundFragments = new ArrayList<>(mol.getAtomCount() * 2);
             for (CleavageRule rule : this.CLEAVAGE_RULES) {
+                List<IAtomContainer> newRoundFragments = new ArrayList<>(mol.getAtomCount() * 2);
                 for (IAtomContainer fragment : lastRoundFragments) {
                     if (rule.getEductPattern().matches(fragment)) {
                         //mode unique returns as many products as there are splittable bonds, so one product for every bond split
@@ -324,16 +446,18 @@ public class RECAP {
                                     newRoundFragments.addAll(parts);
                                 }
                             }
-                        }
+                        } // end of cleavage product iteration
                     } else {
+                        // simply pass fragment on to next round if this rule does not match
                         newRoundFragments.add(fragment);
                     }
-                }
+                } // end of iteration of last round (i.e. last cleavage rule) fragments
+                //TODO can this be empty?
                 if (!newRoundFragments.isEmpty()) {
                     lastRoundFragments = List.copyOf(newRoundFragments);
                     newRoundFragments.clear();
                 }
-            }
+            } // end of cleavage rule iteration
             return lastRoundFragments;
         }
 
@@ -342,6 +466,7 @@ public class RECAP {
          */
         private List<IAtomContainer> applyTransformationsWithAllIntermediates(IAtomContainer mol, int minimumFragmentSize) throws CDKException {
             //TODO what if mol has no cleaving bonds?
+            //TODO what if mol should have multiple fragments that are essentially the same?
             Map<String, IAtomContainer> finalFragments = new HashMap<>(mol.getAtomCount() * 2);
             SmilesGenerator smilesGenerator = new SmilesGenerator(SmiFlavor.Absolute | SmiFlavor.UseAromaticSymbols);
             //step 1 determine relevant transformation rules that have at least one match in the mol
@@ -379,7 +504,7 @@ public class RECAP {
             for (IAtomContainer fragment: temporaryRoundFragments) {
                 finalFragments.putIfAbsent(smilesGenerator.create(fragment), fragment);
             }
-            //step 3 generate all intermediate and final fragments, starting with the fragments of round
+            //step 3 generate all intermediate and final fragments, starting with the fragments of the first round
             List<IAtomContainer> lastRoundFragments = List.copyOf(temporaryRoundFragments);
             temporaryRoundFragments.clear();
             for (int i = 1; i < splittableBondsNr; i++) {
@@ -487,7 +612,7 @@ public class RECAP {
 //            return fragments;
         }
 
-        boolean isFragmentForbidden(IAtomContainer mol, int minimumFragmentSize) {
+        private boolean isFragmentForbidden(IAtomContainer mol, int minimumFragmentSize) {
             //TODO check for rings?
             //TODO do not count pseudo atoms for the minimum fragment size!
             if (mol.getAtomCount() >= minimumFragmentSize) {
