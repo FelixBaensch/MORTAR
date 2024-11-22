@@ -51,6 +51,7 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IElement;
 import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.ringsearch.RingSearch;
@@ -216,7 +217,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private static final Logger logger = Logger.getLogger(AlkylStructureFragmenter.class.getName());
     //WIP
-    private IAtomContainer builderInstanceAtomContainer;
+    private IChemObjectBuilder chemObjectBuilderInstance;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -608,8 +609,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
         //WIP
-        this.builderInstanceAtomContainer = null;
-        this.builderInstanceAtomContainer = tmpClone.getBuilder().newInstance(IAtomContainer.class);
+        this.chemObjectBuilderInstance = null;
+        this.chemObjectBuilderInstance = tmpClone.getBuilder();
         //IAtomContainer tmpBuilderAtomContainer = tmpClone.getBuilder().newInstance(IAtomContainer.class);
         int tmpPreFragmentationAtomCount = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
@@ -1053,7 +1054,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //<editor-fold desc="Extraction">
         IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
         //WIP
-        IAtomContainer tmpRingFragmentationContainer = this.builderInstanceAtomContainer.clone();
+        IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         //IAtomContainer tmpRingFragmentationContainer = new AtomContainer();
         IAtomContainer tmpChainFragmentationContainer = new AtomContainer();
         IAtomContainer tmpIsolatedMultiBondsContainer = new AtomContainer();
@@ -1067,7 +1068,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (!((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
                     || (boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY))) {
                 if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
-                    tmpRingFragmentationContainer.addAtom(tmpAtom);
+                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     //System.out.println("tert atom added");
                     if (this.altHandlingSingleTertQuatCarbonsSetting.get()) {
                         for (int i = 0; i < 3; i++) {
@@ -1077,7 +1078,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         }
                     }
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
-                    tmpRingFragmentationContainer.addAtom(tmpAtom);
+                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     //System.out.println("quart atom added");
                     if (this.altHandlingSingleTertQuatCarbonsSetting.get()) {
                         for (int i = 0; i < 4; i++) {
@@ -1100,43 +1101,43 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             boolean tmpBegin = tmpDoubleToRingBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                             boolean tmpEnd = tmpDoubleToRingBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                             if (tmpBegin || tmpEnd) {
-                                tmpRingFragmentationContainer.addAtom(tmpAtom);
                                 //WIP
+                                tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                                 //System.out.println("double bond to ring atom added");
                             } else {
-                                tmpIsolatedMultiBondsContainer.addAtom(tmpAtom);
+                                tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
                                 //System.out.println("double bond atom added");
                             }
                         }
                     }
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
-                    tmpIsolatedMultiBondsContainer.addAtom(tmpAtom);
+                    tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     //System.out.println("triple bond atom added");
                 }
                 //extract neighbor atoms of tertiary or quaternary carbon atoms
                 else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
                     if (this.altHandlingSingleTertQuatCarbonsSetting.get()) {continue;}
-                    tmpRingFragmentationContainer.addAtom(tmpAtom);
+                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     //System.out.println("neighbor atom added");
                 }
                 //extract residue atoms as linear chain atoms
                 else {
-                    tmpChainFragmentationContainer.addAtom(tmpAtom);
+                    tmpChainFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     //System.out.println("chain residue atom added");
                 }
             } else {
                 if (!this.keepRingsSetting.get()) {
                     ArrayList<Integer> tmpList = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY);
                     if (tmpList.size() > 1) {
-                        tmpSpiroCarbonContainer.addAtom(tmpAtom);
+                        tmpSpiroCarbonContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     } /*
                     else {
                         tmpSpiroResidueContainer.addAtom(tmpAtom);
                     }
                     */
-                    tmpRingFragmentationContainer.addAtom(tmpAtom);
+                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                 } else {
-                    tmpRingFragmentationContainer.addAtom(tmpAtom);
+                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     //System.out.println("ring atom list: " + tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY));
                     //System.out.println("ring atom added");
                 }
@@ -1176,31 +1177,31 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
                 //</editor-fold>
                 if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
-
+                    //WIP
                     boolean tmpBegin = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                     boolean tmpEnd = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                     if (tmpBegin || tmpEnd) {
-                        tmpRingFragmentationContainer.addBond(tmpBond);
+                        tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                         //System.out.println("double bond to ring added");
                     } else {
-                        tmpIsolatedMultiBondsContainer.addBond(tmpBond);
+                        tmpIsolatedMultiBondsContainer.addBond(this.deepCopyBond(tmpBond, tmpIsolatedMultiBondsContainer));
                         //System.out.println("double bond added");
                     }
                 }
-                else if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
-                    tmpIsolatedMultiBondsContainer.addBond(tmpBond);
+                else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
+                    tmpIsolatedMultiBondsContainer.addBond(this.deepCopyBond(tmpBond, tmpIsolatedMultiBondsContainer));
                     //System.out.println("triple bond added");
                 }
                 else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)
                         && !((tmpIsBeginRing && tmpIsBeginTertiary) || (tmpIsEndRing && tmpIsEndTertiary)
                             || (tmpIsBeginRing && tmpIsBeginQuaternary) || (tmpIsEndRing && tmpIsEndQuaternary))) {
-                    tmpRingFragmentationContainer.addBond(tmpBond);
+                    tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                     //System.out.println("neighbor bond added");
                 }
                 if (!(tmpIsBeginRing && tmpIsEndRing && tmpIsBeginConjPi && tmpIsEndConjPi)
                         && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
                     if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary || tmpIsBeginNeighbor || tmpIsEndNeighbor)) {
-                        tmpChainFragmentationContainer.addBond(tmpBond);
+                        tmpChainFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpChainFragmentationContainer));
                         //System.out.println("chain residue bond added");
                     }
                 }
@@ -1219,10 +1220,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         tmpIsEndSpiro = true;
                     }
                     if (!tmpIsBeginSpiro && !tmpIsEndSpiro) {
-                        tmpRingFragmentationContainer.addBond(tmpBond);
+                        tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                     }
                 } else {
-                    tmpRingFragmentationContainer.addBond(tmpBond);
+                    tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                     //System.out.println("ring bond added");
                 }
             }
@@ -1310,15 +1311,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             IBond tmpBond = tmpBondIterator.next();
             if (tmpCounter == aLength) {
                 if (!tmpBondIterator.hasNext()) {
-                    tmpReturnAC.addAtom(tmpBond.getEnd());
+                    tmpReturnAC.addAtom(this.deepCopyAtom(tmpBond.getEnd()));
                 }
                 tmpCounter = 1;
             } else {
                 IAtom tmpBeginAtom = tmpBond.getBegin();
                 IAtom tmpEndAtom = tmpBond.getEnd();
-                tmpReturnAC.addAtom(tmpBeginAtom);
-                tmpReturnAC.addAtom(tmpEndAtom);
-                tmpReturnAC.addBond(tmpBond);
+                tmpReturnAC.addAtom(this.deepCopyAtom(tmpBeginAtom));
+                tmpReturnAC.addAtom(this.deepCopyAtom(tmpEndAtom));
+                tmpReturnAC.addBond(this.deepCopyBond(tmpBond, tmpReturnAC));
                 tmpCounter++;
             }
         }
@@ -1366,6 +1367,47 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpObject[0] = anAtomArray;
         tmpObject[1] = aBondArray;
         return tmpObject;
+    }
+    //WIP
+
+    /**
+     * Method to create a deeper copy of a given atom, meant to replace the default addAtom() method of IAtomContainer
+     * in which only the reference is added to the atomcontainer instead of a new atom.
+     *
+     * @param anAtomToCopy the atom to create a deep copy of
+     * @return the deep copy of the given atom
+     */
+    protected IAtom deepCopyAtom(IAtom anAtomToCopy) {
+        IAtom tmpNewAtom = this.chemObjectBuilderInstance.newAtom();
+        tmpNewAtom.setAtomicNumber(anAtomToCopy.getAtomicNumber());
+        tmpNewAtom.setImplicitHydrogenCount(anAtomToCopy.getImplicitHydrogenCount());
+        tmpNewAtom.setProperties(anAtomToCopy.getProperties());
+        return tmpNewAtom;
+    }
+
+    /**
+     * Method to create a deep copy of a given bond, meant to replace the default addBond() method of IAtomContainer
+     *
+     * @param aBondToCopy the bond to create a deep copy of
+     * @param aBondIncludingAtomContainer the atomcontainer in which the bond's atoms are placed in
+     * @return the deep copy of the given bond
+     */
+    protected IBond deepCopyBond(IBond aBondToCopy, IAtomContainer aBondIncludingAtomContainer) {
+        IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
+        tmpNewBond.setOrder(aBondToCopy.getOrder());
+        IAtom tmpBeginAtom = this.deepCopyAtom(aBondToCopy.getBegin());
+        IAtom tmpEndAtom = this.deepCopyAtom(aBondToCopy.getEnd());
+        for (IAtom tmpAtom: aBondIncludingAtomContainer.atoms()) {
+            if (tmpAtom.equals(tmpBeginAtom)) {
+                tmpNewBond.setAtom(tmpAtom, 0);
+            } else if (tmpAtom.equals(tmpEndAtom)) {
+                tmpNewBond.setAtom(tmpAtom, 1);
+            }
+        }
+        //sets the atoms from bond to copy for new bond
+        //tmpNewBond.setAtom(aBondToCopy.getAtom(0), 0);
+        //tmpNewBond.setAtom(aBondToCopy.getAtom(1), 1);
+        return tmpNewBond;
     }
     //</editor-fold>
     //
