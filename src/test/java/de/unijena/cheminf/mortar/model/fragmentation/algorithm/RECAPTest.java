@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -32,12 +33,12 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.isomorphism.Transform;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.smirks.Smirks;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
-
-import java.util.List;
 
 class RECAPTest extends RECAP {
     @Test
@@ -50,11 +51,51 @@ class RECAPTest extends RECAP {
         cycles.find(mol);
         arom.apply(mol);
         RECAP recap = new RECAP();
-        //List<IAtomContainer> fragments = recap.fragment(mol, false, 2);
         HierarchyNode node = recap.buildHierarchy(mol, 1);
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
-        for (HierarchyNode fragment : node.getOnlyTerminalChildren()) {
-            System.out.println(smiGen.create(fragment.getStructure()));
+        int i = 0;
+        System.out.println(i + ": " + smiGen.create(node.getStructure()));
+        for (HierarchyNode childFirstLevel : node.getChildren()) {
+            i++;
+            System.out.println(i + ":\t " + smiGen.create(childFirstLevel.getStructure()));
+            for (HierarchyNode childSecondLevel : childFirstLevel.getChildren()) {
+                i++;
+                System.out.println(i + ":\t\t " + smiGen.create(childSecondLevel.getStructure()));
+                for (HierarchyNode childThirdLevel : childSecondLevel.getChildren()) {
+                    i++;
+                    System.out.println(i + ":\t\t\t " + smiGen.create(childThirdLevel.getStructure()));
+                }
+            }
         }
+        Assertions.assertEquals(6, node.getChildren().size());
+        Assertions.assertEquals(26, node.getAllDescendants().size());
+        Assertions.assertEquals(18, node.getOnlyTerminalDescendants().size());
+        Assertions.assertTrue(node.getParents().isEmpty());
+
+        node = recap.buildHierarchy(mol, 3); //TODO this should be 2
+        Assertions.assertEquals(4, node.getChildren().size());
+        Assertions.assertEquals(8, node.getAllDescendants().size());
+        Assertions.assertEquals(6, node.getOnlyTerminalDescendants().size());
+        Assertions.assertTrue(node.getParents().isEmpty());
+
+        node = recap.buildHierarchy(mol, 5); //TODO this should be 4
+        Assertions.assertEquals(2, node.getChildren().size());
+        Assertions.assertEquals(2, node.getAllDescendants().size());
+        Assertions.assertEquals(2, node.getOnlyTerminalDescendants().size());
+        Assertions.assertTrue(node.getParents().isEmpty());
+    }
+
+    @Test
+    void testEgon() throws Exception {
+        SmilesParser parser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        SmilesGenerator generator = new SmilesGenerator(SmiFlavor.Unique);
+        Transform neutralAcid = Smirks.compile("[O-:1]>>[O;+0:1][H]");
+        IAtomContainer cdkStruct = parser.parseSmiles("CC(=O)[O-]");
+        Iterable<IAtomContainer> iterable = neutralAcid.apply(cdkStruct, Transform.Mode.Exclusive);
+        for (IAtomContainer neutral : iterable) {
+            String neutralSmiles = generator.createSMILES(neutral);
+            System.out.println(neutralSmiles);
+        }
+
     }
 }

@@ -40,8 +40,10 @@ import org.openscience.cdk.smirks.SmirksTransform;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 /**
  * Implementation of the
@@ -178,7 +180,7 @@ public class RECAP {
         public List<IAtomContainer> getParentMolecules() {
             List<IAtomContainer> list = new ArrayList<>(this.parents.size());
             for (HierarchyNode node : this.parents) {
-                list.add(node.structure);
+                list.add(node.getStructure());
             }
             return list;
         }
@@ -190,7 +192,7 @@ public class RECAP {
         public List<IAtomContainer> getChildrenMolecules() {
             List<IAtomContainer> list = new ArrayList<>(this.children.size());
             for (HierarchyNode node : this.children) {
-                list.add(node.structure);
+                list.add(node.getStructure());
             }
             return list;
         }
@@ -200,33 +202,34 @@ public class RECAP {
         }
 
         public List<HierarchyNode> getAllDescendants() {
-            List<HierarchyNode> desc = new ArrayList<>();
+            List<HierarchyNode> desc = new ArrayList<>(this.children.size()^2);
             for (HierarchyNode child : this.children) {
-                child.collectAllChildrenRecursive(desc, false);
+                child.collectAllDescendants(desc, false);
             }
             return desc;
         }
 
-        public List<HierarchyNode> getOnlyTerminalChildren() {
-            List<HierarchyNode> desc = new ArrayList<>();
+        public List<HierarchyNode> getOnlyTerminalDescendants() {
+            List<HierarchyNode> desc = new ArrayList<>(this.children.size()^2);
             for (HierarchyNode child : this.children) {
                 if (child.isTerminal()) {
                     desc.add(child);
                 } else {
-                    child.collectAllChildrenRecursive(desc, true);
+                    child.collectAllDescendants(desc, true);
                 }
             }
             return desc;
         }
 
-        private void collectAllChildrenRecursive(List<HierarchyNode> childrenList, boolean onlyTerminal) {
-            for (HierarchyNode child : this.children) {
-                if (onlyTerminal && !child.getChildren().isEmpty()) {
-                    continue;
-                } else {
-                    childrenList.add(child);
+        private void collectAllDescendants(List<HierarchyNode> childrenList, boolean onlyTerminal) {
+            Queue<HierarchyNode> queue = new LinkedList<>();
+            queue.add(this);
+            while(!queue.isEmpty()) {
+                HierarchyNode current = queue.poll();
+                if (!onlyTerminal || current.getChildren().isEmpty()) {
+                    childrenList.add(current);
                 }
-                child.collectAllChildrenRecursive(childrenList, onlyTerminal);
+                queue.addAll(current.getChildren());
             }
         }
     }
@@ -375,39 +378,36 @@ public class RECAP {
 
         private HierarchyNode buildHierarchy(IAtomContainer inputMol, int minimumFragmentSize) {
             HierarchyNode inputMolNode = new HierarchyNode(inputMol);
-            List<HierarchyNode> activePool = new ArrayList<>();
-            activePool.add(inputMolNode);
-            while (!activePool.isEmpty()) {
-                for (int i = 0; i < activePool.size(); i++) {
-                    HierarchyNode currentNode = activePool.get(i);
-                    activePool.remove(currentNode);
-                    i--;
-                    for (CleavageRule rule : this.CLEAVAGE_RULES) {
-                        if (rule.getEductPattern().matches(currentNode.getStructure())) {
-                            //mode unique returns as many products as there are splittable bonds, so one product for every bond split
-                            Iterable<IAtomContainer> products = rule.getTransformation().apply(currentNode.getStructure(), Transform.Mode.Unique);
-                            for (IAtomContainer product : products) {
-                                List<IAtomContainer> parts = new ArrayList<>();
-                                boolean containsForbiddenFragment = false;
-                                for (IAtomContainer part : ConnectivityChecker.partitionIntoMolecules(product).atomContainers()) {
-                                    parts.add(part);
-                                    if (this.isFragmentForbidden(part, minimumFragmentSize)) {
-                                        containsForbiddenFragment = true;
-                                        break;
-                                    }
+            Queue<HierarchyNode> queue = new LinkedList<>();
+            queue.add(inputMolNode);
+            while (!queue.isEmpty()) {
+                HierarchyNode currentNode = queue.poll();
+                for (CleavageRule rule : this.CLEAVAGE_RULES) {
+                    if (rule.getEductPattern().matches(currentNode.getStructure())) {
+                        //mode unique returns as many products as there are splittable bonds, so one product for every bond split
+                        Iterable<IAtomContainer> products = rule.getTransformation().apply(currentNode.getStructure(), Transform.Mode.Unique);
+                        for (IAtomContainer product : products) {
+                            List<IAtomContainer> parts = new ArrayList<>();
+                            boolean containsForbiddenFragment = false;
+                            for (IAtomContainer part : ConnectivityChecker.partitionIntoMolecules(product).atomContainers()) {
+                                parts.add(part);
+                                if (this.isFragmentForbidden(part, minimumFragmentSize)) {
+                                    containsForbiddenFragment = true;
+                                    break;
                                 }
-                                if (!containsForbiddenFragment) {
-                                    for (IAtomContainer part : parts) {
-                                        HierarchyNode newNode = new HierarchyNode(part);
-                                        newNode.getParents().add(currentNode);
-                                        currentNode.getChildren().add(newNode);
-                                        activePool.add(newNode);
-                                    }
+                            }
+                            if (!containsForbiddenFragment) {
+                                for (IAtomContainer part : parts) {
+                                    HierarchyNode newNode = new HierarchyNode(part);
+                                    newNode.getParents().add(currentNode);
+                                    currentNode.getChildren().add(newNode);
+                                    queue.add(newNode);
                                 }
                             }
                         }
                     }
                 }
+
             }
             return inputMolNode;
         }
