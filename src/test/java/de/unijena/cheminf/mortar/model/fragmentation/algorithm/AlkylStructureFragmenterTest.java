@@ -282,37 +282,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 new ArrayList<>(tmpExpectedSMILESList)) && tmpChemicalFormulaCheck);
     }
 
-    private boolean checkChemicalFormula(IAtomContainer aMolecule, IAtomContainerSet anExpectedACSet, IAtomContainerSet aResultACSet) {
-        int tmpPreFragmentationAtomCount = 0;
-        for (IAtom tmpAtom: aMolecule.atoms()) {
-            if (tmpAtom.getAtomicNumber() != 0) {
-                tmpPreFragmentationAtomCount++;
-            }
-        }
-        int tmpResultPostFragmentationAtomCount = 0;
-        int tmpExpPostFragmentationAtomCount = 0;
-        for (IAtomContainer tmpAtomContainer: anExpectedACSet.atomContainers()) {
-            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-                if (tmpAtom.getAtomicNumber() != 0) {
-                    tmpExpPostFragmentationAtomCount++;
-                }
-            }
-        }
-        for (IAtomContainer tmpAtomContainer: aResultACSet.atomContainers()) {
-            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-                if (tmpAtom.getAtomicNumber() != 0)
-                    tmpResultPostFragmentationAtomCount++;
-            }
-        }
-        System.out.println(tmpPreFragmentationAtomCount);
-        System.out.println(tmpExpPostFragmentationAtomCount);
-        System.out.println(tmpResultPostFragmentationAtomCount);
-        if (tmpResultPostFragmentationAtomCount != tmpPreFragmentationAtomCount
-                || tmpResultPostFragmentationAtomCount != tmpExpPostFragmentationAtomCount) {
-            return false;
-        }
-        return true;
-    }
     //</editor-fold>
 
     //<editor-fold desc="Method to test alkyl fragmentation on real compound">
@@ -343,6 +312,34 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         //System.out.println("result: " + tmpResultSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+    }
+    @Test
+    public void doubleBondExtractionButeneTest() throws FileNotFoundException, URISyntaxException {
+        this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.basicAlkylStructureFragmenter.setKeepNonFragmentableMoleculesSetting(AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMcbSingleRingDetectionSetting(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
+        IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
+        IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
+        IAtomContainer tmpCopyAC = tmpButeneAC.getBuilder().newAtomContainer();
+        this.basicAlkylStructureFragmenter.setChemObjectBuilderInstance(tmpButeneAC);
+        for (IAtom tmpAtom: tmpButeneAC.atoms()) {
+            tmpCopyAC.addAtom(deepCopyAtom(tmpAtom));
+        }
+        for (IBond tmpBond: tmpButeneAC.bonds()) {
+            tmpCopyAC.addBond(deepCopyBond(tmpBond, tmpCopyAC));
+        }
+        //Comparison of original and copied AtomContainer
+        String tmpButeneSMILES = ChemUtil.createUniqueSmiles(tmpButeneAC);
+        String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC);
+        //system print for easier debugging
+        System.out.println("Butene: " + tmpButeneSMILES);
+        System.out.println("Copied Butene: " + tmpCopySMILES);
+        Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
     }
     //</editor-fold>
 
@@ -411,6 +408,39 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         }
         return tmpACSet;
     }
+
+    private boolean checkChemicalFormula(IAtomContainer aMolecule, IAtomContainerSet anExpectedACSet, IAtomContainerSet aResultACSet) {
+        int tmpPreFragmentationAtomCount = 0;
+        for (IAtom tmpAtom: aMolecule.atoms()) {
+            if (tmpAtom.getAtomicNumber() != 0) {
+                tmpPreFragmentationAtomCount++;
+            }
+        }
+        int tmpResultPostFragmentationAtomCount = 0;
+        int tmpExpPostFragmentationAtomCount = 0;
+        for (IAtomContainer tmpAtomContainer: anExpectedACSet.atomContainers()) {
+            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
+                if (tmpAtom.getAtomicNumber() != 0) {
+                    tmpExpPostFragmentationAtomCount++;
+                }
+            }
+        }
+        for (IAtomContainer tmpAtomContainer: aResultACSet.atomContainers()) {
+            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
+                if (tmpAtom.getAtomicNumber() != 0)
+                    tmpResultPostFragmentationAtomCount++;
+            }
+        }
+        System.out.println(tmpPreFragmentationAtomCount);
+        System.out.println(tmpExpPostFragmentationAtomCount);
+        System.out.println(tmpResultPostFragmentationAtomCount);
+        if (tmpResultPostFragmentationAtomCount != tmpPreFragmentationAtomCount
+                || tmpResultPostFragmentationAtomCount != tmpExpPostFragmentationAtomCount) {
+            return false;
+        }
+        return true;
+    }
+
     //</editor-fold>
 
 }

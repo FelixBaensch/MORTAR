@@ -471,6 +471,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public void setSeparateTertQuatCarbonFromRingSetting(boolean aBoolean) {
         this.separateTertQuatCarbonFromRingSetting.set(aBoolean);
     }
+    public void setChemObjectBuilderInstance(IAtomContainer anAtomContainer) {
+        this.chemObjectBuilderInstance = anAtomContainer.getBuilder();
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public Methods">
@@ -492,6 +495,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.keepNonFragmentableMoleculesSetting.set(AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
         this.fragmentSideChainsSetting.set(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.altHandlingSingleTertQuatCarbonsSetting.set(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
