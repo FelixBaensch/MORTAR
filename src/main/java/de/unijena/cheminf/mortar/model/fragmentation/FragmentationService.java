@@ -38,11 +38,14 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.LogUtil;
+import de.unijena.cheminf.mortar.model.util.MORTARException;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
 import de.unijena.cheminf.mortar.preference.PreferenceUtil;
 import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
 import de.unijena.cheminf.mortar.preference.SingleTermPreference;
 
+import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Alert;
@@ -997,7 +1000,14 @@ public class FragmentationService {
             tmpToIndex++;
             tmpMoleculeModulo--;
         }
-        this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks);
+        this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks, tmpThreadFactory -> {
+            // note: the Callables used as threads here catch basically everything
+            // and wrap it in an ExecutionException; setting the UncaughtExceptionHandler
+            // anyway just to be sure
+            Thread tmpThread = new Thread(tmpThreadFactory);
+            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            return tmpThread;
+        });
         /* Explicit version that can be used to override methods:
         this.executorService =  new ThreadPoolExecutor(tmpNumberOfTasks, tmpNumberOfTasks, 0L,
                 TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()) {
@@ -1032,20 +1042,48 @@ public class FragmentationService {
             FragmentationService.LOGGER.log(Level.INFO, "Fragmentation cancelled");
             return null;
         }
+        List<Exception> tmpFutureExceptionsList = new ArrayList<>(tmpFuturesList.size());
         for (Future<Integer> tmpFuture : tmpFuturesList) {
-            //execution exceptions do not get handled here because this is called inside another thread
             try {
                 Integer tmpResult = tmpFuture.get();
                 if (!Objects.isNull(tmpResult)) {
                     tmpExceptionsCounter += tmpFuture.get();
                 } else {
-                    //this can occur when the task has been interrupted or cancelled, nothing to do here
-                    //errors in execution will be thrown by get() and are checked in the calling method/thread
+                    // go to catch
+                    throw new ExecutionException(new MORTARException("Result of parallel computation task was null for unknown reason."));
                 }
             } catch (CancellationException | InterruptedException | ExecutionException aCancellationOrInterruptionException) {
-                FragmentationService.LOGGER.log(Level.WARNING, aCancellationOrInterruptionException.toString(), aCancellationOrInterruptionException);
+                FragmentationService.LOGGER.log(Level.SEVERE, aCancellationOrInterruptionException.toString(), aCancellationOrInterruptionException);
+                tmpFutureExceptionsList.add(aCancellationOrInterruptionException);
+                // probably does nothing because a thread can interrupt itself any time
                 Thread.currentThread().interrupt();
                 //continue;
+            }
+        }
+        if (!tmpFutureExceptionsList.isEmpty()) {
+            int tmpOOMEIndex = -1;
+            for (int i = 0; i < tmpFutureExceptionsList.size(); i++) {
+                Exception tmpCaughtException = tmpFutureExceptionsList.get(i);
+                if (tmpCaughtException.getCause() instanceof OutOfMemoryError) {
+                    tmpOOMEIndex = i;
+                    break;
+                }
+            }
+            if (tmpOOMEIndex != -1) {
+                int finalTmpOOMEIndex = tmpOOMEIndex;
+                Platform.runLater(() -> {
+                    GuiUtil.guiExceptionAlert(Message.get("MainViewController.FragmentationError.Title"),
+                            Message.get("MainViewController.FragmentationError.Header"),
+                            Message.get("MainViewController.FragmentationOOME.Content"),
+                            tmpFutureExceptionsList.get(finalTmpOOMEIndex));
+                });
+            } else {
+                Platform.runLater(() -> {
+                    GuiUtil.guiExceptionAlert(Message.get("MainViewController.FragmentationError.Title"),
+                            Message.get("MainViewController.FragmentationError.Header"),
+                            Message.get("MainViewController.FragmentationError.Content"),
+                            tmpFutureExceptionsList.getFirst());
+                });
             }
         }
         int tmpFragmentAmount = 0;
