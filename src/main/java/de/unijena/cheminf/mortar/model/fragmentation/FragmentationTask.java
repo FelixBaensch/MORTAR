@@ -163,18 +163,15 @@ public class FragmentationTask implements Callable<Integer> {
                     if (tmpFragmentDataModel == null) {
                         tmpFragmentDataModel = tmpNewFragmentDataModel;
                     }
-                    // increment the absolute frequency of this fragment
-                    FragmentationTask.LOCK.lock();
+                    // increment the absolute frequency of this fragment - operation is atomic!
                     tmpFragmentDataModel.incrementAbsoluteFrequency();
-                    FragmentationTask.LOCK.unlock();
                     // add the initial molecule as a parent molecule
                     tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                     if (tmpFragmentsOfMolList.contains(tmpFragmentDataModel)) {
                         tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
                     } else {
-                        FragmentationTask.LOCK.lock();
+                        // increment molecule frequency of this fragment - operation is atomic!
                         tmpFragmentDataModel.incrementMoleculeFrequency();
-                        FragmentationTask.LOCK.unlock();
                         tmpFragmentsOfMolList.add(tmpFragmentDataModel);
                         tmpFragmentFrequenciesOfMoleculeMap.put(tmpSmiles, 1);
                     }
