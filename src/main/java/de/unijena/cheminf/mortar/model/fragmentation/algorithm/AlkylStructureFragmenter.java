@@ -41,6 +41,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.Bond;
+import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -304,6 +305,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settings.add(this.mcbSingleRingDetectionSetting);
         this.settings.add(this.keepRingsSetting);
         this.settings.add(this.separateTertQuatCarbonFromRingSetting);
+        //set chemObjectBuilderInstance
+        this.setChemObjectBuilderInstance();
     }
     //</editor-fold>
     //
@@ -471,8 +474,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public void setSeparateTertQuatCarbonFromRingSetting(boolean aBoolean) {
         this.separateTertQuatCarbonFromRingSetting.set(aBoolean);
     }
-    public void setChemObjectBuilderInstance(IAtomContainer anAtomContainer) {
-        this.chemObjectBuilderInstance = anAtomContainer.getBuilder();
+
+    /**
+     * Set method for chemObjectBuilderInstance, instancing the CDK default chemObjectBilder.
+     */
+    public void setChemObjectBuilderInstance() {
+        this.chemObjectBuilderInstance = DefaultChemObjectBuilder.getInstance();
     }
     //</editor-fold>
     //
@@ -614,8 +621,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainer tmpClone = aMolecule.clone();
         //WIP
         this.chemObjectBuilderInstance = null;
-        this.chemObjectBuilderInstance = tmpClone.getBuilder();
-        //IAtomContainer tmpBuilderAtomContainer = tmpClone.getBuilder().newInstance(IAtomContainer.class);
+        this.chemObjectBuilderInstance = DefaultChemObjectBuilder.getInstance();
         int tmpPreFragmentationAtomCount = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
             if (tmpAtom.getAtomicNumber() != 0) {
@@ -1090,6 +1096,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 } //extract atoms for double/triple bonds
                 else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
+                    //WIP! Here lies the faulty double bond extraction! An 'unnecessary' second iteration over the
+                    // atom array "anAtomArray" is done here!
                     for (IAtom tmpArrayAtom: anAtomArray) {
                         if (tmpArrayAtom != tmpAtom) {
                             IBond tmpDoubleToRingBond;
@@ -1107,7 +1115,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                 //System.out.println("double bond to ring atom added");
                             } else {
                                 tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                                //System.out.println("double bond atom added");
+                                System.out.println("double bond atom added");
                             }
                         }
                     }
@@ -1183,27 +1191,27 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     boolean tmpEnd = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                     if (tmpBegin || tmpEnd) {
                         tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
-                        //System.out.println("double bond to ring added");
+                        System.out.println("double bond to ring added");
                     } else {
                         tmpIsolatedMultiBondsContainer.addBond(this.deepCopyBond(tmpBond, tmpIsolatedMultiBondsContainer));
-                        //System.out.println("double bond added");
+                        System.out.println("double bond added");
                     }
                 }
                 else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
                     tmpIsolatedMultiBondsContainer.addBond(this.deepCopyBond(tmpBond, tmpIsolatedMultiBondsContainer));
-                    //System.out.println("triple bond added");
+                    System.out.println("triple bond added");
                 }
                 else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)
                         && !((tmpIsBeginRing && tmpIsBeginTertiary) || (tmpIsEndRing && tmpIsEndTertiary)
                             || (tmpIsBeginRing && tmpIsBeginQuaternary) || (tmpIsEndRing && tmpIsEndQuaternary))) {
                     tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
-                    //System.out.println("neighbor bond added");
+                    System.out.println("neighbor bond added");
                 }
                 if (!(tmpIsBeginRing && tmpIsEndRing && tmpIsBeginConjPi && tmpIsEndConjPi)
                         && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
                     if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary || tmpIsBeginNeighbor || tmpIsEndNeighbor)) {
                         tmpChainFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpChainFragmentationContainer));
-                        //System.out.println("chain residue bond added");
+                        System.out.println("chain residue bond added");
                     }
                 }
             }
@@ -1222,10 +1230,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                     if (!tmpIsBeginSpiro && !tmpIsEndSpiro) {
                         tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
+                        System.out.println("spiro bond added");
                     }
                 } else {
                     tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
-                    //System.out.println("ring bond added");
+                    System.out.println("ring bond added");
                 }
             }
         }
@@ -1334,6 +1343,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpReturnAC.addAtom(this.deepCopyAtom(tmpBeginAtom));
                 tmpReturnAC.addAtom(this.deepCopyAtom(tmpEndAtom));
                 tmpReturnAC.addBond(this.deepCopyBond(tmpBond, tmpReturnAC));
+                System.out.println("return AC bond added");
                 tmpCounter++;
             }
         }
@@ -1409,17 +1419,23 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     protected IBond deepCopyBond(IBond aBondToCopy, IAtomContainer aBondIncludingAtomContainer) {
         IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
         tmpNewBond.setOrder(aBondToCopy.getOrder());
-        int tmpBeginAtomIndex = aBondToCopy.getBegin().getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-        //System.out.println("begin " + aBondToCopy.getBegin().getIndex());
-        int tmpEndAtomIndex = aBondToCopy.getEnd().getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-        for (IAtom tmpAtom: aBondIncludingAtomContainer.atoms()) {
-            if ((int) tmpAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpBeginAtomIndex) {
-                tmpNewBond.setAtom(tmpAtom, 0);
-                //aBondIncludingAtomContainer.removeAtom(tmpBeginAtomIndex);
-            } else if ((int) tmpAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpEndAtomIndex) {
-                tmpNewBond.setAtom(tmpAtom, 1);
-                //aBondIncludingAtomContainer.removeAtom(tmpEndAtomIndex);
+        IAtom tmpBeginAtom = aBondToCopy.getBegin();
+        int tmpBeginAtomIndex = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+        System.out.println("Begin Index: " + tmpBeginAtomIndex);
+        if ((tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) != null)) {
+            //System.out.println("begin " + aBondToCopy.getBegin().getIndex());
+            int tmpEndAtomIndex = aBondToCopy.getEnd().getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            for (IAtom tmpAtom : aBondIncludingAtomContainer.atoms()) {
+                if ((int) tmpAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpBeginAtomIndex) {
+                    tmpNewBond.setAtom(tmpAtom, 0);
+                    //aBondIncludingAtomContainer.removeAtom(tmpBeginAtomIndex);
+                } else if ((int) tmpAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpEndAtomIndex) {
+                    tmpNewBond.setAtom(tmpAtom, 1);
+                    //aBondIncludingAtomContainer.removeAtom(tmpEndAtomIndex);
+                }
             }
+        } else {
+            System.out.println((String) tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY));
         }
         return tmpNewBond;
     }

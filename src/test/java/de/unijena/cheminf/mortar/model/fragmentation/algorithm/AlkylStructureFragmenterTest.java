@@ -314,7 +314,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
     @Test
-    public void doubleBondExtractionButeneTest() throws FileNotFoundException, URISyntaxException {
+    public void deepCopyButeneTest() throws FileNotFoundException, URISyntaxException {
         this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         this.basicAlkylStructureFragmenter.setKeepNonFragmentableMoleculesSetting(AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
@@ -325,10 +325,13 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
         IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
+        //two steps below needed for correct internal index handling
+        this.basicAlkylStructureFragmenter.fillAtomArray(tmpButeneAC);
+        this.basicAlkylStructureFragmenter.fillBondArray(tmpButeneAC);
         IAtomContainer tmpCopyAC = tmpButeneAC.getBuilder().newAtomContainer();
-        this.basicAlkylStructureFragmenter.setChemObjectBuilderInstance(tmpButeneAC);
+        this.basicAlkylStructureFragmenter.setChemObjectBuilderInstance();
         for (IAtom tmpAtom: tmpButeneAC.atoms()) {
-            tmpCopyAC.addAtom(deepCopyAtom(tmpAtom));
+            tmpCopyAC.addAtom(this.basicAlkylStructureFragmenter.deepCopyAtom(tmpAtom));
         }
         for (IBond tmpBond: tmpButeneAC.bonds()) {
             tmpCopyAC.addBond(deepCopyBond(tmpBond, tmpCopyAC));
@@ -340,6 +343,34 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         System.out.println("Butene: " + tmpButeneSMILES);
         System.out.println("Copied Butene: " + tmpCopySMILES);
         Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
+    }
+    @Test
+    public void linearDoubleBondExtractionTest() throws CloneNotSupportedException, FileNotFoundException, URISyntaxException {
+        this.basicAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        this.basicAlkylStructureFragmenter.setKeepNonFragmentableMoleculesSetting(AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setMcbSingleRingDetectionSetting(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
+        this.basicAlkylStructureFragmenter.setChemObjectBuilderInstance();
+
+        IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
+        IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
+        Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBeFiltered(tmpButeneAC));
+        Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBePreprocessed(tmpButeneAC));
+        Assertions.assertTrue(this.basicAlkylStructureFragmenter.canBeFragmented(tmpButeneAC));
+        List<IAtomContainer> tmpFragmentACList = this.basicAlkylStructureFragmenter.fragmentMolecule(tmpButeneAC);
+        List<String> tmpExpectedList = new ArrayList<>(3);
+        tmpExpectedList.add("C");
+        tmpExpectedList.add("C");
+        tmpExpectedList.add("C=C");
+        List<String> tmpFragmentStringList = new ArrayList<>();
+        for (IAtomContainer tmpAC: tmpFragmentACList) {
+            tmpFragmentStringList.add(ChemUtil.createUniqueSmiles(tmpAC));
+        }
+        Assertions.assertTrue(this.compareListsIgnoringOrder((ArrayList) tmpExpectedList, (ArrayList) tmpFragmentStringList));
     }
     //</editor-fold>
 
