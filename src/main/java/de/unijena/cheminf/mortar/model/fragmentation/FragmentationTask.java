@@ -158,6 +158,7 @@ public class FragmentationTask implements Callable<Integer> {
                     // create new FragmentDataModel
                     FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
                     // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
+                    // operation must be atomic (HashMap) or synchronised (HashTable); we are currently using ConcurrentHashMap
                     FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel);
                     if (tmpFragmentDataModel == null) {
                         tmpFragmentDataModel = tmpNewFragmentDataModel;
