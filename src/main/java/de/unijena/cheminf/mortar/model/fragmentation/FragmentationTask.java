@@ -158,22 +158,20 @@ public class FragmentationTask implements Callable<Integer> {
                     // create new FragmentDataModel
                     FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
                     // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
+                    // operation must be atomic (HashMap) or synchronised (HashTable); we are currently using ConcurrentHashMap
                     FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel);
                     if (tmpFragmentDataModel == null) {
                         tmpFragmentDataModel = tmpNewFragmentDataModel;
                     }
-                    // increment the absolute frequency of this fragment
-                    FragmentationTask.LOCK.lock();
+                    // increment the absolute frequency of this fragment - operation is atomic!
                     tmpFragmentDataModel.incrementAbsoluteFrequency();
-                    FragmentationTask.LOCK.unlock();
                     // add the initial molecule as a parent molecule
                     tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                     if (tmpFragmentsOfMolList.contains(tmpFragmentDataModel)) {
                         tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
                     } else {
-                        FragmentationTask.LOCK.lock();
+                        // increment molecule frequency of this fragment - operation is atomic!
                         tmpFragmentDataModel.incrementMoleculeFrequency();
-                        FragmentationTask.LOCK.unlock();
                         tmpFragmentsOfMolList.add(tmpFragmentDataModel);
                         tmpFragmentFrequenciesOfMoleculeMap.put(tmpSmiles, 1);
                     }
