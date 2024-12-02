@@ -51,7 +51,7 @@ class RECAPTest extends RECAP {
         cycles.find(mol);
         arom.apply(mol);
         RECAP recap = new RECAP();
-        HierarchyNode node = recap.buildHierarchy(mol, 1);
+        HierarchyNode node = recap.buildHierarchy(mol, 1); //get full hierarchy without size restriction
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         int i = 0;
         System.out.println(i + ": " + smiGen.create(node.getStructure()));
@@ -72,30 +72,23 @@ class RECAPTest extends RECAP {
         Assertions.assertEquals(18, node.getOnlyTerminalDescendants().size());
         Assertions.assertTrue(node.getParents().isEmpty());
 
-        node = recap.buildHierarchy(mol, 3); //TODO this should be 2
+        node = recap.buildHierarchy(mol, 2); //do not cleave off the methyl-ether
         Assertions.assertEquals(4, node.getChildren().size());
         Assertions.assertEquals(8, node.getAllDescendants().size());
         Assertions.assertEquals(6, node.getOnlyTerminalDescendants().size());
         Assertions.assertTrue(node.getParents().isEmpty());
 
-        node = recap.buildHierarchy(mol, 5); //TODO this should be 4
-        Assertions.assertEquals(2, node.getChildren().size());
-        Assertions.assertEquals(2, node.getAllDescendants().size());
-        Assertions.assertEquals(2, node.getOnlyTerminalDescendants().size());
+        node = recap.buildHierarchy(mol, 4); //do not cleave off the cyclo-propane either BUT it is cyclic, so actually no change!
+        Assertions.assertEquals(4, node.getChildren().size());
+        Assertions.assertEquals(8, node.getAllDescendants().size());
+        Assertions.assertEquals(6, node.getOnlyTerminalDescendants().size());
+        Assertions.assertTrue(node.getParents().isEmpty());
+
+        node = recap.buildHierarchy(mol, 5); //default they talk about in the paper
+        Assertions.assertEquals(4, node.getChildren().size());
+        Assertions.assertEquals(8, node.getAllDescendants().size());
+        Assertions.assertEquals(6, node.getOnlyTerminalDescendants().size());
         Assertions.assertTrue(node.getParents().isEmpty());
     }
 
-    @Test
-    void testEgon() throws Exception {
-        SmilesParser parser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        SmilesGenerator generator = new SmilesGenerator(SmiFlavor.Unique);
-        Transform neutralAcid = Smirks.compile("[O-:1]>>[O;+0:1][H]");
-        IAtomContainer cdkStruct = parser.parseSmiles("CC(=O)[O-]");
-        Iterable<IAtomContainer> iterable = neutralAcid.apply(cdkStruct, Transform.Mode.Exclusive);
-        for (IAtomContainer neutral : iterable) {
-            String neutralSmiles = generator.createSMILES(neutral);
-            System.out.println(neutralSmiles);
-        }
-
-    }
 }

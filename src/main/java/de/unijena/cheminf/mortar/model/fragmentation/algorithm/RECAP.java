@@ -29,8 +29,11 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IElement;
+import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.isomorphism.Pattern;
 import org.openscience.cdk.isomorphism.Transform;
+import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.smarts.SmartsPattern;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
@@ -120,7 +123,6 @@ public class RECAP {
             return this.smirksCode;
         }
     }
-    //TODO option for minimum fragment size (also described in RECAP paper)
     //TODO implement tests from RECAP paper and RDKit
     //TODO make individual rules able to be turned off and on?
     //TODO give option to add rules
@@ -155,6 +157,11 @@ public class RECAP {
             return Collections.emptyList();
         State state = new State();
         return includeIntermediates? state.applyTransformationsWithAllIntermediates(mol, minimumFragmentSize) : state.applyTransformationsSinglePass(mol, minimumFragmentSize);
+    }
+
+    public HierarchyNode buildHierarchy(IAtomContainer mol) {
+        State state = new State();
+        return state.buildHierarchy(mol, 5);
     }
 
     public HierarchyNode buildHierarchy(IAtomContainer mol, int minimumFragmentSize) {
@@ -633,28 +640,91 @@ public class RECAP {
 //            return fragments;
         }
 
+        /**
+         * "If the *terminal* fragment to be cleaved contains only small functional
+         * groups *(hydrogen, methyl, ethyl, propyl, and butyl)*, the fragment is
+         * *left uncleaved*. [...] The reason for this is, first, to avoid generating
+         * "uninteresting" small fragments such as methyl in the analysis and,
+         * second, with these smaller functional groups attached to the larger
+         * fragments such as those shown in Figure 3, more "drug-like" features
+         * are retained compared to the "barer" fragments where these small
+         * functionalities are cleaved off."
+         *
+         * forbidden are too small terminal fragments that only consist of methyl, ethyl, propyl, etc.
+         *
+         * @param mol
+         * @param minimumFragmentSize
+         * @return
+         */
         private boolean isFragmentForbidden(IAtomContainer mol, int minimumFragmentSize) {
-            //TODO check for rings?
-            //TODO do not count pseudo atoms for the minimum fragment size!
-            if (mol.getAtomCount() >= minimumFragmentSize) {
-                return false;
-            }
+            //note: mol.getAtomCount () < minimumFragmentSize ? would count pseudo atoms, so not a good option
             int pseudoAtomCounter = 0;
-            int heteroAtomCounter = 0;
             for (IAtom atom : mol.atoms()) {
-                if (atom.getSymbol().equals("R")) {
+                boolean isPseudoAtom = this.isPseudoAtom(atom);
+                if (isPseudoAtom) {
                     pseudoAtomCounter++;
                 }
                 if (pseudoAtomCounter >= 2) {
+                    //fragment is not terminal, it has two cleavage sites
                     return false;
                 }
-                if (!(atom.getSymbol().equals("C") || atom.getSymbol().equals("H") || atom.getSymbol().equals("R"))) {
-                    heteroAtomCounter++;
+                boolean isHeteroAtom = this.isHeteroAtom(atom);
+                if (isHeteroAtom) {
+                    //fragment is not a simple alkyl fragment
+                    return false;
                 }
             }
-            //R count should be 1
-            //forbidden are too small terminal fragments that only consist of methyl, ethyl, propyl, etc.
-            return (heteroAtomCounter == 0);
+            //R count is 1 (or theoretically 0)
+            //no hetero atoms in fragment
+            if ((mol.getAtomCount() - pseudoAtomCounter) < minimumFragmentSize) {
+                //costly ring search only for small fragments
+                RingSearch ringSearch = new RingSearch(mol);
+                //forbidden if linear, otherwise too interesting
+                return ringSearch.numRings() == 0;
+            } else {
+                //not forbidden, bigger than or equal to minimum fragment size
+                return false;
+            }
         }
+
+        /**
+         * Checks whether the given atom is a pseudo atom. Very strict, any atom
+         * whose atomic number is null or 0, whose symbol equals "R" or "*", or that
+         * is an instance of an IPseudoAtom implementing class will be classified as
+         * a pseudo atom.
+         *
+         * @param atom the atom to test
+         * @return true if the given atom is identified as a pseudo (R) atom
+         */
+        private boolean isPseudoAtom(IAtom atom) {
+            Integer tmpAtomicNr = atom.getAtomicNumber();
+            if (tmpAtomicNr == null) {
+                return true;
+            }
+            String tmpSymbol = atom.getSymbol();
+            return tmpAtomicNr == IElement.Wildcard ||
+                    tmpSymbol.equals("R") ||
+                    tmpSymbol.equals("*") ||
+                    atom instanceof IPseudoAtom;
+        }
+
+        /**
+         * Checks whether the given atom is a hetero-atom (i.e. non-carbon and
+         * non-hydrogen). Pseudo (R) atoms will also return false.
+         *
+         * @param atom the atom to test
+         * @return true if the given atom is neither a carbon nor a hydrogen or
+         *         pseudo atom
+         */
+        private boolean isHeteroAtom(IAtom atom) {
+            Integer tmpAtomicNr = atom.getAtomicNumber();
+            if (tmpAtomicNr == null) {
+                return false;
+            }
+            int tmpAtomicNumberInt = tmpAtomicNr;
+            return tmpAtomicNumberInt != IElement.H && tmpAtomicNumberInt != IElement.C
+                    && !this.isPseudoAtom(atom);
+        }
+
     }
 }
