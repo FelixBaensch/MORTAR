@@ -1096,8 +1096,38 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 } //extract atoms for double/triple bonds
                 else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
-                    //WIP! Here lies the faulty double bond extraction! An 'unnecessary' second iteration over the
-                    // atom array "anAtomArray" is done here!
+                    //extracts extra circular double bonds connected with the ring structure
+                    //WIP!
+                    //only atom with double bond marker gets to this point -> get other atom of double bond -> check if already in ring container
+                    //if not: place there
+                        IBond tmpRingDoubleBond;
+                        for (IAtom tmpArrayAtom: anAtomArray) {
+                            System.out.println("atom extract: array for");
+                            if (tmpArrayAtom != tmpAtom && !(boolean) tmpArrayAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
+                                try {
+                                    System.out.println("try");
+                                    tmpRingDoubleBond = tmpAtom.getBond(tmpArrayAtom);
+                                    for (IAtom tmpBondAtom: tmpRingDoubleBond.atoms()) {
+                                        System.out.println("atom extract: bond for");
+                                        if (tmpBondAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)
+                                                != tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)) {
+                                            if (!tmpRingFragmentationContainer.contains(tmpBondAtom)) {
+                                                tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpBondAtom));
+                                            }
+                                        }
+                                    }
+                                } catch (Exception atomNotInBondException){
+                                    continue;
+                                }
+                            }
+                        }
+                    //} else {
+                        tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
+                        System.out.println("double bond atom added");
+                    //}
+                    //Here lies the faulty double bond extraction! An 'unnecessary' second iteration over the
+                    //atom array "anAtomArray" is done here!
+                    /*
                     for (IAtom tmpArrayAtom: anAtomArray) {
                         if (tmpArrayAtom != tmpAtom) {
                             IBond tmpDoubleToRingBond;
@@ -1113,12 +1143,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                 //WIP
                                 tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                                 //System.out.println("double bond to ring atom added");
-                            } else {
-                                tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                                System.out.println("double bond atom added");
                             }
                         }
                     }
+                    */
                 } else if (tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
                     tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     //System.out.println("triple bond atom added");
