@@ -33,12 +33,14 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.isomorphism.Transform;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.smirks.Smirks;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class RECAPTest extends RECAP {
     @Test
@@ -91,4 +93,60 @@ class RECAPTest extends RECAP {
         Assertions.assertTrue(node.getParents().isEmpty());
     }
 
+    @Test
+    void rdkitDocExampleTest() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        IAtomContainer mol = smiPar.parseSmiles("C1CC1Oc1ccccc1-c1ncc(OC)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+        cycles.find(mol);
+        arom.apply(mol);
+        RECAP recap = new RECAP();
+        HierarchyNode node = recap.buildHierarchy(mol);
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+        Set<String> directChildrenSmilesSet = HashSet.newHashSet(node.getChildren().size());
+        for (HierarchyNode child : node.getChildren()) {
+            directChildrenSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertEquals(4, directChildrenSmilesSet.size());
+        //corresponds to SMILES codes given in RDKit doc
+        Assertions.assertTrue(directChildrenSmilesSet.containsAll(List.of("*C1CC1", "*c1ncc(OC)cc1", "*c1ccccc1-c2ncc(OC)cc2", "*c1ccccc1OC2CC2")));
+        Set<String> allDescendantsSmilesSet = HashSet.newHashSet(node.getAllDescendants().size());
+        for (HierarchyNode child : node.getAllDescendants()) {
+            allDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertEquals(5, allDescendantsSmilesSet.size());
+        //corresponds to SMILES codes given in RDKit doc
+        Assertions.assertTrue(allDescendantsSmilesSet.containsAll(List.of("*C1CC1", "*c1ncc(OC)cc1", "*c1ccccc1*", "*c1ccccc1-c2ncc(OC)cc2", "*c1ccccc1OC2CC2")));
+        Set<String> terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
+        for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
+            terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertEquals(3, terminalDescendantsSmilesSet.size());
+        //corresponds to SMILES codes given in RDKit doc
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C1CC1", "*c1ncc(OC)cc1", "*c1ccccc1*")));
+    }
+
+    @Test
+    void recapPaperExampleTest() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        IAtomContainer mol = smiPar.parseSmiles("FC1=CC=C(OCCCN2CCC(NC(C3=CC(Cl)=C(N)C=C3OC)=O)C(OC)C2)C=C1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+        cycles.find(mol);
+        arom.apply(mol);
+        RECAP recap = new RECAP();
+        HierarchyNode node = recap.buildHierarchy(mol);
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+        Set<String> terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
+        for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
+            terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertEquals(4, terminalDescendantsSmilesSet.size());
+        //corresponds to RECAP paper, except for the Fluorphenole described there,
+        // but it is not described how this came to be
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*c1ccc(F)cc1", "*CCC*", "*NC1CCN(*)CC1OC", "*C(=O)c1cc(Cl)c(N)cc1OC")));
+    }
 }

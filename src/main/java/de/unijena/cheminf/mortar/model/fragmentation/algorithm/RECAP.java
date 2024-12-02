@@ -127,12 +127,13 @@ public class RECAP {
     //TODO make individual rules able to be turned off and on?
     //TODO give option to add rules
     //TODO check whether atoms, bonds, etc are copied or whether they are new
-
+    //TODO add methods that return meaningful fragment sets, not the whole hierarchy
+    //TODO discard unused methods
     /**
      *
      */
     public RECAP() {
-
+        //TODO initialise default minimum fragment size of 5
     }
 
     /**
@@ -159,12 +160,12 @@ public class RECAP {
         return includeIntermediates? state.applyTransformationsWithAllIntermediates(mol, minimumFragmentSize) : state.applyTransformationsSinglePass(mol, minimumFragmentSize);
     }
 
-    public HierarchyNode buildHierarchy(IAtomContainer mol) {
+    public HierarchyNode buildHierarchy(IAtomContainer mol) throws CDKException {
         State state = new State();
         return state.buildHierarchy(mol, 5);
     }
 
-    public HierarchyNode buildHierarchy(IAtomContainer mol, int minimumFragmentSize) {
+    public HierarchyNode buildHierarchy(IAtomContainer mol, int minimumFragmentSize) throws CDKException {
         State state = new State();
         return state.buildHierarchy(mol, minimumFragmentSize);
     }
@@ -260,6 +261,12 @@ public class RECAP {
      * final: Prevents the class from being extended.
      */
     private static final class State {
+        /*
+        * Notes on SMIRKS/SMARTS:
+        * - when using the any-atom "*", be aware that it also matches pseudo (R)
+        *   atoms; so think about avoiding this by adding ";!#0" in the any-atom
+        *   definition
+        * */
         /**
          * 1 = Amide -> aliphatic C that is NOT connected to two N (as not to
          * match urea) (index 1), connected via a non-ring double bond to an
@@ -270,7 +277,9 @@ public class RECAP {
          * result is an aldehyde and an amine, not a carboxylic acid or ester
          * and an amine -> note also that the atoms can potentially be in a
          * ring, just not the bonds
+         * TODO: insert ";!$([#7][#0]);!$([#7]([#0])[#0])" was inserted to avoid matching pseudo atoms that resulted from a previous cleavage?
          */
+        //private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1;!$([#7][#0]);!$([#7]([#0])[#0]):3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
         private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1:3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
         /**
          * 2 = Ester -> aliphatic C (index 1), connected via a non-ring double
@@ -283,6 +292,7 @@ public class RECAP {
          */
         private final CleavageRule ester = new CleavageRule("[C:1](=!@[O:2])!@[O;+0:3]", "*[C:1]=[O:2].[O:3]*", "Ester");
         //TODO does this also work for tertiary amines? I guess it matches multiple times?
+        //TODO this does not align with the RECAP paper definition of the amine cleavage rule, i.e. it does not match the example structure; see also additional rule "cyclic amines" below
         /**
          * 3 = Amine -> aliphatic N with a neutral charge and a degree of NOT 1
          * that is also NOT connected to a C connected via a double bond to N,
@@ -292,9 +302,10 @@ public class RECAP {
          * 2, each connected to any other atom -> note that the amine / N is
          * discarded! -> note also that the atoms can potentially be in a ring,
          * just not the bonds -> simpler alternative would be (without excluding
-         * any sort of amides): [N;!D1](!@[*:1])!@[*:2]>>*[*:1].[*:2]*
+         * any sort of amines): [N;!D1](!@[*:1])!@[*:2]>>*[*:1].[*:2]*
+         * ";!#0" was added for the two any-atoms to avoid matching pseudo atoms that resulted from a previous cleavage
          */
-        private final CleavageRule amine = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16])](-!@[*:1])-!@[*:2]", "*[*:1].[*:2]*", "Amine");
+        private final CleavageRule amine = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16])](-!@[*;!#0:1])-!@[*;!#0:2]", "*[*:1].[*:2]*", "Amine");
         /**
          * 4 = Urea -> aliphatic or aromatic(!) N with a neutral charge and a
          * degree of 2 or 3 (index 1), connected via a non-ring bond to an
@@ -376,8 +387,9 @@ public class RECAP {
          * bond to any atom (index 2) reacts to the N connected to any atom and
          * the other atom connected to any atom note that no assumption is made
          * as to how the structure was synthesized
+         * ";!#0" was inserted to avoid matching pseudo atoms that resulted from a previous cleavage
          */
-        private final CleavageRule cyclicAmines = new CleavageRule("[#7;R;D3;+0:1]-!@[*:2]", "*[#7:1].[*:2]*", "Cyclic amines");
+        private final CleavageRule cyclicAmines = new CleavageRule("[#7;R;D3;+0:1]-!@[*;!#0:2]", "*[#7:1].[*:2]*", "Cyclic amines");
         //TODO this is not part of the original RECAP, make it optional?
         /**
          * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral
@@ -398,13 +410,13 @@ public class RECAP {
                 this.aromaticNitrogenToAromaticCarbon};
 
         /**
-         * 
+         *
          *
          * @param inputMol
          * @param minimumFragmentSize
          * @return
          */
-        private HierarchyNode buildHierarchy(IAtomContainer inputMol, int minimumFragmentSize) {
+        private HierarchyNode buildHierarchy(IAtomContainer inputMol, int minimumFragmentSize) throws CDKException {
             HierarchyNode inputMolNode = new HierarchyNode(inputMol);
             Queue<HierarchyNode> queue = new LinkedList<>();
             queue.add(inputMolNode);
@@ -413,8 +425,7 @@ public class RECAP {
                 for (CleavageRule rule : this.cleavageRules) {
                     if (rule.getEductPattern().matches(currentNode.getStructure())) {
                         //mode unique returns as many products as there are splittable bonds, so one product for every bond split
-                        Iterable<IAtomContainer> products = rule.getTransformation().apply(currentNode.getStructure(), Transform.Mode.Unique);
-                        for (IAtomContainer product : products) {
+                        for (IAtomContainer product : rule.getTransformation().apply(currentNode.getStructure(), Transform.Mode.Unique)) {
                             List<IAtomContainer> parts = new ArrayList<>();
                             boolean containsForbiddenFragment = false;
                             for (IAtomContainer part : ConnectivityChecker.partitionIntoMolecules(product).atomContainers()) {
@@ -425,7 +436,10 @@ public class RECAP {
                                 }
                             }
                             if (!containsForbiddenFragment) {
+                                //Logger.getLogger(RECAP.class.getName()).log(Level.INFO, "Transformation rule " + rule.getName() + " matched and produced valid fragments.");
+                                //Logger.getLogger(RECAP.class.getName()).log(Level.INFO, "Educt " + (new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols)).create(currentNode.getStructure()));
                                 for (IAtomContainer part : parts) {
+                                    //Logger.getLogger(RECAP.class.getName()).log(Level.INFO, "Product " + (new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols)).create(part));
                                     HierarchyNode newNode = new HierarchyNode(part);
                                     newNode.getParents().add(currentNode);
                                     currentNode.getChildren().add(newNode);
@@ -686,7 +700,7 @@ public class RECAP {
                 return false;
             }
         }
-
+        //TODO: in the CDK integration, use the corresponding methods of functionalgroupsfinder or put them in a central utility class
         /**
          * Checks whether the given atom is a pseudo atom. Very strict, any atom
          * whose atomic number is null or 0, whose symbol equals "R" or "*", or that
