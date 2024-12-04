@@ -124,11 +124,15 @@ public class RECAP {
         }
     }
     //TODO implement tests from RECAP paper and RDKit
+    //TODO RDKit generate a mapping of SMILES code to hierarchy node to reduce the search space (deduplication)
+    // and be able to add more molecules and their fragments into the map (but not the hierarchy)!
     //TODO make individual rules able to be turned off and on?
     //TODO give option to add rules
     //TODO check whether atoms, bonds, etc are copied or whether they are new
     //TODO add methods that return meaningful fragment sets, not the whole hierarchy
+    //TODO how to ensure fragments appearing multiple times in the molecule appear multiple times in a deduplicated fragment set?
     //TODO discard unused methods
+    //TODO track information which cleavage rules were applied?
     /**
      *
      */
@@ -272,12 +276,13 @@ public class RECAP {
          * match urea) (index 1), connected via a non-ring double bond to an
          * aliphatic O (index 2), connected via a non-ring bond to N with a
          * neutral charge and a degree of not 1, can be aliphatic or aromatic
-         * (index 3) -> reacts to C index 1 connected to O index 2 and to any
-         * other atom and N index 3 connected to any other atom -> note that the
+         * (index 3) -> reacts to C index 1 connected to O index 2 and to an R
+         * atom and N index 3 connected to an R atom -> note that the
          * result is an aldehyde and an amine, not a carboxylic acid or ester
          * and an amine -> note also that the atoms can potentially be in a
          * ring, just not the bonds
-         * TODO: insert ";!$([#7][#0]);!$([#7]([#0])[#0])" was inserted to avoid matching pseudo atoms that resulted from a previous cleavage?
+         * TODO: insert ";!$([#7][#0]);!$([#7]([#0])[#0])" to avoid matching pseudo atoms that resulted from a previous cleavage?
+         * TODO: transform this into carboxy acid and amine? Right now, we get aldehyde and amine
          */
         //private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1;!$([#7][#0]);!$([#7]([#0])[#0]):3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
         private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1:3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
@@ -305,7 +310,8 @@ public class RECAP {
          * any sort of amines): [N;!D1](!@[*:1])!@[*:2]>>*[*:1].[*:2]*
          * ";!#0" was added for the two any-atoms to avoid matching pseudo atoms that resulted from a previous cleavage
          */
-        private final CleavageRule amine = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16])](-!@[*;!#0:1])-!@[*;!#0:2]", "*[*:1].[*:2]*", "Amine");
+        //TODO test this further
+        private final CleavageRule amine = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16]);!$()](-!@[*;!#0:1])-!@[*;!#0:2]", "*[*:1].[*:2]*", "Amine");
         /**
          * 4 = Urea -> aliphatic or aromatic(!) N with a neutral charge and a
          * degree of 2 or 3 (index 1), connected via a non-ring bond to an
