@@ -133,6 +133,8 @@ public class RECAP {
     //TODO how to ensure fragments appearing multiple times in the molecule appear multiple times in a deduplicated fragment set?
     //TODO discard unused methods
     //TODO track information which cleavage rules were applied?
+    //TODO make public method to check how many rule matches are in a molecule (and reject mols with more than 31)
+    //TODO limit tree depth?
     /**
      *
      */
@@ -225,6 +227,10 @@ public class RECAP {
             return this.children.isEmpty();
         }
 
+        public boolean isRoot() {
+            return this.parents.isEmpty();
+        }
+
         public List<HierarchyNode> getAllDescendants() {
             List<HierarchyNode> desc = new ArrayList<>(this.children.size()^2);
             for (HierarchyNode child : this.children) {
@@ -245,7 +251,30 @@ public class RECAP {
             return desc;
         }
 
+        public int getLevel() {
+            if (this.isRoot()) {
+                return 0;
+            } else {
+                return this.parents.getFirst().getLevel() + 1;
+            }
+        }
+
+        public int getMaximumLevelOfAllDescendants() {
+            if (this.isTerminal()) {
+                return this.getLevel();
+            } else {
+                int maxLevel = this.getLevel();
+                for (HierarchyNode child : this.children) {
+                    if (child.getMaximumLevelOfAllDescendants() > maxLevel) {
+                        maxLevel = child.getMaximumLevelOfAllDescendants();
+                    }
+                }
+                return maxLevel;
+            }
+        }
+
         private void collectAllDescendants(List<HierarchyNode> childrenList, boolean onlyTerminal) {
+            //note that this is breadth first because we traverse level by level
             Queue<HierarchyNode> queue = new LinkedList<>();
             queue.add(this);
             while(!queue.isEmpty()) {
@@ -333,8 +362,9 @@ public class RECAP {
          * O is discarded, we do not get an alcohol or sth similar as result
          * note also that the atoms can potentially be in a ring, just not the
          * bonds
+         * ";!$(O-[#6]=O)" was added to the central O to avoid matching ester groups
          */
-        private final CleavageRule ether = new CleavageRule("[#6:1]-!@[O;+0]-!@[#6:2]", "[#6:1]*.*[#6:2]", "Ether");
+        private final CleavageRule ether = new CleavageRule("[#6:1]-!@[O;+0;!$(O-[#6]=O)]-!@[#6:2]", "[#6:1]*.*[#6:2]", "Ether");
         /**
          * 6 = Olefin -> an aliphatic C (index 1) connected via a non-ring
          * double bond to another aliphatic C (index 2) reacts to the two carbon

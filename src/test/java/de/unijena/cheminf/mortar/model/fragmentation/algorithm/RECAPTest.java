@@ -54,18 +54,19 @@ class RECAPTest extends RECAP {
         arom.apply(mol);
         RECAP recap = new RECAP();
         HierarchyNode node = recap.buildHierarchy(mol, 1); //get full hierarchy without size restriction
+        Assertions.assertEquals(3, node.getMaximumLevelOfAllDescendants());
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         int i = 0;
-        System.out.println(i + ": " + smiGen.create(node.getStructure()));
+        System.out.println(i + ": " + smiGen.create(node.getStructure()) + " (level " + node.getLevel() + ")");
         for (HierarchyNode childFirstLevel : node.getChildren()) {
             i++;
-            System.out.println(i + ":\t " + smiGen.create(childFirstLevel.getStructure()));
+            System.out.println(i + ":\t " + smiGen.create(childFirstLevel.getStructure()) + " (level " + childFirstLevel.getLevel() + ")");
             for (HierarchyNode childSecondLevel : childFirstLevel.getChildren()) {
                 i++;
-                System.out.println(i + ":\t\t " + smiGen.create(childSecondLevel.getStructure()));
+                System.out.println(i + ":\t\t " + smiGen.create(childSecondLevel.getStructure()) + " (level " + childSecondLevel.getLevel() + ")");
                 for (HierarchyNode childThirdLevel : childSecondLevel.getChildren()) {
                     i++;
-                    System.out.println(i + ":\t\t\t " + smiGen.create(childThirdLevel.getStructure()));
+                    System.out.println(i + ":\t\t\t " + smiGen.create(childThirdLevel.getStructure()) + " (level " + childThirdLevel.getLevel() + ")");
                     Assertions.assertTrue(childThirdLevel.isTerminal());
                 }
             }
@@ -366,16 +367,159 @@ class RECAPTest extends RECAP {
         cycles.find(mol);
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
+        //no match because the amide group is terminal (N must not be of order 1,
+        // as defined in the SMIRKS string
         Assertions.assertTrue(node.getChildren().isEmpty());
 
-        //CC(=O)NC
-        //C(=O)NCCNC(=O)CC
+        mol = smiPar.parseSmiles("CC(=O)NC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        node = recap.buildHierarchy(mol);
+        terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
+        for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
+            terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        //here, the N is not terminal and the fragmentation is "allowed" because the fragments are not just alkyl fragments
+        Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C(=O)C", "*NC")));
 
-//        int i = 0;
-//        System.out.println(i + ": " + smiGen.create(node.getStructure()));
-//        for (HierarchyNode childFirstLevel : node.getChildren()) {
-//            i++;
-//            System.out.println(i + ":\t " + smiGen.create(childFirstLevel.getStructure()));
-//        }
+        //TODO does it really make sense to cleave these terminal amide bonds? But so far, we are in agreement with RDKit
+        mol = smiPar.parseSmiles("C(=O)NCCNC(=O)CC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        node = recap.buildHierarchy(mol);
+        terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
+        for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
+            terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        //molecule can be cleaved at two positions
+        Assertions.assertEquals(3, terminalDescendantsSmilesSet.size());
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C=O", "*NCCN*", "*C(=O)CC")));
+        HashSet<String> childrenSmilesSet = HashSet.newHashSet(node.getChildren().size());
+        for (HierarchyNode child : node.getChildren()) {
+            childrenSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        //children of root node also contain two intermediate structures, listed below
+        Assertions.assertEquals(4, childrenSmilesSet.size());
+        Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*NCCNC(=O)CC", "*NCCNC=O")));
+    }
+
+    @Test
+    void testEsterRule() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        IAtomContainer mol = smiPar.parseSmiles("C1CC1C(=O)OC1OC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+        cycles.find(mol);
+        arom.apply(mol);
+        RECAP recap = new RECAP();
+        HierarchyNode node = recap.buildHierarchy(mol);
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+        Set<String> terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
+        for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
+            terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
+        Assertions.assertEquals(2, node.getChildren().size());
+        Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
+        //in agreement with RDKit
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C(=O)C1CC1", "*OC1OC1")));
+
+        mol = smiPar.parseSmiles("C1CCC(=O)OC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        node = recap.buildHierarchy(mol);
+        //ester group is in ring, no match
+        Assertions.assertTrue(node.isTerminal());
+    }
+
+    @Test
+    void testUreaRule() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        IAtomContainer mol = smiPar.parseSmiles("C1CC1NC(=O)NC1OC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+        cycles.find(mol);
+        arom.apply(mol);
+        RECAP recap = new RECAP();
+        HierarchyNode node = recap.buildHierarchy(mol);
+        //TODO: so far, we are in agreement with RDKit, but throwing away the whole keto group is highly questionable
+        Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
+        Assertions.assertEquals(2, node.getChildren().size());
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+        HashSet<String> childrenSmilesSet = HashSet.newHashSet(node.getChildren().size());
+        for (HierarchyNode child : node.getChildren()) {
+            childrenSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*NC1CC1", "*NC1OC1")));
+
+        //one nitrogen has an additional methyl group now
+        mol = smiPar.parseSmiles("C1CC1NC(=O)N(C)C1OC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        node = recap.buildHierarchy(mol);
+        Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
+        Assertions.assertEquals(2, node.getChildren().size());
+        childrenSmilesSet = HashSet.newHashSet(node.getChildren().size());
+        for (HierarchyNode child : node.getChildren()) {
+            childrenSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*NC1CC1", "*N(C)C1OC1")));
+        Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
+        Assertions.assertEquals(2, node.getChildren().size());
+
+        //urea in a ring - no match!
+        mol = smiPar.parseSmiles("C1CCNC(=O)NC1C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        node = recap.buildHierarchy(mol);
+        Assertions.assertTrue(node.isTerminal());
+
+        //TODO rules "aromatic N to aliphatic C", cyclic amines, and amide also match here (some the products)
+        // but the products should only be *n1cccc1 (level 1) and *NC1OC1 (level 1)
+        mol = smiPar.parseSmiles("c1cccn1C(=O)NC1OC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        node = recap.buildHierarchy(mol);
+
+        //TODO: this also matches too many rules, the products should only be *n1cccc1 (level 1) and *n1cccc1C (level 1)
+        mol = smiPar.parseSmiles("c1cccn1C(=O)n1c(C)ccc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        node = recap.buildHierarchy(mol);
+    }
+
+    @Test
+    void testAmineRule() throws Exception {
+        //carry on here...
+    }
+
+    private void printTree(HierarchyNode node) throws Exception {
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+        int i = 0;
+        System.out.println(i + ": " + smiGen.create(node.getStructure()) + " (level " + node.getLevel() + ")");
+        Assertions.assertTrue(node.getMaximumLevelOfAllDescendants() <= 3);
+        for (HierarchyNode childFirstLevel : node.getChildren()) {
+            i++;
+            System.out.println(i + ":\t " + smiGen.create(childFirstLevel.getStructure()) + " (level " + childFirstLevel.getLevel() + ")");
+            for (HierarchyNode childSecondLevel : childFirstLevel.getChildren()) {
+                i++;
+                System.out.println(i + ":\t\t " + smiGen.create(childSecondLevel.getStructure()) + " (level " + childSecondLevel.getLevel() + ")");
+                for (HierarchyNode childThirdLevel : childSecondLevel.getChildren()) {
+                    i++;
+                    System.out.println(i + ":\t\t\t " + smiGen.create(childThirdLevel.getStructure()) + " (level " + childThirdLevel.getLevel() + ")");
+                    Assertions.assertTrue(childThirdLevel.isTerminal());
+                }
+            }
+        }
     }
 }
