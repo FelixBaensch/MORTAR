@@ -74,37 +74,50 @@ public class RECAP {
     //TODO track information which cleavage rules were applied?
     //TODO make public method to check how many rule matches are in a molecule (and reject mols with more than 31)
     //TODO limit tree depth?
+    //TODO option for hydrogen saturation instead of R?
     /*
      * Notes on SMIRKS/SMARTS:
      * - when using the any-atom "*", be aware that it also matches pseudo (R)
-     *   atoms; so think about avoiding this by adding ";!#0" in the any-atom
-     *   definition
+     *   atoms which can be the product of other cleavages; so think about
+     *   avoiding this by adding ";!#0" in the any-atom definition
      * */
     /**
-     * 1 = Amide -> aliphatic C that is NOT connected to two N (as not to
-     * match urea) (index 1), connected via a non-ring double bond to an
-     * aliphatic O (index 2), connected via a non-ring bond to N with a
-     * neutral charge and a degree of not 1, can be aliphatic or aromatic
-     * (index 3) -> reacts to C index 1 connected to O index 2 and to an R
-     * atom and N index 3 connected to an R atom -> note that the
-     * result is an aldehyde and an amine, not a carboxylic acid or ester
-     * and an amine -> note also that the atoms can potentially be in a
-     * ring, just not the bonds
-     * TODO: insert ";!$([#7][#0]);!$([#7]([#0])[#0])" to avoid matching pseudo atoms that resulted from a previous cleavage?
-     * TODO: transform this into carboxy acid and amine? Right now, we get aldehyde and amine
+     * RECAP rule nr 1: Amide.
+     * <br>An aliphatic C (index 1) that is...
+     * <br>-> of degree 3, i.e. we do NOT want to match H-C(=O)-N-...
+     * (degree 4 is impossible because of the double bond to O)
+     * <br>-> NOT connected to two N (as not to match urea)
+     * <br>-> NOT connected to a pseudo atom, i.e. we do NOT want to match R-C(=O)-N-...
+     * <br>-> connected via a non-ring double bond to an aliphatic O (index 2)
+     * <br>-> connected via a non-ring bond to N (index 3) that is...
+     * <br>     -> aliphatic or aromatic
+     * <br>     -> charged neutrally
+     * <br>     -> has a degree of not 1, i.e. we do NOT want to match ...-C(=O)-NH2
+     * <br>     -> NOT connected to a pseudo atom, i.e. we do NOT want to match ...-C(=O)-N-R.
+     * <br>Reacts to C (index 1) connected to O (index 2) via a double bond and a
+     * newly added single-bound O which is connected to an R atom (carboxylic acid).
+     * <br>On the other side, there is an N (index 3) connected to an R atom (primary or secondary amine).
+     * <br>Note that the atoms can potentially be in a ring but not the bond that is
+     * to be broken (no conflict with lactam rule).
      */
-    //private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1;!$([#7][#0]);!$([#7]([#0])[#0]):3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
-    public static final CleavageRule AMIDE = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1:3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
+    public static final CleavageRule AMIDE = new CleavageRule("[C;D3;!$(C([#7])[#7]);!$(C[#0]):1](=!@[O:2])!@[#7;+0;!D1;!$([#7][#0]):3]", "[C:1](=[O:2])O*.*[#7:3]", "Amide");
     /**
-     * 2 = Ester -> aliphatic C (index 1), connected via a non-ring double
-     * bond to aliphatic O (index 2) as a side chain, connected via a
-     * non-ring bond to an aliphatic O with a neutral charge (index 3) ->
-     * reacts to C index 1 connected to O index 2 and to any other atom and
-     * O index 3 connected to any other atom -> note that the result is an
-     * aldehyde (not a carboxylic acid) and an alcohol -> note also that the
-     * atoms can potentially be in a ring, just not the bonds
+     * RECAP rule nr 2: Ester.
+     * <br>An aliphatic C (index 1) that is...
+     * <br>-> of degree 3, i.e. we do NOT want to match H-C(=O)-O-...
+     * (degree 4 is impossible because of the double bond to O)
+     * <br>-> NOT connected to a pseudo atom, i.e. we do NOT want to match R-C(=O)-O-...
+     * <br>-> connected via a non-ring double bond to an aliphatic O (index 2)
+     * <br>-> connected via a non-ring bond to an aliphatic O (index 3) that is...
+     * <br>     -> charged neutrally
+     * <br>     -> has a degree of 2, i.e. we do NOT want to match ...-C(=O)-OH
+     * <br>     -> NOT connected to a pseudo atom, i.e. we do NOT want to match ...-C(=O)-O-R.
+     * <br>Reacts to C (index 1) connected to O (index 2) via a double bond and a
+     * newly added single-bound O which is connected to an R atom (carboxylic acid).
+     * <br>On the other side, there is an O (index 3) connected to an R atom (alcohol).
+     * <br>Note that this group cannot be in a ring.
      */
-    public static final CleavageRule ESTER = new CleavageRule("[C:1](=!@[O:2])!@[O;+0:3]", "*[C:1]=[O:2].[O:3]*", "Ester");
+    public static final CleavageRule ESTER = new CleavageRule("[C;D3;!$(C[#0]):1](=!@[O:2])!@[O;+0;D2;!$(O[#0]):3]", "[C:1](=[O:2])O*.*[O:3]", "Ester");
     //TODO does this also work for tertiary amines? I guess it matches multiple times?
     //TODO this does not align with the RECAP paper definition of the amine cleavage rule, i.e. it does not match the example structure; see also additional rule "cyclic amines" below
     /**
@@ -115,11 +128,12 @@ public class RECAP {
      * any atom (index 2) -> reacts to the two any atoms with indices 1 and
      * 2, each connected to any other atom -> note that the amine / N is
      * discarded! -> note also that the atoms can potentially be in a ring,
-     * just not the bonds -> simpler alternative would be (without excluding
-     * any sort of amines): [N;!D1](!@[*:1])!@[*:2]>>*[*:1].[*:2]*
+     * just not the bonds
      * ";!#0" was added for the two any-atoms to avoid matching pseudo atoms that resulted from a previous cleavage
      */
-    //TODO test this further
+    //TODO test this further, why the empty environment?
+    //TODO split into secondary and tertiary?
+    //TODO what could be the educts?
     public static final CleavageRule AMINE = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16]);!$()](-!@[*;!#0:1])-!@[*;!#0:2]", "*[*:1].[*:2]*", "Amine");
     /**
      * 4 = Urea -> aliphatic or aromatic(!) N with a neutral charge and a
@@ -167,7 +181,7 @@ public class RECAP {
      * synthesized note also that the atoms can potentially be in a ring
      * (the n must be), just not the bonds
      */
-    public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule("[n;+0:1]-!@[C:2]", "[n:1]*.[C:2]*", "Aromatic nitrogen to aliphatic carbon");
+    public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule("[n;+0:1]-!@[C;!$(C=O):2]", "[n:1]*.[C:2]*", "Aromatic nitrogen to aliphatic carbon");
     /**
      * 9 = Lactam nitrogen - aliphatic carbon -> an aliphatic O (index 3)
      * connected via a double bond (ring or non-ring) to an aliphatic C
@@ -205,7 +219,7 @@ public class RECAP {
      * as to how the structure was synthesized
      * ";!#0" was inserted to avoid matching pseudo atoms that resulted from a previous cleavage
      */
-    public static final CleavageRule CYCLIC_AMINES = new CleavageRule("[#7;R;D3;+0:1]-!@[*;!#0:2]", "*[#7:1].[*:2]*", "Cyclic amines");
+    public static final CleavageRule CYCLIC_AMINES = new CleavageRule("[#7;R;D3;+0:1]-!@[*;!#0;!$(C=O):2]", "*[#7:1].[*:2]*", "Cyclic amines");
     //TODO this is not part of the original RECAP, make it optional?
     /**
      * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral

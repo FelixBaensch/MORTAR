@@ -156,9 +156,9 @@ class RECAPTest extends RECAP {
             terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
         }
         Assertions.assertEquals(4, terminalDescendantsSmilesSet.size());
-        //corresponds to RECAP paper, except for the Fluorphenole described there,
-        // but it is not described how this came to be
-        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*c1ccc(F)cc1", "*CCC*", "*NC1CCN(*)CC1OC", "*C(=O)c1cc(Cl)c(N)cc1OC")));
+        //generally corresponds to RECAP paper, except for the Fluorphenole described there,
+        // but it is not described how this came to be; plus, we make a carboxylic acid and an amine out of the amide, not an aldehyde
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*c1ccc(F)cc1", "*CCC*", "*NC1CCN(*)CC1OC", "*OC(=O)c1cc(Cl)c(N)cc1OC")));
     }
     /**
      * Corresponds to RDKit implementation test 2.
@@ -316,50 +316,139 @@ class RECAPTest extends RECAP {
      *
      */
     @Test
-    void testAmideRule() throws Exception {
+    void testAmideRuleIndividually() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        IAtomContainer mol = smiPar.parseSmiles("C1CC1C(=O)NC1OC1");
-        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         CycleFinder cycles = Cycles.cdkAromaticSet();
         Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("CCCCC(=O)N(*)*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
+        //do not match N connected to a pseudo atom, as to not match results of other cleavages
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)N(*)CCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match N connect to a pseudo atom, as to not match results of other cleavages
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("*C(=O)N(CCCCCCCCCCCC)CCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match C connect to a pseudo atom, as to not match results of other cleavages
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)N(CCCCCCCCC)CCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)NCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C(=O)N(CCCCCCCCC)CCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because C is terminal
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)N");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because N is terminal
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1(=O)NCCCCCC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because of the ring, this is a lactam!
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)N(CCC2)CCCCC2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do match even though N is in a ring
+        Assertions.assertTrue(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)n(cn1)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do match even though n is in a ring and aromatic
+        Assertions.assertTrue(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCN(CCCC)C(=O)N(CCCC)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match urea
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+    }
+    /**
+     *
+     */
+    @Test
+    void testAmideRuleIntegration() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
         RECAP recap = new RECAP();
-        HierarchyNode node = recap.buildHierarchy(mol);
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+
+        IAtomContainer mol = smiPar.parseSmiles("C1CC1C(=O)NC1OC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        HierarchyNode node = recap.buildHierarchy(mol);
+        Assertions.assertEquals(2, node.getChildren().size());
         Set<String> terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
         for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
             terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
         }
+        //one match - the amide rule, two products
         Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
-        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C(=O)C1CC1", "*NC1OC1")));
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*OC(=O)C1CC1", "*NC1OC1")));
 
         // N is now of degree three because of additional methyl group
-        //TODO the products also match the amine rule
         mol = smiPar.parseSmiles("C1CC1C(=O)N(C)C1OC1");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
+        //one match - the amide rule, two products
+        Assertions.assertEquals(2, node.getChildren().size());
         terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
         for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
             terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
         }
         Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
-        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C(=O)C1CC1", "*N(C)C1OC1")));
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*OC(=O)C1CC1", "*N(C)C1OC1")));
 
-        //TODO this also matches aromatic nitrogen to aliphatic carbon and cyclic amine, is this a problem?
         mol = smiPar.parseSmiles("C1CC1C(=O)n1cccc1");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
+        // one match - the amide rule, two products
+        Assertions.assertEquals(2, node.getChildren().size());
         terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
         for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
             terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
         }
         Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
-        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C(=O)C1CC1", "*n1cccc1")));
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*OC(=O)C1CC1", "*n1cccc1")));
 
 
         mol = smiPar.parseSmiles("CC(=O)N");
@@ -368,7 +457,7 @@ class RECAPTest extends RECAP {
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
         //no match because the amide group is terminal (N must not be of order 1,
-        // as defined in the SMIRKS string
+        // as defined in the SMIRKS string)
         Assertions.assertTrue(node.getChildren().isEmpty());
 
         mol = smiPar.parseSmiles("CC(=O)NC");
@@ -376,38 +465,82 @@ class RECAPTest extends RECAP {
         cycles.find(mol);
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
+        Assertions.assertEquals(2, node.getChildren().size());
         terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
         for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
             terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
         }
         //here, the N is not terminal and the fragmentation is "allowed" because the fragments are not just alkyl fragments
         Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
-        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C(=O)C", "*NC")));
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*OC(=O)C", "*NC")));
 
-        //TODO does it really make sense to cleave these terminal amide bonds? But so far, we are in agreement with RDKit
+        //disagreement with RDKit: we do not cleave terminal amide
         mol = smiPar.parseSmiles("C(=O)NCCNC(=O)CC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
+        Assertions.assertEquals(2, node.getChildren().size());
         terminalDescendantsSmilesSet = HashSet.newHashSet(node.getOnlyTerminalDescendants().size());
         for (HierarchyNode child : node.getOnlyTerminalDescendants()) {
             terminalDescendantsSmilesSet.add(smiGen.create(child.getStructure()));
         }
-        //molecule can be cleaved at two positions
-        Assertions.assertEquals(3, terminalDescendantsSmilesSet.size());
-        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C=O", "*NCCN*", "*C(=O)CC")));
-        HashSet<String> childrenSmilesSet = HashSet.newHashSet(node.getChildren().size());
-        for (HierarchyNode child : node.getChildren()) {
-            childrenSmilesSet.add(smiGen.create(child.getStructure()));
-        }
-        //children of root node also contain two intermediate structures, listed below
-        Assertions.assertEquals(4, childrenSmilesSet.size());
-        Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*NCCNC(=O)CC", "*NCCNC=O")));
+        //molecule can be cleaved at one position
+        Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*NCCNC=O", "*OC(=O)CC")));
     }
 
     @Test
-    void testEsterRule() throws Exception {
+    void testEsterRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("CCCCC(=O)O*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match O connected to a pseudo atom, as to not match results of other cleavages
+        Assertions.assertFalse(RECAP.ESTER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("*C(=O)OCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match C connect to a pseudo atom, as to not match results of other cleavages
+        Assertions.assertFalse(RECAP.ESTER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)OCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.ESTER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C(=O)OCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because C is terminal
+        Assertions.assertFalse(RECAP.ESTER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because O is terminal
+        Assertions.assertFalse(RECAP.ESTER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1(=O)OCCCCCC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because of the ring
+        Assertions.assertFalse(RECAP.ESTER.getEductPattern().matches(mol));
+    }
+
+    @Test
+    void testEsterRuleIntegration() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         IAtomContainer mol = smiPar.parseSmiles("C1CC1C(=O)OC1OC1");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
@@ -425,8 +558,8 @@ class RECAPTest extends RECAP {
         Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
         Assertions.assertEquals(2, node.getChildren().size());
         Assertions.assertEquals(2, terminalDescendantsSmilesSet.size());
-        //in agreement with RDKit
-        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*C(=O)C1CC1", "*OC1OC1")));
+        //in agreement with RDKit except for the carboxylic acid on one side, instead of an aldehyde
+        Assertions.assertTrue(terminalDescendantsSmilesSet.containsAll(List.of("*OC(=O)C1CC1", "*OC1OC1")));
 
         mol = smiPar.parseSmiles("C1CCC(=O)OC1");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
@@ -507,7 +640,7 @@ class RECAPTest extends RECAP {
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         int i = 0;
         System.out.println(i + ": " + smiGen.create(node.getStructure()) + " (level " + node.getLevel() + ")");
-        Assertions.assertTrue(node.getMaximumLevelOfAllDescendants() <= 3);
+        Assertions.assertTrue(node.getMaximumLevelOfAllDescendants() <= 4);
         for (HierarchyNode childFirstLevel : node.getChildren()) {
             i++;
             System.out.println(i + ":\t " + smiGen.create(childFirstLevel.getStructure()) + " (level " + childFirstLevel.getLevel() + ")");
@@ -517,7 +650,11 @@ class RECAPTest extends RECAP {
                 for (HierarchyNode childThirdLevel : childSecondLevel.getChildren()) {
                     i++;
                     System.out.println(i + ":\t\t\t " + smiGen.create(childThirdLevel.getStructure()) + " (level " + childThirdLevel.getLevel() + ")");
-                    Assertions.assertTrue(childThirdLevel.isTerminal());
+                    for (HierarchyNode childFourthLevel : childThirdLevel.getChildren()) {
+                        i++;
+                        System.out.println(i + ":\t\t\t\t " + smiGen.create(childFourthLevel.getStructure()) + " (level " + childFourthLevel.getLevel() + ")");
+                        Assertions.assertTrue(childFourthLevel.isTerminal());
+                    }
                 }
             }
         }
