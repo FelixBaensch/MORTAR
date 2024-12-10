@@ -62,67 +62,6 @@ import java.util.Queue;
  * @version 1.0.0.0
  */
 public class RECAP {
-    /**
-     * TODO doc
-     * private: Limits access to within the enclosing class.
-     * static: Makes the class independent of the enclosing class's instances.
-     * final: Prevents the class from being extended.
-     */
-    private static final class CleavageRule {
-        //TODO move to State?
-        private final String smirksCode;
-
-        private final String eductSmartsCode;
-
-        private final String productSmartsCode;
-
-        private final String name;
-
-        private final SmirksTransform transformation;
-
-        private final Pattern eductPattern;
-
-        private CleavageRule(String smirksCode, String name) {
-            //TODO checks
-            this(smirksCode.split(">>")[0], smirksCode.split(">>")[1], name);
-        }
-
-        private CleavageRule(String eductSmarts, String productSmarts, String name) {
-            this.eductSmartsCode = eductSmarts;
-            this.productSmartsCode = productSmarts;
-            this.name = name;
-            this.smirksCode = String.format("%s>>%s", eductSmarts, productSmarts);
-            //can throw IllegalStateException if code is invalid
-            this.transformation = Smirks.compile(this.smirksCode);
-            //TODO is this a problem? We want cycle detection and aromaticity detection to be done externally, explicitly
-            this.transformation.setPrepare(false);
-            this.eductPattern = SmartsPattern.create(eductSmarts);
-        }
-
-        private String getName() {
-            return this.name;
-        }
-
-        private SmirksTransform getTransformation() {
-            return this.transformation;
-        }
-
-        private String getEductSmartsCode() {
-            return this.eductSmartsCode;
-        }
-
-        private String getProductSmartsCode() {
-            return this.productSmartsCode;
-        }
-
-        private Pattern getEductPattern() {
-            return this.eductPattern;
-        }
-
-        private String getSmirksCode() {
-            return this.smirksCode;
-        }
-    }
     //TODO implement tests from RECAP paper and RDKit
     //TODO RDKit generate a mapping of SMILES code to hierarchy node to reduce the search space (deduplication)
     // and be able to add more molecules and their fragments into the map (but not the hierarchy)!
@@ -135,6 +74,156 @@ public class RECAP {
     //TODO track information which cleavage rules were applied?
     //TODO make public method to check how many rule matches are in a molecule (and reject mols with more than 31)
     //TODO limit tree depth?
+    /*
+     * Notes on SMIRKS/SMARTS:
+     * - when using the any-atom "*", be aware that it also matches pseudo (R)
+     *   atoms; so think about avoiding this by adding ";!#0" in the any-atom
+     *   definition
+     * */
+    /**
+     * 1 = Amide -> aliphatic C that is NOT connected to two N (as not to
+     * match urea) (index 1), connected via a non-ring double bond to an
+     * aliphatic O (index 2), connected via a non-ring bond to N with a
+     * neutral charge and a degree of not 1, can be aliphatic or aromatic
+     * (index 3) -> reacts to C index 1 connected to O index 2 and to an R
+     * atom and N index 3 connected to an R atom -> note that the
+     * result is an aldehyde and an amine, not a carboxylic acid or ester
+     * and an amine -> note also that the atoms can potentially be in a
+     * ring, just not the bonds
+     * TODO: insert ";!$([#7][#0]);!$([#7]([#0])[#0])" to avoid matching pseudo atoms that resulted from a previous cleavage?
+     * TODO: transform this into carboxy acid and amine? Right now, we get aldehyde and amine
+     */
+    //private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1;!$([#7][#0]);!$([#7]([#0])[#0]):3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
+    public static final CleavageRule AMIDE = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1:3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
+    /**
+     * 2 = Ester -> aliphatic C (index 1), connected via a non-ring double
+     * bond to aliphatic O (index 2) as a side chain, connected via a
+     * non-ring bond to an aliphatic O with a neutral charge (index 3) ->
+     * reacts to C index 1 connected to O index 2 and to any other atom and
+     * O index 3 connected to any other atom -> note that the result is an
+     * aldehyde (not a carboxylic acid) and an alcohol -> note also that the
+     * atoms can potentially be in a ring, just not the bonds
+     */
+    public static final CleavageRule ESTER = new CleavageRule("[C:1](=!@[O:2])!@[O;+0:3]", "*[C:1]=[O:2].[O:3]*", "Ester");
+    //TODO does this also work for tertiary amines? I guess it matches multiple times?
+    //TODO this does not align with the RECAP paper definition of the amine cleavage rule, i.e. it does not match the example structure; see also additional rule "cyclic amines" below
+    /**
+     * 3 = Amine -> aliphatic N with a neutral charge and a degree of NOT 1
+     * that is also NOT connected to a C connected via a double bond to N,
+     * O, P, or S (to avoid any form of amides) but connected via a non-ring
+     * bond to any atom (index 1) as a side chain and via a non-ring bond to
+     * any atom (index 2) -> reacts to the two any atoms with indices 1 and
+     * 2, each connected to any other atom -> note that the amine / N is
+     * discarded! -> note also that the atoms can potentially be in a ring,
+     * just not the bonds -> simpler alternative would be (without excluding
+     * any sort of amines): [N;!D1](!@[*:1])!@[*:2]>>*[*:1].[*:2]*
+     * ";!#0" was added for the two any-atoms to avoid matching pseudo atoms that resulted from a previous cleavage
+     */
+    //TODO test this further
+    public static final CleavageRule AMINE = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16]);!$()](-!@[*;!#0:1])-!@[*;!#0:2]", "*[*:1].[*:2]*", "Amine");
+    /**
+     * 4 = Urea -> aliphatic or aromatic(!) N with a neutral charge and a
+     * degree of 2 or 3 (index 1), connected via a non-ring bond to an
+     * aliphatic C, connected via a non-ring double bond to an aliphatic O
+     * as a side chain and via a non-ring bond to another aliphatic or
+     * aromatic(!) N with a neutral charge and a degree of 2 or 3 (index 2)
+     * reacts to two N atoms (indices 1 and 2) that are unconnected but each
+     * to connected to any other atom note that the central keto group is
+     * discarded! We get two amines as a result of the reaction (one
+     * possible way to synthesize a urea functionality) note also that the
+     * atoms can potentially be in a ring, just not the bonds
+     */
+    public static final CleavageRule UREA = new CleavageRule("[#7;+0;D2,D3:1]!@C(!@=O)!@[#7;+0;D2,D3:2]", "*[#7:1].[#7:2]*", "Urea");
+    /**
+     * 5 = Ether -> aliphatic or aromatic(!) C (index 1) connected via a
+     * non-ring bond to an aliphatic O with a neutral charge, connected via
+     * a non-ring bond to an aliphatic or aromatic(!) C (index 2) reacts to
+     * the two carbon atoms connected to any other atom note that the ether
+     * O is discarded, we do not get an alcohol or sth similar as result
+     * note also that the atoms can potentially be in a ring, just not the
+     * bonds
+     * ";!$(O-[#6]=O)" was added to the central O to avoid matching ester groups
+     */
+    public static final CleavageRule ETHER = new CleavageRule("[#6:1]-!@[O;+0;!$(O-[#6]=O)]-!@[#6:2]", "[#6:1]*.*[#6:2]", "Ether");
+    /**
+     * 6 = Olefin -> an aliphatic C (index 1) connected via a non-ring
+     * double bond to another aliphatic C (index 2) reacts to the two carbon
+     * atoms each connected to any atom note that the double bond is simply
+     * split, no assumption is made as to how it was synthesized note also
+     * that the degree of the carbon atoms is not specified note also that
+     * the atoms can potentially be in a ring, just not the bonds
+     */
+    public static final CleavageRule OLEFIN = new CleavageRule("[C:1]=!@[C:2]", "[C:1]*.*[C:2]", "Olefin");
+    //TODO what about this? I do not think it is covered by nr 3 (amine)!
+    /**
+     * 7 = Quaternary nitrogen
+     */
+    public static final CleavageRule QUATERNARY_NITROGEN = new CleavageRule("", "", "Quaternary nitrogen");
+    /**
+     * 8 = Aromatic nitrogen - aliphatic carbon -> an aromatic N with a
+     * neutral charge (index 1) connected via a non-ring bond to an
+     * aliphatic C (index 2) reacts to both atoms connected to any other
+     * atom note that no assumption is made as to how the structure was
+     * synthesized note also that the atoms can potentially be in a ring
+     * (the n must be), just not the bonds
+     */
+    public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule("[n;+0:1]-!@[C:2]", "[n:1]*.[C:2]*", "Aromatic nitrogen to aliphatic carbon");
+    /**
+     * 9 = Lactam nitrogen - aliphatic carbon -> an aliphatic O (index 3)
+     * connected via a double bond (ring or non-ring) to an aliphatic C
+     * (index 4) connected via a ring bond(!) to an aliphatic N with a
+     * neutral charge (index 1) connected via a non-ring bond to an
+     * aliphatic C (index 2) reacts to the C index 2 being split from the
+     * rest of the structure note that C index 2 could be in different ring
+     * note also that no assumption is made as to how the structure was
+     * synthesized
+     */
+    public static final CleavageRule LACTAM_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule("[O:3]=[C:4]-@[N;+0:1]-!@[C:2]", "[O:3]=[C:4]-[N:1]*.[C:2]*", "Lactam nitrogen to aliphatic carbon");
+    /**
+     * 10 = Aromatic carbon - aromatic carbon -> aromatic C (index 1)
+     * connected via a non-ring bond(!) to another aromatic C (index 2)
+     * reacts to the bond in between being split note that no assumption is
+     * made as to how the structure was synthesized
+     */
+    public static final CleavageRule AROMATIC_CARBON_TO_AROMATIC_CARBON = new CleavageRule("[c:1]-!@[c:2]", "[c:1]*.*[c:2]", "Aromatic carbon to aromatic carbon");
+    /**
+     * 11 = Sulphonamide -> an aliphatic or aromatic N with a neutral charge
+     * and a degree of 2 or 3 (index 1) connected via a non-ring bond to an
+     * alipathic S (index 2) connected to two aliphatic O (indices 3 and 4)
+     * via double bonds reacts to the bond between N and S being split note
+     * that the atoms could be in rings, just not the bond that is split
+     * note that no assumption is made as to how the structure was
+     * synthesized
+     */
+    public static final CleavageRule SULPHONAMIDE = new CleavageRule("[#7;+0;D2,D3:1]-!@[S:2](=[O:3])=[O:4]", "[#7:1]*.*[S:2](=[O:3])=[O:4]", "Sulphonamide");
+    //TODO this is not part of the original RECAP, make it optional?
+    /**
+     * S1 = Cyclic amines -> an aliphatic or aromatic N in a ring, with a
+     * degree of 3, and a neutral charge (index 1) connected via a non-ring
+     * bond to any atom (index 2) reacts to the N connected to any atom and
+     * the other atom connected to any atom note that no assumption is made
+     * as to how the structure was synthesized
+     * ";!#0" was inserted to avoid matching pseudo atoms that resulted from a previous cleavage
+     */
+    public static final CleavageRule CYCLIC_AMINES = new CleavageRule("[#7;R;D3;+0:1]-!@[*;!#0:2]", "*[#7:1].[*:2]*", "Cyclic amines");
+    //TODO this is not part of the original RECAP, make it optional?
+    /**
+     * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral
+     * charge (index 1) connected via a non-ring bond(!) to an aromatic C
+     * (index 2) reacts to the bond in between being split note that no
+     * assumption is made as to how the structure was synthesized note also
+     * that both atoms are in different rings
+     */
+    public static final CleavageRule AROMATIC_NITROGEN_TO_AROMATIC_CARBON = new CleavageRule("[n;+0:1]-!@[c:2]", "[n:1]*.*[c:2]", "Aromatic nitrogen to aromatic carbon");
+    /**
+     * String array of SMIRKS reaction transform codes that describe the
+     * cleavage rules.
+     */
+    public static final CleavageRule[] CLEAVAGE_RULES = {RECAP.AMIDE, RECAP.ESTER,
+            RECAP.AMINE, RECAP.UREA, RECAP.ETHER, RECAP.OLEFIN, RECAP.QUATERNARY_NITROGEN,
+            RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON, RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON,
+            RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON, RECAP.SULPHONAMIDE, RECAP.CYCLIC_AMINES,
+            RECAP.AROMATIC_NITROGEN_TO_AROMATIC_CARBON};
     /**
      *
      */
@@ -175,6 +264,70 @@ public class RECAP {
         State state = new State();
         return state.buildHierarchy(mol, minimumFragmentSize);
     }
+    /**
+     * TODO doc
+     * public: Accessible by calling code.
+     * static: Makes the class independent of the enclosing class's instances.
+     * final: Prevents the class from being extended.
+     */
+    public static final class CleavageRule {
+        private final String smirksCode;
+
+        private final String eductSmartsCode;
+
+        private final String productSmartsCode;
+
+        private final String name;
+
+        private final SmirksTransform transformation;
+
+        private final Pattern eductPattern;
+
+        public CleavageRule(String smirksCode, String name) {
+            //TODO checks
+            this(smirksCode.split(">>")[0], smirksCode.split(">>")[1], name);
+        }
+
+        public CleavageRule(String eductSmarts, String productSmarts, String name) {
+            this.eductSmartsCode = eductSmarts;
+            this.productSmartsCode = productSmarts;
+            this.name = name;
+            this.smirksCode = String.format("%s>>%s", eductSmarts, productSmarts);
+            //can throw IllegalStateException if code is invalid
+            this.transformation = Smirks.compile(this.smirksCode);
+            //TODO is this a problem? We want cycle detection and aromaticity detection to be done externally, explicitly
+            this.transformation.setPrepare(false);
+            this.eductPattern = SmartsPattern.create(eductSmarts);
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public SmirksTransform getTransformation() {
+            return this.transformation;
+        }
+
+        public String getEductSmartsCode() {
+            return this.eductSmartsCode;
+        }
+
+        public String getProductSmartsCode() {
+            return this.productSmartsCode;
+        }
+
+        public Pattern getEductPattern() {
+            return this.eductPattern;
+        }
+
+        public String getSmirksCode() {
+            return this.smirksCode;
+        }
+
+        public CleavageRule copy() {
+            return new CleavageRule(this.eductSmartsCode, this.productSmartsCode, this.name);
+        }
+    }
 
     /**
      * public: Accessible by calling code since this is a return value.
@@ -189,7 +342,7 @@ public class RECAP {
 
         private final List<HierarchyNode> children;
 
-        private HierarchyNode(IAtomContainer molecule) {
+        public HierarchyNode(IAtomContainer molecule) {
             this.structure = molecule;
             this.parents = new ArrayList<>();
             this.children = new ArrayList<>();
@@ -289,161 +442,19 @@ public class RECAP {
 
     /**
      * Encapsulating the state of the algorithm allows thread-safe calling.
+     *
      * private: Limits access to within the enclosing class.
-     * static: Makes the class independent of the enclosing class's instances.
      * final: Prevents the class from being extended.
      */
-    private static final class State {
-        /*
-        * Notes on SMIRKS/SMARTS:
-        * - when using the any-atom "*", be aware that it also matches pseudo (R)
-        *   atoms; so think about avoiding this by adding ";!#0" in the any-atom
-        *   definition
-        * */
-        /**
-         * 1 = Amide -> aliphatic C that is NOT connected to two N (as not to
-         * match urea) (index 1), connected via a non-ring double bond to an
-         * aliphatic O (index 2), connected via a non-ring bond to N with a
-         * neutral charge and a degree of not 1, can be aliphatic or aromatic
-         * (index 3) -> reacts to C index 1 connected to O index 2 and to an R
-         * atom and N index 3 connected to an R atom -> note that the
-         * result is an aldehyde and an amine, not a carboxylic acid or ester
-         * and an amine -> note also that the atoms can potentially be in a
-         * ring, just not the bonds
-         * TODO: insert ";!$([#7][#0]);!$([#7]([#0])[#0])" to avoid matching pseudo atoms that resulted from a previous cleavage?
-         * TODO: transform this into carboxy acid and amine? Right now, we get aldehyde and amine
-         */
-        //private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1;!$([#7][#0]);!$([#7]([#0])[#0]):3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
-        private final CleavageRule amide = new CleavageRule("[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1:3]", "*[C:1]=[O:2].*[#7:3]", "Amide");
-        /**
-         * 2 = Ester -> aliphatic C (index 1), connected via a non-ring double
-         * bond to aliphatic O (index 2) as a side chain, connected via a
-         * non-ring bond to an aliphatic O with a neutral charge (index 3) ->
-         * reacts to C index 1 connected to O index 2 and to any other atom and
-         * O index 3 connected to any other atom -> note that the result is an
-         * aldehyde (not a carboxylic acid) and an alcohol -> note also that the
-         * atoms can potentially be in a ring, just not the bonds
-         */
-        private final CleavageRule ester = new CleavageRule("[C:1](=!@[O:2])!@[O;+0:3]", "*[C:1]=[O:2].[O:3]*", "Ester");
-        //TODO does this also work for tertiary amines? I guess it matches multiple times?
-        //TODO this does not align with the RECAP paper definition of the amine cleavage rule, i.e. it does not match the example structure; see also additional rule "cyclic amines" below
-        /**
-         * 3 = Amine -> aliphatic N with a neutral charge and a degree of NOT 1
-         * that is also NOT connected to a C connected via a double bond to N,
-         * O, P, or S (to avoid any form of amides) but connected via a non-ring
-         * bond to any atom (index 1) as a side chain and via a non-ring bond to
-         * any atom (index 2) -> reacts to the two any atoms with indices 1 and
-         * 2, each connected to any other atom -> note that the amine / N is
-         * discarded! -> note also that the atoms can potentially be in a ring,
-         * just not the bonds -> simpler alternative would be (without excluding
-         * any sort of amines): [N;!D1](!@[*:1])!@[*:2]>>*[*:1].[*:2]*
-         * ";!#0" was added for the two any-atoms to avoid matching pseudo atoms that resulted from a previous cleavage
-         */
-        //TODO test this further
-        private final CleavageRule amine = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16]);!$()](-!@[*;!#0:1])-!@[*;!#0:2]", "*[*:1].[*:2]*", "Amine");
-        /**
-         * 4 = Urea -> aliphatic or aromatic(!) N with a neutral charge and a
-         * degree of 2 or 3 (index 1), connected via a non-ring bond to an
-         * aliphatic C, connected via a non-ring double bond to an aliphatic O
-         * as a side chain and via a non-ring bond to another aliphatic or
-         * aromatic(!) N with a neutral charge and a degree of 2 or 3 (index 2)
-         * reacts to two N atoms (indices 1 and 2) that are unconnected but each
-         * to connected to any other atom note that the central keto group is
-         * discarded! We get two amines as a result of the reaction (one
-         * possible way to synthesize a urea functionality) note also that the
-         * atoms can potentially be in a ring, just not the bonds
-         */
-        private final CleavageRule urea = new CleavageRule("[#7;+0;D2,D3:1]!@C(!@=O)!@[#7;+0;D2,D3:2]", "*[#7:1].[#7:2]*", "Urea");
-        /**
-         * 5 = Ether -> aliphatic or aromatic(!) C (index 1) connected via a
-         * non-ring bond to an aliphatic O with a neutral charge, connected via
-         * a non-ring bond to an aliphatic or aromatic(!) C (index 2) reacts to
-         * the two carbon atoms connected to any other atom note that the ether
-         * O is discarded, we do not get an alcohol or sth similar as result
-         * note also that the atoms can potentially be in a ring, just not the
-         * bonds
-         * ";!$(O-[#6]=O)" was added to the central O to avoid matching ester groups
-         */
-        private final CleavageRule ether = new CleavageRule("[#6:1]-!@[O;+0;!$(O-[#6]=O)]-!@[#6:2]", "[#6:1]*.*[#6:2]", "Ether");
-        /**
-         * 6 = Olefin -> an aliphatic C (index 1) connected via a non-ring
-         * double bond to another aliphatic C (index 2) reacts to the two carbon
-         * atoms each connected to any atom note that the double bond is simply
-         * split, no assumption is made as to how it was synthesized note also
-         * that the degree of the carbon atoms is not specified note also that
-         * the atoms can potentially be in a ring, just not the bonds
-         */
-        private final CleavageRule olefin = new CleavageRule("[C:1]=!@[C:2]", "[C:1]*.*[C:2]", "Olefin");
-        //TODO what about this? I do not think it is covered by nr 3 (amine)!
-        /**
-         * 7 = Quaternary nitrogen
-         */
-        private final CleavageRule quaternaryNitrogen = new CleavageRule("", "", "Quaternary nitrogen");
-        /**
-         * 8 = Aromatic nitrogen - aliphatic carbon -> an aromatic N with a
-         * neutral charge (index 1) connected via a non-ring bond to an
-         * aliphatic C (index 2) reacts to both atoms connected to any other
-         * atom note that no assumption is made as to how the structure was
-         * synthesized note also that the atoms can potentially be in a ring
-         * (the n must be), just not the bonds
-         */
-        private final CleavageRule aromaticNitrogenToAliphaticCarbon = new CleavageRule("[n;+0:1]-!@[C:2]", "[n:1]*.[C:2]*", "Aromatic nitrogen to aliphatic carbon");
-        /**
-         * 9 = Lactam nitrogen - aliphatic carbon -> an aliphatic O (index 3)
-         * connected via a double bond (ring or non-ring) to an aliphatic C
-         * (index 4) connected via a ring bond(!) to an aliphatic N with a
-         * neutral charge (index 1) connected via a non-ring bond to an
-         * aliphatic C (index 2) reacts to the C index 2 being split from the
-         * rest of the structure note that C index 2 could be in different ring
-         * note also that no assumption is made as to how the structure was
-         * synthesized
-         */
-        private final CleavageRule lactamNitrogenToAliphaticCarbon = new CleavageRule("[O:3]=[C:4]-@[N;+0:1]-!@[C:2]", "[O:3]=[C:4]-[N:1]*.[C:2]*", "Lactam nitrogen to aliphatic carbon");
-        /**
-         * 10 = Aromatic carbon - aromatic carbon -> aromatic C (index 1)
-         * connected via a non-ring bond(!) to another aromatic C (index 2)
-         * reacts to the bond in between being split note that no assumption is
-         * made as to how the structure was synthesized
-         */
-        private final CleavageRule aromaticCarbonToAromaticCarbon = new CleavageRule("[c:1]-!@[c:2]", "[c:1]*.*[c:2]", "Aromatic carbon to aromatic carbon");
-        /**
-         * 11 = Sulphonamide -> an aliphatic or aromatic N with a neutral charge
-         * and a degree of 2 or 3 (index 1) connected via a non-ring bond to an
-         * alipathic S (index 2) connected to two aliphatic O (indices 3 and 4)
-         * via double bonds reacts to the bond between N and S being split note
-         * that the atoms could be in rings, just not the bond that is split
-         * note that no assumption is made as to how the structure was
-         * synthesized
-         */
-        private final CleavageRule sulphonamide = new CleavageRule("[#7;+0;D2,D3:1]-!@[S:2](=[O:3])=[O:4]", "[#7:1]*.*[S:2](=[O:3])=[O:4]", "Sulphonamide");
-        //TODO this is not part of the original RECAP, make it optional?
-        /**
-         * S1 = Cyclic amines -> an aliphatic or aromatic N in a ring, with a
-         * degree of 3, and a neutral charge (index 1) connected via a non-ring
-         * bond to any atom (index 2) reacts to the N connected to any atom and
-         * the other atom connected to any atom note that no assumption is made
-         * as to how the structure was synthesized
-         * ";!#0" was inserted to avoid matching pseudo atoms that resulted from a previous cleavage
-         */
-        private final CleavageRule cyclicAmines = new CleavageRule("[#7;R;D3;+0:1]-!@[*;!#0:2]", "*[#7:1].[*:2]*", "Cyclic amines");
-        //TODO this is not part of the original RECAP, make it optional?
-        /**
-         * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral
-         * charge (index 1) connected via a non-ring bond(!) to an aromatic C
-         * (index 2) reacts to the bond in between being split note that no
-         * assumption is made as to how the structure was synthesized note also
-         * that both atoms are in different rings
-         */
-        private final CleavageRule aromaticNitrogenToAromaticCarbon = new CleavageRule("[n;+0:1]-!@[c:2]", "[n:1]*.*[c:2]", "Aromatic nitrogen to aromatic carbon");
-        /**
-         * String array of SMIRKS reaction transform codes that describe the
-         * cleavage rules.
-         */
-        private final CleavageRule[] cleavageRules = {this.amide, this.ester,
-                this.amine, this.urea, this.ether, this.olefin, this.quaternaryNitrogen,
-                this.aromaticNitrogenToAliphaticCarbon, this.lactamNitrogenToAliphaticCarbon,
-                this.aromaticCarbonToAromaticCarbon, this.sulphonamide, this.cyclicAmines,
-                this.aromaticNitrogenToAromaticCarbon};
+    private final class State {
+    private final CleavageRule[] cleavageRules;
+
+    private State() {
+        this.cleavageRules = new CleavageRule[RECAP.CLEAVAGE_RULES.length];
+        for (int i = 0; i < RECAP.CLEAVAGE_RULES.length; i++) {
+            this.cleavageRules[i] = RECAP.CLEAVAGE_RULES[i].copy();
+        }
+    }
 
         /**
          *
