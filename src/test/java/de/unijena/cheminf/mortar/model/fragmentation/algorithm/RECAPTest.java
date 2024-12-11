@@ -492,6 +492,7 @@ class RECAPTest extends RECAP {
 
     @Test
     void testEsterRuleIndividually() throws Exception {
+        //TODO test anhydride and carbonate! (and ketone/aldehyde?)
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         CycleFinder cycles = Cycles.cdkAromaticSet();
         Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
@@ -632,8 +633,304 @@ class RECAPTest extends RECAP {
     }
 
     @Test
-    void testAmineRule() throws Exception {
-        //carry on here...
+    void testSecondaryAmineRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("CCCCCCCCCN");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match primary amine
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCNCCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match secondary amine
+        Assertions.assertTrue(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCN(CCCCCCCCCCC)CCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match tertiary amine
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCN*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atom
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCN(*)CCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atom
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)NCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match amide
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCNC(=O)NCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match urea
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1(=O)NCCCCCC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match lactam
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCC[N+](CCCCCCCCCC)(CCCCCCC)CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match quaternary nitrogen
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCn(cn1)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match aromatic n to aliphatic C
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCNS(=O)(=O)CCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match sulphonamide
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=CNCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match amidine
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCNC(=NCCCCCC)NCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match guanidine
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC(=O)NC(=O)CCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match imide
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=NCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match azo compounds
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCOC#N");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match cyanate
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=C=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match iso cyanate
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC#N");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitrile
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCON=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitrite
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(=O)=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[N+](=O)[O-]");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+    }
+
+    @Test
+    void testTertiaryAmineRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("CCCCCCCCCN");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match primary amine
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCNCCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match secondary amine
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCN(CCCCCCCCCCC)CCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match tertiary amine
+        Assertions.assertTrue(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCN*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atom
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCN(*)CCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atom
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)N(CCCCCCCCC)CCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match amide
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCN(CCCC)C(=O)N(CCCC)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match urea
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1(=O)N(CCCCCCCCCC)CCCCCC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match lactam
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCC[N+](CCCCCCCCCC)(CCCCCCC)CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match quaternary nitrogen
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCn(cn1)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match aromatic n to aliphatic C
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(CCCCCCCCCC)S(=O)(=O)CCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match sulphonamide
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(CCCCCCCCCCC)=CN(CCCCCCCCCC)CCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match amidine
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(CCCCCCCCCC)C(=NCCCCCC)N(CCCCCCC)CCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match guanidine
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC(=O)N(CCCCCCCCCC)C(=O)CCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match imide
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(CCCCCCCC)=N(CCCCCCCCCCCCCCC)CCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match azo compounds
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCOC#N");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match cyanate
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=C=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match iso cyanate
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC#N");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitrile
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCON=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitrite
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(=O)=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[N+](=O)[O-]");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+    }
+
+    @Test
+    void testAmineRulesIntegration() throws Exception {
+        //TODO
     }
 
     private void printTree(HierarchyNode node) throws Exception {

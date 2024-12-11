@@ -75,6 +75,7 @@ public class RECAP {
     //TODO make public method to check how many rule matches are in a molecule (and reject mols with more than 31)
     //TODO limit tree depth?
     //TODO option for hydrogen saturation instead of R?
+    //TODO hydrogen atoms should be implicit when given here
     /*
      * Notes on SMIRKS/SMARTS:
      * - when using the any-atom "*", be aware that it also matches pseudo (R)
@@ -134,7 +135,11 @@ public class RECAP {
     //TODO test this further, why the empty environment?
     //TODO split into secondary and tertiary?
     //TODO what could be the educts?
-    public static final CleavageRule AMINE = new CleavageRule("[N;!D1;+0;!$(N-C=[#7,#8,#15,#16]);!$()](-!@[*;!#0:1])-!@[*;!#0:2]", "*[*:1].[*:2]*", "Amine");
+    public static final CleavageRule SECONDARY_AMINE = new CleavageRule("[N;+0;D2;!$(N-C=[#7,#8,#15,#16]);!$(N~[N,S,O])](-!@[*;!#0:1])-!@[*;!#0:2]", "[*:1]-N*.*N-[*:2]", "Secondary Amine");
+    /**
+     *
+     */
+    public static final CleavageRule TERTIARY_AMINE = new CleavageRule("[N;+0;D3;!$(N-C=[#7,#8,#15,#16]);!$(N~[N,S,O])](-!@[*;!#0:1])(-!@[*;!#0:2])-!@[*;!#0:3]", "[*:1]-N*.*N-[*:2].*N-[*:3]", "Tertiary Amine");
     /**
      * 4 = Urea -> aliphatic or aromatic(!) N with a neutral charge and a
      * degree of 2 or 3 (index 1), connected via a non-ring bond to an
@@ -233,11 +238,22 @@ public class RECAP {
      * String array of SMIRKS reaction transform codes that describe the
      * cleavage rules.
      */
-    public static final CleavageRule[] CLEAVAGE_RULES = {RECAP.AMIDE, RECAP.ESTER,
-            RECAP.AMINE, RECAP.UREA, RECAP.ETHER, RECAP.OLEFIN, RECAP.QUATERNARY_NITROGEN,
-            RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON, RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON,
-            RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON, RECAP.SULPHONAMIDE, RECAP.CYCLIC_AMINES,
-            RECAP.AROMATIC_NITROGEN_TO_AROMATIC_CARBON};
+    public static final CleavageRule[] CLEAVAGE_RULES = {
+            RECAP.AMIDE,
+            RECAP.ESTER,
+            RECAP.SECONDARY_AMINE,
+            RECAP.TERTIARY_AMINE,
+            RECAP.UREA,
+            RECAP.ETHER,
+            RECAP.OLEFIN,
+            RECAP.QUATERNARY_NITROGEN,
+            RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON,
+            RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON,
+            RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON,
+            RECAP.SULPHONAMIDE,
+            RECAP.CYCLIC_AMINES,
+            RECAP.AROMATIC_NITROGEN_TO_AROMATIC_CARBON
+    };
     /**
      *
      */
