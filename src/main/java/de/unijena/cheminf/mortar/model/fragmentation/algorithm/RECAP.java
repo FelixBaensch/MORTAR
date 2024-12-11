@@ -119,9 +119,8 @@ public class RECAP {
      * <br>Note that this group cannot be in a ring.
      */
     public static final CleavageRule ESTER = new CleavageRule("[C;D3;!$(C[#0]):1](=!@[O:2])!@[O;+0;D2;!$(O[#0]):3]", "[C:1](=[O:2])O*.*[O:3]", "Ester");
-    //TODO does this also work for tertiary amines? I guess it matches multiple times?
-    //TODO this does not align with the RECAP paper definition of the amine cleavage rule, i.e. it does not match the example structure; see also additional rule "cyclic amines" below
     /**
+     * //TODO re-write
      * 3 = Amine -> aliphatic N with a neutral charge and a degree of NOT 1
      * that is also NOT connected to a C connected via a double bond to N,
      * O, P, or S (to avoid any form of amides) but connected via a non-ring
@@ -132,12 +131,10 @@ public class RECAP {
      * just not the bonds
      * ";!#0" was added for the two any-atoms to avoid matching pseudo atoms that resulted from a previous cleavage
      */
-    //TODO test this further, why the empty environment?
-    //TODO split into secondary and tertiary?
-    //TODO what could be the educts?
     public static final CleavageRule SECONDARY_AMINE = new CleavageRule("[N;+0;D2;!$(N-C=[#7,#8,#15,#16]);!$(N~[N,S,O])](-!@[*;!#0:1])-!@[*;!#0:2]", "[*:1]-N*.*N-[*:2]", "Secondary Amine");
+    //TODO this does not align with the RECAP paper definition of the amine cleavage rule, i.e. it does not match the example structure; see also additional rule "cyclic amines" below
     /**
-     *
+     * TODO
      */
     public static final CleavageRule TERTIARY_AMINE = new CleavageRule("[N;+0;D3;!$(N-C=[#7,#8,#15,#16]);!$(N~[N,S,O])](-!@[*;!#0:1])(-!@[*;!#0:2])-!@[*;!#0:3]", "[*:1]-N*.*N-[*:2].*N-[*:3]", "Tertiary Amine");
     /**
