@@ -673,9 +673,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return tmpFragmentList;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + " extraction or saturation failed at molecule: " + tmpClone.getID(), anException);
+                    anException + " extraction or saturation failed at molecule: " + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
             throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + tmpClone.getID() + ", at fragment extraction: " + anException.toString());
+                    + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY) + ", at fragment extraction: " + anException.toString());
         }
         //</editor-fold>
         //
@@ -858,9 +858,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
         } catch (Exception anException) {
-            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString() + " MoleculeID: " + anAtomContainer.getID(), anException);
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException.toString() + " MoleculeID: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
             throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + anAtomContainer.getID() + ", at fused ringsearch: " + anException.toString());
+                    + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY) + ", at fused ringsearch: " + anException.toString());
         }
         //</editor-fold>
         //
@@ -890,9 +890,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             } catch (Exception anException) {
                 AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                        anException + " MoleculeID: " + anAtomContainer.getID(), anException);
+                        anException + " MoleculeID: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
                 throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                        + anAtomContainer.getID() + ", at cyclefinder : " + anException.toString());
+                        + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY) + ", at cyclefinder : " + anException.toString());
             }
             //</editor-fold>
         } else {
@@ -922,9 +922,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             } catch (Exception anException) {
                 AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                        anException + " MoleculeID: " + anAtomContainer.getID(), anException);
+                        anException + " MoleculeID: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
                 throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                        + anAtomContainer.getID() + ", at isolated RingSearch : " + anException.toString());
+                        + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY) + ", at isolated RingSearch : " + anException.toString());
             }
         //</editor-fold>
         }
@@ -971,9 +971,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return new Object[] {anAtomArray, aBondArray};
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
-                    anException + " MoleculeID: " + anAtomContainer.getID(), anException);
+                    anException + " MoleculeID: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
             throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
-                    + anAtomContainer.getID() + " at conjugated pi systems detector: " + anException.toString());
+                    + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY) + " at conjugated pi systems detector: " + anException.toString());
         }
 
         //</editor-fold>
@@ -1003,7 +1003,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             return tmpFragmentSet;
         } catch (Exception anException) {
-            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + anAtomContainer.getID(), anException);
+            AlkylStructureFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
             //logger only used for debug purpose
             AlkylStructureFragmenter.this.logger.log(Level.INFO, System.currentTimeMillis() + " start sD, AC size: " + anAtomContainer.getAtomCount() + ", " + anAtomContainer.getBondCount());
             throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + anException.toString() +
