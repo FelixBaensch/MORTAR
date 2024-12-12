@@ -1192,7 +1192,7 @@ public class MainViewController {
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
-                        MainViewController.LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
+                        MainViewController.LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0 + " seconds.");
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
@@ -1200,13 +1200,17 @@ public class MainViewController {
             );
             this.parallelFragmentationMainTask.setOnCancelled(event -> {
                 this.updateStatusBar(this.fragmentationThread, Message.get("Status.canceled"));
+                //note: the export functions give a warning to the user should the fragment set be empty
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
+                MainViewController.LOGGER.info("Fragmentation cancelled by user.");
             });
+            // see also how exceptions thrown in the task's sub-tasks are handled in startFragmentation()
             this.parallelFragmentationMainTask.setOnFailed(event -> {
                 this.updateStatusBar(this.fragmentationThread, Message.get("Status.failed"));
+                //note: the export functions give a warning to the user should the fragment set be empty
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
