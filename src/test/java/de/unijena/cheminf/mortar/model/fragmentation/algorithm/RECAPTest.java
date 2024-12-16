@@ -904,6 +904,13 @@ class RECAPTest extends RECAP {
         arom.apply(mol);
         //do not match this amidine
         Assertions.assertFalse(RECAP.CYCLIC_TERTIARY_AMINES.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1(=O)CCC(=O)N1CCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match succinimide
+        Assertions.assertFalse(RECAP.CYCLIC_TERTIARY_AMINES.getEductPattern().matches(mol));
     }
 
     @Test
