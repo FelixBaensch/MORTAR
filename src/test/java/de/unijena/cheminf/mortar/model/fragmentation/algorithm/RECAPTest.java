@@ -353,7 +353,7 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //match this simple example
+        //match N of D2
         Assertions.assertTrue(RECAP.AMIDE.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("C(=O)N(CCCCCCCCC)CCCCCCCCCC");
@@ -395,6 +395,30 @@ class RECAPTest extends RECAP {
         cycles.find(mol);
         //do not match urea
         Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("ClC(=O)N(CCCC)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match C connected to another hetero atom
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCOC(=O)N(CCCC)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match carbamate ester
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC(=O)NC(=O)CCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match imide
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1ccccc1C(=O)N(CCCCCCCCCC)CCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do match with an aromatic ring connected to C
+        Assertions.assertTrue(RECAP.AMIDE.getEductPattern().matches(mol));
     }
     /**
      *

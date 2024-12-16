@@ -87,21 +87,30 @@ public class RECAP {
      * <br>An aliphatic C (index 1) that is...
      * <br>-> of degree 3, i.e. we do NOT want to match H-C(=O)-N-...
      * (degree 4 is impossible because of the double bond to O)
-     * <br>-> NOT connected to two N (as not to match urea)
-     * <br>-> NOT connected to a pseudo atom, i.e. we do NOT want to match R-C(=O)-N-...
+     * <br>-> connected to another aliphatic or aromatic C in its environment
+     * (C index 1 has one more possible connection but this should be to another
+     * C to not match any bigger functional groups, also excludes pseudo atoms,
+     * i.e. we do NOT want to match R-C(=O)-N-...
+     * <br>-> this environmental C should not be connected to a hetero atom via
+     * a single or double bond
      * <br>-> connected via a non-ring double bond to an aliphatic O (index 2)
-     * <br>-> connected via a non-ring bond to N (index 3) that is...
-     * <br>     -> aliphatic or aromatic
+     * <br>-> connected via a non-ring single bond to N (index 3) that is...
+     * <br>     -> aliphatic or aromatic(!)
      * <br>     -> charged neutrally
      * <br>     -> has a degree of not 1, i.e. we do NOT want to match ...-C(=O)-NH2
-     * <br>     -> NOT connected to a pseudo atom, i.e. we do NOT want to match ...-C(=O)-N-R.
+     * <br>     -> NOT connected to an atom that is neither carbon nor hydrogen
+     * as to not match any bigger functional groups, also excludes pseudo atoms,
+     * i.e. we do NOT want to match ...-C(=O)-N-R or -N(-R)-R.
+     * <br>     -> NOT connected to two(!) carbon atoms with double bonds to
+     * hetero atoms, as to not match any bigger functional groups like imide
+     * <br>     -> NOT connected to a carbon atom that is connected to a hetero atom via a triple bond
      * <br>Reacts to C (index 1) connected to O (index 2) via a double bond and a
      * newly added single-bound O which is connected to an R atom (carboxylic acid).
      * <br>On the other side, there is an N (index 3) connected to an R atom (primary or secondary amine).
-     * <br>Note that the atoms can potentially be in a ring but not the bond that is
+     * <br>Note that the N can potentially be in a ring but not the bond that is
      * to be broken (no conflict with lactam rule).
      */
-    public static final CleavageRule AMIDE = new CleavageRule("[C;D3;!$(C([#7])[#7]);!$(C[#0]):1](=!@[O:2])!@[#7;+0;!D1;!$([#7][#0]):3]", "[C:1](=[O:2])O*.*[#7:3]", "Amide");
+    public static final CleavageRule AMIDE = new CleavageRule("[C;D3;$(C-[#6]);!$(C-[#6]=[!#1;!#6]);!$(C-[#6]#[!#1;!#6]):1](=!@[O:2])-!@[#7;+0;!D1;!$([#7][!#1;!#6]);!$([#7](C=[!#1;!#6])C=[!#1;!#6]);!$([#7]C#[!#1;!#6]):3]", "[C:1](=[O:2])O*.*[#7:3]", "Amide");
     /**
      * RECAP rule nr 2: Ester.
      * <br>An aliphatic C (index 1) that is...
