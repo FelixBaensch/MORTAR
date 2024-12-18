@@ -212,6 +212,13 @@ class RECAPTest extends RECAP {
         arom.apply(mol);
         //in these positions, pseudo atoms are allowed
         Assertions.assertTrue(RECAP.AMIDE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCC(=O)N=CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because of N being connected via a double bond to C not in FG
+        Assertions.assertFalse(RECAP.AMIDE.getEductPattern().matches(mol));
     }
     /**
      *
@@ -578,6 +585,13 @@ class RECAPTest extends RECAP {
         Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("CCCCCCCCC(=NCCCCCCC)CCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match imine
+        Assertions.assertFalse(RECAP.SECONDARY_AMINE.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCC=NCCCCCCCCCCCCCCCCCCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);

@@ -107,6 +107,7 @@ public class RECAP {
      * <br>     -> NOT connected to an atom that is neither carbon nor hydrogen
      * as to not match any bigger functional groups, also excludes pseudo atoms,
      * i.e. we do NOT want to match ...-C(=O)-N-R or -N(-R)-R
+     * <br>     -> NOT connected to any atom via a double or triple bond
      * <br>     -> NOT connected to two(!) carbon atoms with double bonds to
      * hetero atoms, as to not match any bigger functional groups like imide
      * <br>     -> NOT connected to a carbon atom that is connected to a hetero atom via a triple bond
@@ -119,7 +120,7 @@ public class RECAP {
     public static final CleavageRule AMIDE = new CleavageRule(
             "[C;D3;$(C-[#6]);!$(C-[#6]=[!#1;!#6]);!$(C-[#6]#[!#1;!#6]):1]" +
                     "(=!@[O:2])" +
-                    "-!@[#7;+0;!D1;!$([#7][!#1;!#6]);!$([#7](C=[!#1;!#6])C=[!#1;!#6]);!$([#7]C#[!#1;!#6]):3]",
+                    "-!@[#7;+0;!D1;!$([#7][!#1;!#6]);!$([#7]=,#*);!$([#7](C=[!#1;!#6])C=[!#1;!#6]);!$([#7]C#[!#1;!#6]):3]",
             "[C:1](=[O:2])O*.*[#7:3]",
             "Amide");
     /**
