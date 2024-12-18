@@ -93,67 +93,66 @@ public class RECAP {
      * <br>An aliphatic C (index 1) that is...
      * <br>-> of degree 3, i.e. we do NOT want to match H-C(=O)-N-...
      * (degree 4 is impossible because of the double bond to O)
-     * <br>-> connected to another aliphatic or aromatic C in its environment
+     * <br>-> connected to another aliphatic or aromatic C in its environment via a single bond
      * (C index 1 has one more possible connection but this should be to another
      * C to not match any bigger functional groups like urea, also excludes pseudo atoms,
-     * i.e. we do NOT want to match R-C(=O)-N-...
-     * <br>-> this environmental C should not be connected to a hetero atom via
-     * a double or triple bond
+     * i.e. we do NOT want to match R-C(=O)-N-...)
+     * <br>-> this environmental C should NOT be connected to any atom via
+     * a double or triple bond, e.g. no C=C-C(=O)-N-... or O=C-C(=O)-N-...
      * <br>-> connected via a non-ring double bond to an aliphatic O (index 2)
      * <br>-> connected via a non-ring single bond to N (index 3) that is...
      * <br>     -> aliphatic or aromatic(!)
      * <br>     -> charged neutrally
      * <br>     -> has a degree of not 1, i.e. we do NOT want to match ...-C(=O)-NH2
-     * <br>     -> NOT connected to an atom that is neither carbon nor hydrogen
-     * as to not match any bigger functional groups, also excludes pseudo atoms,
+     * <br>     -> NOT connected via any bond type to an atom that is neither carbon nor hydrogen
+     * (hetero atom) as to not match any bigger functional groups, also excludes pseudo atoms,
      * i.e. we do NOT want to match ...-C(=O)-N-R or -N(-R)-R
      * <br>     -> NOT connected to any atom via a double or triple bond
-     * <br>     -> NOT connected to two(!) carbon atoms with double bonds to
-     * hetero atoms, as to not match any bigger functional groups like imide
-     * <br>     -> NOT connected to a carbon atom that is connected to a hetero atom via a triple bond
+     * (aromatic bond should still work)
+     * <br>     -> NOT connected to another carbon atom with a double or triple bond to
+     * any atom (so another in addition to the amide C=O), as to not match any bigger functional groups like imide
      * <br>Reacts to C (index 1) connected to O (index 2) via a double bond and a
      * newly added single-bound O which is connected to an R atom (carboxylic acid).
-     * <br>On the other side, there is an N (index 3) connected to an R atom (primary or secondary amine).
+     * <br>In the other component, there is an N (index 3) connected to an R atom (primary or secondary amine).
      * <br>Note that the N can potentially be in a ring but not the bond that is
      * to be broken (no conflict with lactam rule).
      */
     public static final CleavageRule AMIDE = new CleavageRule(
-            "[C;D3;$(C-[#6]);!$(C-[#6]=[!#1;!#6]);!$(C-[#6]#[!#1;!#6]):1]" +
+            "[C;D3;$(C-[#6]);!$(C-[#6]=,#*):1]" +
                     "(=!@[O:2])" +
-                    "-!@[#7;+0;!D1;!$([#7][!#1;!#6]);!$([#7]=,#*);!$([#7](C=[!#1;!#6])C=[!#1;!#6]);!$([#7]C#[!#1;!#6]):3]",
-            "[C:1](=[O:2])O*.*[#7:3]",
+                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])C=,#[*]):3]",
+            "([C:1](=[O:2])O*).(*[#7:3])",
             "Amide");
     /**
      * RECAP rule nr 2: Ester.
      * <br>An aliphatic C (index 1) that is...
      * <br>-> of degree 3, i.e. we do NOT want to match H-C(=O)-O-...
      * (degree 4 is impossible because of the double bond to O)
-     * <br>-> connected to another aliphatic or aromatic C in its environment
+     * <br>-> connected to another aliphatic or aromatic C in its environment via a single bond
      * (C index 1 has one more possible connection but this should be to another
-     * C to not match any bigger functional groups like carbonate or carbamate ester,
-     * also excludes pseudo atoms, i.e. we do NOT want to match R-C(=O)-O-...
-     * <br>-> this environmental C should not be connected to a hetero atom via
-     * a double or triple bond
+     * C to not match any bigger functional groups like carbonate or carbamate ester, also excludes pseudo atoms,
+     * i.e. we do NOT want to match R-C(=O)-O-...)
+     * <br>-> this environmental C should NOT be connected to any atom via
+     * a double or triple bond, e.g. no C=C-C(=O)-O-... or O=C-C(=O)-O-...
      * <br>-> connected via a non-ring double bond to an aliphatic O (index 2)
      * <br>-> connected via a non-ring bond to an aliphatic O (index 3) that is...
      * <br>     -> charged neutrally
      * <br>     -> has a degree of 2, i.e. we do NOT want to match ...-C(=O)-OH
-     * <br>     -> NOT connected to an atom that is neither carbon nor hydrogen
-     * as to not match any bigger functional groups, also excludes pseudo atoms,
+     * <br>     -> NOT connected to via any bond type to an atom that is neither carbon nor hydrogen
+     * (hetero atom) as to not match any bigger functional groups, also excludes pseudo atoms,
      * i.e. we do NOT want to match ...-C(=O)-O-R
-     * <br>     -> NOT connected to two(!) carbon atoms with double bonds to
-     * hetero atoms, as to not match any bigger functional groups like organic acid anhydride
-     * <br>     -> NOT connected to a carbon atom that is connected to a hetero atom via a triple bond
+     * <br>     -> NOT connected to another carbon atom with a double or triple bond to
+     * any atom (so another in addition to the ester C=O), as to not match any bigger functional groups like organic acid anhydride
      * <br>Reacts to C (index 1) connected to O (index 2) via a double bond and a
      * newly added single-bound O which is connected to an R atom (carboxylic acid).
-     * <br>On the other side, there is an O (index 3) connected to an R atom (alcohol).
+     * <br>In the other component, there is an O (index 3) connected to an R atom (alcohol).
      * <br>Note that this group cannot be in a ring.
      */
     public static final CleavageRule ESTER = new CleavageRule(
-            "[C;D3;$(C-[#6]);!$(C-[#6]=[!#1;!#6]);!$(C-[#6]#[!#1;!#6]):1]" +
+            "[C;D3;$(C-[#6]);!$(C-[#6]=,#*):1]" +
                     "(=!@[O:2])" +
-                    "-!@[O;+0;D2;!$(O[!#1;!#6]);!$(O(C=[!#1;!#6])C=[!#1;!#6]);!$(OC#[!#1;!#6]):3]",
-            "[C:1](=[O:2])O*.*[O:3]",
+                    "-!@[O;+0;D2;!$(O~[!#1;!#6]);!$(O(C=[O])C=,#[*]):3]",
+            "([C:1](=[O:2])O*).(*[O:3])",
             "Ester");
     /**
      * RECAP rule nr 3.1: (secondary) Amine.
@@ -163,8 +162,8 @@ public class RECAP {
      * <br>-> connected via non-ring single bonds to two carbon atoms (indices 1
      * and 2) that are, respectively...
      * <br>     -> aliphatic or aromatic(!)
-     * <br>     -> NOT connected to an atom that is neither carbon nor hydrogen
-     * via a double or triple bond as to not match any bigger functional groups
+     * <br>     -> NOT connected to any atom via a double or triple bond as to
+     * not match any bigger functional groups
      * like amide, urea, lactam, amidine, guanidine, imide, carbamate ester, etc.
      * <br>Reacts to two primary amines.
      * <br>Note that this group cannot be in a ring but the two carbon atoms can be.
@@ -173,9 +172,9 @@ public class RECAP {
      */
     public static final CleavageRule SECONDARY_AMINE = new CleavageRule(
             "[N;+0;D2]" +
-                    "(-!@[#6;!$([#6]=[!#1;!#6]);!$([#6]#[!#1;!#6]):1])" +
-                    "-!@[#6;!$([#6]=[!#1;!#6]);!$([#6]#[!#1;!#6]):2]",
-            "[#6:1]-N*.*N-[#6:2]",
+                    "(-!@[#6;!$([#6]=,#[*]):1])" +
+                    "-!@[#6;!$([#6]=,#[*]):2]",
+            "([#6:1]-N*).(*N-[#6:2])",
             "Secondary Amine");
     /**
      * RECAP rule nr 3.2: (tertiary) Amine.
@@ -185,7 +184,7 @@ public class RECAP {
      * <br>-> connected via non-ring single bonds to three carbon atoms (indices 1, 2,
      * and 3) that are, respectively...
      * <br>     -> aliphatic or aromatic(!)
-     * <br>     -> NOT connected to an atom that is neither carbon nor hydrogen
+     * <br>     -> NOT connected to any atom
      * via a double or triple bond as to not match any bigger functional groups
      * like amide, urea, lactam, amidine, guanidine, imide, carbamate ester, etc.
      * <br>Reacts to three primary amines.
@@ -195,10 +194,10 @@ public class RECAP {
      */
     public static final CleavageRule TERTIARY_AMINE = new CleavageRule(
             "[N;+0;D3]" +
-                    "(-!@[#6;!$([#6]=[!#1;!#6]);!$([#6]#[!#1;!#6]):1])" +
-                    "(-!@[#6;!$([#6]=[!#1;!#6]);!$([#6]#[!#1;!#6]):2])" +
-                    "-!@[#6;!$([#6]=[!#1;!#6]);!$([#6]#[!#1;!#6]):3]",
-            "[*:1]-N*.*N-[*:2].*N-[*:3]",
+                    "(-!@[#6;!$([#6]=,#[*]):1])" +
+                    "(-!@[#6;!$([#6]=,#[*]):2])" +
+                    "-!@[#6;!$([#6]=,#[*]):3]",
+            "([*:1]-N*).(*N-[*:2]).(*N-[*:3])",
             "Tertiary Amine");
     /**
      * RECAP rule nr 3.3: (cyclic tertiary) Amine.
@@ -207,36 +206,60 @@ public class RECAP {
      * <br>-> charged neutrally
      * <br>-> of degree 3
      * <br>-> not connected to a carbon atom in that same ring which is connected
-     * to a hetero atom via a non-ring double bond (e.g. lactam, see rule below)
+     * to an atom outside the ring via a double bond (e.g. lactam, see rule below)
      * <br>-> not connected to a pseudo atom (atomic nr 0)
      * <br>-> connected via a non-ring single bond to a carbon atom (index 2) that is...
      * <br>     -> aliphatic or aromatic(!)
+     * <br>     -> NOT connected to any atom
+     * via a double or triple bond (aromatic bond should still work) as to not match any bigger functional groups
      * <br>     -> not connected to a pseudo atom (atomic nr 0)
-     * <br>     -> NOT connected to an atom that is neither carbon nor hydrogen
-     * via a double or triple bond as to not match any bigger functional groups
      * <br>The bond between the carbon and the ring N is cleaved and the ring and
      * a primary amine remain.
      * <br>note also that the "amine" rule from the paper was split into three rules,
      * one for secondary amines, one for tertiary amines, and one for aliphatic N hetero cycles
      */
     public static final CleavageRule CYCLIC_TERTIARY_AMINES = new CleavageRule(
-            "[N;R;+0;D3;!$(N~@C=!@[!#1;!#6]);!$(N[#0]):1]" +
-                    "-!@[#6;!$([#6]=[!#1;!#6]);!$([#6]#[!#1;!#6]);!$([#6][#0]):2]",
-            "[N:1]*.*N-[#6:2]",
+            "[N;R;+0;D3;!$(N-@C=!@[*]);!$(N~[#0]):1]" +
+                    "-!@[#6;!$([#6]=,#[*]);!$([#6]~[#0]):2]",
+            "([N:1]*).(*N-[#6:2])",
             "Cyclic Tertiary Amine");
+    //TODO: use different educts?
     /**
-     * 4 = Urea -> aliphatic or aromatic(!) N with a neutral charge and a
-     * degree of 2 or 3 (index 1), connected via a non-ring bond to an
-     * aliphatic C, connected via a non-ring double bond to an aliphatic O
-     * as a side chain and via a non-ring bond to another aliphatic or
-     * aromatic(!) N with a neutral charge and a degree of 2 or 3 (index 2)
-     * reacts to two N atoms (indices 1 and 2) that are unconnected but each
-     * to connected to any other atom note that the central keto group is
-     * discarded! We get two amines as a result of the reaction (one
-     * possible way to synthesize a urea functionality) note also that the
-     * atoms can potentially be in a ring, just not the bonds
+     * RECAP rule nr 4: Urea.
+     * <br>An aliphatic or aromatic N (index 1) that is...
+     * <br>-> charged neutrally
+     * <br>-> has a degree of not 1, i.e. we do NOT want to match H2N-C(=O)-N-...
+     * <br>-> NOT connected via any bond type to an atom that is neither carbon nor hydrogen
+     * (hetero atom) as to not match any bigger functional groups, also excludes pseudo atoms,
+     * i.e. we do NOT want to match, e.g., O-N-C(=O)-N-... or R-N-C(=O)-N-...
+     * <br>-> NOT connected to any atom via a double or triple bond
+     * (aromatic bond should still work)
+     * <br>-> NOT connected to another carbon atom with a double or triple bond to
+     * any atom (so another in addition to the urea C=O), as to not match any bigger functional groups
+     * <br>-> connected via a non-ring single bond to an aliphatic C (index 2) with a degree of 3 that is...
+     * <br>     -> connected via a non-ring double bond to an aliphatic O (index 3)
+     * <br>     -> connected to via a non-ring single bond to aliphatic or aromatic N (index 4) that is...
+     * <br>             -> charged neutrally
+     * <br>             -> has a degree of not 1, i.e. we do NOT want to match ...N-C(=O)-NH2
+     * <br>             -> NOT connected via any bond type to an atom that is neither carbon nor hydrogen
+     * (hetero atom) as to not match any bigger functional groups, also excludes pseudo atoms,
+     * i.e. we do NOT want to match, e.g., ...-N-C(=O)-N-O-... or ...-N-C(=O)-N-R
+     * <br>             -> NOT connected to any atom via a double or triple bond
+     * (aromatic bond should still work)
+     * <br>             -> NOT connected to another carbon atom with a double or triple bond to
+     * any atom (so another in addition to the urea C=O), as to not match any bigger functional groups
+     * <br>Reacts to two primary amines (N atoms indices 1 and 4), discarding the keto C=O
+     * (assuming a synthesis reaction with carbonyldiimidazole or triphosgene).
+     * <br>Note that the N atoms can potentially be in a ring but not the bonds that are
+     * to be broken.
      */
-    public static final CleavageRule UREA = new CleavageRule("[#7;+0;D2,D3:1]!@C(!@=O)!@[#7;+0;D2,D3:2]", "*[#7:1].[#7:2]*", "Urea");
+    public static final CleavageRule UREA = new CleavageRule(
+            "[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])C=,#[*]):1]" +
+                    "-!@[C;D3:2]" +
+                    "(=!@[O:3])" +
+                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])C=,#[*]):4]",
+            "([#7:1]*).(*[#7:4])",
+            "Urea");
     /**
      * 5 = Ether -> aliphatic or aromatic(!) C (index 1) connected via a
      * non-ring bond to an aliphatic O with a neutral charge, connected via
@@ -247,7 +270,12 @@ public class RECAP {
      * bonds
      * ";!$(O-[#6]=O)" was added to the central O to avoid matching ester groups
      */
-    public static final CleavageRule ETHER = new CleavageRule("[#6:1]-!@[O;+0;!$(O-[#6]=O)]-!@[#6:2]", "[#6:1]*.*[#6:2]", "Ether");
+    public static final CleavageRule ETHER = new CleavageRule(
+            "[#6:1]" +
+                    "-!@[O;+0;!$(O-[#6]=O)]" +
+                    "-!@[#6:2]",
+            "[#6:1]*.*[#6:2]",
+            "Ether");
     /**
      * 6 = Olefin -> an aliphatic C (index 1) connected via a non-ring
      * double bond to another aliphatic C (index 2) reacts to the two carbon

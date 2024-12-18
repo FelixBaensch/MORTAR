@@ -794,6 +794,13 @@ class RECAPTest extends RECAP {
         //do not match imine
         Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
 
+        mol = smiPar.parseSmiles("CCCCCCCCC=NCCCCCCCCCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match imine
+        Assertions.assertFalse(RECAP.TERTIARY_AMINE.getEductPattern().matches(mol));
+
         mol = smiPar.parseSmiles("CCCCCCCCCCN(CCCCCCCC)=N(CCCCCCCCCCCCCCC)CCCCCCCCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
@@ -934,7 +941,86 @@ class RECAPTest extends RECAP {
 
     @Test
     void testUreaRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
 
+        IAtomContainer mol = smiPar.parseSmiles("CN(C)C(=O)N(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("*N(*)C(=O)N(*)*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atoms
+        Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CC(=O)N(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match amide
+        Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1N(C1)C(=O)N(C2)C2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match with N in ring
+        Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CNC(=O)NC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match N of D2
+        Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("NC(=O)N");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match terminal group
+        Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CN(C)C(=O)N(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCNC(=O)n(cn1)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do match even though one n is in a ring and aromatic
+        Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCNC(=O)NC(=O)NCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match this bigger FG
+        Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCNC(=O)NC(Cl)CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do match with the chlorine substituent connected to the environment C
+        Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCNC(=O)NC=CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because of double bond at environment C
+        Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
     }
 
     @Test
@@ -948,7 +1034,6 @@ class RECAPTest extends RECAP {
         arom.apply(mol);
         RECAP recap = new RECAP();
         HierarchyNode node = recap.buildHierarchy(mol);
-        //TODO: so far, we are in agreement with RDKit, but throwing away the whole keto group is highly questionable
         Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
         Assertions.assertEquals(2, node.getChildren().size());
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
@@ -971,8 +1056,6 @@ class RECAPTest extends RECAP {
             childrenSmilesSet.add(smiGen.create(child.getStructure()));
         }
         Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*NC1CC1", "*N(C)C1OC1")));
-        Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
-        Assertions.assertEquals(2, node.getChildren().size());
 
         //urea in a ring - no match!
         mol = smiPar.parseSmiles("C1CCNC(=O)NC1C");
@@ -982,20 +1065,31 @@ class RECAPTest extends RECAP {
         node = recap.buildHierarchy(mol);
         Assertions.assertTrue(node.isTerminal());
 
-        //TODO rules "aromatic N to aliphatic C", cyclic amines, and amide also match here (some the products)
-        // but the products should only be *n1cccc1 (level 1) and *NC1OC1 (level 1)
         mol = smiPar.parseSmiles("c1cccn1C(=O)NC1OC1");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
+        Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
+        Assertions.assertEquals(2, node.getChildren().size());
+        childrenSmilesSet = HashSet.newHashSet(node.getChildren().size());
+        for (HierarchyNode child : node.getChildren()) {
+            childrenSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*n1cccc1", "*NC1OC1")));
 
-        //TODO: this also matches too many rules, the products should only be *n1cccc1 (level 1) and *n1cccc1C (level 1)
         mol = smiPar.parseSmiles("c1cccn1C(=O)n1c(C)ccc1");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
         node = recap.buildHierarchy(mol);
+        Assertions.assertEquals(1, node.getMaximumLevelOfAllDescendants());
+        Assertions.assertEquals(2, node.getChildren().size());
+        childrenSmilesSet = HashSet.newHashSet(node.getChildren().size());
+        for (HierarchyNode child : node.getChildren()) {
+            childrenSmilesSet.add(smiGen.create(child.getStructure()));
+        }
+        Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*n1cccc1", "*n1cccc1C")));
     }
 
     @Test
