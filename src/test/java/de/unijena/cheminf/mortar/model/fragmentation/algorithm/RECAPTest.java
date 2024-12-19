@@ -1259,6 +1259,111 @@ class RECAPTest extends RECAP {
     }
 
     @Test
+    void testOlefinRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("C=C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match ethylene
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCC=C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because one side is terminal
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC=C*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atom
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("*C=C*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atoms
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCC=CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCC(CCCCC)=C(CCCCCC)CCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match with D3 carbons
+        Assertions.assertTrue(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCC=C(O)CCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match enol
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCC=C(*)CCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not pseudo atom
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCCC=CCCCCCC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because of ring
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCCC1=C2CCCCCC2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //this ring configuration is ok
+        Assertions.assertTrue(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCC=CC(=O)CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match conjugated system
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCC=CC(Cl)CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //the chlorine substituent on the environmental C is ok
+        Assertions.assertTrue(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CC=CC=CC=CC=CC=CC=C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match conjugated system
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC=C=CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match the sp3 carbon
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+    }
+
+    @Test
     void recapPaperExampleTest() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         IAtomContainer mol = smiPar.parseSmiles("FC1=CC=C(OCCCN2CCC(NC(C3=CC(Cl)=C(N)C=C3OC)=O)C(OC)C2)C=C1");

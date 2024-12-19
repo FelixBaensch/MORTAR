@@ -120,7 +120,7 @@ public class RECAP {
     public static final CleavageRule AMIDE = new CleavageRule(
             "[C;D3;$(C-[#6]);!$(C-[#6]=,#*):1]" +
                     "(=!@[O:2])" +
-                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])C=,#[*]):3]",
+                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])[#6]=,#[*]):3]",
             "([C:1](=[O:2])O*).(*[#7:3])",
             "Amide");
     /**
@@ -151,7 +151,7 @@ public class RECAP {
     public static final CleavageRule ESTER = new CleavageRule(
             "[C;D3;$(C-[#6]);!$(C-[#6]=,#*):1]" +
                     "(=!@[O:2])" +
-                    "-!@[O;+0;D2;!$(O~[!#1;!#6]);!$(O(C=[O])C=,#[*]):3]",
+                    "-!@[O;+0;D2;!$(O~[!#1;!#6]);!$(O(C=[O])[#6]=,#[*]):3]",
             "([C:1](=[O:2])O*).(*[O:3])",
             "Ester");
     /**
@@ -254,16 +254,16 @@ public class RECAP {
      * to be broken.
      */
     public static final CleavageRule UREA = new CleavageRule(
-            "[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])C=,#[*]):1]" +
+            "[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])[#6]=,#[*]):1]" +
                     "-!@[C;D3:2]" +
                     "(=!@[O:3])" +
-                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])C=,#[*]):4]",
+                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])[#6]=,#[*]):4]",
             "([#7:1]*).(*[#7:4])",
             "Urea");
     //TODO exclude glycosidic C?
     //TODO use different educts?
     /**
-     * RECAP rule nr 2: Ester.
+     * RECAP rule nr 5: Ether.
      * <br>An aliphatic or aromatic C (index 1) that is...
      * <br>-> not connected to any atom via
      * a double or triple bond, e.g. no ...-O-C#N (cyanate) or C(=O)-O-... (ester)
@@ -271,7 +271,7 @@ public class RECAP {
      * <br>&nbsp;-> charged neutrally
      * <br>&nbsp;-> has a degree of 2
      * <br>&nbsp;-> connected via a non-ring single bond to an aliphatic or aromatic C that is...
-     * <br>&nbsp;-> not connected to any atom via
+     * <br>&nbsp;&nbsp;-> not connected to any atom via
      * a double or triple bond, e.g. no O=C-O-C=O (organic acid anhydride)
      * <br>Reacts to two primary alcohols.
      * <br>Note that the carbon atoms can be part of rings but not the O.
@@ -284,15 +284,29 @@ public class RECAP {
                     "-!@[#6;!$([#6]=,#[*]):3]",
             "([#6:1]O*).(*O[#6:3])",
             "Ether");
+    //TODO use different educts?
     /**
-     * 6 = Olefin -> an aliphatic C (index 1) connected via a non-ring
-     * double bond to another aliphatic C (index 2) reacts to the two carbon
-     * atoms each connected to any atom note that the double bond is simply
-     * split, no assumption is made as to how it was synthesized note also
-     * that the degree of the carbon atoms is not specified note also that
-     * the atoms can potentially be in a ring, just not the bonds
+     * RECAP rule nr 6: Olefin.
+     * <br>An aliphatic C (index 1) that is...
+     * <br>-> of degree 2 or 3, i.e. we do not want to match a terminal moiety
+     * <br>-> NOT connected via any bond type to an atom that is neither carbon nor hydrogen
+     * (hetero atom) as to not match any bigger functional groups, also excludes pseudo atoms,
+     * i.e. we do NOT want to match, e.g., ...-O-C=C-... or R-C=C-...
+     * <br>-> connected to another aliphatic or aromatic C in its environment via a single bond
+     * (C index 1 has two more possible connections, one can be to H but one must be to this
+     * environmental C; this also prohibits =C= from matching)
+     * <br>-> this environmental C should NOT be connected to any atom via
+     * a double or triple bond to not match bigger functional groups like conjugated systems
+     * <br>-> connected via a non-ring double bond to another aliphatic C (index 2) that
+     * has the same properties as C index 1
+     * <br>Reacts to two terminal olefins.
+     * <br>Note that the carbon atoms can be part of rings but not the connecting double bond.
      */
-    public static final CleavageRule OLEFIN = new CleavageRule("[C:1]=!@[C:2]", "[C:1]*.*[C:2]", "Olefin");
+    public static final CleavageRule OLEFIN = new CleavageRule(
+            "[C;D2,D3;!$(C~[!#1;!#6]);$(C-[#6]);!$(C-[#6]=,#*):1]" +
+                    "=!@[C;D2,D3;!$(C~[!#1;!#6]);$(C-[#6]);!$(C-[#6]=,#*):2]",
+            "([C:1]=C*).(*C=[C:2])",
+            "Olefin");
     //TODO what about this? I do not think it is covered by nr 3 (amine)!
     /**
      * 7 = Quaternary nitrogen
