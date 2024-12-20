@@ -206,9 +206,9 @@ public class RECAP {
      * <br>-> part of a ring
      * <br>-> charged neutrally
      * <br>-> of degree 3
+     * <br>-> connected to two aliphatic carbon atoms via cyclic single bonds
      * <br>-> not connected to a carbon atom in that same ring which is connected
-     * to an atom outside the ring via a double bond (e.g. lactam, see rule below)
-     * <br>-> not connected to a pseudo atom (atomic nr 0)
+     * to any atom outside the ring via a double bond (e.g. lactam, see rule below)
      * <br>-> connected via a non-ring single bond to a carbon atom (index 2) that is...
      * <br>&nbsp;-> aliphatic or aromatic(!)
      * <br>&nbsp;-> NOT connected to any atom
@@ -220,7 +220,7 @@ public class RECAP {
      * one for secondary amines, one for tertiary amines, and one for aliphatic N hetero cycles
      */
     public static final CleavageRule CYCLIC_TERTIARY_AMINES_ALIPHATIC = new CleavageRule(
-            "[N;R;+0;D3;!$(N-@C=!@[*]);!$(N~[#0]):1]" +
+            "[N;R;+0;D3;$(N(-@C)-@C);!$(N-@C=!@[*]):1]" +
                     "-!@[#6;!$([#6]=,#[*]);!$([#6]~[#0]):2]",
             "([N:1]*).(*N-[#6:2])",
             "Cyclic Tertiary Amine Aliphatic");
@@ -345,6 +345,12 @@ public class RECAP {
      * <br>&nbsp;-> not connected to a pseudo atom (atomic nr 0)
      * <br>The bond between the carbon and the ring N is cleaved and the ring and
      * a primary amine remain.
+     * <br>Note that this rule is a bit more "loose" than the other, e.g. the amine rules,
+     * i.e. there can, e.g., be another nitrogen in the ring that is a direct neighbor
+     * of the indexed nitrogen, like it is the case in the example in the paper.
+     * But it is still forbidden for the environmental ring atoms of the aromatic N
+     * to be connected via a non-ring double bond to any atom, primarily to not match
+     * an "aromatic lactam".
      */
     public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule(
             "[n;R;+0;D3;!$(n-@c=!@[*]);!$(n~[#0]):1]" +
@@ -360,13 +366,17 @@ public class RECAP {
      * rest of the structure note that C index 2 could be in different ring
      * note also that no assumption is made as to how the structure was
      * synthesized
+     *
+     * Amide: [C;D3;$(C-[#6]);!$(C-[#6]=,#*):1](=!@[O:2])-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])[#6]=,#[*]):3]
+     * Cyc. tert. amine: [N;R;+0;D3;!$(N-@C=!@[*]);!$(N~[#0]):1]-!@[#6;!$([#6]=,#[*]);!$([#6]~[#0]):2]
+     * Arom N to aliph C: [n;R;+0;D3;!$(n-@c=!@[*]);!$(n~[#0]):1]-!@[C;!$(C=,#[*]);!$(C~[#0]):2]
      */
     public static final CleavageRule LACTAM_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule(
-            "[O:3]" +
-                    "=[C:4]" +
-                    "-@[N;+0:1]" +
-                    "-!@[C:2]",
-            "[O:3]=[C:4]-[N:1]*.[C:2]*",
+            "[O:1]" +
+                    "=!@[#6;R;D3;$([#6]~@[#6]);!$([#6]~@[#6]=!@[*]):2]" +
+                    "-@[#7;R;D3;+0;$([#7](~@[#6])~@[#6]);!$([#7]([#6]=!@O)[#6]=!@[*]):3]" +
+                    "-!@[C;!$(C=,#[*]);!$(C~[#0]):4]",
+            "([O:1]=[C:2]-[N:3]*).(*N[C:4])",
             "Lactam Nitrogen to Aliphatic Carbon");
     /**
      * 10 = Aromatic carbon - aromatic carbon -> aromatic C (index 1)

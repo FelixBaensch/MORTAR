@@ -1489,6 +1489,31 @@ class RECAPTest extends RECAP {
     }
 
     @Test
+    void testLactamNitrogenToAliphaticCarbonRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        //test urea in ring
+        //test imide in ring
+        //carbamate ester in ring
+        //tertiary N in ring
+        //test whether aromatic lactam is possible
+    }
+
+    @Test
+    void testLactamNitrogenToAliphaticCarbonRuleIntegration() throws Exception {
+        //TODO
+    }
+
+    @Test
     void testAromaticNitrogenToAliphaticCarbonRuleIndividually() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         CycleFinder cycles = Cycles.cdkAromaticSet();
