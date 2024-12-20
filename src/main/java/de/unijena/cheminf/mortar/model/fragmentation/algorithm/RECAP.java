@@ -331,17 +331,25 @@ public class RECAP {
             "([*:1]-N*).(*N-[*:2]).(*N-[*:3]).(*N-[*:4])",
             "Quaternary Nitrogen");
     /**
-     * 8 = Aromatic nitrogen - aliphatic carbon -> an aromatic N with a
-     * neutral charge (index 1) connected via a non-ring bond to an
-     * aliphatic C (index 2) reacts to both atoms connected to any other
-     * atom note that no assumption is made as to how the structure was
-     * synthesized note also that the atoms can potentially be in a ring
-     * (the n must be), just not the bonds
+     * RECAP rule nr 8: Aromatic Nitrogen to Aliphatic Carbon.
+     * <br>An aromatic N (index 1) that is...
+     * <br>-> part of a ring
+     * <br>-> charged neutrally
+     * <br>-> of degree 3
+     * <br>-> not connected to an aromatic carbon atom in that same ring which is connected
+     * to an atom outside the ring via a double bond
+     * <br>-> not connected to a pseudo atom (atomic nr 0)
+     * <br>-> connected via a non-ring single bond to an aliphatic carbon atom (index 2) that is...
+     * <br>&nbsp;-> NOT connected to any atom
+     * via a double or triple bond as to not match any bigger functional groups
+     * <br>&nbsp;-> not connected to a pseudo atom (atomic nr 0)
+     * <br>The bond between the carbon and the ring N is cleaved and the ring and
+     * a primary amine remain.
      */
     public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule(
-            "[n;+0:1]" +
-                    "-!@[C;!$(C=O):2]",
-            "[n:1]*.[C:2]*",
+            "[n;R;+0;D3;!$(n-@c=!@[*]);!$(n~[#0]):1]" +
+                    "-!@[C;!$(C=,#[*]);!$(C~[#0]):2]",
+            "([n:1]*).(*N-[C:2])",
             "Aromatic Nitrogen to Aliphatic Carbon");
     /**
      * 9 = Lactam nitrogen - aliphatic carbon -> an aliphatic O (index 3)
