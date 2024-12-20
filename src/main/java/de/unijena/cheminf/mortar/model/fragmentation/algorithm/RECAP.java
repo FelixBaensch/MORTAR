@@ -77,6 +77,7 @@ public class RECAP {
     //TODO option for hydrogen saturation instead of R?
     //TODO hydrogen atoms should be implicit when given here
     //TODO re-visit the minimum fragment size after returning "more sensible" educts for every transformation, also in the tests
+    //TODO make it an option to return "more meaningful" educts or simply cut the FG?
     /*
      * Notes on SMIRKS/SMARTS:
      * - when using the any-atom "*", be aware that it also matches pseudo (R)
@@ -307,11 +308,28 @@ public class RECAP {
                     "=!@[C;D2,D3;!$(C~[!#1;!#6]);$(C-[#6]);!$(C-[#6]=,#*):2]",
             "([C:1]=C*).(*C=[C:2])",
             "Olefin");
-    //TODO what about this? I do not think it is covered by nr 3 (amine)!
     /**
-     * 7 = Quaternary nitrogen
+     * RECAP rule nr 7: Quaternary Nitrogen.
+     * <br>An aliphatic N that is...
+     * <br>-> charged positively (+1)
+     * <br>-> of degree 4
+     * <br>-> connected via non-ring single bonds to three carbon atoms (indices
+     * 1, 2, 3, and 4) that are, respectively...
+     * <br>&nbsp;-> aliphatic or aromatic(!)
+     * <br>&nbsp;-> NOT connected to any atom
+     * via a double or triple bond as to not match any bigger functional groups
+     * <br>Reacts to four (uncharged) primary amines.
+     * <br>Note that this group cannot be in a ring but the four carbon atoms can
+     * be in separate rings.
      */
-    public static final CleavageRule QUATERNARY_NITROGEN = new CleavageRule("", "", "Quaternary nitrogen");
+    public static final CleavageRule QUATERNARY_NITROGEN = new CleavageRule(
+            "[N;+1;D4]" +
+                    "(-!@[#6;!$([#6]=,#[*]):1])" +
+                    "(-!@[#6;!$([#6]=,#[*]):2])" +
+                    "(-!@[#6;!$([#6]=,#[*]):3])" +
+                    "-!@[#6;!$([#6]=,#[*]):4]",
+            "([*:1]-N*).(*N-[*:2]).(*N-[*:3]).(*N-[*:4])",
+            "Quaternary Nitrogen");
     /**
      * 8 = Aromatic nitrogen - aliphatic carbon -> an aromatic N with a
      * neutral charge (index 1) connected via a non-ring bond to an
@@ -320,7 +338,11 @@ public class RECAP {
      * synthesized note also that the atoms can potentially be in a ring
      * (the n must be), just not the bonds
      */
-    public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule("[n;+0:1]-!@[C;!$(C=O):2]", "[n:1]*.[C:2]*", "Aromatic nitrogen to aliphatic carbon");
+    public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule(
+            "[n;+0:1]" +
+                    "-!@[C;!$(C=O):2]",
+            "[n:1]*.[C:2]*",
+            "Aromatic Nitrogen to Aliphatic Carbon");
     /**
      * 9 = Lactam nitrogen - aliphatic carbon -> an aliphatic O (index 3)
      * connected via a double bond (ring or non-ring) to an aliphatic C
@@ -331,14 +353,24 @@ public class RECAP {
      * note also that no assumption is made as to how the structure was
      * synthesized
      */
-    public static final CleavageRule LACTAM_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule("[O:3]=[C:4]-@[N;+0:1]-!@[C:2]", "[O:3]=[C:4]-[N:1]*.[C:2]*", "Lactam nitrogen to aliphatic carbon");
+    public static final CleavageRule LACTAM_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule(
+            "[O:3]" +
+                    "=[C:4]" +
+                    "-@[N;+0:1]" +
+                    "-!@[C:2]",
+            "[O:3]=[C:4]-[N:1]*.[C:2]*",
+            "Lactam Nitrogen to Aliphatic Carbon");
     /**
      * 10 = Aromatic carbon - aromatic carbon -> aromatic C (index 1)
      * connected via a non-ring bond(!) to another aromatic C (index 2)
      * reacts to the bond in between being split note that no assumption is
      * made as to how the structure was synthesized
      */
-    public static final CleavageRule AROMATIC_CARBON_TO_AROMATIC_CARBON = new CleavageRule("[c:1]-!@[c:2]", "[c:1]*.*[c:2]", "Aromatic carbon to aromatic carbon");
+    public static final CleavageRule AROMATIC_CARBON_TO_AROMATIC_CARBON = new CleavageRule(
+            "[c:1]" +
+                    "-!@[c:2]",
+            "[c:1]*.*[c:2]",
+            "Aromatic Carbon to Aromatic Carbon");
     /**
      * 11 = Sulphonamide -> an aliphatic or aromatic N with a neutral charge
      * and a degree of 2 or 3 (index 1) connected via a non-ring bond to an
@@ -348,7 +380,13 @@ public class RECAP {
      * note that no assumption is made as to how the structure was
      * synthesized
      */
-    public static final CleavageRule SULPHONAMIDE = new CleavageRule("[#7;+0;D2,D3:1]-!@[S:2](=[O:3])=[O:4]", "[#7:1]*.*[S:2](=[O:3])=[O:4]", "Sulphonamide");
+    public static final CleavageRule SULPHONAMIDE = new CleavageRule(
+            "[#7;+0;D2,D3:1]" +
+                    "-!@[S:2]" +
+                    "(=[O:3])" +
+                    "=[O:4]",
+            "[#7:1]*.*[S:2](=[O:3])=[O:4]",
+            "Sulphonamide");
     //TODO this is not part of the original RECAP, make it optional?
     /**
      * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral
@@ -357,7 +395,11 @@ public class RECAP {
      * assumption is made as to how the structure was synthesized note also
      * that both atoms are in different rings
      */
-    public static final CleavageRule AROMATIC_NITROGEN_TO_AROMATIC_CARBON = new CleavageRule("[n;+0:1]-!@[c:2]", "[n:1]*.*[c:2]", "Aromatic nitrogen to aromatic carbon");
+    public static final CleavageRule AROMATIC_NITROGEN_TO_AROMATIC_CARBON = new CleavageRule(
+            "[n;+0:1]" +
+                    "-!@[c:2]",
+            "[n:1]*.*[c:2]",
+            "Aromatic Nitrogen to Aromatic Carbon");
     /**
      * String array of SMIRKS reaction transform codes that describe the
      * cleavage rules.

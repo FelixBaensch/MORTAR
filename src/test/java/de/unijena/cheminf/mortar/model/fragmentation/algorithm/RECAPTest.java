@@ -1364,6 +1364,131 @@ class RECAPTest extends RECAP {
     }
 
     @Test
+    void testOlefinRuleIntegration() throws Exception {
+        //TODO
+    }
+
+    @Test
+    void testQuaternaryNitrogenRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("[NH4+]");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match ammonia
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("*[N+](*)(*)*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atoms
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[N+](CCCCCCCCC)(CCCCCCCC)*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atom
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[NH+](CCCCCCCCC)CCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match tertiary amine with a positive charge
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[NH3+]");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match primary amine with a positive charge
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C[N+](C)(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCC[N+](CCCCCCCC)(CCCCCCC)CCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1[N+](C1)(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match in ring
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCCCCCCCCC[N+]1(C)(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match in ring
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCCCCCC1[N+](C)(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //the environmental Cs can be in rings
+        Assertions.assertTrue(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1ccccc1[N+](C)(C)C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //the environmental Cs can be in rings, even aromatic rings
+        Assertions.assertTrue(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1[nH+]cc[nH]1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match charged imidazole
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(=O)=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[N+](=O)[O-]");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match nitro/nitroso
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCOC#[NH+]");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match charged cyanate
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+    }
+
+    @Test
+    void testQuaternaryNitrogenRuleIntegration() throws Exception {
+        //TODO
+    }
+
+    @Test
     void recapPaperExampleTest() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         IAtomContainer mol = smiPar.parseSmiles("FC1=CC=C(OCCCN2CCC(NC(C3=CC(Cl)=C(N)C=C3OC)=O)C(OC)C2)C=C1");
