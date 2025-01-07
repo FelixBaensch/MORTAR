@@ -1494,17 +1494,118 @@ class RECAPTest extends RECAP {
         CycleFinder cycles = Cycles.cdkAromaticSet();
         Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
 
-        IAtomContainer mol = smiPar.parseSmiles("");
+        IAtomContainer mol = smiPar.parseSmiles("C1CCCC(=O)N1CCCCCCCCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not match
+        //match this simple example
+        Assertions.assertTrue(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCC(=O)N1*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match pseudo atom
         Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
-        //test urea in ring
-        //test imide in ring
-        //carbamate ester in ring
-        //tertiary N in ring
+        mol = smiPar.parseSmiles("C1CCCC(=O)N1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match terminal group (no side chain connected to the N)
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCC(=O)N1N");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because of connected amine / hetero atom
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)N(CCCCC)CCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match acyclic amide
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCN(CCCCC)C(=O)N1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match cyclic urea
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1(=O)CCCC(=O)N1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match cyclic imide
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCOC(=O)N1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match cyclic carbamate ester
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCCN1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match tertiary amine in ring
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CC=CC(=O)N1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because environmental C has a double bond inside the ring
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCC(=C)C(=O)N1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because environmental C has a double bond outside the ring
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCC(=O)N1C2CCCCCC2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match even though the connected C is in a ring
+        Assertions.assertTrue(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCC(=O)N1c2ccccc2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because the connected C is in a benzene ring (aromatic!)
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1(N)CCCC(=O)N1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match even though one environmental C is connected to a hetero atom
+        Assertions.assertTrue(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCCC(=O)N1C=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because the connected C is an aldehyde
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+//        mol = smiPar.parseSmiles("O=c1n(CCCCCC)c2c(cccc2)c3c1cccc3");
+//        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+//        cycles.find(mol);
+//        arom.apply(mol);
+//        //match aromatic lactam
+//        Assertions.assertTrue(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
         //test whether aromatic lactam is possible
     }
 
