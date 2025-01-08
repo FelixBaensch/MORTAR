@@ -63,7 +63,7 @@ import java.util.Queue;
  */
 public class RECAP {
     //TODO implement tests from RECAP paper and RDKit
-    //TODO RDKit generate a mapping of SMILES code to hierarchy node to reduce the search space (deduplication)
+    //TODO like RDKit, generate a mapping of SMILES code to hierarchy node to reduce the search space (deduplication)
     // and be able to add more molecules and their fragments into the map (but not the hierarchy)!
     //TODO make individual rules able to be turned off and on?
     //TODO give option to add rules
@@ -397,15 +397,13 @@ public class RECAP {
             "([#7:3]*).(*N[C:4])",
             "Lactam Nitrogen to Aliphatic Carbon");
     /**
-     * 10 = Aromatic carbon - aromatic carbon -> aromatic C (index 1)
-     * connected via a non-ring bond(!) to another aromatic C (index 2)
-     * reacts to the bond in between being split note that no assumption is
-     * made as to how the structure was synthesized
+     * RECAP rule nr 10: Aromatic Carbon to Aromatic Carbon.
+     * //TODO
      */
     public static final CleavageRule AROMATIC_CARBON_TO_AROMATIC_CARBON = new CleavageRule(
-            "[c:1]" +
-                    "-!@[c:2]",
-            "[c:1]*.*[c:2]",
+            "[c;D3;R;+0;!$(c=;!:[*]):1]" +
+                    "-!@[c;D3;R;+0;!$(c=;!:[*]):2]",
+            "([c:1]*).(*[c:2])",
             "Aromatic Carbon to Aromatic Carbon");
     /**
      * 11 = Sulphonamide -> an aliphatic or aromatic N with a neutral charge
@@ -423,7 +421,7 @@ public class RECAP {
                     "=[O:4]",
             "[#7:1]*.*[S:2](=[O:3])=[O:4]",
             "Sulphonamide");
-    //TODO this is not part of the original RECAP, make it optional?
+    //TODO this is not part of the original RECAP, make it optional
     /**
      * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral
      * charge (index 1) connected via a non-ring bond(!) to an aromatic C

@@ -1730,6 +1730,94 @@ class RECAPTest extends RECAP {
     }
 
     @Test
+    void testAromaticCarbonToAromaticCarbonRuleIndividually() throws Exception {
+        SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        CycleFinder cycles = Cycles.cdkAromaticSet();
+        Aromaticity arom = new Aromaticity(ElectronDonation.cdk(), cycles);
+
+        IAtomContainer mol = smiPar.parseSmiles("c1ccccc1c2ccccc2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this simple example
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1ccccc1*");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match connection to pseudo atom
+        Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1=CC=CC=C1C2=CC=CC=C2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this kekulised structure, proves that the exception for aromatic double bonds works
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cnccc1c2ccccc2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this example from the paper
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccnc1c2ccccc2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this, even though the N is now a direct neighbor of one of the bond Cs
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cnccc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match a single benzene
+        Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cnccc1C");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match toluene
+        Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C12=CC=CC=C1C3=CC=CC=C32");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match because there are two connections of the rings
+        Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+    }
+
+    @Test
+    void testAromaticCarbonToAromaticCarbonRuleIntegration() throws Exception {
+        //TODO
+    }
+
+    @Test
+    void testSulphonamideRuleIndividually() throws Exception {
+
+    }
+
+    @Test
+    void testSulphonamideRuleIntegration() throws Exception {
+
+    }
+
+    @Test
+    void testAromaticNitrogenToAromaticCarbonRuleIndividually() throws Exception {
+
+    }
+
+    @Test
+    void testAromaticNitrogenToAromaticCarbonRuleIntegration() throws Exception {
+
+    }
+
+    @Test
     void recapPaperExampleTest() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         IAtomContainer mol = smiPar.parseSmiles("FC1=CC=C(OCCCN2CCC(NC(C3=CC(Cl)=C(N)C=C3OC)=O)C(OC)C2)C=C1");
