@@ -38,7 +38,7 @@ jobs:
       - name: Execute fatJarAarch64
         run: ./gradlew --info --stacktrace fatJarAarch64
       - name: Execute jpackage
-        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-aarch64-1.2.2.0.jar -t dmg --app-version 1.2.2 --copyright "Copyright (C) 2024  Felix Baensch, Jonas Schaub; licensed under MIT license" --description "MORTAR - MOlecule fRagmenTAtion fRamework" --java-options "-Xms512m -Xmx4g" --about-url "https://github.com/FelixBaensch/MORTAR"
+        run: jpackage -i . -n MORTAR --icon Images/MORTAR-icon.icns --main-jar build/libs/MORTAR-fat-aarch64-1.2.2.0.jar -t dmg --app-version 1.2.2 --copyright "Copyright (C) 2025  Felix Baensch, Jonas Schaub; licensed under MIT license" --description "MORTAR - MOlecule fRagmenTAtion fRamework" --java-options "-Xms512m -Xmx4g" --about-url "https://github.com/FelixBaensch/MORTAR"
       - name: Upload DMG as an artifact
         uses: actions/upload-artifact@v4
         with:
