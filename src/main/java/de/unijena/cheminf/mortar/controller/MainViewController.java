@@ -1337,7 +1337,7 @@ public class MainViewController {
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
-        Pagination tmpPagination = this.createPaginationWithSuitablePageCount(this.moleculeDataModelList.size());
+        Pagination tmpPagination = this.createPaginationWithSuitablePageCount(tmpItemizationDataTableView.getItemsList().size());
         tmpPagination.setPageFactory(pageIndex -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
         tmpItemizationTab.addPaginationToGridPane(tmpPagination);
         Button tmpItemizationTabExportPDfButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));
