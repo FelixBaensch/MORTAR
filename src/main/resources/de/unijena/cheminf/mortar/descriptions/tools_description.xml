@@ -32,12 +32,6 @@
         <license>LGPL v2.1 (or later)</license>
     </externalTool>
     <externalTool>
-        <name>ErtlFunctionalGroupsFinder</name>
-        <version>1.3.0.0</version>
-        <author>Fritsch et al.</author>
-        <license>LGPL v2.1 (or later)</license>
-    </externalTool>
-    <externalTool>
         <name>CDK-Scaffold</name>
         <version>2.8</version>
         <author>Schaub, Zander, et al.</author>
