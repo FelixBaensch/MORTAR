@@ -22,15 +22,19 @@ repositories {
 }
 
 def javaFxVersion = '21.0.1'
-def cdkVersion = '2.9'
+def cdkVersion = '2.10'
 
 dependencies {
     implementation 'org.jetbrains:annotations:19.0.0'
     testImplementation(platform('org.junit:junit-bom:5.9.3'))
     testImplementation ('org.junit.jupiter:junit-jupiter')
     implementation group: 'org.openscience.cdk', name: 'cdk-bundle', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-pdb', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-silent', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-extra', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-depict', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-misc', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-scaffold', version: '2.8'
-    implementation group: 'io.github.jonasschaub', name: 'sru', version: '1.4.0.0'
     implementation group: 'io.github.jonasschaub', name: 'ErtlFunctionalGroupsFinder', version: '1.3.0.0'
     implementation group: 'com.github.librepdf', name: 'openpdf', version: '1.3.26'
     implementation group: 'org.openjfx', name: 'javafx-controls', version: javaFxVersion, classifier: 'win'
