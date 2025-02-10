@@ -79,6 +79,7 @@ public class RECAP {
     //TODO re-visit the minimum fragment size after returning "more sensible" educts for every transformation, also in the tests
     //TODO make it an option to return "more meaningful" educts or simply cut the FG?
     //TODO the semicolon in the SMIRKS atom definitions are actually not needed
+    //TODO do not use state, it kills the memory!
     /*
      * Notes on SMIRKS/SMARTS:
      * - when using the any-atom "*", be aware that it also matches pseudo (R)
