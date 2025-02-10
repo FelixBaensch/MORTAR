@@ -739,6 +739,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
 
+        //TODO remove because unused now?
         int tmpInitialCapacityForIdToAtomMap = CollectionUtil.calculateInitialHashCollectionCapacity(tmpMoleculeClone.getAtomCount(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(tmpInitialCapacityForIdToAtomMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         for (int i = 0; i < tmpMoleculeClone.getAtomCount(); i++) {
@@ -772,9 +773,16 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                         IAtomContainer tmpNewClone = aMolecule.clone();
                         int[] tmpFunctionalGroupIndices = new int[tmpNewClone.getAtomCount()];
                         this.ertlFGFInstance.find(tmpFunctionalGroupIndices, tmpNewClone);
+                        HashMap<Integer, IAtom> tmpIndexToAtomMap = new HashMap<>(
+                                CollectionUtil.calculateInitialHashCollectionCapacity(
+                                        tmpNewClone.getAtomCount(),
+                                        BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR));
                         for (IAtom tmpAtom : tmpNewClone.atoms()) {
-                            if (tmpFunctionalGroupIndices[tmpAtom.getIndex()] != -1) {
-                                tmpNewClone.removeAtom(tmpAtom);
+                            tmpIndexToAtomMap.put(tmpAtom.getIndex(), tmpAtom);
+                        }
+                        for (Map.Entry<Integer, IAtom> tmpEntry : tmpIndexToAtomMap.entrySet()) {
+                            if (tmpFunctionalGroupIndices[tmpEntry.getKey()] != -1) {
+                                tmpNewClone.removeAtom(tmpEntry.getValue());
                             }
                         }
                         //Partition unconnected alkane fragments in distinct atom containers
@@ -791,6 +799,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                             tmpNonFGFragments.add(tmpContainer);
                         }
                     } else {
+                        // molecule clone is empty
                         tmpNonFGFragments = new ArrayList<>(0);
                     }
                 }
