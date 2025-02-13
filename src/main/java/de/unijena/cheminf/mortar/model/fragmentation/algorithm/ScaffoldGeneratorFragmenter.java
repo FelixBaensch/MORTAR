@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
@@ -56,7 +57,8 @@ import java.util.logging.Logger;
  * Wrapper class that makes the <a href="https://github.com/cdk/cdk-scaffold">CDK Scaffold module</a> functionality
  * available in MORTAR.
  *
- * @author Julian Zander, Jonas Schaub (zanderjulian@gmx.de, jonas.schaub@uni-jena.de)
+ * @author Julian Zander (zanderjulian@gmx.de)
+ * @author Jonas Schaub (jonas.schaub@uni-jena.de)
  * @version 1.0.0.0
  */
 public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
@@ -386,6 +388,8 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Private final variables">
 
+    //note: since Java 21, the javadoc build complains about "double comments" when there is a comment
+    // for the get() method of the property and the private property itself as well
     private final SimpleIDisplayEnumConstantProperty scaffoldModeSetting;
 
     private final SimpleBooleanProperty determineAromaticitySetting;
@@ -1114,6 +1118,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                         ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SCAFFOLD_VALUE);
                 tmpReturnList.add(tmpScaffold);
             }
+            /*dissect scaffold into rings*/
             if (this.fragmentationTypeSetting.get().equals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.RING_DISSECTION)) {
                 boolean tmpSaturateWithHydrogen = this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION);
                 IAtomContainer tmpScaffold = this.scaffoldGeneratorInstance.getScaffold(tmpMoleculeClone, tmpSaturateWithHydrogen);
@@ -1128,7 +1133,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 }
             }
         } catch (Exception anException) {
-            throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
+            throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString() + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
         tmpReturnList.addAll(tmpSideChainList);
         /*Remove all empty fragments*/
@@ -1256,7 +1261,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
                 this.smilesGeneratorInstance = new SmilesGenerator(SmiFlavor.Unique);
                 break;
             default:
-                throw new IllegalArgumentException("Undefined electron donation model option.");
+                throw new IllegalArgumentException("Undefined SMILES generator option.");
         }
     }
     //</editor-fold>
