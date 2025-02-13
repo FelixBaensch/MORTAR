@@ -30,7 +30,7 @@ def cdkVersion = '2.10'
 
 dependencies {
     implementation 'org.jetbrains:annotations:19.0.0'
-    testImplementation(platform('org.junit:junit-bom:5.9.3'))
+    testImplementation(platform('org.junit:junit-bom:5.11.4'))
     testImplementation ('org.junit.jupiter:junit-jupiter')
     implementation group: 'org.openscience.cdk', name: 'cdk-bundle', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-pdb', version: cdkVersion

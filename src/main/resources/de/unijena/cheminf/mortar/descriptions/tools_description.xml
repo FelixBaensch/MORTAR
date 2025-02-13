@@ -26,16 +26,10 @@
 
 <tools>
     <externalTool>
-        <name>CDK</name>
+        <name>Chemistry Development Kit (CDK)</name>
         <version>2.10</version>
-        <author>Steinbeck et al.</author>
-        <license>LGPL v2.1 (or later)</license>
-    </externalTool>
-    <externalTool>
-        <name>CDK-Scaffold</name>
-        <version>2.8</version>
-        <author>Schaub, Zander, et al.</author>
-        <license>LGPL v2.1 (or later)</license>
+        <author>CDK Community</author>
+        <license>LGPL v2.1</license>
     </externalTool>
     <externalTool>
         <name>OpenJFX</name>
@@ -57,8 +51,14 @@
     </externalTool>
     <externalTool>
         <name>JUnit 5</name>
-        <version>5.9.3</version>
+        <version>5.11.4</version>
         <author>JUnit team</author>
         <license>Eclipse Public License 2.0</license>
+    </externalTool>
+    <externalTool>
+        <name>Gradle Build Tool</name>
+        <version>8.5</version>
+        <author>Gradle Inc.</author>
+        <license>Apache License 2.0</license>
     </externalTool>
 </tools>
