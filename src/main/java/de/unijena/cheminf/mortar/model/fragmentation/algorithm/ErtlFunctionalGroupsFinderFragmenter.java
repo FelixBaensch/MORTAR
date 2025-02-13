@@ -129,19 +129,20 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         /**
          * Option to return only the identified functional groups of a molecule after fragmentation.
          */
-        ONLY_FUNCTIONAL_GROUPS(Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.OnlyFunctionalGroups.displayName"),
+        ONLY_FUNCTIONAL_GROUPS(
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.OnlyFunctionalGroups.displayName"),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.OnlyFunctionalGroups.tooltip")),
-
         /**
          * Option to return only the non-functional-group alkane fragments of a molecule after fragmentation.
          */
-        ONLY_ALKANE_FRAGMENTS(Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.OnlyAlkanes.displayName"),
+        ONLY_ALKANE_FRAGMENTS(
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.OnlyAlkanes.displayName"),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.OnlyAlkanes.tooltip")),
-
         /**
          * Option to return both, functional groups and alkane fragments, after fragmentation.
          */
-        ALL_FRAGMENTS(Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.All.displayName"),
+        ALL_FRAGMENTS(
+                Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.All.displayName"),
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.All.tooltip"));
         /**
          * Language-specific name for display in GUI.
@@ -179,11 +180,6 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * Name of the algorithm used in this fragmenter.
      */
     public static final String ALGORITHM_NAME = "Ertl algorithm";
-
-    /**
-     * Key for an index property that is used internally for unique identification of atoms in a given molecule.
-     */
-    public static final String INTERNAL_INDEX_PROPERTY_KEY = "EFGFFragmenter.INDEX";
 
     /**
      * Default electron donation model for aromaticity detection.
@@ -259,7 +255,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     //<editor-fold desc="Private final variables">
 
     //note: since Java 21, the javadoc build complains about "double comments" when there is a comment
-    // for the get method of the property and the private property itself as well
+    // for the get() method of the property and the private property itself as well
     private final SimpleIDisplayEnumConstantProperty environmentModeSetting;
 
     private final SimpleIDisplayEnumConstantProperty electronDonationModelSetting;
@@ -738,20 +734,12 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         }
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
-
-        //TODO remove because unused now?
-        int tmpInitialCapacityForIdToAtomMap = CollectionUtil.calculateInitialHashCollectionCapacity(tmpMoleculeClone.getAtomCount(), BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        HashMap<Integer, IAtom> tmpIdToAtomMap = new HashMap<>(tmpInitialCapacityForIdToAtomMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        for (int i = 0; i < tmpMoleculeClone.getAtomCount(); i++) {
-            IAtom tmpAtom = tmpMoleculeClone.getAtom(i);
-            tmpAtom.setProperty(ErtlFunctionalGroupsFinderFragmenter.INTERNAL_INDEX_PROPERTY_KEY, i);
-            tmpIdToAtomMap.put(i, tmpAtom);
-        }
         List<IAtomContainer> tmpFunctionalGroupFragments;
         List<IAtomContainer> tmpNonFGFragments = null;
         try {
             //Applies the always necessary preprocessing for functional group detection. Atom types are set and aromaticity detected in the input molecule.
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMoleculeClone);
+            Aromaticity.clear(tmpMoleculeClone);
             this.aromaticityModelInstance.apply(tmpMoleculeClone);
             //generate FG fragments using EFGF
             tmpFunctionalGroupFragments = this.ertlFGFInstance.extract(tmpMoleculeClone, this.applyInputRestrictionsSetting.get());
@@ -767,26 +755,30 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 }
                 if (this.returnedFragmentsSetting.get().equals(ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.ALL_FRAGMENTS)
                         || this.returnedFragmentsSetting.get().equals(ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.ONLY_ALKANE_FRAGMENTS)) {
+                    //FG fragments are removed from molecule to generate alkane fragments
+                    //note: only removes marked atoms, so atoms added as env C atoms to the FGs are duplicated
+                    //also note: yes, we have to do the detection again using the indices-returning method, sadly...
+                    int[] tmpFunctionalGroupIndices = new int[tmpMoleculeClone.getAtomCount()];
+                    this.ertlFGFInstance.find(tmpFunctionalGroupIndices, tmpMoleculeClone);
+                    //use map of index to atom because indices will change whenever an atom is removed
+                    int tmpInitialCapacityForIdToAtomMap = CollectionUtil.calculateInitialHashCollectionCapacity(
+                            tmpMoleculeClone.getAtomCount(),
+                            BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+                    HashMap<Integer, IAtom> tmpIndexToAtomMap = new HashMap<>(
+                                    tmpInitialCapacityForIdToAtomMap,
+                                    BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+                    for (IAtom tmpAtom : tmpMoleculeClone.atoms()) {
+                        tmpIndexToAtomMap.put(tmpAtom.getIndex(), tmpAtom);
+                    }
+                    //now, remove FG atoms from the molecule to generate alkane fragments
+                    for (Map.Entry<Integer, IAtom> tmpEntry : tmpIndexToAtomMap.entrySet()) {
+                        if (tmpFunctionalGroupIndices[tmpEntry.getKey()] != -1) {
+                            tmpMoleculeClone.removeAtom(tmpEntry.getValue());
+                        }
+                    }
                     if (!tmpMoleculeClone.isEmpty()) {
-                        //FG fragments are removed from molecule to generate alkane fragments
-                        //TODO this does not work as it should! Also does not remove the environmental carbon atoms...
-                        IAtomContainer tmpNewClone = aMolecule.clone();
-                        int[] tmpFunctionalGroupIndices = new int[tmpNewClone.getAtomCount()];
-                        this.ertlFGFInstance.find(tmpFunctionalGroupIndices, tmpNewClone);
-                        HashMap<Integer, IAtom> tmpIndexToAtomMap = new HashMap<>(
-                                CollectionUtil.calculateInitialHashCollectionCapacity(
-                                        tmpNewClone.getAtomCount(),
-                                        BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR));
-                        for (IAtom tmpAtom : tmpNewClone.atoms()) {
-                            tmpIndexToAtomMap.put(tmpAtom.getIndex(), tmpAtom);
-                        }
-                        for (Map.Entry<Integer, IAtom> tmpEntry : tmpIndexToAtomMap.entrySet()) {
-                            if (tmpFunctionalGroupIndices[tmpEntry.getKey()] != -1) {
-                                tmpNewClone.removeAtom(tmpEntry.getValue());
-                            }
-                        }
                         //Partition unconnected alkane fragments in distinct atom containers
-                        IAtomContainerSet tmpPartitionedMoietiesSet = ConnectivityChecker.partitionIntoMolecules(tmpNewClone);
+                        IAtomContainerSet tmpPartitionedMoietiesSet = ConnectivityChecker.partitionIntoMolecules(tmpMoleculeClone);
                         tmpNonFGFragments = new ArrayList<>(tmpPartitionedMoietiesSet.getAtomContainerCount());
                         for (IAtomContainer tmpContainer : tmpPartitionedMoietiesSet.atomContainers()) {
                             //post-processing of alkane fragments
@@ -799,7 +791,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                             tmpNonFGFragments.add(tmpContainer);
                         }
                     } else {
-                        // molecule clone is empty
+                        // molecule clone is empty after FG removal, no alkane fragments
                         tmpNonFGFragments = new ArrayList<>(0);
                     }
                 }
@@ -827,7 +819,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             tmpFragments = new ArrayList<>(tmpFunctionalGroupFragments.size());
             tmpFragments.addAll(tmpFunctionalGroupFragments);
         } else if (this.returnedFragmentsSetting.get().equals(ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.ONLY_ALKANE_FRAGMENTS)) {
-            if (!Objects.isNull(tmpNonFGFragments)) {
+            if (tmpNonFGFragments != null) {
                 tmpFragments = new ArrayList<>(tmpNonFGFragments.size());
                 tmpFragments.addAll(tmpNonFGFragments);
             } else {
@@ -875,29 +867,6 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         }
         return aMolecule.clone();
-        //Deprecated!
-        /*
-        if (!this.shouldBePreprocessed(aMolecule)) {
-            return aMolecule.clone();
-        }
-        IAtomContainer tmpPreprocessedMolecule = aMolecule.clone();
-        if (ErtlFunctionalGroupsFinder.isStructureUnconnected(tmpPreprocessedMolecule)) {
-            tmpPreprocessedMolecule = ErtlFunctionalGroupsFinderUtility.selectBiggestUnconnectedComponent(tmpPreprocessedMolecule);
-        }
-        if (ErtlFunctionalGroupsFinder.containsChargedAtom(tmpPreprocessedMolecule)) {
-            try {
-                ErtlFunctionalGroupsFinderUtility.neutralizeCharges(tmpPreprocessedMolecule);
-            } catch (CDKException anException) {
-                this.logger.log(Level.WARNING, anException.toString(), anException);
-                throw new IllegalArgumentException("Unexpected error at charge neutralization: " + anException.toString());
-            }
-        }
-        if (Objects.isNull(tmpPreprocessedMolecule)) {
-            throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
-        } else {
-            return tmpPreprocessedMolecule;
-        }
-        */
     }
     //</editor-fold>
     //
