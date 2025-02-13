@@ -46,12 +46,12 @@
     <externalTool>
         <name>OpenPDF</name>
         <version>2.0.3</version>
-        <author>Claudio Clemens et al</author>
+        <author>LibrePDF</author>
         <license>LGPL v2.1 or MPL 2.0</license>
     </externalTool>
     <externalTool>
         <name>spotless</name>
-        <version>6.25.0</version>
+        <version>7.0.2</version>
         <author>DiffPlug</author>
         <license>Apache License 2.0</license>
     </externalTool>

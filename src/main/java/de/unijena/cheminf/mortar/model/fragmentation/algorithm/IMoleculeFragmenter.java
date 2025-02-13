@@ -83,7 +83,7 @@ public interface IMoleculeFragmenter {
     /**
      * Enumeration of different ways to saturate free valences of returned fragment molecules.
      */
-    public static enum FragmentSaturationOption implements IDisplayEnum {
+    enum FragmentSaturationOption implements IDisplayEnum {
         /**
          * Do not saturate free valences or use default of the respective fragmenter.
          */
@@ -131,7 +131,7 @@ public interface IMoleculeFragmenter {
      * aromaticity model to use. Utility for defining the options in a GUI. The electron
      * donation model specified in the constant name is used and a cycle finder algorithm set via the respective option.
      */
-    public static enum ElectronDonationModelOption implements IDisplayEnum {
+    enum ElectronDonationModelOption implements IDisplayEnum {
         /**
          * Daylight electron donation model.
          */
@@ -189,7 +189,7 @@ public interface IMoleculeFragmenter {
      * donation model is set via the respective option. See CDK class "Cycles" for more detailed descriptions of the
      * available cycle finders.
      */
-    public static enum CycleFinderOption implements IDisplayEnum {
+    enum CycleFinderOption implements IDisplayEnum {
         /**
          * Algorithm that tries to find all possible rings in a given structure. Might cause IntractableException.
          */
@@ -266,12 +266,12 @@ public interface IMoleculeFragmenter {
      * Property key/name to assign a category to a fragment, represented by an IAtomContainer, e.g. 'aglycone' or
      * 'functional group'.
      */
-    public static final String FRAGMENT_CATEGORY_PROPERTY_KEY = "IMoleculeFragmenter.Category";
+    String FRAGMENT_CATEGORY_PROPERTY_KEY = "IMoleculeFragmenter.Category";
 
     /**
      * Default option for saturating free valences on the returned fragment molecules.
      */
-    public static final FragmentSaturationOption FRAGMENT_SATURATION_OPTION_DEFAULT = FragmentSaturationOption.HYDROGEN_SATURATION;
+    FragmentSaturationOption FRAGMENT_SATURATION_OPTION_DEFAULT = FragmentSaturationOption.HYDROGEN_SATURATION;
     //</editor-fold>
     //
     //<editor-fold desc="Public properties">
@@ -280,7 +280,7 @@ public interface IMoleculeFragmenter {
      *
      * @return list of settings represented by properties
      */
-    public List<Property<?>> settingsProperties();
+    List<Property<?>> settingsProperties();
 
     /**
      * Returns a map containing descriptive texts (values) for the settings with the given names (keys) to be used as
@@ -288,7 +288,7 @@ public interface IMoleculeFragmenter {
      *
      * @return map with tooltip texts
      */
-    public Map<String, String> getSettingNameToTooltipTextMap();
+    Map<String, String> getSettingNameToTooltipTextMap();
 
     /**
      * Returns a map containing language-specific names (values) for the settings with the given names (keys) to be used
@@ -296,7 +296,7 @@ public interface IMoleculeFragmenter {
      *
      * @return map with display names
      */
-    public Map<String, String> getSettingNameToDisplayNameMap();
+    Map<String, String> getSettingNameToDisplayNameMap();
 
     /**
      * Returns a string representation of the algorithm name, e.g. "ErtlFunctionalGroupsFinder" or "Ertl algorithm".
@@ -305,7 +305,7 @@ public interface IMoleculeFragmenter {
      *
      * @return algorithm name
      */
-    public String getFragmentationAlgorithmName();
+    String getFragmentationAlgorithmName();
 
     /**
      * Returns a language-specific name of the fragmenter to be used in the GUI.
@@ -313,21 +313,21 @@ public interface IMoleculeFragmenter {
      *
      * @return language-specific name for display in GUI
      */
-    public String getFragmentationAlgorithmDisplayName();
+    String getFragmentationAlgorithmDisplayName();
 
     /**
      * Returns the currently set option for saturating free valences on returned fragment molecules.
      *
      * @return the set option
      */
-    public FragmentSaturationOption getFragmentSaturationSetting();
+    FragmentSaturationOption getFragmentSaturationSetting();
 
     /**
      * Returns the property representing the setting for fragment saturation.
      *
      * @return setting property for fragment saturation
      */
-    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty();
+    SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty();
 
     /**
      * Sets the option for saturating free valences on returned fragment molecules.
@@ -335,7 +335,7 @@ public interface IMoleculeFragmenter {
      * @param anOption the saturation option to use
      * @throws NullPointerException if the given option is null
      */
-    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException;
+    void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException;
 
     /**
      * Returns a new instance of the respective fragmenter with the same settings as this instance. Intended for
@@ -343,12 +343,12 @@ public interface IMoleculeFragmenter {
      *
      * @return new fragmenter instance with the same settings
      */
-    public IMoleculeFragmenter copy();
+    IMoleculeFragmenter copy();
 
     /**
      * Restore all settings of the fragmenter to their default values.
      */
-    public void restoreDefaultSettings();
+    void restoreDefaultSettings();
     //</editor-fold>
     //
     //<editor-fold desc="Public methods">
@@ -361,7 +361,7 @@ public interface IMoleculeFragmenter {
      * @throws IllegalArgumentException if the given molecule cannot be fragmented but should be filtered or preprocessed
      * @throws CloneNotSupportedException if cloning the given molecule fails
      */
-    public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
+    List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException;
 
     /**
@@ -372,7 +372,7 @@ public interface IMoleculeFragmenter {
      * @return true if the given molecule is not acceptable as input for the fragmentation algorithm, even if it would be
      * preprocessed
      */
-    public boolean shouldBeFiltered(IAtomContainer aMolecule);
+    boolean shouldBeFiltered(IAtomContainer aMolecule);
 
     /**
      * Returns true if the given molecule can be fragmented by the respective algorithm *after preprocessing*.
@@ -383,7 +383,7 @@ public interface IMoleculeFragmenter {
      * @return true if the molecule needs to be preprocessed
      * @throws NullPointerException if the molecule is null
      */
-    public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException;
+    boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException;
 
     /**
      * Returns true only if the given molecule can be passed to the central fragmentation method without any preprocessing
@@ -393,7 +393,7 @@ public interface IMoleculeFragmenter {
      * @return true if the molecule can be directly fragmented
      * @throws NullPointerException if the molecule is null
      */
-    public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException;
+    boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException;
 
     /**
      * Applies the needed preprocessing for fragmentation to the given molecule. Throws an exception if the molecule
@@ -406,7 +406,7 @@ public interface IMoleculeFragmenter {
      * preprocessing
      * @throws CloneNotSupportedException if cloning the given molecule fails
      */
-    public IAtomContainer applyPreprocessing(IAtomContainer aMolecule)
+    IAtomContainer applyPreprocessing(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException;
     //</editor-fold>
 }

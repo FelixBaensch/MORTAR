@@ -3,7 +3,7 @@ import java.util.regex.Matcher
 plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
-    id 'com.diffplug.spotless' version '6.25.0'
+    id 'com.diffplug.spotless' version '7.0.2'
 }
 
 group 'de.unijena.cheminf'
@@ -214,7 +214,7 @@ spotless {
         cleanthat()
         importOrder('com', 'de', 'javafx', 'org', 'javax', 'java')
         removeUnusedImports()
-        indentWithSpaces(4) // doesn't really seem to work...
+        leadingTabsToSpaces(4)
         trimTrailingWhitespace()
         endWithNewline()
         //eclipse() //not optimal, because indents with tabs..
