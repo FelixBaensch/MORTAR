@@ -250,6 +250,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * An electron donation instance for construction of the aromaticity model.
      */
     private ElectronDonation electronDonationInstance;
+
+    /**
+     * Instance of ErtlfFunctionalGroupsFinder class used to do the extraction of functional groups.
+     */
+    private FunctionalGroupsFinder ertlFGFInstance;
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
@@ -284,11 +289,6 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
      * Map to store pairs of {@literal <setting name, display name>}.
      */
     private final HashMap<String, String> settingNameDisplayNameMap;
-
-    /**
-     * Instance of ErtlfFunctionalGroupsFinder class used to do the extraction of functional groups.
-     */
-    private FunctionalGroupsFinder ertlFGFInstance;
 
     /**
      * Logger of this class.

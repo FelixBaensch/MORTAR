@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
@@ -284,13 +285,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      */
     private final SugarRemovalUtility sugarRUInstance;
 
+    //note: since Java 21, the javadoc build complains about "double comments" when there is a comment
+    // for the get() method of the property and the private property itself as well
     private final SimpleIDisplayEnumConstantProperty returnedFragmentsSetting;
 
     private final SimpleIDisplayEnumConstantProperty sugarTypeToRemoveSetting;
 
-    /**
-     * A property that has a constant from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
-     */
     private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
 
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
@@ -1170,35 +1170,28 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            List<IAtomContainer> tmpReturnList = new ArrayList<>(1);
-            IAtomContainer tmpClone = aMolecule.clone();
-            tmpClone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                    SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
-            tmpReturnList.addFirst(tmpClone);
-            return tmpReturnList;
-        }
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
         if (!tmpCanBeFragmented) {
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
         List<IAtomContainer> tmpFragments;
         SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption tmpOption = (SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption) this.sugarTypeToRemoveSetting.get();
+        IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
             tmpFragments = switch (tmpOption) {
                 case SugarTypeToRemoveOption.CIRCULAR ->
-                        this.sugarRUInstance.removeAndReturnCircularSugars(aMolecule.clone());
+                        this.sugarRUInstance.removeAndReturnCircularSugars(tmpMoleculeClone);
                 case SugarTypeToRemoveOption.LINEAR ->
-                        this.sugarRUInstance.removeAndReturnLinearSugars(aMolecule.clone());
+                        this.sugarRUInstance.removeAndReturnLinearSugars(tmpMoleculeClone);
                 case SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR ->
-                        this.sugarRUInstance.removeAndReturnCircularAndLinearSugars(aMolecule.clone());
+                        this.sugarRUInstance.removeAndReturnCircularAndLinearSugars(tmpMoleculeClone);
                 default ->
                         throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemoveSetting.get());
             };
         } catch (IllegalArgumentException anException) {
-            throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
+            throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString()  + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
-        //post-processing of aglycone, it is always saturated with implicit hydrogen atoms (might be empty)
+        //post-processing of aglycone (might be empty)
         IAtomContainer tmpAglycone = tmpFragments.getFirst();
         tmpAglycone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
@@ -1212,7 +1205,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     }
                     ChemUtil.checkAndCorrectElectronConfiguration(tmpAglycone);
                 } catch (CDKException aCDKException) {
-                    Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Aglycon saturation failed.");
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, "Aglycone saturation failed.");
                 }
                 if (!ConnectivityChecker.isConnected(tmpAglycone)) {
                     List<IAtomContainer> tmpAglyconeFragments = this.partitionAndSortUnconnectedFragments(tmpAglycone);
@@ -1224,10 +1217,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     tmpFragments.addAll(0, tmpAglyconeFragments);
                 }
             } else {
+                //aglycone is empty
                 tmpFragments.removeFirst();
             }
-            //else: only sugars are returned, dispose of aglycone
+
         } else {
+            // only sugars are returned, dispose of aglycone
             tmpFragments.removeFirst();
         }
         //sugars were detected, postprocessing
@@ -1235,6 +1230,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
             if (this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS)
                     || this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES)) {
                 for (IAtomContainer tmpSugarFragment : tmpFragments) {
+                    //skip aglycone fragments
                     if (!Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
                             && tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY)
                             .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
@@ -1250,7 +1246,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                         }
                         ChemUtil.checkAndCorrectElectronConfiguration(tmpSugarFragment);
                     } catch (CDKException aCDKException) {
-                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                        SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, "Fragment saturation failed.");
                     }
                 }
             //else: only aglycone is returned, dispose of sugars
@@ -1294,9 +1290,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
-        }
-        if (!this.shouldBePreprocessed(aMolecule)) {
-            return aMolecule.clone();
         }
         return aMolecule.clone();
     }
