@@ -1055,6 +1055,7 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         List<IAtomContainer> tmpReturnList = new ArrayList<>();
         List<IAtomContainer> tmpSideChainList = new ArrayList<>();
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
+        // note that Scaffold Generator detects aromaticity in the input molecule internally
         try {
             /*Generate side chains*/
             if (this.sideChainSetting.get().equals(ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SIDE_CHAINS) ||
@@ -1232,16 +1233,28 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         Objects.requireNonNull(anOption, "Given option is null.");
         switch (anOption) {
             case IMoleculeFragmenter.ElectronDonationModelOption.CDK:
-                this.electronDonationInstance = ElectronDonation.cdk();
+                this.electronDonationInstance = Aromaticity.Model.CDK_AtomTypes;
                 break;
             case IMoleculeFragmenter.ElectronDonationModelOption.DAYLIGHT:
-                this.electronDonationInstance = ElectronDonation.daylight();
+                this.electronDonationInstance = Aromaticity.Model.Daylight;
                 break;
             case IMoleculeFragmenter.ElectronDonationModelOption.CDK_ALLOWING_EXOCYCLIC:
                 this.electronDonationInstance = ElectronDonation.cdkAllowingExocyclic();
                 break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.CDK_1X:
+                this.electronDonationInstance = Aromaticity.Model.CDK_1x;
+                break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.CDK_2X:
+                this.electronDonationInstance = Aromaticity.Model.CDK_2x;
+                break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.MDL:
+                this.electronDonationInstance = Aromaticity.Model.Mdl;
+                break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.OPEN_SMILES:
+                this.electronDonationInstance = Aromaticity.Model.OpenSmiles;
+                break;
             case IMoleculeFragmenter.ElectronDonationModelOption.PI_BONDS:
-                this.electronDonationInstance = ElectronDonation.piBonds();
+                this.electronDonationInstance = Aromaticity.Model.PiBonds;
                 break;
             default:
                 throw new IllegalArgumentException("Undefined electron donation model option.");

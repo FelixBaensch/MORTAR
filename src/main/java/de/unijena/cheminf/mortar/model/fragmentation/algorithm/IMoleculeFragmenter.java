@@ -133,25 +133,50 @@ public interface IMoleculeFragmenter {
      */
     enum ElectronDonationModelOption implements IDisplayEnum {
         /**
-         * Daylight electron donation model.
+         * A model similar to what Daylight used for SMILES/SMARTS.
          */
         DAYLIGHT(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.displayName"),
                 Message.get("IMoleculeFragmenter.ElectronDonationModelOption.daylight.tooltip")),
         /**
-         * CDK electron donation model.
+         * The "old" aromatic bond based on CDK atom types, this model requires atom types have been assigned before
+         * calling(!). Generally the CDK_1x should be indistinguishable and run faster.
          */
         CDK(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.displayName"),
                 Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk.tooltip")),
         /**
-         * CDK electron donation model that additionally allows exocyclic bonds to contribute electrons to the aromatic system.
+         * Somewhere in between Mdl/Daylight, allows indole/pyrrole/furan but does not allow exo-cyclic bonds.
+         */
+        CDK_1X(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk_1x.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk_1x.tooltip")),
+        /**
+         * Similar to the Daylight model but also allows boron, tellurium and some arsenic variants as well not allowing
+         * sulfinyl/seleninyl since these are Sp3.
+         */
+        CDK_2X(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk_2x.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdk_2x.tooltip")),
+        /**
+         * The "old" aromatic bond based on CDK atom types, this model requires atom types have been assigned before
+         * calling(!), additionally allows exocyclic bonds to contribute electrons to the aromatic system.
          */
         CDK_ALLOWING_EXOCYCLIC(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.displayName"),
                 Message.get("IMoleculeFragmenter.ElectronDonationModelOption.cdkAllowingExocyclic.tooltip")),
         /**
-         * Pi bonds electron donation model.
+         * Any atom connected to a single pi bond in a ring contributes 1 electron.
          */
         PI_BONDS(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.displayName"),
-                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.tooltip"));
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.piBonds.tooltip")),
+        /**
+         * A model similar to what MDL/Symyx used. This is similar to the PiBonds model but only allows certain atom types.
+         * Exocyclic pi bonds are not allowed.
+         */
+        MDL(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.mdl.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.mdl.tooltip")),
+        /**
+         * Similar to the Daylight model but also allows boron and some arsenic variants as well as charge separated
+         * sulfinyl/seleninyl.
+         */
+        OPEN_SMILES(Message.get("IMoleculeFragmenter.ElectronDonationModelOption.openSmiles.displayName"),
+                Message.get("IMoleculeFragmenter.ElectronDonationModelOption.openSmiles.tooltip"));
         /**
          * Language-specific name for display in GUI.
          */

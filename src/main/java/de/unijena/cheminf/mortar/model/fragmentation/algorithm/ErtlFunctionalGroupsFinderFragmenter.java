@@ -738,7 +738,11 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         List<IAtomContainer> tmpNonFGFragments = null;
         try {
             //Applies the always necessary preprocessing for functional group detection. Atom types are set and aromaticity detected in the input molecule.
-            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMoleculeClone);
+            if (this.electronDonationModelSetting.get().equals(IMoleculeFragmenter.ElectronDonationModelOption.CDK)
+                    || this.electronDonationModelSetting.get().equals(IMoleculeFragmenter.ElectronDonationModelOption.CDK_ALLOWING_EXOCYCLIC)) {
+                //the other aromaticity models do not need atom types to be set
+                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMoleculeClone);
+            }
             Aromaticity.clear(tmpMoleculeClone);
             this.aromaticityModelInstance.apply(tmpMoleculeClone);
             //generate FG fragments using EFGF
@@ -926,16 +930,28 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         Objects.requireNonNull(anOption, "Given option is null.");
         switch (anOption) {
             case IMoleculeFragmenter.ElectronDonationModelOption.CDK:
-                this.electronDonationInstance = ElectronDonation.cdk();
+                this.electronDonationInstance = Aromaticity.Model.CDK_AtomTypes;
                 break;
             case IMoleculeFragmenter.ElectronDonationModelOption.DAYLIGHT:
-                this.electronDonationInstance = ElectronDonation.daylight();
+                this.electronDonationInstance = Aromaticity.Model.Daylight;
                 break;
             case IMoleculeFragmenter.ElectronDonationModelOption.CDK_ALLOWING_EXOCYCLIC:
                 this.electronDonationInstance = ElectronDonation.cdkAllowingExocyclic();
                 break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.CDK_1X:
+                this.electronDonationInstance = Aromaticity.Model.CDK_1x;
+                break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.CDK_2X:
+                this.electronDonationInstance = Aromaticity.Model.CDK_2x;
+                break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.MDL:
+                this.electronDonationInstance = Aromaticity.Model.Mdl;
+                break;
+            case IMoleculeFragmenter.ElectronDonationModelOption.OPEN_SMILES:
+                this.electronDonationInstance = Aromaticity.Model.OpenSmiles;
+                break;
             case IMoleculeFragmenter.ElectronDonationModelOption.PI_BONDS:
-                this.electronDonationInstance = ElectronDonation.piBonds();
+                this.electronDonationInstance = Aromaticity.Model.PiBonds;
                 break;
             default:
                 throw new IllegalArgumentException("Undefined electron donation model option.");
