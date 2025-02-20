@@ -1092,6 +1092,7 @@ class RECAPTest extends RECAP {
         Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*n1cccc1", "*n1cccc1C")));
     }
 
+    //TODO: check acetal/ketal/glycosidic bond
     @Test
     void testEtherRuleIndividually() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
@@ -1713,8 +1714,8 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //match aromatic lactam
-        Assertions.assertTrue(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+        //do not match aromatic lactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("C1CCC2CC(=O)N1CCCCCC2");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);

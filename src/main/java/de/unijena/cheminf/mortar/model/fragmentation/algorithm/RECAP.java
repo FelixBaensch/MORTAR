@@ -51,12 +51,8 @@ import java.util.Queue;
 /**
  * Implementation of the
  * <a href="https://doi.org/10.1186/s13321-017-0225-z">RECAP - Retrosynthetic
- * Combinatorial Analysis Procedure</a>
- * algorithm. The SMIRKS strings are taken from the
- * <a
- * href="https://github.com/rdkit/rdkit/blob/master/rdkit/Chem/Recap.py">RDKit
- * implementation</a>
- * done by Greg Landrum (last access 15th Nov 2024).
+ * Combinatorial Analysis Procedure</a> with a few alterations.
+ * algorithm.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
@@ -74,21 +70,22 @@ public class RECAP {
     //TODO track information which cleavage rules were applied?
     //TODO make public method to check how many rule matches are in a molecule (and reject mols with more than 31)
     //TODO limit tree depth?
-    //TODO option for hydrogen saturation instead of R?
+    //TODO option for hydrogen saturation instead of R
     //TODO hydrogen atoms should be implicit when given here
-    //TODO re-visit the minimum fragment size after returning "more sensible" educts for every transformation, also in the tests
+    //TODO re-visit the minimum fragment size, also in the tests
     //TODO make it an option to return "more meaningful" educts or simply cut the FG?
-    //TODO the semicolon in the SMIRKS atom definitions are actually not needed
     //TODO do not use state, it kills the memory!
     /*
      * Notes on SMIRKS/SMARTS:
      * - when using the any-atom "*", be aware that it also matches pseudo (R)
      *   atoms which can be the product of other cleavages; so think about
      *   avoiding this by adding ";!#0" in the any-atom definition
-     * - bond that is supposed to be broken must always be non-cyclic to be in
+     * - the bond that is supposed to be broken must always be non-cyclic to be in
      *   alignment with the RECAP rules
      * - when adding more rules, avoid matching the same structures as
      *   pre-existing rules
+     * - note that a single bond "-" is always aliphatic
+     * - C = aliphatic, c = aromatic, [#6] = both (alternative: [C,c])
      *
      */
     /**
@@ -121,10 +118,10 @@ public class RECAP {
      * to be broken (no conflict with lactam rule).
      */
     public static final CleavageRule AMIDE = new CleavageRule(
-            "[C;D3;$(C-[#6]);!$(C-[#6]=,#*):1]" +
-                    "(=!@[O;+0;D1:2])" +
-                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])[#6]=,#[*]):3]",
-            "([C:1](=[O:2])O*).(*[#7:3])",
+            "[C;!R;D3;+0;$(C-[#6;+0]);!$(C-[#6]=,#*):1]" +
+                    "(=!@[O;!R;D1;+0:2])" +
+                    "-!@[#7;D2,D3;+0;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](-!@C=!@O)~[#6]=,#*):3]",
+            "([C:1](=[O:2])-O-*).(*-[#7:3])",
             "Amide");
     /**
      * RECAP rule nr 2: Ester.
@@ -152,10 +149,10 @@ public class RECAP {
      * <br>Note that this group cannot be in a ring.
      */
     public static final CleavageRule ESTER = new CleavageRule(
-            "[C;D3;$(C-[#6]);!$(C-[#6]=,#*):1]" +
-                    "(=!@[O;+0;D1:2])" +
-                    "-!@[O;+0;D2;!$(O~[!#1;!#6]);!$(O(C=[O])[#6]=,#[*]):3]",
-            "([C:1](=[O:2])O*).(*[O:3])",
+            "[C;!R;D3;+0;$(C-[#6;+0]);!$(C-[#6]=,#*):1]" +
+                    "(=!@[O;!R;D1;+0:2])" +
+                    "-!@[O;!R;D2;+0;$(O(-!@C=!@O)~[#6;+0]);!$(O(-!@C=!@O)~[#6]=,#*):3]",
+            "([C:1](=[O:2])-O-*).(*-[O:3])",
             "Ester");
     /**
      * RECAP rule nr 3.1: (secondary) Amine.
@@ -174,10 +171,10 @@ public class RECAP {
      * one for secondary amines, one for tertiary amines, and one for aliphatic N hetero cycles
      */
     public static final CleavageRule SECONDARY_AMINE = new CleavageRule(
-            "[N;+0;D2]" +
-                    "(-!@[#6;!$([#6]=,#[*]):1])" +
-                    "-!@[#6;!$([#6]=,#[*]):2]",
-            "([#6:1]-N*).(*N-[#6:2])",
+            "[N;!R;D2;+0]" +
+                    "(-!@[#6;+0;!$([#6]=,#*):1])" +
+                    "-!@[#6;+0;!$([#6]=,#*):2]",
+            "([#6:1]-N-*).(*-N-[#6:2])",
             "Secondary Amine");
     /**
      * RECAP rule nr 3.2: (tertiary) Amine.
@@ -196,11 +193,11 @@ public class RECAP {
      * one for secondary amines, one for tertiary amines, and one for aliphatic N hetero cycles
      */
     public static final CleavageRule TERTIARY_AMINE = new CleavageRule(
-            "[N;+0;D3]" +
-                    "(-!@[#6;!$([#6]=,#[*]):1])" +
-                    "(-!@[#6;!$([#6]=,#[*]):2])" +
-                    "-!@[#6;!$([#6]=,#[*]):3]",
-            "([*:1]-N*).(*N-[*:2]).(*N-[*:3])",
+            "[N;!R;D3;+0]" +
+                    "(-!@[#6;+0;!$([#6]=,#*):1])" +
+                    "(-!@[#6;+0;!$([#6]=,#*):2])" +
+                    "-!@[#6;+0;!$([#6]=,#*):3]",
+            "([#6:1]-N-*).(*-N-[#6:2]).(*-N-[#6:3])",
             "Tertiary Amine");
     /**
      * RECAP rule nr 3.3: (cyclic tertiary) Amine.
@@ -222,9 +219,9 @@ public class RECAP {
      * one for secondary amines, one for tertiary amines, and one for aliphatic N hetero cycles
      */
     public static final CleavageRule CYCLIC_TERTIARY_AMINES_ALIPHATIC = new CleavageRule(
-            "[N;R;+0;D3;$(N(-@C)-@C);!$(N-@C=!@[*]):1]" +
-                    "-!@[#6;!$([#6]=,#[*]);!$([#6]~[#0]):2]",
-            "([N:1]*).(*N-[#6:2])",
+            "[N;R;D3;+0;$(N(-@[#6;+0])-@[#6;+0]);!$(N-@[#6]=!@*):1]" +
+                    "-!@[#6;+0;!$([#6]=,#*):2]",
+            "([N:1]-*).(*-N-[#6:2])",
             "Cyclic Tertiary Amine Aliphatic");
     //TODO: use different educts?
     /**
@@ -257,13 +254,12 @@ public class RECAP {
      * to be broken.
      */
     public static final CleavageRule UREA = new CleavageRule(
-            "[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])[#6]=,#[*]):1]" +
-                    "-!@[C;D3:2]" +
-                    "(=!@[O;+0;D1:3])" +
-                    "-!@[#7;+0;!D1;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](C=[O])[#6]=,#[*]):4]",
-            "([#7:1]*).(*[#7:4])",
+            "[#7;D2,D3;+0;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](-!@C=!@O)~[#6]=,#*):1]" +
+                    "-!@[C;!R;D3;+0:2]" +
+                    "(=!@[O;!R;D1;+0:3])" +
+                    "-!@[#7;D2,D3;+0;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7](-!@C=!@O)~[#6]=,#*):4]",
+            "([#7:1]-*).(*-[#7:4])",
             "Urea");
-    //TODO exclude glycosidic C?
     //TODO use different educts?
     /**
      * RECAP rule nr 5: Ether.
@@ -282,10 +278,10 @@ public class RECAP {
      * matched by this rule.
      */
     public static final CleavageRule ETHER = new CleavageRule(
-            "[#6;!$([#6]=,#[*]):1]" +
-                    "-!@[O;+0;D2:2]" +
-                    "-!@[#6;!$([#6]=,#[*]):3]",
-            "([#6:1]O*).(*O[#6:3])",
+             "[O;!R;D2;+0]" +
+                     "(-!@[#6;+0;!$([#6]=,#*):1])" +
+                    "-!@[#6;+0;!$([#6]=,#*):2]",
+            "([#6:1]-O-*).(*-O-[#6:2])",
             "Ether");
     //TODO use different educts?
     /**
@@ -306,10 +302,11 @@ public class RECAP {
      * <br>Note that the carbon atoms can be part of rings but not the connecting double bond.
      */
     public static final CleavageRule OLEFIN = new CleavageRule(
-            "[C;D2,D3;!$(C~[!#1;!#6]);$(C-[#6]);!$(C-[#6]=,#*):1]" +
-                    "=!@[C;D2,D3;!$(C~[!#1;!#6]);$(C-[#6]);!$(C-[#6]=,#*):2]",
-            "([C:1]=C*).(*C=[C:2])",
+            "[C;D2,D3;+0;!$(C~[!#1;!#6]);!$(C~[#6]=,#*):1]" +
+                    "=!@[C;D2,D3;+0;!$(C~[!#1;!#6]);!$(C~[#6]=,#*):2]",
+            "([C:1]=C-*).(*-C=[C:2])",
             "Olefin");
+    //TODO: keep the charge somehow?
     /**
      * RECAP rule nr 7: Quaternary Nitrogen.
      * <br>An aliphatic N that is...
@@ -325,14 +322,14 @@ public class RECAP {
      * be in separate rings.
      */
     public static final CleavageRule QUATERNARY_NITROGEN = new CleavageRule(
-            "[N;+1;D4]" +
-                    "(-!@[#6;!$([#6]=,#[*]):1])" +
-                    "(-!@[#6;!$([#6]=,#[*]):2])" +
-                    "(-!@[#6;!$([#6]=,#[*]):3])" +
-                    "-!@[#6;!$([#6]=,#[*]):4]",
-            "([*:1]-N*).(*N-[*:2]).(*N-[*:3]).(*N-[*:4])",
+            "[N;!R;D4;+1]" +
+                    "(-!@[#6;+0;!$([#6]=,#*):1])" +
+                    "(-!@[#6;+0;!$([#6]=,#*):2])" +
+                    "(-!@[#6;+0;!$([#6]=,#*):3])" +
+                    "-!@[#6;+0;!$([#6]=,#*):4]",
+            "([#6:1]-N-*).(*-N-[#6:2]).(*-N-[#6:3]).(*-N-[#6:4])",
             "Quaternary Nitrogen");
-    //TODO: split this into two, one more sensitive, one more selective? I.e. one that would also match the ex in the paper and one that strictly follows the env. C definition
+    //TODO:preserve aromaticity in the resulting primary amine?
     /**
      * RECAP rule nr 8: Aromatic Nitrogen to Aliphatic Carbon.
      * <br>An aromatic N (index 1) that is...
@@ -356,9 +353,9 @@ public class RECAP {
      * an "aromatic lactam".
      */
     public static final CleavageRule AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule(
-            "[n;R;+0;D3;!$(n~@c=[*]);!$(n~[#0]):1]" +
-                    "-!@[C;!$(C=,#[*]);!$(C~[#0]):2]",
-            "([n:1]*).(*N-[C:2])",
+            "[n;R;D3;+0;!$(n~[#0]):1]" +
+                    "-!@[C;+0;!$(C=,#*);!$(C~[#0]):2]",
+            "([n:1]-*).(*-N-[C:2])",
             "Aromatic Nitrogen to Aliphatic Carbon");
     /**
      * RECAP rule nr 9: Lactam Nitrogen to Aliphatic Carbon.
@@ -392,21 +389,24 @@ public class RECAP {
      * (but it can be in another ring).
      */
     public static final CleavageRule LACTAM_NITROGEN_TO_ALIPHATIC_CARBON = new CleavageRule(
-            "[O;+0;D1:1]" +
-                    "=!@[#6;D3;R;$([#6]-,:@[#6]);!$([#6]-,:@[#6]=[*]):2]" +
-                    "-,:@[#7;+0;D3;R;$([#7](~@[#6])~@[#6]);!$([#7](~@[#6]=!@O)~@[#6]=[*]);!$([#7]~[#0]):3]" +
-                    "-!@[C;!$(C=,#[*]):4]",
-            "([#7:3]*).(*N[C:4])",
+            "[C;R;D3;+0;$(C-@[#6;+0]);!$(C-@[#6]=*):1]" +
+                    "(=!@[O;!R;D1;+0:2])" +
+                    "-@[N;R;D3;+0;$(N(-@[#6;+0])-@[#6;+0]);!$(N(-@C=!@O)-@[#6]=*);!$(N~[#0]):3]" +
+                    "-!@[C;+0;!$(C=,#*):4]",
+            "([N:3]-*).(*-N-[C:4])",
             "Lactam Nitrogen to Aliphatic Carbon");
+    //TODO: use different educts?
+    //TODO: check whether the definition of the cleavage bond works as intended
     /**
      * RECAP rule nr 10: Aromatic Carbon to Aromatic Carbon.
      * //TODO
      */
     public static final CleavageRule AROMATIC_CARBON_TO_AROMATIC_CARBON = new CleavageRule(
-            "[c;D3;R;+0;!$(c=;!:[*]):1]" +
-                    "-!@[c;D3;R;+0;!$(c=;!:[*]):2]",
-            "([c:1]*).(*[c:2])",
+            "[c;R;D3;+0;!$(c~[#0]):1]" +
+                    "-!@[c;R;D3;+0;!$(c~[#0]):2]",
+            "([c:1]-*).(*-[c:2])",
             "Aromatic Carbon to Aromatic Carbon");
+    //TODO: use different educts?
     /**
      * 11 = Sulphonamide -> an aliphatic or aromatic N with a neutral charge
      * and a degree of 2 or 3 (index 1) connected via a non-ring bond to an
@@ -417,13 +417,15 @@ public class RECAP {
      * synthesized
      */
     public static final CleavageRule SULPHONAMIDE = new CleavageRule(
-            "[#7;+0;D2,D3:1]" +
-                    "-!@[S:2]" +
-                    "(=[O:3])" +
-                    "=[O:4]",
-            "[#7:1]*.*[S:2](=[O:3])=[O:4]",
+            "[#7;D2,D3;+0;!$([#7]~[!#1;!#6]);!$([#7]=,#*);!$([#7]~[#6]=,#*):1]" +
+                    "-!@[S;!R;D4;+0;$(S-[#6;+0]);!$(S-[#6]=,#*):2]" +
+                    "(=!@[O;!R;D1;+0:3])" +
+                    "=!@[O;!R;D1;+0:4]",
+            "([#7:1]-*).(*-[S:2](=[O:3])=[O:4])",
             "Sulphonamide");
-    //TODO this is not part of the original RECAP, make it optional
+    //TODO: this is not part of the original RECAP, make it optional
+    //TODO: check whether the definition of the cleavage bond works as intended
+    //TODO: preserve aromaticity in the resulting primary amine?
     /**
      * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral
      * charge (index 1) connected via a non-ring bond(!) to an aromatic C
@@ -432,9 +434,9 @@ public class RECAP {
      * that both atoms are in different rings
      */
     public static final CleavageRule AROMATIC_NITROGEN_TO_AROMATIC_CARBON = new CleavageRule(
-            "[n;+0:1]" +
-                    "-!@[c:2]",
-            "[n:1]*.*[c:2]",
+            "[n;R;D3;+0;!$(n~[#0]):1]" +
+                    "-!@[c;R;D3;+0;!$(c~[#0]):2]",
+            "([n:1]-*).(*-[c:2])",
             "Aromatic Nitrogen to Aromatic Carbon");
     /**
      * String array of SMIRKS reaction transform codes that describe the
