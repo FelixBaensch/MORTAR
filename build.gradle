@@ -38,6 +38,13 @@ dependencies {
     implementation group: 'org.openscience.cdk', name: 'cdk-extra', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-depict', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-misc', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-core', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-hash', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-interfaces', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-ioformats', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-smiles', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-standard', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-valencycheck', version: cdkVersion
     //specific CDK 2.11 snapshot release to get FunctionalGroupsFinder that also copies atomic charges
     implementation group: 'org.openscience.cdk', name: 'cdk-fragment', version: '2.11-20250211.070243-7'
     implementation group: 'org.openscience.cdk', name: 'cdk-scaffold', version: '2.8'
