@@ -25,9 +25,9 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-import de.unijena.cheminf.deglycosylation.SugarRemovalUtility;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
@@ -42,9 +42,13 @@ import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.tools.SugarRemovalUtility;
+import org.openscience.cdk.tools.manipulator.AtomContainerComparator;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -165,40 +169,40 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Enum SRUFragmenterPreservationModeOption">
+    //<editor-fold desc="Enum SRUFragmenterPreservationMode">
     /**
      * Enum with options for how to determine whether a substructure that gets disconnected from the molecule during the
      * removal of a sugar moiety should be preserved or can get removed along with the sugar.
-     * Wraps the enum PreservationModeOption from SugarRemovalUtility to be able to add display name and tooltip here.
+     * Wraps the enum PreservationMode from SugarRemovalUtility to be able to add display name and tooltip here.
      */
-    public static enum SRUFragmenterPreservationModeOption implements IDisplayEnum {
+    public static enum SRUFragmenterPreservationMode implements IDisplayEnum {
         /**
          * Specifies that all structures should be preserved. Note that if this option is combined with the removal of
          * only terminal moieties, even the smallest attached structure will prevent the removal of a sugar. The most
          * important consequence is that circular sugars with any hydroxy groups will not be removed because these are
          * not considered as part of the sugar moiety.
          */
-        ALL(SugarRemovalUtility.PreservationModeOption.ALL,
-                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption.All.displayName"),
-                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption.All.tooltip")),
+        ALL(SugarRemovalUtility.PreservationMode.ALL,
+                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationMode.All.displayName"),
+                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationMode.All.tooltip")),
         /**
          * Specifies that whether a structure is worth preserving will be judged by its heavy atom count. The default
          * threshold to preserve a structure is set to 5 heavy atoms (inclusive).
          */
-        HEAVY_ATOM_COUNT(SugarRemovalUtility.PreservationModeOption.HEAVY_ATOM_COUNT,
-                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption.HAC.displayName"),
-                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption.HAC.tooltip")),
+        HEAVY_ATOM_COUNT(SugarRemovalUtility.PreservationMode.HEAVY_ATOM_COUNT,
+                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationMode.HAC.displayName"),
+                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationMode.HAC.tooltip")),
         /**
          * Specifies that whether a structure is worth preserving will be judged by its molecular weight. The default
          * threshold to preserve a structure is set to 60 Da (= 5 carbon atoms, inclusive).
          */
-        MOLECULAR_WEIGHT (SugarRemovalUtility.PreservationModeOption.MOLECULAR_WEIGHT,
-                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption.MW.displayName"),
-                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption.MW.tooltip"));
+        MOLECULAR_WEIGHT (SugarRemovalUtility.PreservationMode.MOLECULAR_WEIGHT,
+                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationMode.MW.displayName"),
+                Message.get("SugarRemovalUtilityFragmenter.SRUFragmenterPreservationMode.MW.tooltip"));
         /**
          * Wrapped enum constant from the analogous SRU enum.
          */
-        private final SugarRemovalUtility.PreservationModeOption wrappedOption;
+        private final SugarRemovalUtility.PreservationMode wrappedOption;
         /**
          * Language-specific name for display in GUI.
          */
@@ -214,17 +218,17 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
          * @param aDisplayName display name
          * @param aTooltip tooltip text
          */
-        private SRUFragmenterPreservationModeOption(SugarRemovalUtility.PreservationModeOption anOption, String aDisplayName, String aTooltip) {
+        private SRUFragmenterPreservationMode(SugarRemovalUtility.PreservationMode anOption, String aDisplayName, String aTooltip) {
             this.wrappedOption = anOption;
             this.displayName = aDisplayName;
             this.tooltip = aTooltip;
         }
         /**
-         * Returns the enum constant from the SRU PreservationModeOption enum that is wrapped in this instance.
+         * Returns the enum constant from the SRU PreservationMode enum that is wrapped in this instance.
          *
          * @return wrapped constant
          */
-        public SugarRemovalUtility.PreservationModeOption getWrappedSRUPreservationMode() {
+        public SugarRemovalUtility.PreservationMode getWrappedSRUPreservationMode() {
             return this.wrappedOption;
         }
         //
@@ -271,8 +275,8 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     /**
      * Default preservation mode setting.
      */
-    public static final SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption PRESERVATION_MODE_DEFAULT =
-            SRUFragmenterPreservationModeOption.HEAVY_ATOM_COUNT;
+    public static final SRUFragmenterPreservationMode PRESERVATION_MODE_DEFAULT =
+            SRUFragmenterPreservationMode.HEAVY_ATOM_COUNT;
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
@@ -281,13 +285,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      */
     private final SugarRemovalUtility sugarRUInstance;
 
+    //note: since Java 21, the javadoc build complains about "double comments" when there is a comment
+    // for the get() method of the property and the private property itself as well
     private final SimpleIDisplayEnumConstantProperty returnedFragmentsSetting;
 
     private final SimpleIDisplayEnumConstantProperty sugarTypeToRemoveSetting;
 
-    /**
-     * A property that has a constant from the IMoleculeFragmenter.FragmentSaturationOption enum as value.
-     */
     private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
 
     private final SimpleBooleanProperty detectCircularSugarsOnlyWithGlycosidicBondSetting;
@@ -445,12 +448,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap.put(this.removeOnlyTerminalSugarsSetting.getName(),
                 Message.get("SugarRemovalUtilityFragmenter.removeOnlyTerminalSugarsSetting.displayName"));
         this.preservationModeSetting = new SimpleIDisplayEnumConstantProperty(this, "Preservation mode setting",
-                SugarRemovalUtilityFragmenter.PRESERVATION_MODE_DEFAULT, SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption.class) {
+                SugarRemovalUtilityFragmenter.PRESERVATION_MODE_DEFAULT, SRUFragmenterPreservationMode.class) {
             @Override
             public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
                     SugarRemovalUtilityFragmenter.this.sugarRUInstance.setPreservationModeSetting(
-                            ((SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption) newValue).getWrappedSRUPreservationMode());
+                            ((SRUFragmenterPreservationMode) newValue).getWrappedSRUPreservationMode());
                     //when the preservation mode is changed, the threshold is set to the default value of the chosen mode internally within the SRU!
                     SugarRemovalUtilityFragmenter.this.preservationModeThresholdSetting.set(
                             SugarRemovalUtilityFragmenter.this.sugarRUInstance.getPreservationModeThresholdSetting());
@@ -728,13 +731,13 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      *
      * @return enum constant of the set option
      */
-    public SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption getPreservationModeSetting() {
-        return (SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption) this.preservationModeSetting.get();
+    public SRUFragmenterPreservationMode getPreservationModeSetting() {
+        return (SRUFragmenterPreservationMode) this.preservationModeSetting.get();
     }
 
     /**
      * Returns the property object of the preservation mode setting that can be used to configure this setting.
-     * It has a constant from the SugarRemovalUtility.PreservationModeOption enum as value.
+     * It has a constant from the SugarRemovalUtility.PreservationMode enum as value.
      *
      * @return property object of the preservation mode setting
      */
@@ -961,10 +964,10 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
      * Sets the preservation mode setting, defining what molecular characteristic should be considered when judging
      * whether a fragment is 'big enough' to be kept and not discarded.
      *
-     * @param anOption a constant from the SugarRemovalUtility.PreservationModeOption enum
+     * @param anOption a constant from the SugarRemovalUtility.PreservationMode enum
      * @throws NullPointerException if the given parameter is null
      */
-    public void setPreservationModeSetting(SugarRemovalUtilityFragmenter.SRUFragmenterPreservationModeOption anOption) throws NullPointerException {
+    public void setPreservationModeSetting(SRUFragmenterPreservationMode anOption) throws NullPointerException {
         Objects.requireNonNull(anOption, "Given option is null.");
         //synchronisation with SRU instance done in overridden set() function of the property
         this.preservationModeSetting.set(anOption);
@@ -1131,7 +1134,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         tmpCopy.setFragmentSaturationSetting((FragmentSaturationOption) this.fragmentSaturationSetting.get());
         tmpCopy.setDetectCircularSugarsOnlyWithGlycosidicBondSetting(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get());
         tmpCopy.setRemoveOnlyTerminalSugarsSetting(this.removeOnlyTerminalSugarsSetting.get());
-        tmpCopy.setPreservationModeSetting((SRUFragmenterPreservationModeOption) this.preservationModeSetting.get());
+        tmpCopy.setPreservationModeSetting((SRUFragmenterPreservationMode) this.preservationModeSetting.get());
         tmpCopy.setPreservationModeThresholdSetting(this.preservationModeThresholdSetting.get());
         tmpCopy.setDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting(this.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting.get());
         tmpCopy.setExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting(this.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting.get());
@@ -1167,34 +1170,28 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (aMolecule.isEmpty()) {
-            List<IAtomContainer> tmpReturnList = new ArrayList<>(1);
-            tmpReturnList.addFirst(aMolecule.clone());
-            aMolecule.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
-                    SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
-            return tmpReturnList;
-        }
         boolean tmpCanBeFragmented = this.canBeFragmented(aMolecule);
         if (!tmpCanBeFragmented) {
             throw new IllegalArgumentException("Given molecule cannot be fragmented but should be filtered or preprocessed first.");
         }
         List<IAtomContainer> tmpFragments;
         SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption tmpOption = (SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption) this.sugarTypeToRemoveSetting.get();
+        IAtomContainer tmpMoleculeClone = aMolecule.clone();
         try {
             tmpFragments = switch (tmpOption) {
                 case SugarTypeToRemoveOption.CIRCULAR ->
-                        this.sugarRUInstance.removeAndReturnCircularSugars(aMolecule, true);
+                        this.sugarRUInstance.removeAndReturnCircularSugars(tmpMoleculeClone);
                 case SugarTypeToRemoveOption.LINEAR ->
-                        this.sugarRUInstance.removeAndReturnLinearSugars(aMolecule, true);
+                        this.sugarRUInstance.removeAndReturnLinearSugars(tmpMoleculeClone);
                 case SugarTypeToRemoveOption.CIRCULAR_AND_LINEAR ->
-                        this.sugarRUInstance.removeAndReturnCircularAndLinearSugars(aMolecule, true);
+                        this.sugarRUInstance.removeAndReturnCircularAndLinearSugars(tmpMoleculeClone);
                 default ->
                         throw new IllegalStateException("Unexpected value: " + this.sugarTypeToRemoveSetting.get());
             };
-        } catch (IllegalArgumentException | CloneNotSupportedException anException) {
-            throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString());
+        } catch (IllegalArgumentException anException) {
+            throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString()  + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
-        //post-processing of aglycone, it is always saturated with implicit hydrogen atoms (might be empty)
+        //post-processing of aglycone (might be empty)
         IAtomContainer tmpAglycone = tmpFragments.getFirst();
         tmpAglycone.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
@@ -1202,8 +1199,16 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         if (this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS)
                 || this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_AGLYCONE)) {
             if (!tmpAglycone.isEmpty()) {
+                try {
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                        ChemUtil.saturateWithHydrogen(tmpAglycone);
+                    }
+                    ChemUtil.checkAndCorrectElectronConfiguration(tmpAglycone);
+                } catch (CDKException aCDKException) {
+                    SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, "Aglycone saturation failed.");
+                }
                 if (!ConnectivityChecker.isConnected(tmpAglycone)) {
-                    List<IAtomContainer> tmpAglyconeFragments = SugarRemovalUtility.partitionAndSortUnconnectedFragments(tmpAglycone);
+                    List<IAtomContainer> tmpAglyconeFragments = this.partitionAndSortUnconnectedFragments(tmpAglycone);
                     for (IAtomContainer tmpAglyconeFragment : tmpAglyconeFragments) {
                         tmpAglyconeFragment.setProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY,
                                 SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE);
@@ -1212,10 +1217,12 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                     tmpFragments.addAll(0, tmpAglyconeFragments);
                 }
             } else {
+                //aglycone is empty
                 tmpFragments.removeFirst();
             }
-            //else: only sugars are returned, dispose of aglycone
+
         } else {
+            // only sugars are returned, dispose of aglycone
             tmpFragments.removeFirst();
         }
         //sugars were detected, postprocessing
@@ -1223,6 +1230,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
             if (this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS)
                     || this.returnedFragmentsSetting.get().equals(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES)) {
                 for (IAtomContainer tmpSugarFragment : tmpFragments) {
+                    //skip aglycone fragments
                     if (!Objects.isNull(tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))
                             && tmpSugarFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY)
                             .equals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE)) {
@@ -1238,7 +1246,7 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
                         }
                         ChemUtil.checkAndCorrectElectronConfiguration(tmpSugarFragment);
                     } catch (CDKException aCDKException) {
-                        Logger.getLogger(SugarRemovalUtilityFragmenter.class.getName()).log(Level.WARNING, "Fragment saturation failed.");
+                        SugarRemovalUtilityFragmenter.LOGGER.log(Level.WARNING, "Fragment saturation failed.");
                     }
                 }
             //else: only aglycone is returned, dispose of sugars
@@ -1265,10 +1273,6 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
-            boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
-            return !tmpIsConnected;
-        }
         return false;
     }
 
@@ -1287,16 +1291,48 @@ public class SugarRemovalUtilityFragmenter implements IMoleculeFragmenter {
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         }
-        if (!this.shouldBePreprocessed(aMolecule)) {
-            return aMolecule.clone();
-        }
-        if (this.sugarRUInstance.areOnlyTerminalSugarsRemoved()) {
-            boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
-            if (!tmpIsConnected) {
-                return SugarRemovalUtility.selectBiggestUnconnectedFragment(aMolecule.clone());
-            }
-        }
         return aMolecule.clone();
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Protected utilities">
+    /**
+     * Utility method that can be used to partition the unconnected structures in an atom container, e.g. after the removal
+     * of both terminal and non-terminal sugar moieties, into a list of separate atom container objects and sort this
+     * list in decreasing order with the following criteria with decreasing priority: atom count, molecular weight, bond
+     * count and sum of bond orders.
+     * <br>Note: This method does not clear away structures that are too small. It is independent of all settings.
+     *
+     * @param aMolecule the molecule whose unconnected structures to separate and sort
+     * @return list of sorted atom containers representing the unconnected structures of the given molecule
+     * @throws NullPointerException if the given atom container is 'null'
+     */
+    protected List<IAtomContainer> partitionAndSortUnconnectedFragments(IAtomContainer aMolecule)
+            throws NullPointerException {
+        Objects.requireNonNull(aMolecule, "Given molecule is 'null'.");
+        boolean tmpIsEmpty = aMolecule.isEmpty();
+        boolean tmpIsConnected = ConnectivityChecker.isConnected(aMolecule);
+        if (tmpIsConnected || tmpIsEmpty) {
+            ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(1);
+            tmpFragmentList.add(aMolecule);
+            return tmpFragmentList;
+        }
+        IAtomContainerSet tmpUnconnectedFragments = ConnectivityChecker.partitionIntoMolecules(aMolecule);
+        int tmpSize = tmpUnconnectedFragments.getAtomContainerCount();
+        ArrayList<IAtomContainer> tmpSortedList = new ArrayList<>(tmpSize);
+        for (IAtomContainer tmpFragment : tmpUnconnectedFragments.atomContainers()) {
+            tmpSortedList.add(tmpFragment);
+        }
+        /*Compares two IAtomContainers for order with the following criteria with decreasing priority:
+            Compare atom count
+            Compare molecular weight (heavy atoms only)
+            Compare bond count
+            Compare sum of bond orders (heavy atoms only)
+        If no difference can be found with the above criteria, the IAtomContainers are considered equal.*/
+        Comparator<IAtomContainer> tmpComparator = new AtomContainerComparator().reversed();
+        //note: this can throw various exceptions but they should not appear here
+        tmpSortedList.sort(tmpComparator);
+        return tmpSortedList;
     }
     //</editor-fold>
 }

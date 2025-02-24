@@ -34,11 +34,11 @@ public interface IDisplayEnum {
      *
      * @return String display name
      */
-    public String getDisplayName();
+    String getDisplayName();
     /**
      * Returns the language-specific tooltip text of the enum constant for using it in the GUI.
      *
      * @return String tooltip text
      */
-    public String getTooltipText();
+    String getTooltipText();
 }

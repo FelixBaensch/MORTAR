@@ -42,14 +42,14 @@ public interface IDataTableView {
      *
      * @return List of MoleculeDataModel
      */
-    public List<MoleculeDataModel> getItemsList();
+    List<MoleculeDataModel> getItemsList();
     //
     /**
      * Sets given list.
      *
      * @param aListOfFragments List
      */
-    public void setItemsList(List<MoleculeDataModel> aListOfFragments);
+    void setItemsList(List<MoleculeDataModel> aListOfFragments);
     //
     /**
      * Adds a change listener to the height property of table view which sets the height for structure images to
@@ -57,5 +57,5 @@ public interface IDataTableView {
      *
      * @param aSettingsContainer SettingsContainer
      */
-    public void addTableViewHeightListener(SettingsContainer aSettingsContainer);
+    void addTableViewHeightListener(SettingsContainer aSettingsContainer);
 }

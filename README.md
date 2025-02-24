@@ -73,12 +73,12 @@ Development Kit or Runtime Environment (JDK/JRE) of version 21.0.1 or higher mus
 
 <p>
 <b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.2/MORTAR_v1.2.2.0_WINx64_installer.exe">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.3.0/MORTAR_v1.3.0.0_WINx64_installer.exe">here</a> to 
 automatically download the installer .exe of the latest version). Download the installer 
 executable, start, and follow the instructions to install MORTAR. Note that the installation includes a full 
 Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
 Windows desktop. E.g. for MORTAR to use up to 4 gigabyte of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.2.2.0\bin" or the path specified at 
+located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.3.0.0\bin" or the path specified at 
 installation). To start MORTAR, double-click the created shortcut. MORTAR can be uninstalled by the provided 
 Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
 <br>
@@ -117,28 +117,30 @@ the Debian package (.deb) attached to every
 (only one for devices with an x86 processor architecture). Download the package 
 and double-click on it to install it. Alternatively, you can install it via the 
 command line:
+</p>
 
 ```shell
-sudo dpkg -i <path to>MORTAR-1.2.2.deb
+sudo dpkg -i <path to>MORTAR-1.3.0.deb
 ```
+
 Execute the command in the directory where the JAR is situated or use its explicit 
 path instead of ```<path to>```.
 The package is configured to allocate up to 4 gigabytes of RAM to MORTAR. Should 
 you want to assign more memory to analyse bigger data sets or should this 
 installation not work for you, you can run MORTAR directly from the command line 
 (see below).
-</p>
+
 
 <p><b>JAR execution via command line (all platforms)</b>: 
-Every release has the executable JAR "MORTAR-fat-1.2.2.0.jar"
+Every release has the executable JAR "MORTAR-fat-1.3.0.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.2/MORTAR-fat-1.2.2.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.3.0/MORTAR-fat-1.3.0.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.2.2.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.3.0.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
@@ -148,9 +150,9 @@ Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx
 
 <p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all three platforms) and AArch64/ARM 
 (on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.2.2.0.jar" is available from the distributions attached 
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.3.0.0.jar" is available from the distributions attached 
 to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.2.2/MORTAR-fat-aarch64-1.2.2.0.jar">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.3.0/MORTAR-fat-aarch64-1.3.0.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
@@ -181,16 +183,16 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be "bin",
 * JavaFX version 21.0.1
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
-* Chemistry Development Kit (CDK) version 2.9
+* Chemistry Development Kit (CDK) version 2.10
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
-* JUnit version 5.9.3
+* JUnit version 5.11.4
     * [JUnit 5](https://junit.org/junit5/)
     * License: Eclipse Public License 2.0
-* LibrePDF OpenPDF version 1.3.26
+* LibrePDF OpenPDF version 2.0.3
   * [OpenPDF GitHub repository](https://github.com/LibrePDF/OpenPDF)
   * License: GNU Lesser General Public License 2.1
-* Spotless version 6.25
+* Spotless version 7.0.2
   * [Spotless GitHub repository](https://github.com/diffplug/spotless)
   * License: Apache-2.0 license
 
