@@ -111,7 +111,7 @@ public final class BasicDefinitions {
     /**
      * Version of application.
      */
-    public static final String MORTAR_VERSION = "1.2.2.0";
+    public static final String MORTAR_VERSION = "1.3.0.0";
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Model constants and magic numbers">
