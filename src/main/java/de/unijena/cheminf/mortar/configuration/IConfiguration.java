@@ -41,5 +41,5 @@ public interface IConfiguration {
      * @return property value associated with the given key
      * @throws MissingResourceException if no associated value could be found for the given key
      */
-    public String getProperty(String aKey) throws MissingResourceException;
+    String getProperty(String aKey) throws MissingResourceException;
 }

@@ -79,8 +79,8 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
      */
     @Test
     public void fragmentationTest() throws Exception {
-        SmilesParser tmpSmiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Canonical));
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        SmilesGenerator tmpSmiGen = new SmilesGenerator(SmiFlavor.Canonical);
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
