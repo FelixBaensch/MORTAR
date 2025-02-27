@@ -219,7 +219,7 @@ public class RECAP {
      * one for secondary amines, one for tertiary amines, and one for aliphatic N hetero cycles
      */
     public static final CleavageRule CYCLIC_TERTIARY_AMINES_ALIPHATIC = new CleavageRule(
-            "[N;R;D3;+0;$(N(-@[#6;+0])-@[#6;+0]);!$(N-@[#6]=!@*):1]" +
+            "[N;R;D3;+0;$(N(-@[#6;+0])-@[#6;+0]);!$(N-@[#6]=*):1]" +
                     "-!@[#6;+0;!$([#6]=,#*):2]",
             "([N:1]-*).(*-N-[#6:2])",
             "Cyclic Tertiary Amine Aliphatic");
@@ -307,6 +307,7 @@ public class RECAP {
             "([C:1]=C-*).(*-C=[C:2])",
             "Olefin");
     //TODO: keep the charge somehow?
+    //TODO: introduce separate cyclic quaternary N rule for when two of the env. Cs are in the same ring?
     /**
      * RECAP rule nr 7: Quaternary Nitrogen.
      * <br>An aliphatic N that is...
@@ -329,7 +330,8 @@ public class RECAP {
                     "-!@[#6;+0;!$([#6]=,#*):4]",
             "([#6:1]-N-*).(*-N-[#6:2]).(*-N-[#6:3]).(*-N-[#6:4])",
             "Quaternary Nitrogen");
-    //TODO:preserve aromaticity in the resulting primary amine?
+    //TODO: preserve aromaticity in the resulting primary amine?
+    //TODO: allow N to be charged?
     /**
      * RECAP rule nr 8: Aromatic Nitrogen to Aliphatic Carbon.
      * <br>An aromatic N (index 1) that is...
@@ -426,6 +428,7 @@ public class RECAP {
     //TODO: this is not part of the original RECAP, make it optional
     //TODO: check whether the definition of the cleavage bond works as intended
     //TODO: preserve aromaticity in the resulting primary amine?
+    //TODO: allow N to be charged?
     /**
      * S2 = Aromatic nitrogen - aromatic carbon -> aromatic N with a neutral
      * charge (index 1) connected via a non-ring bond(!) to an aromatic C
