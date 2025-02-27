@@ -1082,7 +1082,7 @@ class RECAPTest extends RECAP {
         //do not match amide
         Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
 
-        mol = smiPar.parseSmiles("C1N(C1)C(=O)N(C2)C2");
+        mol = smiPar.parseSmiles("C1N(C1)C(=O)NC2CCCCCC2");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
@@ -1117,11 +1117,25 @@ class RECAPTest extends RECAP {
         //do match even though one n is in a ring and aromatic
         Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
 
+        mol = smiPar.parseSmiles("n1(cncc1)C(=O)n(cn1)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do match with both n in aromatic cycles
+        Assertions.assertTrue(RECAP.UREA.getEductPattern().matches(mol));
+
         mol = smiPar.parseSmiles("CCCCNC(=O)NC(=O)NCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
         //do not match this bigger FG
+        Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("N1(C(=O)CCC1)C(=O)N(CCCC)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match urea connected to butyrolactam
         Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("CCCCNC(=O)NC(Cl)CCCCCCC");
@@ -1135,7 +1149,14 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not match because of double bond at environment C
+        //do not match because of double bond at environmental C
+        Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCN1CCCN(CCCCC)C1=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match this urea cycle
         Assertions.assertFalse(RECAP.UREA.getEductPattern().matches(mol));
     }
 
@@ -1208,7 +1229,6 @@ class RECAPTest extends RECAP {
         Assertions.assertTrue(childrenSmilesSet.containsAll(List.of("*n1cccc1", "*n1cccc1C")));
     }
 
-    //TODO: check acetal/ketal/glycosidic bond
     @Test
     void testEtherRuleIndividually() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
@@ -1247,7 +1267,7 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not pseudo atom
+        //do not match pseudo atom
         Assertions.assertFalse(RECAP.ETHER.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("CCCOC*");
@@ -1261,7 +1281,14 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not match in ring
+        //do not match ether in ring
+        Assertions.assertFalse(RECAP.ETHER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cocc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match ether in aromatic ring
         Assertions.assertFalse(RECAP.ETHER.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("C1CCCCC(CCCC1)OC2CCCCCCCCC2");
@@ -1269,6 +1296,13 @@ class RECAPTest extends RECAP {
         cycles.find(mol);
         arom.apply(mol);
         //this ring configuration is ok, ether connects the rings
+        Assertions.assertTrue(RECAP.ETHER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1ccccc1Oc1ccccc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //ether connecting two benzene rings
         Assertions.assertTrue(RECAP.ETHER.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("CCCCCC(=O)OCCCCCC");
@@ -1366,7 +1400,14 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //match orthocarbonateester
+        //match orthocarbonate ester
+        Assertions.assertTrue(RECAP.ETHER.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("OC1[C@@H](O)[C@@H](O)C(O[C@@H]2[C@@H](O)[C@@H](O)C(O)O[C@@H]2CO)O[C@@H]1CO");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match glycosidic bond
         Assertions.assertTrue(RECAP.ETHER.getEductPattern().matches(mol));
     }
 
@@ -1448,7 +1489,7 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //this ring configuration is ok
+        //this ring configuration is ok, the double bond is connecting two rings
         Assertions.assertTrue(RECAP.OLEFIN.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("CCCCCC=CC(=O)CCCCC");
@@ -1476,7 +1517,14 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not match the sp3 carbon
+        //do not match the sp carbon
+        Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccc1=c1cccc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //arom.apply(mol);
+        //do not match double bond connecting two aromatic rings
         Assertions.assertFalse(RECAP.OLEFIN.getEductPattern().matches(mol));
     }
 
@@ -1540,18 +1588,11 @@ class RECAPTest extends RECAP {
         //match this simple example
         Assertions.assertTrue(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
 
-        mol = smiPar.parseSmiles("C1[N+](C1)(C)C");
+        mol = smiPar.parseSmiles("C1[N+](CCCCCC1)(CCCCCC)CCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not match in ring
-        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
-
-        mol = smiPar.parseSmiles("C1CCCCCCCCCCC[N+]1(C)(C)C");
-        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
-        cycles.find(mol);
-        arom.apply(mol);
-        //do not match in ring
+        //do not match in ring, TODO: make this possible via a separate (optional) rule?
         Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("C1CCCCCCCC1[N+](C)(C)C");
@@ -1597,6 +1638,95 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         //do not match charged cyanate
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC(=O)[N+](CCCCCCCCC)(CCCCCCCCC)CCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match quaternary, charged amide
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCN(CCCC)C(=O)[N+](CCCC)(CCCC)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match quaternary, charged urea
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[N+](CCCCCCCCCC)(CCCCCCCCCC)S(=O)(=O)CCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged sulphonamide
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(CCCCCCCCCCC)=C[N+](CCCCCCCCCC)(CCCCCCCCCC)CCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged amidine
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN(CCCCCCCCCC)C(=NCCCCCC)[N+](CCCCCCC)(CCCCCCC)CCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged guanidine
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCC[N+](CCCCC)(C(=O)CCCCC)C(=O)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary charged imide
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCOC(=O)[N+](CCCCCCCCCC)(CCCCCCCCCC)CCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match quaternary, charged carbamate ester
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCC(=N[N+](CCCCCCCCCC)(CCCCCCCCCC)CCCCCCC)CCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match quaternary, charged hydrazone
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCC(=[N+](CCCCCCC)CCCCCCC)CCCCCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match quaternary, charged imine
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCN=[N+](CCCCCCCCCCC)CCCCCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged azo compounds
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCOC#[N+]CCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged cyanate
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC[N+](CCCCCCC)=C=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged iso cyanate
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCC#[N+]CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged nitrile
+        Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCCCCCO[N+](CCCCCCCC)=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        //do not match quaternary, charged nitrite
         Assertions.assertFalse(RECAP.QUATERNARY_NITROGEN.getEductPattern().matches(mol));
     }
 
@@ -1650,6 +1780,8 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("c1cc[nH]c1", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
         //do not match pyrrole without any exocyclic groups
         Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
@@ -1657,6 +1789,8 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("*n1cccc1", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
         //do not match pseudo atom
         Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
@@ -1671,20 +1805,33 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //match this example from the paper
+        //match this example from the paper, triazole
         Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("c1ncnn1C(=O)CCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not match this kind of amine
+        //make sure aromaticity is still there
+        Assertions.assertEquals("O=C(n1ncnc1)CCCCC", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match amine connected to triazole
+        Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccn1C(=O)CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("O=C(n1cccc1)CCCCC", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match amine connected to pyrrole
         Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("c12ncnn1CCCCCC2");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("n1cnn2c1CCCCCC2", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
         //do not match this ring system
         Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
@@ -1692,6 +1839,8 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("c1ccc(cc1)N2CCCCC2", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
         //do not match because N is aliphatic and C aromatic
         Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
@@ -1699,7 +1848,110 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //match these two rings, the cleaved bond is not in a any ring but connecting them
+        //match these two rings, the cleaved bond is not in any ring but connecting them
+        Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccn1C(=O)NCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("O=C(NCCCCC)n1cccc1", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match urea connected to pyrrole
+        Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccn1C=NCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("N(=Cn1cccc1)CCCCC", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match amidine connected to pyrrole
+        Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccn1S(=O)(=O)CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("O=S(=O)(n1cccc1)CCCCCCC", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match sulphonamide connected to pyrrole
+        Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccn1N=CCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("N(=CCCCCC)n1cccc1", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match hydrazone connected to pyrrole
+        Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccn1C(NCCCCC)=NCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("N(=C(NCCCCC)n1cccc1)CCCCC", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match guanidine connected to pyrrole
+        Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cccn1C(=O)OCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //make sure aromaticity is still there
+        Assertions.assertEquals("O=C(OCCCCC)n1cccc1", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match carbamate ester connected to pyrrole
+        Assertions.assertFalse(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCn1nccc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match hydrzone in an aromatic cycle
+        Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCn1c(=O)n(CCCC)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match urea in an aromatic cycle
+        Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCn1c(=O)ccccc1=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match imide in an aromatic cycle
+        Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCCn1ccoc1=O");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match carbamate ester in an aromatic cycle
+        Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCn1c(=O)cccc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match 2-pyridine ("aromatic lactam")
+        Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCn1c(=NCCCCC)n(CCCC)cc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match guanidine in an aromatic ring
+        Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCn1cncc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match amidine in an aromatic ring
         Assertions.assertTrue(RECAP.AROMATIC_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
     }
 
@@ -1749,6 +2001,55 @@ class RECAPTest extends RECAP {
         //do not match acyclic amide
         Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
+        mol = smiPar.parseSmiles("C1CCC(=O)N1C(=O)N(CCCC)CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match urea connected to butyrolactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCC(=O)N1C(=O)CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match amide connected to butyrolactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCC(=O)N1C=N(CCCC)CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match amidine connected to butyrolactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCC(=O)N1S(=O)(=O)CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match sulphonamide connected to butyrolactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCC(=O)N1N(CCCC)=CCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match hydrazone connected to butyrolactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCC(=O)N1C(=N(CCCC)CCCC)N(CCCC)CCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match guanidine connected to butyrolactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1CCC(=O)N1C(=O)OCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match carbamate ester connected to butyrolactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
         mol = smiPar.parseSmiles("C1CCN(CCCCC)C(=O)N1CCCCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
@@ -1764,6 +2065,13 @@ class RECAPTest extends RECAP {
         Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("C1CCOC(=O)N1CCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match cyclic carbamate ester
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("O=C(OCCC1=O)N1CCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
@@ -1812,7 +2120,7 @@ class RECAPTest extends RECAP {
         //match even though one environmental C is connected to a hetero atom
         Assertions.assertTrue(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
-        mol = smiPar.parseSmiles("C1CCCC(=O)N1C=O");
+        mol = smiPar.parseSmiles("C1CCCC(=O)N1C(=O)CCCCCCCC");
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
@@ -1830,7 +2138,20 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
+        //TODO: aromaticity not detected!
+        //make sure aromaticity is still there
+        //Assertions.assertEquals("", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
         //do not match aromatic lactam
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("CCCCCn1c(=O)cccc1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //TODO: aromaticity not detected!
+        //make sure aromaticity is still there
+        //Assertions.assertEquals("", new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols).create(mol));
+        //do not match 2-pyridine ("aromatic lactam")
         Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("C1CCC2CC(=O)N1CCCCCC2");
@@ -1839,6 +2160,27 @@ class RECAPTest extends RECAP {
         arom.apply(mol);
         //do not match because the bond supposed to be cleaved is in a ring
         Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1=NN(CCCCCC)C(=O)CC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match hydrazone in a cycle with a neighboring keto group
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("N1(CCCCCCC)=CN(CCCC)C(=O)CC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match amidine in a cycle with a neighboring keto group
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("N1(CCCCCC)C(=N(CCCCC)CCCCCC)N(CCCCC)C(=O)CC1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match guanidine in a cycle with a neighboring keto group
+        Assertions.assertFalse(RECAP.LACTAM_NITROGEN_TO_ALIPHATIC_CARBON.getEductPattern().matches(mol));
     }
 
     @Test
@@ -1846,6 +2188,7 @@ class RECAPTest extends RECAP {
         //TODO
     }
 
+    //TODO: make sure that aromaticity is actually correctly detected for the negative test cases!
     @Test
     void testAromaticCarbonToAromaticCarbonRuleIndividually() throws Exception {
         SmilesParser smiPar = new SmilesParser(DefaultChemObjectBuilder.getInstance());
@@ -1870,7 +2213,7 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //match this kekulised structure, proves that the exception for aromatic double bonds works
+        //match this kekulised structure
         Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("c1cnccc1c2ccccc2");
@@ -1898,7 +2241,7 @@ class RECAPTest extends RECAP {
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
         cycles.find(mol);
         arom.apply(mol);
-        //do not match toluene
+        //do not match single toluene
         Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
 
         mol = smiPar.parseSmiles("C12=CC=CC=C1C3=CC=CC=C32");
@@ -1907,6 +2250,57 @@ class RECAPTest extends RECAP {
         arom.apply(mol);
         //do not match because there are two connections of the rings
         Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("C1=CNC=C1C2=CNC=C2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this example of two pyrrole rings connected via C
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1[nH]ccc1c1cc[nH]c1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match this example of two pyrrole rings connected via C, now in aromatic notation
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        //TODO: note that the following does not work because there are no Hs explicitly declared, CDK issue?
+        //mol = smiPar.parseSmiles("c1nccc1c1ccnc1");
+        //AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        //cycles.find(mol);
+        //arom.apply(mol);
+        //match this example of two pyrrole rings connected via C, now in aromatic notation
+        //Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1cc[nH]c1CCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match aromatic C connected to aliphatic C
+        Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1ccccc1CCCCCCCC");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //do not match aromatic C connected to aliphatic C
+        Assertions.assertFalse(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        //TODO: this structure cannot be kekulized by CDK if the two Hs are not explicitly declared
+        mol = smiPar.parseSmiles("c1[nH]c(-c2[nH]cnn2)nn1");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match two triazole rings connected via C
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
+
+        mol = smiPar.parseSmiles("c1ncccc1c2ncccc2");
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+        cycles.find(mol);
+        arom.apply(mol);
+        //match two pyridine rings connected via C
+        Assertions.assertTrue(RECAP.AROMATIC_CARBON_TO_AROMATIC_CARBON.getEductPattern().matches(mol));
     }
 
     @Test

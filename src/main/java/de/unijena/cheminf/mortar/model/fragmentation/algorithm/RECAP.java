@@ -398,10 +398,12 @@ public class RECAP {
             "([N:3]-*).(*-N-[C:4])",
             "Lactam Nitrogen to Aliphatic Carbon");
     //TODO: use different educts?
-    //TODO: check whether the definition of the cleavage bond works as intended
     /**
      * RECAP rule nr 10: Aromatic Carbon to Aromatic Carbon.
      * //TODO
+     * note: an aliphatic, non-ring bond connecting the two aromatic cycles works
+     * because the non-ring bond will not be flagged as aromatic, even though it
+     * can be part of the delocalised system in reality
      */
     public static final CleavageRule AROMATIC_CARBON_TO_AROMATIC_CARBON = new CleavageRule(
             "[c;R;D3;+0;!$(c~[#0]):1]" +
