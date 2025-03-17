@@ -105,6 +105,11 @@ public class SettingsContainer {
     public static final Exporter.CSVSeparator CSV_EXPORT_SEPARATOR_SETTING_DEFAULT = Exporter.CSVSeparator.COMMA;
 
     /**
+     * Default value for the regard stereochemistry setting.
+     */
+    public static final boolean REGARD_STEREOCHEMISTRY_SETTING_DEFAULT = true;
+
+    /**
      * Default value of whether to keep last fragment.
      */
     public static final boolean KEEP_LAST_FRAGMENT_SETTING_DEFAULT = false;
@@ -140,6 +145,8 @@ public class SettingsContainer {
     private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
 
     private SimpleIDisplayEnumConstantProperty csvExportSeparatorSetting;
+
+    private SimpleBooleanProperty regardStereochemistrySetting;
 
     private SimpleBooleanProperty keepLastFragmentSetting;
 
@@ -368,6 +375,24 @@ public class SettingsContainer {
     }
 
     /**
+     * Returns the current value of the regard stereochemistry setting.
+     *
+     * @return regard stereochemistry setting value
+     */
+    public boolean getRegardStereochemistrySetting() {
+        return this.regardStereochemistrySetting.get();
+    }
+
+    /**
+     * Returns the property wrapping the regard stereochemistry setting.
+     *
+     * @return regard stereochemistry setting property
+     */
+    public SimpleBooleanProperty regardStereochemistrySettingProperty() {
+        return this.regardStereochemistrySetting;
+    }
+
+    /**
      * Returns the current value of the keep last fragment setting.
      *
      * @return keep last fragment setting value
@@ -473,6 +498,15 @@ public class SettingsContainer {
     }
 
     /**
+     * Sets the setting for whether to regard stereochemistry.
+     *
+     * @param aBoolean whether to regard stereochemistry
+     */
+    public void setRegardStereochemistrySetting(boolean aBoolean) {
+        this.regardStereochemistrySetting.set(aBoolean);
+    }
+
+    /**
      * Sets the setting for the separator for the csv export. Param must be an enum constant of
      * the Exporter CSV separator enum.
      *
@@ -511,6 +545,7 @@ public class SettingsContainer {
         //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
+        this.regardStereochemistrySetting.set(SettingsContainer.REGARD_STEREOCHEMISTRY_SETTING_DEFAULT);
         //DEPRECATED
         //this.keepLastFragmentSetting.set(SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
     }
@@ -716,6 +751,11 @@ public class SettingsContainer {
         };
         this.settingNameTooltipTextMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.csvExportSeparatorSetting.getName(), Message.get("SettingsContainer.csvExportSeparatorSetting.displayName"));
+        this.regardStereochemistrySetting = new SimpleBooleanProperty(this,
+                "Regard stereochemistry setting",
+                SettingsContainer.REGARD_STEREOCHEMISTRY_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.regardStereochemistrySetting.getName(), Message.get("SettingsContainer.regardStereochemistrySetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.regardStereochemistrySetting.getName(), Message.get("SettingsContainer.regardStereochemistrySetting.displayName"));
         //DEPRECATED
         /*this.keepLastFragmentSetting = new SimpleBooleanProperty(this,
                 "Keep last fragment in pipelining",
@@ -737,6 +777,7 @@ public class SettingsContainer {
         //DEPRECATED
         //this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
+        this.settings.add(this.regardStereochemistrySetting);
         //DEPRECATED
         //this.settings.add(this.keepLastFragmentSetting);
         this.settings.add(this.csvExportSeparatorSetting);
