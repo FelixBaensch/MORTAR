@@ -88,7 +88,7 @@ public final class ChemUtil {
      */
     public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) {
         int tmpFlavor = SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols;
-        if (isStereoChemEncoded) {
+        if (isStereoChemEncoded && anAtomContainer.stereoElements().iterator().hasNext()) {
             tmpFlavor = tmpFlavor | SmiFlavor.Stereo;
         }
         int[] tmpAtomOrder = new int[anAtomContainer.getAtomCount()];
