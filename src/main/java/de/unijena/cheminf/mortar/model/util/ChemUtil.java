@@ -88,6 +88,7 @@ public final class ChemUtil {
     public static String createUniqueSmiles(IAtomContainer anAtomContainer) {
         String tmpSmiles = null;
         SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+        //SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.Stereo | SmiFlavor.UseAromaticSymbols);
         try {
             try {
                 tmpSmiles = tmpSmilesGen.create(anAtomContainer);
