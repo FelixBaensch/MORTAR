@@ -542,14 +542,14 @@ public class MainViewController {
                 if (tmpAtomContainerSet != null && !tmpAtomContainerSet.isEmpty()) {
                     for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
                         //returns null if no SMILES code could be created
-                        String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
+                        String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
                         if (tmpSmiles == null) {
                             tmpExceptionCount++;
                             continue;
                         }
                         MoleculeDataModel tmpMoleculeDataModel;
                         if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                            tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
+                            tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
                         } else {
                             tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
                         }

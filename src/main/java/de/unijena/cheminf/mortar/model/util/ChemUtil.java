@@ -80,25 +80,29 @@ public final class ChemUtil {
      * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
      * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
      * container. Aromaticity information is encoded in the returned SMILES string, if there is any given. Unique SMILES
-     * codes do NOT encode stereochemistry!
+     * codes do NOT encode stereochemistry by default! This can be turned on with the second parameter
      *
      * @param anAtomContainer atom container the unique SMILES should be created of
+     * @param isStereoChemEncoded whether stereochemistry should be encoded
      * @return unique SMILES of the given atom container or 'null' if no creation was possible
      */
-    public static String createUniqueSmiles(IAtomContainer anAtomContainer) {
+    public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) {
+        int tmpFlavor = SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols;
+        if (isStereoChemEncoded) {
+            tmpFlavor = tmpFlavor | SmiFlavor.Stereo;
+        }
+        int[] tmpAtomOrder = new int[anAtomContainer.getAtomCount()];
         String tmpSmiles = null;
-        SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
-        //SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.Stereo | SmiFlavor.UseAromaticSymbols);
         try {
             try {
-                tmpSmiles = tmpSmilesGen.create(anAtomContainer);
+                tmpSmiles = SmilesGenerator.create(anAtomContainer, tmpFlavor, tmpAtomOrder);
             } catch (CDKException anException) {
                 IAtomContainer tmpAtomContainer = anAtomContainer.clone();
                 Kekulization.kekulize(tmpAtomContainer);
-                tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                tmpSmiles = SmilesGenerator.create(tmpAtomContainer, tmpFlavor, tmpAtomOrder);
                 ChemUtil.LOGGER.log(Level.INFO, String.format("Kekulized molecule %s", anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
             }
-        } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException anException){
+        } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException | ArrayIndexOutOfBoundsException anException){
             ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s; molecule name: %s", anException.toString(), anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anException);
         }
         return tmpSmiles;

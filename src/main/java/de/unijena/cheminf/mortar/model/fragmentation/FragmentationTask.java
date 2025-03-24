@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
@@ -80,6 +81,10 @@ public class FragmentationTask implements Callable<Integer> {
      */
     private final String fragmentationName;
     /**
+     * MORTAR settings container.
+     */
+    private final SettingsContainer settingsContainer;
+    /**
      * Integer to count possible exceptions which could occur during fragmentation.
      */
     private int exceptionsCounter;
@@ -94,12 +99,18 @@ public class FragmentationTask implements Callable<Integer> {
      * @param aHashtableOfFragments Map to hold fragments, should be synchronised, e.g. by using a HashTable instance;
      *                              keys are unique SMILES codes.
      * @param aFragmentationName String
+     * @param aSettingsContainer MORTAR settings container
      */
-    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules, IMoleculeFragmenter aFragmenter, Map<String, FragmentDataModel> aHashtableOfFragments, String aFragmentationName) {
+    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules,
+                             IMoleculeFragmenter aFragmenter,
+                             Map<String, FragmentDataModel> aHashtableOfFragments,
+                             String aFragmentationName,
+                             SettingsContainer aSettingsContainer) {
         this.moleculesList = aListOfMolecules;
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
+        this.settingsContainer = aSettingsContainer;
         this.exceptionsCounter = 0;
     }
     //
@@ -150,7 +161,7 @@ public class FragmentationTask implements Callable<Integer> {
                 HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size()));
                 // iterate through list of resulting fragments
                 for (IAtomContainer tmpFragment : tmpFragmentsList) {
-                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
+                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment, this.settingsContainer.getRegardStereochemistrySetting());
                     if (tmpSmiles == null) {
                         this.exceptionsCounter++;
                         continue;

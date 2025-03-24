@@ -130,10 +130,11 @@ public class MoleculeDataModel {
      * Constructor for MoleculeDataModel. Retains the given atom container.
      *
      * @param anAtomContainer AtomContainer of the molecule
+     * @param isStereoChemEncoded whether stereochemistry should be retained in the unique SMILES code encoding the structure
      * @throws NullPointerException if given SMILES string is null
      */
-    public MoleculeDataModel(IAtomContainer anAtomContainer) throws NullPointerException {
-        this(ChemUtil.createUniqueSmiles(anAtomContainer), anAtomContainer.getTitle(), anAtomContainer.getProperties());
+    public MoleculeDataModel(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) throws NullPointerException {
+        this(ChemUtil.createUniqueSmiles(anAtomContainer, isStereoChemEncoded), anAtomContainer.getTitle(), anAtomContainer.getProperties());
         this.keepAtomContainer = true;
         this.atomContainer = anAtomContainer;
     }

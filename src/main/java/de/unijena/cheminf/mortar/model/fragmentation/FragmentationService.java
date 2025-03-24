@@ -490,7 +490,7 @@ public class FragmentationService {
                     for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificFragmentation(tmpFragmentationName)){
                         String tmpKey;
                         try{
-                            tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                            tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer(), this.settingsContainer.getRegardStereochemistrySetting());
                             if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName) ||
                                     !tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
                                 continue;
@@ -500,13 +500,13 @@ public class FragmentationService {
                                         tmpKey,
                                         tmpNewFrequencies.get(tmpKey) +
                                                 tmpChildMol.getFragmentFrequencyOfSpecificFragmentation(tmpFragmentationName).get(tmpKey) *
-                                                        tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
+                                                        tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer(), this.settingsContainer.getRegardStereochemistrySetting()))
                                 );
                             } else {
                                 tmpNewFrequencies.put(
                                         tmpKey,
                                         tmpChildMol.getFragmentFrequencyOfSpecificFragmentation(tmpFragmentationName).get(tmpKey) *
-                                                tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
+                                                tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer(), this.settingsContainer.getRegardStereochemistrySetting()))
                                 );
                             }
                         } catch(CDKException anException) {
@@ -526,7 +526,7 @@ public class FragmentationService {
             for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificFragmentation(tmpPipelineFragmentationName)) {
                 String tmpKey;
                 try {
-                    tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                    tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer(), this.settingsContainer.getRegardStereochemistrySetting());
                 } catch (CDKException anException){
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s fragment name: %s", anException.toString(), tmpFrag.getName()), anException);
                     continue;
@@ -1020,7 +1020,7 @@ public class FragmentationService {
         for (int i = 1; i <= tmpNumberOfTasks; i++) {
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
             IMoleculeFragmenter tmpFragmenterForTask = aFragmenter.copy();
-            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentMap, aFragmentationName));
+            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentMap, aFragmentationName, this.settingsContainer));
             tmpFromIndex = tmpToIndex;
             tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
             if(tmpMoleculeModulo > 0){
