@@ -106,7 +106,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
         for(int i = 1; i <= this.numberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = this.molecules.subList(tmpFromIndex, tmpToIndex);
             IMoleculeFragmenter tmpFragmenterForTask = this.fragmenter.copy();
-            tmpFragmentationTaskList.add (new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, this.fragmentationName, this.settingsContainer));
+            tmpFragmentationTaskList.add (new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, this.fragmentationName, this.settingsContainer.getRegardStereochemistrySetting()));
             tmpFromIndex = tmpToIndex;
             tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
             if(tmpMoleculeModulo > 0){
