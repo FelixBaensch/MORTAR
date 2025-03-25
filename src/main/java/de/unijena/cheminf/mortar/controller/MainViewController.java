@@ -239,7 +239,7 @@ public class MainViewController {
         this.mainView = aMainView;
         this.settingsContainer = new SettingsContainer();
         this.settingsContainer.reloadGlobalSettings();
-        this.fragmentationService = new FragmentationService(this.settingsContainer);
+        this.fragmentationService = new FragmentationService();
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
         this.viewToolsManager = new ViewToolsManager(this.configuration);
@@ -513,10 +513,12 @@ public class MainViewController {
             this.interruptExport();
         }
         this.clearGuiAndCollections();
+        boolean tmpIsRegardStereo = this.settingsContainer.getRegardStereochemistrySetting();
+        boolean tmpIsFillOpenValences = this.settingsContainer.getAddImplicitHydrogensAtImportSetting();
         this.importTask = new Task<>() {
             @Override
             protected List<MoleculeDataModel> call() throws Exception {
-                List<MoleculeDataModel> tmpSet = tmpImporter.importMoleculeFile(aFile);
+                List<MoleculeDataModel> tmpSet = tmpImporter.importMoleculeFile(aFile, tmpIsRegardStereo, tmpIsFillOpenValences);
                 return tmpSet;
             }
         };
@@ -1125,6 +1127,8 @@ public class MainViewController {
         MainViewController.LOGGER.info("Start of method startFragmentation");
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(MoleculeDataModel::isSelected).toList();
         int tmpNumberOfCores = this.settingsContainer.getNumberOfTasksForFragmentationSetting();
+        boolean tmpIsKeepLastFragmentSetting = this.settingsContainer.isKeepLastFragmentSetting();
+        boolean tmpIsStereoChemRegarded = this.settingsContainer.getRegardStereochemistrySetting();
         try {
             this.fragmentationButton.setDisable(true);
             this.cancelFragmentationButton.setVisible(true);
@@ -1133,11 +1137,11 @@ public class MainViewController {
                 protected Void call() throws Exception {
                     if (isPipelining) {
                         MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
-                                tmpNumberOfCores);
+                                tmpNumberOfCores, tmpIsStereoChemRegarded, tmpIsKeepLastFragmentSetting);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
                     } else {
                         MainViewController.this.fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
-                                tmpNumberOfCores);
+                                tmpNumberOfCores, tmpIsStereoChemRegarded);
                     }
                     return null;
                 }

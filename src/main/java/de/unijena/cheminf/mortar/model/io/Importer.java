@@ -204,13 +204,16 @@ public class Importer {
      * counter is used as such and added to the returned atom containers as a property.
      *
      * @param aFile File to import
+     * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
+     * @param isFillOpenValencesWithImplH whether open valences in the imported molecules should be filled with implicit hydrogen atoms
      * @return List of MoleculeDataModels which contains the imported molecules or null if the file chooser was
      * closed by the user or a not importable file type was chosen
      * @throws CDKException if the given file cannot be parsed
      * @throws IOException if the given file cannot be found or read
      * @throws NullPointerException if the given file is null
      */
-    public List<MoleculeDataModel> importMoleculeFile(File aFile) throws NullPointerException, IOException, CDKException {
+    public List<MoleculeDataModel> importMoleculeFile(File aFile, boolean isRegardStereo, boolean isFillOpenValencesWithImplH)
+            throws NullPointerException, IOException, CDKException {
         Objects.requireNonNull(aFile, "aFile is null");
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
@@ -250,9 +253,9 @@ public class Importer {
                 throw new UnsupportedOperationException(String.format("Input file type %s is defined but not treated " +
                         "in Importer.importMoleculeFile() yet.", tmpInputFileType.toString()));
         }
-        this.preprocessMoleculeSet(tmpImportedMoleculesSet);
+        this.preprocessMoleculeSet(tmpImportedMoleculesSet, isFillOpenValencesWithImplH);
         this.fileName = aFile.getName();
-        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet);
+        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo);
         return tmpReturnList;
     }
     //
@@ -263,9 +266,10 @@ public class Importer {
      * SMILES generation (leads to molecule not being parsed into MoleculeDataModel).
      *
      * @param anAtomContainerSet the set to parse
+     * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
      * @return list of MoleculeDataModel instances or empty list if the input set is empty or null
      */
-    private List<MoleculeDataModel> parse(IAtomContainerSet anAtomContainerSet) {
+    private List<MoleculeDataModel> parse(IAtomContainerSet anAtomContainerSet, boolean isRegardStereo) {
         if (anAtomContainerSet == null || anAtomContainerSet.isEmpty()) {
             return new ArrayList<>(0);
         }
@@ -273,14 +277,14 @@ public class Importer {
         int tmpExceptionCount = 0;
         for (IAtomContainer tmpAtomContainer : anAtomContainerSet.atomContainers()) {
             //returns null if no SMILES code could be created
-            String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
+            String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, isRegardStereo);
             if (tmpSmiles == null) {
                 tmpExceptionCount++;
                 continue;
             }
             MoleculeDataModel tmpMoleculeDataModel;
             if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer, isRegardStereo);
             } else {
                 tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
             }
@@ -558,9 +562,11 @@ public class Importer {
      * the molecule data models. Nevertheless, it is done here to ensure that the generated SMILES codes are correct.
      *
      * @param aMoleculeSet the molecule set to process; may be empty but not null
+     * @param isFillOpenValencesWithImplH whether open valences in the imported molecules should be filled with implicit
+     *                                    hydrogen atoms
      * @throws NullPointerException if the given molecule set is null
      */
-    private void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet) throws NullPointerException {
+    private void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet, boolean isFillOpenValencesWithImplH) throws NullPointerException {
         Objects.requireNonNull(aMoleculeSet, "given molecule set is null.");
         if (aMoleculeSet.isEmpty()) {
             return;
@@ -569,7 +575,7 @@ public class Importer {
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
             try {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
-                if (this.settingsContainer.getAddImplicitHydrogensAtImportSetting()) {
+                if (isFillOpenValencesWithImplH) {
                     CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
                 } else {
                     for (IAtom tmpAtom : tmpMolecule.atoms()) {
