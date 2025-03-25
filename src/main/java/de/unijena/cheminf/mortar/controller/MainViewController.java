@@ -30,11 +30,7 @@ import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
-import de.unijena.cheminf.mortar.gui.views.IDataTableView;
-import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
-import de.unijena.cheminf.mortar.gui.views.MainView;
-import de.unijena.cheminf.mortar.gui.views.MoleculesDataTableView;
+import de.unijena.cheminf.mortar.gui.views.*;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -44,12 +40,7 @@ import de.unijena.cheminf.mortar.model.io.ChemFileTypes;
 import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.model.util.ChemUtil;
-import de.unijena.cheminf.mortar.model.util.CollectionUtil;
-import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.LogUtil;
-
+import de.unijena.cheminf.mortar.model.util.*;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
@@ -63,17 +54,7 @@ import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Pagination;
-import javafx.scene.control.RadioMenuItem;
-import javafx.scene.control.SortEvent;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TableView;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
@@ -86,15 +67,8 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -176,7 +150,7 @@ public class MainViewController {
     /**
      * Task for molecule file import.
      */
-    private Task<IAtomContainerSet> importTask;
+    private Task<List<MoleculeDataModel>> importTask;
     /**
      * Storing the name of the last imported file.
      */
@@ -518,8 +492,8 @@ public class MainViewController {
         this.clearGuiAndCollections();
         this.importTask = new Task<>() {
             @Override
-            protected IAtomContainerSet call() throws Exception {
-                IAtomContainerSet tmpSet = tmpImporter.importMoleculeFile(aFile);
+            protected List<MoleculeDataModel> call() throws Exception {
+                List<MoleculeDataModel> tmpSet = tmpImporter.importMoleculeFile(aFile);
                 return tmpSet;
             }
         };
@@ -527,9 +501,9 @@ public class MainViewController {
             //note: setOnSucceeded() takes place in the JavaFX GUI thread again but still runLater() is necessary to wait
             // for the thread to be free for the update
             Platform.runLater(() -> {
-                IAtomContainerSet tmpAtomContainerSet = null;
+                List<MoleculeDataModel> tmpImportedMoleculeDataModels = null;
                 try {
-                    tmpAtomContainerSet = this.importTask.get();
+                    tmpImportedMoleculeDataModels = this.importTask.get();
                 } catch (InterruptedException | ExecutionException anException) {
                     MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -538,26 +512,8 @@ public class MainViewController {
                             anException);
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                 }
-                int tmpExceptionCount = 0;
-                if (tmpAtomContainerSet != null && !tmpAtomContainerSet.isEmpty()) {
-                    for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-                        //returns null if no SMILES code could be created
-                        String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
-                        if (tmpSmiles == null) {
-                            tmpExceptionCount++;
-                            continue;
-                        }
-                        MoleculeDataModel tmpMoleculeDataModel;
-                        if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                            tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
-                        } else {
-                            tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
-                        }
-                        tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-                        this.moleculeDataModelList.add(tmpMoleculeDataModel);
-                    }
-                }
-                if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty() || this.moleculeDataModelList.isEmpty()) {
+                this.moleculeDataModelList.addAll(tmpImportedMoleculeDataModels);
+                if (tmpImportedMoleculeDataModels == null || tmpImportedMoleculeDataModels.isEmpty() || this.moleculeDataModelList.isEmpty()) {
                     MainViewController.LOGGER.log(Level.WARNING, "Import failed, set of imported molecules is null or empty");
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                     this.isImportRunningProperty.setValue(false);
@@ -572,13 +528,9 @@ public class MainViewController {
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
-                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() +
-                        " " + Message.get((tmpAtomContainerSet.getAtomContainerCount() == 1 ? "Title.molecule" : "Title.molecules")));
+                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpImportedMoleculeDataModels.size() +
+                        " " + Message.get((tmpImportedMoleculeDataModels.size() == 1 ? "Title.molecule" : "Title.molecules")));
                 this.importedFileName = tmpImporter.getFileName();
-                MainViewController.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
-                        "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
-                        "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
-                        tmpAtomContainerSet.getAtomContainerCount(), tmpImporter.getFileName(), tmpExceptionCount));
                 this.updateStatusBar(this.importerThread, Message.get("Status.imported"));
                 this.isImportRunningProperty.setValue(false);
                 this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");

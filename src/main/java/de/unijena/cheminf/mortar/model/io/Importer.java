@@ -27,8 +27,10 @@ package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 
@@ -202,13 +204,13 @@ public class Importer {
      * counter is used as such and added to the returned atom containers as a property.
      *
      * @param aFile File to import
-     * @return IAtomContainerSet which contains the imported molecules as AtomContainers or null if the file chooser was
+     * @return List of MoleculeDataModels which contains the imported molecules or null if the file chooser was
      * closed by the user or a not importable file type was chosen
      * @throws CDKException if the given file cannot be parsed
      * @throws IOException if the given file cannot be found or read
      * @throws NullPointerException if the given file is null
      */
-    public IAtomContainerSet importMoleculeFile(File aFile) throws NullPointerException, IOException, CDKException {
+    public List<MoleculeDataModel> importMoleculeFile(File aFile) throws NullPointerException, IOException, CDKException {
         Objects.requireNonNull(aFile, "aFile is null");
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
@@ -231,17 +233,17 @@ public class Importer {
             case Importer.ValidImportFileTypes.MOL_FILE:
                 tmpImportedMoleculesSet = this.importMolFile(aFile);
                 break;
-            case ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE:
+            case Importer.ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE:
                 tmpImportedMoleculesSet = this.importSDFile(aFile);
                 break;
             //Needs more work before it can be made available
             /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
                 break;*/
-            case ValidImportFileTypes.SMILES_FILE,
-                 ValidImportFileTypes.TEXT_FILE,
-                 ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE,
-                 ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE:
+            case Importer.ValidImportFileTypes.SMILES_FILE,
+                 Importer.ValidImportFileTypes.TEXT_FILE,
+                 Importer.ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE,
+                 Importer.ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE:
                 tmpImportedMoleculesSet = this.importSMILESFile(aFile);
                 break;
             default:
@@ -250,7 +252,46 @@ public class Importer {
         }
         this.preprocessMoleculeSet(tmpImportedMoleculesSet);
         this.fileName = aFile.getName();
-        return tmpImportedMoleculesSet;
+        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet);
+        return tmpReturnList;
+    }
+    //
+    /**
+     * Parses an atom container set into a list of the MORTAR-internal MoleculeDataModel instances. If the parameter is null or empty, an empty
+     * list is returned. Most time-consuming step is the SMILES generation, especially if stereochemistry is regarded because
+     * then, the InChI numbering algorithm is used. Logs the size of the input data set and the number of exceptions that occurred during
+     * SMILES generation (leads to molecule not being parsed into MoleculeDataModel).
+     *
+     * @param anAtomContainerSet the set to parse
+     * @return list of MoleculeDataModel instances or empty list if the input set is empty or null
+     */
+    private List<MoleculeDataModel> parse(IAtomContainerSet anAtomContainerSet) {
+        if (anAtomContainerSet == null || anAtomContainerSet.isEmpty()) {
+            return new ArrayList<>(0);
+        }
+        List<MoleculeDataModel> tmpReturnList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
+        int tmpExceptionCount = 0;
+        for (IAtomContainer tmpAtomContainer : anAtomContainerSet.atomContainers()) {
+            //returns null if no SMILES code could be created
+            String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
+            if (tmpSmiles == null) {
+                tmpExceptionCount++;
+                continue;
+            }
+            MoleculeDataModel tmpMoleculeDataModel;
+            if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer, this.settingsContainer.getRegardStereochemistrySetting());
+            } else {
+                tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
+            }
+            tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+            tmpReturnList.add(tmpMoleculeDataModel);
+        }
+        Importer.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
+                "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
+                "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
+                anAtomContainerSet.getAtomContainerCount(), this.getFileName(), tmpExceptionCount));
+        return tmpReturnList;
     }
     //
     /**
