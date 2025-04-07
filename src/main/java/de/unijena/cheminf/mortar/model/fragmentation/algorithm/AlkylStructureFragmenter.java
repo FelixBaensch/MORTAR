@@ -1380,6 +1380,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtom tmpNewAtom = this.chemObjectBuilderInstance.newAtom();
         tmpNewAtom.setAtomicNumber(anAtomToCopy.getAtomicNumber());
         tmpNewAtom.setImplicitHydrogenCount(anAtomToCopy.getImplicitHydrogenCount());
+        tmpNewAtom.setCharge(anAtomToCopy.getCharge());
         tmpNewAtom.setProperties(anAtomToCopy.getProperties());
         return tmpNewAtom;
     }
