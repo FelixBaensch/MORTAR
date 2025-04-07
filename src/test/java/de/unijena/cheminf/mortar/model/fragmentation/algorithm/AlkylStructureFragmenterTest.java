@@ -85,6 +85,10 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     private final AlkylStructureFragmenter basicAlkylStructureFragmenter;
     /**
+     * Private AlkylStructureFragmenter internal class 'Molecular Arrays' used in this test.
+     */
+    private MolecularArrays molecularArraysInstance;
+    /**
      * Private IAtom Array containing the atoms of a given structure, used in unit testing of internal
      * AlkylStructureFragmenter methods.
      */
@@ -107,6 +111,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     public AlkylStructureFragmenterTest() throws FileNotFoundException, URISyntaxException {
         this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
+        this.molecularArraysInstance = new MolecularArrays();
         this.testStructuresACSet = new AtomContainerSet();
         this.testStructuresACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Test_Structures.sdf");
         this.testExpectedFragmentsACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments_Natural_Compound.sdf");
@@ -155,7 +160,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpRingsAC);
 
         //ToDo: write test structure in fragmenter arrays; create array for comparison with expected markings
-        this.basicAlkylStructureFragmenter.markRings(tmpRingsAC, this.testAtomArray, this.testBondArray);
+        this.basicAlkylStructureFragmenter.markRings(this.molecularArraysInstance, tmpRingsAC, this.testAtomArray, this.testBondArray);
         //ToDo: find way to compare structures without extracting tested substructures
     }
     /**

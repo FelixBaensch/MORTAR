@@ -309,7 +309,40 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.setChemObjectBuilderInstance();
     }
     //</editor-fold>
-    //
+    /**
+     * Inner class for internal data transfer of atoms and bonds in arrays.
+     */
+    class MolecularArrays {
+                private IAtom[] atomArray;
+                private IBond[] bondArray;
+                protected MolecularArrays(IAtomContainer aMolecule) {
+                    this.atomArray = new IAtom[aMolecule.getAtomCount()];
+                    this.bondArray = new IBond[aMolecule.getBondCount()];
+                }
+                protected MolecularArrays() {
+                    this.atomArray = new IAtom[1];
+                    this.bondArray = new IBond[1];
+                }
+                protected MolecularArrays getMolecularArraysInstance(IAtomContainer aMolecule) {
+                    return new MolecularArrays(aMolecule);
+                }
+                public IAtom[] getAtomArray() {
+                    return this.atomArray;
+                }
+                public IBond[] getBondArray() {
+                    return this.bondArray;
+                }
+                public void setAtomArray(IAtom[] anAtomArray) {
+                    this.atomArray = anAtomArray;
+                }
+                public void setBondArray(IBond[] bondArray) {
+                    this.bondArray = bondArray;
+                }
+                public void clearArrays() {
+                    this.atomArray = null;
+                    this.bondArray = null;
+                }
+            }
     //<editor-fold desc="Public Properties Get">
 
     @Override
@@ -640,19 +673,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
         //
         //<editor-fold desc="Detection Steps" defaultstate="collapsed">
-        Object[] tmpObject = new Object[2];
-        tmpObject[0] = this.fillAtomArray(tmpClone);
-        tmpObject[1] = this.fillBondArray(tmpClone);
-        tmpObject = this.markNeighborAtomsAndBonds((IAtom[]) tmpObject[0], (IBond[]) tmpObject[1]);
-        tmpObject = this.markRings(tmpClone, (IAtom[]) tmpObject[0], (IBond[]) tmpObject[1]);
-        tmpObject = this.markConjugatedPiSystems(tmpClone, (IAtom[]) tmpObject[0], (IBond[]) tmpObject[1]);
-        tmpObject = this.markMultiBonds((IAtom[]) tmpObject[0], (IBond[]) tmpObject[1]);
+        MolecularArrays tmpMolecularArrays = new MolecularArrays(tmpClone);
+        tmpMolecularArrays.setAtomArray(this.fillAtomArray(tmpClone));
+        tmpMolecularArrays.setBondArray(this.fillBondArray(tmpClone));
+
+        this.markNeighborAtomsAndBonds(tmpMolecularArrays, tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
+        this.markRings(tmpMolecularArrays, tmpClone, tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
+        this.markConjugatedPiSystems(tmpMolecularArrays, tmpClone, tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
+        this.markMultiBonds(tmpMolecularArrays, tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
         //</editor-fold>
         //
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
             int tmpPostFragmentationAtomCount = 0;
-            IAtomContainerSet tmpFragmentSet = this.extractFragments((IAtom[]) tmpObject[0],(IBond[]) tmpObject[1]);
+            IAtomContainerSet tmpFragmentSet = this.extractFragments(tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
                     if (tmpAtom.getAtomicNumber() != 0)
@@ -664,12 +698,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 throw new Exception("Molecular formula is not the same between original molecule and received fragments!");
             }
             if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
+                tmpMolecularArrays.clearArrays();
                 return this.saturateWithImplicitHydrogen(tmpFragmentSet);
             }
             ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 tmpFragmentList.add(tmpAtomContainer);
             }
+            tmpMolecularArrays.clearArrays();
             return tmpFragmentList;
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
@@ -757,11 +793,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Protected method for detecting and marking tertiary or quaternary carbon atoms and their surrounding neighbor atoms and bonds.
      *
+     * @param aMolecularArraysInstance MolecularArrays instance for data transfer between methods
      * @param anAtomArray Given array with atoms of molecule to be fragmented
      * @param aBondArray Given array with bonds of molecule to be fragmented
-     * @return Object[] containing manipulated atom and bond arrays for easier data transfer
      */
-    protected Object[] markNeighborAtomsAndBonds(IAtom[] anAtomArray, IBond[] aBondArray) {
+    protected void markNeighborAtomsAndBonds(MolecularArrays aMolecularArraysInstance,IAtom[] anAtomArray, IBond[] aBondArray) {
         Objects.requireNonNull(anAtomArray, "Given atom array is null.");
         Objects.requireNonNull(aBondArray,"Given bond array is null");
         //set general atom and specific bond properties
@@ -817,20 +853,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 aBondArray[tmpBondIndex] = tmpBond;
             }
         }
-        Object[] tmpObject = new Object[2];
-        tmpObject[0] = anAtomArray;
-        tmpObject[1] = aBondArray;
-        return tmpObject;
+        aMolecularArraysInstance.setAtomArray(anAtomArray);
+        aMolecularArraysInstance.setBondArray(aBondArray);
     }
     /**
      * Protected method to mark all atoms and bonds of any rings in the given atomcontainer.
      *
+     * @param aMolecularArraysInstance MolecularArrays instance for data transfer between methods
      * @param anAtomContainer IAtomContainer to mark atoms and bonds in
      * @param anAtomArray containing atoms to be marked
      * @param aBondArray containing bonds to be marked
-     * @return Object containing both input arrays
      */
-    protected Object[] markRings(IAtomContainer anAtomContainer, IAtom[] anAtomArray, IBond[] aBondArray) throws IllegalArgumentException {
+    protected void markRings(MolecularArrays aMolecularArraysInstance, IAtomContainer anAtomContainer, IAtom[] anAtomArray, IBond[] aBondArray) throws IllegalArgumentException {
         //
         //<editor-fold desc="Ring System Detection" defaultstate="collapsed">
         Objects.requireNonNull(anAtomArray);
@@ -929,10 +963,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
         }
         //returns object containing atoms array and bonds array
-        Object[] tmpObject = new Object[2];
-        tmpObject[0] = anAtomArray;
-        tmpObject[1] = aBondArray;
-        return tmpObject;
+        aMolecularArraysInstance.setAtomArray(anAtomArray);
+        aMolecularArraysInstance.setBondArray(aBondArray);
         //</editor-fold>
         //
     }
@@ -940,14 +972,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Protected method to mark all atoms and bonds of any conjugated pi systems in the given atomcontainer.
      *
+     * @param aMolecularArraysInstance MolecularArrays instance for data transfer between methods
      * @param anAtomContainer IAtomContainer to mark atoms and bonds in
      * @param anAtomArray Array containing the atoms of a given fragmentation molecule
      * @param aBondArray Array containing the bonds of a given fragmentation molecule
-     *
-     * @return new {@link java.lang.Object} for easy array transfer, containing the atom and bond array
      */
     //test performance if pi system detection should be relocated to standard ring detection
-    protected Object[] markConjugatedPiSystems(IAtomContainer anAtomContainer, IAtom[] anAtomArray, IBond[] aBondArray) throws IllegalArgumentException{
+    protected void markConjugatedPiSystems(MolecularArrays aMolecularArraysInstance, IAtomContainer anAtomContainer, IAtom[] anAtomArray, IBond[] aBondArray) throws IllegalArgumentException{
         //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
         Objects.requireNonNull(anAtomArray);
         Objects.requireNonNull(aBondArray);
@@ -968,7 +999,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
                 }
             }
-            return new Object[] {anAtomArray, aBondArray};
+            aMolecularArraysInstance.setAtomArray(anAtomArray);
+            aMolecularArraysInstance.setBondArray(aBondArray);
         } catch (Exception anException) {
             AlkylStructureFragmenter.this.logger.log(Level.WARNING,
                     anException + " MoleculeID: " + anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
@@ -1328,11 +1360,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * Protected method to mark atoms and bonds with order of double or triple.
      *
+     * @param aMolecularArraysInstance MolecularArrays instance for data transfer between methods
      * @param anAtomArray Atom array providing the atoms of a molecule
      * @param aBondArray Bond array providing the bonds of a molecule
-     * @return new Object containing both given arrays after manipulation of method for easier data transfer
      */
-    protected Object[] markMultiBonds(IAtom[] anAtomArray, IBond[] aBondArray) {
+    protected void markMultiBonds(MolecularArrays aMolecularArraysInstance, IAtom[] anAtomArray, IBond[] aBondArray) {
         Objects.requireNonNull(anAtomArray);
         Objects.requireNonNull(aBondArray);
         for (IBond tmpArrayBond: aBondArray) {
@@ -1362,12 +1394,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
         }
-        Object[] tmpObject = new Object[2];
-        tmpObject[0] = anAtomArray;
-        tmpObject[1] = aBondArray;
-        return tmpObject;
+        aMolecularArraysInstance.setAtomArray(anAtomArray);
+        aMolecularArraysInstance.setBondArray(aBondArray);
     }
-    //WIP
 
     /**
      * Method to create a deeper copy of a given atom, meant to replace the default addAtom() method of IAtomContainer
