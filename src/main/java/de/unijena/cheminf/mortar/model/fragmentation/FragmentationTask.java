@@ -98,18 +98,18 @@ public class FragmentationTask implements Callable<Integer> {
      * @param aHashtableOfFragments Map to hold fragments, should be synchronised, e.g. by using a HashTable instance;
      *                              keys are unique SMILES codes.
      * @param aFragmentationName String
-     * @param anIsStereoChemRegarded Whether stereochemistry in the fragments should be regarded when creating their SMILES codes
+     * @param isStereo Whether stereochemistry in the fragments should be regarded when creating their SMILES codes
      */
     public FragmentationTask(List<MoleculeDataModel> aListOfMolecules,
                              IMoleculeFragmenter aFragmenter,
                              Map<String, FragmentDataModel> aHashtableOfFragments,
                              String aFragmentationName,
-                             boolean anIsStereoChemRegarded) {
+                             boolean isStereo) {
         this.moleculesList = aListOfMolecules;
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
-        this.isStereochemistryRegarded = anIsStereoChemRegarded;
+        this.isStereochemistryRegarded = isStereo;
         this.exceptionsCounter = 0;
     }
     //
