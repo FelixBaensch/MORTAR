@@ -91,15 +91,14 @@ public final class ChemUtil {
         if (isStereoChemEncoded && anAtomContainer.stereoElements().iterator().hasNext()) {
             tmpFlavor = tmpFlavor | SmiFlavor.Stereo;
         }
-        int[] tmpAtomOrder = new int[anAtomContainer.getAtomCount()];
         String tmpSmiles = null;
         try {
             try {
-                tmpSmiles = SmilesGenerator.create(anAtomContainer, tmpFlavor, tmpAtomOrder);
+                tmpSmiles = SmilesGenerator.create(anAtomContainer, tmpFlavor, new int[anAtomContainer.getAtomCount()]);
             } catch (CDKException anException) {
                 IAtomContainer tmpAtomContainer = anAtomContainer.clone();
                 Kekulization.kekulize(tmpAtomContainer);
-                tmpSmiles = SmilesGenerator.create(tmpAtomContainer, tmpFlavor, tmpAtomOrder);
+                tmpSmiles = SmilesGenerator.create(tmpAtomContainer, tmpFlavor, new int[anAtomContainer.getAtomCount()]);
                 ChemUtil.LOGGER.log(Level.INFO, String.format("Kekulized molecule %s", anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
             }
         } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException | ArrayIndexOutOfBoundsException anException){
