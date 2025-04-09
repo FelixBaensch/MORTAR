@@ -147,74 +147,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertLinesMatch(tmpExpectList, tmpCheckList);
     }
     /**
-     * Test method for AlkylStructureFragmenter.markRings().
-     *
-     * @throws NoSuchMethodException if method reflection returns null
-     * @throws InvocationTargetException if target method cannot be invoked
-     * @throws IllegalAccessException if method cannot be accessed
-     */
-    @Test
-    public void markRingsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        IAtomContainer tmpRingsAC = this.testStructuresACSet.getAtomContainer(0);
-        this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpRingsAC);
-        this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpRingsAC);
-
-        //ToDo: write test structure in fragmenter arrays; create array for comparison with expected markings
-        this.basicAlkylStructureFragmenter.markRings(this.molecularArraysInstance, tmpRingsAC, this.testAtomArray, this.testBondArray);
-        //ToDo: find way to compare structures without extracting tested substructures
-    }
-    /**
-     * Test method for AlkylStructureFragmenter.markConjugatedPiSystems().
-     *
-     * @throws NoSuchMethodException if method reflection returns null
-     * @throws InvocationTargetException if target method cannot be invoked
-     * @throws IllegalAccessException if method cannot be accessed
-     */
-    @Test
-    public void markConjugatedPiSystemsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        //IAtomContainer tmpConjugatedAC = this.testStructuresHashSet.getFirst();
-        //this.basicAlkylStructureFragmenter.markConjugatedPiSystems();
-        /*
-        Method tmpMarkConjugated = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("AlkylStructureFragmenter.markConjugatedPiSystems", IAtomContainer.class);
-        tmpMarkConjugated.setAccessible(true);
-        //problem: marking on local(ASF) private variables
-        tmpMarkConjugated.invoke(this.basicAlkylStructureFragmenter, tmpConjugatedAC);
-        */
-        //ToDo: find way to compare structures without extracting tested substructures
-    }
-    /**
-     * Test method for AlkylStructureFragmenter.saturateWithImplicitHydrogen().
-     *
-     * @throws NoSuchMethodException if method reflection returns null
-     * @throws InvocationTargetException if target method cannot be invoked
-     * @throws IllegalAccessException if method cannot be accessed
-     */
-    @Test
-    public void saturateWithImplicitHydrogenTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        IAtomContainerSet tmpSaturateACSet = new AtomContainerSet();
-        tmpSaturateACSet.addAtomContainer(this.testStructuresACSet.getAtomContainer(0));
-        Method tmpSaturate = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("saturateWithImplicitHydrogen", IAtomContainerSet.class);
-        tmpSaturate.setAccessible(true);
-        //problem?
-        List<IAtomContainer> tmpACList = (List<IAtomContainer>) tmpSaturate.invoke(this.basicAlkylStructureFragmenter, tmpSaturateACSet);
-        //ToDo: generate test structures with open valences to be saturated
-    }
-    /**
-     * Test method for AlkylStructureFragmenter.separateDisconnectedStructures().
-     *
-     * @throws NoSuchMethodException if method reflection returns null
-     * @throws InvocationTargetException if target method cannot be invoked
-     * @throws IllegalAccessException if method cannot be accessed
-     */
-    @Test
-    public void separateDisconnectedStructuresTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        IAtomContainer tmpDisconnectedAC = this.testStructuresACSet.getAtomContainer(0);
-        Method tmpSeparateDisconnectedAC = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("separateDisconnectedStructures", IAtomContainer.class);
-        tmpSeparateDisconnectedAC.setAccessible(true);
-        IAtomContainerSet tmpDisconnectedACSet = (IAtomContainerSet) tmpSeparateDisconnectedAC.invoke(this.basicAlkylStructureFragmenter, tmpDisconnectedAC);
-        //ToDo: generate disconnected structures in one AtomContainer
-    }
-    /**
      * Test method for AlkylStructureFragmenter.extractFragments().
      *
      * @throws NoSuchMethodException if method reflection returns null
@@ -224,14 +156,25 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     @Test
     public void extractFragmentsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         //problem: no way to take input AC as they are local(ASF) private variables
-        IAtomContainer tmpDisconnectedAC = this.testStructuresACSet.getAtomContainer(0);
-        IAtomContainerSet tmpExtractFragments;
+        ArrayList<String> tmpExpectedFragmentsList = new ArrayList<String>(5);
+        tmpExpectedFragmentsList.add("C=1C=CC2=CC(=CC=C2C1)C=CC(C)C");
+        tmpExpectedFragmentsList.add("CC(C)(C)C");
+        tmpExpectedFragmentsList.add("C=C");
+        tmpExpectedFragmentsList.add("CCC");
+        tmpExpectedFragmentsList.add("C1CCCCC1");
+        IAtomContainer tmpTestAC = this.testStructuresACSet.getAtomContainer(1);
+        IAtom[] tmpAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpTestAC);
+        IBond[] tmpBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpTestAC);
+        //implement for-loop/other going over test structure and manually set correct properties to test extraction
+        IAtomContainerSet tmpExtractedFragments;
         try {
-            tmpExtractFragments = this.basicAlkylStructureFragmenter.extractFragments(this.testAtomArray, this.testBondArray);
+            tmpExtractedFragments = this.basicAlkylStructureFragmenter.extractFragments(this.testAtomArray, this.testBondArray);
+            for (IAtomContainer tmpAC : tmpExtractedFragments.atomContainers()) {
+
+            }
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
-        //ToDo: generate structures with marked substructures (mark with code)
     }
     /**
      * Test method for AlkylStructureFragmenter.dissectLinearChain().
@@ -345,8 +288,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         String tmpButeneSMILES = ChemUtil.createUniqueSmiles(tmpButeneAC);
         String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC);
         //system print for easier debugging
-        System.out.println("Butene: " + tmpButeneSMILES);
-        System.out.println("Copied Butene: " + tmpCopySMILES);
+        //System.out.println("Butene: " + tmpButeneSMILES);
+        //System.out.println("Copied Butene: " + tmpCopySMILES);
         Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
     }
     @Test
@@ -467,9 +410,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                     tmpResultPostFragmentationAtomCount++;
             }
         }
-        System.out.println(tmpPreFragmentationAtomCount);
-        System.out.println(tmpExpPostFragmentationAtomCount);
-        System.out.println(tmpResultPostFragmentationAtomCount);
+        //System.out.println(tmpPreFragmentationAtomCount);
+        //System.out.println(tmpExpPostFragmentationAtomCount);
+        //System.out.println(tmpResultPostFragmentationAtomCount);
         if (tmpResultPostFragmentationAtomCount != tmpPreFragmentationAtomCount
                 || tmpResultPostFragmentationAtomCount != tmpExpPostFragmentationAtomCount) {
             return false;
