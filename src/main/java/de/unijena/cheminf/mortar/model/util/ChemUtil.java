@@ -80,14 +80,32 @@ public final class ChemUtil {
      * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
      * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
      * container. Aromaticity information is encoded in the returned SMILES string, if there is any given. Unique SMILES
-     * codes do NOT encode stereochemistry by default! This can be turned on with the second parameter
+     * codes do NOT encode stereochemistry by default! This can be turned on with the second parameter.
      *
      * @param anAtomContainer atom container the unique SMILES should be created of
      * @param isStereoChemEncoded whether stereochemistry should be encoded
      * @return unique SMILES of the given atom container or 'null' if no creation was possible
      */
     public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) {
-        int tmpFlavor = SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols;
+        return ChemUtil.createUniqueSmiles(anAtomContainer, isStereoChemEncoded, true);
+    }
+
+    /**
+     * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
+     * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
+     * container. Unique SMILES codes do NOT encode stereochemistry or aromaticity by default! This can be turned on
+     * with the parameters.
+     *
+     * @param anAtomContainer atom container the unique SMILES should be created of
+     * @param isStereoChemEncoded whether stereochemistry should be encoded
+     * @param isAromaticityEncoded whether aromaticity should be encoded
+     * @return unique SMILES of the given atom container or 'null' if no creation was possible
+     */
+    public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded, boolean isAromaticityEncoded) {
+        int tmpFlavor = SmiFlavor.Unique;
+        if (isAromaticityEncoded) {
+            tmpFlavor = tmpFlavor | SmiFlavor.UseAromaticSymbols;
+        }
         if (isStereoChemEncoded && anAtomContainer.stereoElements().iterator().hasNext()) {
             tmpFlavor = tmpFlavor | SmiFlavor.Stereo;
         }
