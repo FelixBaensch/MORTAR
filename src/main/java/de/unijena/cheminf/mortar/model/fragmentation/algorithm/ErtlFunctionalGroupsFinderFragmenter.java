@@ -184,7 +184,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
     /**
      * Default electron donation model for aromaticity detection.
      */
-    public static final IMoleculeFragmenter.ElectronDonationModelOption Electron_Donation_MODEL_OPTION_DEFAULT =
+    public static final IMoleculeFragmenter.ElectronDonationModelOption ELECTRON_DONATION_MODEL_OPTION_DEFAULT =
             IMoleculeFragmenter.ElectronDonationModelOption.DAYLIGHT;
 
     /**
@@ -410,7 +410,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
                 Message.get("ErtlFunctionalGroupsFinderFragmenter.cycleFinderSetting.displayName"));
         this.setCycleFinderInstance((IMoleculeFragmenter.CycleFinderOption) this.cycleFinderSetting.get());
         this.electronDonationModelSetting = new SimpleIDisplayEnumConstantProperty(this, "Electron donation model setting",
-                ErtlFunctionalGroupsFinderFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT,
+                ErtlFunctionalGroupsFinderFragmenter.ELECTRON_DONATION_MODEL_OPTION_DEFAULT,
                 IMoleculeFragmenter.ElectronDonationModelOption.class) {
             @Override
             public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
@@ -714,7 +714,7 @@ public class ErtlFunctionalGroupsFinderFragmenter implements IMoleculeFragmenter
         this.setErtlFGFInstance(ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT);
         this.cycleFinderSetting.set(ErtlFunctionalGroupsFinderFragmenter.CYCLE_FINDER_OPTION_DEFAULT);
         this.setCycleFinderSetting(ErtlFunctionalGroupsFinderFragmenter.CYCLE_FINDER_OPTION_DEFAULT);
-        this.electronDonationModelSetting.set(ErtlFunctionalGroupsFinderFragmenter.Electron_Donation_MODEL_OPTION_DEFAULT);
+        this.electronDonationModelSetting.set(ErtlFunctionalGroupsFinderFragmenter.ELECTRON_DONATION_MODEL_OPTION_DEFAULT);
         //this.aromaticityModel is set in the method
         this.setAromaticityInstance(this.electronDonationInstance, this.cycleFinderInstance);
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
