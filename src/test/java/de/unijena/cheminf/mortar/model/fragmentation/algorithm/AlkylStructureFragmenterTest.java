@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -110,18 +109,14 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * during testing.
      */
     public AlkylStructureFragmenterTest() throws FileNotFoundException, URISyntaxException {
+        //TODO: proper Test instantiation
         this.basicAlkylStructureFragmenter = new AlkylStructureFragmenter();
         this.molecularArraysInstance = new MolecularArrays();
         this.testStructuresACSet = new AtomContainerSet();
         this.testStructuresACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Test_Structures.sdf");
         this.testExpectedFragmentsACSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Expected_Fragments_Natural_Compound.sdf");
         this.testExpectedFragmentsACList = new ArrayList<>(this.testExpectedFragmentsACSet.getAtomContainerCount());
-        //ToDo: read structures into arrays in each test method, not in general test!
-        //this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpAC);
-        this.testAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(this.testStructuresACSet.getAtomContainer(0));
-        //this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpAC);
-        this.testBondArray = this.basicAlkylStructureFragmenter.fillBondArray(this.testStructuresACSet.getAtomContainer(0));
-    }
+     }
 
     //<editor-fold desc="@Test Public Methods">
     /**
@@ -163,18 +158,35 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedFragmentsList.add("CCC");
         tmpExpectedFragmentsList.add("C1CCCCC1");
         IAtomContainer tmpTestAC = this.testStructuresACSet.getAtomContainer(1);
-        IAtom[] tmpAtomArray = this.basicAlkylStructureFragmenter.fillAtomArray(tmpTestAC);
-        IBond[] tmpBondArray = this.basicAlkylStructureFragmenter.fillBondArray(tmpTestAC);
-        //implement for-loop/other going over test structure and manually set correct properties to test extraction
-        IAtomContainerSet tmpExtractedFragments;
-        try {
-            tmpExtractedFragments = this.basicAlkylStructureFragmenter.extractFragments(this.testAtomArray, this.testBondArray);
-            for (IAtomContainer tmpAC : tmpExtractedFragments.atomContainers()) {
+        //System.out.println(ChemUtil.createUniqueSmiles(tmpTestAC));
+        MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpTestAC);
+        tmpTestMolecularArrays.setAtomArray(this.basicAlkylStructureFragmenter.fillAtomArray(tmpTestAC));
+        tmpTestMolecularArrays.setBondArray(this.basicAlkylStructureFragmenter.fillBondArray(tmpTestAC));
+        //weird things happening, result is not expected molecule or fragments of it
+        this.basicAlkylStructureFragmenter.markNeighborAtomsAndBonds(tmpTestMolecularArrays,
+                tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+        this.basicAlkylStructureFragmenter.markRings(tmpTestMolecularArrays, tmpTestAC,
+                tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+        this.basicAlkylStructureFragmenter.markConjugatedPiSystems(tmpTestMolecularArrays, tmpTestAC,
+                tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+        this.basicAlkylStructureFragmenter.markMultiBonds(tmpTestMolecularArrays,
+                tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
 
+
+        //implement for-loop/other going over test structure and manually set correct properties to test extraction
+        IAtomContainerSet tmpExtractedFrag;
+        ArrayList<String> tmpExtractedFragmentList = new ArrayList<>(5);
+        try {
+            tmpExtractedFrag = this.basicAlkylStructureFragmenter.extractFragments(tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+            for (IAtomContainer tmpAC : tmpExtractedFrag.atomContainers()) {
+                ChemUtil.saturateWithHydrogen(tmpAC);
+                tmpExtractedFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC));
+                //System.out.println(ChemUtil.createUniqueSmiles(tmpAC) + ", ");
             }
-        } catch (CloneNotSupportedException e) {
+        } catch (CloneNotSupportedException | CDKException e) {
             throw new RuntimeException(e);
         }
+        Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
     }
     /**
      * Test method for AlkylStructureFragmenter.dissectLinearChain().
@@ -185,14 +197,15 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     @Test
     public void dissectLinearChainTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        //TODO: rework!
+        //ToDo: generate/choose linear structure to test linear dissection
         //get linear test structure from ACList
-        IAtomContainer tmpDissectLinearChainAC = this.testStructuresACSet.getAtomContainer(0);//correct index needed
-        Method tmpDissectMethod = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("dissectLinearChain", IAtomContainer.class, int.class);
-        tmpDissectMethod.setAccessible(true);
-        IAtomContainer tmpNoRestrictAC = (IAtomContainer) tmpDissectMethod.invoke(this.basicAlkylStructureFragmenter, tmpDissectLinearChainAC, 0);
+        //IAtomContainer tmpDissectLinearChainAC = this.testStructuresACSet.getAtomContainer(0);//correct index needed
+        //Method tmpDissectMethod = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("dissectLinearChain", IAtomContainer.class, int.class);
+        //tmpDissectMethod.setAccessible(true);
+        //IAtomContainer tmpNoRestrictAC = (IAtomContainer) tmpDissectMethod.invoke(this.basicAlkylStructureFragmenter, tmpDissectLinearChainAC, 0);
         //dissect test structure with different settings
         //compare with expected fragments
-        //ToDo: generate/choose linear structure to test linear dissection
     }
     /**
      *  Method to test a default alkyl structure fragmentation on a concept molecule.
@@ -229,10 +242,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)) && tmpChemicalFormulaCheck);
     }
-
-    //</editor-fold>
-
-    //<editor-fold desc="Method to test alkyl fragmentation on real compound">
     //ToDo: change current placeholder molecule to fitting natural compound
     @Test
     public void naturalCompoundFragmentationTest() throws Exception {
@@ -323,7 +332,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     //</editor-fold>
 
     //<editor-fold desc="Private Methods">
-
     /**
      * Compares two provided lists on equality while ignoring the lists' orders.
      *
