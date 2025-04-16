@@ -80,6 +80,10 @@ public class FragmentationTask implements Callable<Integer> {
      */
     private final String fragmentationName;
     /**
+     * Whether stereochemistry in the fragments should be regarded when creating their SMILES codes.
+     */
+    private final boolean isStereochemistryRegarded;
+    /**
      * Integer to count possible exceptions which could occur during fragmentation.
      */
     private int exceptionsCounter;
@@ -94,12 +98,18 @@ public class FragmentationTask implements Callable<Integer> {
      * @param aHashtableOfFragments Map to hold fragments, should be synchronised, e.g. by using a HashTable instance;
      *                              keys are unique SMILES codes.
      * @param aFragmentationName String
+     * @param isStereo Whether stereochemistry in the fragments should be regarded when creating their SMILES codes
      */
-    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules, IMoleculeFragmenter aFragmenter, Map<String, FragmentDataModel> aHashtableOfFragments, String aFragmentationName) {
+    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules,
+                             IMoleculeFragmenter aFragmenter,
+                             Map<String, FragmentDataModel> aHashtableOfFragments,
+                             String aFragmentationName,
+                             boolean isStereo) {
         this.moleculesList = aListOfMolecules;
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
+        this.isStereochemistryRegarded = isStereo;
         this.exceptionsCounter = 0;
     }
     //
@@ -150,7 +160,7 @@ public class FragmentationTask implements Callable<Integer> {
                 HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size()));
                 // iterate through list of resulting fragments
                 for (IAtomContainer tmpFragment : tmpFragmentsList) {
-                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
+                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment, this.isStereochemistryRegarded);
                     if (tmpSmiles == null) {
                         this.exceptionsCounter++;
                         continue;

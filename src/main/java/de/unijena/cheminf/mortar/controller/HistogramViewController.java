@@ -975,7 +975,7 @@ public class HistogramViewController implements IViewToolController {
                     this.imageZoomFactor,
                     this.imageWidth,
                     this.imageHeight,
-                    true,
+                    false,
                     true);
             anImageView.setImage(tmpImage);
         };

@@ -271,7 +271,7 @@ public class DynamicSMILESFileReaderTest {
         String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
         int i = 0;
         for (IAtomContainer tmpAtomContainer : tmpMolSet.atomContainers()) {
-            Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer));
+            Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer, false));
             Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             i++;
         }

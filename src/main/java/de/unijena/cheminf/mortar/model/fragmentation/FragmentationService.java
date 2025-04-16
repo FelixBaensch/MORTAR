@@ -33,7 +33,6 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGro
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGeneratorFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
@@ -170,7 +169,9 @@ public class FragmentationService {
      * Logger.
      */
     private static final Logger LOGGER = Logger.getLogger(FragmentationService.class.getName());
+    //</editor-fold>
     //
+    //<editor-fold desc="private final class variables" defaultstate="collapsed">
     /**
      * Array for the different fragmentation algorithms available.
      */
@@ -192,11 +193,6 @@ public class FragmentationService {
     private final IMoleculeFragmenter scaffoldGF;
     //
     /**
-     * SettingsContainer to hold settings.
-     */
-    private final SettingsContainer settingsContainer;
-    //
-    /**
      * Property of display name of selected fragmenter.
      */
     private final SimpleStringProperty selectedFragmenterDisplayNameProperty;
@@ -205,10 +201,8 @@ public class FragmentationService {
     //<editor-fold desc="Constructors">
     /**
      * Constructor, instantiates the fragmenters and sets the selected fragmenter and the pipeline to their defaults.
-     *
-     * @param aSettingsContainer SettingsContainer which holds the settings
      */
-    public FragmentationService(SettingsContainer aSettingsContainer) {
+    public FragmentationService() {
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
         this.fragmenters = new IMoleculeFragmenter[3];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
@@ -218,8 +212,6 @@ public class FragmentationService {
         this.scaffoldGF = new ScaffoldGeneratorFragmenter();
         this.fragmenters[2] = this.scaffoldGF;
         //
-        Objects.requireNonNull(aSettingsContainer, "aSettingsContainer must not be null");
-        this.settingsContainer = aSettingsContainer;
         this.selectedFragmenterDisplayNameProperty = new SimpleStringProperty();
         try {
             this.checkFragmenters();
@@ -260,9 +252,10 @@ public class FragmentationService {
      *
      * @param aListOfMolecules list of molecules to fragment
      * @param aNumberOfTasks how many parallel tasks should be used
+     * @param isStereoChemistryRegarded whether stereochemistry should be encoded in the fragment SMILES strings
      * @throws Exception if anything goes wrong
      */
-    public void startSingleFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
+    public void startSingleFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, boolean isStereoChemistryRegarded) throws Exception {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
         if (aNumberOfTasks == 0) {
@@ -272,7 +265,7 @@ public class FragmentationService {
         String tmpFragmentationName = this.createAndCheckFragmentationName(this.selectedFragmenter.getFragmentationAlgorithmDisplayName());
         this.existingFragmentations.add(tmpFragmentationName);
         this.currentFragmentationName = tmpFragmentationName;
-        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName);
+        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName, isStereoChemistryRegarded);
         FragmentationService.LOGGER.log(Level.INFO, "Number of different fragments extracted: {0}", this.fragments == null ? 0 : this.fragments.size());
     }
     //
@@ -282,9 +275,13 @@ public class FragmentationService {
      *
      * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
      * @param aNumberOfTasks int value to define onto how many parallel task the molecules should be distributed for fragmentation
+     * @param isStereoChemistryRegarded whether stereochemistry should be encoded in the resulting fragments SMILES codes
+     * @param isKeepLastFragmentSetting deprecated, should always be false; whether the fragments of the last pipeline fragmentation
+     *                                  should be passed on to the next if the respective molecule does nto produce any
+     *                                  fragments in the new fragmentation
      * @throws Exception if anything goes critically wrong
      */
-    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
+    public void startPipelineFragmentation(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, boolean isStereoChemistryRegarded, boolean isKeepLastFragmentSetting) throws Exception {
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
         Objects.requireNonNull(this.pipelineFragmenter, "pipelineFragmenter must not be null");
@@ -303,7 +300,7 @@ public class FragmentationService {
         List<MoleculeDataModel> tmpMolsToFragment = new ArrayList<>(aListOfMolecules);
         for (int i = 0; i < this.pipelineFragmenter.length; i++) {
             this.fragments.clear();
-            tmpFragmentsMap = this.startFragmentation(tmpMolsToFragment, aNumberOfTasks, this.pipelineFragmenter[i], tmpPipelineFragmentationName);
+            tmpFragmentsMap = this.startFragmentation(tmpMolsToFragment, aNumberOfTasks, this.pipelineFragmenter[i], tmpPipelineFragmentationName, isStereoChemistryRegarded);
             tmpMolsToFragment.clear();
             //iterate through all initial molecules
             for (MoleculeDataModel tmpMolecule : aListOfMolecules) {
@@ -330,7 +327,7 @@ public class FragmentationService {
                         //if settingsContainer.isKeepLastFragmentSetting == true (DEPRECATED, always false) or
                         // parent fragment is part of the results of fragmentation, the parent fragment will be set as new fragment if no new fragment is found
                         if (
-                            this.settingsContainer.isKeepLastFragmentSetting() ||
+                            isKeepLastFragmentSetting ||
                                 (tmpFragmentsMap != null && tmpFragmentsMap.containsKey(tmpParentFragment.getUniqueSmiles()))
                         ) {
                             if (
@@ -445,11 +442,12 @@ public class FragmentationService {
      *
      * @param aListOfMolecules List {@literal <}MoleculeDataModel {@literal >}
      * @param aNumberOfTasks int
+     * @param isStereoChemRegarded whether stereochemistry is regarded in the fragments
      * @throws Exception if anything unexpected happen
      * @deprecated After adapting the data models, this method must be modified so that the resulting fragments are kept separate for each molecule. Note the setting keepLastFragment
      */
     @Deprecated
-    public void startPipelineFragmentationMolByMol(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception{
+    public void startPipelineFragmentationMolByMol(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks, boolean isStereoChemRegarded) throws Exception{
         //<editor-fold desc="checks" defualtstate="collapsed">
         Objects.requireNonNull(aListOfMolecules, "aListOfMolecules must not be null");
         Objects.requireNonNull(this.pipelineFragmenter, "pipelineFragmenter must not be null");
@@ -465,7 +463,7 @@ public class FragmentationService {
         this.existingFragmentations.add(tmpPipelineFragmentationName);
         this.currentFragmentationName = tmpPipelineFragmentationName;
 
-        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName);
+        this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.pipelineFragmenter[0], tmpPipelineFragmentationName, isStereoChemRegarded);
 
         for(int i = 1; i < this.pipelineFragmenter.length; i++){
             String tmpFragmentationName = this.createAndCheckFragmentationName(tmpPipelineFragmentationName + "_" + this.pipelineFragmenter[i].getFragmentationAlgorithmDisplayName());
@@ -476,7 +474,7 @@ public class FragmentationService {
                 }
                 List<MoleculeDataModel> tmpChildMols = (List<MoleculeDataModel>)(List<?>) tmpParentMol.getFragmentsOfSpecificFragmentation(tmpPipelineFragmentationName);
                 Map<String, FragmentDataModel> tmpFragmentsMap = this.startFragmentation(
-                        tmpChildMols, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName);
+                        tmpChildMols, aNumberOfTasks, this.pipelineFragmenter[i], tmpFragmentationName, isStereoChemRegarded);
                 Set<String> tmpKeySet = tmpFragmentsMap.keySet();
                 LinkedList<FragmentDataModel> tmpFrags = new LinkedList<>();
                 for(String tmpKey : tmpKeySet){
@@ -490,7 +488,7 @@ public class FragmentationService {
                     for(FragmentDataModel tmpFrag : tmpChildMol.getFragmentsOfSpecificFragmentation(tmpFragmentationName)){
                         String tmpKey;
                         try{
-                            tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                            tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer(), isStereoChemRegarded);
                             if(!tmpChildMol.hasMoleculeUndergoneSpecificFragmentation(tmpFragmentationName) ||
                                     !tmpParentMol.hasMoleculeUndergoneSpecificFragmentation(tmpPipelineFragmentationName)){
                                 continue;
@@ -500,13 +498,13 @@ public class FragmentationService {
                                         tmpKey,
                                         tmpNewFrequencies.get(tmpKey) +
                                                 tmpChildMol.getFragmentFrequencyOfSpecificFragmentation(tmpFragmentationName).get(tmpKey) *
-                                                        tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
+                                                        tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer(), isStereoChemRegarded))
                                 );
                             } else {
                                 tmpNewFrequencies.put(
                                         tmpKey,
                                         tmpChildMol.getFragmentFrequencyOfSpecificFragmentation(tmpFragmentationName).get(tmpKey) *
-                                                tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer()))
+                                                tmpParentMol.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(ChemUtil.createUniqueSmiles(tmpChildMol.getAtomContainer(), isStereoChemRegarded))
                                 );
                             }
                         } catch(CDKException anException) {
@@ -526,7 +524,7 @@ public class FragmentationService {
             for(FragmentDataModel tmpFrag : tmpMol.getFragmentsOfSpecificFragmentation(tmpPipelineFragmentationName)) {
                 String tmpKey;
                 try {
-                    tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer());
+                    tmpKey = ChemUtil.createUniqueSmiles(tmpFrag.getAtomContainer(), isStereoChemRegarded);
                 } catch (CDKException anException){
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s fragment name: %s", anException.toString(), tmpFrag.getName()), anException);
                     continue;
@@ -977,12 +975,14 @@ public class FragmentationService {
      * @param aNumberOfTasks number of parallel tasks to use for the process
      * @param aFragmenter fragmenter instance to use to fragment, will be copied for the parallel tasks
      * @param aFragmentationName name under which to store the fragmentation results on the molecules
+     * @param isStereoChemistryRegarded whether stereo chemistry should be encoded in the resulting fragment SMILES codes
      * @throws Exception if anything goes wrong
      */
     private Map<String, FragmentDataModel> startFragmentation(List<MoleculeDataModel> aListOfMolecules,
                                                                     int aNumberOfTasks,
                                                                     IMoleculeFragmenter aFragmenter,
-                                                                    String aFragmentationName)
+                                                                    String aFragmentationName,
+                                                                    boolean isStereoChemistryRegarded)
             throws Exception {
         if (aListOfMolecules.isEmpty() || aNumberOfTasks == 0) {
             return new ConcurrentHashMap<>(0);
@@ -1020,7 +1020,7 @@ public class FragmentationService {
         for (int i = 1; i <= tmpNumberOfTasks; i++) {
             List<MoleculeDataModel> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
             IMoleculeFragmenter tmpFragmenterForTask = aFragmenter.copy();
-            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentMap, aFragmentationName));
+            tmpFragmentationTaskList.add(new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentMap, aFragmentationName, isStereoChemistryRegarded));
             tmpFromIndex = tmpToIndex;
             tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
             if(tmpMoleculeModulo > 0){

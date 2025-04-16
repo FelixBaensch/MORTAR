@@ -43,6 +43,7 @@ dependencies {
     implementation group: 'org.openscience.cdk', name: 'cdk-interfaces', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-ioformats', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-smiles', version: cdkVersion
+    implementation group: 'org.openscience.cdk', name: 'cdk-inchi', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-standard', version: cdkVersion
     implementation group: 'org.openscience.cdk', name: 'cdk-valencycheck', version: cdkVersion
     //CDK 2.11 snapshot release to get FunctionalGroupsFinder that also copies atomic charges

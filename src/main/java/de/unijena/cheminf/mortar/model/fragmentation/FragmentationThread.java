@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.fragmentation;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -61,6 +62,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
     private int numberOfTasks;
     private String fragmentationName;
     private IMoleculeFragmenter fragmenter;
+    private final SettingsContainer settingsContainer;
 
     /**
      * Constructor
@@ -69,8 +71,9 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
      * @param aNumberOfTasks int specifies number of tasks
      * @param aFragmentationName String
      * @param aFragmenter IMoleculeFragmenter to use
+     * @param aSettingsContainer MORTAR settings container
      */
-    public FragmentationThread(List<MoleculeDataModel> anArrayOfMolecules, int aNumberOfTasks, String aFragmentationName, IMoleculeFragmenter aFragmenter){
+    public FragmentationThread(List<MoleculeDataModel> anArrayOfMolecules, int aNumberOfTasks, String aFragmentationName, IMoleculeFragmenter aFragmenter, SettingsContainer aSettingsContainer){
         //<editor-fold desc="checks" defaultstate="collapsed">
         Objects.requireNonNull(anArrayOfMolecules, "anArrayOfMolecules must not be null");
         Objects.requireNonNull(aNumberOfTasks, "aNumberOfTasks must not be null");
@@ -81,6 +84,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
         this.numberOfTasks = aNumberOfTasks;
         this.fragmentationName = aFragmentationName;
         this.fragmenter = aFragmenter;
+        this.settingsContainer = aSettingsContainer;
     }
 
     @Override
@@ -102,7 +106,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
         for(int i = 1; i <= this.numberOfTasks; i++){
             List<MoleculeDataModel> tmpMoleculesForTask = this.molecules.subList(tmpFromIndex, tmpToIndex);
             IMoleculeFragmenter tmpFragmenterForTask = this.fragmenter.copy();
-            tmpFragmentationTaskList.add (new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, this.fragmentationName));
+            tmpFragmentationTaskList.add (new FragmentationTask(tmpMoleculesForTask, tmpFragmenterForTask, tmpFragmentHashtable, this.fragmentationName, this.settingsContainer.getRegardStereochemistrySetting()));
             tmpFromIndex = tmpToIndex;
             tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
             if(tmpMoleculeModulo > 0){

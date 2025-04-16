@@ -754,7 +754,7 @@ public class OverviewViewController implements IViewToolController {
                                 tmpFinalContentNode = new ImageView(
                                         DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                 tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                tmpImageHeight, true, true
+                                                tmpImageHeight, false, true
                                         )
                                 );
                             } else {
@@ -763,7 +763,7 @@ public class OverviewViewController implements IViewToolController {
                                         new ImageView(
                                                 DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                         tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                        tmpImageHeight, true, false
+                                                        tmpImageHeight, false, false
                                                 )
                                         )
                                 );
