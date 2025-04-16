@@ -151,7 +151,16 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
     }
     //
     /**
-     *
+     * For a set of randomly picked COCONUT structures, their alkyl fragments are generated, parsed into SMILES codes
+     * *with* stereochemistry, and then used as SMARTS strings to do substructure matching in the original molecule.
+     * This test does not assert, structures where the substructure matching is not working are printed as SMILES codes
+     * to console. This is merely an illustration of the effects the fragmentation has on stereochemistry.
+     * If ligands like hydroxy groups are extracted as functional groups, the formerly connected carbon atom in the alkyl
+     * remnant might not be a stereo center anymore as a result. Another possible effect is that a stereo center in the
+     * alkyl remnant might change its R/S configuration because a functional group ligand is replaced by a hydrogen atom.
+     * But, in this case, the overall 3D stereo configuration of the carbon atom still remains the same, just the
+     * priorities and hence the R/S label might change. Also note that the depiction might change (or definitely does
+     * in most cases).
      *
      * @throws Exception if anything goes wrong
      */
@@ -189,8 +198,8 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
                 String tmpAlkylFragmentSmiles = ChemUtil.createUniqueSmiles(tmpFragment, true, true);
                 SmartsPattern tmpPattern = SmartsPattern.create(tmpAlkylFragmentSmiles);
                 if(!tmpPattern.matches(tmpMolecule)) {
-                    System.out.println("\n" + tmpSmilesCode);
-                    System.out.println(tmpAlkylFragmentSmiles + "\n");
+                    System.out.println("\nOriginal molecule: " + tmpSmilesCode);
+                    System.out.println("Fragment: " + tmpAlkylFragmentSmiles + "\n");
                 }
             }
         }
