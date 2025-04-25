@@ -279,7 +279,7 @@ public class MoleculeDataModel {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
             return new ImageView(DepictionUtil.depictImageWithZoomAndFillToFit(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), true));
-            } catch (CDKException aCDKException) {
+        } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
         }
