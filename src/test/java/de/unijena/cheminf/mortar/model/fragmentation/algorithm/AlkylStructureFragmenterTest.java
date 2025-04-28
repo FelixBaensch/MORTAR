@@ -33,12 +33,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -139,19 +143,27 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
     }
     /**
-     * Test method for AlkylStructureFragmenter.dissectLinearChain().
+     * Method testing for correct behavior in dissection and separation of linear carbon chains of varying sizes.
      */
+    //ToDO:
     @Test
-    public void dissectLinearChainTest() {
-        //TODO: rework!
-        //ToDo: generate/choose linear structure to test linear dissection
-        //get linear test structure from ACList
-        //IAtomContainer tmpDissectLinearChainAC = this.testStructuresACSet.getAtomContainer(0);//correct index needed
-        //Method tmpDissectMethod = this.basicAlkylStructureFragmenter.getClass().getDeclaredMethod("dissectLinearChain", IAtomContainer.class, int.class);
-        //tmpDissectMethod.setAccessible(true);
-        //IAtomContainer tmpNoRestrictAC = (IAtomContainer) tmpDissectMethod.invoke(this.basicAlkylStructureFragmenter, tmpDissectLinearChainAC, 0);
-        //dissect test structure with different settings
-        //compare with expected fragments
+    public void dissectLinearChainTest() throws InvalidSmilesException {
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Default);
+        IAtomContainer tmpCarbonChainAC = tmpParser.parseSmiles("CCCCCCCCCCCCCC");
+        IAtomContainer tmpDefaultSizeAC = this.basicAlkylStructureFragmenter.dissectLinearChain(tmpCarbonChainAC,
+                6);
+        IAtomContainerSet tmpResultACSet = this.basicAlkylStructureFragmenter.separateDisconnectedStructures(tmpDefaultSizeAC);
+        Assertions.assertTrue(tmpResultACSet.getAtomContainerCount() == 3);
+        //Assertions.assertEquals(tmpGenerator.create(tmpResultACSet.getAtomContainer(0)), "CCCCCC");
+    }
+    /**
+     *
+     */
+    //ToDo
+    @Test
+    public void simpleMarkingTest() {
+
     }
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.

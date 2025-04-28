@@ -676,7 +676,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         MolecularArrays tmpMolecularArrays = new MolecularArrays(tmpClone);
         tmpMolecularArrays.setAtomArray(this.fillAtomArray(tmpClone));
         tmpMolecularArrays.setBondArray(this.fillBondArray(tmpClone));
-
         this.markNeighborAtomsAndBonds(tmpMolecularArrays, tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
         this.markRings(tmpMolecularArrays, tmpClone, tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
         this.markConjugatedPiSystems(tmpMolecularArrays, tmpClone, tmpMolecularArrays.getAtomArray(), tmpMolecularArrays.getBondArray());
@@ -743,7 +742,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             ArrayList<Integer> tmpRingAtomList = new ArrayList<>();
             if (tmpAtom != null) {
                 /*
-                set atom properties, IMPORTANT: this needs to be done in array filling step for correct function of
+                set atom properties, IMPORTANT: this needs to be done in array filling step for correct detection of
                 tertiary or quaternary carbon atoms and neighbors
                  */
                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
@@ -873,14 +872,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         try {
             List<IAtomContainer> tmpFusedList = tmpRingSearch.fusedRingFragments();
             if (!tmpFusedList.isEmpty()) {
-                //think of way to incorporate ring index
-                int[] tmpRingIndexArray = new int[tmpFusedList.size()];
                 for (int tmpFusedCount = 0; tmpFusedCount < tmpFusedList.size(); tmpFusedCount++) {
                     for (IAtom tmpFusedAtom: tmpFusedList.get(tmpFusedCount).atoms()) {
                         int tmpAtomInteger = tmpFusedAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
                         IAtom tmpAtom = anAtomArray[tmpAtomInteger];
                         tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
-                        //currently ring index gets overwritten during marking -> use tmpRingIndexArray instead where ring affection is stored (possibly multiple)
                         tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_FUSED_RING_INDEX_PROPERTY_KEY, tmpFusedCount);
                     }
                     for (IBond tmpFusedBond: tmpFusedList.get(tmpFusedCount).bonds()) {
@@ -1326,8 +1322,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
-     * Protected method to dissect given AtomContainer (containing linear carbon chain) into separate molecules with given length and remnants if
-     * molecule is too small for given length.
+     * Protected method to dissect given AtomContainer (containing linear carbon chain) into separate molecules with given length.
+     *
+     * Returns remnants of chains as disconnected structures if they are falling short of set maximum length (i.e. set maximum is 6, chain is 8 C's long -> fragment of length 6 is returned, together with a disconnected remnant of length 2).
+     * The used counter starts at 1 as to allow a one-to-one "translation" of user input for the setting and implementation.
      *
      * @param anAC AtomContainer to be dissected
      * @param aLength Given maximum length of molecule
