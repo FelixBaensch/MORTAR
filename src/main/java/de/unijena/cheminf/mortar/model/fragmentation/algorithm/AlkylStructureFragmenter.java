@@ -762,7 +762,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (tmpAtom != null)
                 tmpRemovedNull.add(tmpAtom);
         return tmpRemovedNull.toArray(new IAtom[0]);
-        //return tmpAtomArray;
     }
     /**
      * Method to fill an IBond array with the bonds of the input IAtomContainer
@@ -1331,6 +1330,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param aLength Given maximum length of molecule
      * @return AtomContainer with separate dissected molecules
      */
+    //ToDo: FIX! Does not return expected fragments!
     protected IAtomContainer dissectLinearChain(IAtomContainer anAC, int aLength) {
         IAtomContainer tmpReturnAC = new AtomContainer();
         //starts at 1 for usability, see aLength: 1on1 translation of input to counter

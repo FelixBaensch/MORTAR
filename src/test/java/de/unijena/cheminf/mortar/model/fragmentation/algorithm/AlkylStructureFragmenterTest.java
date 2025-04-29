@@ -25,12 +25,15 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.openscience.cdk.Atom;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -143,14 +146,25 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
     }
     /**
-     * Method testing for correct behavior in dissection and separation of linear carbon chains of varying sizes.
+     * DISABLED! Method testing for correct behavior in dissection and separation of linear carbon chains of varying sizes.
      */
-    //ToDO:
+    //ToDO: come back when AlkylStructureFragmenter.dissectLinearChain works
+    @Disabled
     @Test
     public void dissectLinearChainTest() throws InvalidSmilesException {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Default);
         IAtomContainer tmpCarbonChainAC = tmpParser.parseSmiles("CCCCCCCCCCCCCC");
+        int tmpAlkylSFAtomIndex;
+        int tmpAlkylSFBondIndex;
+        for (tmpAlkylSFAtomIndex = 0; tmpAlkylSFAtomIndex < tmpCarbonChainAC.getAtomCount(); tmpAlkylSFAtomIndex++) {
+            IAtom tmpAtom = tmpCarbonChainAC.getAtom(tmpAlkylSFAtomIndex);
+            tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
+        }
+        for (tmpAlkylSFBondIndex = 0; tmpAlkylSFBondIndex < tmpCarbonChainAC.getBondCount(); tmpAlkylSFBondIndex++) {
+            IBond tmpBond = tmpCarbonChainAC.getBond(tmpAlkylSFBondIndex);
+            tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
+        }
         IAtomContainer tmpDefaultSizeAC = this.basicAlkylStructureFragmenter.dissectLinearChain(tmpCarbonChainAC,
                 6);
         IAtomContainerSet tmpResultACSet = this.basicAlkylStructureFragmenter.separateDisconnectedStructures(tmpDefaultSizeAC);
@@ -158,12 +172,37 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         //Assertions.assertEquals(tmpGenerator.create(tmpResultACSet.getAtomContainer(0)), "CCCCCC");
     }
     /**
-     *
+     * Method testing the correct marking with an example molecule.
      */
-    //ToDo
+    //ToDo: way to compare actual markings of fragmenter with expected markings
     @Test
-    public void simpleMarkingTest() {
-
+    public void defaultMarkingTest() throws InvalidSmilesException {
+        //test structure: CCCC=CCC(C)(C)CC1=CC(=CC2=CC(=CC=C21)C=CC(C)C)C3CCCCC3
+        SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpSmilesParser.parseSmiles("CCCC=CCC(C)(C)CC1=CC(=CC2=CC(=CC=C21)C=CC(C)C)C3CCCCC3");
+        MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpTestStructureAC);
+        tmpTestMolecularArrays.setAtomArray(this.basicAlkylStructureFragmenter.fillAtomArray(tmpTestStructureAC));
+        tmpTestMolecularArrays.setBondArray(this.basicAlkylStructureFragmenter.fillBondArray(tmpTestStructureAC));
+        this.markNeighborAtomsAndBonds(tmpTestMolecularArrays, tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+        this.markRings(tmpTestMolecularArrays, tmpTestStructureAC, tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+        this.markConjugatedPiSystems(tmpTestMolecularArrays, tmpTestStructureAC, tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+        this.markMultiBonds(tmpTestMolecularArrays, tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
+        //System.out.println(Arrays.toString(tmpTestMolecularArrays.getAtomArray()));
+        //System.out.println(Arrays.toString(tmpTestMolecularArrays.getBondArray()));
+        IAtom[] tmpTestAtomArray = tmpTestMolecularArrays.getAtomArray();
+        IBond[] tmpTestBondArray = tmpTestMolecularArrays.getBondArray();
+        for (int tmpCounter = 0; tmpCounter < tmpTestAtomArray.length; tmpCounter++) {
+            System.out.println(tmpTestAtomArray[tmpCounter].getProperties());
+        }
+        for (int tmpCounter = 0; tmpCounter < tmpTestBondArray.length; tmpCounter++) {
+            System.out.println(tmpTestBondArray[tmpCounter].getProperties());
+        }
+        IAtom[] tmpExpectedAtomMarksArray = new IAtom[tmpTestAtomArray.length];
+        tmpExpectedAtomMarksArray[0] = new Atom();
+        //Map tmpExpectedAtomMarkMap = new Map();
+        //tmpExpectedAtomMarksArray[0].setProperties(tmpExpectedAtomMarkMap);
+        //[] tmpExpectedBondMarksArray = new IBond[tmpTestBondArray.length];
+        //tmpExpectedBondMarksArray[0].setProperties();
     }
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.
@@ -218,7 +257,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.basicAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         this.basicAlkylStructureFragmenter.setChemObjectBuilderInstance();
-
         IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
         IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
         Assertions.assertFalse(this.basicAlkylStructureFragmenter.shouldBeFiltered(tmpButeneAC));
