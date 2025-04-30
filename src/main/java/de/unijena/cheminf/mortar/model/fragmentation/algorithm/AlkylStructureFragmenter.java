@@ -660,7 +660,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         }
         AlkylStructureFragmenter.this.logger.log(Level.INFO, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
-        //move percieveAtomType to preprocessing
+        //move percieveAtomType to preprocessing !Tests need to be changed accordingly!
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
             //add ChemUtils atom checks?
