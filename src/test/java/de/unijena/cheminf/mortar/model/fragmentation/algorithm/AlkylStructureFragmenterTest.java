@@ -82,7 +82,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     //ToDo: what to do in constructor?
     public AlkylStructureFragmenterTest() throws FileNotFoundException, URISyntaxException {
-        //if Windows Locale is not set to "en" and "GB", a MissingResource Exception is thrown (Localisation for "de" and "DE" not found)
+        //if Windows Locale is not set to "en" and "GB", a MissingResource Exception is thrown (example Exception: Localisation for "de" and "DE" not found)
         //Locale.setDefault(Locale.of("en", "GB"));
         this.defaultAlkylStructureFragmenter = new AlkylStructureFragmenter();
         this.defaultAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
