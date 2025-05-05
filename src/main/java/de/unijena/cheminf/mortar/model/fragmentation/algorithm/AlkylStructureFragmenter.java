@@ -60,7 +60,6 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -165,7 +164,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * A variable to quickly disable certain checks in fragmentation steps (i.e. chemical formula) for easier debugging.
      */
-    private final boolean ASFDebugBoolean = false;
+    private final boolean ASFDebugBoolean = true;
     /**
      * A property that has a constant fragment hydrogen saturation setting.
      */
@@ -1239,17 +1238,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //</editor-fold>
         //</editor-fold>
+        //extracts disconnected ring structures from one atomcontainer into atomcontainer set
         IAtomContainerSet tmpRingACSet = new AtomContainerSet();
         if (!tmpRingFragmentationContainer.isEmpty()) {
             tmpRingACSet = this.separateDisconnectedStructures(tmpRingFragmentationContainer);
         }
+        //extracts disconnected isolated tertiary and quaternary systems into atomcontainer set
         IAtomContainerSet tmpSingleACSet = new AtomContainerSet();
         if (!tmpTertQuatCarbonContainer.isEmpty()) {
             tmpExtractionSet.add(this.separateDisconnectedStructures(tmpTertQuatCarbonContainer));
         }
+        //if more than one atomcontainer containing a ring system is present, add to extraction atomcontainer set
         if (!tmpRingACSet.isEmpty() && tmpRingACSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpRingACSet);
         }
+        //if more than one atomcontainer containing singular structures is present, add it to the extraction set
         if (!tmpSingleACSet.isEmpty() && tmpSingleACSet.getAtomContainerCount() > 0) {
             tmpExtractionSet.add(tmpSingleACSet);
         }
@@ -1272,10 +1275,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //tmpMaxChainLengthInteger = AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT;
         }
         //checks for applied restrictions, default restriction is set to 6
+        System.out.println("side: " + this.fragmentSideChainsSetting.get() + ", chain length: " + tmpMaxChainLengthInteger);
         if (this.fragmentSideChainsSetting.get() && tmpMaxChainLengthInteger > 0) {
-            //check maxchainlength
+            //check maxchainlength: 0 -> no restrictions, 1 -> only methanes, >= 2 -> respective alkane
             switch (tmpMaxChainLengthInteger) {
                 case 1 -> {
+                    System.out.println("case: 1");
                     //single methane molecules
                     IAtomContainer tmpDissectedAC = new AtomContainer();
                     for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
@@ -1285,15 +1290,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpDissectedChainACSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                 }
                 default -> {
+                    System.out.println("case: default");
                     //restrictions > 1
                     for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
                         IAtomContainer tmpDissectedAC = this.dissectLinearChain(tmpAtomContainer, tmpMaxChainLengthInteger);
                         tmpDissectedChainACSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                     }
+                    System.out.println("dissectedACSet ac count: " + tmpDissectedChainACSet.getAtomContainerCount());
+                    for (IAtomContainer tmpAC: tmpDissectedChainACSet.atomContainers()) {
+                        System.out.println("Atom count: " + tmpAC.getAtomCount());
+                    }
                 }
             }
         } else {
-            //no restrictions applied
+            System.out.println("case: else/maxChainLength = 0");
+            //no restrictions applied (maxChainLengthSetting = 0)
             tmpDissectedChainACSet.add(tmpChainACSet);
         }
         if (!tmpDissectedChainACSet.isEmpty() && tmpDissectedChainACSet.getAtomContainerCount() > 0) {
@@ -1307,30 +1318,25 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Returns remnants of chains as disconnected structures if they are falling short of set maximum length (i.e. set maximum is 6, chain is 8 C's long -> fragment of length 6 is returned, together with a disconnected remnant of length 2).
      * The used counter starts at 1 as to allow a one-to-one "translation" of user input for the setting and implementation.
      *
-     * @param anAC AtomContainer to be dissected
-     * @param aLength Given maximum length of molecule
+     * @param aLinearChainAC AtomContainer to be dissected
+     * @param aMaxChainLength Given maximum length of molecule
      * @return AtomContainer with separate dissected molecules
      */
     //ToDo: FIX! Does not return expected fragments!
-    protected IAtomContainer dissectLinearChain(IAtomContainer anAC, int aLength) {
+    protected IAtomContainer dissectLinearChain(IAtomContainer aLinearChainAC, int aMaxChainLength) {
         IAtomContainer tmpReturnAC = new AtomContainer();
-        //starts at 1 for usability, see aLength: 1on1 translation of input to counter
-        int tmpCounter = 1;
-        Iterator<IBond> tmpBondIterator = anAC.bonds().iterator();
-        while (tmpBondIterator.hasNext()) {
-            IBond tmpBond = tmpBondIterator.next();
-            if (tmpCounter == aLength) {
-                if (!tmpBondIterator.hasNext()) {
-                    tmpReturnAC.addAtom(this.deepCopyAtom(tmpBond.getEnd()));
-                }
-                tmpCounter = 1;
-            } else {
-                IAtom tmpBeginAtom = tmpBond.getBegin();
-                IAtom tmpEndAtom = tmpBond.getEnd();
-                tmpReturnAC.addAtom(this.deepCopyAtom(tmpBeginAtom));
-                tmpReturnAC.addAtom(this.deepCopyAtom(tmpEndAtom));
+        int tmpMaxBondCount = aMaxChainLength - 1;
+        int tmpInternalBondCount = 0;
+        for (IAtom tmpAtom: aLinearChainAC.atoms()) {
+            //index of tmpAtom is set to -1 when deep copied, no idea why
+            tmpReturnAC.addAtom(this.deepCopyAtom(tmpAtom));
+        }
+        for (IBond tmpBond: aLinearChainAC.bonds()) {
+            if (tmpInternalBondCount < tmpMaxBondCount) {
                 tmpReturnAC.addBond(this.deepCopyBond(tmpBond, tmpReturnAC));
-                tmpCounter++;
+                tmpInternalBondCount++;
+            } else if (tmpInternalBondCount == tmpMaxBondCount) {
+                tmpInternalBondCount = 0;
             }
         }
         return tmpReturnAC;
@@ -1383,6 +1389,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @return the deep copy of the given atom
      */
     protected IAtom deepCopyAtom(IAtom anAtomToCopy) {
+        //seems like atom index is lost when deep copying is applied
         IAtom tmpNewAtom = this.chemObjectBuilderInstance.newAtom();
         tmpNewAtom.setAtomicNumber(anAtomToCopy.getAtomicNumber());
         tmpNewAtom.setImplicitHydrogenCount(anAtomToCopy.getImplicitHydrogenCount());
@@ -1400,6 +1407,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     protected IBond deepCopyBond(IBond aBondToCopy, IAtomContainer aBondIncludingAtomContainer) {
         IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
         tmpNewBond.setOrder(aBondToCopy.getOrder());
+        tmpNewBond.setProperties(aBondToCopy.getProperties());
         IAtom tmpBeginAtom = aBondToCopy.getBegin();
         int tmpBeginAtomIndex = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
         if ((tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) != null)) {
@@ -1414,6 +1422,23 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         } else {
             throw new IllegalArgumentException();
         }
+        return tmpNewBond;
+    }
+
+    /**
+     * Method to create deep copy of a given bond, with the respective atoms given as parameters.
+     *
+     * @param aBondToCopy IBond instance to create a deep copy of
+     * @param aBondBeginAtom Begin atom of bond to deep copy
+     * @param aBondEndAtom End atom of bond to deep copy
+     * @return New IBond instance with properties of given bond, therefore a deep copy
+     */
+    protected IBond deepCopyBond(IBond aBondToCopy, IAtom aBondBeginAtom, IAtom aBondEndAtom){
+        IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
+        tmpNewBond.setOrder(aBondToCopy.getOrder());
+        tmpNewBond.setProperties(aBondToCopy.getProperties());
+        tmpNewBond.setAtom(aBondBeginAtom, 0);
+        tmpNewBond.setAtom(aBondEndAtom, 1);
         return tmpNewBond;
     }
     //</editor-fold>

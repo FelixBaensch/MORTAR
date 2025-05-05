@@ -31,7 +31,6 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
@@ -160,30 +159,38 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
     }
     /**
-     * DISABLED! Method testing for correct behavior in dissection and separation of linear carbon chains of varying sizes.
+     * Method testing for correct behavior in dissection and separation of linear carbon chains of varying sizes (including 'no restrictions applied').
      */
-    //ToDO: come back when AlkylStructureFragmenter.dissectLinearChain works
-    @Disabled
     @Test
-    public void dissectLinearChainTest() throws InvalidSmilesException {
+    public void defaultLinearChainDissectionTest() throws InvalidSmilesException, CloneNotSupportedException {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Default);
         IAtomContainer tmpCarbonChainAC = tmpParser.parseSmiles("CCCCCCCCCCCCCC");
-        int tmpAlkylSFAtomIndex;
-        int tmpAlkylSFBondIndex;
-        for (tmpAlkylSFAtomIndex = 0; tmpAlkylSFAtomIndex < tmpCarbonChainAC.getAtomCount(); tmpAlkylSFAtomIndex++) {
-            IAtom tmpAtom = tmpCarbonChainAC.getAtom(tmpAlkylSFAtomIndex);
-            tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
-        }
-        for (tmpAlkylSFBondIndex = 0; tmpAlkylSFBondIndex < tmpCarbonChainAC.getBondCount(); tmpAlkylSFBondIndex++) {
-            IBond tmpBond = tmpCarbonChainAC.getBond(tmpAlkylSFBondIndex);
-            tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAlkylSFAtomIndex);
-        }
-        IAtomContainer tmpDefaultSizeAC = this.defaultAlkylStructureFragmenter.dissectLinearChain(tmpCarbonChainAC,
-                6);
-        IAtomContainerSet tmpResultACSet = this.defaultAlkylStructureFragmenter.separateDisconnectedStructures(tmpDefaultSizeAC);
-        Assertions.assertTrue(tmpResultACSet.getAtomContainerCount() == 3);
-        //Assertions.assertEquals(tmpGenerator.create(tmpResultACSet.getAtomContainer(0)), "CCCCCC");
+        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpCarbonChainAC, false,
+                false, true);
+        tmpASF.setFragmentSideChainsSetting(true);
+        tmpASF.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpCarbonChainAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("CC");
+        tmpExpectedSMILESList.add("CCCCCC");
+        tmpExpectedSMILESList.add("CCCCCC");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        tmpASF.setMaxChainLengthSetting(7);
+        tmpFragmentsACList.clear();
+        tmpExpectedSMILESList.clear();
+        tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpCarbonChainAC));
+        tmpExpectedSMILESList.add("CCCCCCC");
+        tmpExpectedSMILESList.add("CCCCCCC");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        tmpASF.setFragmentSideChainsSetting(false);
+        tmpFragmentsACList.clear();
+        tmpExpectedSMILESList.clear();
+        tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpCarbonChainAC));
+        tmpExpectedSMILESList.add("CCCCCCCCCCCCCC");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                new ArrayList<>(tmpExpectedSMILESList)));
     }
     /**
      * Method testing correct fragmentation with a basic example molecule.
