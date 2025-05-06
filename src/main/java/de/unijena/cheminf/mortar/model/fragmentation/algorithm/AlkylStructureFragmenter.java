@@ -164,7 +164,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * A variable to quickly disable certain checks in fragmentation steps (i.e. chemical formula) for easier debugging.
      */
-    private final boolean ASFDebugBoolean = true;
+    private final boolean ASFDebugBoolean = false;
     /**
      * A property that has a constant fragment hydrogen saturation setting.
      */
@@ -625,7 +625,42 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //<editor-fold desc="Fragmentation">
     /**
      * {@inheritDoc}
-     *
+     * <p>
+     * Algorithmic approach to alkyl fragmentation:
+     * <p>
+     *     As a first measure, the given molecule aMolecule is checked for an internal property, checking if it has been
+     *     passed through an upstream filter. Afterward, the molecule is cloned in order to prevent changes to the
+     *     original molecule and atom types are perceived and configured for downstream fragmentation steps.
+     * </p>
+     * <p>
+     *     Next, the internal class MolecularArrays responsible for data transfer is filled. The atoms and bonds of the
+     *     cloned molecule tmpClone are placed in respective IAtom and IBond arrays, which are then placed in a
+     *     MolecularArrays instance. In the 'Filling' step, atoms and bonds are prepared with internal properties used
+     *     during fragmentation.
+     * </p>
+     * <p>
+     *     Following, the atoms and bonds are marked in accordance with substructures of interest, ex. tertiary carbons.
+     *     Atoms and bonds may be marked multiple times with different properties if they are part of more than one
+     *     substructure.
+     *     Order of marking as follows: tertiary and quaternary carbon properties are set during array filling step;
+     *     atoms and bonds neighbouring tertiary and quaternary carbons; singular rings and ring systems;
+     *     conjugated pi bond systems; bonds of higher order (>1) present in linear sidechains.
+     * </p>
+     * <p>
+     *     Extraction of marked substructures is done by creating deep copies of the tmpClone's atoms and bonds,
+     *     and placing them in designated new IAtomContainer instances. During extraction, the preservation of the
+     *     chemical formula is checked, and an exception is thrown if not true.
+     *     The order of extraction is as follows: rings, conjugated pi bond systems and their fusion products;
+     *     additional double bonds connected to rings; isolated bonds of higher order;
+     *     atoms and bonds neighbouring tertiary or quaternary carbons; residual atoms and bonds as linear chains.
+     *     The received linear chains may also be restricted in their size/length
+     *     (see maxChainLengthSetting documentation).
+     *     Multiple settings may be activated for different algorithmic behavior regarding selected substructures
+     *     (see settings documentation).
+     *     After the extraction, the received fragments are saturated with implicit hydrogen if the corresponding
+     *     setting is active.
+     * </p>
+     * Finally, the received fragments are returned to be viewed in the 'Fragments' tab.
      *
      * @param aMolecule to fragment
      * @return List of IAtomContainers containing the fragments (may be empty if no fragments are extracted)
@@ -633,7 +668,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @throws IllegalArgumentException if the given molecule cannot be fragmented
      * @throws CloneNotSupportedException if cloning the given molecule is unsuccessful
      */
-    //ToDO: Proper doc description of algorithm approach and functionalities
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
@@ -643,7 +677,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             tmpNonFragACList.add(aMolecule);
             return tmpNonFragACList;
         }
-        //<editor-fold desc="Molecule Cloning, Property and Arrays Set" defaultstate="collapsed">
+        //<editor-fold desc="Molecule Cloning and Chemical Formula Check" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
         //WIP
         this.chemObjectBuilderInstance = null;
@@ -655,10 +689,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         }
         AlkylStructureFragmenter.this.LOGGER.log(Level.INFO, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
-        //move percieveAtomType to preprocessing !Tests need to be changed accordingly!
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
-            //add ChemUtils atom checks?
         } catch (CDKException aCDKException) {
             AlkylStructureFragmenter.this.LOGGER.log(Level.WARNING,
                     aCDKException + " Molecule ID: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
@@ -1149,11 +1181,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     ArrayList<Integer> tmpList = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY);
                     if (tmpList.size() > 1) {
                         tmpSpiroCarbonContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                    } /*
-                    else {
-                        tmpSpiroResidueContainer.addAtom(tmpAtom);
                     }
-                    */
                     tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                 } else {
                     tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
