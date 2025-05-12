@@ -73,7 +73,6 @@ import java.util.logging.Logger;
  * @author Maximilian Rottmann (maximilian.rottmann@studmail.w-hs.de)
  * @version 1.0.0.0
  */
-//ToDo: remove redundant calls for both atom and bond arrays during marking step to get arrays from respective MolecularArrays instance
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //<editor-fold desc="Public Static Final Class Variables">
     /**
@@ -199,7 +198,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * from ring structures.
      */
     private final SimpleBooleanProperty separateTertQuatCarbonFromRingSetting;
-
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -719,6 +717,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             AlkylStructureFragmenter.this.LOGGER.log(Level.INFO, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
             if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount && !this.ASFDebugBoolean) {
+                AlkylStructureFragmenter.this.LOGGER.log(Level.WARNING, "Chemical formula was not constant!");
                 throw new Exception("Molecular formula is not the same between original molecule and received fragments!");
             }
             if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
@@ -828,7 +827,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 //marking of tertiary or quaternary carbons together with their neighbor atoms
                 if (tmpAtom.getBondCount() == 3 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
                     tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
-                    //may not work as no guarantee for proper atom or bond property set -> may have already been iterated over
                     for (IBond tmpBond: tmpAtom.bonds()) {
                         int tmpBondIndex = tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
                         int tmpBondBeginIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
@@ -843,7 +841,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 } else if (tmpAtom.getBondCount() == 4 && tmpAtom.getMaxBondOrder() == IBond.Order.SINGLE) {
                     tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, true);
-                    //may also not work
                     for (IBond tmpBond: tmpAtom.bonds()) {
                         int tmpBondIndex = tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
                         int tmpBondBeginIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
@@ -863,7 +860,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         for (int tmpBondIndex = 0; tmpBondIndex < aBondArray.length; tmpBondIndex++) {
             IBond tmpBond = aBondArray[tmpBondIndex];
             if (tmpBond != null) {
-
                 boolean tmpIsBeginTertiary = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
                 boolean tmpIsEndTertiary = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
                 boolean tmpIsBeginQuaternary = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
@@ -959,7 +955,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, true);
                             ArrayList<Integer> tmpList = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY);
                             tmpList.add(tmpIsolatedCount);
-                            tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY, tmpList);
                             tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ISOLATED_RING_INDEX_PROPERTY_KEY, tmpIsolatedCount);
                         }
                         for (IBond tmpFusedBond: tmpIsolatedRingList.get(tmpIsolatedCount).bonds()) {
@@ -1219,7 +1214,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 boolean tmpIsEndNeighbor = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY);
                 //</editor-fold>
                 if (tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
-                    //WIP
                     boolean tmpBegin = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                     boolean tmpEnd = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
                     if (tmpBegin || tmpEnd) {
@@ -1350,7 +1344,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param aMaxChainLength Given maximum length of molecule
      * @return AtomContainer with separate dissected molecules
      */
-    //ToDo: FIX! Does not return expected fragments!
     protected IAtomContainer dissectLinearChain(IAtomContainer aLinearChainAC, int aMaxChainLength) {
         IAtomContainer tmpReturnAC = new AtomContainer();
         int tmpMaxBondCount = aMaxChainLength - 1;
@@ -1386,9 +1379,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 int tmpEndIndex = tmpArrayBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
                 for (IAtom tmpAtom: anAtomArray) {
                     int tmpAtomIndex = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                    if (tmpAtomIndex == tmpBeginIndex) {
-                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, true);
-                    } else if (tmpAtomIndex == tmpEndIndex) {
+                    if (tmpAtomIndex == tmpBeginIndex || tmpAtomIndex == tmpEndIndex) {
                         tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, true);
                     }
                 }
@@ -1398,9 +1389,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 int tmpEndIndex = tmpArrayBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
                 for (IAtom tmpAtom: anAtomArray) {
                     int tmpAtomIndex = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                    if ( tmpAtomIndex == tmpBeginIndex) {
-                        tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, true);
-                    } else if (tmpAtomIndex == tmpEndIndex) {
+                    if ( tmpAtomIndex == tmpBeginIndex || tmpAtomIndex == tmpEndIndex) {
                         tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, true);
                     }
                 }

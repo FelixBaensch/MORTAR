@@ -65,10 +65,6 @@ import java.util.Objects;
  */
 public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
-     * Private AlkylStructureFragmenter used in this test, currently without special parameters.
-     */
-    private final AlkylStructureFragmenter defaultAlkylStructureFragmenter;
-    /**
      * Static setter for Locale.
      * If Locale is set in Test constructor, a MissingResourceException is thrown when user locale diverts from set Locale.
      */
@@ -76,24 +72,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Locale.setDefault(Locale.of("en", "GB"));
     }
     /**
-     * Constructor of AlkylStructureFragmenter test class, setting all necessary settings in order of correct functionality
-     * during testing.
+     * Constructor of AlkylStructureFragmenter test class.
      */
-    //ToDo: what to do in constructor?
-    public AlkylStructureFragmenterTest() throws FileNotFoundException, URISyntaxException {
-        //if Windows Locale is not set to "en" and "GB", a MissingResource Exception is thrown (example Exception: Localisation for "de" and "DE" not found)
-        //Locale.setDefault(Locale.of("en", "GB"));
-        this.defaultAlkylStructureFragmenter = new AlkylStructureFragmenter();
-        this.defaultAlkylStructureFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
-        this.defaultAlkylStructureFragmenter.setKeepNonFragmentableMoleculesSetting(false);
-        this.defaultAlkylStructureFragmenter.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
-        this.defaultAlkylStructureFragmenter.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        this.defaultAlkylStructureFragmenter.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
-        this.defaultAlkylStructureFragmenter.setMcbSingleRingDetectionSetting(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
-        this.defaultAlkylStructureFragmenter.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
-        this.defaultAlkylStructureFragmenter.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
-        }
-
+    public AlkylStructureFragmenterTest() {}
     //<editor-fold desc="@Test Public Methods">
     /**
      * Tests correct instantiation and basic settings retrieval.
@@ -122,7 +103,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     @Test
     public void extractFragmentsTest() throws CDKException {
         ArrayList<String> tmpExpectedFragmentsList = new ArrayList<>(6);
-        //ToDo: Seems like extraction may be not as expected in this context
         tmpExpectedFragmentsList.add("C=CC1=CC=C2C=CC=CC2=C1");
         tmpExpectedFragmentsList.add("CC(C)(C)C");
         tmpExpectedFragmentsList.add("C=C");
@@ -154,8 +134,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         } catch (CloneNotSupportedException | CDKException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(tmpExtractedFragmentList);
-        System.out.println(tmpExpectedFragmentsList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
     }
     /**
@@ -448,7 +426,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC);
         Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
     }
-
     /**
      * Test for correct extraction of isolated double bonds found in linear residues after extraction of all other groups deemed interesting.
      *
@@ -496,29 +473,47 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     }
 
     /**
-     * Test for correct fragmentation by fragmentation of real natural product to simulate user environment for fragmentation.
+     * Example fragmentation using natural compounds CNP0321029.1; CNP0509407.0 and CNP0242949.0. The natural compounds
+     * used in this test can be found in the natural product database COCONUT @see <a href="https://coconut.naturalproducts.net/"<a/>.
      *
      * @throws Exception if molecule is not correctly fragmented
      */
-    //ToDo: change current placeholder molecule to fitting natural compound
     @Test
     public void naturalCompoundFragmentationTest() throws Exception {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C=1(C=CC=CC1)C=2C=CC=C(C2)C=3C=CC=C(C3)C(CCCCC)C=4C(=C(C=CC4)C=5C=CC=CC5C)C");
+        //test structure: CNP0321029.1
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C[C@@H]1C[C@@H](C)[C@@H](C)C1");
         AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false,
                 false, true);
-        List<IAtomContainer> tmpAtomContainerList = tmpASF.fragmentMolecule(tmpTestStructureAC);
-        IAtomContainerSet tmpResultACSet = new AtomContainerSet();
-        for (IAtomContainer tmpAtomContainer : tmpAtomContainerList) {
-            tmpResultACSet.addAtomContainer(tmpAtomContainer);
-        }
-        List<String> tmpResultSMILESList = this.generateSMILESFromACSet(tmpResultACSet);
-        List<String> tmpExpectedSMILESList = new ArrayList<>(4);
-        System.out.println(tmpExpectedSMILESList);
-        tmpExpectedSMILESList.add("CCCC");
+        List<String> tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>(5);
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C=1C=CC(=CC1)C=2C=CC=C(C2)C=3C=CC=C(C3)C(C4=CC=CC(=C4)C=5C=CC=CC5)C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C1CCCC1");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        //test structure: CNP0509407.0
+        tmpTestStructureAC = tmpParser.parseSmiles("CCCCCCCCCC(CC)(CCCCCCC)CCCCCCCC");
+        tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false,
+                false, true);
+        tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        tmpExpectedSMILESList.clear();
+        tmpExpectedSMILESList.add("CC(C)(C)C");
+        tmpExpectedSMILESList.add("CCCCCCCC");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("CCCCCC");
+        tmpExpectedSMILESList.add("CCCCCCC");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        //test structure: CNP0242949.0
+        tmpTestStructureAC = tmpParser.parseSmiles("CC1CCCCCCCCC1");
+        tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false,
+                false, true);
+        tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        tmpExpectedSMILESList.clear();
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C1CCCCCCCCC1");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -621,14 +616,14 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     private AlkylStructureFragmenter getDefaultASFInstance(IAtomContainer aMolecule, boolean aShouldBeFilteredStatement,
                                                            boolean aShouldBePreprocessedStatement, boolean aCanBeFragmentedStatement) {
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
-        tmpASF.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
+        tmpASF.setFragmentSaturationSetting(FragmentSaturationOption.HYDROGEN_SATURATION);
         tmpASF.setKeepNonFragmentableMoleculesSetting(false);
-        tmpASF.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
-        tmpASF.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        tmpASF.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
-        tmpASF.setMcbSingleRingDetectionSetting(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
-        tmpASF.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
-        tmpASF.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
+        tmpASF.setFragmentSideChainsSetting(false);
+        tmpASF.setMaxChainLengthSetting(6);
+        tmpASF.setAltHandlingTertQuatCarbonsSetting(false);
+        tmpASF.setMcbSingleRingDetectionSetting(false);
+        tmpASF.setKeepRingsSetting(true);
+        tmpASF.setSeparateTertQuatCarbonFromRingSetting(true);
         //assertions for non-set-able pre-fragmentation tasks
         if (aShouldBeFilteredStatement) {
             Assertions.assertTrue(tmpASF.shouldBeFiltered(aMolecule));
