@@ -517,6 +517,36 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
+
+    /**
+     * Simple test testing for chemical formula correctness in the same way it is done in the fragmenter.
+     *
+     * @throws InvalidSmilesException if SMILES cannot be parsed.
+     * @throws CloneNotSupportedException if molecule cloning fails.
+     */
+    @Test
+    public void chemicalFormulaTest() throws InvalidSmilesException, CloneNotSupportedException {
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpAtomContainer = tmpParser.parseSmiles("C1CCCCCC1");
+        int tmpPreFragmentationCount = 0;
+        int tmpPostFragmentationCount = 0;
+        for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
+            if (tmpAtom.getAtomicNumber() != 0 && tmpAtom != null) {
+                tmpPreFragmentationCount++;
+            }
+        }
+        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpAtomContainer, false,
+                false, true);
+        List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpAtomContainer);
+        for (IAtomContainer tmpAC: tmpACList) {
+            for (IAtom tmpAtom: tmpAC.atoms()) {
+                if (tmpAtom.getAtomicNumber() != 0 && tmpAtom != null) {
+                    tmpPostFragmentationCount++;
+                }
+            }
+        }
+        Assertions.assertEquals(tmpPreFragmentationCount, tmpPostFragmentationCount);
+    }
     //</editor-fold>
 
     //<editor-fold desc="Private Utility Methods">
@@ -642,7 +672,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         }
         return tmpASF;
     }
-
     /**
      * Private method to check and compare the correctness of chemical formulas before and after fragmentation.
      *
