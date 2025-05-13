@@ -34,9 +34,11 @@ import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
+import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.scene.control.Alert;
 
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
@@ -266,6 +268,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.fragmentSideChainsSetting.displayName"));
         this.maxChainLengthSetting = new SimpleIntegerProperty(this, "Carbon side chains maximum length setting",
                 AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
+        this.maxChainLengthSetting.addListener((observable, tmpOldValue, tmpNewValue) -> {
+            if (tmpNewValue == null || tmpNewValue.intValue() < 0) {
+                this.maxChainLengthSetting.set(tmpOldValue.intValue());
+                Platform.runLater(() -> {
+                    Alert tmpInvalidValueAlert = new Alert(Alert.AlertType.WARNING, "Invalid setting value! Please enter a valid value for maximum side chain length. Refer to documentation for guidance.");
+                    tmpInvalidValueAlert.showAndWait();
+                });
+            }
+        });
         this.settingNameTooltipTextMap.put(this.maxChainLengthSetting.getName(),
                 Message.get("AlkylStructureFragmenter.maxChainLengthSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.maxChainLengthSetting.getName(),
