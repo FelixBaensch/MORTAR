@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -80,6 +80,10 @@ public class FragmentationTask implements Callable<Integer> {
      */
     private final String fragmentationName;
     /**
+     * Whether stereochemistry in the fragments should be regarded when creating their SMILES codes.
+     */
+    private final boolean isStereochemistryRegarded;
+    /**
      * Integer to count possible exceptions which could occur during fragmentation.
      */
     private int exceptionsCounter;
@@ -94,12 +98,18 @@ public class FragmentationTask implements Callable<Integer> {
      * @param aHashtableOfFragments Map to hold fragments, should be synchronised, e.g. by using a HashTable instance;
      *                              keys are unique SMILES codes.
      * @param aFragmentationName String
+     * @param isStereo Whether stereochemistry in the fragments should be regarded when creating their SMILES codes
      */
-    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules, IMoleculeFragmenter aFragmenter, Map<String, FragmentDataModel> aHashtableOfFragments, String aFragmentationName) {
+    public FragmentationTask(List<MoleculeDataModel> aListOfMolecules,
+                             IMoleculeFragmenter aFragmenter,
+                             Map<String, FragmentDataModel> aHashtableOfFragments,
+                             String aFragmentationName,
+                             boolean isStereo) {
         this.moleculesList = aListOfMolecules;
         this.fragmenter = aFragmenter;
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
+        this.isStereochemistryRegarded = isStereo;
         this.exceptionsCounter = 0;
     }
     //
@@ -150,7 +160,7 @@ public class FragmentationTask implements Callable<Integer> {
                 HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size()));
                 // iterate through list of resulting fragments
                 for (IAtomContainer tmpFragment : tmpFragmentsList) {
-                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment);
+                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment, this.isStereochemistryRegarded);
                     if (tmpSmiles == null) {
                         this.exceptionsCounter++;
                         continue;
@@ -158,22 +168,20 @@ public class FragmentationTask implements Callable<Integer> {
                     // create new FragmentDataModel
                     FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
                     // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
+                    // operation must be atomic (HashMap) or synchronised (HashTable); we are currently using ConcurrentHashMap
                     FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel);
                     if (tmpFragmentDataModel == null) {
                         tmpFragmentDataModel = tmpNewFragmentDataModel;
                     }
-                    // increment the absolute frequency of this fragment
-                    FragmentationTask.LOCK.lock();
+                    // increment the absolute frequency of this fragment - operation is atomic!
                     tmpFragmentDataModel.incrementAbsoluteFrequency();
-                    FragmentationTask.LOCK.unlock();
                     // add the initial molecule as a parent molecule
                     tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
                     if (tmpFragmentsOfMolList.contains(tmpFragmentDataModel)) {
                         tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
                     } else {
-                        FragmentationTask.LOCK.lock();
+                        // increment molecule frequency of this fragment - operation is atomic!
                         tmpFragmentDataModel.incrementMoleculeFrequency();
-                        FragmentationTask.LOCK.unlock();
                         tmpFragmentsOfMolList.add(tmpFragmentDataModel);
                         tmpFragmentFrequenciesOfMoleculeMap.put(tmpSmiles, 1);
                     }

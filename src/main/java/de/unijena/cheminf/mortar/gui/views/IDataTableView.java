@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -42,14 +42,14 @@ public interface IDataTableView {
      *
      * @return List of MoleculeDataModel
      */
-    public List<MoleculeDataModel> getItemsList();
+    List<MoleculeDataModel> getItemsList();
     //
     /**
      * Sets given list.
      *
      * @param aListOfFragments List
      */
-    public void setItemsList(List<MoleculeDataModel> aListOfFragments);
+    void setItemsList(List<MoleculeDataModel> aListOfFragments);
     //
     /**
      * Adds a change listener to the height property of table view which sets the height for structure images to
@@ -57,5 +57,5 @@ public interface IDataTableView {
      *
      * @param aSettingsContainer SettingsContainer
      */
-    public void addTableViewHeightListener(SettingsContainer aSettingsContainer);
+    void addTableViewHeightListener(SettingsContainer aSettingsContainer);
 }

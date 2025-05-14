@@ -31,6 +31,9 @@ hs_err_pid*
 /build/
 /out
 
+# VS Code bin #
+/bin/
+
 # Ignore Gradle GUI config
 gradle-app.setting
 

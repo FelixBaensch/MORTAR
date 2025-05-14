@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -130,10 +130,11 @@ public class MoleculeDataModel {
      * Constructor for MoleculeDataModel. Retains the given atom container.
      *
      * @param anAtomContainer AtomContainer of the molecule
+     * @param isStereoChemEncoded whether stereochemistry should be retained in the unique SMILES code encoding the structure
      * @throws NullPointerException if given SMILES string is null
      */
-    public MoleculeDataModel(IAtomContainer anAtomContainer) throws NullPointerException {
-        this(ChemUtil.createUniqueSmiles(anAtomContainer), anAtomContainer.getTitle(), anAtomContainer.getProperties());
+    public MoleculeDataModel(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) throws NullPointerException {
+        this(ChemUtil.createUniqueSmiles(anAtomContainer, isStereoChemEncoded), anAtomContainer.getTitle(), anAtomContainer.getProperties());
         this.keepAtomContainer = true;
         this.atomContainer = anAtomContainer;
     }
@@ -278,7 +279,7 @@ public class MoleculeDataModel {
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImageWithZoomAndFillToFit(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), true));
+            return new ImageView(DepictionUtil.depictImageWithZoomAndFillToFit(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), false));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
             return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));

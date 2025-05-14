@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -40,14 +40,14 @@ public interface IPreference extends Comparable<IPreference> {
      *
      * @return the name of this preference instance
      */
-    public String getName();
+    String getName();
 
     /**
      * Returns the GUID of this preference.
      *
      * @return the GUID of this preference instance
      */
-    public String getGUID();
+    String getGUID();
 
     /**
      * Returns the content of this preference as a string literal representation or its
@@ -55,21 +55,21 @@ public interface IPreference extends Comparable<IPreference> {
      *
      * @return the content of this preference instance as a string literal or its type or class
      */
-    public String getContentRepresentative();
+    String getContentRepresentative();
 
     /**
      * Returns the current version of this preference class.
      *
      * @return the current version
      */
-    public String getVersion();
+    String getVersion();
 
     /**
      * Returns the type of this preference.
      *
      * @return the PreferenceType enum constant associated with this preference implementation.
      */
-    public PreferenceType getType();
+    PreferenceType getType();
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public methods">
@@ -80,7 +80,7 @@ public interface IPreference extends Comparable<IPreference> {
      *
      * @param aPrintWriter writing to the destined line-based text file
      */
-    public void writeRepresentation(PrintWriter aPrintWriter);
+    void writeRepresentation(PrintWriter aPrintWriter);
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Comparing and sorting">
@@ -95,7 +95,7 @@ public interface IPreference extends Comparable<IPreference> {
      * @throws NullPointerException if aPreference is 'null'
      */
     @Override
-    public int compareTo(IPreference aPreference) throws NullPointerException;
+    int compareTo(IPreference aPreference) throws NullPointerException;
 
     /**
      * For IPreference objects equality is determined by comparing their GUID strings.
@@ -107,7 +107,7 @@ public interface IPreference extends Comparable<IPreference> {
      * @return true if this object equals anObject
      */
     @Override
-    public boolean equals(Object anObject);
+    boolean equals(Object anObject);
 
     /**
      * Returns a hash code for this IPreference object based on its GUID string.
@@ -117,7 +117,7 @@ public interface IPreference extends Comparable<IPreference> {
      * @return hash code based on GUID
      */
     @Override
-    public int hashCode();
+    int hashCode();
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Copying">
@@ -127,10 +127,10 @@ public interface IPreference extends Comparable<IPreference> {
      * @return a deep copy of this object
      * @throws java.lang.CloneNotSupportedException if copying this specific object fails
      */
-    public IPreference copy() throws CloneNotSupportedException;
+    IPreference copy() throws CloneNotSupportedException;
     //</editor-fold>
 
     @Override
-    public String toString();
+    String toString();
     //</editor-fold>
 }

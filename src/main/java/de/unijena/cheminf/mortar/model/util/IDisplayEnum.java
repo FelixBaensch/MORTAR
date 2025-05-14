@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -34,11 +34,11 @@ public interface IDisplayEnum {
      *
      * @return String display name
      */
-    public String getDisplayName();
+    String getDisplayName();
     /**
      * Returns the language-specific tooltip text of the enum constant for using it in the GUI.
      *
      * @return String tooltip text
      */
-    public String getTooltipText();
+    String getTooltipText();
 }

@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -44,17 +44,17 @@ public interface IViewToolController {
      *
      * @return list of settings represented by properties
      */
-    public List<Property<?>> settingsProperties();
+    List<Property<?>> settingsProperties();
     /**
      * Returns a view tool name that can be displayed in the GUI, e.g. in the views menu.
      *
      * @return language-specific name for the view tool
      */
-    public String getViewToolNameForDisplay();
+    String getViewToolNameForDisplay();
     /**
      * Restore all settings of the view tool to their default values.
      */
-    public void restoreDefaultSettings();
+    void restoreDefaultSettings();
     /**
      * Specifies whether the view tool can be used on the given tab type, e.g. the histogram view cannot be used
      * on the molecules tab.
@@ -62,6 +62,6 @@ public interface IViewToolController {
      * @param aTabNameEnumConstant enum constant denoting the currently active tab in the GUI
      * @return true if the view tool can be opened when this specific tab is active
      */
-    public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant);
+    boolean canBeUsedOnTab(TabNames aTabNameEnumConstant);
     //</editor-fold>
 }

@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -41,5 +41,5 @@ public interface IConfiguration {
      * @return property value associated with the given key
      * @throws MissingResourceException if no associated value could be found for the given key
      */
-    public String getProperty(String aKey) throws MissingResourceException;
+    String getProperty(String aKey) throws MissingResourceException;
 }

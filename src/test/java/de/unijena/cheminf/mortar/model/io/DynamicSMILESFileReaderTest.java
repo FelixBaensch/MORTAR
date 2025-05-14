@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -271,7 +271,7 @@ public class DynamicSMILESFileReaderTest {
         String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
         int i = 0;
         for (IAtomContainer tmpAtomContainer : tmpMolSet.atomContainers()) {
-            Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer));
+            Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer, false));
             Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             i++;
         }

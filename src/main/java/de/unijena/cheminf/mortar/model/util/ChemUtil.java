@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -80,24 +80,46 @@ public final class ChemUtil {
      * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
      * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
      * container. Aromaticity information is encoded in the returned SMILES string, if there is any given. Unique SMILES
-     * codes do NOT encode stereochemistry!
+     * codes do NOT encode stereochemistry by default! This can be turned on with the second parameter.
      *
      * @param anAtomContainer atom container the unique SMILES should be created of
+     * @param isStereoChemEncoded whether stereochemistry should be encoded
      * @return unique SMILES of the given atom container or 'null' if no creation was possible
      */
-    public static String createUniqueSmiles(IAtomContainer anAtomContainer) {
+    public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) {
+        return ChemUtil.createUniqueSmiles(anAtomContainer, isStereoChemEncoded, true);
+    }
+
+    /**
+     * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
+     * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
+     * container. Unique SMILES codes do NOT encode stereochemistry or aromaticity by default! This can be turned on
+     * with the parameters.
+     *
+     * @param anAtomContainer atom container the unique SMILES should be created of
+     * @param isStereoChemEncoded whether stereochemistry should be encoded
+     * @param isAromaticityEncoded whether aromaticity should be encoded
+     * @return unique SMILES of the given atom container or 'null' if no creation was possible
+     */
+    public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded, boolean isAromaticityEncoded) {
+        int tmpFlavor = SmiFlavor.Unique;
+        if (isAromaticityEncoded) {
+            tmpFlavor = tmpFlavor | SmiFlavor.UseAromaticSymbols;
+        }
+        if (isStereoChemEncoded && anAtomContainer.stereoElements().iterator().hasNext()) {
+            tmpFlavor = tmpFlavor | SmiFlavor.Stereo;
+        }
         String tmpSmiles = null;
-        SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         try {
             try {
-                tmpSmiles = tmpSmilesGen.create(anAtomContainer);
+                tmpSmiles = SmilesGenerator.create(anAtomContainer, tmpFlavor, new int[anAtomContainer.getAtomCount()]);
             } catch (CDKException anException) {
                 IAtomContainer tmpAtomContainer = anAtomContainer.clone();
                 Kekulization.kekulize(tmpAtomContainer);
-                tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                tmpSmiles = SmilesGenerator.create(tmpAtomContainer, tmpFlavor, new int[anAtomContainer.getAtomCount()]);
                 ChemUtil.LOGGER.log(Level.INFO, String.format("Kekulized molecule %s", anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
             }
-        } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException anException){
+        } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException | ArrayIndexOutOfBoundsException anException){
             ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s; molecule name: %s", anException.toString(), anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anException);
         }
         return tmpSmiles;

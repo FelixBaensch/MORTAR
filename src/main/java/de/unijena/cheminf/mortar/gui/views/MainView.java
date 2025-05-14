@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -83,6 +83,11 @@ public class MainView extends AnchorPane {
         this.mainBorderPane.setCenter(this.mainCenterPane);
         //menuBar
         this.mainMenuBar = new MainMenuBar();
+        //on Mac, show as a standard OS X menu bar, at the top of the screen
+        String tmpOS = System.getProperty("os.name").toUpperCase();
+        if (tmpOS != null && tmpOS.contains("MAC")) {
+            this.mainMenuBar.useSystemMenuBarProperty().set(true);
+        }
         this.mainBorderPane.setTop(this.mainMenuBar);
         //statusBar
         this.statusBar = new StatusBar();

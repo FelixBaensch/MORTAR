@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,7 +51,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Absolute frequency of the fragment.
      */
-    private int absoluteFrequency;
+    private AtomicInteger absoluteFrequency;
     //
     /**
      * Absolute frequency of the fragment as a percentage.
@@ -60,7 +61,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Molecule frequency of the fragment.
      */
-    private int moleculeFrequency;
+    private AtomicInteger moleculeFrequency;
     //
     /**
      * Molecule frequency of the fragment as a percentage.
@@ -97,9 +98,9 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public FragmentDataModel(String aUniqueSmiles, String aName, Map<Object, Object> aPropertyMap) throws NullPointerException {
         super(aUniqueSmiles, aName, aPropertyMap);
-        this.absoluteFrequency = 0;
+        this.absoluteFrequency = new AtomicInteger(0);
         this.absolutePercentage = 0.;
-        this.moleculeFrequency = 0;
+        this.moleculeFrequency = new AtomicInteger(0);
         this.moleculePercentage = 0.;
         // sounds weird but to set the number of the total molecule set as expected size kills the performance
         this.parentMolecules = ConcurrentHashMap.newKeySet();
@@ -109,13 +110,14 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Constructor, sets absolute frequency to 0. Retains the given data as atom container.
      *
      * @param anAtomContainer AtomContainer of the molecule
+     * @param isStereoChemEncoded whether stereochemistry should be retained in the unique SMILES code encoding the structure
      * @throws NullPointerException if given SMILES string is null
      */
-    public FragmentDataModel(IAtomContainer anAtomContainer) throws NullPointerException {
-        super(anAtomContainer);
-        this.absoluteFrequency = 0;
+    public FragmentDataModel(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) throws NullPointerException {
+        super(anAtomContainer, isStereoChemEncoded);
+        this.absoluteFrequency = new AtomicInteger(0);
         this.absolutePercentage = 0.;
-        this.moleculeFrequency = 0;
+        this.moleculeFrequency = new AtomicInteger(0);
         this.moleculePercentage = 0.;
         // sounds weird but to set the number of the total molecule set as expected size kills the performance
         this.parentMolecules = ConcurrentHashMap.newKeySet();
@@ -124,23 +126,30 @@ public class FragmentDataModel extends MoleculeDataModel {
     //
     //<editor-fold desc="public methods">
     /**
-     * Increases the absolute frequency by one.
+     * Increases the absolute frequency by one and returns it.
+     * This operation is atomic because AtomicInteger is used internally.
+     *
+     * @return incremented absolute frequency
      */
-    public void incrementAbsoluteFrequency() {
-        this.absoluteFrequency += 1;
+    public final int incrementAbsoluteFrequency() {
+        return this.absoluteFrequency.incrementAndGet();
     }
     //
     /**
-     * Increases the molecule frequency by one.
+     * Increases the molecule frequency by one and returns it.
+     * This operation is atomic because AtomicInteger is used internally.
+     *
+     * @return incremented molecule frequency
      */
-    public void incrementMoleculeFrequency() {
-        this.moleculeFrequency += 1;
+    public final int incrementMoleculeFrequency() {
+        return this.moleculeFrequency.incrementAndGet();
     }
     //</editor-fold>
     //
     //<editor-fold desc="public properties get" defaultstate="collapsed">
     /**
      * Returns absolute frequency of this fragment.
+     * This operation is atomic because AtomicInteger is used internally.
      * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
      * CellValueFactory of the frequency column is set to a PropertyValueFactory that uses "absoluteFrequency" as
      * property string to invoke this method; see also DataModelPropertiesForTableView enum).
@@ -148,7 +157,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * @return int absoluteFrequency
      */
     public int getAbsoluteFrequency() {
-        return this.absoluteFrequency;
+        return this.absoluteFrequency.get();
     }
     //
     /**
@@ -165,6 +174,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     //
     /**
      * Returns molecule frequency of this fragment.
+     * This operation is atomic because AtomicInteger is used internally.
      * <br>NOTE: Do not delete or rename this method, it is used by reflection (in FragmentsDataTableView, the
      * CellValueFactory of the molecule frequency column is set to a PropertyValueFactory that uses "moleculeFrequency" as
      * property string to invoke this method; see also DataModelPropertiesForTableView enum).
@@ -172,7 +182,7 @@ public class FragmentDataModel extends MoleculeDataModel {
      * @return int moleculeFrequency
      */
     public int getMoleculeFrequency() {
-        return this.moleculeFrequency;
+        return this.moleculeFrequency.get();
     }
     //
     /**
@@ -262,6 +272,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     //<editor-fold desc="public properties set">
     /**
      * Sets the absolute frequency.
+     * This operation is NOT atomic because of parameter checks.
      *
      * @param aValue absolute frequency
      */
@@ -269,11 +280,12 @@ public class FragmentDataModel extends MoleculeDataModel {
         if (aValue < 0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
-        this.absoluteFrequency = aValue;
+        this.absoluteFrequency.set(aValue);
     }
     //
     /**
      * Sets the molecule frequency.
+     * This operation is NOT atomic because of parameter checks.
      *
      * @param aValue molecule frequency
      */
@@ -281,7 +293,7 @@ public class FragmentDataModel extends MoleculeDataModel {
         if (aValue < 0 ) {
             throw new IllegalArgumentException("aValue must be positive or zero.");
         }
-        this.moleculeFrequency = aValue;
+        this.moleculeFrequency.set(aValue);
     }
     //
     /**

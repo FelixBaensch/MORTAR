@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -448,9 +448,9 @@ public class Exporter {
         }
         List<String> tmpReturnedList;
         if (aChemFileType == ChemFileTypes.SDF && anIsSingleExport) {
-            tmpReturnedList = this.createFragmentationTabSingleSDFile(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
+            tmpReturnedList = this.createFragmentationTabSingleSDFile(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates, this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
         } else if (aChemFileType == ChemFileTypes.SDF) {
-            tmpReturnedList = this.createFragmentationTabSeparateSDFiles(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
+            tmpReturnedList = this.createFragmentationTabSeparateSDFiles(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates, this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
         } else if (aChemFileType == ChemFileTypes.PDB) {
             tmpReturnedList = this.createFragmentationTabPDBFiles(aFile, aFragmentDataModelList, aGenerate2dAtomCoordinates);
         } else {
@@ -823,13 +823,15 @@ public class Exporter {
      * @param aFile                  File to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param generate2DCoordinates  boolean value whether to generate 2D coordinates
+     * @param alwaysMDLV3000 whether to generate v3000 MOL/SD files as default
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws IOException if sth goes wrong
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabSingleSDFile(File aFile,
                                                             List<MoleculeDataModel> aFragmentDataModelList,
-                                                            boolean generate2DCoordinates) throws IOException {
+                                                            boolean generate2DCoordinates,
+                                                            boolean alwaysMDLV3000) throws IOException {
         if (aFile == null || aFragmentDataModelList == null) {
             return null;
         }
@@ -843,7 +845,7 @@ public class Exporter {
         ) {
             //specifying format of export
             //setting whether to always use MDL V3000 format
-            tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+            tmpSDFWriter.setAlwaysV3000(alwaysMDLV3000);
             //accessing the WriteAromaticBondType setting
             try {
                 tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
@@ -914,13 +916,15 @@ public class Exporter {
      * @param aDirectory             directory to save fragments
      * @param aFragmentDataModelList list of FragmentDataModel instances
      * @param generate2DCoordinates  boolean value whether to generate 2D coordinates
+     * @param isAlwaysV3000MOLfile whether to use v3000 MOL files as default
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws IOException if sth goes wrong
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabSeparateSDFiles(File aDirectory,
                                                                List<MoleculeDataModel> aFragmentDataModelList,
-                                                               boolean generate2DCoordinates) throws IOException {
+                                                               boolean generate2DCoordinates,
+                                                               boolean isAlwaysV3000MOLfile) throws IOException {
         if (aDirectory == null || !aDirectory.isDirectory() || aFragmentDataModelList == null) {
             return null;
         }
@@ -962,7 +966,7 @@ public class Exporter {
                 ) {
                     //specifying format of export
                     //setting whether to always use MDL V3000 format
-                    tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+                    tmpSDFWriter.setAlwaysV3000(isAlwaysV3000MOLfile);
                     //accessing the WriteAromaticBondType setting
                     try {
                         tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");

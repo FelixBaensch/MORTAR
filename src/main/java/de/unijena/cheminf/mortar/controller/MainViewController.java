@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -85,9 +85,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -176,7 +173,7 @@ public class MainViewController {
     /**
      * Task for molecule file import.
      */
-    private Task<IAtomContainerSet> importTask;
+    private Task<List<MoleculeDataModel>> importTask;
     /**
      * Storing the name of the last imported file.
      */
@@ -242,7 +239,7 @@ public class MainViewController {
         this.mainView = aMainView;
         this.settingsContainer = new SettingsContainer();
         this.settingsContainer.reloadGlobalSettings();
-        this.fragmentationService = new FragmentationService(this.settingsContainer);
+        this.fragmentationService = new FragmentationService();
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
         this.viewToolsManager = new ViewToolsManager(this.configuration);
@@ -516,10 +513,12 @@ public class MainViewController {
             this.interruptExport();
         }
         this.clearGuiAndCollections();
+        boolean tmpIsRegardStereo = this.settingsContainer.getRegardStereochemistrySetting();
+        boolean tmpIsFillOpenValences = this.settingsContainer.getAddImplicitHydrogensAtImportSetting();
         this.importTask = new Task<>() {
             @Override
-            protected IAtomContainerSet call() throws Exception {
-                IAtomContainerSet tmpSet = tmpImporter.importMoleculeFile(aFile);
+            protected List<MoleculeDataModel> call() throws Exception {
+                List<MoleculeDataModel> tmpSet = tmpImporter.importMoleculeFile(aFile, tmpIsRegardStereo, tmpIsFillOpenValences);
                 return tmpSet;
             }
         };
@@ -527,9 +526,9 @@ public class MainViewController {
             //note: setOnSucceeded() takes place in the JavaFX GUI thread again but still runLater() is necessary to wait
             // for the thread to be free for the update
             Platform.runLater(() -> {
-                IAtomContainerSet tmpAtomContainerSet = null;
+                List<MoleculeDataModel> tmpImportedMoleculeDataModels = null;
                 try {
-                    tmpAtomContainerSet = this.importTask.get();
+                    tmpImportedMoleculeDataModels = this.importTask.get();
                 } catch (InterruptedException | ExecutionException anException) {
                     MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Error.ExceptionAlert.Title"),
@@ -538,26 +537,8 @@ public class MainViewController {
                             anException);
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                 }
-                int tmpExceptionCount = 0;
-                if (tmpAtomContainerSet != null && !tmpAtomContainerSet.isEmpty()) {
-                    for (IAtomContainer tmpAtomContainer : tmpAtomContainerSet.atomContainers()) {
-                        //returns null if no SMILES code could be created
-                        String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer);
-                        if (tmpSmiles == null) {
-                            tmpExceptionCount++;
-                            continue;
-                        }
-                        MoleculeDataModel tmpMoleculeDataModel;
-                        if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                            tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer);
-                        } else {
-                            tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
-                        }
-                        tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-                        this.moleculeDataModelList.add(tmpMoleculeDataModel);
-                    }
-                }
-                if (tmpAtomContainerSet == null || tmpAtomContainerSet.isEmpty() || this.moleculeDataModelList.isEmpty()) {
+                this.moleculeDataModelList.addAll(tmpImportedMoleculeDataModels);
+                if (tmpImportedMoleculeDataModels == null || tmpImportedMoleculeDataModels.isEmpty() || this.moleculeDataModelList.isEmpty()) {
                     MainViewController.LOGGER.log(Level.WARNING, "Import failed, set of imported molecules is null or empty");
                     this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
                     this.isImportRunningProperty.setValue(false);
@@ -572,13 +553,9 @@ public class MainViewController {
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
-                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpAtomContainerSet.getAtomContainerCount() +
-                        " " + Message.get((tmpAtomContainerSet.getAtomContainerCount() == 1 ? "Title.molecule" : "Title.molecules")));
+                this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpImportedMoleculeDataModels.size() +
+                        " " + Message.get((tmpImportedMoleculeDataModels.size() == 1 ? "Title.molecule" : "Title.molecules")));
                 this.importedFileName = tmpImporter.getFileName();
-                MainViewController.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
-                        "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
-                        "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
-                        tmpAtomContainerSet.getAtomContainerCount(), tmpImporter.getFileName(), tmpExceptionCount));
                 this.updateStatusBar(this.importerThread, Message.get("Status.imported"));
                 this.isImportRunningProperty.setValue(false);
                 this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");
@@ -1150,6 +1127,8 @@ public class MainViewController {
         MainViewController.LOGGER.info("Start of method startFragmentation");
         List<MoleculeDataModel> tmpSelectedMolecules = this.moleculeDataModelList.stream().filter(MoleculeDataModel::isSelected).toList();
         int tmpNumberOfCores = this.settingsContainer.getNumberOfTasksForFragmentationSetting();
+        boolean tmpIsKeepLastFragmentSetting = this.settingsContainer.isKeepLastFragmentSetting();
+        boolean tmpIsStereoChemRegarded = this.settingsContainer.getRegardStereochemistrySetting();
         try {
             this.fragmentationButton.setDisable(true);
             this.cancelFragmentationButton.setVisible(true);
@@ -1158,11 +1137,11 @@ public class MainViewController {
                 protected Void call() throws Exception {
                     if (isPipelining) {
                         MainViewController.this.fragmentationService.startPipelineFragmentation(tmpSelectedMolecules,
-                                tmpNumberOfCores);
+                                tmpNumberOfCores, tmpIsStereoChemRegarded, tmpIsKeepLastFragmentSetting);
 //                        fragmentationService.startPipelineFragmentationMolByMol(tmpSelectedMolecules, tmpNumberOfCores);
                     } else {
                         MainViewController.this.fragmentationService.startSingleFragmentation(tmpSelectedMolecules,
-                                tmpNumberOfCores);
+                                tmpNumberOfCores, tmpIsStereoChemRegarded);
                     }
                     return null;
                 }
@@ -1192,7 +1171,7 @@ public class MainViewController {
                         this.cancelFragmentationButton.setVisible(false);
                         this.isFragmentationRunning = false;
                         long tmpEndTime = System.nanoTime();
-                        MainViewController.LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0);
+                        MainViewController.LOGGER.info("End of method startFragmentation after " + (tmpEndTime - tmpStartTime) / 1000000000.0 + " seconds.");
                     } catch (Exception anException) {
                         MainViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
                     }
@@ -1200,13 +1179,17 @@ public class MainViewController {
             );
             this.parallelFragmentationMainTask.setOnCancelled(event -> {
                 this.updateStatusBar(this.fragmentationThread, Message.get("Status.canceled"));
+                //note: the export functions give a warning to the user should the fragment set be empty
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
+                MainViewController.LOGGER.info("Fragmentation cancelled by user.");
             });
+            // see also how exceptions thrown in the task's sub-tasks are handled in startFragmentation()
             this.parallelFragmentationMainTask.setOnFailed(event -> {
                 this.updateStatusBar(this.fragmentationThread, Message.get("Status.failed"));
+                //note: the export functions give a warning to the user should the fragment set be empty
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
@@ -1333,7 +1316,7 @@ public class MainViewController {
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
         this.mainTabPane.getTabs().add(tmpItemizationTab);
-        Pagination tmpPagination = this.createPaginationWithSuitablePageCount(this.moleculeDataModelList.size());
+        Pagination tmpPagination = this.createPaginationWithSuitablePageCount(tmpItemizationDataTableView.getItemsList().size());
         tmpPagination.setPageFactory(pageIndex -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
         tmpItemizationTab.addPaginationToGridPane(tmpPagination);
         Button tmpItemizationTabExportPDfButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.itemizationTab.pdfButton.txt"));

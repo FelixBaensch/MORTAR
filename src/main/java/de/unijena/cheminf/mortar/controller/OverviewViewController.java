@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -754,7 +754,7 @@ public class OverviewViewController implements IViewToolController {
                                 tmpFinalContentNode = new ImageView(
                                         DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                 tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                tmpImageHeight, true, true
+                                                tmpImageHeight, false, true
                                         )
                                 );
                             } else {
@@ -763,7 +763,7 @@ public class OverviewViewController implements IViewToolController {
                                         new ImageView(
                                                 DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                         tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                        tmpImageHeight, true, false
+                                                        tmpImageHeight, false, false
                                                 )
                                         )
                                 );
