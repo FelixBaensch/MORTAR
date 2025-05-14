@@ -167,36 +167,36 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final boolean ASFDebugBoolean = false;
     /**
-     * A property that has a constant fragment hydrogen saturation setting.
+     * A constant property that has a fragment hydrogen saturation setting.
      */
     private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
     /**
-     * A property that has a constant boolean value defining if non-fragmentable molecules should be kept in the
+     * A constant property that has a boolean value defining if non-fragmentable molecules should be kept in the
      * fragmenter pipeline.
      */
     private final SimpleBooleanProperty keepNonFragmentableMoleculesSetting;
     /**
-     * A property that has a constant boolean value determining whether side chains should be fragmented.
+     * A constant property that has a boolean value determining whether side chains should be fragmented.
      */
     private final SimpleBooleanProperty fragmentSideChainsSetting;
     /**
-     * A property that has a constant carbon side chain setting.
+     * A constant property that has an integer for maximum side chain length.
      */
     private final SimpleIntegerProperty maxChainLengthSetting;
     /**
-     * A property that has a constant boolean value determining which single carbon handling to use during fragmentation.
+     * A constant property that has a boolean value determining which handling of tertiary and quaternary carbons to use during fragmentation.
      */
     private final SimpleBooleanProperty altHandlingSingleTertQuatCarbonsSetting;
     /**
-     * A property that has a constant boolean value determining which single ring detection method to use during fragmentation.
+     * A constant property that has a boolean value determining which single ring detection method to use during fragmentation.
      */
     private final SimpleBooleanProperty mcbSingleRingDetectionSetting;
     /**
-     * A property that has a constant boolean value defining if rings should be dissected further.
+     * A constant property that has a boolean value defining whether rings should be kept intact or be dissected, applying chain length restrictions.
      */
     private final SimpleBooleanProperty keepRingsSetting;
     /**
-     * A property that has a constant boolean value defining if tertiary and quaternary carbon atoms should be separated
+     * A constant property that has a boolean value defining if tertiary and quaternary carbon atoms should be separated
      * from ring structures.
      */
     private final SimpleBooleanProperty separateTertQuatCarbonFromRingSetting;
@@ -216,7 +216,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(AlkylStructureFragmenter.class.getName());
-    //aCDKException + "Molecule ID: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), aCDKException
     /**
      * String format for logger output when exceptions are thrown.
      */
@@ -1006,7 +1005,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         aMolecularArraysInstance.setBondArray(aBondArray);
         //</editor-fold>
     }
-
     /**
      * Protected method to mark all atoms and bonds of any conjugated pi systems in the given atomcontainer.
      *
@@ -1015,7 +1013,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param anAtomArray Array containing the atoms of a given fragmentation molecule
      * @param aBondArray Array containing the bonds of a given fragmentation molecule
      */
-    //test performance if pi system detection should be relocated to standard ring detection
     protected void markConjugatedPiSystems(MolecularArrays aMolecularArraysInstance, IAtomContainer anAtomContainer, IAtom[] anAtomArray, IBond[] aBondArray) throws IllegalArgumentException{
         //<editor-fold desc="ConjugatedPiSystemsDetector" defaultstate="collapsed">
         Objects.requireNonNull(anAtomArray);
