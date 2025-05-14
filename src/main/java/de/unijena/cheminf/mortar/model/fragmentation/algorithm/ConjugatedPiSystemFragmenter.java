@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -27,7 +27,6 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
@@ -35,15 +34,11 @@ import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 
-import org.openscience.cdk.AtomContainer;
-import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
-import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
@@ -56,9 +51,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Java class implementing an algorithm in MORTAR for detection of conjugated pi systems using
+ * Java class implementing an algorithm for detection of conjugated pi systems using
  * the CDK functionality {@link org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector}
- * to simply test and validate its purpose.
+ * to make it available in MORTAR. It only extracts and returns detected conjugated pi systems, all additional atoms are
+ * currently not extracted.
  *
  * @author Maximilian Rottmann
  * @version 1.1.1.0
@@ -69,7 +65,7 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
     /**
      * Name of the fragmenter, CPS stands for Conjugated Pi System.
      */
-    public static final String ALGORITHM_NAME = "CPS Fragmenter";
+    public static final String ALGORITHM_NAME = "ConjugatedPiSystemFragmenter";
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
      */
@@ -92,15 +88,15 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
-
     private final HashMap<String, String> settingNameTooltipTextMap;
+    /**
+     * Map to store pairs of {@literal <setting name, display name>}.
+     */
     private final HashMap<String, String> settingNameDisplayNameMap;
     /**
      * The logger responsible for this fragmenter.
      */
-    private static final Logger logger = Logger.getLogger(ConjugatedPiSystemFragmenter.class.getName());
-    private IAtom[] atomArray;
-    private IBond[] bondArray;
+    private static final Logger LOGGER = Logger.getLogger(ConjugatedPiSystemFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Class Constructor">
@@ -122,7 +118,7 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
                     //call to super.set() for parameter checks
                     super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
-                    ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException.toString(), anException);
+                    ConjugatedPiSystemFragmenter.this.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert("Illegal Argument", "Illegal Argument was set", anException.toString(), anException);
                     //re-throws the exception to properly reset the binding
                     throw anException;
@@ -150,12 +146,6 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         return this.settingNameTooltipTextMap;
     }
 
-    /**
-     * Returns a map containing language-specific names (values) for the settings with the given names (keys) to be used
-     * in the GUI.
-     *
-     * @return map with display names
-     */
     @Override
     public Map<String, String> getSettingNameToDisplayNameMap() {
         return Map.of();
@@ -166,12 +156,6 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         return ConjugatedPiSystemFragmenter.ALGORITHM_NAME;
     }
 
-    /**
-     * Returns a language-specific name of the fragmenter to be used in the GUI.
-     * The given name must be unique among the available fragmentation algorithms!
-     *
-     * @return language-specific name for display in GUI
-     */
     @Override
     public String getFragmentationAlgorithmDisplayName() {
         return Message.get("ConjugatedPiSystemFragmenter.displayName");
@@ -186,25 +170,9 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
     public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
         return this.fragmentSaturationSetting;
     }
-
-    /*
-    @Override
-    public FragmentSaturationOption getFragmentSaturationSettingConstant() {
-        return FragmentSaturationOption.valueOf(this.fragmentSaturationSetting.get());
-    }
-    */
     //</editor-fold>
     //
     //<editor-fold desc="Public Properties Set">
-    /*
-    @Override
-    public void setFragmentSaturationSetting(String anOptionName) throws NullPointerException, IllegalArgumentException {
-        Objects.requireNonNull(anOptionName, "Given saturation option name is null.");
-        //throws IllegalArgumentException if the given name does not match a constant name in the enum
-        FragmentSaturationOption tmpConstant = FragmentSaturationOption.valueOf(anOptionName);
-        this.fragmentSaturationSetting.set(tmpConstant.name());
-    }
-    */
 
     @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws NullPointerException {
@@ -224,7 +192,6 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
     @Override
     public void restoreDefaultSettings() {
         this.fragmentSaturationSetting.set(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
-
     }
 
     @Override
@@ -232,82 +199,38 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
 
         //<editor-fold desc="Molecule Cloning, Property and Arrays Set">
         IAtomContainer tmpClone = aMolecule.clone();
-        this.clearCache();
-        this.atomArray = new IAtom[tmpClone.getAtomCount()];
-        this.bondArray = new IBond[tmpClone.getBondCount()];
-        int tmpCPSFAtomIndex = 0;
-        int tmpCPSFBondIndex = 0;
+        int tmpPreFragmentationCount = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
-            if (tmpAtom != null) {
-                tmpAtom.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY, tmpCPSFAtomIndex);
-                this.atomArray[tmpCPSFAtomIndex] = tmpAtom;
-                tmpCPSFAtomIndex++;
-            }
-        }
-        for (IBond tmpBond: tmpClone.bonds()) {
-            if (tmpBond != null) {
-                tmpBond.setProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY, tmpCPSFBondIndex);
-                this.bondArray[tmpCPSFBondIndex] = tmpBond;
-                tmpCPSFBondIndex++;
+            if (tmpAtom.getAtomicNumber() != 0) {
+                tmpPreFragmentationCount++;
             }
         }
         //</editor-fold>
 
         //<editor-fold desc="Detection and Extraction">
-        IAtomContainer tmpFragments = new AtomContainer();
+        IAtomContainerSet tmpConjugatedAtomContainerSet;
         try {
-            IAtomContainerSet tmpConjugatedAtomContainerSet;
             tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(tmpClone);
-            for (IAtomContainer tmpConjAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
-                for (IAtom tmpConjAtom: tmpConjAtomContainer.atoms()) {
-                    int tmpAtomInteger = tmpConjAtom.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_ATOM_INDEX_PROPERTY_KEY);
-                    tmpFragments.addAtom(this.atomArray[tmpAtomInteger]);
-                }
-                for (IBond tmpConjBond: tmpConjAtomContainer.bonds()) {
-                    int tmpBondInteger = tmpConjBond.getProperty(ConjugatedPiSystemFragmenter.INTERNAL_CPSF_BOND_INDEX_PROPERTY_KEY);
-                    tmpFragments.addBond(this.bondArray[tmpBondInteger]);
-                }
-            }
         } catch (Exception anException) {
-            ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING,
+            ConjugatedPiSystemFragmenter.this.LOGGER.log(Level.WARNING,
                     anException + " MoleculeID: " + tmpClone.getID(), anException);
             throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
                     + tmpClone.getID() + " at conjugated pi systems detector: " + anException.toString());
         }
         //</editor-fold>
 
-        //<editor-fold desc="Connectivity Checking">
-        IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
-        try {
-            if (!tmpFragments.isEmpty()) {
-                if (!ConnectivityChecker.isConnected(tmpFragments)) {
-                    IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(tmpFragments);
-                    for (IAtomContainer tmpContainer: tmpContainerSet.atomContainers()) {
-                        tmpFragmentSet.addAtomContainer(tmpContainer);
-                    }
-                } else {
-                    tmpFragmentSet.addAtomContainer(tmpFragments);
-                }
-            }
-        } catch (Exception anException) {
-            ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException + " Connectivity Checking failed at molecule: " + tmpClone.getID(), anException);
-            throw new IllegalArgumentException("An Error occurred during Connectivity Checking: " + anException.toString() +
-                    ": " + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-        }
-        //</editor-fold>
-
         //<editor-fold desc="Hydrogen Saturation">
-        List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
+        List<IAtomContainer> tmpProcessedFragments = new ArrayList<>(tmpConjugatedAtomContainerSet.getAtomContainerCount());
         try {
-            if (!tmpFragmentSet.isEmpty() && tmpFragmentSet != null) {
-                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpFragmentSet.getAtomContainer(0).getBuilder());
-                for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
+            if (!tmpConjugatedAtomContainerSet.isEmpty() && tmpConjugatedAtomContainerSet != null) {
+                CDKHydrogenAdder tmpAdder = CDKHydrogenAdder.getInstance(tmpConjugatedAtomContainerSet.getAtomContainer(0).getBuilder());
+                for (IAtomContainer tmpAtomContainer: tmpConjugatedAtomContainerSet.atomContainers()) {
                     AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpAtomContainer);
-                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION.name())) {
+                    if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
                         try {
                             tmpAdder.addImplicitHydrogens(tmpAtomContainer);
                         } catch (CDKException anException) {
-                            ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException
+                            ConjugatedPiSystemFragmenter.this.LOGGER.log(Level.WARNING, anException
                                     + " Unable to add Implicit Hydrogen at MoleculeID: " + tmpClone.getID());
                             throw new CDKException("Unexpected error occurred during implicit hydrogen adding at " +
                                     "hydrogen saturation of molecule: " + tmpClone.getID() + ", " + anException.toString(), anException);
@@ -317,13 +240,23 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
                 }
             }
         } catch (Exception anException) {
-            ConjugatedPiSystemFragmenter.this.logger.log(Level.WARNING, anException
+            ConjugatedPiSystemFragmenter.this.LOGGER.log(Level.WARNING, anException
                     + "Error during hydrogen saturation at MoleculeID: " + tmpClone.getID());
             throw new IllegalArgumentException("Unexpected error occurred during fragmentation of molecule: "
                     + tmpClone.getID() + ", at hydrogen saturation: " + anException.toString(), anException);
         }
         //</editor-fold>
-
+        int tmpPostFragmentationCount = 0;
+        for (IAtomContainer tmpAC: tmpProcessedFragments) {
+            for (IAtom tmpAtom: tmpAC.atoms()) {
+                if (tmpAtom.getAtomicNumber() != 0) {
+                    tmpPostFragmentationCount++;
+                }
+            }
+        }
+        if (tmpPostFragmentationCount != tmpPreFragmentationCount) {
+            ConjugatedPiSystemFragmenter.this.LOGGER.log(Level.WARNING, "Chemical formula was not persistent!");
+        }
         return tmpProcessedFragments;
     }
 
@@ -368,9 +301,4 @@ public class ConjugatedPiSystemFragmenter implements IMoleculeFragmenter{
         return aMolecule;
     }
     //</editor-fold>
-    private void clearCache(){
-        this.atomArray = null;
-        this.bondArray = null;
-    }
-    //
 }

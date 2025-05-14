@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -25,17 +25,16 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.io.MDLV3000Reader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.smiles.SmilesParser;
 
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -63,7 +62,7 @@ public class ConjugatedPiSystemFragmenterTest {
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void basicTest() throws Exception {
+    public void settingsTest() throws Exception {
         ConjugatedPiSystemFragmenter tmpFragmenter = new ConjugatedPiSystemFragmenter();
         List<String> tmpCheckList = new ArrayList<>();
         List<String> tmpExpectList = new ArrayList<>();
@@ -71,7 +70,7 @@ public class ConjugatedPiSystemFragmenterTest {
         for (Property tmpSetting: tmpFragmenter.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());
         }
-        Assertions.assertLinesMatch(tmpExpectList, tmpCheckList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder((ArrayList) tmpExpectList, (ArrayList) tmpCheckList));
     }
 
     /**
@@ -82,20 +81,84 @@ public class ConjugatedPiSystemFragmenterTest {
      */
     @Test
     public void defaultFragmentationTest() throws Exception {
-        try (MDLV3000Reader tmpMDLReader = new MDLV3000Reader(new FileReader("src/test/resources/de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/TestCPSFStructure.mol"))) {
-            IAtomContainer tmpOriginalMolecule = tmpMDLReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
-            ConjugatedPiSystemFragmenter tmpFragmenter = new ConjugatedPiSystemFragmenter();
-            tmpFragmenter.setFragmentSaturationSetting(ConjugatedPiSystemFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
-            Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
-            Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
-            Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
-            List<IAtomContainer> tmpFragmentList;
-            tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
-            SmilesGenerator tmpGenerator = new SmilesGenerator(SmiFlavor.Canonical);
-            for (IAtomContainer tmpFragment : tmpFragmentList) {
-                System.out.println(tmpGenerator.create(tmpFragment) + " "
-                        + tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
-            }
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        //test structure: C=C\C=C\C(CC\C=C/c1ccccc1)c1ccccc1
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C=C\\C=C\\C(CC\\C=C/c1ccccc1)c1ccccc1");
+        ConjugatedPiSystemFragmenter tmpCPSF = this.getDefaultCPSFInstance(tmpTestStructureAC, false, false, true);
+        List<String> tmpResultSMILESList = this.generateSMILESFromACList(tmpCPSF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>(3);
+        tmpExpectedSMILESList.add("C=CC=C");
+        tmpExpectedSMILESList.add("C=Cc1ccccc1");
+        tmpExpectedSMILESList.add("c1ccccc1");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+    }
+
+    /**
+     * Utility method returning a default instance of the ConjugatedPiSystemFragmenter for a given molecule.
+     *
+     * @param aMolecule to fragment
+     * @param aShouldBeFilteredStatement decide if molecule should be filtered
+     * @param aShouldBePreprocessedStatement decide if molecule needs preprocessing
+     * @param aCanBeFragmentedStatement decide if molecule can be fragmented
+     * @return ConjugatedPiSystemFragmenter instance
+     */
+    private ConjugatedPiSystemFragmenter getDefaultCPSFInstance(IAtomContainer aMolecule,
+                                                                boolean aShouldBeFilteredStatement,
+                                                                boolean aShouldBePreprocessedStatement,
+                                                                boolean aCanBeFragmentedStatement) {
+        ConjugatedPiSystemFragmenter tmpCPSF = new ConjugatedPiSystemFragmenter();
+        tmpCPSF.setFragmentSaturationSetting(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION);
+        //assertions for non-set-able pre-fragmentation tasks
+        if (aShouldBeFilteredStatement) {
+            Assertions.assertTrue(tmpCPSF.shouldBeFiltered(aMolecule));
+        } else {
+            Assertions.assertFalse(tmpCPSF.shouldBeFiltered(aMolecule));
         }
+        if (aShouldBePreprocessedStatement) {
+            Assertions.assertTrue(tmpCPSF.shouldBePreprocessed(aMolecule));
+        } else {
+            Assertions.assertFalse(tmpCPSF.shouldBePreprocessed(aMolecule));
+        }
+        if (aCanBeFragmentedStatement) {
+            Assertions.assertTrue(tmpCPSF.canBeFragmented(aMolecule));
+        } else {
+            Assertions.assertFalse(tmpCPSF.canBeFragmented(aMolecule));
+        }
+        return tmpCPSF;
+    }
+
+    /**
+     * Utility method to generate a list of SMILES Strings corresponding to a list of IAtomContainer.
+     *
+     * @param anAtomContainerList to generate the SMILES of
+     * @return list of SMILES Strings
+     */
+    private List<String> generateSMILESFromACList(List<IAtomContainer> anAtomContainerList) {
+        List<String> tmpReturnSmilesList = new ArrayList<>(anAtomContainerList.size());
+        for (IAtomContainer tmpAC: anAtomContainerList) {
+            tmpReturnSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
+        }
+        return tmpReturnSmilesList;
+    }
+
+    /**
+     * Utility method comparing two list while ignoring their elements order.
+     *
+     * @param aList1 to compare
+     * @param aList2 to compare
+     * @return boolean whether lists contain equal elements or not
+     */
+    private boolean compareListsIgnoringOrder(ArrayList aList1, ArrayList aList2) {
+        if (aList1 == null || aList2 == null) {
+            return false;
+        }
+        if (aList1.size() != aList2.size()) {
+            return false;
+        }
+        for (Object o : aList1) {
+            aList2.remove(o);
+        }
+        return aList2.isEmpty();
     }
 }

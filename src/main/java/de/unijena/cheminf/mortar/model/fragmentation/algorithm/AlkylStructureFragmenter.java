@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -1331,12 +1331,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     "Illegal maximum chain length."));
         }
         //checks for applied restrictions, default restriction is set to 6
-        System.out.println("side: " + this.fragmentSideChainsSetting.get() + ", chain length: " + tmpMaxChainLengthInteger);
         if (this.fragmentSideChainsSetting.get() && tmpMaxChainLengthInteger > 0) {
             //check maxchainlength: 0 -> no restrictions, 1 -> only methanes, >= 2 -> respective alkane
             switch (tmpMaxChainLengthInteger) {
                 case 1 -> {
-                    System.out.println("case: 1");
                     //single methane molecules
                     IAtomContainer tmpDissectedAC = new AtomContainer();
                     for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
@@ -1346,20 +1344,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpDissectedChainACSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                 }
                 default -> {
-                    System.out.println("case: default");
                     //restrictions > 1
                     for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
                         IAtomContainer tmpDissectedAC = this.dissectLinearChain(tmpAtomContainer, tmpMaxChainLengthInteger);
                         tmpDissectedChainACSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                     }
-                    System.out.println("dissectedACSet ac count: " + tmpDissectedChainACSet.getAtomContainerCount());
-                    for (IAtomContainer tmpAC: tmpDissectedChainACSet.atomContainers()) {
-                        System.out.println("Atom count: " + tmpAC.getAtomCount());
-                    }
                 }
             }
         } else {
-            System.out.println("case: else/maxChainLength = 0");
             //no restrictions applied (maxChainLengthSetting = 0)
             tmpDissectedChainACSet.add(tmpChainACSet);
         }

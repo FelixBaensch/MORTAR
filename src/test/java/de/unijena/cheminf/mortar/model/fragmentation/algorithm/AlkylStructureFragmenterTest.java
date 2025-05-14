@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2025  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -129,7 +129,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             tmpExtractedFrag = tmpASF.extractFragments(tmpTestMolecularArrays.getAtomArray(), tmpTestMolecularArrays.getBondArray());
             for (IAtomContainer tmpAC : tmpExtractedFrag.atomContainers()) {
                 ChemUtil.saturateWithHydrogen(tmpAC);
-                tmpExtractedFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC));
+                tmpExtractedFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
             }
         } catch (CloneNotSupportedException | CDKException e) {
             throw new RuntimeException(e);
@@ -319,6 +319,27 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
+
+    /**
+     * Method testing the correct handling of spiro configurated rings with an example molecule.
+     * The molecule used in this test is Spiro[5.5]undecane.
+     *
+     * @throws InvalidSmilesException if SMILES can not be parsed
+     * @throws CloneNotSupportedException if cloning fails
+     */
+    @Test
+    public void basicTest06() throws InvalidSmilesException, CloneNotSupportedException {
+        //test structure: C1CCC2(CCCCC2)CC1
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C1CCC2(CCCCC2)CC1");
+        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false,
+                false, true);
+        List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("C1CCC2(CC1)CCCCC2");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+    }
     /**
      * Method testing correct fragmentation with a specific example molecule.
      * This test focuses on extraction of ring systems, tested with a derivative of the molecule Hapalindole B after
@@ -422,8 +443,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             tmpCopyAC.addBond(deepCopyBond(tmpBond, tmpCopyAC));
         }
         //Comparison of original and copied AtomContainer
-        String tmpButeneSMILES = ChemUtil.createUniqueSmiles(tmpButeneAC);
-        String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC);
+        String tmpButeneSMILES = ChemUtil.createUniqueSmiles(tmpButeneAC, false);
+        String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC, false);
         Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
     }
     /**
@@ -446,7 +467,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedList.add("C=C");
         List<String> tmpFragmentStringList = new ArrayList<>();
         for (IAtomContainer tmpAC: tmpFragmentACList) {
-            tmpFragmentStringList.add(ChemUtil.createUniqueSmiles(tmpAC));
+            tmpFragmentStringList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
         }
         Assertions.assertTrue(this.compareListsIgnoringOrder((ArrayList) tmpExpectedList, (ArrayList) tmpFragmentStringList));
     }
@@ -589,7 +610,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     private List<String> generateSMILESFromACSet(IAtomContainerSet anACSet) {
         List<String> tmpSmilesList = new ArrayList<>(anACSet.getAtomContainerCount());
         for (IAtomContainer tmpAC : anACSet.atomContainers()) {
-            tmpSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC));
+            tmpSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
         }
         return tmpSmilesList;
     }
@@ -602,7 +623,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     private List<String> generateSMILESFromACList(List<IAtomContainer> anACList) {
         List<String> tmpReturnSmilesList = new ArrayList<>(anACList.size());
         for (IAtomContainer tmpAC: anACList) {
-            tmpReturnSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC));
+            tmpReturnSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
         }
         return tmpReturnSmilesList;
     }
