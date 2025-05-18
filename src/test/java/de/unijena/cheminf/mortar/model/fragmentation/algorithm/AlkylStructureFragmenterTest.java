@@ -191,6 +191,17 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("CC(C)(C)C");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+//        tmpFragmentsACList.clear();
+//        tmpExpectedSMILESList.clear();
+//
+//        IAtomContainer tmpTemporaryAC = tmpParser.parseSmiles("CC(C)(C)C");
+//        tmpASF = this.getDefaultASFInstance(tmpTemporaryAC, false, false, true);
+//
+//        tmpASF.setAltHandlingTertQuatCarbonsSetting(true);
+//
+//        tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTemporaryAC));
+//        tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+//        System.out.println(tmpFragmentsACList);
     }
     /**
      * Method testing correct fragmentation with a basic example molecule.
@@ -319,7 +330,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
-
     /**
      * Method testing the correct handling of spiro configurated rings with an example molecule.
      * The molecule used in this test is Spiro[5.5]undecane.
@@ -339,6 +349,28 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C1CCC2(CC1)CCCCC2");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+    }
+    /**
+     * Method testing the correct handling of spiro configurated rings with an example molecule.
+     * The molecule used in this test is Spiro[5.5]undecane.
+     *
+     * @throws InvalidSmilesException if SMILES can not be parsed
+     * @throws CloneNotSupportedException if cloning fails
+     */
+    @Test
+    public void basicTest07() throws InvalidSmilesException, CloneNotSupportedException {
+        //test structure: C1CCCCC1C(C)(C)C
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C1CCCCC1C(C)(C)C");
+        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false,
+                false, true);
+        tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
+        List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("");
+        System.out.println(tmpFragmentsACList);
+        //Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+        //        new ArrayList<>(tmpExpectedSMILESList)));
     }
     /**
      * Method testing correct fragmentation with a specific example molecule.
