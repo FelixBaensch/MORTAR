@@ -81,15 +81,14 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     @Test
     public void defaultSettingsTest() {
-        List<String> tmpCheckList = new ArrayList<>(8);
-        List<String> tmpExpectList = new ArrayList<>(8);
+        List<String> tmpCheckList = new ArrayList<>(7);
+        List<String> tmpExpectList = new ArrayList<>(7);
         tmpExpectList.add("Fragment saturation setting");
         tmpExpectList.add("Retention setting for non-fragmentable molecules");
         tmpExpectList.add("Fragmentation of hydrocarbon side chains setting");
         tmpExpectList.add("Carbon side chains maximum length setting");
         tmpExpectList.add("Single carbon handling setting");
         tmpExpectList.add("Single ring detection setting");
-        tmpExpectList.add("Keep rings setting");
         tmpExpectList.add("Separate tertiary and quaternary carbon atoms from ring structures setting");
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         for (Property tmpSetting: tmpASF.settingsProperties()) {
@@ -459,7 +458,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         tmpASF.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
         tmpASF.setMcbSingleRingDetectionSetting(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
-        tmpASF.setKeepRingsSetting(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
         IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
@@ -705,7 +703,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.setMaxChainLengthSetting(6);
         tmpASF.setAltHandlingTertQuatCarbonsSetting(false);
         tmpASF.setMcbSingleRingDetectionSetting(false);
-        tmpASF.setKeepRingsSetting(true);
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(true);
         //assertions for non-set-able pre-fragmentation tasks
         if (aShouldBeFilteredStatement) {

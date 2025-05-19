@@ -82,7 +82,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public static final String ALGORITHM_NAME = "Alkyl Fragmenter";
     /**
-     * Default boolean value to deter keeping non-fragmentable molecules in the fragmenter pipeline.
+     * Default boolean value for keeping non-fragmentable molecules in the fragmenter pipeline.
      */
     public static final boolean KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT = true;
     /**
@@ -101,10 +101,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default boolean value for determining which single ring detection method should be used.
      */
     public static final boolean MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT = false;
-    /**
-     * Default boolean value for keeping rings intact setting .
-     */
-    public static final boolean KEEP_RINGS_SETTING_DEFAULT = true;
     /**
      * Default boolean value for separating tertiary and quaternary carbon atoms from ring setting.
      */
@@ -191,10 +187,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * A constant property that has a boolean value determining which single ring detection method to use during fragmentation.
      */
     private final SimpleBooleanProperty mcbSingleRingDetectionSetting;
-    /**
-     * A constant property that has a boolean value defining whether rings should be kept intact or be dissected, applying chain length restrictions.
-     */
-    private final SimpleBooleanProperty keepRingsSetting;
     /**
      * A constant property that has a boolean value defining if tertiary and quaternary carbon atoms should be separated
      * from ring structures.
@@ -301,26 +293,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.mcbSingleRingDetectionSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.mcbSingleRingDetectionSetting.getName(),
                 Message.get("AlkylStructureFragmenter.mcbSingleRingDetectionSetting.displayName"));
-        this.keepRingsSetting = new SimpleBooleanProperty(this, "Keep rings setting",
-                AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
-        this.settingNameTooltipTextMap.put(this.keepRingsSetting.getName(),
-                Message.get("AlkylStructureFragmenter.keepRingsSetting.tooltip"));
-        this.settingNameDisplayNameMap.put(this.keepRingsSetting.getName(),
-                Message.get("AlkylStructureFragmenter.keepRingsSetting.displayName"));
         this.separateTertQuatCarbonFromRingSetting = new SimpleBooleanProperty(this, "Separate tertiary and " +
                 "quaternary carbon atoms from ring structures setting", AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.displayName"));
-        this.settings = new ArrayList<>(8);
+        this.settings = new ArrayList<>(7);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.keepNonFragmentableMoleculesSetting);
         this.settings.add(this.fragmentSideChainsSetting);
         this.settings.add(this.maxChainLengthSetting);
         this.settings.add(this.altHandlingSingleTertQuatCarbonsSetting);
         this.settings.add(this.mcbSingleRingDetectionSetting);
-        this.settings.add(this.keepRingsSetting);
         this.settings.add(this.separateTertQuatCarbonFromRingSetting);
         //set chemObjectBuilderInstance
         this.setChemObjectBuilderInstance();
@@ -427,14 +412,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return this.mcbSingleRingDetectionSetting;
     }
     /**
-     * Public get method for keep rings setting property.
-     *
-     * @return SimpleBooleanProperty keepRingsSetting
-     */
-    public SimpleBooleanProperty getKeepRingsSettingProperty() {
-        return this.keepRingsSetting;
-    }
-    /**
      * Public get method for separate tertiary and quaternary carbon atoms from ring structures setting property.
      *
      * @return SimpleBooleanProperty separateTertQuatCarbonFromRingSetting
@@ -500,14 +477,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.mcbSingleRingDetectionSetting.set(aBoolean);
     }
     /**
-     * Set method for setting defining if rings should be dissected or kept intact.
-     *
-     * @param aBoolean the given boolean value for switching between dissecting rings and keeping them intact
-     */
-    public void setKeepRingsSetting(boolean aBoolean) {
-        this.keepRingsSetting.set(aBoolean);
-    }
-    /**
      * Set method for setting defining if tertiary and quaternary carbon atoms should be separated from ring structures.
      *
      * @param aBoolean the given boolean value defining if tertiary and quaternary carbon atoms should be separated from ring structures
@@ -533,7 +502,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
         tmpCopy.setAltHandlingTertQuatCarbonsSetting(this.altHandlingSingleTertQuatCarbonsSetting.get());
         tmpCopy.setMcbSingleRingDetectionSetting(this.mcbSingleRingDetectionSetting.get());
-        tmpCopy.setKeepRingsSetting(this.keepRingsSetting.get());
         tmpCopy.setSeparateTertQuatCarbonFromRingSetting(this.separateTertQuatCarbonFromRingSetting.get());
         return tmpCopy;
     }
@@ -545,7 +513,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.altHandlingSingleTertQuatCarbonsSetting.set(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
         this.mcbSingleRingDetectionSetting.set(AlkylStructureFragmenter.MCB_SINGLE_RING_DETECTION_SETTING_DEFAULT);
-        this.keepRingsSetting.set(AlkylStructureFragmenter.KEEP_RINGS_SETTING_DEFAULT);
         this.separateTertQuatCarbonFromRingSetting.set(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
     }
     //<editor-fold desc="Pre-Fragmentation Tasks">
@@ -1220,15 +1187,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpChainFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                 }
             } else {
-                if (!this.keepRingsSetting.get()) {
-                    ArrayList<Integer> tmpList = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY);
-                    if (tmpList.size() > 1) {
-                        tmpSpiroCarbonContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                    }
-                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                } else {
-                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                }
+                tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
             }
         }
         //</editor-fold>
@@ -1286,25 +1245,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
             }
-            else {
-                if (!this.keepRingsSetting.get()) {
-                    //check if begin or end of bond is spiro configuration carbon
-                    boolean tmpIsBeginSpiro = false;
-                    boolean tmpIsEndSpiro = false;
-                    ArrayList<Integer> tmpBeginList = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY);
-                    if (tmpBeginList.size() > 1) {
-                        tmpIsBeginSpiro = true;
-                    }
-                    ArrayList<Integer> tmpEndList = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_ATOM_LIST_KEY);
-                    if (tmpEndList.size() > 1) {
-                        tmpIsEndSpiro = true;
-                    }
-                    if (!tmpIsBeginSpiro && !tmpIsEndSpiro) {
-                        tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
-                    }
-                } else {
+            else { //only ring or conjugated
                     tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
-                }
             }
         }
         //</editor-fold>
