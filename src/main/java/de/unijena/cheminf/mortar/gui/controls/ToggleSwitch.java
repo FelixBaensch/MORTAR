@@ -31,7 +31,10 @@ import javafx.animation.TranslateTransition;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
@@ -318,11 +321,9 @@ public class ToggleSwitch extends Control {
         this.switchBackground = new Rectangle(aRectangleWidth, aRectangleHeight);
         this.switchBackground.setArcWidth(aRectangleHeight);
         this.switchBackground.setArcHeight(aRectangleHeight);
-        this.switchBackground.setLayoutX(aRectanglePositionXValue);
         this.switchBackground.setFill(this.switchStateBooleanProperty.get() ? aRectangleColorOn : aRectangleColorOff);
         this.switchBackground.setStroke(aRectangleOutline);
         this.switchButton = new Circle(aCircleRadius);
-        this.switchButton.setCenterX(aCirclePositionXValue);
         this.switchButton.setCenterY(aCirclePositionYValue);
         this.switchButton.setFill(aCircleColor);
         this.switchButton.setStroke(aCircleOutline);
@@ -337,7 +338,6 @@ public class ToggleSwitch extends Control {
                 this.switchBackgroundColorFillTransition);
         this.switchCircleTranslateTransition.setNode(this.switchButton);
         this.switchBackgroundColorFillTransition.setShape(this.switchBackground);
-        this.getChildren().addAll(this.switchBackground, this.switchButton);
         //Listener
         // note: a mouse listener on this control sets the boolean switch state property
         // and this value change listener plays the switch transition when the property changes
@@ -429,12 +429,49 @@ public class ToggleSwitch extends Control {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Overridden methods" defaultstate="collapsed">
+    //<editor-fold desc="Override methods" defaultstate="collapsed">
 
     @Override
-    protected javafx.scene.control.Skin<?> createDefaultSkin() {
-        // Since the control manages its own layout, an empty skin is sufficient
-        return new javafx.scene.control.SkinBase<ToggleSwitch>(this) {};
+    protected Skin<ToggleSwitch> createDefaultSkin() {
+        return new ToggleSwitchSkin(this);
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Inner classes" defaultstate="collapsed">
+    /**
+     * Inner class implementing a custom Skin for the ToggleSwitch control. This skin handles the visual layout
+     * and positioning of the switch components (background rectangle and button circle) within their container.
+     * The skin manages proper sizing and alignment to ensure the toggle switch renders correctly in the UI.
+     * Extends SkinBase to provide proper JavaFX control skinning functionality.
+     */
+    private class ToggleSwitchSkin extends SkinBase<ToggleSwitch> {
+        /**
+         * Container that groups together the visual components of the toggle switch. During layout, the pane helps with
+         * positioning the entire toggle switch as a single unit.
+         */
+        private final Pane pane;
+        /**
+         * This constructor initializes the visual components of the toggle switch by setting up a container pane for
+         * the switch components, adding the switch background and button to this container, repositioning components
+         * to fit properly within the control, and setting appropriate sizing and layout properties.
+         *
+         * @param aToggleSwitchControl The ToggleSwitch control for which this skin is being created
+         */
+        public ToggleSwitchSkin(ToggleSwitch aToggleSwitchControl) {
+            super(aToggleSwitchControl);
+            this.pane = new Pane();
+            this.pane.getChildren().addAll(aToggleSwitchControl.switchBackground, aToggleSwitchControl.switchButton);
+            this.getChildren().add(this.pane);
+            // Reset the position of components to work with the skin properly
+            double tmpSwitchWidth = aToggleSwitchControl.switchBackground.getWidth();
+            // Set the preferred width for proper sizing
+            aToggleSwitchControl.setPrefWidth(tmpSwitchWidth + 5); // Add small padding, magic number
+            // Position components to the right side of their container
+            aToggleSwitchControl.getSwitchBackground().setLayoutX(0);
+            // Keep the button/circle properly positioned relative to the background
+            double circleRadius = aToggleSwitchControl.switchButton.getRadius();
+            aToggleSwitchControl.switchButton.setCenterX(circleRadius);
+        }
     }
     //</editor-fold>
 }

@@ -210,9 +210,12 @@ public class SettingsView extends AnchorPane {
                     ToggleSwitch tmpToggle = new ToggleSwitch();
                     tmpToggle.setTooltip(tmpTooltip);
                     tmpToggle.getSwitchStateProperty().bindBidirectional(tmpSimpleBooleanProperty);
+                    // Create container with right alignment for the toggle switch
+                    HBox tmpToggleContainer = new HBox(tmpToggle);
+                    tmpToggleContainer.setAlignment(Pos.CENTER_RIGHT);
                     //add to gridpane
-                    aGridPane.add(tmpToggle, 1, tmpRowIndex++);
-                    GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    aGridPane.add(tmpToggleContainer, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpToggleContainer, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleIntegerProperty simpleIntegerProperty -> {
                     TextField tmpIntegerTextField = new TextField();
