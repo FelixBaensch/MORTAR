@@ -427,5 +427,11 @@ public class ToggleSwitch extends Control {
     public void setSwitchState(boolean switchStateBooleanProperty) {
         this.switchStateBooleanProperty.set(switchStateBooleanProperty);
     }
+
+    @Override
+    protected javafx.scene.control.Skin<?> createDefaultSkin() {
+        // Da das Control sein eigenes Layout verwaltet, reicht eine leere Skin
+        return new javafx.scene.control.SkinBase<ToggleSwitch>(this) {};
+    }
     //</editor-fold>
 }
