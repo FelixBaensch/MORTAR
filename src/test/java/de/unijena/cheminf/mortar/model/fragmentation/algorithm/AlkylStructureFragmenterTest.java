@@ -84,16 +84,15 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<String> tmpCheckList = new ArrayList<>(6);
         List<String> tmpExpectList = new ArrayList<>(6);
         tmpExpectList.add("Fragment saturation setting");
-        tmpExpectList.add("Retention setting for non-fragmentable molecules");
-        tmpExpectList.add("Fragmentation of hydrocarbon side chains setting");
-        tmpExpectList.add("Carbon side chains maximum length setting");
-        tmpExpectList.add("Single carbon handling setting");
-        tmpExpectList.add("Separate tertiary and quaternary carbon atoms from ring structures setting");
+        tmpExpectList.add("Keep non-fragmentable molecules in Pipeline");
+        tmpExpectList.add("Fragment linear chains");
+        tmpExpectList.add("Limit length of returned chains");
+        tmpExpectList.add("Isolate non-cyclic tertiary and quaternary carbons");
+        tmpExpectList.add("Separate tertiary and quaternary carbon atoms from rings");
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         for (Property tmpSetting: tmpASF.settingsProperties()) {
             tmpCheckList.add(tmpSetting.getName());
         }
-        System.out.println(tmpCheckList);
         Assertions.assertTrue(this.compareListsIgnoringOrder((ArrayList) tmpExpectList, (ArrayList) tmpCheckList));
     }
     /**
@@ -351,7 +350,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     }
     /**
      * Method testing the correct handling of spiro configurated rings with an example molecule.
-     * The molecule used in this test is Spiro[5.5]undecane.
+     * The molecule used in this test is a concept molecule comprised of a cyclohexane bonded to a quaternary carbon system.
      *
      * @throws InvalidSmilesException if SMILES can not be parsed
      * @throws CloneNotSupportedException if cloning fails
@@ -366,10 +365,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
         List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         List<String> tmpExpectedSMILESList = new ArrayList<>();
-        tmpExpectedSMILESList.add("");
-        System.out.println(tmpFragmentsACList);
-        //Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
-        //        new ArrayList<>(tmpExpectedSMILESList)));
+        tmpExpectedSMILESList.add("CC(C)(C)C1CCCCC1");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                new ArrayList<>(tmpExpectedSMILESList)));
     }
     /**
      * Method testing correct fragmentation with a specific example molecule.
@@ -456,7 +454,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.setKeepNonFragmentableMoleculesSetting(AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
         tmpASF.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
         tmpASF.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        tmpASF.setAltHandlingTertQuatCarbonsSetting(AlkylStructureFragmenter.ALT_HANDLING_SINGLE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
+        tmpASF.setIsolateQuatCarbonsSetting(AlkylStructureFragmenter.ISOLATE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
         IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
@@ -464,7 +462,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.fillAtomArray(tmpButeneAC);
         tmpASF.fillBondArray(tmpButeneAC);
         IAtomContainer tmpCopyAC = tmpButeneAC.getBuilder().newAtomContainer();
-        tmpASF.setChemObjectBuilderInstance();
         for (IAtom tmpAtom: tmpButeneAC.atoms()) {
             tmpCopyAC.addAtom(tmpASF.deepCopyAtom(tmpAtom));
         }
@@ -488,7 +485,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
         IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
         AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpButeneAC, false, false, true);
-        tmpASF.setChemObjectBuilderInstance();
         List<IAtomContainer> tmpFragmentACList = tmpASF.fragmentMolecule(tmpButeneAC);
         List<String> tmpExpectedList = new ArrayList<>(3);
         tmpExpectedList.add("C");
@@ -512,7 +508,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C12=CC(=CC=C1C(=CC(=C2)C3CCCCC3)CC(C)(C)C/C=C/CCC)/C=C\\C(C)C");
         AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false, false, true);
         List<String> tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
-        System.out.println(tmpResultSMILESList);
         List<String> tmpExpectedSMILESList = new ArrayList<>(5);
         tmpExpectedSMILESList.add("C=1C=CC2=CC(=CC=C2C1)C=CC(C)C");
         tmpExpectedSMILESList.add("CC(C)(C)C");
@@ -702,7 +697,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.setKeepNonFragmentableMoleculesSetting(false);
         tmpASF.setFragmentSideChainsSetting(false);
         tmpASF.setMaxChainLengthSetting(6);
-        tmpASF.setAltHandlingTertQuatCarbonsSetting(false);
+        tmpASF.setIsolateQuatCarbonsSetting(false);
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
         //assertions for non-set-able pre-fragmentation tasks
         if (aShouldBeFilteredStatement) {
