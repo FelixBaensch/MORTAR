@@ -183,23 +183,13 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false,
                 false, true);
         List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        System.out.println(tmpFragmentsACList);
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("CC(C)C");
         tmpExpectedSMILESList.add("CC(C)(C)C");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
-//        tmpFragmentsACList.clear();
-//        tmpExpectedSMILESList.clear();
-//
-//        IAtomContainer tmpTemporaryAC = tmpParser.parseSmiles("CC(C)(C)C");
-//        tmpASF = this.getDefaultASFInstance(tmpTemporaryAC, false, false, true);
-//
-//        tmpASF.setAltHandlingTertQuatCarbonsSetting(true);
-//
-//        tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTemporaryAC));
-//        tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
-//        System.out.println(tmpFragmentsACList);
     }
     /**
      * Method testing correct fragmentation with a basic example molecule.
@@ -693,11 +683,12 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     private AlkylStructureFragmenter getDefaultASFInstance(IAtomContainer aMolecule, boolean aShouldBeFilteredStatement,
                                                            boolean aShouldBePreprocessedStatement, boolean aCanBeFragmentedStatement) {
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        //manual set of setting values to default values
         tmpASF.setFragmentSaturationSetting(FragmentSaturationOption.HYDROGEN_SATURATION);
-        tmpASF.setKeepNonFragmentableMoleculesSetting(false);
-        tmpASF.setFragmentSideChainsSetting(false);
+        tmpASF.setKeepNonFragmentableMoleculesSetting(true);
+        tmpASF.setFragmentSideChainsSetting(true);
         tmpASF.setMaxChainLengthSetting(6);
-        tmpASF.setIsolateQuatCarbonsSetting(false);
+        tmpASF.setIsolateQuatCarbonsSetting(true);
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
         //assertions for non-set-able pre-fragmentation tasks
         if (aShouldBeFilteredStatement) {
