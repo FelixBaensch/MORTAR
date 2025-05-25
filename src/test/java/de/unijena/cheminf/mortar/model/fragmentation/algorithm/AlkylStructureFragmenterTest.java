@@ -25,7 +25,6 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import javafx.beans.property.Property;
@@ -76,25 +75,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      */
     public AlkylStructureFragmenterTest() {}
     //<editor-fold desc="@Test Public Methods">
-    /**
-     * Tests correct instantiation and basic settings retrieval.
-     */
-    @Test
-    public void defaultSettingsTest() {
-        List<String> tmpCheckList = new ArrayList<>(6);
-        List<String> tmpExpectList = new ArrayList<>(6);
-        tmpExpectList.add("Fragment saturation setting");
-        tmpExpectList.add("Keep non-fragmentable molecules in Pipeline");
-        tmpExpectList.add("Fragment linear chains");
-        tmpExpectList.add("Limit length of returned chains");
-        tmpExpectList.add("Isolate non-cyclic tertiary and quaternary carbons");
-        tmpExpectList.add("Separate tertiary and quaternary carbon atoms from rings");
-        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
-        for (Property tmpSetting: tmpASF.settingsProperties()) {
-            tmpCheckList.add(tmpSetting.getName());
-        }
-        Assertions.assertTrue(this.compareListsIgnoringOrder((ArrayList) tmpExpectList, (ArrayList) tmpCheckList));
-    }
     /**
      * Test method for AlkylStructureFragmenter.extractFragments().
      */

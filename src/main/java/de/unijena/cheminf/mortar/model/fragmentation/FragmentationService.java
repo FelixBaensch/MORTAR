@@ -157,14 +157,6 @@ public class FragmentationService {
      */
     private String currentFragmentationName;
     /**
-     * Alkyl Structure Fragmenter
-     */
-    private IMoleculeFragmenter AlkylSF;
-    /**
-     * Conjugated Pi System Fragmenter
-     */
-    private IMoleculeFragmenter ConjPiSysF;
-    /**
      * String for the name of the current pipeline fragmentation.
      */
     private String pipeliningFragmentationName;
@@ -203,6 +195,16 @@ public class FragmentationService {
     private final IMoleculeFragmenter scaffoldGF;
     //
     /**
+     * Alkyl Structure Fragmenter
+     */
+    private IMoleculeFragmenter alkylSF;
+    //
+    /**
+     * Conjugated Pi System Fragmenter
+     */
+    private IMoleculeFragmenter conjPiSysF;
+    //
+    /**
      * Property of display name of selected fragmenter.
      */
     private final SimpleStringProperty selectedFragmenterDisplayNameProperty;
@@ -221,10 +223,10 @@ public class FragmentationService {
         this.fragmenters[1] = this.sugarRUF;
         this.scaffoldGF = new ScaffoldGeneratorFragmenter();
         this.fragmenters[2] = this.scaffoldGF;
-        this.AlkylSF = new AlkylStructureFragmenter();
-        this.fragmenters[3] = this.AlkylSF;
-        this.ConjPiSysF = new ConjugatedPiSystemFragmenter();
-        this.fragmenters[4] = this.ConjPiSysF;
+        this.alkylSF = new AlkylStructureFragmenter();
+        this.fragmenters[3] = this.alkylSF;
+        this.conjPiSysF = new ConjugatedPiSystemFragmenter();
+        this.fragmenters[4] = this.conjPiSysF;
         //
         this.selectedFragmenterDisplayNameProperty = new SimpleStringProperty();
         try {
