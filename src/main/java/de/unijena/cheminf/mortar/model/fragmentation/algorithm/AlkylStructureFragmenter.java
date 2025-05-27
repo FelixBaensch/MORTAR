@@ -1078,15 +1078,25 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 //Checks for tertiary mark
                 if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
                     if (this.isolateTertQuatCarbonSetting.get()) {
-                        tmpTertQuatCarbonContainer.addAtom(tmpAtom);
-                        for (int i = 0; i < 3; i++) {
-                            PseudoAtom tmpPseudoAtom = new PseudoAtom();
-                            tmpTertQuatCarbonContainer.addAtom(tmpPseudoAtom);
-                            IBond tmpBond = new Bond();
-                            tmpBond.setOrder(IBond.Order.SINGLE);
-                            tmpBond.setAtom(tmpAtom, 0);
-                            tmpBond.setAtom(tmpPseudoAtom, 1);
-                            tmpTertQuatCarbonContainer.addBond(tmpBond);
+                        if (!this.separateTertQuatCarbonFromRingSetting.get()) {
+                            for (IAtom tmpNeighborAtom: tmpAtom.neighbors()) {
+                                if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
+                                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
+                                }
+                            }
+                        }
+                        else {
+                            //ToDo: deep copy
+                            tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                            for (int i = 0; i < 3; i++) {
+                                PseudoAtom tmpPseudoAtom = new PseudoAtom();
+                                tmpTertQuatCarbonContainer.addAtom(tmpPseudoAtom);
+                                IBond tmpBond = new Bond();
+                                tmpBond.setOrder(IBond.Order.SINGLE);
+                                tmpBond.setAtom(tmpAtom, 0);
+                                tmpBond.setAtom(tmpPseudoAtom, 1);
+                                tmpTertQuatCarbonContainer.addBond(tmpBond);
+                            }
                         }
                     //tertiary carbons are added to ensure correct interaction with other substructures, neighbor atoms added later
                     } else {
@@ -1095,15 +1105,27 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 //checks for quaternary mark
                 } else if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
                     if (this.isolateTertQuatCarbonSetting.get()) {
-                        tmpTertQuatCarbonContainer.addAtom(tmpAtom);
-                        for (int i = 0; i < 4; i++) {
-                            PseudoAtom tmpPseudoAtom = new PseudoAtom();
-                            tmpTertQuatCarbonContainer.addAtom(tmpPseudoAtom);
-                            IBond tmpBond = new Bond();
-                            tmpBond.setOrder(IBond.Order.SINGLE);
-                            tmpBond.setAtom(tmpAtom, 0);
-                            tmpBond.setAtom(tmpPseudoAtom, 1);
-                            tmpTertQuatCarbonContainer.addBond(tmpBond);
+                        if (!this.separateTertQuatCarbonFromRingSetting.get()) {
+                            //ToDo: move check outside of setting if
+                            for (IAtom tmpNeighborAtom: tmpAtom.neighbors()) {
+                                if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)){
+                                    System.out.println("add Quat Atom RingCont");
+                                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
+                                }
+                            }
+                        }
+                        else {
+                            //ToDo: deep copy
+                            tmpTertQuatCarbonContainer.addAtom(tmpAtom);
+                            for (int i = 0; i < 4; i++) {
+                                PseudoAtom tmpPseudoAtom = new PseudoAtom();
+                                tmpTertQuatCarbonContainer.addAtom(tmpPseudoAtom);
+                                IBond tmpBond = new Bond();
+                                tmpBond.setOrder(IBond.Order.SINGLE);
+                                tmpBond.setAtom(tmpAtom, 0);
+                                tmpBond.setAtom(tmpPseudoAtom, 1);
+                                tmpTertQuatCarbonContainer.addBond(tmpBond);
+                            }
                         }
                     //tertiary carbons are added to ensure correct interaction with other substructures, neighbor atoms added later
                     } else {
@@ -1258,10 +1280,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         }
                         //adds bond connecting tertiary/quaternary carbons and rings
                         else if (tmpIsBondConnectedTertQuatRing) {
+                            tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
+                            /*
                             if (!this.isolateTertQuatCarbonSetting.get()) {
                                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             }
-                        } else {
+                            */
+                        }
+                        else {
                             if (!this.isolateTertQuatCarbonSetting.get()) {
                                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             }
