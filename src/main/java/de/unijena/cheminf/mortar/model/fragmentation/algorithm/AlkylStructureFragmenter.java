@@ -1217,32 +1217,58 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //only ring and conj pi system atoms, sets bond property to determine connection between tert/quat atom and ring structure
             } else {
                 for (IBond tmpBond: tmpAtom.bonds()) {
+                    boolean tmpIsBondConj = tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+                    boolean tmpIsBondRing = tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+                    //
+                    boolean tmpIsEndConjPi = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+                    boolean tmpIsEndTertiary = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
+                    boolean tmpIsEndQuaternary = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
+                    boolean tmpIsEndRing = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+                    //
+                    boolean tmpIsBeginConjPi = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+                    boolean tmpIsBeginTertiary = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
+                    boolean tmpIsBeginQuaternary = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
+                    boolean tmpIsBeginRing = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+                    //
+                    int tmpBeginAtomIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                    int tmpEndAtomIndex = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                    //
+                    if (tmpIsBondRing) {
+                        continue;
+                    } else if (!tmpIsBeginRing && (tmpIsBeginTertiary || tmpIsBeginQuaternary) && tmpIsEndRing) {
+                        anAtomArray[tmpBeginAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                    } else if (!tmpIsEndRing && (tmpIsEndTertiary || tmpIsEndQuaternary) && tmpIsBeginRing) {
+                        anAtomArray[tmpEndAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                    } else if (tmpIsBeginRing && (tmpIsEndTertiary || tmpIsEndQuaternary) && !tmpIsEndRing) {
+                        anAtomArray[tmpBeginAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                    } else if (tmpIsEndRing && (tmpIsBeginTertiary || tmpIsBeginQuaternary) && !tmpIsBeginRing) {
+                        anAtomArray[tmpEndAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                    }
+                    /*
                     if (tmpBond.getBegin().equals(tmpAtom)) {
-                        boolean tmpIsEndTertiary = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
-                        boolean tmpIsEndQuaternary = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
-                        boolean tmpIsEndRing = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
-                        boolean tmpIsEndConjPi = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
-                        if (!tmpIsEndRing && (tmpIsEndTertiary || tmpIsEndQuaternary) && !tmpIsEndConjPi) {
-                                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                                int tmpBeginAtomIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                                int tmpEndAtomIndex = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                                anAtomArray[tmpBeginAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                                anAtomArray[tmpEndAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                            }
-
+                        if (!(boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY) && (boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY)) {
+                            continue;
+                        }
+                        if (!tmpIsEndRing && (tmpIsEndTertiary || tmpIsEndQuaternary)) {
+                            System.out.println(tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY).toString());
+                        }
                     } else {
-                        boolean tmpIsBeginTertiary = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
-                        boolean tmpIsBeginQuaternary = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
-                        boolean tmpIsBeginRing = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
-                        boolean tmpIsBeginConjPi = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
-                        if (!tmpIsBeginRing && (tmpIsBeginTertiary || tmpIsBeginQuaternary) && !tmpIsBeginConjPi) {
-                                tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                                int tmpBeginAtomIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                                int tmpEndAtomIndex = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-                                anAtomArray[tmpBeginAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                                anAtomArray[tmpEndAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                            }
+                        if (!(boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY) && (boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY)) {
+                            continue;
+                        }
+                        if (!tmpIsBeginRing && (tmpIsBeginTertiary || tmpIsBeginQuaternary)) {
+                            tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                            int tmpBeginAtomIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                            int tmpEndAtomIndex = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                            anAtomArray[tmpBeginAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                            anAtomArray[tmpEndAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                        }
 
+                    }
+                    */
+                    if ((boolean) tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)
+                            && (boolean) tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)) {
+                        tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
                     }
                 }
                 tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
@@ -1327,17 +1353,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         }
                         //adds bond connecting tertiary/quaternary carbons and rings
                         else if (tmpIsBondConnectedTertQuatRing) {
+                            tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             if (!(tmpIsBeginConjPi || tmpIsEndConjPi)) {
                                 System.out.println(3.2 + "BondIndex: " + tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY).toString());
                                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             }
-                        //ToDo: connectTertQuatRing is falsely set true for conjPi without any ring structures
                         } else if ((tmpIsBeginConnectedTertQuatRing || tmpIsEndConnectedTertQuatRing) && (tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary)) {
                             System.out.println("is connect TertQuatRing -> " + tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY).toString());
+
                             if (this.isolateTertQuatCarbonSetting.get()) {
                                 if ((tmpIsBeginConjPi || tmpIsEndConjPi)) {
                                     continue;
                                 }
+
                             }
                             else {
                                 System.out.println(3.3 + "BondIndex: " + tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY).toString());
