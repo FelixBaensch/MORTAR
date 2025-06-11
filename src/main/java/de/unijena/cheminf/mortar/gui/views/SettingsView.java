@@ -86,8 +86,8 @@ public class SettingsView extends AnchorPane {
     private final HBox hBoxLeftSideButtons;
     private final HBox hBoxButtonsHBox;
     private final SelectionModel<Tab> selectionModel;
-    private static final String COLOR_ODD_ROW = "#E0E0E0";
-    private static final String COLOR_EVEN_ROW = "#F0F0F0";
+    private static final String COLOR_ODD_ROW = "-fx-control-inner-background-alt";
+    private static final String COLOR_EVEN_ROW = "-fx-control-inner-background";
     //</editor-fold>
     //
     /**
@@ -233,7 +233,6 @@ public class SettingsView extends AnchorPane {
                     TextField tmpIntegerTextField = new TextField();
                     tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                    tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
                     int tmpDefaultValue = 0;
                     //note: setting the filter to only accept positive integers including zero is an assumption that is true
                     // for all settings so far but might have to be changed in the future
@@ -249,7 +248,6 @@ public class SettingsView extends AnchorPane {
                     TextField tmpDoubleTextField = new TextField();
                     tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                    tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
                     double tmpDefaultValue = 0.0;
                     //note: setting the filter to only accept positive double values including zero is an assumption that is true
                     // for all settings so far but might have to be changed in the future
@@ -306,7 +304,6 @@ public class SettingsView extends AnchorPane {
                     TextField tmpStringTextField = new TextField();
                     tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
-                    tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
                     tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
                     tmpStringTextField.setTooltip(tmpTooltip);
                     controlWrapper.getChildren().add(tmpStringTextField);
@@ -314,7 +311,7 @@ public class SettingsView extends AnchorPane {
                 default ->
                         throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
             }
-
+            controlWrapper.setAlignment(Pos.CENTER_RIGHT);
             // Add the control wrapper to column 1
             aGridPane.add(controlWrapper, 1, tmpRowIndex);
             tmpRowIndex++;
