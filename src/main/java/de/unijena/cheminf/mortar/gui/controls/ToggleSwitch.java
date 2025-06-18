@@ -35,6 +35,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
@@ -434,7 +435,7 @@ public class ToggleSwitch extends Control {
     @Override
     protected Skin<ToggleSwitch> createDefaultSkin() {
         return new ToggleSwitchSkin(this);
-    }
+        }
     //</editor-fold>
     //
     //<editor-fold desc="Inner classes" defaultstate="collapsed">
@@ -459,18 +460,28 @@ public class ToggleSwitch extends Control {
          */
         public ToggleSwitchSkin(ToggleSwitch aToggleSwitchControl) {
             super(aToggleSwitchControl);
-            this.pane = new Pane();
+            this.pane = new StackPane(); // Initialize as StackPane
             this.pane.getChildren().addAll(aToggleSwitchControl.switchBackground, aToggleSwitchControl.switchButton);
             this.getChildren().add(this.pane);
-            // Reset the position of components to work with the skin properly
-            double tmpSwitchWidth = aToggleSwitchControl.switchBackground.getWidth();
-            // Set the preferred width for proper sizing
-            aToggleSwitchControl.setPrefWidth(tmpSwitchWidth + 5); // Add small padding, magic number
-            // Position components to the right side of their container
-            aToggleSwitchControl.getSwitchBackground().setLayoutX(0);
-            // Keep the button/circle properly positioned relative to the background
-            double circleRadius = aToggleSwitchControl.switchButton.getRadius();
-            aToggleSwitchControl.switchButton.setCenterX(circleRadius);
+
+            // Set the preferred width and height for the ToggleSwitch control itself,
+            // based on its background dimensions. This helps parent layouts size it correctly.
+            aToggleSwitchControl.setPrefWidth(aToggleSwitchControl.switchBackground.getWidth() - getWidth());
+            aToggleSwitchControl.setPrefHeight(aToggleSwitchControl.switchBackground.getHeight());
+
+//            super(aToggleSwitchControl);
+//            this.pane = new Pane();
+//            this.pane.getChildren().addAll(aToggleSwitchControl.switchBackground, aToggleSwitchControl.switchButton);
+//            this.getChildren().add(this.pane);
+//            // Reset the position of components to work with the skin properly
+//            double tmpSwitchWidth = aToggleSwitchControl.switchBackground.getWidth();
+//            // Set the preferred width for proper sizing
+//            aToggleSwitchControl.setPrefWidth(tmpSwitchWidth + 5); // Add small padding, magic number
+//            // Position components to the right side of their container
+//            aToggleSwitchControl.getSwitchBackground().setLayoutX(0);
+//            // Keep the button/circle properly positioned relative to the background
+//            double circleRadius = aToggleSwitchControl.switchButton.getRadius();
+//            aToggleSwitchControl.switchButton.setCenterX(circleRadius);
         }
     }
     //</editor-fold>
