@@ -29,12 +29,14 @@ import javafx.animation.FillTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.geometry.Pos;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -91,6 +93,10 @@ public class ToggleSwitch extends Control {
      */
     public static final double DEFAULT_DURATION_VALUE = 0.25;
     /**
+     * Default alignment for the toggle switch or rather the stack pane that contains it.
+     */
+    public static final Pos DEFAULT_ALIGNMENT = Pos.CENTER;
+    /**
      * Default color of the background when the toggle switch is turned off.
      */
     public static final Color DEFAULT_RECTANGLE_COLOR_OFF = Color.LIGHTGRAY;
@@ -145,6 +151,11 @@ public class ToggleSwitch extends Control {
      * Combined transition of background color and circle position.
      */
     private final ParallelTransition switchTransition;
+    /**
+     * Property for controlling the internal alignment of the toggle switch's components.
+     * Default is Pos.CENTER.
+     */
+    private final ObjectProperty<Pos> alignmentProperty;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
@@ -167,10 +178,8 @@ public class ToggleSwitch extends Control {
                 ToggleSwitch.DEFAULT_RECTANGLE_OUTLINE_COLOR,
                 ToggleSwitch.DEFAULT_RECTANGLE_WIDTH_VALUE,
                 ToggleSwitch.DEFAULT_RECTANGLE_HEIGHT_VALUE,
-                ToggleSwitch.DEFAULT_RECTANGLE_POSITION_X_VALUE,
                 ToggleSwitch.DEFAULT_CIRCLE_RADIUS_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_X_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_Y_VALUE,
+                ToggleSwitch.DEFAULT_ALIGNMENT,
                 ToggleSwitch.DEFAULT_DURATION_VALUE);
     }
     //
@@ -190,10 +199,8 @@ public class ToggleSwitch extends Control {
                 ToggleSwitch.DEFAULT_RECTANGLE_OUTLINE_COLOR,
                 ToggleSwitch.DEFAULT_RECTANGLE_WIDTH_VALUE,
                 ToggleSwitch.DEFAULT_RECTANGLE_HEIGHT_VALUE,
-                ToggleSwitch.DEFAULT_RECTANGLE_POSITION_X_VALUE,
                 ToggleSwitch.DEFAULT_CIRCLE_RADIUS_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_X_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_Y_VALUE,
+                ToggleSwitch.DEFAULT_ALIGNMENT,
                 anAnimationDuration);
     }
     //
@@ -224,6 +231,7 @@ public class ToggleSwitch extends Control {
                 aCircleRadius,
                 aCirclePositionXValue,
                 aCirclePositionYValue,
+                ToggleSwitch.DEFAULT_ALIGNMENT,
                 ToggleSwitch.DEFAULT_DURATION_VALUE);
     }
     //
@@ -251,10 +259,8 @@ public class ToggleSwitch extends Control {
                 aRectangleOutline,
                 ToggleSwitch.DEFAULT_RECTANGLE_WIDTH_VALUE,
                 ToggleSwitch.DEFAULT_RECTANGLE_HEIGHT_VALUE,
-                ToggleSwitch.DEFAULT_RECTANGLE_POSITION_X_VALUE,
                 ToggleSwitch.DEFAULT_CIRCLE_RADIUS_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_X_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_Y_VALUE,
+                ToggleSwitch.DEFAULT_ALIGNMENT,
                 ToggleSwitch.DEFAULT_DURATION_VALUE);
     }
     //
@@ -277,10 +283,8 @@ public class ToggleSwitch extends Control {
                 ToggleSwitch.DEFAULT_RECTANGLE_OUTLINE_COLOR,
                 ToggleSwitch.DEFAULT_RECTANGLE_WIDTH_VALUE,
                 ToggleSwitch.DEFAULT_RECTANGLE_HEIGHT_VALUE,
-                ToggleSwitch.DEFAULT_RECTANGLE_POSITION_X_VALUE,
                 ToggleSwitch.DEFAULT_CIRCLE_RADIUS_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_X_VALUE,
-                ToggleSwitch.DEFAULT_CIRCLE_POSITION_Y_VALUE,
+                ToggleSwitch.DEFAULT_ALIGNMENT,
                 ToggleSwitch.DEFAULT_DURATION_VALUE);
     }
     //
@@ -299,19 +303,15 @@ public class ToggleSwitch extends Control {
      * @param aRectangleOutline the color of the outline of the background
      * @param aRectangleWidth width of the switch background
      * @param aRectangleHeight height of the switch background
-     * @param aRectanglePositionXValue value for the layout which sets the position of the background
-     *                                 of the switch on the x-axis of the dialogue box.
      * @param aCircleRadius radius of the button
-     * @param aCirclePositionXValue value for the layout which sets the position of the button on
-     *                              the x-axis of the dialogue box.
      * @param aCirclePositionYValue value for the position of the button on the y-axis of the dialogue box
      * @param anAnimationDuration duration of the animated transition in seconds
      * @throws IllegalArgumentException if at least one of the given arguments is null or negative
      */
     public ToggleSwitch(Color aCircleColor, Color aCircleOutline, Color aCircleShadowColor, int aDropShadowRadius,
                         Color aRectangleColorOn, Color aRectangleColorOff, Color aRectangleOutline,
-                        int aRectangleWidth, int aRectangleHeight, int aRectanglePositionXValue, int aCircleRadius,
-                        int aCirclePositionXValue, int aCirclePositionYValue, double anAnimationDuration) throws IllegalArgumentException {
+                        int aRectangleWidth, int aRectangleHeight, int aCircleRadius,
+                         int aCirclePositionYValue, Pos anAlignmentPosition, double anAnimationDuration) throws IllegalArgumentException {
         super();
         if (aCircleColor == null || aCircleOutline == null || aCircleShadowColor == null || aDropShadowRadius < 0
                 || aRectangleColorOn == null || aRectangleColorOff == null || aRectangleOutline == null
@@ -346,8 +346,7 @@ public class ToggleSwitch extends Control {
             if (oldValue.booleanValue() == newValue.booleanValue()) {
                 return;
             }
-            this.switchCircleTranslateTransition.setToX(newValue ?
-                    (this.switchBackground.getWidth() - 2 * this.switchButton.getRadius()) : 0);
+            this.switchCircleTranslateTransition.setToX(newValue ? 0 : -(this.switchBackground.getWidth() - (2 * this.switchButton.getRadius())));
             this.switchBackgroundColorFillTransition.setFromValue(newValue ?
                     aRectangleColorOff : aRectangleColorOn);
             this.switchBackgroundColorFillTransition.setToValue(newValue ?
@@ -357,6 +356,16 @@ public class ToggleSwitch extends Control {
         //Mouse listener.
         this.setOnMouseClicked(event -> this.switchStateBooleanProperty.set(
                 !this.switchStateBooleanProperty.get()));
+        // Set initial state for the button's position and background color
+        double travelDistance = this.switchBackground.getWidth() - (2 * this.switchButton.getRadius());
+        if (ToggleSwitch.DEFAULT_SWITCH_STATE) {
+            this.switchButton.setTranslateX(0); // Right-aligned for "on"
+            this.switchBackground.setFill(aRectangleColorOn);
+        } else {
+            this.switchButton.setTranslateX(-travelDistance); // Left-aligned for "off"
+            this.switchBackground.setFill(aRectangleColorOff);
+        }
+        this.alignmentProperty = new SimpleObjectProperty<>(this.DEFAULT_ALIGNMENT);
     }
     //</editor-fold>
     //
@@ -417,9 +426,25 @@ public class ToggleSwitch extends Control {
     public BooleanProperty getSwitchStateProperty() {
         return this.switchStateBooleanProperty;
     }
+    /**
+     * Gets the alignment of the children within the toggle switch's internal StackPane.
+     *
+     * @return the current alignment position
+     */
+    public final Pos getAlignment() {
+        return this.alignmentProperty.get();
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Properties set">
+    /**
+     * Sets the alignment of the children within the toggle switch's internal StackPane.
+     *
+     * @param value the new alignment position
+     */
+    public final void setAlignment(Pos value) {
+        this.alignmentProperty.set(value);
+    }
     /**
      * Turns the switch on or off.
      *
@@ -450,7 +475,7 @@ public class ToggleSwitch extends Control {
          * Container that groups together the visual components of the toggle switch. During layout, the pane helps with
          * positioning the entire toggle switch as a single unit.
          */
-        private final Pane pane;
+        private final StackPane stackPane;
         /**
          * This constructor initializes the visual components of the toggle switch by setting up a container pane for
          * the switch components, adding the switch background and button to this container, repositioning components
@@ -460,28 +485,17 @@ public class ToggleSwitch extends Control {
          */
         public ToggleSwitchSkin(ToggleSwitch aToggleSwitchControl) {
             super(aToggleSwitchControl);
-            this.pane = new StackPane(); // Initialize as StackPane
-            this.pane.getChildren().addAll(aToggleSwitchControl.switchBackground, aToggleSwitchControl.switchButton);
-            this.getChildren().add(this.pane);
-
-            // Set the preferred width and height for the ToggleSwitch control itself,
-            // based on its background dimensions. This helps parent layouts size it correctly.
-            aToggleSwitchControl.setPrefWidth(aToggleSwitchControl.switchBackground.getWidth() - getWidth());
-            aToggleSwitchControl.setPrefHeight(aToggleSwitchControl.switchBackground.getHeight());
-
-//            super(aToggleSwitchControl);
-//            this.pane = new Pane();
-//            this.pane.getChildren().addAll(aToggleSwitchControl.switchBackground, aToggleSwitchControl.switchButton);
-//            this.getChildren().add(this.pane);
-//            // Reset the position of components to work with the skin properly
-//            double tmpSwitchWidth = aToggleSwitchControl.switchBackground.getWidth();
-//            // Set the preferred width for proper sizing
-//            aToggleSwitchControl.setPrefWidth(tmpSwitchWidth + 5); // Add small padding, magic number
-//            // Position components to the right side of their container
-//            aToggleSwitchControl.getSwitchBackground().setLayoutX(0);
-//            // Keep the button/circle properly positioned relative to the background
-//            double circleRadius = aToggleSwitchControl.switchButton.getRadius();
-//            aToggleSwitchControl.switchButton.setCenterX(circleRadius);
+            this.stackPane = new StackPane(); // Initialize as StackPane
+            this.stackPane.getChildren().addAll(aToggleSwitchControl.switchBackground, aToggleSwitchControl.switchButton);
+            this.getChildren().add(this.stackPane);
+            this.stackPane.setAlignment(aToggleSwitchControl.getAlignment());
+            // Reset the position of components to work with the skin properly
+            Rectangle tmpSwitchBackground = aToggleSwitchControl.switchBackground;
+            // Set the preferred width for proper sizing
+            aToggleSwitchControl.setPrefWidth(tmpSwitchBackground.getWidth() - getWidth());
+            aToggleSwitchControl.setPrefHeight(tmpSwitchBackground.getHeight() - getHeight());
+            // Keep the button/circle properly positioned relative to the background
+            double circleRadius = aToggleSwitchControl.switchButton.getRadius();
         }
     }
     //</editor-fold>

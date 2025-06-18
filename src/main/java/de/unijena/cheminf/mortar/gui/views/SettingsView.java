@@ -63,6 +63,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 
@@ -87,8 +88,6 @@ public class SettingsView extends AnchorPane {
     private final HBox hBoxLeftSideButtons;
     private final HBox hBoxButtonsHBox;
     private final SelectionModel<Tab> selectionModel;
-    private static final String COLOR_ODD_ROW = "-fx-control-inner-background-alt";
-    private static final String COLOR_EVEN_ROW = "-fx-control-inner-background";
     //</editor-fold>
     //
     /**
@@ -194,50 +193,35 @@ public class SettingsView extends AnchorPane {
     private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
         int tmpRowIndex = 0;
         for (Property tmpProperty : aPropertiesList) {
-            String backgroundColor = (tmpRowIndex % 2 == 0) ? COLOR_ODD_ROW : COLOR_EVEN_ROW;
-
-            RowConstraints rowConstraints = new RowConstraints();
-            rowConstraints.setVgrow(Priority.ALWAYS);
-            rowConstraints.setPrefHeight(200);
-            rowConstraints.setMinHeight(200);
-            rowConstraints.setMaxHeight(200);
-            aGridPane.getRowConstraints().add(rowConstraints);
-
-            Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpProperty.getName()));
-            Tooltip tmpTooltip = GuiUtil.createTooltip(aTooltipTextsMap.get(tmpProperty.getName()));
+            RowConstraints tmpRow = new RowConstraints();
+            tmpRow.setVgrow(Priority.ALWAYS);
+            tmpRow.setPrefHeight(100); //magic number
+            tmpRow.setMaxHeight(100); //magic number
+            tmpRow.setMinHeight(100); //magic number
+            aGridPane.getRowConstraints().add(tmpRow);
+            String tmpPropName = tmpProperty.getName();
+            Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpPropName));
+            Tooltip tmpTooltip = GuiUtil.createTooltip(aTooltipTextsMap.get(tmpPropName));
             tmpNameLabel.setTooltip(tmpTooltip);
+            aGridPane.add(tmpNameLabel, 0, tmpRowIndex);
+            GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
 
-            // Create a StackPane to wrap the label and apply background color
-            StackPane labelWrapper = new StackPane(tmpNameLabel);
-            labelWrapper.setStyle("-fx-background-color: " + backgroundColor + ";");
-            labelWrapper.setPadding(new Insets(GuiDefinitions.GUI_SPACING_VALUE, GuiDefinitions.GUI_SPACING_VALUE, GuiDefinitions.GUI_SPACING_VALUE, GuiDefinitions.GUI_SPACING_VALUE));
-            labelWrapper.setAlignment(Pos.CENTER_LEFT);
-            GridPane.setHgrow(labelWrapper, Priority.ALWAYS);
-            GridPane.setVgrow(labelWrapper, Priority.ALWAYS);
-            aGridPane.add(labelWrapper, 0, tmpRowIndex);
-
-            StackPane controlWrapper = new StackPane();
-            controlWrapper.setStyle("-fx-background-color: " + backgroundColor + ";");
-            controlWrapper.setPadding(new Insets(GuiDefinitions.GUI_SPACING_VALUE, GuiDefinitions.GUI_SPACING_VALUE, GuiDefinitions.GUI_SPACING_VALUE, GuiDefinitions.GUI_SPACING_VALUE));
-            controlWrapper.setAlignment(Pos.CENTER_RIGHT);
-            GridPane.setHgrow(controlWrapper, Priority.ALWAYS);
-            GridPane.setVgrow(controlWrapper, Priority.ALWAYS);
-
-            GridPane.setHalignment(controlWrapper, HPos.RIGHT);
-            GridPane.setValignment(controlWrapper, VPos.CENTER);
-
-            // Add the control to its wrapper
+            Object tmpRecentValue = tmpProperty.getValue();
+            aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             switch (tmpProperty) {
                 case SimpleBooleanProperty tmpSimpleBooleanProperty -> {
                     ToggleSwitch tmpToggle = new ToggleSwitch();
                     tmpToggle.setTooltip(tmpTooltip);
                     tmpToggle.getSwitchStateProperty().bindBidirectional(tmpSimpleBooleanProperty);
-                    controlWrapper.getChildren().add(tmpToggle);
+                    tmpToggle.setAlignment(Pos.CENTER_RIGHT);
+                    aGridPane.add(tmpToggle, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleIntegerProperty simpleIntegerProperty -> {
                     TextField tmpIntegerTextField = new TextField();
                     tmpIntegerTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpIntegerTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpIntegerTextField.setAlignment(Pos.CENTER_RIGHT);
                     int tmpDefaultValue = 0;
                     //note: setting the filter to only accept positive integers including zero is an assumption that is true
                     // for all settings so far but might have to be changed in the future
@@ -247,12 +231,15 @@ public class SettingsView extends AnchorPane {
                     tmpIntegerTextField.setTextFormatter(tmpFormatter);
                     tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
                     tmpIntegerTextField.setTooltip(tmpTooltip);
-                    controlWrapper.getChildren().add(tmpIntegerTextField);
+                    //add to gridpane
+                    aGridPane.add(tmpIntegerTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpIntegerTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleDoubleProperty simpleDoubleProperty -> {
                     TextField tmpDoubleTextField = new TextField();
                     tmpDoubleTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpDoubleTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpDoubleTextField.setAlignment(Pos.CENTER_RIGHT);
                     double tmpDefaultValue = 0.0;
                     //note: setting the filter to only accept positive double values including zero is an assumption that is true
                     // for all settings so far but might have to be changed in the future
@@ -262,7 +249,9 @@ public class SettingsView extends AnchorPane {
                     tmpDoubleTextField.setTextFormatter(tmpFormatter);
                     tmpFormatter.valueProperty().bindBidirectional(tmpProperty);
                     tmpDoubleTextField.setTooltip(tmpTooltip);
-                    controlWrapper.getChildren().add(tmpDoubleTextField);
+                    //add to gridpane
+                    aGridPane.add(tmpDoubleTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpDoubleTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleIDisplayEnumConstantProperty tmpSimpleIDisplayEnumConstantProperty -> {
                     ComboBox<IDisplayEnum> tmpEnumComboBox = new ComboBox<>();
@@ -294,7 +283,9 @@ public class SettingsView extends AnchorPane {
                     });
                     tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleIDisplayEnumConstantProperty);
                     tmpEnumComboBox.setTooltip(tmpTooltip);
-                    controlWrapper.getChildren().add(tmpEnumComboBox);
+                    //add to gridpane
+                    aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleEnumConstantNameProperty tmpSimpleEnumConstantNameProperty -> {
                     ComboBox<String> tmpEnumComboBox = new ComboBox<>();
@@ -303,23 +294,37 @@ public class SettingsView extends AnchorPane {
                     tmpEnumComboBox.getItems().addAll(((SimpleEnumConstantNameProperty) tmpProperty).getAssociatedEnumConstantNames());
                     tmpEnumComboBox.valueProperty().bindBidirectional(tmpSimpleEnumConstantNameProperty);
                     tmpEnumComboBox.setTooltip(tmpTooltip);
-                    controlWrapper.getChildren().add(tmpEnumComboBox);
+                    //add to gridpane
+                    aGridPane.add(tmpEnumComboBox, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpEnumComboBox, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleStringProperty simpleStringProperty -> {
                     TextField tmpStringTextField = new TextField();
                     tmpStringTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_PREF_WIDTH_VALUE);
                     tmpStringTextField.setMaxWidth(GuiDefinitions.GUI_SETTINGS_TEXT_FIELD_MAX_WIDTH_VALUE);
+                    tmpStringTextField.setAlignment(Pos.CENTER_RIGHT);
                     tmpStringTextField.textProperty().bindBidirectional(tmpProperty);
                     tmpStringTextField.setTooltip(tmpTooltip);
-                    controlWrapper.getChildren().add(tmpStringTextField);
+                    //add to gridpane
+                    aGridPane.add(tmpStringTextField, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpStringTextField, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 default ->
                         throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
             }
-            controlWrapper.setAlignment(Pos.CENTER_RIGHT);
-            // Add the control wrapper to column 1
-            aGridPane.add(controlWrapper, 1, tmpRowIndex);
-            tmpRowIndex++;
+
+            Region backgroundRegion = new Region();
+            backgroundRegion.setPrefHeight(40);
+
+            // Set alternating colors
+            if (tmpRowIndex % 2 == 0) {
+                backgroundRegion.setStyle("-fx-background-color: #f5f5f5;");
+            } else {
+                backgroundRegion.setStyle("-fx-background-color: #ffffff;");
+            }
+
+            // Span across all columns
+            aGridPane.add(backgroundRegion, 0, tmpRowIndex, 2, 1);
         }
     }
     //</editor-fold>
