@@ -382,6 +382,7 @@ public final class ChemUtil {
      * </ol>
      * This process effectively caps each radical site with a hydrogen atom, resulting in
      * a more stable molecular representation suitable for further processing.
+     * <br><br><b>Important note: expects atom types to be perceived beforehand!</b>
      *
      * @param aMolecule The molecule to process; will be modified in place
      * @throws NullPointerException If the provided molecule is null

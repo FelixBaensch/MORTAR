@@ -566,7 +566,7 @@ public class Importer {
      *                                    hydrogen atoms
      * @throws NullPointerException if the given molecule set is null
      */
-    private void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet, boolean isFillOpenValencesWithImplH) throws NullPointerException {
+    protected void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet, boolean isFillOpenValencesWithImplH) throws NullPointerException {
         Objects.requireNonNull(aMoleculeSet, "given molecule set is null.");
         if (aMoleculeSet.isEmpty()) {
             return;
