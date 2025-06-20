@@ -80,7 +80,7 @@ class ChemUtilTest {
         }
     }
     /**
-     * Test importing a MOL file containing a molecules with radicals and testing whether these are fixed correctly.
+     * Test importing a MOL file containing a molecule with radicals and verifying that these are fixed correctly.
      */
     @Test
     public void testFixRadicals() throws Exception {
