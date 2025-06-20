@@ -28,6 +28,16 @@ package de.unijena.cheminf.mortar.model.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.io.MDLV2000Reader;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+
+import java.io.File;
+import java.io.FileReader;
+import java.net.URL;
+import java.nio.file.Paths;
 
 /**
  * Tests for the utility functions in ChemUtil.
@@ -40,7 +50,7 @@ class ChemUtilTest {
      * CDK canonical SMILES and re-generate SMILES with stereo chemistry from the resulting atom containers.
      */
     @Test
-    void testParseAndCreateUniqueSmilesRoundTrip() throws Exception {
+    public void testParseAndCreateUniqueSmilesRoundTrip() throws Exception {
         String[] tmpSmilesCodes = new String[] {
                 "C/C=C(\\C)/C(=O)O[C@H]1C[C@@H]2C[C@@H](C[C@H]1N2C)OC(=O)/C=C(\\C)/C(=O)OCC", //CNP0315572.1
                 "C/C(=C\\C[C@@H]([C@@H](C)[C@H]1CC[C@@]2(C)C3=CC[C@H]4C(C)(C)[C@@H](CC[C@]4(C)C3=CC[C@]12C)O)OC(=O)C)/C(=O)O", //CNP0219624.2
@@ -68,5 +78,20 @@ class ChemUtilTest {
             String tmpSmilesCodeOutput = ChemUtil.createUniqueSmiles(tmpMolecule, true);
             Assertions.assertEquals(tmpSmilesCode, tmpSmilesCodeOutput);
         }
+    }
+    /**
+     * Test importing a MOL file containing a molecule with radicals and verifying that these are fixed correctly.
+     */
+    @Test
+    public void testFixRadicals() throws Exception {
+        URL tmpURL = this.getClass().getResource("Mirabilin_B.mol");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        MDLV2000Reader tmpReader = new MDLV2000Reader(new FileReader(tmpResourceFile));
+        IAtomContainer tmpMolecule = tmpReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
+        tmpReader.close();
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
+        ChemUtil.fixRadicals(tmpMolecule);
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Canonical);
+        Assertions.assertEquals("N=C1N=C2C3=C(N1)CCC3CC(C)C2CCCC", smiGen.create(tmpMolecule));
     }
 }
