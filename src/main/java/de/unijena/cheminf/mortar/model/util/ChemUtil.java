@@ -34,6 +34,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.interfaces.ISingleElectron;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
@@ -367,6 +368,56 @@ public final class ChemUtil {
                     + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), aNullPointerException);
              */
         }
+    }
+
+    /**
+     * Fixes radical atoms in a molecule by replacing the single electron with an implicit hydrogen atom.
+     * This method converts radical centers to closed-shell configurations by:
+     * <ol>
+     * <li>Increasing the valency of radical atoms by 1</li>
+     * <li>Increasing the formal neighbor count by 1</li>
+     * <li>Adding an implicit hydrogen to each radical center</li>
+     * <li>Removing all single electrons from the molecule</li>
+     * <li>Reperceiving atom types to ensure correct configuration</li>
+     * </ol>
+     * This process effectively caps each radical site with a hydrogen atom, resulting in
+     * a more stable molecular representation suitable for further processing.
+     * <br><br><b>Important note: expects atom types to be perceived beforehand!</b>
+     *
+     * @param aMolecule The molecule to process; will be modified in place
+     * @throws NullPointerException If the provided molecule is null
+     * @throws CDKException If atom type perception fails or other CDK operations encounter problems
+     */
+    public static void fixRadicals(IAtomContainer aMolecule) throws NullPointerException, CDKException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return;
+        }
+        if (aMolecule.getSingleElectronCount() > 0) {
+            //fix properties of the atoms that are radicals
+            for (ISingleElectron tmpSingleElectron : aMolecule.singleElectrons()) {
+                IAtom tmpAtom = tmpSingleElectron.getAtom();
+                //setting to null now, will be re-detected correctly below
+                tmpAtom.setHybridization(null);
+                tmpAtom.setValency(tmpAtom.getValency() + 1);
+                tmpAtom.setFormalNeighbourCount(tmpAtom.getFormalNeighbourCount() + 1);
+                Integer tmpHCount = tmpAtom.getImplicitHydrogenCount();
+                if (tmpHCount == null) {
+                    tmpHCount = 0;
+                }
+                tmpAtom.setImplicitHydrogenCount(tmpHCount + 1);
+            }
+            //remove all single electrons from the molecule
+            int tmpSingleElectronCount = aMolecule.getSingleElectronCount();
+            // the electron array is re-ordered after a removal, so we need to remove them in reverse order
+            for (int i = tmpSingleElectronCount - 1; i >= 0; i--) {
+                aMolecule.removeSingleElectron(i);
+            }
+            //needs to be redone now to set the correct atom types
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
+            ChemUtil.LOGGER.log(Level.INFO, "{0}", String.format("Fixed %d radicals in molecule with name %s.",
+                    tmpSingleElectronCount, aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
+        } //else: do nothing
     }
     //</editor-fold>
 }
