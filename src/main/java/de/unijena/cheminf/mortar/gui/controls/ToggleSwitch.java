@@ -71,20 +71,6 @@ public class ToggleSwitch extends Control {
      */
     public static final int DEFAULT_CIRCLE_RADIUS_VALUE = 10;
     /**
-     * Default value for the layout which sets the position of the background
-     * of the switch on the x-axis of the dialogue box.
-     */
-    public static final int DEFAULT_RECTANGLE_POSITION_X_VALUE = -50;
-    /**
-     * Default value for the layout which sets the position of the button on
-     * the x-axis of the dialogue box.
-     */
-    public static final int DEFAULT_CIRCLE_POSITION_X_VALUE = -40;
-    /**
-     * Default value for the position of the button on the y-axis of the dialogue box.
-     */
-    public static final int DEFAULT_CIRCLE_POSITION_Y_VALUE = 9;
-    /**
      * Default value for the radius of the shadow on the button.
      */
     public static final int DEFAULT_CIRCLE_SHADOW_RADIUS = 5;
@@ -211,13 +197,10 @@ public class ToggleSwitch extends Control {
      * @param aRectanglePositionXValue value for the layout which sets the position of the background
      *                                 of the switch on the x-axis of the dialogue box.
      * @param aCircleRadius radius of the button
-     * @param aCirclePositionXValue value for the layout which sets the position of the button on
-     *                              the x-axis of the dialogue box.
-     * @param aCirclePositionYValue value for the position of the button on the y-axis of the dialogue box
      * @throws IllegalArgumentException if at least one parameter is negative
      */
-    public ToggleSwitch(int aRectangleWidth, int aRectangleHeight, int aRectanglePositionXValue, int aCircleRadius,
-                        int aCirclePositionXValue, int aCirclePositionYValue) throws IllegalArgumentException {
+    public ToggleSwitch(int aRectangleWidth, int aRectangleHeight, int aRectanglePositionXValue, int aCircleRadius)
+            throws IllegalArgumentException {
         this(ToggleSwitch.DEFAULT_CIRCLE_COLOR,
                 ToggleSwitch.DEFAULT_CIRCLE_OUTLINE_COLOR,
                 ToggleSwitch.DEFAULT_CIRCLE_SHADOW_COLOR,
@@ -227,10 +210,7 @@ public class ToggleSwitch extends Control {
                 ToggleSwitch.DEFAULT_RECTANGLE_OUTLINE_COLOR,
                 aRectangleWidth,
                 aRectangleHeight,
-                aRectanglePositionXValue,
                 aCircleRadius,
-                aCirclePositionXValue,
-                aCirclePositionYValue,
                 ToggleSwitch.DEFAULT_ALIGNMENT,
                 ToggleSwitch.DEFAULT_DURATION_VALUE);
     }
@@ -304,14 +284,14 @@ public class ToggleSwitch extends Control {
      * @param aRectangleWidth width of the switch background
      * @param aRectangleHeight height of the switch background
      * @param aCircleRadius radius of the button
-     * @param aCirclePositionYValue value for the position of the button on the y-axis of the dialogue box
+     * @param anAlignmentPosition alignment position of the toggle switch on the underlying stack pane
      * @param anAnimationDuration duration of the animated transition in seconds
      * @throws IllegalArgumentException if at least one of the given arguments is null or negative
      */
     public ToggleSwitch(Color aCircleColor, Color aCircleOutline, Color aCircleShadowColor, int aDropShadowRadius,
                         Color aRectangleColorOn, Color aRectangleColorOff, Color aRectangleOutline,
                         int aRectangleWidth, int aRectangleHeight, int aCircleRadius,
-                         int aCirclePositionYValue, Pos anAlignmentPosition, double anAnimationDuration) throws IllegalArgumentException {
+                        Pos anAlignmentPosition, double anAnimationDuration) throws IllegalArgumentException {
         super();
         if (aCircleColor == null || aCircleOutline == null || aCircleShadowColor == null || aDropShadowRadius < 0
                 || aRectangleColorOn == null || aRectangleColorOff == null || aRectangleOutline == null
@@ -325,7 +305,6 @@ public class ToggleSwitch extends Control {
         this.switchBackground.setFill(this.switchStateBooleanProperty.get() ? aRectangleColorOn : aRectangleColorOff);
         this.switchBackground.setStroke(aRectangleOutline);
         this.switchButton = new Circle(aCircleRadius);
-        this.switchButton.setCenterY(aCirclePositionYValue);
         this.switchButton.setFill(aCircleColor);
         this.switchButton.setStroke(aCircleOutline);
         this.switchButton.setEffect(new DropShadow(aDropShadowRadius, aCircleShadowColor));
@@ -472,20 +451,20 @@ public class ToggleSwitch extends Control {
      */
     private class ToggleSwitchSkin extends SkinBase<ToggleSwitch> {
         /**
-         * Container that groups together the visual components of the toggle switch. During layout, the pane helps with
-         * positioning the entire toggle switch as a single unit.
+         * Container that groups together the visual components of the toggle switch. During layout, the stack pane
+         * enables the positioning of the entire toggle switch as a single unit.
          */
         private final StackPane stackPane;
         /**
-         * This constructor initializes the visual components of the toggle switch by setting up a container pane for
-         * the switch components, adding the switch background and button to this container, repositioning components
-         * to fit properly within the control, and setting appropriate sizing and layout properties.
+         * This constructor initializes the visual components of the toggle switch by setting up a container stack pane
+         * for the switch components, adding the switch background and button to this container, repositioning
+         * components to fit properly within the control, and setting appropriate sizing and layout properties.
          *
          * @param aToggleSwitchControl The ToggleSwitch control for which this skin is being created
          */
         public ToggleSwitchSkin(ToggleSwitch aToggleSwitchControl) {
             super(aToggleSwitchControl);
-            this.stackPane = new StackPane(); // Initialize as StackPane
+            this.stackPane = new StackPane();
             this.stackPane.getChildren().addAll(aToggleSwitchControl.switchBackground, aToggleSwitchControl.switchButton);
             this.getChildren().add(this.stackPane);
             this.stackPane.setAlignment(aToggleSwitchControl.getAlignment());

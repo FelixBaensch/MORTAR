@@ -44,7 +44,6 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
-import javafx.geometry.VPos;
 import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -147,7 +146,8 @@ public class SettingsView extends AnchorPane {
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      * @return Tab
      */
-    public Tab addTab(String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
+    public Tab addTab(String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap,
+                      Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         tmpTab.setId(aLabel);
@@ -190,14 +190,16 @@ public class SettingsView extends AnchorPane {
      * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      */
-    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
+    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList,
+                                  Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap,
+                                  Map<String, Object> aRecentPropertiesMap) {
         int tmpRowIndex = 0;
         for (Property tmpProperty : aPropertiesList) {
             RowConstraints tmpRow = new RowConstraints();
             tmpRow.setVgrow(Priority.ALWAYS);
-            tmpRow.setPrefHeight(100); //magic number
-            tmpRow.setMaxHeight(100); //magic number
-            tmpRow.setMinHeight(100); //magic number
+            tmpRow.setPrefHeight(50); //magic number
+            tmpRow.setMaxHeight(50); //magic number
+            tmpRow.setMinHeight(50); //magic number
             aGridPane.getRowConstraints().add(tmpRow);
             String tmpPropName = tmpProperty.getName();
             Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpPropName));
@@ -322,7 +324,6 @@ public class SettingsView extends AnchorPane {
             } else {
                 backgroundRegion.setStyle("-fx-background-color: #ffffff;");
             }
-
             // Span across all columns
             aGridPane.add(backgroundRegion, 0, tmpRowIndex, 2, 1);
         }
