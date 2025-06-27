@@ -344,7 +344,7 @@ public class ToggleSwitch extends Control {
             this.switchButton.setTranslateX(-travelDistance); // Left-aligned for "off"
             this.switchBackground.setFill(aRectangleColorOff);
         }
-        this.alignmentProperty = new SimpleObjectProperty<>(this.DEFAULT_ALIGNMENT);
+        this.alignmentProperty = new SimpleObjectProperty<>(ToggleSwitch.DEFAULT_ALIGNMENT);
     }
     //</editor-fold>
     //
