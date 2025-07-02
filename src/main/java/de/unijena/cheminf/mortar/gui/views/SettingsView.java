@@ -74,9 +74,22 @@ import java.util.Map;
  * View class for the settings windows, both global and fragmenter settings.
  *
  * @author Felix Baensch
+ * @author Tom Weiß
  * @version 1.0.0.0
  */
 public class SettingsView extends AnchorPane {
+    //<editor-fold desc="public class variables" defaultstate="collapsed">
+    /**
+     * The color of the even rows for the settings view.
+     */
+    public final String EVEN_ROW_COLOR = "-fx-background-color: #ffffff;";
+    /**
+     *
+     * The color of the odd rows for the settings view.
+     */
+    public final String ODD_ROW_COLOR = "-fx-background-color: #f5f5f5;";
+    //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     private final TabPane tabPane;
     private final BorderPane borderPane;
@@ -200,6 +213,17 @@ public class SettingsView extends AnchorPane {
             tmpRow.setPrefHeight(50); //magic number
             tmpRow.setMaxHeight(50); //magic number
             tmpRow.setMinHeight(50); //magic number
+            Region tmpBackgroundRegion = new Region();
+            tmpBackgroundRegion.setPrefHeight(50);
+
+            // Set alternating colors
+            if (tmpRowIndex % 2 == 1) {
+                tmpBackgroundRegion.setStyle(this.ODD_ROW_COLOR);
+            } else {
+                tmpBackgroundRegion.setStyle(this.EVEN_ROW_COLOR);
+            }
+            // Span across all columns
+            aGridPane.add(tmpBackgroundRegion, 0, tmpRowIndex, 2, 1);
             aGridPane.getRowConstraints().add(tmpRow);
             String tmpPropName = tmpProperty.getName();
             Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpPropName));
@@ -314,18 +338,6 @@ public class SettingsView extends AnchorPane {
                 default ->
                         throw new UnsupportedOperationException("Unknown property type " + tmpProperty.getName());
             }
-
-            Region backgroundRegion = new Region();
-            backgroundRegion.setPrefHeight(40);
-
-            // Set alternating colors
-            if (tmpRowIndex % 2 == 0) {
-                backgroundRegion.setStyle("-fx-background-color: #f5f5f5;");
-            } else {
-                backgroundRegion.setStyle("-fx-background-color: #ffffff;");
-            }
-            // Span across all columns
-            aGridPane.add(backgroundRegion, 0, tmpRowIndex, 2, 1);
         }
     }
     //</editor-fold>

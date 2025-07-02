@@ -54,6 +54,7 @@ import javafx.util.Duration;
  * See <a href="https://youtu.be/maX5ymmQixM?si=v2ULa57-pjCmoQlf">link here</a>, (last time viewed on 06/06/2024, 18:10)
  *
  * @author Zeynep Dagtekin
+ * @author Tom Weiß
  * @version 1.0.0.0
  */
 public class ToggleSwitch extends Control {
@@ -318,6 +319,8 @@ public class ToggleSwitch extends Control {
                 this.switchBackgroundColorFillTransition);
         this.switchCircleTranslateTransition.setNode(this.switchButton);
         this.switchBackgroundColorFillTransition.setShape(this.switchBackground);
+        // Set initial state for the button's position and background color
+        final double tmpTravelDistance = this.switchBackground.getWidth() - (2 * this.switchButton.getRadius());
         //Listener
         // note: a mouse listener on this control sets the boolean switch state property
         // and this value change listener plays the switch transition when the property changes
@@ -325,7 +328,8 @@ public class ToggleSwitch extends Control {
             if (oldValue.booleanValue() == newValue.booleanValue()) {
                 return;
             }
-            this.switchCircleTranslateTransition.setToX(newValue ? 0 : -(this.switchBackground.getWidth() - (2 * this.switchButton.getRadius())));
+            this.switchCircleTranslateTransition.setToX(newValue ?
+                    0 : -tmpTravelDistance);
             this.switchBackgroundColorFillTransition.setFromValue(newValue ?
                     aRectangleColorOff : aRectangleColorOn);
             this.switchBackgroundColorFillTransition.setToValue(newValue ?
@@ -335,16 +339,14 @@ public class ToggleSwitch extends Control {
         //Mouse listener.
         this.setOnMouseClicked(event -> this.switchStateBooleanProperty.set(
                 !this.switchStateBooleanProperty.get()));
-        // Set initial state for the button's position and background color
-        double travelDistance = this.switchBackground.getWidth() - (2 * this.switchButton.getRadius());
         if (ToggleSwitch.DEFAULT_SWITCH_STATE) {
             this.switchButton.setTranslateX(0); // Right-aligned for "on"
             this.switchBackground.setFill(aRectangleColorOn);
         } else {
-            this.switchButton.setTranslateX(-travelDistance); // Left-aligned for "off"
+            this.switchButton.setTranslateX(-tmpTravelDistance); // Left-aligned for "off"
             this.switchBackground.setFill(aRectangleColorOff);
         }
-        this.alignmentProperty = new SimpleObjectProperty<>(ToggleSwitch.DEFAULT_ALIGNMENT);
+        this.alignmentProperty = new SimpleObjectProperty<>(anAlignmentPosition);
     }
     //</editor-fold>
     //
@@ -471,10 +473,14 @@ public class ToggleSwitch extends Control {
             // Reset the position of components to work with the skin properly
             Rectangle tmpSwitchBackground = aToggleSwitchControl.switchBackground;
             // Set the preferred width for proper sizing
-            aToggleSwitchControl.setPrefWidth(tmpSwitchBackground.getWidth() - getWidth());
-            aToggleSwitchControl.setPrefHeight(tmpSwitchBackground.getHeight() - getHeight());
-            // Keep the button/circle properly positioned relative to the background
-            double circleRadius = aToggleSwitchControl.switchButton.getRadius();
+            aToggleSwitchControl.prefWidthProperty()
+                    .bind(tmpSwitchBackground
+                    .widthProperty()
+                    .subtract(stackPane.widthProperty()));
+            aToggleSwitchControl.prefHeightProperty()
+                    .bind(tmpSwitchBackground
+                            .heightProperty()
+                            .subtract(stackPane.heightProperty()));
         }
     }
     //</editor-fold>
