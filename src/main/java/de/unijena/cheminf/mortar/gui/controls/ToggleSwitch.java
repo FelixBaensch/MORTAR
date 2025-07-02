@@ -197,12 +197,10 @@ public class ToggleSwitch extends Control {
      * Constructor for setting the dimensions of rectangle and circle. All other parameters will be set to default values.
      * @param aRectangleWidth width of the switch background
      * @param aRectangleHeight height of the switch background
-     * @param aRectanglePositionXValue value for the layout which sets the position of the background
-     *                                 of the switch on the x-axis of the dialogue box.
      * @param aCircleRadius radius of the button
      * @throws IllegalArgumentException if at least one parameter is negative
      */
-    public ToggleSwitch(int aRectangleWidth, int aRectangleHeight, int aRectanglePositionXValue, int aCircleRadius)
+    public ToggleSwitch(int aRectangleWidth, int aRectangleHeight, int aCircleRadius)
             throws IllegalArgumentException {
         this(ToggleSwitch.DEFAULT_CIRCLE_COLOR,
                 ToggleSwitch.DEFAULT_CIRCLE_OUTLINE_COLOR,

@@ -78,7 +78,7 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public class SettingsView extends AnchorPane {
-    //<editor-fold desc="public class variables" defaultstate="collapsed">
+    //<editor-fold desc="public static final class variables" defaultstate="collapsed">
     /**
      * The color of the even rows for the settings view (white).
      */
