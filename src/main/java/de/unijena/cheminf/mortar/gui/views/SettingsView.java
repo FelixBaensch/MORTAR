@@ -80,14 +80,13 @@ import java.util.Map;
 public class SettingsView extends AnchorPane {
     //<editor-fold desc="public class variables" defaultstate="collapsed">
     /**
-     * The color of the even rows for the settings view.
+     * The color of the even rows for the settings view (white).
      */
-    public final String EVEN_ROW_COLOR = "-fx-background-color: #ffffff;";
+    public static final String EVEN_ROW_COLOR = "-fx-background-color: #ffffff;";
     /**
-     *
-     * The color of the odd rows for the settings view.
+     * The color of the odd rows for the settings view (light grey).
      */
-    public final String ODD_ROW_COLOR = "-fx-background-color: #f5f5f5;";
+    public static final String ODD_ROW_COLOR = "-fx-background-color: #f5f5f5;";
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
