@@ -62,6 +62,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 
@@ -73,9 +74,21 @@ import java.util.Map;
  * View class for the settings windows, both global and fragmenter settings.
  *
  * @author Felix Baensch
+ * @author Tom Weiß
  * @version 1.0.0.0
  */
 public class SettingsView extends AnchorPane {
+    //<editor-fold desc="public static final class variables" defaultstate="collapsed">
+    /**
+     * The color of the even rows for the settings view (white).
+     */
+    public static final String EVEN_ROW_COLOR = "-fx-background-color: #ffffff;";
+    /**
+     * The color of the odd rows for the settings view (light grey).
+     */
+    public static final String ODD_ROW_COLOR = "-fx-background-color: #f5f5f5;";
+    //</editor-fold>
+    //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
     private final TabPane tabPane;
     private final BorderPane borderPane;
@@ -145,7 +158,8 @@ public class SettingsView extends AnchorPane {
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      * @return Tab
      */
-    public Tab addTab(String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
+    public Tab addTab(String aLabel, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap,
+                      Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
         Tab tmpTab = new Tab();
         tmpTab.setClosable(false);
         tmpTab.setId(aLabel);
@@ -188,7 +202,9 @@ public class SettingsView extends AnchorPane {
      * @param aTooltipTextsMap Map containing setting names as keys and tooltip text as values
      * @param aRecentPropertiesMap Map to hold recent properties to restore them if necessary
      */
-    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList, Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap, Map<String, Object> aRecentPropertiesMap) {
+    private void addPropertyItems(GridPane aGridPane, List<Property<?>> aPropertiesList,
+                                  Map<String, String> aDisplayNamesMap, Map<String, String> aTooltipTextsMap,
+                                  Map<String, Object> aRecentPropertiesMap) {
         int tmpRowIndex = 0;
         for (Property tmpProperty : aPropertiesList) {
             RowConstraints tmpRow = new RowConstraints();
@@ -196,6 +212,17 @@ public class SettingsView extends AnchorPane {
             tmpRow.setPrefHeight(50); //magic number
             tmpRow.setMaxHeight(50); //magic number
             tmpRow.setMinHeight(50); //magic number
+            Region tmpBackgroundRegion = new Region();
+            tmpBackgroundRegion.setPrefHeight(50);
+
+            // Set alternating colors
+            if (tmpRowIndex % 2 == 1) {
+                tmpBackgroundRegion.setStyle(SettingsView.ODD_ROW_COLOR);
+            } else {
+                tmpBackgroundRegion.setStyle(SettingsView.EVEN_ROW_COLOR);
+            }
+            // Span across all columns
+            aGridPane.add(tmpBackgroundRegion, 0, tmpRowIndex, 2, 1);
             aGridPane.getRowConstraints().add(tmpRow);
             String tmpPropName = tmpProperty.getName();
             Label tmpNameLabel = new Label(aDisplayNamesMap.get(tmpPropName));
@@ -203,6 +230,7 @@ public class SettingsView extends AnchorPane {
             tmpNameLabel.setTooltip(tmpTooltip);
             aGridPane.add(tmpNameLabel, 0, tmpRowIndex);
             GridPane.setMargin(tmpNameLabel, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+
             Object tmpRecentValue = tmpProperty.getValue();
             aRecentPropertiesMap.put(tmpPropName, tmpRecentValue);
             switch (tmpProperty) {
@@ -210,12 +238,9 @@ public class SettingsView extends AnchorPane {
                     ToggleSwitch tmpToggle = new ToggleSwitch();
                     tmpToggle.setTooltip(tmpTooltip);
                     tmpToggle.getSwitchStateProperty().bindBidirectional(tmpSimpleBooleanProperty);
-                    // Create container with right alignment for the toggle switch
-                    HBox tmpToggleContainer = new HBox(tmpToggle);
-                    tmpToggleContainer.setAlignment(Pos.CENTER_RIGHT);
-                    //add to gridpane
-                    aGridPane.add(tmpToggleContainer, 1, tmpRowIndex++);
-                    GridPane.setMargin(tmpToggleContainer, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+                    tmpToggle.setAlignment(Pos.CENTER_RIGHT);
+                    aGridPane.add(tmpToggle, 1, tmpRowIndex++);
+                    GridPane.setMargin(tmpToggle, new Insets(GuiDefinitions.GUI_INSETS_VALUE));
                 }
                 case SimpleIntegerProperty simpleIntegerProperty -> {
                     TextField tmpIntegerTextField = new TextField();
