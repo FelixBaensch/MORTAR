@@ -43,6 +43,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+import java.util.Objects;
+
 /**
  * This class implements a toggle switch to en- and disable features in settings. The toggle switch is built by putting
  * a circle on top of a rectangle. The corners of the rectangle were adjusted to fit the round shape of the circle.
@@ -325,7 +327,7 @@ public class ToggleSwitch extends Control {
         // note: a mouse listener on this control sets the boolean switch state property
         // and this value change listener plays the switch transition when the property changes
         this.switchStateBooleanProperty.addListener((observable, oldValue, newValue) -> {
-            if (oldValue.booleanValue() == newValue.booleanValue()) {
+            if (Objects.equals(oldValue, newValue)) {
                 return;
             }
             this.switchCircleTranslateTransition.setToX(newValue ?
@@ -475,8 +477,8 @@ public class ToggleSwitch extends Control {
             // Set the preferred width for proper sizing
             aToggleSwitchControl.prefWidthProperty()
                     .bind(tmpSwitchBackground
-                    .widthProperty()
-                    .subtract(stackPane.widthProperty()));
+                        .widthProperty()
+                        .subtract(stackPane.widthProperty()));
             aToggleSwitchControl.prefHeightProperty()
                     .bind(tmpSwitchBackground
                             .heightProperty()

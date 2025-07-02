@@ -217,9 +217,9 @@ public class SettingsView extends AnchorPane {
 
             // Set alternating colors
             if (tmpRowIndex % 2 == 1) {
-                tmpBackgroundRegion.setStyle(this.ODD_ROW_COLOR);
+                tmpBackgroundRegion.setStyle(SettingsView.ODD_ROW_COLOR);
             } else {
-                tmpBackgroundRegion.setStyle(this.EVEN_ROW_COLOR);
+                tmpBackgroundRegion.setStyle(SettingsView.EVEN_ROW_COLOR);
             }
             // Span across all columns
             aGridPane.add(tmpBackgroundRegion, 0, tmpRowIndex, 2, 1);
