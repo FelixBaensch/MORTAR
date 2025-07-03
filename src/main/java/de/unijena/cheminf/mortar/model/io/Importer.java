@@ -293,10 +293,11 @@ public class Importer {
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             tmpReturnList.add(tmpMoleculeDataModel);
         }
-        Importer.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
+        int finalTmpExceptionCount = tmpExceptionCount;
+        Importer.LOGGER.log(Level.INFO, () -> String.format("Successfully imported %d molecules from file: %s; " +
                 "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
                 "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
-                anAtomContainerSet.getAtomContainerCount(), this.getFileName(), tmpExceptionCount));
+                anAtomContainerSet.getAtomContainerCount(), this.getFileName(), finalTmpExceptionCount));
         return tmpReturnList;
     }
     //
