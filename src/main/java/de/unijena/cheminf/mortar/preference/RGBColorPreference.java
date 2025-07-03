@@ -389,7 +389,7 @@ public class RGBColorPreference extends BasePreference {
         this.guid = aReader.readLine();
         String[] tmpColorComponents = aReader.readLine().split(":");
         if (tmpColorComponents.length != 4) {
-            throw new IOException("Invalid number of color components in persisted representation.");
+            throw new IOException("Invalid number of color components in persisted representation. Expected 4 components but found " + tmpColorComponents.length + ".");
         }
         this.red = Double.parseDouble(tmpColorComponents[0]);
         this.green = Double.parseDouble(tmpColorComponents[1]);
