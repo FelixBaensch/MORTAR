@@ -1255,6 +1255,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         for (IBond tmpBond : aBondArray) {
             IAtom tmpBeginAtom = tmpBond.getBegin();
             IAtom tmpEndAtom = tmpBond.getEnd();
+            if (tmpBeginAtom.getAtomicNumber() == 0 || tmpEndAtom.getAtomicNumber() == 0) {
+                continue;
+            }
             System.out.println("BondExtract: getBegin/getEnd");
             //booleans for bond begin and end atom properties used in fragmentation, self-explanatory
             boolean tmpIsBeginRing = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
@@ -1323,8 +1326,35 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             System.out.println("ControlPoint Pre conTertQuatRing");
                             if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)) {
                                 System.out.println("ControlPoint IN conTertQuatRing");
-                                int i = 0;
-                                tmpRingFragmentationContainer.addAtom(new PseudoAtom());
+                                PseudoAtom tmpPseudoAtom = new PseudoAtom();
+                                tmpPseudoAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, false);
+                                if (!(boolean) tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
+                                    int tmpAtomIndex = tmpBeginAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                                    IBond tmpNewBond = new Bond();
+                                    tmpNewBond.setOrder(IBond.Order.SINGLE);
+                                    tmpNewBond.setAtom(tmpPseudoAtom, 0);
+                                    for (IAtom tmpAtom: tmpRingFragmentationContainer.atoms()) {
+                                        if ((int) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
+                                            tmpNewBond.setAtom(tmpAtom, 1);
+                                            break;
+                                        }
+                                    }
+                                    tmpRingFragmentationContainer.addAtom(tmpPseudoAtom);
+                                    tmpRingFragmentationContainer.addBond(tmpNewBond);
+                                } else if (!( boolean) tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)){
+                                    int tmpAtomIndex = tmpEndAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                                    IBond tmpNewBond = new Bond();
+                                    tmpNewBond.setOrder(IBond.Order.SINGLE);
+                                    tmpNewBond.setAtom(tmpPseudoAtom, 0);
+                                    for (IAtom tmpAtom: tmpRingFragmentationContainer.atoms()) {
+                                        if ((int) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
+                                            tmpNewBond.setAtom(tmpAtom, 1);
+                                            break;
+                                        }
+                                    }
+                                    tmpRingFragmentationContainer.addAtom(tmpPseudoAtom);
+                                    tmpRingFragmentationContainer.addBond(tmpNewBond);
+                                }
                                 /*
                                 for (int tmpAtomCount = 0; tmpAtomCount < tmpRingFragmentationContainer.getAtomCount(); tmpAtomCount++) {
                                     IAtom tmpContainerAtom = tmpRingFragmentationContainer.getAtom(tmpAtomCount);
@@ -1394,13 +1424,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
                             }
                             System.out.println("ControlPoint Post conTertQuatRing");
-                            //ToDo: IMPORTANT! Here lies the problem, need to investigate what causes it
+                            //ToDo: IMPORTANT! Here lies a problem with extraction of neighbor bonds NOT to a ring, need to investigate what causes it
                             try {
                                 if (!(tmpIsBeginRing || tmpIsEndRing)) {
+                                    //ToDo: property=null problem may arise from deepCopyBond --> investigate
                                     tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                                 }
                             } catch (Exception e) {
-                                System.out.println("Problem in if(!(isBeginRing||isEndRing))");
+                                System.out.println("Problem in if(!(isBeginRing||isEndRing)) Exception: " + e.toString());
+                                System.out.println("Bond-MAP: " + tmpBond.getProperties());
+                                System.out.println("Begin-Map: " + tmpBeginAtom.getProperties());
+                                System.out.println("End-Map: " + tmpEndAtom.getProperties());
                             }
                             System.out.println("ControlPoint Post notRing");
                             /*
