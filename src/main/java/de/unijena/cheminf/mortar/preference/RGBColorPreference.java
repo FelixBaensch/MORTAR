@@ -384,9 +384,7 @@ public class RGBColorPreference extends BasePreference {
      * (Re-)instantiates a new RGBColorPreference object of version 1.0.0.0 from a line-based text file.
      */
     private void reloadVersion1000(BufferedReader aReader) throws IOException {
-        if (aReader == null) {
-            throw new IOException("Reader must not be 'null'!");
-        }
+        Objects.requireNonNull(aReader, "Reader must not be null");
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         String[] tmpColorComponents = aReader.readLine().split(":");
