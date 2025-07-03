@@ -83,7 +83,8 @@ import java.util.logging.Logger;
 /**
  * Controller class for the HistogramView.
  *
- * @author Betuel Sevindik, Jonas Schaub
+ * @author Betuel Sevindik
+ * @author Jonas Schaub
  * @version 1.0.1.0
  */
 public class HistogramViewController implements IViewToolController {
@@ -975,7 +976,7 @@ public class HistogramViewController implements IViewToolController {
                     this.imageZoomFactor,
                     this.imageWidth,
                     this.imageHeight,
-                    true,
+                    false,
                     true);
             anImageView.setImage(tmpImage);
         };

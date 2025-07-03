@@ -53,7 +53,8 @@ import java.util.regex.Pattern;
  * on the first few lines and some assumptions like the SMILES and ID/name columns should be the first two but can
  * be in both positions. Unsuitable for reaction SMILES or CxSMILES.
  *
- * @author Jonas Schaub, Samuel Behr
+ * @author Jonas Schaub
+ * @author Samuel Behr
  * @version 1.0.0.0
  */
 public class DynamicSMILESFileReader {

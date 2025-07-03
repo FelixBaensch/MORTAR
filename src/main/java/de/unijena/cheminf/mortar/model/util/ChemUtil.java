@@ -34,6 +34,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.interfaces.ISingleElectron;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
@@ -55,7 +56,8 @@ import java.util.logging.Logger;
 /**
  * Chemistry utility.
  *
- * @author Samuel Behr, Jonas Schaub
+ * @author Samuel Behr
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public final class ChemUtil {
@@ -80,24 +82,46 @@ public final class ChemUtil {
      * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
      * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
      * container. Aromaticity information is encoded in the returned SMILES string, if there is any given. Unique SMILES
-     * codes do NOT encode stereochemistry!
+     * codes do NOT encode stereochemistry by default! This can be turned on with the second parameter.
      *
      * @param anAtomContainer atom container the unique SMILES should be created of
+     * @param isStereoChemEncoded whether stereochemistry should be encoded
      * @return unique SMILES of the given atom container or 'null' if no creation was possible
      */
-    public static String createUniqueSmiles(IAtomContainer anAtomContainer) {
+    public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) {
+        return ChemUtil.createUniqueSmiles(anAtomContainer, isStereoChemEncoded, true);
+    }
+
+    /**
+     * Creates a unique SMILES string out of the given atom container or returns null, if the creation was not possible.
+     * If the SMILES could not be created in the first place, it is retried with a kekulized clone of the given atom
+     * container. Unique SMILES codes do NOT encode stereochemistry or aromaticity by default! This can be turned on
+     * with the parameters.
+     *
+     * @param anAtomContainer atom container the unique SMILES should be created of
+     * @param isStereoChemEncoded whether stereochemistry should be encoded
+     * @param isAromaticityEncoded whether aromaticity should be encoded
+     * @return unique SMILES of the given atom container or 'null' if no creation was possible
+     */
+    public static String createUniqueSmiles(IAtomContainer anAtomContainer, boolean isStereoChemEncoded, boolean isAromaticityEncoded) {
+        int tmpFlavor = SmiFlavor.Unique;
+        if (isAromaticityEncoded) {
+            tmpFlavor = tmpFlavor | SmiFlavor.UseAromaticSymbols;
+        }
+        if (isStereoChemEncoded && anAtomContainer.stereoElements().iterator().hasNext()) {
+            tmpFlavor = tmpFlavor | SmiFlavor.Stereo;
+        }
         String tmpSmiles = null;
-        SmilesGenerator tmpSmilesGen = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
         try {
             try {
-                tmpSmiles = tmpSmilesGen.create(anAtomContainer);
+                tmpSmiles = SmilesGenerator.create(anAtomContainer, tmpFlavor, new int[anAtomContainer.getAtomCount()]);
             } catch (CDKException anException) {
                 IAtomContainer tmpAtomContainer = anAtomContainer.clone();
                 Kekulization.kekulize(tmpAtomContainer);
-                tmpSmiles = tmpSmilesGen.create(tmpAtomContainer);
+                tmpSmiles = SmilesGenerator.create(tmpAtomContainer, tmpFlavor, new int[anAtomContainer.getAtomCount()]);
                 ChemUtil.LOGGER.log(Level.INFO, String.format("Kekulized molecule %s", anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
             }
-        } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException anException){
+        } catch (CDKException | NullPointerException | IllegalArgumentException | CloneNotSupportedException | ArrayIndexOutOfBoundsException anException){
             ChemUtil.LOGGER.log(Level.SEVERE, String.format("%s; molecule name: %s", anException.toString(), anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anException);
         }
         return tmpSmiles;
@@ -345,6 +369,56 @@ public final class ChemUtil {
                     + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), aNullPointerException);
              */
         }
+    }
+
+    /**
+     * Fixes radical atoms in a molecule by replacing the single electron with an implicit hydrogen atom.
+     * This method converts radical centers to closed-shell configurations by:
+     * <ol>
+     * <li>Increasing the valency of radical atoms by 1</li>
+     * <li>Increasing the formal neighbor count by 1</li>
+     * <li>Adding an implicit hydrogen to each radical center</li>
+     * <li>Removing all single electrons from the molecule</li>
+     * <li>Reperceiving atom types to ensure correct configuration</li>
+     * </ol>
+     * This process effectively caps each radical site with a hydrogen atom, resulting in
+     * a more stable molecular representation suitable for further processing.
+     * <br><br><b>Important note: expects atom types to be perceived beforehand!</b>
+     *
+     * @param aMolecule The molecule to process; will be modified in place
+     * @throws NullPointerException If the provided molecule is null
+     * @throws CDKException If atom type perception fails or other CDK operations encounter problems
+     */
+    public static void fixRadicals(IAtomContainer aMolecule) throws NullPointerException, CDKException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (aMolecule.isEmpty()) {
+            return;
+        }
+        if (aMolecule.getSingleElectronCount() > 0) {
+            //fix properties of the atoms that are radicals
+            for (ISingleElectron tmpSingleElectron : aMolecule.singleElectrons()) {
+                IAtom tmpAtom = tmpSingleElectron.getAtom();
+                //setting to null now, will be re-detected correctly below
+                tmpAtom.setHybridization(null);
+                tmpAtom.setValency(tmpAtom.getValency() + 1);
+                tmpAtom.setFormalNeighbourCount(tmpAtom.getFormalNeighbourCount() + 1);
+                Integer tmpHCount = tmpAtom.getImplicitHydrogenCount();
+                if (tmpHCount == null) {
+                    tmpHCount = 0;
+                }
+                tmpAtom.setImplicitHydrogenCount(tmpHCount + 1);
+            }
+            //remove all single electrons from the molecule
+            int tmpSingleElectronCount = aMolecule.getSingleElectronCount();
+            // the electron array is re-ordered after a removal, so we need to remove them in reverse order
+            for (int i = tmpSingleElectronCount - 1; i >= 0; i--) {
+                aMolecule.removeSingleElectron(i);
+            }
+            //needs to be redone now to set the correct atom types
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(aMolecule);
+            ChemUtil.LOGGER.log(Level.INFO, "{0}", String.format("Fixed %d radicals in molecule with name %s.",
+                    tmpSingleElectronCount, aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)));
+        } //else: do nothing
     }
     //</editor-fold>
 }

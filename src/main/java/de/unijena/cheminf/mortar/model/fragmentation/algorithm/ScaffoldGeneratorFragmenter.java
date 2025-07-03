@@ -1268,10 +1268,10 @@ public class ScaffoldGeneratorFragmenter implements IMoleculeFragmenter {
         Objects.requireNonNull(anOption, "Given option is null.");
         switch (anOption) {
             case ScaffoldGeneratorFragmenter.SmilesGeneratorOption.UNIQUE_WITH_STEREO:
-                this.smilesGeneratorInstance = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
+                this.smilesGeneratorInstance = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols | SmiFlavor.Stereo);
                 break;
             case ScaffoldGeneratorFragmenter.SmilesGeneratorOption.UNIQUE_WITHOUT_STEREO:
-                this.smilesGeneratorInstance = new SmilesGenerator(SmiFlavor.Unique);
+                this.smilesGeneratorInstance = new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols);
                 break;
             default:
                 throw new IllegalArgumentException("Undefined SMILES generator option.");

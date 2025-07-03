@@ -43,7 +43,8 @@ import java.util.logging.Logger;
 /**
  * Model class for fragment data.
  *
- * @author Felix Baensch, Samuel Behr
+ * @author Felix Baensch
+ * @author Samuel Behr
  * @version 1.0.0.0
  */
 public class FragmentDataModel extends MoleculeDataModel {
@@ -110,10 +111,11 @@ public class FragmentDataModel extends MoleculeDataModel {
      * Constructor, sets absolute frequency to 0. Retains the given data as atom container.
      *
      * @param anAtomContainer AtomContainer of the molecule
+     * @param isStereoChemEncoded whether stereochemistry should be retained in the unique SMILES code encoding the structure
      * @throws NullPointerException if given SMILES string is null
      */
-    public FragmentDataModel(IAtomContainer anAtomContainer) throws NullPointerException {
-        super(anAtomContainer);
+    public FragmentDataModel(IAtomContainer anAtomContainer, boolean isStereoChemEncoded) throws NullPointerException {
+        super(anAtomContainer, isStereoChemEncoded);
         this.absoluteFrequency = new AtomicInteger(0);
         this.absolutePercentage = 0.;
         this.moleculeFrequency = new AtomicInteger(0);
