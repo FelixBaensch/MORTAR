@@ -81,7 +81,8 @@ import java.util.regex.Pattern;
 /**
  * GUI utility.
  *
- * @author Jonas Schaub, Felix Baensch
+ * @author Jonas Schaub
+ * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class GuiUtil {

@@ -51,7 +51,8 @@ import javafx.stage.Stage;
 /**
  * View for the pipeline settings
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class PipelineSettingsView extends AnchorPane {

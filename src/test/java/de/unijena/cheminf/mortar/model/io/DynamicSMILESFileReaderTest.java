@@ -39,7 +39,8 @@ import java.nio.file.Paths;
 /**
  * Test class for the DynamicSMILESFileReader class.
  *
- * @author Samuel Behr, Jonas Schaub
+ * @author Samuel Behr
+ * @author Jonas Schaub
  * @version 2.0.0.0
  */
 public class DynamicSMILESFileReaderTest {

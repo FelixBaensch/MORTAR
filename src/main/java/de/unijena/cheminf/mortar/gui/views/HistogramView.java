@@ -52,7 +52,8 @@ import javafx.scene.paint.Color;
 /**
  * View for the frequency histogram.
  *
- * @author Betuel Sevindik, Jonas Schaub
+ * @author Betuel Sevindik
+ * @author Jonas Schaub
  * @version 1.0.1.0
  */
 public class HistogramView extends AnchorPane {

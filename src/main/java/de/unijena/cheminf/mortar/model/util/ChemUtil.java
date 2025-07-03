@@ -56,7 +56,8 @@ import java.util.logging.Logger;
 /**
  * Chemistry utility.
  *
- * @author Samuel Behr, Jonas Schaub
+ * @author Samuel Behr
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public final class ChemUtil {

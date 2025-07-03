@@ -37,7 +37,8 @@ import javafx.scene.layout.FlowPane;
 /**
  * StatusBar to show status of the application and progress of a running task.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class StatusBar extends FlowPane {

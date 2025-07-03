@@ -41,7 +41,9 @@ import java.util.logging.Logger;
 /**
  * File utility.
  *
- * @author Achim Zielesny, Jonas Schaub, Felix Baensch
+ * @author Achim Zielesny
+ * @author Jonas Schaub
+ * @author Felix Baensch
  * @version 1.0.0.0
  */
 public final class FileUtil {

@@ -30,7 +30,8 @@ import java.util.regex.Pattern;
 /**
  * Basic definitions of the model or application.
  *
- * @author Jonas Schaub, Achim Zielesny
+ * @author Jonas Schaub
+ * @author Achim Zielesny
  * @version 1.0.0.0
  */
 public final class BasicDefinitions {
