@@ -86,7 +86,10 @@ import java.util.logging.Logger;
 /**
  * Exporter.
  *
- * @author Betuel Sevindik, Samuel Behr, Felix Baensch, Jonas Schaub
+ * @author Betuel Sevindik
+ * @author Samuel Behr
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class Exporter {

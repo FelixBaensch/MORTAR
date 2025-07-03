@@ -36,7 +36,8 @@ import java.util.logging.Logger;
 /**
  * Miscellaneous utilities.
  *
- * @author Achim Zielesny, Jonas Schaub
+ * @author Achim Zielesny
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public final class MiscUtil {

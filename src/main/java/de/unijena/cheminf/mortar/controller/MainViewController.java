@@ -101,7 +101,8 @@ import java.util.stream.Collectors;
 /**
  * MainViewController controls  {@link MainView}.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class MainViewController {

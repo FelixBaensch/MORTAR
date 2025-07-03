@@ -43,7 +43,8 @@ import java.util.logging.Logger;
 /**
  * Model class for fragment data.
  *
- * @author Felix Baensch, Samuel Behr
+ * @author Felix Baensch
+ * @author Samuel Behr
  * @version 1.0.0.0
  */
 public class FragmentDataModel extends MoleculeDataModel {

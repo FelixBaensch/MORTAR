@@ -77,7 +77,8 @@ import java.util.logging.Logger;
 /**
  * Service class for fragmentation, single and in a pipeline.
  *
- * @author Jonas Schaub, Felix Baensch
+ * @author Jonas Schaub
+ * @author Felix Baensch
  * @version 1.0.0.1
  */
 public class FragmentationService {

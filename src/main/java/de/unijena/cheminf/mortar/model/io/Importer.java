@@ -80,7 +80,9 @@ import java.util.logging.Logger;
 /**
  * Importer.
  *
- * @author Felix Baensch, Samuel Behr, Jonas Schaub
+ * @author Felix Baensch
+ * @author Samuel Behr
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class Importer {
@@ -461,7 +463,8 @@ public class Importer {
      * @param aFile a SMILES codes-containing *.txt, *.csv, *.tsv, or *.smi file
      * @return the imported molecules in an IAtomContainerSet
      * @throws IOException if the given file does not fit to the expected format of a SMILES file
-     * @author Samuel Behr, Jonas Schaub
+     * @author Samuel Behr
+     * @author Jonas Schaub
      */
     private IAtomContainerSet importSMILESFile(File aFile) throws IOException {
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(aFile);

@@ -47,7 +47,8 @@ import java.util.logging.Logger;
  * Thread class to run the fragmentation in a new parallel thread. This thread itself distributes the molecules onto
  * multiple parallel tasks to speed up the fragmentation.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 @Deprecated
