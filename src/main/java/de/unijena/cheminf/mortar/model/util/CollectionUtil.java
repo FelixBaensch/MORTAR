@@ -34,7 +34,8 @@ import java.util.List;
 /**
  * Util class for collections.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.2.0
  */
 public final class CollectionUtil {

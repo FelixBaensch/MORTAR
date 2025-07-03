@@ -1,0 +1,175 @@
+
+     RDKit          2D
+
+ 18 20  0  0  0  0  0  0  0  0999 V2000
+    6.1816    0.6744    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7889    1.2316    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6101    0.3040    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2174    0.8612    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0385   -0.0664    0.0000 C   0  0  0  0  0  3  0  0  0  0  0  0
+    1.2524   -1.5511    0.0000 C   0  0  0  0  0  3  0  0  0  0  0  0
+    2.6451   -2.1082    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0735   -2.4786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3191   -1.9215    0.0000 C   0  0  0  0  0  3  0  0  0  0  0  0
+   -2.6651   -2.5837    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7108   -1.5082    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0111   -0.1814    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5330   -0.4368    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3542    0.4907    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8603    1.9100    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3036    2.3185    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6714    3.7727    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3790    1.2728    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  7  1  0
+  6  8  1  0
+  8  9  1  0
+  9 10  1  0
+ 10 11  1  0
+ 11 12  1  0
+ 12 13  2  0
+ 13 14  1  0
+ 14 15  2  0
+ 15 16  1  0
+ 16 17  2  0
+ 16 18  1  0
+ 14  5  1  0
+ 13  9  1  0
+ 18 12  1  0
+M  RAD  3   5   2   6   2   9   2
+M  END
+>  <identifier>  (553) 
+CNP0571280.0
+
+>  <canonical_smiles>  (553) 
+CCCC[C]1[C](C)C[C]2CCC3=C2C1=NC(=N)N3
+
+>  <standard_inchi>  (553) 
+InChI=1S/C15H20N3/c1-3-4-5-11-9(2)8-10-6-7-12-13(10)14(11)18-15(16)17-12/h3-8H2,1-2H3,(H2,16,17,18)
+
+>  <standard_inchi_key>  (553) 
+ARNBVSOOJTUWNE-UHFFFAOYSA-N
+
+>  <name>  (553) 
+Mirabilin B
+
+>  <iupac_name>  (553) 
+nan
+
+>  <annotation_level>  (553) 
+5
+
+>  <total_atom_count>  (553) 
+38
+
+>  <heavy_atom_count>  (553) 
+18
+
+>  <molecular_weight>  (553) 
+242.35
+
+>  <exact_molecular_weight>  (553) 
+242.16572
+
+>  <molecular_formula>  (553) 
+C15H20N3
+
+>  <alogp>  (553) 
+2.87
+
+>  <topological_polar_surface_area>  (553) 
+52.53
+
+>  <rotatable_bond_count>  (553) 
+3
+
+>  <hydrogen_bond_acceptors>  (553) 
+2
+
+>  <hydrogen_bond_donors>  (553) 
+2
+
+>  <hydrogen_bond_acceptors_lipinski>  (553) 
+2
+
+>  <hydrogen_bond_donors_lipinski>  (553) 
+2
+
+>  <lipinski_rule_of_five_violations>  (553) 
+0
+
+>  <aromatic_rings_count>  (553) 
+1
+
+>  <qed_drug_likeliness>  (553) 
+0.84
+
+>  <formal_charge>  (553) 
+0
+
+>  <fractioncsp3>  (553) 
+0.53
+
+>  <number_of_minimal_rings>  (553) 
+3
+
+>  <van_der_walls_volume>  (553) 
+240.46
+
+>  <contains_sugar>  (553) 
+False
+
+>  <contains_ring_sugars>  (553) 
+False
+
+>  <contains_linear_sugars>  (553) 
+False
+
+>  <murcko_framework>  (553) 
+N1=C2C3=C(NC1)CCC3CCC2
+
+>  <np_likeness>  (553) 
+-0.07
+
+>  <chemical_class>  (553) 
+Diazanaphthalenes
+
+>  <chemical_sub_class>  (553) 
+Benzodiazines
+
+>  <chemical_super_class>  (553) 
+Organoheterocyclic compounds
+
+>  <direct_parent_classification>  (553) 
+Quinazolines
+
+>  <np_classifier_pathway>  (553) 
+Alkaloids
+
+>  <np_classifier_superclass>  (553) 
+Tryptophan alkaloids
+
+>  <np_classifier_class>  (553) 
+nan
+
+>  <np_classifier_is_glycoside>  (553) 
+False
+
+>  <organisms>  (553) 
+Monanchora arbuscula
+
+>  <collections>  (553) 
+BIOFACQUIM
+
+>  <dois>  (553) 
+10.3390/molecules28020606
+
+>  <synonyms>  (553) 
+Mirabilin B
+
+>  <cas>  (553) 
+nan

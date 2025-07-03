@@ -86,7 +86,8 @@ import java.util.logging.Logger;
 /**
  * Controller class of the overview view.
  *
- * @author Samuel Behr, Jonas Schaub
+ * @author Samuel Behr
+ * @author Jonas Schaub
  * @version 1.0.1.0
  */
 public class OverviewViewController implements IViewToolController {
@@ -754,7 +755,7 @@ public class OverviewViewController implements IViewToolController {
                                 tmpFinalContentNode = new ImageView(
                                         DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                 tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                tmpImageHeight, true, true
+                                                tmpImageHeight, false, true
                                         )
                                 );
                             } else {
@@ -763,7 +764,7 @@ public class OverviewViewController implements IViewToolController {
                                         new ImageView(
                                                 DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
                                                         tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                        tmpImageHeight, true, false
+                                                        tmpImageHeight, false, false
                                                 )
                                         )
                                 );
