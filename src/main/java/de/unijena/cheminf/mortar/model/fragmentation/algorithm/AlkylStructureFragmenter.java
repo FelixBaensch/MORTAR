@@ -1071,6 +1071,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //ToDo: split into separate methods (returning one atomcontainer, could make above more viable)
         //ToDo: separate tert/quat atom into method
         //ToDo: check if neighbor ring detection in neighbor extract possible
+        //ToDo: deep copy for tert/quat atoms in isolation routine while separation from rings is true
         IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();
@@ -1106,7 +1107,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             }
                         }
                         else {
-                            //ToDo: deep copy
+                            //add deep copy here
                             tmpTertQuatCarbonContainer.addAtom(tmpAtom);
                             for (int i = 0; i < 3; i++) {
                                 PseudoAtom tmpPseudoAtom = new PseudoAtom();
@@ -1152,7 +1153,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             }
                         }
                         else {
-                            //ToDo: deep copy
+                            //add deep copy here
                             tmpTertQuatCarbonContainer.addAtom(tmpAtom);
                             for (int i = 0; i < 4; i++) {
                                 PseudoAtom tmpPseudoAtom = new PseudoAtom();
@@ -1321,7 +1322,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
                     if (this.separateTertQuatCarbonFromRingSetting.get()) {
                         System.out.println("ControlPoint separate=true");
-                        //ToDo: quaternary/tertiary representation with pseudoatom
                         if (!this.isolateTertQuatCarbonSetting.get()) {
                             System.out.println("ControlPoint Pre conTertQuatRing");
                             if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)) {
@@ -1424,17 +1424,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
                             }
                             System.out.println("ControlPoint Post conTertQuatRing");
-                            //ToDo: IMPORTANT! Here lies a problem with extraction of neighbor bonds NOT to a ring, need to investigate what causes it
-                            try {
-                                if (!(tmpIsBeginRing || tmpIsEndRing)) {
-                                    //ToDo: property=null problem may arise from deepCopyBond --> investigate
-                                    tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
-                                }
-                            } catch (Exception e) {
-                                System.out.println("Problem in if(!(isBeginRing||isEndRing)) Exception: " + e.toString());
-                                System.out.println("Bond-MAP: " + tmpBond.getProperties());
-                                System.out.println("Begin-Map: " + tmpBeginAtom.getProperties());
-                                System.out.println("End-Map: " + tmpEndAtom.getProperties());
+                            if (!(tmpIsBeginRing || tmpIsEndRing)) {
+                                System.out.println("in IsBegin/EndRing");
+                                tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             }
                             System.out.println("ControlPoint Post notRing");
                             /*
@@ -1723,13 +1715,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         if ((tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) != null)) {
             int tmpEndAtomIndex = aBondToCopy.getEnd().getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
             for (IAtom tmpAtom : aBondIncludingAtomContainer.atoms()) {
+                if (tmpAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == null) {
+                    continue;
+                }
                 if ((int) tmpAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpBeginAtomIndex) {
                     tmpNewBond.setAtom(tmpAtom, 0);
                 } else if ((int) tmpAtom.getProperty(INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpEndAtomIndex) {
                     tmpNewBond.setAtom(tmpAtom, 1);
                 }
             }
-        } else {
+        }
+        else {
             throw new IllegalArgumentException();
         }
         return tmpNewBond;
