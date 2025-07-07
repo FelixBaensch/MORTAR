@@ -37,6 +37,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
+import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
@@ -45,6 +46,8 @@ import org.openscience.cdk.smiles.SmilesParser;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -587,6 +590,43 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertEquals(tmpPreFragmentationCount, tmpPostFragmentationCount);
     }
     //</editor-fold>
+
+    //<editor-fold desc="Inner Class 'Molecular Arrays'">
+
+    //ToDo: implement check for bonds
+    @Test
+    public void fillMolecularArraysTest() throws InvalidSmilesException, NoSuchFieldException, IllegalAccessException {
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpParser.parseSmiles("CCCCCCCCCCCC");
+        MolecularArrays refMolecularArrays = new MolecularArrays(tmpMolecule);
+        //reflection is used to manually insert/inflict a null value
+        Field atomsField = AtomContainer.class.getDeclaredField("atoms");
+        Field bondsField = AtomContainer.class.getDeclaredField("bonds");
+        atomsField.setAccessible(true);
+        bondsField.setAccessible(true);
+        IBond[] bonds = new IBond[11];
+        //"getter" for BaseAtomRef
+        Object atoms = atomsField.get(tmpMolecule);
+        Object[] newAtoms = (Object[]) Array.newInstance(atoms.getClass().getComponentType(), Array.getLength(atoms));
+        //fill newAtoms with actual atoms
+        for (int i = 0; i < 12; i++) {
+               newAtoms[i] = tmpMolecule.getAtom(i);
+               if (i < 11) {
+                   bonds[i] = tmpMolecule.getBond(i);
+               }
+        }
+        //set position 5 null
+        newAtoms[5] = null;
+        bonds[5] = null;
+        //insert the fields back into tmpMolecule
+        atomsField.set(tmpMolecule, newAtoms);
+        bondsField.set(tmpMolecule, bonds);
+        //test for expected discrepancy
+        MolecularArrays testMolecularArrays = new MolecularArrays(tmpMolecule);
+        Assertions.assertNotEquals(testMolecularArrays.getAtomArray().length, refMolecularArrays.getAtomArray().length);
+        Assertions.assertNotEquals(testMolecularArrays.getBondArray().length, refMolecularArrays.getBondArray().length);
+    }
+    //</editor-fold
 
     //<editor-fold desc="Private Utility Methods">
     /**
