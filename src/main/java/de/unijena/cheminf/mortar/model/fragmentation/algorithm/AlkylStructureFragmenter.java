@@ -396,8 +396,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.chemObjectBuilderInstance = DefaultChemObjectBuilder.getInstance();
     }
     //</editor-fold>
-
-
     //<editor-fold desc="Public Properties Get">
 
     @Override
@@ -1125,6 +1123,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     IBond tmpDoubleBond;
                     for (IAtom tmpArrayAtom: tmpAtomArray) {
                         if (tmpArrayAtom != tmpAtom) {
+                            //ToDo: if possible iterate over atom bonds
                             //try for successful bond
                             try {
                                 tmpDoubleBond = tmpAtom.getBond(tmpArrayAtom);
@@ -1484,10 +1483,33 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpNewAtom.setAtomicNumber(anAtomToCopy.getAtomicNumber());
         tmpNewAtom.setImplicitHydrogenCount(anAtomToCopy.getImplicitHydrogenCount());
         tmpNewAtom.setCharge(anAtomToCopy.getCharge());
-        //ToDo: deepcopy properties, use iterator
         //IMPORTANT! Make sure to add new internal properties below!
-        ArrayList tmpPropertiesArrayList = new ArrayList<>(9);
-        tmpNewAtom.setProperties(anAtomToCopy.getProperties());
+        //<editor-fold desc="Property Deep Copy">
+        //to ensure a true deep copy the boolean and integer property values are separated
+        int tmpAtomIndexCopy = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+        //boolean values are hardcoded into an array as copies of the original values
+        boolean[] tmpBooleanPropertiesArray = new boolean[8];
+        tmpBooleanPropertiesArray[0] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+        tmpBooleanPropertiesArray[1] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+        tmpBooleanPropertiesArray[2] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
+        tmpBooleanPropertiesArray[3] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
+        tmpBooleanPropertiesArray[4] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY);
+        tmpBooleanPropertiesArray[5] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY);
+        tmpBooleanPropertiesArray[6] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY);
+        tmpBooleanPropertiesArray[7] = anAtomToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
+        //setting the 'old' values as 'new' values in copy
+        //atom index integer
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, tmpAtomIndexCopy);
+        //boolean marker values
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, tmpBooleanPropertiesArray[0]);
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, tmpBooleanPropertiesArray[1]);
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, tmpBooleanPropertiesArray[2]);
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, tmpBooleanPropertiesArray[3]);
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, tmpBooleanPropertiesArray[4]);
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, tmpBooleanPropertiesArray[5]);
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY, tmpBooleanPropertiesArray[6]);
+        tmpNewAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, tmpBooleanPropertiesArray[7]);
+        //</editor-fold>
         return tmpNewAtom;
     }
     /**
@@ -1506,10 +1528,29 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     protected IBond deepCopyBond(IBond aBondToCopy, IAtomContainer aBondIncludingAtomContainer) throws IllegalArgumentException{
         IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
         tmpNewBond.setOrder(aBondToCopy.getOrder());
-        //ToDo: deepcopy properties, use iterator
         //IMPORTANT! Make sure to add new internal properties below!
-        ArrayList tmpPropertiesArrayList = new ArrayList<>(7);
-        tmpNewBond.setProperties(aBondToCopy.getProperties());
+        //<editor-fold desc="Property Deep Copy">
+        //to ensure a true deep copy the boolean and integer property values are separated
+        int tmpBondIndexCopy = aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+        //boolean values are hardcoded into an array as copies of the original values
+        boolean[] tmpBooleanPropertiesArray = new boolean[6];
+        tmpBooleanPropertiesArray[0] = aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+        tmpBooleanPropertiesArray[1] = aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+        tmpBooleanPropertiesArray[2] = aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY);
+        tmpBooleanPropertiesArray[3] = aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY);
+        tmpBooleanPropertiesArray[4] = aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY);
+        tmpBooleanPropertiesArray[5] = aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
+        //setting the 'old' values as 'new' values in copy
+        //bond index integer
+        tmpNewBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, tmpBondIndexCopy);
+        //boolean marker values
+        tmpNewBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, tmpBooleanPropertiesArray[0]);
+        tmpNewBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, tmpBooleanPropertiesArray[1]);
+        tmpNewBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, tmpBooleanPropertiesArray[2]);
+        tmpNewBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, tmpBooleanPropertiesArray[3]);
+        tmpNewBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY, tmpBooleanPropertiesArray[4]);
+        tmpNewBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, tmpBooleanPropertiesArray[5]);
+        //</editor-fold>
         IAtom tmpBeginAtom = aBondToCopy.getBegin();
         int tmpBeginAtomIndex = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
         if ((tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) != null)) {
