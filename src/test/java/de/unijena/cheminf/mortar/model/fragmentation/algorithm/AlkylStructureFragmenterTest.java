@@ -346,6 +346,23 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
+    //ToDo: once extraction is fixed
+    @Disabled //until allene/conjugated extraction is fixed
+    @Test
+    public void basicTest08() throws InvalidSmilesException, CloneNotSupportedException {
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC=C=CC");
+        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false,
+                false, true);
+        List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        System.out.println(tmpFragmentsACList);
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("C=C=C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+    }
     /**
      * Method testing correct fragmentation with a specific example molecule.
      * This test focuses on extraction of ring systems, tested with a derivative of the molecule Hapalindole B after

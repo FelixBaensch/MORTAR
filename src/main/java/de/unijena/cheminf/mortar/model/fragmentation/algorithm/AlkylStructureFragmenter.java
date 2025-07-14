@@ -1007,6 +1007,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //ToDo: split into separate methods (returning one atomcontainer, could make above more viable)
         //ToDo: separate tert/quat atom into method
         //ToDo: check if neighbor ring detection in neighbor extract possible
+        //ToDo: fix allene extraction
         IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();
@@ -1060,20 +1061,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     }
                 }
-                //checks for part of double/triple bond mark
+                //checks for part of double bond
                 else if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
-                    //extracts non-cyclic double bonds connected with a ring structure
-                    IBond tmpDoubleBond;
+                    //extracts non-cyclic double bonds possibly connected to a ring structure
                     for (IAtom tmpArrayAtom: tmpAtomArray) {
                         if (tmpArrayAtom != tmpAtom) {
-                            //ToDo: if possible iterate over atom bonds
-                            //try for successful bond
-                            try {
-                                tmpDoubleBond = tmpAtom.getBond(tmpArrayAtom);
-                                //check if bond is double bond
-                                if ((boolean) tmpDoubleBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
-                                    IAtom tmpBeginAtom = tmpDoubleBond.getBegin();
-                                    IAtom tmpEndAtom = tmpDoubleBond.getEnd();
+                            for (IBond tmpAtomBond : tmpArrayAtom.bonds()) {
+                                //check for double bond
+                                if ((boolean) tmpAtomBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
+                                    IAtom tmpBeginAtom = tmpAtomBond.getBegin();
+                                    IAtom tmpEndAtom = tmpAtomBond.getEnd();
                                     //check if neither begin nor end atom are part of a ring structure
                                     if (!(boolean) tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
                                             && !(boolean) tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
@@ -1093,12 +1090,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                         }
                                     }
                                 }
-                            } catch (Exception atomNotInBondException){
-                                continue;
                             }
                         }
                     }
-                    //test if algorithmic of double bond should be applied here too
+                //checks for marker | extracts triple bond
                 } else if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
                     tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
                 }
@@ -1120,8 +1115,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             //only ring and conj pi system atoms, sets bond property to determine connection between tert/quat atom and ring structure
             } else {
-                if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)
-                ) {
+                //ToDo: allenes are extracted as conjugated!
+                if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
                     for (IAtom tmpNeighborAtom : tmpAtom.neighbors()) {
                         if (!(boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
                                 && ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)
@@ -1155,9 +1150,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //sets "connection ring-tertiary/ring-quaternary" property for bonds
             if ((boolean) tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)
                     && (boolean) tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)) {
-                if (!tmpIsBeginRing && (tmpIsBeginTertiary || tmpIsBeginQuaternary)) {
-                    tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                } else if (!tmpIsEndRing && (tmpIsEndTertiary || tmpIsEndQuaternary)) {
+                if ((!tmpIsBeginRing && (tmpIsBeginTertiary || tmpIsBeginQuaternary)) || (!tmpIsEndRing && (tmpIsEndTertiary || tmpIsEndQuaternary))) {
                     tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
                 }
             }
@@ -1199,8 +1192,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
                 //checks for neighbor mark
                 else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
+                    //checks for setting to separate tertiary/quaternary carbons from ring structures
                     if (this.separateTertQuatCarbonFromRingSetting.get()) {
+                        //checks for setting to isolate tertiary/quaternary carbons from their neighbor atoms
                         if (!this.isolateTertQuatCarbonSetting.get()) {
+                            //checks if bond is connection between tert/quat carbon and ring structure
+                            //adds pseudo atom to indicate bond to ring
                             if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)) {
                                 PseudoAtom tmpPseudoAtom = new PseudoAtom();
                                 tmpPseudoAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, false);
@@ -1242,7 +1239,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         boolean tmpIsBondConnectedTertQuatRing = tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
                         boolean tmpIsBeginConnectedTertQuatRing = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
                         boolean tmpIsEndConnectedTertQuatRing = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
-                        //skips over bonds between isolated rings and rings and linear chains
+                        //skips over bonds between isolated rings / rings and linear chains
                         if ((tmpIsBeginRing && tmpIsEndRing) || (tmpIsBeginRing || tmpIsEndRing) && !tmpIsBondConnectedTertQuatRing) {
                             continue;
                         }
