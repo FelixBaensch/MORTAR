@@ -1007,7 +1007,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //ToDo: split into separate methods (returning one atomcontainer, could make above more viable)
         //ToDo: separate tert/quat atom into method
         //ToDo: check if neighbor ring detection in neighbor extract possible
-        //ToDo: deep copy for tert/quat atoms in isolation routine while separation from rings is true
         IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();
@@ -1019,94 +1018,38 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //checks atom if not part of ring or conjugated pi system
             if (!((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
                     || (boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY))) {
-                //Checks for tertiary mark
-                if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
-                    //ToDo: Revisit. Seems like duplication can be reduced. Counts for tertiary as well as quaternary below
+                //Checks for tertiary or quaternary mark
+                if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)
+                        || (boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
                     if (this.isolateTertQuatCarbonSetting.get()) {
                         if (!this.separateTertQuatCarbonFromRingSetting.get()) {
                             //checks for connected ring atom in neighbors
-                            for (IAtom tmpNeighborAtom: tmpAtom.neighbors()) {
+                            for (IAtom tmpNeighborAtom : tmpAtom.neighbors()) {
                                 if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
                                     tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
                                     tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                                     continue atomIteration;
                                 }
                             }
-                            //technically this and for-loop in else are the same
-                            IAtomContainer tmpContainer = this.chemObjectBuilderInstance.newAtomContainer();
-                            tmpContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                            for (int i = 0; i < 3; i++) {
-                                tmpContainer.addAtom(new PseudoAtom());
-                                IBond tmpBond = this.chemObjectBuilderInstance.newBond();
-                                tmpBond.setOrder(IBond.Order.SINGLE);
-                                tmpContainer.addBond(this.deepCopyBond(tmpBond, tmpContainer.getAtom(0), tmpContainer.getAtom(i + 1)));
-                                tmpTertQuatCarbonContainer.add(tmpContainer);
-                            }
                         }
-                        else {
-                            //technically the same as for-loop above
-                            IAtomContainer tmpContainer = this.chemObjectBuilderInstance.newAtomContainer();
-                            tmpContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                            for (int i = 0; i < 3; i++) {
-                                tmpContainer.addAtom(new PseudoAtom());
-                                IBond tmpBond = new Bond();
-                                tmpBond.setOrder(IBond.Order.SINGLE);
-                                tmpBond.setAtom(tmpContainer.getAtom(0), 0);
-                                tmpBond.setAtom(tmpContainer.getAtom(i+1), 1);
-                                //deep copy not needed as referenced bond is new and has no connection to original molecule
-                                tmpContainer.addBond(tmpBond);
+                        IAtomContainer tmpContainer = this.chemObjectBuilderInstance.newAtomContainer();
+                        tmpContainer.addAtom(this.deepCopyAtom(tmpAtom));
+                        //adds pseudo atoms with bonds depending on carbon configuration (tertiary/quaternary)
+                        for (int i = 0; i < 4; i++) {
+                            if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY) && i == 3) {
+                                break ;
                             }
-                            tmpTertQuatCarbonContainer.add(tmpContainer);
+                            tmpContainer.addAtom(new PseudoAtom());
+                            IBond tmpBond = new Bond();
+                            tmpBond.setOrder(IBond.Order.SINGLE);
+                            tmpBond.setAtom(tmpContainer.getAtom(0), 0);
+                            tmpBond.setAtom(tmpContainer.getAtom(i+1), 1);
+                            //deep copy not needed as referenced bond is new and has no connection to original molecule
+                            tmpContainer.addBond(tmpBond);
                         }
-                    //tertiary carbons are added to ensure correct interaction with other substructures, neighbor atoms added later
-                    } else {
-                        //checks for connected ring atom in neighbors
-                        for (IAtom tmpNeighborAtom : tmpAtom.neighbors()) {
-                            if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
-                                tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                            }
-                        }
-                        tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                    }
-                //checks for quaternary mark
-                } else if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY)) {
-                    if (this.isolateTertQuatCarbonSetting.get()) {
-                        if (!this.separateTertQuatCarbonFromRingSetting.get()) {
-                            //checks for connected ring atom in neighbors
-                            for (IAtom tmpNeighborAtom: tmpAtom.neighbors()) {
-                                if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
-                                    tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
-                                    tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                                    continue atomIteration;
-                                }
-                            }
-                            //technically the same as for-loop in else below
-                            IAtomContainer tmpContainer = this.chemObjectBuilderInstance.newAtomContainer();
-                            tmpContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                            for (int i = 0; i < 4; i++) {
-                                tmpContainer.addAtom(new PseudoAtom());
-                                IBond tmpBond = this.chemObjectBuilderInstance.newBond();
-                                tmpBond.setOrder(IBond.Order.SINGLE);
-                                tmpContainer.addBond(this.deepCopyBond(tmpBond, tmpContainer.getAtom(0), tmpContainer.getAtom(i + 1)));
-                                tmpTertQuatCarbonContainer.add(tmpContainer);
-                            }
-                        }
-                        else {
-                            //technically the same as for-loop above
-                            IAtomContainer tmpContainer = this.chemObjectBuilderInstance.newAtomContainer();
-                            tmpContainer.addAtom(this.deepCopyAtom(tmpAtom));
-                            for (int i = 0; i < 4; i++) {
-                                tmpContainer.addAtom(new PseudoAtom());
-                                IBond tmpBond = new Bond();
-                                tmpBond.setOrder(IBond.Order.SINGLE);
-                                tmpBond.setAtom(tmpContainer.getAtom(0), 0);
-                                tmpBond.setAtom(tmpContainer.getAtom(i+1), 1);
-                                //deep copy not needed as referenced bond is new and has no connection to original molecule
-                                tmpContainer.addBond(tmpBond);
-                            }
-                            tmpTertQuatCarbonContainer.add(tmpContainer);
-                        }
-                    //quaternary carbons are added to ensure correct interaction with other substructures, neighbor atoms added later
+                        tmpTertQuatCarbonContainer.add(tmpContainer);
+                    //tertiary/quaternary carbons are added to ensure correct interaction with other substructures,
+                        // neighbor atoms added later
                     } else {
                         //checks for connected ring atom in neighbors
                         for (IAtom tmpNeighborAtom : tmpAtom.neighbors()) {
@@ -1569,23 +1512,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         else {
             throw new IllegalArgumentException("Deep copy of bond not possible. No 'ASF.ATOM_INDEX' value was found.");
         }
-        return tmpNewBond;
-    }
-
-    /**
-     * Method to create deep copy of a given bond, with the respective atoms given as parameters.
-     *
-     * @param aBondToCopy IBond instance to create a deep copy of
-     * @param aBondBeginAtom Begin atom of bond to deep copy
-     * @param aBondEndAtom End atom of bond to deep copy
-     * @return New IBond instance with properties of given bond, therefore a deep copy
-     */
-    protected IBond deepCopyBond(IBond aBondToCopy, IAtom aBondBeginAtom, IAtom aBondEndAtom){
-        IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
-        tmpNewBond.setOrder(aBondToCopy.getOrder());
-        tmpNewBond.setProperties(aBondToCopy.getProperties());
-        tmpNewBond.setAtom(aBondBeginAtom, 0);
-        tmpNewBond.setAtom(aBondEndAtom, 1);
         return tmpNewBond;
     }
     //</editor-fold>
