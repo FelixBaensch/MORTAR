@@ -251,10 +251,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //<editor-fold desc="Private Class Variables">
 
     /**
-     * A variable to quickly disable certain checks in fragmentation steps (i.e. chemical formula) for easier debugging.
-     */
-    private final boolean ASFDebugBoolean = false;
-    /**
      * A constant property that has a fragment hydrogen saturation setting.
      */
     private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
@@ -711,6 +707,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpPreFragmentationAtomCount++;
             }
         }
+        //ToDo: put into fine debug
         AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
@@ -738,19 +735,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
             }
+            //ToDo: Put into fine debug
             AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
-            if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount && !this.ASFDebugBoolean) {
+            if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount) {
                 AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(LOGGER_WARNING_STRING_FORMAT,
                         "Chemical Formula Check", tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                         "Chemical formula was not constant!"));
             }
             if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
-                IAtomContainerSet tmpSaturatedSet = this.saturateWithImplicitHydrogen(tmpFragmentSet);
-                List<IAtomContainer> tmpSaturatedList = new ArrayList<>(tmpSaturatedSet.getAtomContainerCount());
-                for (IAtomContainer tmpReturnAC: tmpSaturatedSet.atomContainers()) {
-                    tmpSaturatedList.add(tmpReturnAC);
-                }
-                return tmpSaturatedList;
+                tmpFragmentSet = this.saturateWithImplicitHydrogen(tmpFragmentSet);
             }
             ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
@@ -939,6 +932,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //logger used only for debug purpose
             AlkylStructureFragmenter.LOGGER.log(Level.INFO, System.currentTimeMillis() + " start sD, AC size: " + anAtomContainer.getAtomCount() + ", " + anAtomContainer.getBondCount());
             if (!anAtomContainer.isEmpty()) {
+                //ToDo: Investigate which and where atoms are going missing -> changes to tertiary/quaternary extraction responsible?
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
                     IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
                     for (IAtomContainer tmpContainer : tmpContainerSet.atomContainers()) {

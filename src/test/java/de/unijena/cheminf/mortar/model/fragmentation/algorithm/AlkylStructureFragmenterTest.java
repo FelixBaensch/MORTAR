@@ -347,6 +347,12 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
     //ToDo: once extraction is fixed
+    /**
+     * Method to test correct extraction of allene structures.
+     *
+     * @throws InvalidSmilesException if SMILES cannot be parsed
+     * @throws CloneNotSupportedException if cloning of the atomcontainer in fragmentation is not supported
+     */
     @Disabled //until allene/conjugated extraction is fixed
     @Test
     public void basicTest08() throws InvalidSmilesException, CloneNotSupportedException {
@@ -448,7 +454,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws URISyntaxException if syntax of path to test structures file is wrong
      */
     @Test
-    public void deepCopyButeneTest() throws FileNotFoundException, URISyntaxException {
+    public void deepCopyButeneTest() throws InvalidSmilesException {
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         tmpASF.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
         tmpASF.setKeepNonFragmentableMoleculesSetting(AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
@@ -456,19 +462,19 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         tmpASF.setIsolateQuatCarbonsSetting(AlkylStructureFragmenter.ISOLATE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
-        IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
-        IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpButeneContainer = tmpParser.parseSmiles("C=CCC");
         //two steps below needed for correct internal index handling
-        MolecularArrays tmpMolecularArraysInstance = new MolecularArrays(tmpButeneAC);
-        IAtomContainer tmpCopyAC = tmpButeneAC.getBuilder().newAtomContainer();
-        for (IAtom tmpAtom: tmpButeneAC.atoms()) {
+        MolecularArrays tmpMolecularArraysInstance = new MolecularArrays(tmpButeneContainer);
+        IAtomContainer tmpCopyAC = tmpButeneContainer.getBuilder().newAtomContainer();
+        for (IAtom tmpAtom: tmpButeneContainer.atoms()) {
             tmpCopyAC.addAtom(tmpASF.deepCopyAtom(tmpAtom));
         }
-        for (IBond tmpBond: tmpButeneAC.bonds()) {
+        for (IBond tmpBond: tmpButeneContainer.bonds()) {
             tmpCopyAC.addBond(deepCopyBond(tmpBond, tmpCopyAC));
         }
         //Comparison of original and copied AtomContainer
-        String tmpButeneSMILES = ChemUtil.createUniqueSmiles(tmpButeneAC, false);
+        String tmpButeneSMILES = ChemUtil.createUniqueSmiles(tmpButeneContainer, false);
         String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC, false);
         Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
     }
@@ -480,14 +486,13 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws URISyntaxException if syntax of path to test structures file is not correct
      */
     @Test
-    public void linearDoubleBondExtractionTest() throws CloneNotSupportedException, FileNotFoundException, URISyntaxException {
-        IAtomContainerSet tmpReadAtomContainerSet = this.readStructuresToACSet("de.unijena.cheminf.mortar.model.fragmentation.algorithm.ASF/ASF_Butene_Test.mol");
-        IAtomContainer tmpButeneAC = tmpReadAtomContainerSet.getAtomContainer(0);
-        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpButeneAC, false, false, true);
-        List<IAtomContainer> tmpFragmentACList = tmpASF.fragmentMolecule(tmpButeneAC);
+    public void linearDoubleBondExtractionTest() throws CloneNotSupportedException, InvalidSmilesException {
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpButeneContainer = tmpParser.parseSmiles("C=CCC");
+        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpButeneContainer, false, false, true);
+        List<IAtomContainer> tmpFragmentACList = tmpASF.fragmentMolecule(tmpButeneContainer);
         List<String> tmpExpectedList = new ArrayList<>(3);
-        tmpExpectedList.add("C");
-        tmpExpectedList.add("C");
+        tmpExpectedList.add("CC");
         tmpExpectedList.add("C=C");
         List<String> tmpFragmentStringList = new ArrayList<>();
         for (IAtomContainer tmpAC: tmpFragmentACList) {
@@ -503,30 +508,31 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     @Test
     public void defaultFragmentationTest() throws Exception {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        //test structure: C12=CC(=CC=C1C(=CC(=C2)C3CCCCC3)CC(C)(C)C/C=C/CCC)/C=C\C(C)C
-        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C12=CC(=CC=C1C(=CC(=C2)C3CCCCC3)CC(C)(C)C/C=C/CCC)/C=C\\C(C)C");
+        //test structure: CC(CC1C2CC2C(=C)CC1c1ccc(cc1C\C=C/c1ccccc1)C(C)C)(CCCCCCCCC)CC#CC
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC(CC1C2CC2C(=C)CC1c1ccc(cc1C\\C=C/c1ccccc1)C(C)C)(CCCCCCCCC)CC#CC");
         AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpTestStructureAC, false, false, true);
         List<String> tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        System.out.println(tmpResultSMILESList);
         List<String> tmpExpectedSMILESList = new ArrayList<>(12);
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("*C(*)(*)*");
-        tmpExpectedSMILESList.add("*C(*)*");
-        tmpExpectedSMILESList.add("C=CC1=CC=C2C=CC=CC2=C1");
-        tmpExpectedSMILESList.add("C1CCCCC1");
-        tmpExpectedSMILESList.add("C=C");
-        tmpExpectedSMILESList.add("CCC");
+        tmpExpectedSMILESList.add("CC(C)c1ccccc1"); //ring structure with connected tertiary carbon system
+        tmpExpectedSMILESList.add("C=Cc1ccccc1"); //benzene with connected double bond forming conjugated pi bond system
+        tmpExpectedSMILESList.add("C"); //methane between the substructures above
+        tmpExpectedSMILESList.add("C=C1CCCC2CC21"); //ring system with connected non-cyclic double bond
+        tmpExpectedSMILESList.add("C"); //methane connecting ring system above and quaternary carbon below
+        tmpExpectedSMILESList.add("*C(*)(*)*"); //quaternary system in pseudoatom representation
+        tmpExpectedSMILESList.add("C"); //methane residual of quaternary system above
+        tmpExpectedSMILESList.add("CCCCCC"); //hexane residual of fragmented nonane chain
+        tmpExpectedSMILESList.add("CCC"); //propane residual of fragmented nonane chain
+        tmpExpectedSMILESList.add("C"); //methane connecting triple bond and quaternary system
+        tmpExpectedSMILESList.add("C#C"); //triple bond
+        tmpExpectedSMILESList.add("C"); //methane residual of triple bond chain
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
 
     /**
      * Example fragmentation using natural compounds CNP0321029.1; CNP0509407.0 and CNP0242949.0. The natural compounds
-     * used in this test can be found in the natural product database COCONUT @see <a href="https://coconut.naturalproducts.net/"<a/>.
+     * used in this test can be found in the natural product database COCONUT <a href="https://coconut.naturalproducts.net/"<a/>.
      *
      * @throws Exception if molecule is not correctly fragmented
      */
