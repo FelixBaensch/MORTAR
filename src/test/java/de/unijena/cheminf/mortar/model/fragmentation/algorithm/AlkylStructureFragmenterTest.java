@@ -25,6 +25,9 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.io.Importer;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import org.junit.jupiter.api.Assertions;
@@ -33,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
@@ -47,6 +51,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
@@ -353,7 +358,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws InvalidSmilesException if SMILES cannot be parsed
      * @throws CloneNotSupportedException if cloning of the atomcontainer in fragmentation is not supported
      */
-    @Disabled //until allene/conjugated extraction is fixed
+    //@Disabled //until allene/conjugated extraction is fixed
     @Test
     public void basicTest08() throws InvalidSmilesException, CloneNotSupportedException {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -446,6 +451,53 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C1CCCC1");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+    }
+    //test for allene+conjugated with smilesparser
+    @Test
+    public void specificTest04() throws CDKException, IOException, CloneNotSupportedException {
+        //test fragmentation to check MORTAR Importer in the context of conjugated pi system handling
+        SettingsContainer tmpSettingsContainer = new SettingsContainer();
+        tmpSettingsContainer.reloadGlobalSettings();
+        Importer tmpImporter = new Importer(tmpSettingsContainer);
+        File tmpFile = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/testAlleneAndConjugated.mol");
+        List<MoleculeDataModel> tmpDataList = tmpImporter.importMoleculeFile(tmpFile, false, true);
+        IAtomContainer tmpImporterAC = null;
+        for (MoleculeDataModel tmpDataModel: tmpDataList) {
+            tmpImporterAC = tmpDataModel.getAtomContainer();
+        }
+        //only ConjugatedPiSystemDetector output as comparison
+        IAtomContainerSet tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpImporterAC);
+        SmilesGenerator tmpSMILESGen = new SmilesGenerator(SmiFlavor.Canonical);
+        for (IAtomContainer tmpAC: tmpCPSDSet) {
+            System.out.println("CPSD output for Importer: " + tmpSMILESGen.create(tmpAC));
+        }
+        //
+        AlkylStructureFragmenter tmpASF = this.getDefaultASFInstance(tmpImporterAC, false,
+                false, true);
+        List<String> tmpImporterFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpImporterAC));
+        System.out.println("Importer Fragments: " + tmpImporterFragmentsACList);
+
+        //test fragmentation with "import" from SMILES String
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpSMILESTestStructureAC = tmpParser.parseSmiles("C=CC=C=CC");
+        //only ConjugatedPiSystemDetector output as comparison
+        tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpSMILESTestStructureAC);
+        for (IAtomContainer tmpAC: tmpCPSDSet) {
+            System.out.println("CPSD output for SMILES: " + tmpSMILESGen.create(tmpAC));
+        }
+        //no idea where NoSuchAtomException results from
+        tmpASF = this.getDefaultASFInstance(tmpSMILESTestStructureAC, false,
+                false, true);
+        List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpSMILESTestStructureAC));
+        System.out.println("SMILES Fragments: " + tmpFragmentsACList);
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("C=C=C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+
+
     }
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.
