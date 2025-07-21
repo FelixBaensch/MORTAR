@@ -708,7 +708,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         }
         //ToDo: put into fine debug
-        AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
+        //AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
         } catch (CDKException aCDKException) {
@@ -736,7 +736,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
             //ToDo: Put into fine debug
-            AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
+            //AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
             if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount) {
                 AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(LOGGER_WARNING_STRING_FORMAT,
                         "Chemical Formula Check", tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
@@ -930,7 +930,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         try {
             IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
             //logger used only for debug purpose
-            AlkylStructureFragmenter.LOGGER.log(Level.INFO, System.currentTimeMillis() + " start sD, AC size: " + anAtomContainer.getAtomCount() + ", " + anAtomContainer.getBondCount());
+            //ToDo: put into fine debug
+            //AlkylStructureFragmenter.LOGGER.log(Level.INFO, System.currentTimeMillis() + " start sD, AC size: " + anAtomContainer.getAtomCount() + ", " + anAtomContainer.getBondCount());
             if (!anAtomContainer.isEmpty()) {
                 //ToDo: Investigate which and where atoms are going missing -> changes to tertiary/quaternary extraction responsible?
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
@@ -948,7 +949,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     anException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                             "Connectivity Check failed."), anException);
             //logger only used for debug purpose
-            AlkylStructureFragmenter.LOGGER.log(Level.INFO, System.currentTimeMillis() + " start sD, AC size: " + anAtomContainer.getAtomCount() + ", " + anAtomContainer.getBondCount());
+            //ToDo: put into fine debug
+            //AlkylStructureFragmenter.LOGGER.log(Level.INFO, System.currentTimeMillis() + " start sD, AC size: " + anAtomContainer.getAtomCount() + ", " + anAtomContainer.getBondCount());
             throw new IllegalArgumentException(String.format(LOGGER_EXCEPTION_STRING_FORMAT,
                     anException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                     "Connectivity Check failed."));
