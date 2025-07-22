@@ -41,6 +41,7 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IChemObject;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -63,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Stack;
 
 /**
  * Class to test the correct working of
@@ -454,17 +456,23 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
-    //test for allene+conjugated with smilesparser
+    //test for allene+conjugated with separate smiles parser + Importer + SDFReader
     @Test
     public void specificTest04() throws CDKException, IOException, CloneNotSupportedException {
         //test fragmentation to check MORTAR Importer in the context of conjugated pi system handling
         SettingsContainer tmpSettingsContainer = new SettingsContainer();
         tmpSettingsContainer.reloadGlobalSettings();
         Importer tmpImporter = new Importer(tmpSettingsContainer);
-        File tmpFile = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/testAlleneAndConjugated.mol");
-        List<MoleculeDataModel> tmpDataList = tmpImporter.importMoleculeFile(tmpFile, false, true);
+        //V2000 molfile
+        File tmpV2000File = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/testAlleneAndConjugatedV2000.mol");
+        List<MoleculeDataModel> tmpV2000DataList = tmpImporter.importMoleculeFile(tmpV2000File, false, true);
+        //V3000 molfile
+        /*
+        File tmpV3000File = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/testAlleneAndConjugatedV2000.mol");
+        List<MoleculeDataModel> tmpV3000DataList = tmpImporter.importMoleculeFile(tmpV3000File, false, true);
+        */ //
         IAtomContainer tmpImporterAC = null;
-        for (MoleculeDataModel tmpDataModel: tmpDataList) {
+        for (MoleculeDataModel tmpDataModel: tmpV2000DataList) {
             tmpImporterAC = tmpDataModel.getAtomContainer();
         }
         //only ConjugatedPiSystemDetector output as comparison
@@ -481,14 +489,13 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
 
         //test fragmentation with "import" from SMILES String
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        IAtomContainer tmpSMILESTestStructureAC = tmpParser.parseSmiles("C=CC=C=CC");
+        IAtomContainer tmpSMILESTestStructureAC = tmpParser.parseSmiles("C=CC=C=C");
         //only ConjugatedPiSystemDetector output as comparison
         tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpSMILESTestStructureAC);
         for (IAtomContainer tmpAC: tmpCPSDSet) {
             System.out.println("CPSD output for SMILES: " + tmpSMILESGen.create(tmpAC));
         }
         //test Importer Preprocessing
-
         try {
             Method tmpImporterMethod = Importer.class.getDeclaredMethod("preprocessMoleculeSet", IAtomContainerSet.class, boolean.class);
             tmpImporterMethod.setAccessible(true);
@@ -509,10 +516,27 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         } catch (IllegalAccessException e) {
             System.out.println("Method access failed");
         }
+        //test alternative SMILES to determine if CPSD is path-dependent
+        IAtomContainer tmpAlternativeSMILESTestStructureAC = tmpParser.parseSmiles("C(=CC=C)=CC");
+        //only ConjugatedPiSystemDetector output as comparison
+        tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpAlternativeSMILESTestStructureAC);
+        for (IAtomContainer tmpAC: tmpCPSDSet) {
+            System.out.println("CPSD output for alternative SMILES: " + tmpSMILESGen.create(tmpAC));
+        }
+        //test with copied CPSD methods
+        System.out.println();
+        System.out.println("Orig SMILES!:");
+        for (IAtomContainer tmpAC: this.detect(tmpParser.parseSmiles("C=CC=C=C"))) {
+            System.out.println("Custom CPSD output for orig SMILES: " + tmpSMILESGen.create(tmpAC));
+        }
+        System.out.println("Alt SMILES!:");
+        for (IAtomContainer tmpAC: this.detect(tmpParser.parseSmiles("C(=C)=CC=C"))) { //SMILES from Importer import
+            System.out.println("Custom CPSD output for alternative SMILES: " + tmpSMILESGen.create(tmpAC));
+        }
 
-
-        //no idea where NoSuchAtomException results from
+        //no idea where NoSuchAtomException results from, issue not reproducible in runtime
         /*
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpSMILESTestStructureAC);
         tmpASF = this.getDefaultASFInstance(tmpSMILESTestStructureAC, false,
                 false, true);
         List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpSMILESTestStructureAC));
@@ -523,8 +547,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
-         */
+        */
     }
+
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.
      *
@@ -556,6 +581,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC, false);
         Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
     }
+
     /**
      * Test for correct extraction of isolated double bonds found in linear residues after extraction of all other groups that are deemed interesting.
      *
@@ -578,6 +604,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         }
         Assertions.assertTrue(this.compareListsIgnoringOrder((ArrayList) tmpExpectedList, (ArrayList) tmpFragmentStringList));
     }
+
     /**
      * Method to test a default alkyl structure fragmentation on a concept molecule covering a broad range of resulting fragments.
      *
@@ -892,6 +919,129 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         }
         return tmpResultPostFragmentationAtomCount == tmpPreFragmentationAtomCount
                 && tmpResultPostFragmentationAtomCount == tmpExpPostFragmentationAtomCount;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Custom CPSD.detect()">
+
+    /**
+     * Copied from "ConjugatedPiSystemsDetector", with custom enhancement for debugging purposes.
+     *
+     * @param ac AtomContainer to detect conjugated systems in
+     * @return Set of AtomContainer with detected conjugated systems
+     */
+    private IAtomContainerSet detect(IAtomContainer ac) {
+        IAtomContainerSet piSystemSet = ac.getBuilder().newInstance(IAtomContainerSet.class);
+
+        for (int i = 0; i < ac.getAtomCount(); i++) {
+            IAtom atom = ac.getAtom(i);
+            atom.setFlag(IChemObject.VISITED, false);
+        }
+
+        for (int i = 0; i < ac.getAtomCount(); i++) {
+            IAtom firstAtom = ac.getAtom(i);
+
+            // if this atom was already visited in a previous DFS, continue
+            if (firstAtom.getFlag(IChemObject.VISITED) || checkAtom(ac, firstAtom) == -1) {
+                continue;
+            }
+            IAtomContainer piSystem = ac.getBuilder().newInstance(IAtomContainer.class);
+            Stack<IAtom> stack = new Stack<>();
+
+            piSystem.addAtom(firstAtom);
+            stack.push(firstAtom);
+            firstAtom.setFlag(IChemObject.VISITED, true);
+            // Start DFS from firstAtom
+            while (!stack.empty()) {
+                //boolean addAtom = false;
+                IAtom currentAtom = stack.pop();
+                List<IAtom> atoms = ac.getConnectedAtomsList(currentAtom);
+                List<IBond> bonds = ac.getConnectedBondsList(currentAtom);
+
+                for (int j = 0; j < atoms.size(); j++) {
+                    IAtom atom = atoms.get(j);
+                    IBond bond = bonds.get(j);
+                    if (!atom.getFlag(IChemObject.VISITED)) {
+                        int check = checkAtom(ac, atom);
+                        if (check == 1) {
+                            piSystem.addAtom(atom);
+                            piSystem.addBond(bond);
+                            continue;
+                            // do not mark atom as visited if cumulative double bond
+                        } else if (check == 0) {
+                            piSystem.addAtom(atom);
+                            piSystem.addBond(bond);
+                            stack.push(atom);
+                        }
+                        atom.setFlag(IChemObject.VISITED, true);
+                    }
+                    // close rings with one bond
+                    else if (!piSystem.contains(bond) && piSystem.contains(atom)) {
+                        piSystem.addBond(bond);
+                    }
+                }
+            }
+
+            if (piSystem.getAtomCount() > 2) {
+                piSystemSet.addAtomContainer(piSystem);
+            }
+        }
+
+        return piSystemSet;
+    }
+
+    /**
+     * Copied from "ConjugatedPiSystemsDetector", with custom enhancement for debugging purposes.
+     *
+     * @param ac AtomContainer to detect conjugated systems in
+     * @param currentAtom Atom to check for conjugation
+     * @return Integer, -1 = isolated; 0 = conjugated; 1 = cumulative DB
+     */
+    private int checkAtom(IAtomContainer ac, IAtom currentAtom) {
+        int check = -1;
+        List<IAtom> atoms = ac.getConnectedAtomsList(currentAtom);
+        List<IBond> bonds = ac.getConnectedBondsList(currentAtom);
+        if (currentAtom.getFlag(IChemObject.AROMATIC)) {
+            check = 0;
+        } else if (currentAtom.getFormalCharge() == 1 /*
+         * &&
+         * currentAtom.getSymbol
+         * ().equals("C")
+         */) {
+            check = 0;
+        } else if (currentAtom.getFormalCharge() == -1) {
+            //// NEGATIVE CHARGES WITH A NEIGHBOOR PI BOND //////////////
+            int counterOfPi = 0;
+            for (IAtom atom : atoms) {
+                if (ac.getMaximumBondOrder(atom) != IBond.Order.SINGLE) {
+                    counterOfPi++;
+                }
+            }
+            if (counterOfPi > 0) check = 0;
+        } else {
+            int se = ac.getConnectedSingleElectronsCount(currentAtom);
+            if (se == 1) {
+                check = 0; //// DETECTION of radicals
+            } else if (ac.getConnectedLonePairsCount(currentAtom) > 0
+                /* && (currentAtom.getAtomicNumber() == IElement.N */) {
+                check = 0; //// DETECTION of  lone pair
+            } else {
+                int highOrderBondCount = 0;
+                for (int j = 0; j < atoms.size(); j++) {
+                    IBond bond = bonds.get(j);
+                    if (bond == null || bond.getOrder() != IBond.Order.SINGLE) {
+                        highOrderBondCount++;
+                    } else {
+                    }
+                }
+                if (highOrderBondCount == 1) {
+                    check = 0;
+                } else if (highOrderBondCount > 1) {
+                    check = 1;
+                }
+            }
+        }
+        return check;
     }
     //</editor-fold>
 }
