@@ -857,6 +857,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(anAtomContainer);
         IAtom[] tmpAtomArray = aMolecularArraysInstance.getAtomArray();
         IBond[] tmpBondArray = aMolecularArraysInstance.getBondArray();
+        //not necessarily needed as separate method, search logic can be implemented in mark() method
+        this.detectConjugatedPiSystems(aMolecularArraysInstance);
+
+        //<editor-fold desc="Old ConjPiSysDetection + Mapping">
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(anAtomContainer);
             //molecule mapping
@@ -883,6 +887,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     anException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                     "Conjugated Pi Systems detection failed."));
         }
+        //</editor-fold>
     }
     /**
      * Protected method to mark atoms and bonds with order of double or triple.
@@ -1506,6 +1511,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             throw new IllegalArgumentException("Deep copy of bond not possible. No 'ASF.ATOM_INDEX' value was found.");
         }
         return tmpNewBond;
+    }
+
+    /**
+     * Method to detect conjugated pi bond systems.
+     *
+     * @param aMolecularArraysInstance Given arrays with atoms and bonds of a molecule to detect conjugated pi bond systems in
+     */
+    protected void detectConjugatedPiSystems(MolecularArrays aMolecularArraysInstance) {
+        IAtom[] tmpOriginAtomArray = aMolecularArraysInstance.getAtomArray();
+        IBond[] tmpOriginBondArray = aMolecularArraysInstance.getBondArray();
+        List<List<Integer>> tmpIncidenceList = new ArrayList<>(tmpOriginAtomArray.length);
+        //create tuple of both atoms comprising the bond
+        //loop over bonds, if bond A connects atoms a & b, add A to incident[a] & incident[b]
     }
     //</editor-fold>
 }
