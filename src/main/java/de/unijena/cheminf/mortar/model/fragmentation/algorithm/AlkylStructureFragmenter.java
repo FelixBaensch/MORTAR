@@ -178,6 +178,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
     }
     //</editor-fold
+
+    //<editor-fold desc="Inner Class 'Edge'">
+
+    class Edge {
+        public int edgeBegin = -1;
+        public int edgeEnd = -1;
+        public boolean isDouble = false;
+        public Edge(int anEdgeBegin, int anEdgeEnd, boolean anIsDoubleStatement) {
+            this.edgeBegin = anEdgeBegin;
+            this.edgeEnd = anEdgeEnd;
+            this.isDouble = anIsDoubleStatement;
+        }
+    }
+    //</editor-fold>
+
     //<editor-fold desc="Public Static Final Class Variables">
 
     /**
@@ -858,7 +873,39 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtom[] tmpAtomArray = aMolecularArraysInstance.getAtomArray();
         IBond[] tmpBondArray = aMolecularArraysInstance.getBondArray();
         //not necessarily needed as separate method, search logic can be implemented in mark() method
-        this.detectConjugatedPiSystems(aMolecularArraysInstance);
+        //this.detectConjugatedPiSystems(aMolecularArraysInstance);
+        //create list of edges with order
+        List<Edge> tmpEdgeList = new ArrayList<>(tmpBondArray.length);
+        for (IBond tmpBond: tmpBondArray) {
+            boolean tmpIsDouble = false;
+            if (tmpBond.getOrder() == IBond.Order.DOUBLE) { tmpIsDouble = true;}
+            int tmpBeginIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            int tmpEndIndex = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            tmpEdgeList.add(new Edge(tmpBeginIndex, tmpEndIndex, tmpIsDouble));
+        }
+        //create and fill list with integer lists, each integer list representing an atom with bonds as their index value
+        // (i.e. [[0, 1], [0], [1, 2], [2, 3], [3]]
+        List<List<Integer>> tmpIncidenceList = new ArrayList<>(tmpBondArray.length);
+        for (int i = 0; i < tmpAtomArray.length; i++) {
+            tmpIncidenceList.add(new ArrayList<>());
+        }
+        //fill incidence list with corresponding indices
+        for (IBond tmpOriginBond: tmpBondArray) {
+            int tmpBondIndex = tmpOriginBond.getIndex();
+            IAtom tmpBeginAtom = tmpOriginBond.getBegin();
+            int tmpBeginIndex = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            IAtom tmpEndAtom = tmpOriginBond.getEnd();
+            int tmpEndIndex = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            tmpIncidenceList.get(tmpBeginIndex).add(tmpBondIndex);
+            tmpIncidenceList.get(tmpEndIndex).add(tmpBondIndex);
+        }
+        //System.out.println(tmpIncidenceList);
+        //loop over bonds, if bond A connects atoms a & b, add A to incident[a] & incident[b]
+        //create adjacency list for line graph nodes
+        List<List<Integer>> tmpLineGraphAdjacencyList = new ArrayList<>(tmpBondArray.length);
+        for (int i = 0; i < tmpBondArray.length; i++) {
+            tmpLineGraphAdjacencyList.add(new ArrayList<>());
+        }
 
         //<editor-fold desc="Old ConjPiSysDetection + Mapping">
         try {
@@ -1519,11 +1566,32 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param aMolecularArraysInstance Given arrays with atoms and bonds of a molecule to detect conjugated pi bond systems in
      */
     protected void detectConjugatedPiSystems(MolecularArrays aMolecularArraysInstance) {
+        Objects.requireNonNull(aMolecularArraysInstance);
         IAtom[] tmpOriginAtomArray = aMolecularArraysInstance.getAtomArray();
         IBond[] tmpOriginBondArray = aMolecularArraysInstance.getBondArray();
-        List<List<Integer>> tmpIncidenceList = new ArrayList<>(tmpOriginAtomArray.length);
-        //create tuple of both atoms comprising the bond
+        //create and fill list with integer lists, each integer list representing an atom
+        List<List<Integer>> tmpIncidenceList = new ArrayList<>(tmpOriginBondArray.length);
+        for (int i = 0; i < tmpOriginAtomArray.length; i++) {
+            tmpIncidenceList.add(new ArrayList<>());
+        }
+        //put bond index into integer lists, creating an incidence list of all atoms
+        for (IBond tmpOriginBond: tmpOriginBondArray) {
+            boolean tmpIsDouble = false;
+            if (tmpOriginBond.getOrder() == IBond.Order.DOUBLE) { tmpIsDouble = true;}
+            int tmpBondIndex = tmpOriginBond.getIndex();
+            IAtom tmpBeginAtom = tmpOriginBond.getBegin();
+            int tmpBeginIndex = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            IAtom tmpEndAtom = tmpOriginBond.getEnd();
+            int tmpEndIndex = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            Edge tmpEdge = new Edge(tmpBeginIndex, tmpEndIndex, tmpIsDouble);
+            tmpIncidenceList.get(tmpBeginIndex).add(tmpBondIndex);
+            tmpIncidenceList.get(tmpEndIndex).add(tmpBondIndex);
+        }
+        System.out.println(tmpIncidenceList);
         //loop over bonds, if bond A connects atoms a & b, add A to incident[a] & incident[b]
+        for (IAtom tmpOriginAtom: tmpOriginAtomArray) {
+
+        }
     }
     //</editor-fold>
 }
