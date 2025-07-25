@@ -104,7 +104,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         tmpASF.markNeighborAtomsAndBonds(tmpTestMolecularArrays);
         tmpASF.markRings(tmpTestMolecularArrays, tmpTestAC);
-        tmpASF.markConjugatedPiSystems(tmpTestMolecularArrays, tmpTestAC);
+        tmpASF.markConjugatedPiSystems(tmpTestMolecularArrays);
         tmpASF.markMultiBonds(tmpTestMolecularArrays);
         IAtomContainerSet tmpExtractedFrag;
         ArrayList<String> tmpExtractedFragmentList = new ArrayList<>(6);

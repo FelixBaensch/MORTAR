@@ -47,7 +47,6 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
@@ -184,11 +183,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     class Edge {
         public int edgeBegin = -1;
         public int edgeEnd = -1;
-        public boolean isDouble = false;
-        public Edge(int anEdgeBegin, int anEdgeEnd, boolean anIsDoubleStatement) {
+        public IBond.Order bondOrder = IBond.Order.UNSET;
+        public Edge(int anEdgeBegin, int anEdgeEnd, IBond.Order aBondOrder) {
             this.edgeBegin = anEdgeBegin;
             this.edgeEnd = anEdgeEnd;
-            this.isDouble = anIsDoubleStatement;
+            this.bondOrder = aBondOrder;
         }
     }
     //</editor-fold>
@@ -680,7 +679,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *     Atoms and bonds may be marked multiple times with different properties if they are part of more than one
      *     substructure.
      *     Order of marking as follows: tertiary and quaternary carbon properties are set during array filling step;
-     *     atoms and bonds neighbouring tertiary and quaternary carbons; singular rings and ring systems;
+     *     atoms and bonds neighboring tertiary and quaternary carbons; singular rings and ring systems;
      *     conjugated pi bond systems; bonds of higher order (>1) present in linear sidechains.
      * </p>
      * <p>
@@ -689,7 +688,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *     chemical formula is checked, and a warning logged if not true.
      *     The order of extraction is as follows: rings, conjugated pi bond systems and their fusion products;
      *     additional double bonds connected to rings; isolated bonds of higher order;
-     *     atoms and bonds neighbouring tertiary or quaternary carbons; residual atoms and bonds as linear chains.
+     *     atoms and bonds neighboring tertiary or quaternary carbons; residual atoms and bonds as linear chains.
      *     The extracted linear chains may also be fragmented according to the set maximum length
      *     (see maxChainLengthSetting documentation).
      *     Multiple settings may be activated for different algorithmic behavior regarding selected substructures
@@ -736,7 +735,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         MolecularArrays tmpMolecularArrays = new MolecularArrays(tmpClone);
         this.markNeighborAtomsAndBonds(tmpMolecularArrays);
         this.markRings(tmpMolecularArrays, tmpClone);
-        this.markConjugatedPiSystems(tmpMolecularArrays, tmpClone);
+        this.markConjugatedPiSystems(tmpMolecularArrays);
         this.markMultiBonds(tmpMolecularArrays);
         //</editor-fold>
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
@@ -862,26 +861,146 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         aMolecularArraysInstance.setBondArray(tmpBondArray);
     }
     /**
-     * Protected method to mark all atoms and bonds of any conjugated pi systems in the given atomcontainer.
+     * Protected method to mark all atoms and bonds of any conjugated pi systems in the given arrays.
      *
      * @param aMolecularArraysInstance MolecularArrays instance for data transfer between methods
-     * @param anAtomContainer IAtomContainer to mark atoms and bonds in
      */
-    protected void markConjugatedPiSystems(MolecularArrays aMolecularArraysInstance, IAtomContainer anAtomContainer) throws IllegalArgumentException{
+    protected void markConjugatedPiSystems(MolecularArrays aMolecularArraysInstance) throws IllegalArgumentException{
         Objects.requireNonNull(aMolecularArraysInstance);
-        Objects.requireNonNull(anAtomContainer);
         IAtom[] tmpAtomArray = aMolecularArraysInstance.getAtomArray();
         IBond[] tmpBondArray = aMolecularArraysInstance.getBondArray();
-        //not necessarily needed as separate method, search logic can be implemented in mark() method
-        //this.detectConjugatedPiSystems(aMolecularArraysInstance);
-        //create list of edges with order
-        List<Edge> tmpEdgeList = new ArrayList<>(tmpBondArray.length);
+        //no particular algorithm in mind
+        //iterate over every bond in bond array
+        for (IBond tmpArrayBond: tmpBondArray) {
+            if ((boolean) tmpArrayBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY)) {
+                continue;
+            }
+            //bools for double-single-double conjugation
+            boolean tmpIsStartBondDouble = false;
+            boolean tmpIsNeighborBondSingle = false;
+            boolean tmpIsSecondNeighborBondDouble = false;
+            //bools for triple-single-triple conjugation
+            boolean tmpIsStartBondTriple = false;
+            boolean tmpIsSecondNeighborBondTriple = false;
+            if (tmpArrayBond.getOrder() == IBond.Order.DOUBLE) {
+                tmpIsStartBondDouble = true;
+            } else if (tmpArrayBond.getOrder() == IBond.Order.TRIPLE) {
+                tmpIsStartBondTriple = true;
+            }
+            //iterate over each atom of bond
+            for (IAtom tmpArrayBondAtom: tmpArrayBond.atoms()) {
+                //iterate over non-array bonds of atom
+                for (IBond tmpNeighborBond : tmpArrayBondAtom.bonds()) {
+                    if (tmpNeighborBond.equals(tmpArrayBond)) {
+                        continue;
+                    }
+                    if (tmpNeighborBond.getOrder() == IBond.Order.SINGLE) {
+                        tmpIsNeighborBondSingle = true;
+                    }
+                    //iterate over non-array-bond atoms of neighbor bond
+                    for (IAtom tmpNeighborAtom: tmpNeighborBond.atoms()) {
+                        if (tmpNeighborAtom.equals(tmpArrayBondAtom)) {
+                            continue;
+                        }
+                        for (IBond tmpSecondNeighborBond: tmpNeighborAtom.bonds()) {
+                            if (tmpSecondNeighborBond.equals(tmpNeighborBond)) {
+                                continue;
+                            }
+                            if (tmpSecondNeighborBond.getOrder() == IBond.Order.DOUBLE) {
+                                tmpIsSecondNeighborBondDouble = true;
+                            } else if (tmpSecondNeighborBond.getOrder() == IBond.Order.TRIPLE) {
+                                tmpIsSecondNeighborBondTriple = true;
+                            }
+                            //alternating pattern of D-S-D or T-S-T -> conjugation detected
+                            if (((tmpIsStartBondDouble && tmpIsSecondNeighborBondDouble) || (tmpIsStartBondTriple && tmpIsSecondNeighborBondTriple)) && tmpIsNeighborBondSingle) {
+                                //set conjugated property for start bond and it's atoms
+                                tmpArrayBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                tmpAtomArray[(int) tmpArrayBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                tmpAtomArray[(int) tmpArrayBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                //set conjugated property for neighbor bond and atoms
+                                tmpNeighborBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                tmpAtomArray[(int) tmpNeighborBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                tmpAtomArray[(int) tmpNeighborBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                //set conjugated property for second neighbor bond and atoms
+                                tmpSecondNeighborBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                tmpAtomArray[(int) tmpSecondNeighborBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                                tmpAtomArray[(int) tmpSecondNeighborBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /*
+        //create adjacency map for bonds
+        Map<IBond, Set<IBond>> tmpBondAdjacencyMap = new HashMap<>();
         for (IBond tmpBond: tmpBondArray) {
-            boolean tmpIsDouble = false;
-            if (tmpBond.getOrder() == IBond.Order.DOUBLE) { tmpIsDouble = true;}
+            tmpBondAdjacencyMap.put(tmpBond, new HashSet<>());
+        }
+        //true line graph?
+        for (IAtom tmpAtom: tmpAtomArray) {
+            //get connected bonds
+            List<IBond> tmpConnectedBondsList = new ArrayList<>(4);
+            for (IBond tmpBond: tmpBondArray) {
+                if (tmpBond.contains(tmpAtom)) {
+                    tmpConnectedBondsList.add(tmpBond);
+                }
+            }
+            for (int i = 0; i < tmpConnectedBondsList.size(); i++) {
+                IBond tmpFirstBond = tmpConnectedBondsList.get(i);
+                for (int j = i + 1; j < tmpConnectedBondsList.size(); j++) {
+                    IBond tmpSecondBond = tmpConnectedBondsList.get(j);
+                    //check if bonds may form conjugated pi bond system -> alternating double-single
+                    if ((tmpFirstBond.getOrder() == IBond.Order.SINGLE && tmpSecondBond.getOrder() == IBond.Order.DOUBLE)
+                            || tmpFirstBond.getOrder() == IBond.Order.DOUBLE && tmpSecondBond.getOrder() == IBond.Order.SINGLE) {
+                        tmpBondAdjacencyMap.get(tmpFirstBond).add(tmpSecondBond);
+                        tmpBondAdjacencyMap.get(tmpSecondBond).add(tmpFirstBond);
+                    }
+                }
+            }
+        }
+        Set<IBond> tmpVisitedBonds = new HashSet<>();
+        for (IBond tmpStartBond: tmpBondArray) {
+            if (tmpVisitedBonds.contains(tmpStartBond) || tmpStartBond.getOrder() != IBond.Order.DOUBLE) {
+                continue;
+            }
+            Deque<IBond> tmpBondStack = new ArrayDeque<>();
+            tmpBondStack.push(tmpStartBond);
+            tmpVisitedBonds.add(tmpStartBond);
+            tmpStartBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+            stackIteration:
+            while (!tmpBondStack.isEmpty()) {
+                IBond tmpCurrentBond = tmpBondStack.pop();
+                int tmpBeginAtomIndex = tmpCurrentBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                int tmpEndAtomIndex = tmpCurrentBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                tmpAtomArray[tmpBeginAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                tmpAtomArray[tmpEndAtomIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                if (tmpBondAdjacencyMap.get(tmpCurrentBond).size() == 1) {
+                    continue stackIteration;
+                }
+                for (IBond tmpNeighborBond: tmpBondAdjacencyMap.get(tmpCurrentBond)) {
+                    if (!tmpVisitedBonds.contains(tmpNeighborBond)) {
+                        tmpBondStack.push(tmpNeighborBond);
+                        tmpVisitedBonds.add(tmpNeighborBond);
+                        tmpNeighborBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                    }
+                }
+            }
+        }
+        for (IAtom tmpAtom: tmpAtomArray) {
+            System.out.println(tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY).toString());
+        }
+        */
+
+        /*
+        //create list of edges with bond begin and end atom index and bond order
+        List<Edge> tmpEdgeList = new ArrayList<>(tmpBondArray.length);
+        //ToDo: all this info is already in bonds of bondarray
+        for (IBond tmpBond: tmpBondArray) {
             int tmpBeginIndex = tmpBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
             int tmpEndIndex = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-            tmpEdgeList.add(new Edge(tmpBeginIndex, tmpEndIndex, tmpIsDouble));
+            tmpEdgeList.add(new Edge(tmpBeginIndex, tmpEndIndex, tmpBond.getOrder()));
         }
         //create and fill list with integer lists, each integer list representing an atom with bonds as their index value
         // (i.e. [[0, 1], [0], [1, 2], [2, 3], [3]]
@@ -899,14 +1018,39 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             tmpIncidenceList.get(tmpBeginIndex).add(tmpBondIndex);
             tmpIncidenceList.get(tmpEndIndex).add(tmpBondIndex);
         }
-        //System.out.println(tmpIncidenceList);
-        //loop over bonds, if bond A connects atoms a & b, add A to incident[a] & incident[b]
+        System.out.println(tmpIncidenceList);
+        */
+        /*
         //create adjacency list for line graph nodes
         List<List<Integer>> tmpLineGraphAdjacencyList = new ArrayList<>(tmpBondArray.length);
         for (int i = 0; i < tmpBondArray.length; i++) {
             tmpLineGraphAdjacencyList.add(new ArrayList<>());
         }
+        for (int atomIndex = 0; atomIndex < tmpAtomArray.length; atomIndex++) {
+            for (int incidence = 0; incidence < tmpIncidenceList.get(atomIndex).size(); incidence++) {
+                for (int j = incidence + 1; j < tmpIncidenceList.get(atomIndex).size(); j++) {
+                    int tmpEdgeIncidence = tmpIncidenceList.get(atomIndex).get(incidence);
+                    int tmpEdgeIncidenceAttached = tmpIncidenceList.get(atomIndex).get(j);
+                }
+            }
+        } */
 
+        /*
+        for (int atom = 0; atom < numAtoms; atom++) {
+            List<Integer> inc = incident.get(atom);
+            for (int i = 0; i < inc.size(); i++) {
+                for (int j = i+1; j < inc.size(); j++) {
+                    int ei = inc.get(i), ej = inc.get(j);
+                    if (edges.get(ei).isDouble != edges.get(ej).isDouble) {
+                        lineAdj.get(ei).add(ej);
+                        lineAdj.get(ej).add(ei);
+                    }
+                }
+            }
+        }
+         */
+
+        /*
         //<editor-fold desc="Old ConjPiSysDetection + Mapping">
         try {
             IAtomContainerSet tmpConjugatedAtomContainerSet = ConjugatedPiSystemsDetector.detect(anAtomContainer);
@@ -935,6 +1079,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     "Conjugated Pi Systems detection failed."));
         }
         //</editor-fold>
+        */
     }
     /**
      * Protected method to mark atoms and bonds with order of double or triple.
@@ -1055,7 +1200,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //ToDo: split into separate methods (returning one atomcontainer, could make above more viable)
         //ToDo: separate tert/quat atom into method
         //ToDo: check if neighbor ring detection in neighbor extract possible
-        //ToDo: fix allene extraction
         IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();
@@ -1583,7 +1727,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             int tmpBeginIndex = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
             IAtom tmpEndAtom = tmpOriginBond.getEnd();
             int tmpEndIndex = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-            Edge tmpEdge = new Edge(tmpBeginIndex, tmpEndIndex, tmpIsDouble);
+            //Edge tmpEdge = new Edge(tmpBeginIndex, tmpEndIndex, tmpIsDouble);
             tmpIncidenceList.get(tmpBeginIndex).add(tmpBondIndex);
             tmpIncidenceList.get(tmpEndIndex).add(tmpBondIndex);
         }
