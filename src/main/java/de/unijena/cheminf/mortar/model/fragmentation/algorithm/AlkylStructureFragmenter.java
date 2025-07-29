@@ -541,7 +541,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      *
      * @param aBoolean the given boolean value for switching handling
      */
-    public void setIsolateQuatCarbonsSetting(boolean aBoolean){
+    public void setIsolateTertQuatCarbonsSetting(boolean aBoolean){
         this.isolateTertQuatCarbonSetting.set(aBoolean);
     }
     /**
@@ -562,7 +562,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpCopy.setKeepNonFragmentableMoleculesSetting(this.keepNonFragmentableMoleculesSetting.get());
         tmpCopy.setFragmentSideChainsSetting(this.fragmentSideChainsSetting.get());
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
-        tmpCopy.setIsolateQuatCarbonsSetting(this.isolateTertQuatCarbonSetting.get());
+        tmpCopy.setIsolateTertQuatCarbonsSetting(this.isolateTertQuatCarbonSetting.get());
         tmpCopy.setSeparateTertQuatCarbonFromRingSetting(this.separateTertQuatCarbonFromRingSetting.get());
         return tmpCopy;
     }
@@ -1130,7 +1130,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //ToDo: put into fine debug
             //AlkylStructureFragmenter.LOGGER.log(Level.INFO, System.currentTimeMillis() + " start sD, AC size: " + anAtomContainer.getAtomCount() + ", " + anAtomContainer.getBondCount());
             if (!anAtomContainer.isEmpty()) {
+                System.out.println("Con-Checker " + ChemUtil.createUniqueSmiles(anAtomContainer, false));
                 //ToDo: Investigate which and where atoms are going missing -> changes to tertiary/quaternary extraction responsible?
+                //ToDo: create library for all possible alkyl substructures
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
                     IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
                     for (IAtomContainer tmpContainer : tmpContainerSet.atomContainers()) {
