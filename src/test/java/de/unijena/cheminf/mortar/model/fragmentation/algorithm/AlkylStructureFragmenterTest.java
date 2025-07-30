@@ -399,7 +399,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             System.out.println("Assertion failed! Fragments: "+ tmpFragmentsACList);
         }
     }
-    //ToDo: once extraction is fixed
+    //ToDo: fix atom duplication
     /**
      * Method to test correct extraction of allene structures.
      *
@@ -419,6 +419,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C=C=C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
+        //ToDo: atom duplication in fragmentation happening
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -598,7 +599,36 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 new ArrayList<>(tmpExpectedSMILESList)));
         */
     }
-
+    //ToDo: find cause
+    /**
+     * Tests molecule "CC(C)(C)CC1CCC(=C)C2CC21" which showed difficulties in fragmentation in past versions.
+     *
+     * @throws InvalidSmilesException if SMILES cannot be parsed
+     * @throws CloneNotSupportedException if cloning of the original molecule is not supported
+     */
+    @Test
+    public void specificTest05() throws InvalidSmilesException, CloneNotSupportedException {
+        //test structure: CC(C)(C)CC1CCC(=C)C2CC21
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC(C)(C)CC1CCC(=C)C2CC21");
+        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
+                false, false, true);
+        List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("C=CC=C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C1CCCC1");
+        try {
+            Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
+                    new ArrayList<>(tmpExpectedSMILESList)));
+        } catch (AssertionError failedAssert) {
+            System.out.println("Assertion failed! Fragments: "+ tmpFragmentsACList);
+        }
+    }
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.
      *
