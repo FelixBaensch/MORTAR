@@ -337,6 +337,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Constructor, all settings are initialised with their respective default values.
      */
     public AlkylStructureFragmenter(){
+        //check current logger environment for debug
+        //for Debug: set ROOT_LOGGER in LogUtil to Level.FINEST
+        /*
+        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+            System.out.println("finest Environment");
+        } else {
+            System.out.println(AlkylStructureFragmenter.LOGGER.getParent().getLevel());
+        }
+         */
         int tmpSettingsNameTooltipNumber = 6;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNameTooltipNumber,
@@ -729,8 +738,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpPreFragmentationAtomCount++;
             }
         }
-        //ToDo: put into fine debug
-        //AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
+        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+        AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
+        }
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
         } catch (CDKException aCDKException) {
@@ -757,8 +767,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 }
             }
-            //ToDo: Put into fine debug
-            //AlkylStructureFragmenter.LOGGER.log(Level.INFO, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
+            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
+            }
             if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount) {
                 AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(LOGGER_WARNING_STRING_FORMAT,
                         "Chemical Formula Check", tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
@@ -1227,7 +1238,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             //checks for connected ring atom in neighbors
                             for (IAtom tmpNeighborAtom : tmpAtom.neighbors()) {
                                 if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
+                                    //ToDo: why check/set connectedTertQuatRing here?
+                                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                "In: Extraction.AtomIteration: Set ConnectedTertQuatRing");
+                                    }
                                     tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
+                                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().equals(Level.FINEST)) {
+                                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                "In: Extraction.AtomIteration (isolateTertQuat = true): Connected tert/quat -ring");
+                                    }
                                     tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                                     continue atomIteration;
                                 }
@@ -1240,6 +1260,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY) && i == 3) {
                                 break ;
                             }
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.AtomIteration: Pseudoatom saturation");
+                            }
                             tmpContainer.addAtom(new PseudoAtom());
                             IBond tmpBond = new Bond();
                             tmpBond.setOrder(IBond.Order.SINGLE);
@@ -1248,21 +1272,35 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             //deep copy not needed as referenced bond is new and has no connection to original molecule
                             tmpContainer.addBond(tmpBond);
                         }
+                        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                            AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                    "In: Extraction.AtomIteration: Pseudoatom Container");
+                        }
                         tmpTertQuatCarbonContainer.add(tmpContainer);
                     //tertiary/quaternary carbons are added to ensure correct interaction with other substructures,
                         // neighbor atoms added later
                     } else {
                         //checks for connected ring atom in neighbors
                         for (IAtom tmpNeighborAtom : tmpAtom.neighbors()) {
+                            //ToDo: again, why check here?
                             if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
+                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                            "In: Extraction.AtomIteration: Set ConnectedTertQuatRing");
+                                }
                                 tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
                             }
+                        }
+                        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                            AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                    "In: Extraction.AtomIteration (isolateTertQuat = false): Connected tert/quat -ring");
                         }
                         tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     }
                 }
                 //checks for part of double bond
                 else if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
+                    //ToDo: runtime can be improved
                     //extracts non-cyclic double bonds possibly connected to a ring structure
                     for (IAtom tmpArrayAtom: tmpAtomArray) {
                         if (tmpArrayAtom != tmpAtom) {
@@ -1274,17 +1312,29 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                     //check if neither begin nor end atom are part of a ring structure
                                     if (!(boolean) tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
                                             && !(boolean) tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)) {
+                                        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                            AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                    "In: Extraction.AtomIteration: Isolated Non-Cyclic Double Bond");
+                                        }
                                         tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
                                     } else {
-                                        //map bond atom to array atom
+                                        //map bond atom to array atom if atom part of or connected to ring structure
                                         if ((int) tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)
                                                 == (int) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)) {
                                             if (!tmpRingFragmentationContainer.contains(tmpBeginAtom)) {
+                                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                            "In: Extraction.AtomIteration: Double bond (begin atom) associated with ring");
+                                                }
                                                 tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpBeginAtom));
                                             }
                                         } else if ((int) tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)
                                                 == (int) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY)) {
                                             if (!tmpRingFragmentationContainer.contains(tmpEndAtom)) {
+                                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                            "In: Extraction.AtomIteration: Double bond (end atom) associated with ring");
+                                                }
                                                 tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpEndAtom));
                                             }
                                         }
@@ -1295,22 +1345,42 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     }
                 //checks for marker | extracts triple bond
                 } else if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
+                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                "In: Extraction.AtomIteration: Triple Bond");
+                    }
                     tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpAtom));
                 }
                 //extract neighbor atoms of tertiary or quaternary carbon atoms
                 else if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
                     if (this.isolateTertQuatCarbonSetting.get()) {
                         if (tmpAtom.getBondCount() == 1) {
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.AtomIteration: Neighbor atoms for bond count 1");
+                            }
                             tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                         } else {
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.AtomIteration: Neighbor atoms chains");
+                            }
                             tmpChainFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                         }
                     } else {
+                        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                            AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                    "In: Extraction.AtomIteration: Neighbor atoms: no isolation");
+                        }
                         tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                     }
                 }
                 //extract residue atoms as linear chain atoms
                 else {
+                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                "In: Extraction.AtomIteration: Residue non-cyclic/-conj atoms");
+                    }
                     tmpChainFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
                 }
             //only ring and conj pi system atoms, sets bond property to determine connection between tert/quat atom and ring structure
@@ -1321,9 +1391,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                 && ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)
                                 || (boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY))
                         ) {
+                            //ToDo: and once more: Why here?
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.AtomIteration: Set ConnectedTertQuatRing");
+                            }
                             tmpAtom.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
                         }
                     }
+                }
+                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                            "In: Extraction.AtomIteration: ring/conj atoms");
                 }
                 tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpAtom));
             }
@@ -1346,10 +1425,15 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             boolean tmpIsBeginQuaternary = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
             boolean tmpIsEndQuaternary = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
             //
+             //ToDo: same as in atomIteration, why set the property here?
             //sets "connection ring-tertiary/ring-quaternary" property for bonds
             if ((boolean) tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)
                     && (boolean) tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY)) {
                 if ((!tmpIsBeginRing && (tmpIsBeginTertiary || tmpIsBeginQuaternary)) || (!tmpIsEndRing && (tmpIsEndTertiary || tmpIsEndQuaternary))) {
+                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                "In: Extraction.BondIteration: Set ConnectedTertQuatRing");
+                    }
                     tmpBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, true);
                 }
             }
@@ -1375,8 +1459,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 container as the ring as they are part of one substructure.
                  */
                 if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
+                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                "In: Extraction.BondIteration: Double Bond");
+                    }
                     if (tmpIsBeginRing || tmpIsEndRing) {
                         tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
+
                     } else {
                         tmpIsolatedMultiBondsContainer.addBond(this.deepCopyBond(tmpBond, tmpIsolatedMultiBondsContainer));
                     }
@@ -1386,7 +1475,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 This case checks for isolated triple bonds, i.e. triple bonds in linear chains. As a triple bond can not
                 be directly bonded to a ring structure, meaning not an 'internal' bond of a ring, it has to be isolated.
                  */
+                //ToDo: combine with DB extraction above
                 else if ((boolean) tmpBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY)) {
+                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                "In: Extraction.BondIteration: Triple Bond");
+                    }
                     tmpIsolatedMultiBondsContainer.addBond(this.deepCopyBond(tmpBond, tmpIsolatedMultiBondsContainer));
                 }
                 //checks for neighbor mark
@@ -1411,6 +1505,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                             break;
                                         }
                                     }
+                                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                "In: Extraction.BondIteration: ConnectedTertQuatRing Pseudoatom Saturation Begin Atom");
+                                    }
                                     tmpRingFragmentationContainer.addAtom(tmpPseudoAtom);
                                     tmpRingFragmentationContainer.addBond(tmpNewBond);
                                 } else if (!( boolean) tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)){
@@ -1424,11 +1522,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                             break;
                                         }
                                     }
+                                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                "In: Extraction.BondIteration: ConnectedTertQuatRing Pseudoatom Saturation End Atom");
+                                    }
                                     tmpRingFragmentationContainer.addAtom(tmpPseudoAtom);
                                     tmpRingFragmentationContainer.addBond(tmpNewBond);
                                 }
                             }
                             if (!(tmpIsBeginRing || tmpIsEndRing)) {
+                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                            "In: Extraction.BondIteration: No connection to ring");
+                                }
                                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             }
                         }
@@ -1440,13 +1546,23 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         boolean tmpIsEndConnectedTertQuatRing = tmpBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
                         //skips over bonds between isolated rings / rings and linear chains
                         if ((tmpIsBeginRing && tmpIsEndRing) || (tmpIsBeginRing || tmpIsEndRing) && !tmpIsBondConnectedTertQuatRing) {
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.BondIteration: Skip bonds ring-ring, skip bonds ring-linear_chain");
+                            }
                             continue;
                         }
                         //adds bond connecting tertiary/quaternary carbons and rings
                         else if (tmpIsBondConnectedTertQuatRing) {
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.BondIteration: ConnectedTertQuatRing bond");
+                            }
                             tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
-                            //adds bond where begin or end are tertiary/quaternary and part of a ring/tertiary/quaternary connecting bond
-                        } else if ((tmpIsBeginConnectedTertQuatRing || tmpIsEndConnectedTertQuatRing) && (tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary)) {
+                        //adds bond where begin or end are tertiary/quaternary and part of a ring/tertiary/quaternary connecting bond
+                        }
+                        //ToDo: check whether logically same as if above
+                        else if ((tmpIsBeginConnectedTertQuatRing || tmpIsEndConnectedTertQuatRing) && (tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary)) {
                             if (this.isolateTertQuatCarbonSetting.get()) {
                                 if ((tmpIsBeginConjPi || tmpIsEndConjPi)) {
                                     continue;
@@ -1457,15 +1573,25 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             else {
                                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             }
-                            //adds bond where one end is tertiary/quaternary and the other part of a conj. pi system
-                        } else if ((tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary) && (tmpIsBeginConjPi || tmpIsEndConjPi)) {
+
+                        }
+                        //adds bond where one end is tertiary/quaternary and the other part of a conj. pi system
+                        else if ((tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary) && (tmpIsBeginConjPi || tmpIsEndConjPi)) {
                             if (!this.isolateTertQuatCarbonSetting.get()) {
+                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                            "In: Extraction.BondIteration: Connected tert/quat and conj.");
+                                }
                                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             }
                         }
                         //adds residual bonds depending on conditions, first: if "isolate tert/quat" setting false; second: see comment below
                         else {
                             if (!this.isolateTertQuatCarbonSetting.get()) {
+                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                            "In: Extraction.BondIteration: Residual bonds (isolateTertQuat = false)");
+                                }
                                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                             } else {
                                 //adds bond for neighbor atoms within a tertiary/quaternary system connected to a ring,
@@ -1475,6 +1601,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                     for (IAtom tmpNeighborAtom : tmpBondAtom.neighbors()) {
                                         if ((boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY)
                                                 && (boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY)) {
+                                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                        "In: Extraction.BondIteration: Residual bonds (isolateTertQuat = true)");
+                                            }
+                                            //TODO: IMPORTANT! ISSUE CAUSE!
                                             tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                                         }
                                     }
@@ -1486,6 +1617,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 //adds bond when tert/quat system connected to conj. pi system AND "isolate tert/quat" setting false
                 else if ((tmpIsBeginConjPi || tmpIsEndConjPi) && (tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary)) {
                     if (!this.isolateTertQuatCarbonSetting.get()) {
+                        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                            AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                    "In: Extraction.BondIteration: Connected tert/quat and conj. (isolateTertQuat = false)");
+                        }
                         tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
                     }
                 }
@@ -1494,8 +1629,16 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     if (this.isolateTertQuatCarbonSetting.get()) {
                         //stops bond extraction for bonds between double/triple bond atoms and neighbor atoms
                         if (tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple) {
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.BondIteration: Stop bonds between double/triple bond atoms and neighbor atoms");
+                            }
                             continue;
                         } else {
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.BondIteration: Residual bonds (isolateTertQuat = true)");
+                            }
                             tmpChainFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpChainFragmentationContainer));
                         }
                     }
@@ -1503,6 +1646,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     //as well as (tertiary OR quaternary OR neighbor)
                     else if (!(tmpIsBeginRing && tmpIsEndRing && tmpIsBeginConjPi && tmpIsEndConjPi) && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
                         if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary || tmpIsBeginNeighbor || tmpIsEndNeighbor)) {
+                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                        "In: Extraction.BondIteration: Residual bonds (extra markers)");
+                            }
                             tmpChainFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpChainFragmentationContainer));
                         }
                     }
@@ -1510,6 +1657,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             //extracts ring or conjugated bonds
             else {
+                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                            "In: Extraction.BondIteration: Ring/Conj.");
+                }
                 tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpBond, tmpRingFragmentationContainer));
             }
         }
@@ -1588,6 +1739,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @return AtomContainer with separate dissected molecules
      */
     protected IAtomContainer dissectLinearChain(IAtomContainer aLinearChainAC, int aMaxChainLength) {
+        Objects.requireNonNull(aLinearChainAC);
         IAtomContainer tmpReturnAC = new AtomContainer();
         int tmpMaxBondCount = aMaxChainLength - 1;
         int tmpInternalBondCount = 0;
@@ -1618,6 +1770,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @return the deep copy of the given atom
      */
     protected IAtom deepCopyAtom(IAtom anAtomToCopy) {
+        Objects.requireNonNull(anAtomToCopy);
         IAtom tmpNewAtom = this.chemObjectBuilderInstance.newAtom();
         tmpNewAtom.setAtomicNumber(anAtomToCopy.getAtomicNumber());
         tmpNewAtom.setImplicitHydrogenCount(anAtomToCopy.getImplicitHydrogenCount());
@@ -1665,6 +1818,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @return the deep copy of the given bond
      */
     protected IBond deepCopyBond(IBond aBondToCopy, IAtomContainer aBondIncludingAtomContainer) throws IllegalArgumentException{
+        Objects.requireNonNull(aBondToCopy);
+        Objects.requireNonNull(aBondIncludingAtomContainer);
         IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
         tmpNewBond.setOrder(aBondToCopy.getOrder());
         //IMPORTANT! Make sure to add new internal properties below!
