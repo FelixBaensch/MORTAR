@@ -96,7 +96,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         IAtomContainer tmpTestAC = tmpParser.parseSmiles("C12=CC(=CC=C1C(=CC(=C2)C3CCCCC3)CC(C)(C)C/C=C/CCC)/C=C\\C(C)C");
         MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpTestAC);
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
-        tmpASF.markNeighborAtomsAndBonds(tmpTestMolecularArrays);
+        tmpASF.markTertQuatAndNeighbors(tmpTestMolecularArrays);
         tmpASF.markRings(tmpTestMolecularArrays, tmpTestAC);
         tmpASF.markConjugatedPiSystems(tmpTestMolecularArrays);
         tmpASF.markMultiBonds(tmpTestMolecularArrays);
