@@ -25,40 +25,29 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
-import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import de.unijena.cheminf.mortar.model.io.Importer;
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
-import org.openscience.cdk.graph.invariant.ConjugatedPiSystemsDetector;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
-import org.openscience.cdk.interfaces.IChemObject;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Stack;
+import java.util.Objects;
 
 /**
  * Class to test the correct working of
@@ -81,7 +70,12 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     public AlkylStructureFragmenterTest() {}
     //<editor-fold desc="@Test Public Methods">
     /**
-     * Test method for AlkylStructureFragmenter.extractFragments().
+     * Method for unit testing the internal method AlkylStructureFragmenter.extractFragments().
+     * The molecule used for testing is a conceptual molecule containing several key structural features detected and
+     * extracted by the AlkylStructureFragmenter - an isolated double bond, a quaternary C, an aromatic ring system with
+     * a connected conjugated system, an isolated cyclohexane ring and a tertiary C - in default settings.
+     *
+     * @throws CDKException if SMILES cannot be parsed correctly
      */
     @Test
     public void extractFragmentsTest() throws CDKException {
@@ -109,7 +103,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 tmpExtractedFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
             }
         } catch (CloneNotSupportedException | CDKException e) {
-            throw new RuntimeException(e);
+            Assertions.fail();
         }
         System.out.println("Expected: " + tmpExpectedFragmentsList + "; Actual Fragments: "+ tmpExtractedFragmentList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
@@ -148,6 +142,128 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("CCCCCCCCCCCCCC");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+    }
+
+    //<editor-fold desc="Disabled Unit Tests">
+    @Disabled
+    @Test
+    public void testMarkTertQuatAndNeighbors() throws InvalidSmilesException{
+            SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            IAtomContainer tmpMolecule = tmpParser.parseSmiles("CC(C)(C)CCCC(C)C");
+            MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
+            //currently no mark generatable
+            markTertQuatAndNeighbors(tmpTestMolecularArrays);
+            for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
+                if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
+                    System.out.println(tmpAtom.getProperties());
+                }
+            }
+            //create expected arrays
+            MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+            //create atom array with expected atoms
+            IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
+            //example:
+            //tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
+            //create bond array with expected bonds
+            IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
+            //example:
+            //tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
+            tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
+            tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
+            //custom assert for MolecularArrays match/equal
+            Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
+    }
+    @Disabled
+    @Test
+    public void testMarkRings() throws InvalidSmilesException{
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpParser.parseSmiles("CC(C)(C)CCCC(C)C");
+        MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
+        //currently no mark generatable
+        markRings(tmpTestMolecularArrays, tmpMolecule);
+        for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
+            System.out.println(tmpAtom.getProperties());
+        }
+        //create expected arrays
+        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        //create atom array with expected atoms
+        IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
+        //example:
+        //tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_PROPERTY_KEY, true);
+        //create bond array with expected bonds
+        IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
+        //example:
+        //tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_PROPERTY_KEY, true);
+        tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
+        tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
+        //custom assert for MolecularArrays match/equal
+        Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
+    }
+    @Disabled
+    @Test
+    public void testMarkMultiBonds() throws InvalidSmilesException{
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpParser.parseSmiles("CC(C)(C)CCCC(C)C");
+        MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
+        //currently no mark generatable
+        markMultiBonds(tmpTestMolecularArrays);
+        for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
+            System.out.println(tmpAtom.getProperties());
+        }
+        //create expected arrays
+        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        //create atom array with expected atoms
+        IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
+        //example:
+        //tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_PROPERTY_KEY, true);
+        //create bond array with expected bonds
+        IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
+        //example:
+        //tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_PROPERTY_KEY, true);
+        tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
+        tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
+        //custom assert for MolecularArrays match/equal
+        Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
+    }
+    //</editor-fold>
+
+    /**
+     * Method to test the internal algorithm for detecting and marking conjugated pi bond systems.
+     * The used molecule to test this functionality is a short C5-chain with alternating double bonds.
+     *
+     * @throws InvalidSmilesException if SMILES-parser is not able to parse SMILES due to incorrect syntax
+     */
+    @Test
+    public void testMarkConjugatedPiSystems() throws InvalidSmilesException{
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpParser.parseSmiles("C=CC=CC=C");
+        MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
+        //mark actual atoms and bonds
+        markConjugatedPiSystems(tmpTestMolecularArrays);
+//        for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
+//            System.out.println(tmpAtom.getProperties());
+//        }
+        //create expected arrays
+        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        //create atom array with expected atoms
+        IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
+        tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedAtomArray[1].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedAtomArray[2].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedAtomArray[3].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedAtomArray[4].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedAtomArray[5].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        //create bond array with expected bonds
+        IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
+        tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedBondArray[1].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedBondArray[2].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedBondArray[3].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedBondArray[4].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+        tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
+        tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
+        //custom assert for MolecularArrays match/equal
+        Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
     }
     /**
      * Method testing correct fragmentation with a basic example molecule.
@@ -331,7 +447,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
-    //ToDo: more molecules (tert and quat)
     /**
      * Method testing the correct handling of tertiary and quaternary atoms attached to rings with an example molecule.
      * The molecule used in this test is a concept molecule comprised of a cyclohexane bonded to a quaternary carbon system.
@@ -354,8 +469,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
-
-
         //combinations of relevant settings
         //tmpASF.setIsolateTertQuatCarbonsSetting(true); -> default value
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(true);
@@ -370,8 +483,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                     new ArrayList<>(tmpExpectedSMILESList)));
-
-
         //
         tmpASF.setIsolateTertQuatCarbonsSetting(false);
         //tmpASF.setSeparateTertQuatCarbonFromRingSetting(true); -> still correct value from test above
@@ -383,7 +494,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
-
         //
         //tmpASF.setIsolateTertQuatCarbonsSetting(false); -> still correct value from test above
         tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
@@ -395,7 +505,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
-    //ToDo: fix atom duplication
     /**
      * Method to test correct extraction of allene structures.
      *
@@ -414,7 +523,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C(=C)=C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
-        //ToDo: atom duplication in fragmentation happening
         System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
@@ -422,7 +530,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
      * Method testing correct fragmentation with a specific example molecule.
      * This test focuses on extraction of ring systems, tested with a derivative of the molecule Hapalindole B after
-     * standard fragmentation with the (in MORTAR included) ErtlFunctionalGroupsFinder.
+     * partial fragmentation with the (in MORTAR included) ErtlFunctionalGroupsFinder.
      *
      * @throws InvalidSmilesException if SMILES is not correctly parsed of otherwise faulty
      * @throws CloneNotSupportedException if something goes wrong during cloning step in fragmentation
@@ -500,101 +608,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
-    //test for allene+conjugated with separate smiles parser + Importer + SDFReader
-    @Test
-    public void specificTest04() throws CDKException, IOException, CloneNotSupportedException {
-        //test fragmentation to check MORTAR Importer in the context of conjugated pi system handling
-        SettingsContainer tmpSettingsContainer = new SettingsContainer();
-        tmpSettingsContainer.reloadGlobalSettings();
-        Importer tmpImporter = new Importer(tmpSettingsContainer);
-        //V2000 molfile
-        File tmpV2000File = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/testAlleneAndConjugatedV2000.mol");
-        List<MoleculeDataModel> tmpV2000DataList = tmpImporter.importMoleculeFile(tmpV2000File, false, true);
-        //V3000 molfile
-        /*
-        File tmpV3000File = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/testAlleneAndConjugatedV2000.mol");
-        List<MoleculeDataModel> tmpV3000DataList = tmpImporter.importMoleculeFile(tmpV3000File, false, true);
-        */ //
-        IAtomContainer tmpImporterAC = null;
-        for (MoleculeDataModel tmpDataModel: tmpV2000DataList) {
-            tmpImporterAC = tmpDataModel.getAtomContainer();
-        }
-        //only ConjugatedPiSystemDetector output as comparison
-        IAtomContainerSet tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpImporterAC);
-        SmilesGenerator tmpSMILESGen = new SmilesGenerator(SmiFlavor.Canonical);
-        for (IAtomContainer tmpAC: tmpCPSDSet) {
-            System.out.println("CPSD output for Importer: " + tmpSMILESGen.create(tmpAC));
-        }
-        //
-        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
-        this.preprocessTestMolecule(tmpASF, tmpImporterAC,
-                false, false, true);
-        List<String> tmpImporterFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpImporterAC));
-        System.out.println("Importer Fragments: " + tmpImporterFragmentsACList);
-
-        //test fragmentation with "import" from SMILES String
-        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        IAtomContainer tmpSMILESTestStructureAC = tmpParser.parseSmiles("C=CC=C=C");
-        //only ConjugatedPiSystemDetector output as comparison
-        tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpSMILESTestStructureAC);
-        for (IAtomContainer tmpAC: tmpCPSDSet) {
-            System.out.println("CPSD output for SMILES: " + tmpSMILESGen.create(tmpAC));
-        }
-        //test Importer Preprocessing
-        try {
-            Method tmpImporterMethod = Importer.class.getDeclaredMethod("preprocessMoleculeSet", IAtomContainerSet.class, boolean.class);
-            tmpImporterMethod.setAccessible(true);
-            IAtomContainerSet tmpImporterSMILESACSet = new AtomContainerSet();
-            tmpImporterSMILESACSet.addAtomContainer(tmpSMILESTestStructureAC);
-            tmpImporterMethod.invoke(tmpImporter, tmpImporterSMILESACSet, false);
-            for (IAtomContainer tmpAC: tmpImporterSMILESACSet.atomContainers()) {
-                System.out.println("manual preprocessing: " + tmpSMILESGen.create(tmpAC));
-            }
-            tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpImporterSMILESACSet.getAtomContainer(0));
-            for (IAtomContainer tmpAC: tmpCPSDSet) {
-                System.out.println("CPSD output for SMILES after manual Importer.preproccessing: " + tmpSMILESGen.create(tmpAC));
-            }
-        } catch (NoSuchMethodException methodException) {
-            System.out.println("Method reflection failed.");
-        } catch (InvocationTargetException e) {
-            System.out.println("Method invocation failed.");
-        } catch (IllegalAccessException e) {
-            System.out.println("Method access failed");
-        }
-        //test alternative SMILES to determine if CPSD is path-dependent
-        IAtomContainer tmpAlternativeSMILESTestStructureAC = tmpParser.parseSmiles("C(=CC=C)=CC");
-        //only ConjugatedPiSystemDetector output as comparison
-        tmpCPSDSet = ConjugatedPiSystemsDetector.detect(tmpAlternativeSMILESTestStructureAC);
-        for (IAtomContainer tmpAC: tmpCPSDSet) {
-            System.out.println("CPSD output for alternative SMILES: " + tmpSMILESGen.create(tmpAC));
-        }
-        //test with copied CPSD methods
-        System.out.println("Orig SMILES!:");
-        for (IAtomContainer tmpAC: this.detect(tmpParser.parseSmiles("C=CC=C=C"))) {
-            System.out.println("Custom CPSD output for orig SMILES: " + tmpSMILESGen.create(tmpAC));
-        }
-        System.out.println("Alt SMILES!:");
-        for (IAtomContainer tmpAC: this.detect(tmpParser.parseSmiles("C(=C)=CC=C"))) { //SMILES from Importer import
-            System.out.println("Custom CPSD output for alternative SMILES: " + tmpSMILESGen.create(tmpAC));
-        }
-
-        //no idea where NoSuchAtomException results from, issue not reproducible in runtime
-        /*
-        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpSMILESTestStructureAC);
-        tmpASF = new AlkylStructureFragmenter();
-        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
-                false, false, true);
-        List<String> tmpFragmentsACList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpSMILESTestStructureAC));
-        System.out.println("SMILES Fragments: " + tmpFragmentsACList);
-        List<String> tmpExpectedSMILESList = new ArrayList<>();
-        tmpExpectedSMILESList.add("C=C=C");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
-        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsACList),
-                new ArrayList<>(tmpExpectedSMILESList)));
-        */
-    }
-    //ToDo: find cause
     /**
      * Tests molecule "CC(C)(C)CC1CCC(=C)C2CC21" which showed difficulties in fragmentation in past versions.
      *
@@ -602,7 +615,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @throws CloneNotSupportedException if cloning of the original molecule is not supported
      */
     @Test
-    public void specificTest05() throws InvalidSmilesException, CloneNotSupportedException {
+    public void specificTest04() throws InvalidSmilesException, CloneNotSupportedException {
         //test structure: CC(C)(C)CC1CCC(=C)C2CC21
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC(C)(C)CC1CCC(=C)C2CC21");
@@ -624,18 +637,11 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.
      *
-     * @throws FileNotFoundException if test structures file can not be found or accessed
-     * @throws URISyntaxException if syntax of path to test structures file is wrong
+     * @throws InvalidSmilesException if SMILES parser fails to parse SMILES from String with incorrect syntax
      */
     @Test
     public void deepCopyButeneTest() throws InvalidSmilesException {
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
-        tmpASF.setFragmentSaturationSetting(IMoleculeFragmenter.FRAGMENT_SATURATION_OPTION_DEFAULT);
-        tmpASF.setKeepNonFragmentableMoleculesSetting(AlkylStructureFragmenter.KEEP_NON_FRAGMENTABLE_MOLECULES_SETTING_DEFAULT);
-        tmpASF.setFragmentSideChainsSetting(AlkylStructureFragmenter.FRAGMENT_SIDE_CHAINS_SETTING_DEFAULT);
-        tmpASF.setMaxChainLengthSetting(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
-        tmpASF.setIsolateTertQuatCarbonsSetting(AlkylStructureFragmenter.ISOLATE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
-        tmpASF.setSeparateTertQuatCarbonFromRingSetting(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpButeneContainer = tmpParser.parseSmiles("C=CCC");
         //two steps below needed for correct internal index handling
@@ -689,7 +695,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     public void defaultFragmentationTest() throws Exception {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         //test structure: CC(CC1C2CC2C(=C)CC1c1ccc(cc1C\C=C/c1ccccc1)C(C)C)(CCCCCCCCC)CC#CC
-        //ToDo: fragments dont match
         IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC(CC1C2CC2C(=C)CC1c1ccc(cc1C\\C=C/c1ccccc1)C(C)C)(CCCCCCCCC)CC#CC");
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
@@ -901,201 +906,37 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             Assertions.assertFalse(anAlkylStructureFragmenterInstance.canBeFragmented(aMolecule));
         }
     }
-    /**
-     * Private method returning a local instance of AlkylStructureFragmenter with default settings for a given molecule.
-     *
-     * @param aMolecule given molecule to be assessed
-     * @param aShouldBeFilteredStatement boolean value to set pre-fragmentation task
-     * @param aShouldBePreprocessedStatement boolean value to set pre-fragmentation task
-     * @param aCanBeFragmentedStatement boolean value to set pre-fragmentation task
-     * @return AlkylStructureFragmenter instance with default settings
-     */
-    private AlkylStructureFragmenter getDefaultASFInstance(IAtomContainer aMolecule, boolean aShouldBeFilteredStatement,
-                                                           boolean aShouldBePreprocessedStatement, boolean aCanBeFragmentedStatement) {
-        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
-        //manual set of setting values to default values
-        tmpASF.setFragmentSaturationSetting(FragmentSaturationOption.HYDROGEN_SATURATION);
-        tmpASF.setKeepNonFragmentableMoleculesSetting(true);
-        tmpASF.setFragmentSideChainsSetting(true);
-        tmpASF.setMaxChainLengthSetting(6);
-        tmpASF.setIsolateTertQuatCarbonsSetting(true);
-        tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
-        //assertions for non-set-able pre-fragmentation tasks
-        /*
-        if (aShouldBeFilteredStatement) {
-            Assertions.assertTrue(tmpASF.shouldBeFiltered(aMolecule));
-        } else {
-            Assertions.assertFalse(tmpASF.shouldBeFiltered(aMolecule));
-        }
-        if (aShouldBePreprocessedStatement) {
-            Assertions.assertTrue(tmpASF.shouldBePreprocessed(aMolecule));
-        } else {
-            Assertions.assertFalse(tmpASF.shouldBePreprocessed(aMolecule));
-        }
-        if (aCanBeFragmentedStatement) {
-            Assertions.assertTrue(tmpASF.canBeFragmented(aMolecule));
-        } else {
-            Assertions.assertFalse(tmpASF.canBeFragmented(aMolecule));
-        }
-         */
-        return tmpASF;
-    }
-    /**
-     * Private method to check and compare the correctness of chemical formulas before and after fragmentation.
-     *
-     * @param aMolecule the original molecule before fragmentation
-     * @param anExpectedACSet the expected fragments of a given molecule
-     * @param aResultACSet the resulting fragments of a fragmented given molecule
-     * @return true if formula was constant, false if not
-     */
-    private boolean checkChemicalFormula(IAtomContainer aMolecule, IAtomContainerSet anExpectedACSet, IAtomContainerSet aResultACSet) {
-        int tmpPreFragmentationAtomCount = 0;
-        for (IAtom tmpAtom: aMolecule.atoms()) {
-            if (tmpAtom.getAtomicNumber() != 0) {
-                tmpPreFragmentationAtomCount++;
-            }
-        }
-        int tmpResultPostFragmentationAtomCount = 0;
-        int tmpExpPostFragmentationAtomCount = 0;
-        for (IAtomContainer tmpAtomContainer: anExpectedACSet.atomContainers()) {
-            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-                if (tmpAtom.getAtomicNumber() != 0) {
-                    tmpExpPostFragmentationAtomCount++;
-                }
-            }
-        }
-        for (IAtomContainer tmpAtomContainer: aResultACSet.atomContainers()) {
-            for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-                if (tmpAtom.getAtomicNumber() != 0)
-                    tmpResultPostFragmentationAtomCount++;
-            }
-        }
-        return tmpResultPostFragmentationAtomCount == tmpPreFragmentationAtomCount
-                && tmpResultPostFragmentationAtomCount == tmpExpPostFragmentationAtomCount;
-    }
-
-    //</editor-fold>
-
-    //<editor-fold desc="Custom CPSD.detect()">
-
-    /**
-     * Copied from "ConjugatedPiSystemsDetector", with custom enhancement for debugging purposes.
-     *
-     * @param ac AtomContainer to detect conjugated systems in
-     * @return Set of AtomContainer with detected conjugated systems
-     */
-    private IAtomContainerSet detect(IAtomContainer ac) {
-        IAtomContainerSet piSystemSet = ac.getBuilder().newInstance(IAtomContainerSet.class);
-
-        for (int i = 0; i < ac.getAtomCount(); i++) {
-            IAtom atom = ac.getAtom(i);
-            atom.setFlag(IChemObject.VISITED, false);
-        }
-
-        for (int i = 0; i < ac.getAtomCount(); i++) {
-            IAtom firstAtom = ac.getAtom(i);
-
-            // if this atom was already visited in a previous DFS, continue
-            if (firstAtom.getFlag(IChemObject.VISITED) || checkAtom(ac, firstAtom) == -1) {
-                continue;
-            }
-            IAtomContainer piSystem = ac.getBuilder().newInstance(IAtomContainer.class);
-            Stack<IAtom> stack = new Stack<>();
-
-            piSystem.addAtom(firstAtom);
-            stack.push(firstAtom);
-            firstAtom.setFlag(IChemObject.VISITED, true);
-            // Start DFS from firstAtom
-            while (!stack.empty()) {
-                //boolean addAtom = false;
-                IAtom currentAtom = stack.pop();
-                List<IAtom> atoms = ac.getConnectedAtomsList(currentAtom);
-                List<IBond> bonds = ac.getConnectedBondsList(currentAtom);
-
-                for (int j = 0; j < atoms.size(); j++) {
-                    IAtom atom = atoms.get(j);
-                    IBond bond = bonds.get(j);
-                    if (!atom.getFlag(IChemObject.VISITED)) {
-                        int check = checkAtom(ac, atom);
-                        if (check == 1) {
-                            piSystem.addAtom(atom);
-                            piSystem.addBond(bond);
-                            continue;
-                            // do not mark atom as visited if cumulative double bond
-                        } else if (check == 0) {
-                            piSystem.addAtom(atom);
-                            piSystem.addBond(bond);
-                            stack.push(atom);
-                        }
-                        atom.setFlag(IChemObject.VISITED, true);
-                    }
-                    // close rings with one bond
-                    else if (!piSystem.contains(bond) && piSystem.contains(atom)) {
-                        piSystem.addBond(bond);
-                    }
-                }
-            }
-
-            if (piSystem.getAtomCount() > 2) {
-                piSystemSet.addAtomContainer(piSystem);
-            }
-        }
-
-        return piSystemSet;
-    }
-
-    /**
-     * Copied from "ConjugatedPiSystemsDetector", with custom enhancement for debugging purposes.
-     *
-     * @param ac AtomContainer to detect conjugated systems in
-     * @param currentAtom Atom to check for conjugation
-     * @return Integer, -1 = isolated; 0 = conjugated; 1 = cumulative DB
-     */
-    private int checkAtom(IAtomContainer ac, IAtom currentAtom) {
-        int check = -1;
-        List<IAtom> atoms = ac.getConnectedAtomsList(currentAtom);
-        List<IBond> bonds = ac.getConnectedBondsList(currentAtom);
-        if (currentAtom.getFlag(IChemObject.AROMATIC)) {
-            check = 0;
-        } else if (currentAtom.getFormalCharge() == 1 /*
-         * &&
-         * currentAtom.getSymbol
-         * ().equals("C")
-         */) {
-            check = 0;
-        } else if (currentAtom.getFormalCharge() == -1) {
-            //// NEGATIVE CHARGES WITH A NEIGHBOOR PI BOND //////////////
-            int counterOfPi = 0;
-            for (IAtom atom : atoms) {
-                if (ac.getMaximumBondOrder(atom) != IBond.Order.SINGLE) {
-                    counterOfPi++;
-                }
-            }
-            if (counterOfPi > 0) check = 0;
-        } else {
-            int se = ac.getConnectedSingleElectronsCount(currentAtom);
-            if (se == 1) {
-                check = 0; //// DETECTION of radicals
-            } else if (ac.getConnectedLonePairsCount(currentAtom) > 0
-                /* && (currentAtom.getAtomicNumber() == IElement.N */) {
-                check = 0; //// DETECTION of  lone pair
+    private boolean assertMolecularArraysEquals(MolecularArrays anExpectedMolecularArrays, MolecularArrays anActualMolecularArrays) {
+        Objects.requireNonNull(anExpectedMolecularArrays);
+        Objects.requireNonNull(anActualMolecularArrays);
+        IAtom[] tmpExpectedAtomArray = anExpectedMolecularArrays.getAtomArray();
+        IAtom[] tmpActualAtomArray = anActualMolecularArrays.getAtomArray();
+        IBond[] tmpExpectedBondArray = anExpectedMolecularArrays.getBondArray();
+        IBond[] tmpActualBondArray = anActualMolecularArrays.getBondArray();
+        //atom array match
+        boolean tmpIsAtomArrayEqual = false;
+        for (int i = 0; i < tmpActualAtomArray.length; i++) {
+            IAtom tmpActualAtom = tmpActualAtomArray[i];
+            IAtom tmpExpectedAtom = tmpExpectedAtomArray[i];
+            if (tmpActualAtom.getProperties().equals(tmpExpectedAtom.getProperties()) && tmpActualAtom.equals(tmpExpectedAtom)) {
+                tmpIsAtomArrayEqual = true;
             } else {
-                int highOrderBondCount = 0;
-                for (int j = 0; j < atoms.size(); j++) {
-                    IBond bond = bonds.get(j);
-                    if (bond == null || bond.getOrder() != IBond.Order.SINGLE) {
-                        highOrderBondCount++;
-                    } else {
-                    }
-                }
-                if (highOrderBondCount == 1) {
-                    check = 0;
-                } else if (highOrderBondCount > 1) {
-                    check = 1;
-                }
+                tmpIsAtomArrayEqual = false;
             }
         }
-        return check;
+        //bond array match
+        boolean tmpIsBondArrayEqual = false;
+        for (int i = 0; i < tmpActualBondArray.length; i++) {
+            IBond tmpActualBond = tmpActualBondArray[i];
+            IBond tmpExpectedBond = tmpExpectedBondArray[i];
+            if (tmpActualBond.getProperties().equals(tmpExpectedBond.getProperties()) && tmpActualBond.equals(tmpExpectedBond)) {
+                tmpIsBondArrayEqual = true;
+            } else {
+                tmpIsBondArrayEqual = false;
+            }
+        }
+        return (tmpIsAtomArrayEqual && tmpIsBondArrayEqual);
     }
+
     //</editor-fold>
 }
