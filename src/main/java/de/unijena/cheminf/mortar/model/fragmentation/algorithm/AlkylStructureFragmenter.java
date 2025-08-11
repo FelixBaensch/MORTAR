@@ -928,6 +928,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpIsStartBondDouble = true;
             } else if (tmpArrayBond.getOrder() == IBond.Order.TRIPLE) {
                 tmpIsStartBondTriple = true;
+            } else {
+                continue;
             }
             //iterate over each atom of bond
             for (IAtom tmpArrayBondAtom: tmpArrayBond.atoms()) {
@@ -952,6 +954,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                 tmpIsSecondNeighborBondDouble = true;
                             } else if (tmpSecondNeighborBond.getOrder() == IBond.Order.TRIPLE) {
                                 tmpIsSecondNeighborBondTriple = true;
+                            } else {
+                                continue;
                             }
                             //alternating pattern of D-S-D or T-S-T -> conjugation detected
                             if (((tmpIsStartBondDouble && tmpIsSecondNeighborBondDouble) || (tmpIsStartBondTriple && tmpIsSecondNeighborBondTriple)) && tmpIsNeighborBondSingle) {
@@ -1479,7 +1483,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
                     //checks for part of double bond
                     else if ((boolean) tmpArrayAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
-                        //ToDo: runtime can be improved
+                        //extracts allene atoms
+                        if (tmpArrayAtom.getMaxBondOrder() == IBond.Order.DOUBLE && tmpArrayAtom.getBondOrderSum() == 4 && tmpArrayAtom.getBondCount() == 2) {
+                            tmpIsolatedMultiBondsContainer.addAtom(this.deepCopyAtom(tmpArrayAtom));
+                            continue atomIteration;
+                        }
                         //extracts non-cyclic double bonds possibly connected to a ring structure
                         for (IAtom tmpNeighborAtom: tmpArrayAtom.neighbors()) {
                             if (!(boolean) tmpNeighborAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY)) {
@@ -1687,7 +1695,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         }
                         if (tmpIsBeginRing || tmpIsEndRing) {
                             tmpRingFragmentationContainer.addBond(this.deepCopyBond(tmpArraysBond, tmpRingFragmentationContainer));
-
                         } else {
                             tmpIsolatedMultiBondsContainer.addBond(this.deepCopyBond(tmpArraysBond, tmpIsolatedMultiBondsContainer));
                         }
@@ -1893,6 +1900,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                 tmpChainFragmentationContainer.addBond(this.deepCopyBond(tmpArraysBond, tmpChainFragmentationContainer));
                             }
                         }
+                        //for this.isolateTertQuatCarbonSetting == false:
                         //extracts bonds where atoms DO NOT have the following markers active: (ring AND conjugated pi) AND (double OR triple)
                         //as well as (tertiary OR quaternary OR neighbor)
                         else if (!(tmpIsBeginRing && tmpIsEndRing && tmpIsBeginConjPi && tmpIsEndConjPi) && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
@@ -2031,15 +2039,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     protected IAtom deepCopyAtom(IAtom anAtomToCopy) {
         Objects.requireNonNull(anAtomToCopy);
         IAtom tmpNewAtom = this.chemObjectBuilderInstance.newAtom();
-
-        tmpNewAtom.setPoint2d(anAtomToCopy.getPoint2d());
-        tmpNewAtom.setPoint3d(anAtomToCopy.getPoint3d());
-        tmpNewAtom.setFractionalPoint3d(anAtomToCopy.getFractionalPoint3d());
+        //"important" atom properties
         tmpNewAtom.setImplicitHydrogenCount(anAtomToCopy.getImplicitHydrogenCount());
-        tmpNewAtom.setStereoParity(anAtomToCopy.getStereoParity());
         tmpNewAtom.setCharge(anAtomToCopy.getCharge());
         tmpNewAtom.setMaxBondOrder(anAtomToCopy.getMaxBondOrder());
         tmpNewAtom.setBondOrderSum(anAtomToCopy.getBondOrderSum());
+        tmpNewAtom.setAtomicNumber(anAtomToCopy.getAtomicNumber());
+        //additional properties
+        tmpNewAtom.setPoint2d(anAtomToCopy.getPoint2d());
+        tmpNewAtom.setPoint3d(anAtomToCopy.getPoint3d());
+        tmpNewAtom.setFractionalPoint3d(anAtomToCopy.getFractionalPoint3d());
+        tmpNewAtom.setStereoParity(anAtomToCopy.getStereoParity());
         tmpNewAtom.setCovalentRadius(anAtomToCopy.getCovalentRadius());
         tmpNewAtom.setFormalCharge(anAtomToCopy.getFormalCharge());
         tmpNewAtom.setHybridization(anAtomToCopy.getHybridization());
@@ -2049,8 +2059,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpNewAtom.setExactMass(anAtomToCopy.getExactMass());
         tmpNewAtom.setNaturalAbundance(anAtomToCopy.getNaturalAbundance());
         tmpNewAtom.setMassNumber(anAtomToCopy.getMassNumber());
-        tmpNewAtom.setAtomicNumber(anAtomToCopy.getAtomicNumber());
         //setProperty(...) down below
+        //copying of flags results in conjugated pi systems not being saturated and correctly handled
         tmpNewAtom.setFlags(anAtomToCopy.getFlags());
         tmpNewAtom.setNotification(anAtomToCopy.getNotification());
 
@@ -2101,6 +2111,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aBondIncludingAtomContainer);
         IBond tmpNewBond = this.chemObjectBuilderInstance.newBond();
         tmpNewBond.setOrder(aBondToCopy.getOrder());
+        tmpNewBond.setIsAromatic(aBondToCopy.isAromatic());
+        tmpNewBond.setIsInRing(aBondToCopy.isInRing());
+        tmpNewBond.setFlags(aBondToCopy.getFlags());
         //IMPORTANT! Make sure to add new internal properties below!
         //<editor-fold desc="Property Deep Copy">
         //to ensure a true deep copy the boolean and integer property values are separated
