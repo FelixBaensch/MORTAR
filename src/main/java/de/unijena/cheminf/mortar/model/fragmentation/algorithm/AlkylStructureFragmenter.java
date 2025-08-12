@@ -1903,14 +1903,64 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         //for this.isolateTertQuatCarbonSetting == false:
                         //extracts bonds where atoms DO NOT have the following markers active: (ring AND conjugated pi) AND (double OR triple)
                         //as well as (tertiary OR quaternary OR neighbor)
-                        else if (!(tmpIsBeginRing && tmpIsEndRing && tmpIsBeginConjPi && tmpIsEndConjPi) && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
-                            if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary || tmpIsBeginNeighbor || tmpIsEndNeighbor)) {
-                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
-                                    System.out.println("Extraction.BondIteration: " + tmpArraysBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) + " Residual bonds (extra markers)");
-                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
-                                            "In: Extraction.BondIteration: " + tmpArraysBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) + " Residual bonds (extra markers)");
+                        else {
+                            //skips bonds of methyl groups and rings
+                            if ((tmpIsBeginRing && !tmpIsEndRing && tmpEndAtom.getBondCount() == 1) || (!tmpIsBeginRing && tmpIsEndRing && tmpBeginAtom.getBondCount() == 1)) {
+                                continue bondIteration;
+                            }
+                            //ToDo: exclude bond between conj. and residual chain
+//                            else if ((tmpIsBeginConjPi && !tmpIsEndConjPi && tmpEndAtom.getBondCount() != 1) || (tmpIsEndConjPi && !tmpIsBeginConjPi && tmpBeginAtom.getBondCount() != 1)) {
+//                                continue bondIteration;
+//                            }
+                            //skips bonds between ring
+//                            else if ((tmpIsBeginConjPi && !tmpIsEndConjPi) || (!tmpIsBeginConjPi && tmpIsEndConjPi)) {
+//                                //true if at least one property is NOT false;
+//                                boolean tmpIsBondBeginAtomProperties = false;
+//                                boolean[] tmpBeginAtomPropertyValues = new boolean[8];
+//                                tmpBeginAtomPropertyValues[0] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+//                                tmpBeginAtomPropertyValues[1] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+//                                tmpBeginAtomPropertyValues[2] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
+//                                tmpBeginAtomPropertyValues[3] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
+//                                tmpBeginAtomPropertyValues[4] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY);
+//                                tmpBeginAtomPropertyValues[5] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY);
+//                                tmpBeginAtomPropertyValues[6] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY);
+//                                tmpBeginAtomPropertyValues[7] = tmpBeginAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
+//                                for (boolean tmpBool: tmpBeginAtomPropertyValues) {
+//                                    if (tmpBool) {
+//                                        tmpIsBondBeginAtomProperties = true;
+//                                        break;
+//                                    }
+//                                }
+//                                //true if at least one property is NOT false;
+//                                boolean tmpIsBondEndAtomProperties = false;
+//                                boolean[] tmpEndAtomPropertyValues = new boolean[8];
+//                                tmpEndAtomPropertyValues[0] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY);
+//                                tmpEndAtomPropertyValues[1] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY);
+//                                tmpEndAtomPropertyValues[2] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY);
+//                                tmpEndAtomPropertyValues[3] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY);
+//                                tmpEndAtomPropertyValues[4] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY);
+//                                tmpEndAtomPropertyValues[5] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY);
+//                                tmpEndAtomPropertyValues[6] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY);
+//                                tmpEndAtomPropertyValues[7] = tmpEndAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY);
+//                                for (boolean tmpBool: tmpEndAtomPropertyValues) {
+//                                    if (tmpBool) {
+//                                        tmpIsBondEndAtomProperties = true;
+//                                        break;
+//                                    }
+//                                }
+//                                if (!tmpIsBondBeginAtomProperties || !tmpIsBondEndAtomProperties) {
+//                                    continue bondIteration;
+//                                }
+//                            }
+                            else if (!(tmpIsBeginRing && tmpIsEndRing && tmpIsBeginConjPi && tmpIsEndConjPi) && !(tmpIsBeginDouble || tmpIsEndDouble || tmpIsBeginTriple || tmpIsEndTriple)) {
+                                if (!(tmpIsBeginTertiary || tmpIsEndTertiary || tmpIsBeginQuaternary || tmpIsEndQuaternary || tmpIsBeginNeighbor || tmpIsEndNeighbor)) {
+                                    if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+                                        System.out.println("Extraction.BondIteration: " + tmpArraysBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) + " Residual bonds (extra markers)");
+                                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                                                "In: Extraction.BondIteration: " + tmpArraysBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) + " Residual bonds (extra markers)");
+                                    }
+                                    tmpChainFragmentationContainer.addBond(this.deepCopyBond(tmpArraysBond, tmpChainFragmentationContainer));
                                 }
-                                tmpChainFragmentationContainer.addBond(this.deepCopyBond(tmpArraysBond, tmpChainFragmentationContainer));
                             }
                         }
                     }
