@@ -607,6 +607,13 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C1CCCC1");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+        //additional non-default settings:
+        tmpASF.setIsolateTertQuatCarbonsSetting(false);
+        tmpFragmentsSMILESList.clear();
+        //tmpExpectedSMILESLIST is not needed to be cleared, as same fragments are expected
+        tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
     }
     /**
      * Tests molecule "CC(C)(C)CC1CCC(=C)C2CC21" which showed difficulties in fragmentation in past versions.
