@@ -936,6 +936,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             } else if (tmpArrayBond.getOrder() == IBond.Order.TRIPLE) {
                 tmpIsStartBondTriple = true;
             } else {
+                if (tmpArrayBond.getBegin().getMaxBondOrder() == IBond.Order.DOUBLE && tmpArrayBond.getEnd().getMaxBondOrder() == IBond.Order.DOUBLE) {
+                    tmpArrayBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
+                }
                 continue;
             }
             //iterate over each atom of bond
