@@ -30,20 +30,29 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -68,7 +77,45 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * Constructor of AlkylStructureFragmenter test class.
      */
     public AlkylStructureFragmenterTest() {}
+
     //<editor-fold desc="@Test Public Methods">
+
+    /**
+     * Method to showcase the usage of the AlkylStructureFragmenter class.
+     * The molecules used in this 'test' are all molecules used in the tests below, complemented by various substructures
+     * the class will detect and return intact.
+     */
+    @Test
+    public void exampleUsageTest() throws IOException, CDKException, CloneNotSupportedException{
+        //get file reader with test structures file
+        File tmpFile = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/ASF_Test_Substructure_Library.sdf");
+        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(tmpFile),
+                DefaultChemObjectBuilder.getInstance());
+        //read structures into AtomContainerSet
+        IAtomContainerSet tmpStructuresSet = new AtomContainerSet();
+        while (tmpSDFReader.hasNext()) {
+            tmpStructuresSet.addAtomContainer(tmpSDFReader.next());
+        }
+        //get file reader with test structures expected fragments file
+        List<String> tmpExpectedSMILESStringList = Files.readAllLines(
+                Path.of("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/ASF_Test_Substructure_Library_Fragments_Strings"),
+                StandardCharsets.UTF_8);
+        //constructs an AlkylStructureFragmenter with default settings
+        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        //generate fragments and add SMILES to fragment list
+        List<String> tmpFragmentsSMILESList = new ArrayList<>();
+        for (IAtomContainer tmpAC: tmpStructuresSet.atomContainers()) {
+            this.preprocessTestMolecule(tmpASF, tmpAC,
+                    false, false, true);
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpAC)));
+        }
+        //check if match
+        boolean tmpTestSuccessful = this.compareListsIgnoringOrder(tmpExpectedSMILESStringList, tmpFragmentsSMILESList);
+        if (!tmpTestSuccessful) {
+            System.out.println(tmpFragmentsSMILESList);
+            Assertions.fail();
+        }
+    }
     /**
      * Method for unit testing the internal method AlkylStructureFragmenter.extractFragments().
      * The molecule used for testing is a conceptual molecule containing several key structural features detected and
@@ -105,7 +152,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         } catch (CloneNotSupportedException | CDKException e) {
             Assertions.fail();
         }
-        System.out.println("Expected: " + tmpExpectedFragmentsList + "; Actual Fragments: "+ tmpExtractedFragmentList);
+        System.out.println("extractFragmentsTest: Expected: " + tmpExpectedFragmentsList + "; Actual Fragments: "+ tmpExtractedFragmentList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
     }
     /**
@@ -125,6 +172,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("CC");
         tmpExpectedSMILESList.add("CCCCCC");
         tmpExpectedSMILESList.add("CCCCCC");
+        System.out.println("defaultLinearChainDissectionTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         tmpASF.setMaxChainLengthSetting(7);
@@ -133,6 +181,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpCarbonChainAC));
         tmpExpectedSMILESList.add("CCCCCCC");
         tmpExpectedSMILESList.add("CCCCCCC");
+        System.out.println("defaultLinearChainDissectionTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         tmpASF.setFragmentSideChainsSetting(false);
@@ -140,6 +189,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.clear();
         tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpCarbonChainAC));
         tmpExpectedSMILESList.add("CCCCCCCCCCCCCC");
+        System.out.println("defaultLinearChainDissectionTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -290,6 +340,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("CCC");
         tmpExpectedSMILESList.add("*C(*)(*)*");
         tmpExpectedSMILESList.add("*C(*)*");
+        System.out.println("basicTest01: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -314,6 +365,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C=C");
+        System.out.println("basicTest02: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //test structure: C=CCC
@@ -325,6 +377,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC");
         tmpExpectedSMILESList.add("C=C");
+        System.out.println("basicTest02: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //test structure: CC#CC
@@ -337,6 +390,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C#C");
+        System.out.println("basicTest02: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -358,6 +412,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<String> tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CCCCC1");
+        System.out.println("basicTest03: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //test structure: c1ccccc1
@@ -368,7 +423,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("c1ccccc1");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("basicTest03: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -390,6 +445,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<String> tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CC2CCCC2C1");
+        System.out.println("basicTest04: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //test structure: C=1C=CC(=CC1)C2=CC=CC=C2
@@ -400,7 +456,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("C=1C=CC(=CC1)C2=CC=CC=C2");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("basicTest04: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -423,6 +479,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CCCCC1");
         tmpExpectedSMILESList.add("C1CCCCC1");
+        System.out.println("basicTest05: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -444,6 +501,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<String> tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CCC2(CC1)CCCCC2");
+        System.out.println("basicTest06: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -466,7 +524,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<String> tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("CC(C)(C)C1CCCCC1");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("basicTest07: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //combinations of relevant settings
@@ -480,7 +538,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("basicTest07: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                     new ArrayList<>(tmpExpectedSMILESList)));
         //
@@ -491,7 +549,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("*C(C)(C)C");
         tmpExpectedSMILESList.add("C1CCCCC1");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("basicTest07: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //
@@ -501,7 +559,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC(C)(C)C1CCCCC1");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("basicTest07: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -523,7 +581,21 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C(=C)=C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("basicTest08: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+    }
+    @Test
+    public void basicTest09() throws InvalidSmilesException, CloneNotSupportedException {
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("c1ccccc1c2ccccc2");
+        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
+                false, false, true);
+        List<String> tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("c1ccc(cc1)c2ccccc2");
+        System.out.println("basicTest09: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -549,6 +621,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C=C1C=2C=CC=CC2CC3CCCCC13");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
+        System.out.println("specificTest01: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -578,6 +651,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("CCC");
         tmpExpectedSMILESList.add("*C(*)(*)*");
         tmpExpectedSMILESList.add("*C(*)(*)*");
+        System.out.println("specificTest02: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -605,6 +679,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C1CCCC1");
+        System.out.println("specificTest03: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //additional non-default settings:
@@ -612,6 +687,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpFragmentsSMILESList.clear();
         //tmpExpectedSMILESLIST is not needed to be cleared, as same fragments are expected
         tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        System.out.println("specificTest03: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -637,7 +713,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C=C1CCCC2CC12");
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("specificTest04: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -681,16 +757,16 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         this.preprocessTestMolecule(tmpASF, tmpButeneContainer,
                 false, false, true);
         List<IAtomContainer> tmpFragmentACList = tmpASF.fragmentMolecule(tmpButeneContainer);
-        List<String> tmpExpectedList = new ArrayList<>(3);
-        tmpExpectedList.add("CC");
-        tmpExpectedList.add("C=C");
-        List<String> tmpFragmentStringList = new ArrayList<>();
+        List<String> tmpExpectedSMILESList = new ArrayList<>(3);
+        tmpExpectedSMILESList.add("CC");
+        tmpExpectedSMILESList.add("C=C");
+        List<String> tmpFragmentsSMILESList = new ArrayList<>();
         for (IAtomContainer tmpAC: tmpFragmentACList) {
-            tmpFragmentStringList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
+            tmpFragmentsSMILESList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
         }
-        System.out.println("Expected: " + tmpExpectedList + "; Actual Fragments: "+ tmpFragmentStringList);
-        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentStringList),
-                new ArrayList<>(tmpExpectedList)));
+        System.out.println("linearDoubleBondExtractionTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
     }
 
     /**
@@ -720,7 +796,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("C"); //methane connecting triple bond and quaternary system
         tmpExpectedSMILESList.add("C#C"); //triple bond
         tmpExpectedSMILESList.add("C"); //methane residual of triple bond chain
-        System.out.println("Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        System.out.println("defaultFragmentationTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -739,20 +815,22 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
                 false, false, true);
-        List<String> tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         List<String> tmpExpectedSMILESList = new ArrayList<>(5);
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C1CCCC1");
-        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+        System.out.println("naturalCompoundFragmentationTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //test structure: CNP0509407.0
         tmpTestStructureAC = tmpParser.parseSmiles("CCCCCCCCCC(CC)(CCCCCCC)CCCCCCCC");
         this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
                 false, false, true);
-        tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        tmpFragmentsSMILESList.clear();
         tmpExpectedSMILESList.clear();
+        tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         tmpExpectedSMILESList.add("CCCCCC");
         tmpExpectedSMILESList.add("CCCCCC");
         tmpExpectedSMILESList.add("CCCCCC");
@@ -761,17 +839,20 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpExpectedSMILESList.add("CC");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("*C(*)(*)*");
-        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+        System.out.println("naturalCompoundFragmentationTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //test structure: CNP0242949.0
         tmpTestStructureAC = tmpParser.parseSmiles("CC1CCCCCCCCC1");
         this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
                 false, false, true);
-        tmpResultSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        tmpFragmentsSMILESList.clear();
         tmpExpectedSMILESList.clear();
+        tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C1CCCCCCCCC1");
-        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpResultSMILESList),
+        System.out.println("naturalCompoundFragmentationTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
 
@@ -866,7 +947,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * @param aList2 Second given list to compare
      * @return boolean whether given lists are equal
      */
-    private boolean compareListsIgnoringOrder(List aList1, List aList2) {
+    private boolean compareListsIgnoringOrder(List<?> aList1, List<?> aList2) {
         if (aList1 == null || aList2 == null) {
             return false;
         }
@@ -877,6 +958,20 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
             aList2.remove(o);
         }
         return aList2.isEmpty();
+    }
+    /**
+     * Method to return the mismatches from compared Lists.
+     *
+     * @param aList1 first list
+     * @param aList2 second list, will only entail mismatches after comparison
+     * @return List with mismatches
+     */
+    private List<?> returnMismatchFromComparedLists(List<?> aList1, List<?> aList2) {
+        List<?> tmpMismatchList = new ArrayList<>();
+        if (this.compareListsIgnoringOrder(aList1, aList2)) {
+            tmpMismatchList = aList2;
+        }
+        return tmpMismatchList;
     }
     /**
      * Utility method to generate SMILES notation strings for a given List containing IAtomContainer instances.
