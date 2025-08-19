@@ -41,7 +41,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.Bond;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -53,7 +52,9 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IElement;
+import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.ArrayList;
@@ -65,7 +66,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Java class implementing an algorithm for detection and fragmentation of alkyl
+ * An algorithm for detection and fragmentation of alkyl
  * structures in MORTAR using the CDK.
  *
  * <p>
@@ -90,15 +91,14 @@ import java.util.logging.Logger;
 public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
     //<editor-fold desc="Inner Class 'MolecularArrays'">
-
     /**
-     * Inner class for internal data transfer of atoms and bonds in arrays.
+     * Inner class for internally transferring atom and bond arrays of the input molecule.
      * On initialization, the constructor receives a molecule from which the atoms and bonds are to be placed in arrays.
      * Each array 'filling' routine checks and removes any null elements, should there be any.
-     * In the same step, the atom and bond properties are set to an initialization value (e.g. false) except their index
-     * which is set to their respective increasing count.
+     * In the same step, the atom and bond properties used by this class for marking are set to an initialization
+     * value (e.g. false), except their index which is set to their respective increasing count.
      */
-    class MolecularArrays {
+    static class MolecularArrays {
         /**
          * Private IAtom array for storing given atoms.
          */
@@ -149,8 +149,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpBondArrayList.add(tmpBond);
                 }
             }
-            this.atomArray = tmpAtomArrayList.toArray(new IAtom[tmpAtomArrayList.size()]);
-            this.bondArray = tmpBondArrayList.toArray(new IBond[tmpBondArrayList.size()]);
+            this.atomArray = tmpAtomArrayList.toArray(new IAtom[0]);
+            this.bondArray = tmpBondArrayList.toArray(new IBond[0]);
             //</editor-fold>
         }
         /**
@@ -195,8 +195,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //</editor-fold
     //
-    //<editor-fold desc="Public Static Final Class Variables">
-
+    //<editor-fold desc="Public Static Final Class Constants">
     /**
      * Name of the fragmenter.
      */
@@ -267,30 +266,30 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //</editor-fold>
     //
     //<editor-fold desc="Private Class Variables">
-
     /**
-     * A constant property that has a fragment hydrogen saturation setting.
+     * A property wrapping a fragment saturation setting in the form of an
+     * {@link IMoleculeFragmenter.FragmentSaturationOption} enum constant.
      */
     private final SimpleIDisplayEnumConstantProperty fragmentSaturationSetting;
     /**
-     * A constant property that has a boolean value defining if non-fragmentable molecules should be kept in the
+     * A property wrapping a boolean value defining whether non-fragmentable molecules should be kept in the
      * fragmenter pipeline.
      */
     private final SimpleBooleanProperty keepNonFragmentableMoleculesSetting;
     /**
-     * A constant property that has a boolean value determining whether side chains should be fragmented.
+     * A property wrapping a boolean value determining whether side chains should be fragmented.
      */
     private final SimpleBooleanProperty fragmentSideChainsSetting;
     /**
-     * A constant property that has an integer for maximum side chain length.
+     * A property wrapping an integer for maximum side chain length.
      */
     private final SimpleIntegerProperty maxChainLengthSetting;
     /**
-     * A constant property that has a boolean value determining if non-cyclic tertiary and quaternary carbons should be isolated when fragmented.
+     * A property wrapping a boolean value determining whether non-cyclic tertiary and quaternary carbons should be isolated when fragmented.
      */
     private final SimpleBooleanProperty isolateTertQuatCarbonSetting;
     /**
-     * A constant property that has a boolean value defining if tertiary and quaternary carbon atoms should be separated
+     * A property wrapping a boolean value defining whether tertiary and quaternary carbon atoms should be separated
      * from ring structures.
      */
     private final SimpleBooleanProperty separateTertQuatCarbonFromRingSetting;
@@ -323,13 +322,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private static final String LOGGER_WARNING_STRING_FORMAT = "Warning: %1s, Molecule ID: %2s, Cause: %3s";
     /**
-     * CDK IChemObjectBuilder instance used in atomcontainer instancing.
+     * CDK IChemObjectBuilder instance used in atom container instancing.
      */
     private IChemObjectBuilder chemObjectBuilderInstance;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
-
     /**
      * Constructor, all settings are initialised with their respective default values.
      */
@@ -343,9 +341,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             System.out.println(AlkylStructureFragmenter.LOGGER.getParent().getLevel());
         }
          */
-        int tmpSettingsNameTooltipNumber = 6;
+        int tmpSettingsNumber = 6;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
-                tmpSettingsNameTooltipNumber,
+                tmpSettingsNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameTooltipTextMap = new HashMap<>(tmpInitialCapacitySettingsNameTooltipHashMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacitySettingsNameTooltipHashMap, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -386,11 +384,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.maxChainLengthSetting = new SimpleIntegerProperty(this, "Limit length of returned chains",
                 AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT) {
             @Override
-            public void set(int newValue) throws NullPointerException, IllegalArgumentException {
+            public void set(int newValue) throws IllegalArgumentException {
                 //call to super.set() for parameter checks
                 //only allows values greater than 0 to be set
                 if (newValue > 0) {
                     super.set(newValue);
+                } else {
+                    String tmpMessage = "Maximum length of alkyl chain fragments setting only accepts positive, non-zero values.";
+                    AlkylStructureFragmenter.LOGGER.log(Level.WARNING, tmpMessage);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            tmpMessage,
+                            null);
+                    //throws an exception to properly reset the binding
+                    throw new IllegalArgumentException(tmpMessage);
                 }
             }
         };
@@ -409,7 +416,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.displayName"));
-        this.settings = new ArrayList<>(6);
+        this.settings = new ArrayList<>(tmpSettingsNumber);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.keepNonFragmentableMoleculesSetting);
         this.settings.add(this.fragmentSideChainsSetting);
@@ -417,7 +424,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settings.add(this.isolateTertQuatCarbonSetting);
         this.settings.add(this.separateTertQuatCarbonFromRingSetting);
         //set chemObjectBuilderInstance
-        this.chemObjectBuilderInstance = DefaultChemObjectBuilder.getInstance();
+        this.chemObjectBuilderInstance = SilentChemObjectBuilder.getInstance();
     }
     //</editor-fold>
     //
@@ -446,6 +453,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public FragmentSaturationOption getFragmentSaturationSetting() {
         return (IMoleculeFragmenter.FragmentSaturationOption) this.fragmentSaturationSetting.get();
+    }
+    @Override
+    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
+        return this.fragmentSaturationSetting;
     }
     /**
      * Public get method for retention setting for non-fragmentable molecules.
@@ -510,10 +521,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     public SimpleBooleanProperty getSeparateTertQuatCarbonFromRingSettingProperty() {
         return this.separateTertQuatCarbonFromRingSetting;
-    }
-    @Override
-    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() {
-        return this.fragmentSaturationSetting;
     }
     //</editor-fold>
     //
@@ -596,12 +603,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * {@inheritDoc}
      * <p>
-     *     Checks the given IAtomContainer aMolecule for non-carbon and non-hydrogen atoms and returns true if
-     *     non-conforming atoms are found, otherwise false is returned and the molecule can be fragmented.
-     *     In order to enable the user to let non-fragmented molecules be retained in the pipeline, the filter can be
+     *     Checks the given IAtomContainer aMolecule for hetero atoms and returns true if
+     *     non-conforming atoms are found. Otherwise (it contains only carbons and hydrogen atoms), false is returned
+     *     and the molecule can be fragmented.
+     *     In order to enable the user to let non-fragmentable molecules be retained in the pipeline, the filter can be
      *     switched off via setting keepNonFragmentableMoleculesSetting.
-     *     An if-condition at the end checks for the special case of explicit hydrogens and filtering them out if no
-     *     carbon is present in aMolecule, as they pass the actual filter.
+     *     Also returns true if the molecule is null or empty, or if it contains a null atom.
      * </p>
      *
      * @param aMolecule the molecule to check
@@ -609,32 +616,37 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
+        //filter if molecule is null or empty
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
-        int tmpCarbonCount = 0;
+        boolean tmpContainsCarbons = false;
+        boolean tmpContainsHeteroAtoms = false;
+        //TODO @Max, check whether pseudo atoms can be processed by your methods; if they cause issues, filter mols
+        // that have pseudo atoms and document it; otherwise, remove this check
+        boolean tmpContainsPseudoAtoms = false;
         for (IAtom tmpAtom : aMolecule.atoms()) {
-            if (tmpAtom == null || tmpAtom.getAtomicNumber() == null) {
+            if (tmpAtom == null) {
+                //filter if an atom in the mol is null
                 return true;
             }
-            if (Objects.requireNonNull(tmpAtom).getAtomicNumber() == IElement.C) {
-                tmpCarbonCount++;
-            } else {
-                if (this.keepNonFragmentableMoleculesSetting.get()) {
-                    aMolecule.setProperty(ASF_FILTER_MARKER, true);
-                    return false;
-                }
-                return true;
+            if (tmpAtom.getAtomicNumber() == IElement.C) {
+                tmpContainsCarbons = true;
+            } else if (this.isPseudoAtom(tmpAtom)) {
+                tmpContainsPseudoAtoms = true;
+            } else if (this.isHeteroAtom(tmpAtom)) {
+                tmpContainsHeteroAtoms = true;
             }
         }
-        if (tmpCarbonCount != 0 ) {
-            aMolecule.setProperty(ASF_FILTER_MARKER, false);
+        if (tmpContainsCarbons && !tmpContainsHeteroAtoms) {
+            //contains carbons and no hetero atoms
+            aMolecule.setProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER, false);
             return false;
-        }
-        //the else condition is only meant to filter out explicit hydrogen (setting for on/off could be implemented)
-        else {
-            aMolecule.setProperty(ASF_FILTER_MARKER, true);
-            return true;
+        } else {
+            //contains hetero atoms or no carbons (corner case of only explicit hydrogens))
+            aMolecule.setProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER, true);
+            //whether to return true or false depends on the setting
+            return this.keepNonFragmentableMoleculesSetting.get();
         }
     }
     /**
@@ -654,7 +666,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
         //throws NullpointerException if molecule is null
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if ((boolean) aMolecule.getProperty(ASF_FILTER_MARKER)) {
+        if ((boolean) aMolecule.getProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER)) {
             return true;
         }
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
@@ -675,7 +687,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return aMolecule;
     }
     //</editor-fold>
-
+    //
     //<editor-fold desc="Fragmentation">
     /**
      * {@inheritDoc}
@@ -683,13 +695,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Algorithmic approach to alkyl fragmentation:
      * <p>
      *     As a first measure, the given molecule is checked for an internal property, checking if it has been
-     *     passed through an upstream filter. Afterward, the molecule is cloned in order to prevent changes to the
-     *     original molecule and atom types are perceived and configured for downstream fragmentation steps.
+     *     passed through an upstream filter. Afterward, the molecule is cloned, in order to prevent changes to the
+     *     original molecule, and atom types are perceived and configured for downstream fragmentation steps.
      * </p>
      * <p>
-     *     Next, internal class (@see{MolecularArrays}) arrays responsible for data transfer are filled. The atoms and
+     *     Next, internal class ({@link MolecularArrays}) arrays used for internal data transfer are filled. The atoms and
      *     bonds of the cloned molecule are placed in respective IAtom and IBond arrays, which are then placed in a
-     *     MolecularArrays instance. In the 'Filling' step, atoms and bonds are prepared with internal properties used
+     *     MolecularArrays instance. In the 'filling' step, atoms and bonds are prepared with internal properties used
      *     during fragmentation.
      * </p>
      * <p>
@@ -703,7 +715,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * <p>
      *     Extraction of marked substructures is done by creating deep copies of the cloned molecule's atoms and bonds,
      *     and placing them in designated new IAtomContainer instances. During extraction, the preservation of the
-     *     chemical formula is checked, and a warning logged if not true.
+     *     chemical formula is checked, and a warning logged if it changes.
      *     The order of extraction is as follows: rings, conjugated pi bond systems and their fusion products;
      *     additional double bonds connected to rings; isolated bonds of higher order;
      *     atoms and bonds neighboring tertiary or quaternary carbons; residual atoms and bonds as linear chains.
@@ -724,24 +736,25 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
+        Objects.requireNonNull(aMolecule, "Given molecule is null.");
         //skip fragmentation if molecule is not fragmentable and just return it as one fragment to keep it in pipeline
-        if ((boolean) aMolecule.getProperty(ASF_FILTER_MARKER) && this.keepNonFragmentableMoleculesSetting.get()) {
+        if ((boolean) aMolecule.getProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER) && this.keepNonFragmentableMoleculesSetting.get()) {
             List<IAtomContainer> tmpNonFragACList = new ArrayList<>(1);
             tmpNonFragACList.add(aMolecule);
             return tmpNonFragACList;
         }
         //<editor-fold desc="Molecule Cloning and Chemical Formula Check" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
-        this.chemObjectBuilderInstance = DefaultChemObjectBuilder.getInstance();
+        this.chemObjectBuilderInstance = SilentChemObjectBuilder.getInstance();
         int tmpPreFragmentationAtomCount = 0;
         for (IAtom tmpAtom: tmpClone.atoms()) {
-            if (tmpAtom.getAtomicNumber() != 0) {
+            if (!this.isPseudoAtom(tmpAtom)) {
                 tmpPreFragmentationAtomCount++;
             }
         }
-        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
             System.out.println("PreFragAtomCount: " + tmpPreFragmentationAtomCount);
-            AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PreFragAtomCount: " + tmpPreFragmentationAtomCount);
+            AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PreFragAtomCount: {0}", tmpPreFragmentationAtomCount);
         }
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
@@ -751,61 +764,62 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             "Atom types could not be perceived or atoms could not be configured."));
             }
         //</editor-fold>
-
+        //
         //<editor-fold desc="Detection Steps" defaultstate="collapsed">
         MolecularArrays tmpMolecularArrays = new MolecularArrays(tmpClone);
         try {
             this.markRings(tmpMolecularArrays, tmpClone);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException anIllegalArgumentException) {
             AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
-                    "Ring marking failed! Fragments may not be correct! Occurred at molecule: "
-                            + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                    String.format("Ring marking failed! Fragments may not be correct! Occurred at molecule: %s",
+                            tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anIllegalArgumentException);
         }
         try {
             this.markTertQuatAndNeighbors(tmpMolecularArrays);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException anIllegalArgumentException) {
             AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
-                    "Tertiary, Quaternary and Neighbor marking failed! Fragments may not be correct! Occurred at molecule: "
-                            + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                    String.format("Tertiary, Quaternary and Neighbor marking failed! Fragments may not be correct! Occurred at molecule: %s",
+                            tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anIllegalArgumentException);
         }
         try {
             this.markConjugatedPiSystems(tmpMolecularArrays);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException anIllegalArgumentException) {
             AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
-                    "Conjugated Pi System marking failed! Fragments may not be correct! Occurred at molecule: "
-                            + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                    String.format("Conjugated Pi System marking failed! Fragments may not be correct! Occurred at molecule: %s",
+                            tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anIllegalArgumentException);
         }
         try {
             this.markMultiBonds(tmpMolecularArrays);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException anIllegalArgumentException) {
             AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
-                    "Multi-Bond marking failed! Fragments may not be correct! Occurred at molecule: " + tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                    String.format("Multi-Bond marking failed! Fragments may not be correct! Occurred at molecule: %s",
+                            tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anIllegalArgumentException);
         }
         //</editor-fold>
-
+        //
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
         try {
             int tmpPostFragmentationAtomCount = 0;
-            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINER) {
+            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINER.intValue()) {
                 AlkylStructureFragmenter.LOGGER.log(Level.FINER, "Pre-Fragment-Extraction");
             }
             IAtomContainerSet tmpFragmentSet = this.extractFragments(tmpMolecularArrays);
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
-                for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-                    if (tmpAtom.getAtomicNumber() != 0) {
+                for (IAtom tmpAtom : tmpAtomContainer.atoms()) {
+                    if (!this.isPseudoAtom(tmpAtom)) {
                         tmpPostFragmentationAtomCount++;
                     }
                 }
             }
-            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINER) {
+            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINER.intValue()) {
                 AlkylStructureFragmenter.LOGGER.log(Level.FINER, "Post-Fragment-Extraction");
             }
-            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel() == Level.FINEST) {
+            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
                 System.out.println("PostFragAtomCount: " + tmpPostFragmentationAtomCount);
-                AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PostFragAtomCount: " + tmpPostFragmentationAtomCount);
+                AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PostFragAtomCount: {0}", tmpPostFragmentationAtomCount);
             }
             if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount) {
-                AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(LOGGER_WARNING_STRING_FORMAT,
+                AlkylStructureFragmenter.LOGGER.log(Level.WARNING, "{0}", String.format(LOGGER_WARNING_STRING_FORMAT,
                         "Chemical Formula Check", tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                         "Chemical formula was not constant!"));
             }
@@ -818,7 +832,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             return tmpFragmentList;
         } catch (Exception anException) {
-            AlkylStructureFragmenter.LOGGER.log(Level.FINEST, String.format(LOGGER_EXCEPTION_STRING_FORMAT,
+            AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(LOGGER_EXCEPTION_STRING_FORMAT,
                     anException, tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                     "Fragmentation failed!"), anException);
             throw new IllegalArgumentException(String.format(LOGGER_EXCEPTION_STRING_FORMAT, anException,
@@ -832,7 +846,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //<editor-fold desc="Protected Methods" defaultstate="collapsed">
     //
     //<editor-fold desc="Marking Methods">
-
     /**
      * Protected method for detecting and marking tertiary or quaternary carbon atoms and their surrounding neighbor atoms and bonds.
      *
@@ -2068,6 +2081,44 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //</editor-fold>
     //
     //</editor-fold>
+    /**
+     * Checks whether the given atom is a pseudo atom. Very strict, any atom
+     * whose atomic number is null or 0, whose symbol equals "R" or "*", or that
+     * is an instance of an IPseudoAtom implementing class will be classified as
+     * a pseudo atom.
+     *
+     * @param atom the atom to test
+     * @return true if the given atom is identified as a pseudo (R) atom
+     */
+    protected boolean isPseudoAtom(IAtom atom) {
+        Integer tmpAtomicNr = atom.getAtomicNumber();
+        if (Objects.isNull(tmpAtomicNr)) {
+            return true;
+        }
+        String tmpSymbol = atom.getSymbol();
+        return tmpAtomicNr == IElement.Wildcard ||
+                tmpSymbol.equals("R") ||
+                tmpSymbol.equals("*") ||
+                atom instanceof IPseudoAtom;
+    }
+
+    /**
+     * Checks whether the given atom is a hetero-atom (i.e. non-carbon and
+     * non-hydrogen). Pseudo (R) atoms will also return false.
+     *
+     * @param atom the atom to test
+     * @return true if the given atom is neither a carbon nor a hydrogen or
+     *         pseudo atom
+     */
+    protected boolean isHeteroAtom(IAtom atom) {
+        Integer tmpAtomicNr = atom.getAtomicNumber();
+        if (Objects.isNull(tmpAtomicNr)) {
+            return false;
+        }
+        int tmpAtomicNumberInt = tmpAtomicNr;
+        return tmpAtomicNumberInt != IElement.H && tmpAtomicNumberInt != IElement.C
+                && !this.isPseudoAtom(atom);
+    }
     //
     //</editor-fold>
 }
