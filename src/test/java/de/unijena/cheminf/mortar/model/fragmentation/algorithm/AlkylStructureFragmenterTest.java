@@ -149,7 +149,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 ChemUtil.saturateWithHydrogen(tmpAC);
                 tmpExtractedFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
             }
-        } catch (CloneNotSupportedException | CDKException e) {
+        } catch (CDKException e) {
             Assertions.fail();
         }
         System.out.println("extractFragmentsTest: Expected: " + tmpExpectedFragmentsList + "; Actual Fragments: "+ tmpExtractedFragmentList);
