@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.AtomContainerSet;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -45,12 +44,13 @@ import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -63,7 +63,7 @@ import java.util.Objects;
  * @author Maximilian Rottmann
  * @version 1.0.0.0
  */
-public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
+public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
     /**
      * Static setter for Locale.
      * If Locale is set in Test constructor, a MissingResourceException is thrown when user locale diverts from set Locale.
@@ -74,7 +74,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     /**
      * Constructor of AlkylStructureFragmenter test class.
      */
-    public AlkylStructureFragmenterTest() {}
+    private AlkylStructureFragmenterTest() {}
 
     /**
      * Method to showcase the usage of the AlkylStructureFragmenter class.
@@ -82,19 +82,23 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
      * the class will detect and return intact.
      */
     @Test
-    public void exampleUsageTest() throws IOException, CloneNotSupportedException{
+    public void exampleUsageTest() throws Exception {
         //get file reader with test structures file
-        File tmpFile = new File("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/ASF_Test_Substructure_Library.sdf");
-        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(tmpFile),
-                DefaultChemObjectBuilder.getInstance());
+        URL tmpURL = this.getClass().getResource("ASF_Test_Substructure_Library.sdf");
+        Assertions.assertNotNull(tmpURL);
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(tmpResourceFile),
+                SilentChemObjectBuilder.getInstance());
         //read structures into AtomContainerSet
         IAtomContainerSet tmpStructuresSet = new AtomContainerSet();
         while (tmpSDFReader.hasNext()) {
             tmpStructuresSet.addAtomContainer(tmpSDFReader.next());
         }
         //get file reader with test structures expected fragments file
+        URL tmpExpectedFragmentsURL = this.getClass().getResource("ASF_Test_Substructure_Library_Fragments_Strings");
+        Assertions.assertNotNull(tmpExpectedFragmentsURL);
         List<String> tmpExpectedSMILESStringList = Files.readAllLines(
-                Path.of("src/test/resources/de/unijena/cheminf/mortar/model/fragmentation/algorithm/AlkylStructureFragmenter/ASF_Test_Substructure_Library_Fragments_Strings"),
+                Path.of(tmpExpectedFragmentsURL.toURI()),
                 StandardCharsets.UTF_8);
         //constructs an AlkylStructureFragmenter with default settings
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
@@ -114,7 +118,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     }
 
     //<editor-fold desc="Disabled Unit Tests">
-
     /**
      * Method for unit testing the internal method AlkylStructureFragmenter.extractFragments().
      * The molecule used for testing is a conceptual molecule containing several key structural features detected and
@@ -126,13 +129,13 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
     @Disabled
     @Test
     public void extractFragmentsTest() throws CDKException {
-        ArrayList<String> tmpExpectedFragmentsList = new ArrayList<>(6);
-        tmpExpectedFragmentsList.add("C=CC1=CC=C2C=CC=CC2=C1");
-        tmpExpectedFragmentsList.add("CC(C)(C)C");
-        tmpExpectedFragmentsList.add("C=C");
-        tmpExpectedFragmentsList.add("CCC");
-        tmpExpectedFragmentsList.add("CCC");
-        tmpExpectedFragmentsList.add("C1CCCCC1");
+        ArrayList<String> tmpExpectedFragmentList = new ArrayList<>(6);
+        tmpExpectedFragmentList.add("C=CC1=CC=C2C=CC=CC2=C1");
+        tmpExpectedFragmentList.add("CC(C)(C)C");
+        tmpExpectedFragmentList.add("C=C");
+        tmpExpectedFragmentList.add("CCC");
+        tmpExpectedFragmentList.add("CCC");
+        tmpExpectedFragmentList.add("C1CCCCC1");
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpTestAC = tmpParser.parseSmiles("C12=CC(=CC=C1C(=CC(=C2)C3CCCCC3)CC(C)(C)C/C=C/CCC)/C=C\\C(C)C");
         MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpTestAC);
@@ -142,47 +145,47 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         tmpASF.markConjugatedPiSystems(tmpTestMolecularArrays);
         tmpASF.markMultiBonds(tmpTestMolecularArrays);
         IAtomContainerSet tmpExtractedFrag;
-        ArrayList<String> tmpExtractedFragmentList = new ArrayList<>(6);
+        ArrayList<String> tmpActualFragmentList = new ArrayList<>(6);
         try {
             tmpExtractedFrag = tmpASF.extractFragments(tmpTestMolecularArrays);
             for (IAtomContainer tmpAC : tmpExtractedFrag.atomContainers()) {
                 ChemUtil.saturateWithHydrogen(tmpAC);
-                tmpExtractedFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
+                tmpActualFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
             }
         } catch (CDKException e) {
             Assertions.fail();
         }
-        System.out.println("extractFragmentsTest: Expected: " + tmpExpectedFragmentsList + "; Actual Fragments: "+ tmpExtractedFragmentList);
-        Assertions.assertTrue(this.compareListsIgnoringOrder(tmpExtractedFragmentList, tmpExpectedFragmentsList));
+        System.out.println("extractFragmentsTest: Expected: " + tmpExpectedFragmentList + "; Actual Fragments: "+ tmpActualFragmentList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(tmpActualFragmentList, tmpExpectedFragmentList));
     }
 
     @Disabled
     @Test
     public void testMarkTertQuatAndNeighbors() throws InvalidSmilesException{
-            SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            IAtomContainer tmpMolecule = tmpParser.parseSmiles("CC(C)(C)CCCC(C)C");
-            MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
-            //currently no mark generatable
-            markTertQuatAndNeighbors(tmpTestMolecularArrays);
-            for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
-                if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
-                    System.out.println(tmpAtom.getProperties());
-                }
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpParser.parseSmiles("CC(C)(C)CCCC(C)C");
+        MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
+        //currently no mark generatable
+        markTertQuatAndNeighbors(tmpTestMolecularArrays);
+        for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
+            if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
+                System.out.println(tmpAtom.getProperties());
             }
-            //create expected arrays
-            MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
-            //create atom array with expected atoms
-            IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
-            //example:
-            //tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
-            //create bond array with expected bonds
-            IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
-            //example:
-            //tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
-            tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
-            tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
-            //custom assert for MolecularArrays match/equal
-            Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
+        }
+        //create expected arrays
+        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        //create atom array with expected atoms
+        IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
+        //example:
+        //tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
+        //create bond array with expected bonds
+        IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
+        //example:
+        //tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
+        tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
+        tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
+        //custom assert for MolecularArrays match/equal
+        Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
     }
     @Disabled
     @Test
@@ -237,7 +240,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
     }
     //</editor-fold>
-
+    //
     //<editor-fold desc="Unit Tests">
     /**
      * Method to test the internal algorithm for detecting and marking conjugated pi bond systems.
@@ -251,7 +254,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         IAtomContainer tmpMolecule = tmpParser.parseSmiles("C=CC=CC=C");
         MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
         //mark actual atoms and bonds
-        markConjugatedPiSystems(tmpTestMolecularArrays);
+        this.markConjugatedPiSystems(tmpTestMolecularArrays);
 //        for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
 //            System.out.println(tmpAtom.getProperties());
 //        }
@@ -290,7 +293,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         int tmpPreFragmentationCount = 0;
         int tmpPostFragmentationCount = 0;
         for (IAtom tmpAtom: tmpAtomContainer.atoms()) {
-            if (tmpAtom.getAtomicNumber() != 0) {
+            if (!this.isPseudoAtom(tmpAtom)) {
                 tmpPreFragmentationCount++;
             }
         }
@@ -300,7 +303,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpAtomContainer);
         for (IAtomContainer tmpAC: tmpACList) {
             for (IAtom tmpAtom: tmpAC.atoms()) {
-                if (tmpAtom.getAtomicNumber() != 0) {
+                if (!this.isPseudoAtom(tmpAtom)) {
                     tmpPostFragmentationCount++;
                 }
             }
@@ -331,11 +334,9 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         String tmpCopySMILES = ChemUtil.createUniqueSmiles(tmpCopyAC, false);
         Assertions.assertEquals(tmpButeneSMILES, tmpCopySMILES);
     }
-
     //</editor-fold>
-
+    //
     //<editor-fold desc="Basic Fragmentation Tests">
-
     /**
      * Method testing correct fragmentation with a basic example molecule.
      * This test focuses on tertiary and quaternary carbon systems, tested with a conceptual molecule.
@@ -637,7 +638,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
     /**
-     * Method testing coorrect handling of conjugated aromatic rings, conjoined with a single bond,
+     * Method testing correct handling of conjugated aromatic rings, conjoined with a single bond,
      * making the whole molecule conjugated.
      * Tested with molecule Biphenyl.
      *
@@ -695,9 +696,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
-
     //</editor-fold>
-
+    //
     //<editor-fold desc="Specific Fragmentation Tests">
     //all molecules are tested with all relevant settings
     //example: only changing maximum size of linear chains in a linear C6 molecule
@@ -1042,13 +1042,12 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
     //</editor-fold>
-
+    //
     //<editor-fold desc="Inner Class 'Molecular Arrays'">
-
     /**
      * Test method for correct functionality of AlkylStructureFragmenter inner class MolecularArrays.
      *
-     * Since the CDK does not allow the addition of null atoms to existing atomcontainer instances, reflection is used
+     * Since the CDK does not allow the addition of null atoms to existing atom container instances, reflection is used
      * in this test to access the inner fields of atoms and bonds to manipulate their values.
      *
      * @throws InvalidSmilesException if parser cannot parse the given SMILES
@@ -1092,7 +1091,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         }
     }
     //</editor-fold
-
+    //
     //<editor-fold desc="Private Utility Methods">
     /**
      * Compares two provided lists for equality while ignoring the lists' orders.
@@ -1167,22 +1166,14 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter{
         for (int i = 0; i < tmpActualAtomArray.length; i++) {
             IAtom tmpActualAtom = tmpActualAtomArray[i];
             IAtom tmpExpectedAtom = tmpExpectedAtomArray[i];
-            if (tmpActualAtom.getProperties().equals(tmpExpectedAtom.getProperties()) && tmpActualAtom.equals(tmpExpectedAtom)) {
-                tmpIsAtomArrayEqual = true;
-            } else {
-                tmpIsAtomArrayEqual = false;
-            }
+            tmpIsAtomArrayEqual = tmpActualAtom.getProperties().equals(tmpExpectedAtom.getProperties()) && tmpActualAtom.equals(tmpExpectedAtom);
         }
         //bond array match
         boolean tmpIsBondArrayEqual = false;
         for (int i = 0; i < tmpActualBondArray.length; i++) {
             IBond tmpActualBond = tmpActualBondArray[i];
             IBond tmpExpectedBond = tmpExpectedBondArray[i];
-            if (tmpActualBond.getProperties().equals(tmpExpectedBond.getProperties()) && tmpActualBond.equals(tmpExpectedBond)) {
-                tmpIsBondArrayEqual = true;
-            } else {
-                tmpIsBondArrayEqual = false;
-            }
+            tmpIsBondArrayEqual = tmpActualBond.getProperties().equals(tmpExpectedBond.getProperties()) && tmpActualBond.equals(tmpExpectedBond);
         }
         return (tmpIsAtomArrayEqual && tmpIsBondArrayEqual);
     }
