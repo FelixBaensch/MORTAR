@@ -195,14 +195,14 @@ public class FragmentationService {
     private final IMoleculeFragmenter scaffoldGF;
     //
     /**
-     * Alkyl Structure Fragmenter
+     * Alkyl Structure Fragmenter.
      */
-    private IMoleculeFragmenter alkylSF;
+    private final IMoleculeFragmenter alkylSF;
     //
     /**
-     * Conjugated Pi System Fragmenter
+     * Conjugated Pi System Fragmenter.
      */
-    private IMoleculeFragmenter conjPiSysF;
+    private final IMoleculeFragmenter conjPiSysF;
     //
     /**
      * Property of display name of selected fragmenter.
