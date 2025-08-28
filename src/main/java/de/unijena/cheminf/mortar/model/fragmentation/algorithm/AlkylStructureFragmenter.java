@@ -772,13 +772,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     String.format("Ring marking failed! Fragments may not be correct! Occurred at molecule: %s",
                             tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), aFailedRingMarkException);
         }
-        try {
-            this.markTertQuatAndNeighbors(tmpMolecularArrays);
-        } catch (Exception aFailedTertQuatNeighborMarkException) {
-            throw new RuntimeException (
-                    String.format("Tertiary, Quaternary and Neighbor marking failed! Fragments may not be correct! Occurred at molecule: %s",
-                            tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), aFailedTertQuatNeighborMarkException);
-        }
+        this.markTertQuatAndNeighbors(tmpMolecularArrays);
         try {
             this.markConjugatedPiSystems(tmpMolecularArrays);
         } catch (Exception aFailedConjPiMarkException) {
@@ -786,13 +780,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     String.format("Conjugated Pi System marking failed! Fragments may not be correct! Occurred at molecule: %s",
                             tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), aFailedConjPiMarkException);
         }
-        try {
-            this.markMultiBonds(tmpMolecularArrays);
-        } catch (Exception aFailedMultiBondMarkException) {
-            throw new RuntimeException (
-                    String.format("Multi-Bond marking failed! Fragments may not be correct! Occurred at molecule: %s",
-                            tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), aFailedMultiBondMarkException);
-        }
+        this.markMultiBonds(tmpMolecularArrays);
         //</editor-fold>
         //
         //<editor-fold desc="Fragment Extraction and Saturation" defaultstate="collapsed">
