@@ -173,7 +173,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             }
         }
         //create expected arrays
-        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        MolecularArrays tmpExpectedMolecularArrays = new MolecularArrays(tmpMolecule);
         //create atom array with expected atoms
         IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
         //example:
@@ -199,7 +199,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             System.out.println(tmpAtom.getProperties());
         }
         //create expected arrays
-        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        MolecularArrays tmpExpectedMolecularArrays = new MolecularArrays(tmpMolecule);
         //create atom array with expected atoms
         IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
         //example:
@@ -225,7 +225,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             System.out.println(tmpAtom.getProperties());
         }
         //create expected arrays
-        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        MolecularArrays tmpExpectedMolecularArrays = new MolecularArrays(tmpMolecule);
         //create atom array with expected atoms
         IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
         //example:
@@ -234,6 +234,34 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
         //example:
         //tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_PROPERTY_KEY, true);
+        tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
+        tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
+        //custom assert for MolecularArrays match/equal
+        Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
+    }
+    @Disabled
+    @Test
+    public void testMarkConnectedTertQuatRing() throws InvalidSmilesException{
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpParser.parseSmiles("CC(C)(C)CCCC(C)C");
+        MolecularArrays tmpTestMolecularArrays = new MolecularArrays(tmpMolecule);
+        //currently no mark generatable
+        markConnectedTertQuatRing(tmpTestMolecularArrays);
+        for (IAtom tmpAtom: tmpTestMolecularArrays.getAtomArray()) {
+            if ((boolean) tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY)) {
+                System.out.println(tmpAtom.getProperties());
+            }
+        }
+        //create expected arrays
+        MolecularArrays tmpExpectedMolecularArrays = new MolecularArrays(tmpMolecule);
+        //create atom array with expected atoms
+        IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
+        //example:
+        //tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
+        //create bond array with expected bonds
+        IBond[] tmpExpectedBondArray = tmpExpectedMolecularArrays.getBondArray();
+        //example:
+        //tmpExpectedBondArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, true);
         tmpExpectedMolecularArrays.setAtomArray(tmpExpectedAtomArray);
         tmpExpectedMolecularArrays.setBondArray(tmpExpectedBondArray);
         //custom assert for MolecularArrays match/equal
@@ -259,7 +287,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
 //            System.out.println(tmpAtom.getProperties());
 //        }
         //create expected arrays
-        MolecularArrays tmpExpectedMolecularArrays = tmpTestMolecularArrays;
+        MolecularArrays tmpExpectedMolecularArrays = new MolecularArrays(tmpMolecule);
         //create atom array with expected atoms
         IAtom[] tmpExpectedAtomArray = tmpExpectedMolecularArrays.getAtomArray();
         tmpExpectedAtomArray[0].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
@@ -312,6 +340,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
     }
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.
+     * A seemingly unused MolecularArrays instance is instanced here. This is needed for correct filling of internal atom
+     * and bond arrays, since they are created and filled in the MolecularArrays constructor.
      *
      * @throws InvalidSmilesException if SMILES parser fails to parse SMILES from String with incorrect syntax
      */
@@ -465,7 +495,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         Assertions.assertFalse(tmpASF.shouldBeFiltered(tmpTestStructureAC));
         Assertions.assertFalse(tmpASF.shouldBePreprocessed(tmpTestStructureAC));
         Assertions.assertTrue(tmpASF.canBeFragmented(tmpTestStructureAC));
-        tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<IAtomContainer> tmpFragmentsList = tmpASF.fragmentMolecule(tmpTestStructureAC);
+        tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpFragmentsList);
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("c1ccccc1");
         System.out.println("basicTest03: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
