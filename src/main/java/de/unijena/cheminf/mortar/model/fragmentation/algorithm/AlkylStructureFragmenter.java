@@ -636,15 +636,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpContainsHeteroAtoms = true;
             }
         }
-        if (tmpContainsCarbons && !tmpContainsHeteroAtoms) {
-            //contains carbons and no hetero atoms
+        if (tmpContainsCarbons && !tmpContainsHeteroAtoms && !tmpContainsPseudoAtoms) {
+            //contains carbons and no hetero atoms, internal filter property false -> shouldn't be filtered out of fragmentation
             aMolecule.setProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER, false);
             return false;
         } else {
-            //contains hetero atoms or no carbons (corner case of only explicit hydrogens))
+            //contains hetero atoms or no carbons
             aMolecule.setProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER, true);
-            //whether to return true or false depends on the setting
-            return this.keepNonFragmentableMoleculesSetting.get();
+            //whether to return true or false depends on the setting (inverted for correct behavior)
+            if (this.keepNonFragmentableMoleculesSetting.get()) {
+                return false;
+            } else {
+                return true;
+            }
         }
     }
     /**
@@ -665,7 +669,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //throws NullpointerException if molecule is null
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         if ((boolean) aMolecule.getProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER)) {
-            return true;
+            return false;
         }
         boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
         boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
