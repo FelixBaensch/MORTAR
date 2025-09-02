@@ -1121,6 +1121,56 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             Assertions.fail("Arrays length was not in expected range.");
         }
     }
+
+    /**
+     * Test to ensure correct detection and handling of allowed/not-allowed molecules.
+     *
+     * @throws InvalidSmilesException if SMILES cannot be parsed by SmilesParser
+     */
+    @Test
+    public void filterTest() throws InvalidSmilesException{
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        List<IAtomContainer> tmpTestStructuresACList = new ArrayList<>(4);
+        tmpTestStructuresACList.add(tmpParser.parseSmiles("CCC"));
+        tmpTestStructuresACList.add(tmpParser.parseSmiles("CN"));
+        tmpTestStructuresACList.add(tmpParser.parseSmiles("C*"));
+        tmpTestStructuresACList.add(tmpParser.parseSmiles("[H]C([H])([H])[H]"));
+        boolean[] tmpFilterArray = new boolean[tmpTestStructuresACList.size()];
+        setKeepNonFragmentableMoleculesSetting(true);
+        for (int i = 0; i < tmpFilterArray.length; i++) {
+            IAtomContainer tmpAC = tmpTestStructuresACList.get(i);
+            tmpFilterArray[i] = shouldBeFiltered(tmpAC);
+        }
+        boolean[] tmpExpectedArray = new boolean[tmpTestStructuresACList.size()];
+        //add filter cases with expected value
+        tmpExpectedArray[0] = false;
+        //since keepNon-FragmentableInPipeline == true, values for "CN" and "C*" are false to allow passing through filtering
+        // to allow them to be kept in pipeline
+        tmpExpectedArray[1] = false; //"CN"
+        tmpExpectedArray[2] = false; //"C*"
+        tmpExpectedArray[3] = false; //explicit hydrogen
+        for (int i = 0; i < tmpFilterArray.length; i++) {
+            if (tmpFilterArray[i] != tmpExpectedArray[i]) {
+                Assertions.fail();
+            }
+        }
+        //test for excluding non-fragmentables from pipeline
+        setKeepNonFragmentableMoleculesSetting(false);
+        for (int i = 0; i < tmpFilterArray.length; i++) {
+            IAtomContainer tmpAC = tmpTestStructuresACList.get(i);
+            tmpFilterArray[i] = shouldBeFiltered(tmpAC);
+        }
+        tmpExpectedArray[0] = false;
+        tmpExpectedArray[1] = true;
+        tmpExpectedArray[2] = true;
+        tmpExpectedArray[3] = false;
+        for (int i = 0; i < tmpFilterArray.length; i++) {
+            if (tmpFilterArray[i] != tmpExpectedArray[i]) {
+                Assertions.fail();
+            }
+        }
+
+    }
     //</editor-fold
     //
     //<editor-fold desc="Private Utility Methods">
