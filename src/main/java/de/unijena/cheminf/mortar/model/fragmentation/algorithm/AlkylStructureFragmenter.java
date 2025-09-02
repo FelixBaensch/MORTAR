@@ -792,7 +792,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINER.intValue()) {
                 AlkylStructureFragmenter.LOGGER.log(Level.FINER, "Pre-Fragment-Extraction");
             }
-            IAtomContainerSet tmpFragmentSet = this.extractFragments(tmpMolecularArrays);
+            IAtomContainerSet tmpFragmentSet =
+                    this.getFragmentationResults(tmpMolecularArrays);
+                    // this.extractFragments(tmpMolecularArrays);
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 for (IAtom tmpAtom : tmpAtomContainer.atoms()) {
                     if (!this.isPseudoAtom(tmpAtom)) {
@@ -1083,25 +1085,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
     //<editor-fold desc="Extraction Method">
     /**
-     * Protected method to extract detected fragments via properties.
+     * Protected method wrapping the extraction logic for molecular atoms.
      *
-     * @param aMolecularArrays MolecularArrays instance for data transfer between methods
-     * @return IAtomContainerSet with extracted molecules
+     * @param anAtomsArray MolecularArrays atom array with atoms of molecule to fragment
+     * @return atom container set with atom containers ONLY containing the molecule's atoms
      */
-    protected IAtomContainerSet extractFragments(MolecularArrays aMolecularArrays) throws IllegalArgumentException {
-        IAtom[] tmpAtomArray = aMolecularArrays.getAtomArray();
-        IBond[] tmpBondArray = aMolecularArrays.getBondArray();
-        //
-        //<editor-fold desc="Extraction">
-
+    protected IAtomContainerSet extractAtoms(IAtom[] anAtomsArray) {
+        Objects.requireNonNull(anAtomsArray);
+        IAtomContainerSet tmpExtractedAtomACSet = new AtomContainerSet();
+        //break down to use only one AtomContainer
         IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();
         IAtomContainer tmpTertQuatCarbonContainer = this.chemObjectBuilderInstance.newAtomContainer();
-        //
-        //<editor-fold desc="atom extraction">
         atomIteration:
-        for (IAtom tmpArrayAtom : tmpAtomArray) {
+        for (IAtom tmpArrayAtom : anAtomsArray) {
             if (this.isPseudoAtom(tmpArrayAtom)) {
                 continue;
             }
@@ -1265,7 +1263,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                         "In: Extraction.AtomIteration: Pseudoatom Container");
                             }
                             tmpTertQuatCarbonContainer.add(tmpContainer);
-                        //tertiary/quaternary carbons are added to ensure correct interaction with other substructures,
+                            //tertiary/quaternary carbons are added to ensure correct interaction with other substructures,
                             // neighbor atoms added later
                         } else {
                             tmpRingFragmentationContainer.addAtom(this.deepCopyAtom(tmpArrayAtom));
@@ -1345,12 +1343,31 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         + "!" + "Cause: " + anIllegalArgumentException.toString());
             }
         }
-        //</editor-fold>
-        //
-        //</editor-fold>
-        //
-        //<editor-fold desc="bond extraction">
-        for (IBond tmpArraysBond : tmpBondArray) {
+        //add resulting atom container to return set
+        tmpExtractedAtomACSet.addAtomContainer(tmpRingFragmentationContainer);
+        tmpExtractedAtomACSet.addAtomContainer(tmpChainFragmentationContainer);
+        tmpExtractedAtomACSet.addAtomContainer(tmpIsolatedMultiBondsContainer);
+        tmpExtractedAtomACSet.addAtomContainer(tmpTertQuatCarbonContainer);
+        return tmpExtractedAtomACSet;
+    }
+
+    /**
+     * Protected method wrapping the extraction logic for molecular bonds.
+     *
+     * @param aBondsArray MolecularArrays bond array with bonds of molecule to fragment
+     * @param anExtractedAtomsContainingACSet with atom containers containing the molecule's atoms
+     * @return atom container set with possibly disconnected atom containers containing the molecule's generated fragments
+     */
+    protected IAtomContainerSet extractBonds(IBond[] aBondsArray, IAtomContainerSet anExtractedAtomsContainingACSet) {
+        Objects.requireNonNull(aBondsArray);
+        Objects.requireNonNull(anExtractedAtomsContainingACSet);
+        //break down to using only param ACSet
+        IAtomContainerSet tmpExtractedAtomAndBondACSet = new AtomContainerSet();
+        IAtomContainer tmpRingFragmentationContainer = anExtractedAtomsContainingACSet.getAtomContainer(0);
+        IAtomContainer tmpChainFragmentationContainer = anExtractedAtomsContainingACSet.getAtomContainer(1);
+        IAtomContainer tmpIsolatedMultiBondsContainer = anExtractedAtomsContainingACSet.getAtomContainer(2);
+        IAtomContainer tmpTertQuatCarbonContainer = anExtractedAtomsContainingACSet.getAtomContainer(3);
+        for (IBond tmpArraysBond : aBondsArray) {
             if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
                 AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
                         "In: Extraction.BondIteration: Bond Index: {0}", (int) tmpArraysBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY));
@@ -1606,33 +1623,73 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         + "!" + "Cause: " + anIllegalArgumentException.toString());
             }
         } //end of loop over bond array
-        //</editor-fold>
-        //</editor-fold>
-        //
-        //<editor-fold desc="Disconnection Check">
-        IAtomContainerSet tmpExtractionSet = new AtomContainerSet();
+        tmpExtractedAtomAndBondACSet.addAtomContainer(tmpRingFragmentationContainer);
+        tmpExtractedAtomAndBondACSet.addAtomContainer(tmpChainFragmentationContainer);
+        tmpExtractedAtomAndBondACSet.addAtomContainer(tmpIsolatedMultiBondsContainer);
+        tmpExtractedAtomAndBondACSet.addAtomContainer(tmpTertQuatCarbonContainer);
+        return tmpExtractedAtomAndBondACSet;
+    }
+
+    /**
+     * Protected method wrapping the check for disconnected fragmentation atom containers, and if any are present, their separation.
+     *
+     * @param aDisconnectedAtomContainerSet to check for disconnected atom containers to separate
+     * @return atom container set with separated atom containers
+     */
+    protected IAtomContainerSet disperseDisconnectedAtomContainerSet(IAtomContainerSet aDisconnectedAtomContainerSet) {
+        Objects.requireNonNull(aDisconnectedAtomContainerSet);
+        //break down to using only param ACSet
+        IAtomContainerSet tmpDispersedAtomContainerSet = new AtomContainerSet();
+        IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();   // = aDisconnectedAtomContainerSet.getAtomContainer(0);
+        IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();  // = aDisconnectedAtomContainerSet.getAtomContainer(1);
+        IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();  // = aDisconnectedAtomContainerSet.getAtomContainer(2);
+        IAtomContainer tmpTertQuatCarbonContainer = this.chemObjectBuilderInstance.newAtomContainer();      // = aDisconnectedAtomContainerSet.getAtomContainer(3);
+        for (int i = 0; i < aDisconnectedAtomContainerSet.getAtomContainerCount(); i++) {
+            switch (i) {
+                case 0 -> {
+                    if (aDisconnectedAtomContainerSet.getAtomContainer(0) != null) {
+                        tmpRingFragmentationContainer = aDisconnectedAtomContainerSet.getAtomContainer(0);
+                    }
+                }
+                case 1 -> {
+                    if (aDisconnectedAtomContainerSet.getAtomContainer(1) != null) {
+                        tmpChainFragmentationContainer = aDisconnectedAtomContainerSet.getAtomContainer(1);
+                    }
+                }
+                case 2 -> {
+                    if (aDisconnectedAtomContainerSet.getAtomContainer(2) != null) {
+                        tmpIsolatedMultiBondsContainer = aDisconnectedAtomContainerSet.getAtomContainer(2);
+                    }
+                }
+                case 3 -> {
+                    if (aDisconnectedAtomContainerSet.getAtomContainer(3) != null) {
+                        tmpTertQuatCarbonContainer = aDisconnectedAtomContainerSet.getAtomContainer(3);
+                    }
+                }
+            }
+        }
         //extracts disconnected ring structures from one atom container into atom container set
         IAtomContainerSet tmpRingACSet = new AtomContainerSet();
-        if (!tmpRingFragmentationContainer.isEmpty()) {
+        if (!tmpRingFragmentationContainer.isEmpty() && tmpRingFragmentationContainer != null) {
             tmpRingACSet = this.separateDisconnectedStructures(tmpRingFragmentationContainer);
         }
         //extracts disconnected isolated tertiary and quaternary systems into atom container set
         IAtomContainerSet tmpSingleACSet = new AtomContainerSet();
-        if (!tmpTertQuatCarbonContainer.isEmpty()) {
-            tmpExtractionSet.add(this.separateDisconnectedStructures(tmpTertQuatCarbonContainer));
+        if (!tmpTertQuatCarbonContainer.isEmpty() && tmpTertQuatCarbonContainer != null) {
+            tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpTertQuatCarbonContainer));
         }
         //if more than one atom container containing a ring system is present, add to extraction atom container set
         if (!tmpRingACSet.isEmpty() && tmpRingACSet.getAtomContainerCount() > 0) {
-            tmpExtractionSet.add(tmpRingACSet);
+            tmpDispersedAtomContainerSet.add(tmpRingACSet);
         }
         //if more than one atom container containing singular structures is present, add it to the extraction set
         if (!tmpSingleACSet.isEmpty() && tmpSingleACSet.getAtomContainerCount() > 0) {
-            tmpExtractionSet.add(tmpSingleACSet);
+            tmpDispersedAtomContainerSet.add(tmpSingleACSet);
         }
         //remnants after ring, conj. system and tertiary/quaternary carbon extractions
         //expected to be only linear carbohydrates
-        if (!tmpIsolatedMultiBondsContainer.isEmpty()) {
-            tmpExtractionSet.add(this.separateDisconnectedStructures(tmpIsolatedMultiBondsContainer));
+        if (!tmpIsolatedMultiBondsContainer.isEmpty() && tmpIsolatedMultiBondsContainer != null) {
+            tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpIsolatedMultiBondsContainer));
         }
         IAtomContainerSet tmpChainACSet = this.separateDisconnectedStructures(tmpChainFragmentationContainer);
         int tmpMaxChainLengthInteger = this.maxChainLengthSetting.get();
@@ -1645,19 +1702,32 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpAtomContainer.removeAllBonds();
                     tmpDissectedAC.add(tmpAtomContainer);
                 }
-                tmpExtractionSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
+                tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
             } else {//restrictions > 1
                 for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
                     IAtomContainer tmpDissectedAC = this.dissectLinearChain(tmpAtomContainer, tmpMaxChainLengthInteger);
-                    tmpExtractionSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
+                    tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                 }
             }
         } else {
-            tmpExtractionSet.add(tmpChainACSet);
+            tmpDispersedAtomContainerSet.add(tmpChainACSet);
         }
-        //</editor-fold>
-        return tmpExtractionSet;
+        return tmpDispersedAtomContainerSet;
     }
+
+    /**
+     * Protected method wrapping all extraction steps (atom extraction, bond extraction and disconnected atom container check/extraction).
+     *
+     * @param aMolecularArraysInstance with molecule data (atoms and bonds)
+     * @return atom container set with separated atom containers, each with only one generated fragment
+     */
+    protected IAtomContainerSet getFragmentationResults(MolecularArrays aMolecularArraysInstance) {
+        Objects.requireNonNull(aMolecularArraysInstance);
+        IAtomContainerSet tmpExtractedAtomACSet = this.extractAtoms(aMolecularArraysInstance.getAtomArray());
+        IAtomContainerSet tmpExtractedAtomAndBondACSet = this.extractBonds(aMolecularArraysInstance.getBondArray(), tmpExtractedAtomACSet);
+        return this.disperseDisconnectedAtomContainerSet(tmpExtractedAtomAndBondACSet);
+    }
+
     //</editor-fold>
     //
     //<editor-fold desc="Extraction Utility Methods">

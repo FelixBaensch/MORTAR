@@ -126,7 +126,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
      *
      * @throws CDKException if SMILES cannot be parsed correctly
      */
-    @Disabled
     @Test
     public void extractFragmentsTest() throws CDKException {
         ArrayList<String> tmpExpectedFragmentList = new ArrayList<>(6);
@@ -146,14 +145,10 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpASF.markMultiBonds(tmpTestMolecularArrays);
         IAtomContainerSet tmpExtractedFrag;
         ArrayList<String> tmpActualFragmentList = new ArrayList<>(6);
-        try {
-            tmpExtractedFrag = tmpASF.extractFragments(tmpTestMolecularArrays);
-            for (IAtomContainer tmpAC : tmpExtractedFrag.atomContainers()) {
-                ChemUtil.saturateWithHydrogen(tmpAC);
-                tmpActualFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
-            }
-        } catch (CDKException e) {
-            Assertions.fail();
+        tmpExtractedFrag = tmpASF.getFragmentationResults(tmpTestMolecularArrays);
+        for (IAtomContainer tmpAC : tmpExtractedFrag.atomContainers()) {
+            ChemUtil.saturateWithHydrogen(tmpAC);
+            tmpActualFragmentList.add(ChemUtil.createUniqueSmiles(tmpAC, false));
         }
         System.out.println("extractFragmentsTest: Expected: " + tmpExpectedFragmentList + "; Actual Fragments: "+ tmpActualFragmentList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpActualFragmentList, tmpExpectedFragmentList));
