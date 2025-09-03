@@ -1166,6 +1166,35 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         }
 
     }
+    @Test
+    public void disconnectedStructureInputTest() throws InvalidSmilesException, CloneNotSupportedException{
+        //test structure: CC(C)C.C1CCCCC1C1CCCCC1
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC(C)C.C1CCCCC1C1CCCCC1");
+        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
+                false, false, true);
+        List<String> tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("*C(*)*");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C1CCCCC1");
+        tmpExpectedSMILESList.add("C1CCCCC1");
+        System.out.println("disconnectedStructureInputTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        tmpASF.setIsolateTertQuatCarbonsSetting(false);
+        tmpFragmentsSMILESList = this.generateSMILESFromACList(tmpASF.fragmentMolecule(tmpTestStructureAC));
+        tmpExpectedSMILESList.clear();
+        tmpExpectedSMILESList.add("CC(C)C");
+        tmpExpectedSMILESList.add("C1CCCCC1");
+        tmpExpectedSMILESList.add("C1CCCCC1");
+        System.out.println("disconnectedStructureInputTest: Expected: " + tmpExpectedSMILESList + "; Actual Fragments: "+ tmpFragmentsSMILESList);
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+    }
     //</editor-fold
     //
     //<editor-fold desc="Private Utility Methods">
