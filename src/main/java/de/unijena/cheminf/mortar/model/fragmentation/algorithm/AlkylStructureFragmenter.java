@@ -1074,30 +1074,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                                     continue;
                                 }
                             }
-                            IAtomContainer tmpContainer = this.chemObjectBuilderInstance.newAtomContainer();
-                            tmpContainer.addAtom(this.deepCopyAtom(tmpArrayAtom));
-                            //adds pseudo atoms with bonds depending on carbon configuration (tertiary/quaternary)
-                            for (int i = 0; i < 4; i++) {
-                                if ((boolean) tmpArrayAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY) && i == 3) {
-                                    break ;
-                                }
-                                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
-                                    AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
-                                            "In: Extraction.AtomIteration: Pseudoatom saturation");
-                                }
-                                tmpContainer.addAtom(new PseudoAtom());
-                                IBond tmpBond = new Bond();
-                                tmpBond.setOrder(IBond.Order.SINGLE);
-                                tmpBond.setAtom(tmpContainer.getAtom(0), 0);
-                                tmpBond.setAtom(tmpContainer.getAtom(i+1), 1);
-                                //deep copy not needed as referenced bond is new and has no connection to original molecule
-                                tmpContainer.addBond(tmpBond);
-                            }
-                            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
-                                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
-                                        "In: Extraction.AtomIteration: Pseudoatom Container");
-                            }
-                            tmpTertQuatCarbonContainer.add(tmpContainer);
+                            tmpTertQuatCarbonContainer.add(this.extractTertQuatCarbons(tmpArrayAtom));
                             //tertiary/quaternary carbons are added to ensure correct interaction with other substructures,
                             // neighbor atoms added later
                         } else {
@@ -1463,6 +1440,37 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         return tmpExtractedAtomAndBondACSet;
     }
 
+    /**
+     * Protected method wrapping extraction and saturation of tertiary and quaternary carbons with pseudo atoms.
+     *
+     * @param anAtom with either tertiary or quaternary mark to extract and saturate with respective number of pseudo atoms
+     * @return IAtomContainer instance with the extracted and saturated carbon system
+     */
+    protected IAtomContainer extractTertQuatCarbons(IAtom anAtom) {
+        IAtomContainer tmpContainer = this.chemObjectBuilderInstance.newAtomContainer();
+        tmpContainer.addAtom(this.deepCopyAtom(anAtom));
+        for (int i = 0; i < 4; i++) {
+            if ((boolean) anAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY) && i == 3) {
+                break ;
+            }
+            if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
+                AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                        "In: Extraction.AtomIteration: Pseudoatom saturation");
+            }
+            tmpContainer.addAtom(new PseudoAtom());
+            IBond tmpBond = new Bond();
+            tmpBond.setOrder(IBond.Order.SINGLE);
+            tmpBond.setAtom(tmpContainer.getAtom(0), 0);
+            tmpBond.setAtom(tmpContainer.getAtom(i+1), 1);
+            //deep copy not needed as referenced bond is new and has no connection to original molecule
+            tmpContainer.addBond(tmpBond);
+        }
+        if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
+            AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
+                    "In: Extraction.AtomIteration: Pseudoatom Container");
+        }
+        return tmpContainer;
+    }
     /**
      * Protected method wrapping the check for disconnected fragmentation atom containers, and if any are present, their separation.
      *
