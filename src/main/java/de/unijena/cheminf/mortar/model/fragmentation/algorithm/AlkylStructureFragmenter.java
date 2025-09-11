@@ -74,7 +74,6 @@ import java.util.logging.Logger;
  *
  * <p>
  *     general:
- *     ToDo: logger environments (fine, finer, finest) (discuss if really necessary because of code cluttering)
  *     ToDo: library created, only needs small additions (include in Tutorial)
  *     in extraction step:
  *     ToDo: code improvements/simplifications
@@ -1609,8 +1608,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         AlkylStructureFragmenter.LOGGER.log(Level.FINEST, () -> String.format(tmpSeparateDisconStrucLoggerSpecifierString,
                                 tmpSMILES));
                     } catch (NullPointerException nullPointerException) {
-                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST,
-                                "Structure not convertible to SMILES! " + nullPointerException.toString());
+                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST, () -> String.format(tmpSeparateDisconStrucLoggerSpecifierString,
+                                        "Structure not convertible to SMILES!", nullPointerException));
                     }
                 }
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
