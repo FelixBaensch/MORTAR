@@ -1499,38 +1499,26 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();  // = aDisconnectedAtomContainerSet.getAtomContainer(1);
         IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();  // = aDisconnectedAtomContainerSet.getAtomContainer(2);
         IAtomContainer tmpTertQuatCarbonContainer = this.chemObjectBuilderInstance.newAtomContainer();      // = aDisconnectedAtomContainerSet.getAtomContainer(3);
-        for (int i = 0; i < aDisconnectedAtomContainerSet.getAtomContainerCount(); i++) {
-            switch (i) {
-                case 0 -> {
-                    if (aDisconnectedAtomContainerSet.getAtomContainer(0) != null) {
-                        tmpRingFragmentationContainer = aDisconnectedAtomContainerSet.getAtomContainer(0);
-                    }
-                }
-                case 1 -> {
-                    if (aDisconnectedAtomContainerSet.getAtomContainer(1) != null) {
-                        tmpChainFragmentationContainer = aDisconnectedAtomContainerSet.getAtomContainer(1);
-                    }
-                }
-                case 2 -> {
-                    if (aDisconnectedAtomContainerSet.getAtomContainer(2) != null) {
-                        tmpIsolatedMultiBondsContainer = aDisconnectedAtomContainerSet.getAtomContainer(2);
-                    }
-                }
-                case 3 -> {
-                    if (aDisconnectedAtomContainerSet.getAtomContainer(3) != null) {
-                        tmpTertQuatCarbonContainer = aDisconnectedAtomContainerSet.getAtomContainer(3);
-                    }
-                }
-            }
+        if (aDisconnectedAtomContainerSet.getAtomContainer(0) != null) {
+            tmpRingFragmentationContainer = aDisconnectedAtomContainerSet.getAtomContainer(0);
+        }
+        if (aDisconnectedAtomContainerSet.getAtomContainer(1) != null) {
+            tmpChainFragmentationContainer = aDisconnectedAtomContainerSet.getAtomContainer(1);
+        }
+        if (aDisconnectedAtomContainerSet.getAtomContainer(2) != null) {
+            tmpIsolatedMultiBondsContainer = aDisconnectedAtomContainerSet.getAtomContainer(2);
+        }
+        if (aDisconnectedAtomContainerSet.getAtomContainer(3) != null) {
+            tmpTertQuatCarbonContainer = aDisconnectedAtomContainerSet.getAtomContainer(3);
         }
         //extracts disconnected ring structures from one atom container into atom container set
         IAtomContainerSet tmpRingACSet = new AtomContainerSet();
-        if (!tmpRingFragmentationContainer.isEmpty() && tmpRingFragmentationContainer != null) {
+        if (!tmpRingFragmentationContainer.isEmpty()) {
             tmpRingACSet = this.separateDisconnectedStructures(tmpRingFragmentationContainer);
         }
         //extracts disconnected isolated tertiary and quaternary systems into atom container set
         IAtomContainerSet tmpSingleACSet = new AtomContainerSet();
-        if (!tmpTertQuatCarbonContainer.isEmpty() && tmpTertQuatCarbonContainer != null) {
+        if (!tmpTertQuatCarbonContainer.isEmpty()) {
             tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpTertQuatCarbonContainer));
         }
         //if more than one atom container containing a ring system is present, add to extraction atom container set
@@ -1543,7 +1531,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //remnants after ring, conj. system and tertiary/quaternary carbon extractions
         //expected to be only linear carbohydrates
-        if (!tmpIsolatedMultiBondsContainer.isEmpty() && tmpIsolatedMultiBondsContainer != null) {
+        if (!tmpIsolatedMultiBondsContainer.isEmpty()) {
             tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpIsolatedMultiBondsContainer));
         }
         IAtomContainerSet tmpChainACSet = this.separateDisconnectedStructures(tmpChainFragmentationContainer);
