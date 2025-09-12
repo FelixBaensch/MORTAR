@@ -46,7 +46,8 @@ import java.util.logging.Logger;
 /**
  * Callable class to fragment a list of molecules.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class FragmentationTask implements Callable<Integer> {

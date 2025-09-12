@@ -52,7 +52,8 @@ import java.util.logging.SimpleFormatter;
 /**
  * Logging utilities. The Java-own logging API is employed.
  *
- * @author Jonas Schaub, Samuel Behr
+ * @author Jonas Schaub
+ * @author Samuel Behr
  * @version 1.0.0.0
  */
 public final class LogUtil {

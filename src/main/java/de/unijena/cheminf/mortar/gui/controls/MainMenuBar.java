@@ -37,7 +37,9 @@ import javafx.scene.control.SeparatorMenuItem;
  * A MenuBar for the application's {@link MainView}.
  * It contains menus for file handling (I/O), shutting down the application, settings and help menu entries.
  *
- * @author Felix Baensch, Jonas Schaub, Samuel Behr
+ * @author Felix Baensch
+ * @author Jonas Schaub
+ * @author Samuel Behr
  * @version 1.0.0.0
  */
 public class MainMenuBar extends MenuBar {

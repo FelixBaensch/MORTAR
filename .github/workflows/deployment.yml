@@ -1,0 +1,122 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+
+name: Cross-Platform Deployment
+on:
+  push:
+    branches: [ "main", "production" ]
+  pull_request:
+    branches: [ "main", "production" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        java: [ '21.0.1' ]
+      fail-fast: false
+    name: 'windows-latest'
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+      - name: Echo JAVA_HOME
+        run: echo $JAVA_HOME
+      - name: Verify Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+      - name: Download Inno Setup installer
+        run: Invoke-WebRequest -Uri https://files.jrsoftware.org/is/6/innosetup-6.4.2.exe -OutFile inno-setup.exe
+      - name: Install Inno Setup
+        run: .\inno-setup.exe /SILENT
+      - name: Add Inno Setup to PATH
+        run: echo "C:\Program Files (x86)\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Build and package with Gradle
+        run: .\gradlew --info --stacktrace localWinDeploy
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MORTAR-Windows-Setup
+          path: build\winDeploy\out\*.exe
+
+  build-macos:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ macos-13 , macos-latest ]
+        java: [ '21.0.1' ]
+      fail-fast: false
+    name: ${{ matrix.os }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+      - name: Echo JAVA_HOME
+        run: echo $JAVA_HOME
+      - name: Verify Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Package DMG (ARM)
+        if: matrix.os == 'macos-latest'
+        run: ./gradlew --info --stacktrace localMacDmgArm
+      - name: Package DMG (Intel)
+        if: matrix.os == 'macos-13'
+        run: ./gradlew --info --stacktrace localMacDmgIntel
+      - name: Upload DMG as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MORTAR-1.4.0-${{ matrix.os }}.dmg
+          path: ./*.dmg
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference
+
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ '21.0.1' ]
+    name: 'ubuntu-latest'
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+      - name: Echo JAVA_HOME
+        run: echo $JAVA_HOME
+      - name: Verify Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build DEB with Gradle
+        run: ./gradlew --info --stacktrace localLinuxDeb
+      - name: Upload DEB as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MORTAR-1.4.0.deb
+          path: ./*.deb
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference
+      - name: Build RPM with Gradle
+        run: ./gradlew --info --stacktrace localLinuxRpm
+      - name: Upload RPM as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MORTAR-1.4.0.rpm
+          path: ./*.rpm
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference

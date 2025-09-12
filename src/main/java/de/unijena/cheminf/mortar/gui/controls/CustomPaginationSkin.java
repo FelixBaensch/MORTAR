@@ -47,7 +47,8 @@ import javafx.scene.layout.HBox;
  * See kleopatra's comment on https://stackoverflow.com/questions/31540001/how-to-extend-javafx-pagination-navigation-to-display-additional-controls
  * (retrieved August 18, 2022) for more details
  *
- * @author kleopatra (https://stackoverflow.com/users/203657/kleopatra, retireved August 18, 2022), Felix Baensch
+ * @author kleopatra (https://stackoverflow.com/users/203657/kleopatra, retrieved August 18, 2022)
+ * @author Felix Baensch
  */
 public class CustomPaginationSkin extends PaginationSkin {
     //<editor-fold desc="private class variables" defaultstate="collapsed">

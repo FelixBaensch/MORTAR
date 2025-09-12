@@ -49,3 +49,8 @@ AdoptOpenJDK.zip
 
 # Scaffold Generator test output
 /scaffoldTestOutput
+
+# build-logic directory
+/build-logic/build
+/build-logic/.kotlin
+/build-logic/src/main/kotlin/de/unijena/cheminf/mortar/gradle/bundle/gen/

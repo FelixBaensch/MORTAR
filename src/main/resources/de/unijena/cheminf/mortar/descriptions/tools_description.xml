@@ -57,8 +57,14 @@
     </externalTool>
     <externalTool>
         <name>Gradle Build Tool</name>
-        <version>8.5</version>
+        <version>8.14.3</version>
         <author>Gradle Inc.</author>
         <license>Apache License 2.0</license>
+    </externalTool>
+    <externalTool>
+        <name>InnoSetup</name>
+        <version>6.4.2</version>
+        <author>Jordan Russell (jrsoftware.org)</author>
+        <license>Inno Setup License</license>
     </externalTool>
 </tools>

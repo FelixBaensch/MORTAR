@@ -30,7 +30,8 @@ import java.util.regex.Pattern;
 /**
  * Basic definitions of the model or application.
  *
- * @author Jonas Schaub, Achim Zielesny
+ * @author Jonas Schaub
+ * @author Achim Zielesny
  * @version 1.0.0.0
  */
 public final class BasicDefinitions {
@@ -111,7 +112,7 @@ public final class BasicDefinitions {
     /**
      * Version of application.
      */
-    public static final String MORTAR_VERSION = "1.3.0.0";
+    public static final String MORTAR_VERSION = "1.4.0.0";
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Model constants and magic numbers">

@@ -86,7 +86,8 @@ import java.util.logging.Logger;
 /**
  * Controller class of the overview view.
  *
- * @author Samuel Behr, Jonas Schaub
+ * @author Samuel Behr
+ * @author Jonas Schaub
  * @version 1.0.1.0
  */
 public class OverviewViewController implements IViewToolController {

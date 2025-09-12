@@ -34,7 +34,8 @@ import java.util.logging.Logger;
 /**
  * Message.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class Message {

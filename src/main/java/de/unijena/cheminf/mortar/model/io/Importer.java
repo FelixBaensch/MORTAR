@@ -80,7 +80,9 @@ import java.util.logging.Logger;
 /**
  * Importer.
  *
- * @author Felix Baensch, Samuel Behr, Jonas Schaub
+ * @author Felix Baensch
+ * @author Samuel Behr
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class Importer {
@@ -291,10 +293,11 @@ public class Importer {
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             tmpReturnList.add(tmpMoleculeDataModel);
         }
-        Importer.LOGGER.log(Level.INFO, String.format("Successfully imported %d molecules from file: %s; " +
+        int finalTmpExceptionCount = tmpExceptionCount;
+        Importer.LOGGER.log(Level.INFO, () -> String.format("Successfully imported %d molecules from file: %s; " +
                 "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
                 "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
-                anAtomContainerSet.getAtomContainerCount(), this.getFileName(), tmpExceptionCount));
+                anAtomContainerSet.getAtomContainerCount(), this.getFileName(), finalTmpExceptionCount));
         return tmpReturnList;
     }
     //
@@ -461,7 +464,8 @@ public class Importer {
      * @param aFile a SMILES codes-containing *.txt, *.csv, *.tsv, or *.smi file
      * @return the imported molecules in an IAtomContainerSet
      * @throws IOException if the given file does not fit to the expected format of a SMILES file
-     * @author Samuel Behr, Jonas Schaub
+     * @author Samuel Behr
+     * @author Jonas Schaub
      */
     private IAtomContainerSet importSMILESFile(File aFile) throws IOException {
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(aFile);
@@ -566,20 +570,29 @@ public class Importer {
      *                                    hydrogen atoms
      * @throws NullPointerException if the given molecule set is null
      */
-    private void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet, boolean isFillOpenValencesWithImplH) throws NullPointerException {
+    protected void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet, boolean isFillOpenValencesWithImplH) throws NullPointerException {
         Objects.requireNonNull(aMoleculeSet, "given molecule set is null.");
         if (aMoleculeSet.isEmpty()) {
             return;
         }
         int tmpExceptionsCounter = 0;
+        int tmpMoleculesWithRadicalsCounter = 0;
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
             try {
+                // perceive atom types and configure atoms is always done as preprocessing
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
+                //if open valences should be filled with implicit hydrogens, fix radicals first and then saturate everything
                 if (isFillOpenValencesWithImplH) {
+                    if (tmpMolecule.getSingleElectronCount() > 0) {
+                        ChemUtil.fixRadicals(tmpMolecule);
+                        tmpMoleculesWithRadicalsCounter++;
+                    }
                     CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
+                //otherwise, just set implicit hydrogen counts to zero if unset to prevent exceptions
                 } else {
                     for (IAtom tmpAtom : tmpMolecule.atoms()) {
-                        if (tmpAtom.getImplicitHydrogenCount() == CDKConstants.UNSET) {
+                        if (tmpAtom.getImplicitHydrogenCount() == CDKConstants.UNSET
+                                || tmpAtom.getImplicitHydrogenCount() == null) {
                             tmpAtom.setImplicitHydrogenCount(0);
                         }
                     }
@@ -598,7 +611,14 @@ public class Importer {
                 tmpExceptionsCounter++;
             }
         }
-        Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. {0} exceptions occurred while processing.", tmpExceptionsCounter);
+        if (!isFillOpenValencesWithImplH) {
+            Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. {0} exceptions occurred while processing.",
+                    tmpExceptionsCounter);
+        } else {
+            Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. {0} exceptions occurred while processing, " +
+                            "{1} molecules with radicals were fixed and saturated with implicit hydrogens.",
+                    new Object[]{tmpExceptionsCounter, tmpMoleculesWithRadicalsCounter});
+        }
     }
     //</editor-fold>
 }

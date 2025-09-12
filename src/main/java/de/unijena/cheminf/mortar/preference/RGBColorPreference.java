@@ -31,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -384,9 +385,13 @@ public class RGBColorPreference extends BasePreference {
      * (Re-)instantiates a new RGBColorPreference object of version 1.0.0.0 from a line-based text file.
      */
     private void reloadVersion1000(BufferedReader aReader) throws IOException {
+        Objects.requireNonNull(aReader, "Reader must not be null");
         this.name = aReader.readLine();
         this.guid = aReader.readLine();
         String[] tmpColorComponents = aReader.readLine().split(":");
+        if (tmpColorComponents.length != 4) {
+            throw new IOException("Invalid number of color components in persisted representation. Expected 4 components but found " + tmpColorComponents.length + ".");
+        }
         this.red = Double.parseDouble(tmpColorComponents[0]);
         this.green = Double.parseDouble(tmpColorComponents[1]);
         this.blue = Double.parseDouble(tmpColorComponents[2]);

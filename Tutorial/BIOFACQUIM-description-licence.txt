@@ -1,0 +1,8 @@
+BIOFACQUIM
+BIOFACQUIM is a meticulously curated compound database containing natural products isolated and characterized in Mexico. It provides a comprehensive chemoinformatic characterization of its contents and coverage in chemical space, including a detailed profile of physicochemical properties, scaffold content, and diversity, as well as structural diversity based on molecular fingerprints. This valuable resource is available for free and is poised to make a significant impact on drug discovery projects and various areas of research. Additionally, BIOFACQUIM aligns with global initiatives, such as those in Brazil, France, Panama, and Vietnam, aimed at constructing and maintaining representative compound databases, emphasizing the importance of such efforts in the field of natural product research.
+
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+DOI (COCONUT collection, source): https://doi.org/10.71606/coconut.cnpc0005
+
+Reference article: https://doi.org/10.3390/biom9010031

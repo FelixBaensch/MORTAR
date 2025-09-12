@@ -48,7 +48,8 @@ import java.util.logging.Logger;
 /**
  * Util class for depiction.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
+ * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class DepictionUtil {
