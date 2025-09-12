@@ -75,11 +75,6 @@ import java.util.logging.Logger;
  * <p>
  *     general:
  *     ToDo: library created, only needs small additions (include in Tutorial)
- *     in extraction step:
- *     ToDo: code improvements/simplifications
- *     ToDo: check out markRingAtomsAndBonds() from Cycles
- *     ToDo: try out switching atom and bond extraction to use only one AtomContainer
- *     ToDo: check if neighbor ring detection in neighbor extract possible
  * </p>
  *
  * @author Maximilian Rottmann (maximilian.rottmann@studmail.w-hs.de)
@@ -715,7 +710,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * </p>
      *
      * @param aMolecule to fragment
-     * @return List of IAtomContainers containing the fragments (may be empty if no fragments are extracted)
+     * @return List of IAtomContainers containing the fragments (empty if no fragments are extracted)
      * @throws NullPointerException if aMolecule is null
      * @throws IllegalArgumentException if the given molecule cannot be fragmented
      * @throws CloneNotSupportedException if cloning the given molecule is unsuccessful
@@ -981,7 +976,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         for (IBond tmpArrayBond: tmpBondArray) {
             if (tmpArrayBond.getOrder().numeric() == 2) {
                 tmpArrayBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, true);
-                //end of review changes
                 int tmpBeginIndex = tmpArrayBond.getBegin().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
                 int tmpEndIndex = tmpArrayBond.getEnd().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
                 tmpAtomArray[tmpBeginIndex].setProperty(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, true);
@@ -1038,6 +1032,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param anAtomsArray MolecularArrays atom array with atoms of molecule to fragment
      * @return atom container set with atom containers ONLY containing the molecule's atoms
      */
+    //Reduction in complexity could be achieved by using/referencing only one atom container, though this would entail
+    // (quite possibly) large changes to the algorithm logic. Therefor, it can be implemented in the future if necessary,
+    // at this point in time it is deemed unnecessary as the main focus is on functionality of the algorithm.
     protected IAtomContainerSet extractAtoms(IAtom[] anAtomsArray) {
         Objects.requireNonNull(anAtomsArray);
         IAtomContainerSet tmpExtractedAtomACSet = new AtomContainerSet();
@@ -1048,7 +1045,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtomContainer tmpTertQuatCarbonContainer = this.chemObjectBuilderInstance.newAtomContainer();
         //
         String tmpExtractionLoggerSpecifierString = "Extraction.AtomIteration at Index: %d, Step: %s";
-
         for (IAtom tmpArrayAtom : anAtomsArray) {
             try {
                 if (!this.isPseudoAtom(tmpArrayAtom)) {
@@ -1166,6 +1162,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @param anExtractedAtomsContainingACSet with atom containers containing the molecule's atoms
      * @return atom container set with possibly disconnected atom containers containing the molecule's generated fragments
      */
+    //Reduction in complexity could be achieved by using/referencing only one atom container, though this would entail
+    // (quite possibly) large changes to the algorithm logic. Therefor, it can be implemented in the future if necessary,
+    // at this point in time it is deemed unnecessary as the main focus is on functionality of the algorithm.
     protected IAtomContainerSet extractBonds(IBond[] aBondsArray, IAtomContainerSet anExtractedAtomsContainingACSet) {
         Objects.requireNonNull(aBondsArray);
         Objects.requireNonNull(anExtractedAtomsContainingACSet);
@@ -1441,7 +1440,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             } catch (IllegalArgumentException anIllegalArgumentException) {
                 throw new IllegalArgumentException("Bond could not be extracted at bond with index: "
                         + tmpArraysBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY)
-                        + "!" + "Cause: " + anIllegalArgumentException.toString());
+                        + "!" + "Cause: " + anIllegalArgumentException);
             }
         } //end of loop over bond array
         tmpExtractedAtomAndBondACSet.addAtomContainer(tmpRingFragmentationContainer);
@@ -1495,10 +1494,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         Objects.requireNonNull(aDisconnectedAtomContainerSet);
         //break down to using only param ACSet
         IAtomContainerSet tmpDispersedAtomContainerSet = new AtomContainerSet();
-        IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();   // = aDisconnectedAtomContainerSet.getAtomContainer(0);
-        IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();  // = aDisconnectedAtomContainerSet.getAtomContainer(1);
-        IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();  // = aDisconnectedAtomContainerSet.getAtomContainer(2);
-        IAtomContainer tmpTertQuatCarbonContainer = this.chemObjectBuilderInstance.newAtomContainer();      // = aDisconnectedAtomContainerSet.getAtomContainer(3);
+        IAtomContainer tmpRingFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
+        IAtomContainer tmpChainFragmentationContainer = this.chemObjectBuilderInstance.newAtomContainer();
+        IAtomContainer tmpIsolatedMultiBondsContainer = this.chemObjectBuilderInstance.newAtomContainer();
+        IAtomContainer tmpTertQuatCarbonContainer = this.chemObjectBuilderInstance.newAtomContainer();
         if (aDisconnectedAtomContainerSet.getAtomContainer(0) != null) {
             tmpRingFragmentationContainer = aDisconnectedAtomContainerSet.getAtomContainer(0);
         }
@@ -1583,23 +1582,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     protected IAtomContainerSet separateDisconnectedStructures(IAtomContainer anAtomContainer) throws IllegalArgumentException{
         Objects.requireNonNull(anAtomContainer,"Given IAtomContainer is null.");
-        String tmpSeparateDisconStrucLoggerSpecifierString = "Separation.DisconnectedStructures at Structure: %s";
         IAtomContainerSet tmpFragmentSet = new AtomContainerSet();
         try {
             if (!anAtomContainer.isEmpty()) {
-                if (AlkylStructureFragmenter.LOGGER.getParent().getLevel().intValue() <= Level.FINEST.intValue()) {
-                    try {
-                        String tmpSMILES = ChemUtil.createUniqueSmiles(anAtomContainer, false);
-                        if (tmpSMILES == null) {
-                            throw new NullPointerException();
-                        }
-                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST, () -> String.format(tmpSeparateDisconStrucLoggerSpecifierString,
-                                tmpSMILES));
-                    } catch (NullPointerException nullPointerException) {
-                        AlkylStructureFragmenter.LOGGER.log(Level.FINEST, () -> String.format(tmpSeparateDisconStrucLoggerSpecifierString,
-                                        "Structure not convertible to SMILES!", nullPointerException));
-                    }
-                }
                 if (!ConnectivityChecker.isConnected(anAtomContainer)) {
                     IAtomContainerSet tmpContainerSet = ConnectivityChecker.partitionIntoMolecules(anAtomContainer);
                     for (IAtomContainer tmpContainer : tmpContainerSet.atomContainers()) {
@@ -1612,8 +1597,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return tmpFragmentSet;
         } catch (Exception anException) {
             AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT,
-                    anException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
-                            "Connectivity Check failed."), anException);
+                    anException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), "Connectivity Check failed."),
+                    anException);
         }
         return tmpFragmentSet;
     }
@@ -1643,7 +1628,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     /**
      * Protected method to dissect given AtomContainer (containing linear carbon chain) into separate molecules with given length.
-     *
      * Returns remnants of chains as disconnected structures if they are falling short of set maximum length
      * (i.e. set maximum is 6, chain is 8 C's long -> fragment of length 6 is returned, together with a disconnected remnant of length 2).
      * The used counter starts at 1 as to allow a one-to-one "translation" of user input for the setting and implementation.
@@ -1762,14 +1746,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         }
         //</editor-fold>
-        IAtom tmpBeginAtom = null;
+        IAtom tmpBeginAtom;
         try {
             tmpBeginAtom = aBondToCopy.getBegin();
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("In: deepCopyBond(): Begin Atom was null at bond index: "
                     + aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY));
         }
-        IAtom tmpEndAtom = null;
+        IAtom tmpEndAtom;
         try {
             tmpEndAtom = aBondToCopy.getEnd();
         } catch (NullPointerException e) {
