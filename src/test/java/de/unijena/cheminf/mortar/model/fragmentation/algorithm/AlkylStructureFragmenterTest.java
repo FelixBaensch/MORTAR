@@ -52,8 +52,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -1291,7 +1293,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
     //<editor-fold desc="Inner Class 'Molecular Arrays'">
     /**
      * Test method for correct functionality of AlkylStructureFragmenter inner class MolecularArrays.
-     *
+     * It tests the correct filtering of null elements during the array filling step.
+     * It also tests correct setting of atom and bond properties.
      * Since the CDK does not allow the addition of null atoms to existing atom container instances, reflection is used
      * in this test to access the inner fields of atoms and bonds to manipulate their values.
      *
@@ -1333,6 +1336,42 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         Assertions.assertNotEquals(testMolecularArrays.getBondArray().length, refMolecularArrays.getBondArray().length);
         if (testMolecularArrays.getAtomArray().length != 11 && testMolecularArrays.getBondArray().length != 10) {
             Assertions.fail("Array lengths were not in expected range.");
+        }
+        for (int i = 0; i < testMolecularArrays.getAtomArray().length; i++) {
+            Map<Object, Object> tmpExpectedAtomPropertyMap = new HashMap<>();
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY, i);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, false);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, false);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_TERTIARY_CARBON_PROPERTY_KEY, false);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_QUATERNARY_CARBON_PROPERTY_KEY, false);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, false);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, false);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY, false);
+            tmpExpectedAtomPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, false);
+            IAtom tmpAtom = testMolecularArrays.getAtomArray()[i];
+            Map<Object, Object> tmpTestAtomPropertyMap = tmpAtom.getProperties();
+            for (Map.Entry<Object, Object> entry : tmpTestAtomPropertyMap.entrySet()) {
+                if (!tmpExpectedAtomPropertyMap.containsKey(entry.getKey()) || !tmpExpectedAtomPropertyMap.containsValue(entry.getValue())) {
+                    Assertions.fail("Properties not set correctly!");
+                }
+            }
+        }
+        for (int i = 0; i < testMolecularArrays.getBondArray().length; i++) {
+            Map<Object, Object> tmpExpectedBondPropertyMap = new HashMap<>();
+            tmpExpectedBondPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY, i);
+            tmpExpectedBondPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_RING_MARKER_KEY, false);
+            tmpExpectedBondPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, false);
+            tmpExpectedBondPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_DOUBLE_BOND_MARKER_KEY, false);
+            tmpExpectedBondPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_TRIPLE_BOND_MARKER_KEY, false);
+            tmpExpectedBondPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_NEIGHBOR_MARKER_KEY, false);
+            tmpExpectedBondPropertyMap.put(AlkylStructureFragmenter.INTERNAL_ASF_CONNECTED_TERTIARY_QUATERNARY_RING_MARKER_KEY, false);
+            IBond tmpBond = testMolecularArrays.getBondArray()[i];
+            Map<Object, Object> tmpTestAtomPropertyMap = tmpBond.getProperties();
+            for (Map.Entry<Object, Object> entry : tmpTestAtomPropertyMap.entrySet()) {
+                if (!tmpExpectedBondPropertyMap.containsKey(entry.getKey()) || !tmpExpectedBondPropertyMap.containsValue(entry.getValue())) {
+                    Assertions.fail("Properties not set correctly!");
+                }
+            }
         }
     }
 
