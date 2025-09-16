@@ -50,10 +50,12 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IChemObject;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IElement;
 import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.interfaces.IStereoElement;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
@@ -61,6 +63,7 @@ import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -741,6 +744,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         //</editor-fold>
         //internal arrays are filled with atoms and bonds in wrapping class MolecularArrays instance
         MolecularArrays tmpMolecularArrays = new MolecularArrays(tmpClone);
+        //preserve original molecule stereo chemistry
+        Map<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpStereoChemOriginMoleculeMap = this.createStereoChemMap(tmpClone);
         //substructures are detected and marked respectively
         this.markSubstructures(tmpMolecularArrays, tmpClone);
         //
@@ -770,7 +775,20 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
-                tmpFragmentList.add(tmpAtomContainer);
+                boolean stereochemsetting = true;
+                if (stereochemsetting) {
+                    tmpFragmentList.add(this.remapStereoChem(tmpAtomContainer, tmpStereoChemOriginMoleculeMap));
+                    //debug
+                    Iterable<IStereoElement> tmpStereoChemIterable = tmpFragmentList.getFirst().stereoElements();
+                    int tmpStereoChemIterableSize = 0;
+                    if (tmpStereoChemIterable instanceof Collection) {
+                        tmpStereoChemIterableSize = ((Collection<?>) tmpStereoChemIterable).size();
+                    }
+                    System.out.println("result stereo size: " + tmpStereoChemIterableSize);
+
+                } else {
+                    tmpFragmentList.add(tmpAtomContainer);
+                }
             }
             return tmpFragmentList;
         } catch (Exception anException) {
@@ -1839,6 +1857,98 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         }
         return tmpAtomCount;
+    }
+
+    /**
+     * Utility method creating a map of [@link IChemObject] and [@link IStereoElement] of the IChemObjects (atoms and bonds)
+     * of a given atom container.
+     *
+     * @param aStereoMolecule atom container from which the map is to be created
+     * @return created atoms/bonds and IStereoElements map
+     */
+    protected Map<IChemObject, IStereoElement<IChemObject, IChemObject>> createStereoChemMap(IAtomContainer aStereoMolecule) {
+        Iterable<IStereoElement> tmpStereoChemIterable = aStereoMolecule.stereoElements();
+        int tmpStereoChemIterableSize = 0;
+        if (tmpStereoChemIterable instanceof Collection) {
+            tmpStereoChemIterableSize = ((Collection<?>) tmpStereoChemIterable).size();
+        }
+        Map<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpStereoChemOriginMoleculeMap
+                = new HashMap<>(tmpStereoChemIterableSize, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
+        for (IStereoElement tmpStereoElement : aStereoMolecule.stereoElements()) {
+            IChemObject tmpStereoFocus = tmpStereoElement.getFocus();
+            if (tmpStereoFocus instanceof IAtom || tmpStereoFocus instanceof IBond) {
+                tmpStereoChemOriginMoleculeMap.put(tmpStereoFocus, tmpStereoElement);
+            }
+        }
+        return tmpStereoChemOriginMoleculeMap;
+    }
+
+    /**
+     * Utility method remapping the original molecule's stereo chemistry configuration onto a given molecule fragment where possible.
+     *
+     * @param aFragment atom container onto which stereo chemistry configuration is added
+     * @param aStereoChemMap with the original stereo chemistry configuration
+     * @return fragment atom container with added stereo chemistry
+     */
+    protected IAtomContainer remapStereoChem(IAtomContainer aFragment, Map<IChemObject, IStereoElement<IChemObject, IChemObject>> aStereoChemMap) {
+        //first param: fragment atom, second param: stereo map atom -> analog for bonds
+        Map<IAtom, IAtom> tmpStereoChemOriginAtomToCopyMap = new HashMap<>();
+        Map<IBond, IBond> tmpStereoChemOriginBondToCopyMap = new HashMap<>();
+
+        //create mapping of fragment (aFragment) atoms and bonds to the original stereo chem map
+        for (IAtom tmpFragmentAtom : aFragment.atoms()) {
+            int tmpAtomIndex = tmpFragmentAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+                if (tmpEntry.getKey() instanceof IAtom tmpStereoMapAtom
+                        && (int) tmpStereoMapAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
+                    tmpStereoChemOriginAtomToCopyMap.put(tmpFragmentAtom, (IAtom) tmpEntry.getKey());
+                }
+            }
+        }
+        for (IBond tmpFragmentBond : aFragment.bonds()) {
+            int tmpBondIndex = tmpFragmentBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+                if (tmpEntry.getKey() instanceof IBond tmpStereoMapBond
+                        && (int) tmpStereoMapBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) == tmpBondIndex) {
+                    tmpStereoChemOriginBondToCopyMap.put(tmpFragmentBond, (IBond) tmpEntry.getKey());
+                }
+            }
+        }
+        //now what to do with stereochem mapped atoms and bonds??
+        //use IStereoElement.map(map of fragment atoms to origin atoms, map of fragment bonds to origin bonds)
+
+        for (IAtom tmpAtom : aFragment.atoms()) {
+            int tmpAtomIndex = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+                if (tmpEntry.getKey() instanceof IAtom tmpStereoMapAtom
+                        && (int) tmpStereoMapAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
+                    IStereoElement tmpStereoElement = tmpEntry.getValue();
+                    List<?> tmpStereoCarrierList = tmpStereoElement.getCarriers();
+                    List<IChemObject> tmpRemappedStereoCarrierList = new ArrayList<>();
+                    for (int i = 0; i < tmpStereoCarrierList.size(); i++) {
+                        if (tmpStereoCarrierList.get(i) instanceof IAtom tmpCarrierAtom) {
+                            tmpRemappedStereoCarrierList.add(tmpCarrierAtom);
+                        }
+                    }
+                    boolean tmpIsAllRemappedCarrierPresent = true;
+                    for (IChemObject tmpRemappedCarrierChemObject : tmpRemappedStereoCarrierList) {
+                        if (tmpRemappedCarrierChemObject instanceof IAtom) {
+                            if (!aFragment.contains((IAtom) tmpRemappedCarrierChemObject)) {
+                                tmpIsAllRemappedCarrierPresent = false;
+                            }
+                        } else if (tmpRemappedCarrierChemObject instanceof IBond) {
+                            if (!aFragment.contains((IBond) tmpRemappedCarrierChemObject)) {
+                                tmpIsAllRemappedCarrierPresent = false;
+                            }
+                        }
+                    }
+                    if (tmpIsAllRemappedCarrierPresent) {
+                        aFragment.addStereoElement(tmpStereoElement);
+                    }
+                }
+            }
+        }
+        return aFragment;
     }
     //
     //</editor-fold>
