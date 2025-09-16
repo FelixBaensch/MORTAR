@@ -1749,14 +1749,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         IAtom tmpBeginAtom;
         try {
             tmpBeginAtom = aBondToCopy.getBegin();
-        } catch (NullPointerException e) {
+        } catch (NullPointerException aNullPointerException) {
             throw new IllegalArgumentException("In: deepCopyBond(): Begin Atom was null at bond index: "
                     + aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY));
         }
         IAtom tmpEndAtom;
         try {
             tmpEndAtom = aBondToCopy.getEnd();
-        } catch (NullPointerException e) {
+        } catch (NullPointerException aNullPointerException) {
             throw new IllegalArgumentException("In: deepCopyBond(): End Atom was null at bond index: "
                     + aBondToCopy.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY));
         }
