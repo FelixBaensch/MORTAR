@@ -9,6 +9,7 @@
 [![Software Article - JChemInf](https://img.shields.io/badge/Software_Article-JChemInf-blue)](https://doi.org/10.1186/s13321-022-00674-9)
 [![Tutorial - Tutorial folder](https://img.shields.io/badge/Tutorial-Tutorial_folder-2ea44f)](https://github.com/FelixBaensch/MORTAR/tree/main/Tutorial)
 [![Tutorial - Online](https://img.shields.io/badge/Tutorial-Online-2ea44f)](https://felixbaensch.github.io/MORTAR/Tutorial/MORTAR_Tutorial.pdf)
+[![Download_statistics - GitHub_Release_Stats_by_tooomm](https://img.shields.io/badge/Download_statistics-GitHub_Release_Stats_by_tooomm-blue)](https://tooomm.github.io/github-release-stats/?username=FelixBaensch&repository=MORTAR)
 
 ![MORTAR_logo](./Images/Mortar_Logo1_cut.png)
 # MOlecule fRagmenTAtion fRamework (MORTAR)
@@ -37,7 +38,7 @@ molecular <i>in silico</i> fragmentation and substructure analysis. The Java/Jav
 functions for visualizing the fragmentation results of individual compounds or entire compound sets. 
 In addition to three currently integrated methods for fragmentation and substructure analysis - 
 <a href="https://github.com/JonasSchaub/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
-<a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a>, 
+<a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a> (with the <a href="https://github.com/cdk/cdk/pull/1225">Sugar Detection Utility</a> extension), 
 and <a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a> - MORTAR allows straightforward integration of 
 additional fragmentation algorithms to support the development of new methods at an early stage. 
 All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
@@ -65,8 +66,8 @@ Pre-compiled and executable MORTAR distributions can be found attached as assets
 <a href="https://github.com/FelixBaensch/MORTAR/releases">marked releases</a> (below the change notes).
 <br>In brief (more details in the dedicated sections below), a graphical installer 
 executable is available for Windows, a disk image (DMG) file for installation 
-on macOS, and a Debian package (DEB) is available for installation on Debian-based 
-Linux distributions like Ubuntu.
+on macOS, an RPM Package Manager (RPM) package for Red Hat-based Linux distributions like AlmaLinux, and a Debian package (DEB) is 
+available for installation on Debian-based Linux distributions like Ubuntu.
 On all three operating systems (Windows, macOS, and Linux), MORTAR can also be run from the command line using the 
 supplied “fat” Java ARchive (JAR) which gives you full control, e.g., over how much memory should be used. A Java 
 Development Kit or Runtime Environment (JDK/JRE) of version 21.0.1 or higher must be pre-installed on your system
@@ -74,19 +75,23 @@ to run MORTAR from the command line.
 
 
 <p>
-<b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.4.0/MORTAR_v1.4.0.0_WINx64_installer.exe">here</a> to 
-automatically download the installer.exe of the latest version). Download the installer 
-executable, start it, and follow the instructions to install MORTAR. Note that the installation includes a full 
-Java Runtime Environment (JRE). After installation, create a shortcut to an appropriate MORTAR start batch file on your 
-Windows desktop. E.g. for MORTAR to use up to 4 gigabytes of RAM, copy a shortcut to batch file "MORTAR.bat" which is 
-located in the MORTAR program folder (default "C:\Program Files\MORTAR\MORTARv1.4.0.0\bin" or the path specified at 
-installation). To start MORTAR, double-click the created shortcut. MORTAR can be uninstalled by the provided 
-Uninstall.exe executable in the MORTAR program folder or standard Windows functions.
+<b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.5.0/MORTAR_v1.5.0.0_WINx64_setup.exe">here</a> to 
+automatically download the setup.exe of the latest version). Download the installer 
+executable, start it, and follow the instructions to install MORTAR. During installation, you are asked whether desktop 
+or start menu icons/shortcuts should be created. The executable (batch file) denoted "MORTAR" uses up to 4 GB of RAM, 
+while the "MORTAR 20GB" configuration allocates up to 20 GB of your RAM for running MORTAR. Note that no start menu folder
+will be created, so creating at least one of the shortcuts is recommended. To start MORTAR after installation, double-click 
+one of the created shortcuts. 
 <br>
-As an alternative to "MORTAR.bat", there is also the "MORTAR_20GB.bat" batch file available that allocates up to 
-20 GB of RAM for MORTAR. If you want to configure your own heap space settings, open one of the provided batch files 
-and adjust the line
+The MORTAR program folder is located at "C:\Program Files\MORTAR\MORTARv1.5.0.0" by default, but can be adjusted during 
+installation. MORTAR can be uninstalled by the provided "unins000.exe" executable in the MORTAR program folder or by 
+standard Windows functions (Settings -> Apps -> Installed Apps). Note that the installation includes a full Java Runtime 
+Environment (JRE).
+<br>
+If you want to configure your own heap space settings for running MORTAR, open one of the provided batch files 
+(in the "bin" subfolder of the MORTAR program folder, "MORTAR.bat" or "MORTAR_20GB.bat")
+in a text editor and adjust the line
 </p>
 
 ```shell
@@ -102,7 +107,7 @@ the command line (see below).
 
 <p><b>MacOS:</b> On macOS, MORTAR can be installed using the disk image (.dmg) files attached to every 
 <a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> 
-since v1.2 (one for devices with an x86 processor architecture and one for ARM/AArch64-based systems). 
+since v1.2, one for devices with an x86 processor architecture and one for ARM/AArch64-based systems. 
 Download the right file for your system and double-click on it. In the window that opens, drag the MORTAR icon 
 into the Applications folder to install it. It might be necessary to 
 <a href="https://support.apple.com/en-gb/guide/mac-help/mh40620/mac">adjust your security settings</a> to allow MORTAR to run.
@@ -112,7 +117,7 @@ analyse bigger data sets or should this installation not work for you, you can r
 (see below).
 </p>
 
-<p><b>Linux</b>:
+<p><b>Debian-based Linux</b>:
 On Debian-based Linux distributions like Ubuntu, MORTAR can be installed using 
 the Debian package (.deb) attached to every 
 <a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> since v1.2.2 
@@ -122,27 +127,46 @@ command line:
 </p>
 
 ```shell
-sudo dpkg -i <path to>MORTAR-1.4.0.deb
+sudo dpkg -i <path to>MORTAR-1.5.0.deb
 ```
 
-Execute the command in the directory where the JAR is situated or use its explicit 
+Execute the command in the directory where the package is situated or use its explicit 
 path instead of ```<path to>```.
 The package is configured to allocate up to 4 gigabytes of RAM to MORTAR. Should 
 you want to assign more memory to analyse bigger data sets or should this 
 installation not work for you, you can run MORTAR directly from the command line 
 (see below).
 
+<p><b>Red Hat-based Linux</b>:
+On Red Hat-based Linux distributions like AlmaLinux, MORTAR can be installed using 
+the RPM Package Manager (.rpm) package attached to every 
+<a href="https://github.com/FelixBaensch/MORTAR/releases">release</a> since v1.5 
+(only one for devices with an x86 processor architecture). Download the package 
+and double-click on it to install it. Alternatively, you can install it via the 
+command line:
+</p>
+
+```shell
+sudo rpm -i <path to>MORTAR-1.5.0.rpm
+```
+
+Execute the command in the directory where the package is situated or use its explicit
+path instead of ```<path to>```.
+The package is configured to allocate up to 4 gigabytes of RAM to MORTAR. Should
+you want to assign more memory to analyse bigger data sets or should this
+installation not work for you, you can run MORTAR directly from the command line
+(see below).
 
 <p><b>JAR execution via command line (all platforms)</b>: 
-Every release has the executable JAR "MORTAR-fat-1.4.0.0.jar"
+Every release has the executable JAR "MORTAR-fat-1.5.0.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.4.0/MORTAR-fat-1.4.0.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.5.0/MORTAR-fat-1.5.0.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.4.0.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.5.0.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
@@ -150,11 +174,11 @@ Otherwise, replace "java" with the path to the java command of your JDK or JRE.<
 Execute the command in the directory where the JAR is situated or use its explicit path instead of ```<path to>```.<br>
 Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx) according to your preferences.
 
-<p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all three platforms) and AArch64/ARM 
+<p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all four platforms) and AArch64/ARM 
 (on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.4.0.0.jar" is available from the distributions attached 
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.5.0.0.jar" is available from the distributions attached 
 to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.4.0/MORTAR-fat-aarch64-1.4.0.0.jar">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.5.0/MORTAR-fat-aarch64-1.5.0.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
@@ -168,24 +192,26 @@ for or recommend this way of deployment, similar to using the WSL as mentioned a
 ### Source code
 This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
 clone the repository and open it in a Gradle-supporting IDE (e.g. IntelliJ) as a Gradle project and execute the 
-build.gradle file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 21.0.1 
+build.gradle.kts file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 21.0.1 
 or higher must also be pre-installed and set as project JDK / project compiler.
-The Gradle build process is configured to include a specific Java Runtime Environment (JRE) in the "install" folder.
+The Gradle build process is configured to include a specific Java Runtime Environment (JRE) in the distributions.
 For this to work, you need to create an "AdoptOpenJDK\jdk-21.0.1_12_jre\" folder and put the JRE with the specified version 
 into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be "bin", "conf", "legal", "lib", etc.).
+If you are only going to use our custom deployment Gradle tasks, you do not need to download the JRE manually, the tasks 
+will take care of it automatically.
 
 ## Dependencies
 **Needs to be pre-installed:**
 * Java Development Kit (JDK) version 21.0.1 or higher
     * [Adoptium Open JDK](https://adoptium.net) (as one possible source of the JDK)
-* Gradle version 8.5
+* Gradle version 8.14.3
     * [Gradle Build Tool](https://gradle.org)
 
 **Managed by Gradle:**
 * JavaFX version 21.0.1
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
-* Chemistry Development Kit (CDK) version 2.11
+* Chemistry Development Kit (CDK) version 2.12-SNAPSHOT
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
 * JUnit version 5.11.4
@@ -200,10 +226,13 @@ into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be "bin",
 
 ## Citation
 You can cite this software or this repository as it is defined in the CITATION.cff file. Also, please cite our scientific 
-article (<a href= "https://doi.org/10.1186/s13321-022-00674-9"> MORTAR: a rich client application for in silico molecule 
-fragmentation (Baensch et al. 2023)).
+article (<a href= "https://doi.org/10.1186/s13321-022-00674-9">MORTAR: a rich client application for in silico molecule 
+fragmentation (Baensch et al. 2023)</a>).
 
 ## References and useful links
+
+<p><b>MORTAR Download statistics:</b> <a href= "https://tooomm.github.io/github-release-stats/?username=FelixBaensch&repository=MORTAR">GitHub Release Stats by tooomm</a></p>
+
 **Ertl algorithm**
 * [Ertl P. An algorithm to identify functional groups in organic molecules. J Cheminform. 2017; 9:36.](https://doi.org/10.1186/s13321-017-0225-z)
 * [Fritsch S, Neumann S, Schaub J, Steinbeck C, Zielesny A. ErtlFunctionalGroupsFinder: automated rule-based functional group detection with the Chemistry Development Kit (CDK). J Cheminform. 2019; 11:37](https://doi.org/10.1186/s13321-019-0361-8)
@@ -243,6 +272,7 @@ fragmentation (Baensch et al. 2023)).
 * Julian Zander
 * Zeynep Dagtekin
 * Tom Weiss
+* Martin Urban
 
 **Logo:**
 * Kohulan Rajan
