@@ -57,6 +57,8 @@ import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.interfaces.IStereoElement;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.stereo.Projection;
+import org.openscience.cdk.stereo.StereoElementFactory;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import javax.vecmath.Point2d;
@@ -777,15 +779,19 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 boolean stereochemsetting = true;
                 if (stereochemsetting) {
-                    tmpFragmentList.add(this.remapStereoChem(tmpAtomContainer, tmpStereoChemOriginMoleculeMap));
-                    //debug
-                    Iterable<IStereoElement> tmpStereoChemIterable = tmpFragmentList.getFirst().stereoElements();
-                    int tmpStereoChemIterableSize = 0;
-                    if (tmpStereoChemIterable instanceof Collection) {
-                        tmpStereoChemIterableSize = ((Collection<?>) tmpStereoChemIterable).size();
+                    //some null pointer exception: "field 'x' cannot be read cause field 'prevXy' is null" ????
+                    try {
+                        tmpFragmentList.add(this.remapStereoChem(tmpAtomContainer, tmpStereoChemOriginMoleculeMap));
+                    } catch (Exception aStereoChemException) {
+                        throw new RuntimeException(aStereoChemException);
                     }
-                    System.out.println("result stereo size: " + tmpStereoChemIterableSize);
-
+                    //debug
+//                    Iterable<IStereoElement> tmpStereoChemIterable = tmpFragmentList.getFirst().stereoElements();
+//                    int tmpStereoChemIterableSize = 0;
+//                    if (tmpStereoChemIterable instanceof Collection) {
+//                        tmpStereoChemIterableSize = ((Collection<?>) tmpStereoChemIterable).size();
+//                    }
+//                    System.out.println("result stereo size: " + tmpStereoChemIterableSize);
                 } else {
                     tmpFragmentList.add(tmpAtomContainer);
                 }
@@ -1891,7 +1897,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @return fragment atom container with added stereo chemistry
      */
     protected IAtomContainer remapStereoChem(IAtomContainer aFragment, Map<IChemObject, IStereoElement<IChemObject, IChemObject>> aStereoChemMap) {
-        //first param: fragment atom, second param: stereo map atom -> analog for bonds
+        //key: fragment atom, value: stereo map atom (original molecule) -> analog for bonds
         Map<IAtom, IAtom> tmpStereoChemOriginAtomToCopyMap = new HashMap<>();
         Map<IBond, IBond> tmpStereoChemOriginBondToCopyMap = new HashMap<>();
 
@@ -1914,40 +1920,60 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
         }
-        //now what to do with stereochem mapped atoms and bonds??
-        //use IStereoElement.map(map of fragment atoms to origin atoms, map of fragment bonds to origin bonds)
-
-        for (IAtom tmpAtom : aFragment.atoms()) {
-            int tmpAtomIndex = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
-                if (tmpEntry.getKey() instanceof IAtom tmpStereoMapAtom
-                        && (int) tmpStereoMapAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
-                    IStereoElement tmpStereoElement = tmpEntry.getValue();
-                    List<?> tmpStereoCarrierList = tmpStereoElement.getCarriers();
-                    List<IChemObject> tmpRemappedStereoCarrierList = new ArrayList<>();
-                    for (int i = 0; i < tmpStereoCarrierList.size(); i++) {
-                        if (tmpStereoCarrierList.get(i) instanceof IAtom tmpCarrierAtom) {
-                            tmpRemappedStereoCarrierList.add(tmpCarrierAtom);
-                        }
-                    }
-                    boolean tmpIsAllRemappedCarrierPresent = true;
-                    for (IChemObject tmpRemappedCarrierChemObject : tmpRemappedStereoCarrierList) {
-                        if (tmpRemappedCarrierChemObject instanceof IAtom) {
-                            if (!aFragment.contains((IAtom) tmpRemappedCarrierChemObject)) {
-                                tmpIsAllRemappedCarrierPresent = false;
-                            }
-                        } else if (tmpRemappedCarrierChemObject instanceof IBond) {
-                            if (!aFragment.contains((IBond) tmpRemappedCarrierChemObject)) {
-                                tmpIsAllRemappedCarrierPresent = false;
-                            }
-                        }
-                    }
-                    if (tmpIsAllRemappedCarrierPresent) {
-                        aFragment.addStereoElement(tmpStereoElement);
-                    }
-                }
-            }
+        for (Map.Entry<IAtom, IAtom> tmpEntry : tmpStereoChemOriginAtomToCopyMap.entrySet()) {
+            System.out.println(tmpEntry.getKey());
+            System.out.println((int) tmpEntry.getKey().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY));
+            System.out.println(tmpEntry.getValue());
+            System.out.println((int) tmpEntry.getValue().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY));
+            System.out.println("---");
         }
+        StereoElementFactory stereo = StereoElementFactory.using2DCoordinates(aFragment).interpretProjections(Projection.Haworth);
+        aFragment.setStereoElements(stereo.createAll());
+
+        for (IAtom tmpFragmentAtom : aFragment.atoms()) {
+            IAtom tmpOriginAtom = tmpStereoChemOriginAtomToCopyMap.get(tmpFragmentAtom);
+            IStereoElement<IChemObject, IChemObject> tmpOriginStereoElement = aStereoChemMap.get(tmpOriginAtom);
+            IStereoElement<IChemObject, IChemObject> tmpFragmentStereoElement;
+            //i dont know how to create a new stereo element in the fragment atom container
+        }
+
+
+        for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+            System.out.println("Config class: " + tmpEntry.getValue().getConfigClass());
+            System.out.println("Config: " + tmpEntry.getValue().getConfig());
+            System.out.println("config Order: " + tmpEntry.getValue().getConfigOrder());
+        }
+//        for (IAtom tmpAtom : aFragment.atoms()) {
+//            int tmpAtomIndex = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+//            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+//                if (tmpEntry.getKey() instanceof IAtom tmpStereoMapAtom
+//                        && (int) tmpStereoMapAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
+//                    IStereoElement tmpStereoElement = tmpEntry.getValue();
+//                    List<?> tmpStereoCarrierList = tmpStereoElement.getCarriers();
+//                    List<IChemObject> tmpRemappedStereoCarrierList = new ArrayList<>();
+//                    for (int i = 0; i < tmpStereoCarrierList.size(); i++) {
+//                        if (tmpStereoCarrierList.get(i) instanceof IAtom tmpCarrierAtom) {
+//                            tmpRemappedStereoCarrierList.add(tmpCarrierAtom);
+//                        }
+//                    }
+//                    boolean tmpIsAllRemappedCarrierPresent = true;
+//                    for (IChemObject tmpRemappedCarrierChemObject : tmpRemappedStereoCarrierList) {
+//                        if (tmpRemappedCarrierChemObject instanceof IAtom) {
+//                            if (!aFragment.contains((IAtom) tmpRemappedCarrierChemObject)) {
+//                                tmpIsAllRemappedCarrierPresent = false;
+//                            }
+//                        } else if (tmpRemappedCarrierChemObject instanceof IBond) {
+//                            if (!aFragment.contains((IBond) tmpRemappedCarrierChemObject)) {
+//                                tmpIsAllRemappedCarrierPresent = false;
+//                            }
+//                        }
+//                    }
+//                    if (tmpIsAllRemappedCarrierPresent) {
+//                        aFragment.addStereoElement(tmpStereoElement);
+//                    }
+//                }
+//            }
+//        }
         return aFragment;
     }
     //
