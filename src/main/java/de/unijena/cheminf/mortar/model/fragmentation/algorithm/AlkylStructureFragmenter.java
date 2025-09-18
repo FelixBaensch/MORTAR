@@ -59,6 +59,7 @@ import org.openscience.cdk.interfaces.IStereoElement;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.stereo.Projection;
 import org.openscience.cdk.stereo.StereoElementFactory;
+import org.openscience.cdk.stereo.Stereocenters;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import javax.vecmath.Point2d;
@@ -209,6 +210,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * Default boolean value for separating tertiary and quaternary carbon atoms from ring setting.
      */
     public static final boolean SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT = false;
+    /**
+     * Default boolean value for preserve stereo chemistry setting.
+     */
+    public static final boolean PRESERVE_STEREO_CHEMISTRY_SETTING_DEFAULT = true;
     //<editor-fold desc="Property Keys">
     /**
      * Key for an internal index property, used in uniquely identifying atoms during fragmentation.
@@ -282,6 +287,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * from ring structures.
      */
     private final SimpleBooleanProperty separateTertQuatCarbonFromRingSetting;
+    private final SimpleBooleanProperty preserveStereoChemistrySetting;
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -330,7 +336,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             System.out.println(AlkylStructureFragmenter.LOGGER.getParent().getLevel());
         }
          */
-        int tmpSettingsNumber = 6;
+        int tmpSettingsNumber = 7;
         int tmpInitialCapacitySettingsNameTooltipHashMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpSettingsNumber,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -400,11 +406,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 Message.get("AlkylStructureFragmenter.isolateTertQuatCarbonsSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.isolateTertQuatCarbonSetting.getName(),
                 Message.get("AlkylStructureFragmenter.isolateTertQuatCarbonsSetting.displayName"));
-        this.separateTertQuatCarbonFromRingSetting = new SimpleBooleanProperty(this, "Separate tertiary and quaternary carbon atoms from rings", AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
+        this.separateTertQuatCarbonFromRingSetting = new SimpleBooleanProperty(this, "Separate tertiary and quaternary carbon atoms from rings",
+                AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.separateTertQuatCarbonFromRingSetting.getName(),
                 Message.get("AlkylStructureFragmenter.separateTertQuatCarbonFromRingSetting.displayName"));
+        this.preserveStereoChemistrySetting = new SimpleBooleanProperty(this, "Preserve stereo chemistry in fragmentation",
+                AlkylStructureFragmenter.PRESERVE_STEREO_CHEMISTRY_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.preserveStereoChemistrySetting.getName(),
+                Message.get("AlkylStructureFragmenter.preserveStereoChemistrySetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.preserveStereoChemistrySetting.getName(),
+                Message.get("AlkylStructureFragmenter.preserveStereoChemistrySetting.displayName"));
         this.settings = new ArrayList<>(tmpSettingsNumber);
         this.settings.add(this.fragmentSaturationSetting);
         this.settings.add(this.keepNonFragmentableMoleculesSetting);
@@ -412,6 +425,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.settings.add(this.maxChainLengthSetting);
         this.settings.add(this.isolateTertQuatCarbonSetting);
         this.settings.add(this.separateTertQuatCarbonFromRingSetting);
+        this.settings.add(this.preserveStereoChemistrySetting);
         //set chemObjectBuilderInstance
         this.chemObjectBuilderInstance = SilentChemObjectBuilder.getInstance();
     }
@@ -564,6 +578,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     public void setSeparateTertQuatCarbonFromRingSetting(boolean aBoolean) {
         this.separateTertQuatCarbonFromRingSetting.set(aBoolean);
     }
+    /**
+     * Set method for setting deciding whether stereo chemistry should be preserved in fragmentation.
+     *
+     * @param aBoolean the given setting value
+     */
+    public void setPreserveStereoChemistrySetting(boolean aBoolean) {
+        this.preserveStereoChemistrySetting.set(aBoolean);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public Methods">
@@ -577,6 +599,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         tmpCopy.setMaxChainLengthSetting(this.maxChainLengthSetting.get());
         tmpCopy.setIsolateTertQuatCarbonsSetting(this.isolateTertQuatCarbonSetting.get());
         tmpCopy.setSeparateTertQuatCarbonFromRingSetting(this.separateTertQuatCarbonFromRingSetting.get());
+        tmpCopy.setPreserveStereoChemistrySetting(this.preserveStereoChemistrySetting.get());
         return tmpCopy;
     }
     @Override
@@ -587,6 +610,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         this.maxChainLengthSetting.set(AlkylStructureFragmenter.MAX_CHAIN_LENGTH_SETTING_DEFAULT);
         this.isolateTertQuatCarbonSetting.set(AlkylStructureFragmenter.ISOLATE_TERT_QUAT_CARBONS_SETTING_DEFAULT);
         this.separateTertQuatCarbonFromRingSetting.set(AlkylStructureFragmenter.SEPARATE_TERT_QUAT_CARBON_FROM_RING_SETTING_DEFAULT);
+        this.preserveStereoChemistrySetting.set(AlkylStructureFragmenter.PRESERVE_STEREO_CHEMISTRY_SETTING_DEFAULT);
     }
     //<editor-fold desc="Pre-Fragmentation Tasks">
     /**
@@ -777,12 +801,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
-                boolean stereochemsetting = true;
-                if (stereochemsetting) {
+                if (this.preserveStereoChemistrySetting.get()) {
+                    //System.out.println("fragment stereo elements: " + StreamSupport.stream(tmpAtomContainer.stereoElements().spliterator(), false).count());
                     //some null pointer exception: "field 'x' cannot be read cause field 'prevXy' is null" ????
                     try {
                         tmpFragmentList.add(this.remapStereoChem(tmpAtomContainer, tmpStereoChemOriginMoleculeMap));
                     } catch (Exception aStereoChemException) {
+                        System.out.println("remap expection");
                         throw new RuntimeException(aStereoChemException);
                     }
                     //debug
@@ -1757,6 +1782,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //all orders beyond quadruple are not needed here nor should they be copied
             default -> throw new IllegalArgumentException("Given Order diverted from expected range (single up to quadruple).");
         }
+        tmpNewBond.setStereo(aBondToCopy.getStereo());
         //trying to copy flags in deep copy manners results in strange index and illegal state exceptions
         //therefor, a direct copy is used here knowingly diverting from a deep copy
         tmpNewBond.setFlags(aBondToCopy.getFlags());
@@ -1891,58 +1917,54 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
     /**
      * Utility method remapping the original molecule's stereo chemistry configuration onto a given molecule fragment where possible.
+     * IMPORTANT! Currently, remapping is not possible, instead a re-evaluation of the stereo centers is done!
      *
      * @param aFragment atom container onto which stereo chemistry configuration is added
      * @param aStereoChemMap with the original stereo chemistry configuration
      * @return fragment atom container with added stereo chemistry
      */
     protected IAtomContainer remapStereoChem(IAtomContainer aFragment, Map<IChemObject, IStereoElement<IChemObject, IChemObject>> aStereoChemMap) {
+        /*
         //key: fragment atom, value: stereo map atom (original molecule) -> analog for bonds
-        Map<IAtom, IAtom> tmpStereoChemOriginAtomToCopyMap = new HashMap<>();
+        Map<IAtom, IAtom> tmpOriginAtomToCopyMap = new HashMap<>();
         Map<IBond, IBond> tmpStereoChemOriginBondToCopyMap = new HashMap<>();
-
-        //create mapping of fragment (aFragment) atoms and bonds to the original stereo chem map
+        //create mapping of fragment (aFragment) atoms to the original stereo chem map
         for (IAtom tmpFragmentAtom : aFragment.atoms()) {
-            int tmpAtomIndex = tmpFragmentAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
-            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
-                if (tmpEntry.getKey() instanceof IAtom tmpStereoMapAtom
-                        && (int) tmpStereoMapAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
-                    tmpStereoChemOriginAtomToCopyMap.put(tmpFragmentAtom, (IAtom) tmpEntry.getKey());
+            if (!this.isPseudoAtom(tmpFragmentAtom)) {
+                int tmpAtomIndex = tmpFragmentAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
+                for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+                    if (tmpEntry.getKey() instanceof IAtom tmpStereoMapAtom
+                            && (int) tmpStereoMapAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY) == tmpAtomIndex) {
+                        tmpOriginAtomToCopyMap.put(tmpFragmentAtom, (IAtom) tmpEntry.getKey());
+                    }
                 }
             }
         }
+        //create mapping of fragment (aFragemnt) bonds to the original stereo chem map
         for (IBond tmpFragmentBond : aFragment.bonds()) {
-            int tmpBondIndex = tmpFragmentBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
-            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
-                if (tmpEntry.getKey() instanceof IBond tmpStereoMapBond
-                        && (int) tmpStereoMapBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) == tmpBondIndex) {
-                    tmpStereoChemOriginBondToCopyMap.put(tmpFragmentBond, (IBond) tmpEntry.getKey());
+            if (!this.isPseudoAtom(tmpFragmentBond.getBegin()) && !this.isPseudoAtom(tmpFragmentBond.getEnd())) {
+                int tmpBondIndex = tmpFragmentBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
+                for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+                    if (tmpEntry.getKey() instanceof IBond tmpStereoMapBond
+                            && (int) tmpStereoMapBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) == tmpBondIndex) {
+                        tmpStereoChemOriginBondToCopyMap.put(tmpFragmentBond, (IBond) tmpEntry.getKey());
+                    }
                 }
             }
         }
-        for (Map.Entry<IAtom, IAtom> tmpEntry : tmpStereoChemOriginAtomToCopyMap.entrySet()) {
-            System.out.println(tmpEntry.getKey());
-            System.out.println((int) tmpEntry.getKey().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY));
-            System.out.println(tmpEntry.getValue());
-            System.out.println((int) tmpEntry.getValue().getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY));
-            System.out.println("---");
-        }
-        StereoElementFactory stereo = StereoElementFactory.using2DCoordinates(aFragment).interpretProjections(Projection.Haworth);
-        aFragment.setStereoElements(stereo.createAll());
-
-        for (IAtom tmpFragmentAtom : aFragment.atoms()) {
-            IAtom tmpOriginAtom = tmpStereoChemOriginAtomToCopyMap.get(tmpFragmentAtom);
+        for (Map.Entry<IAtom, IAtom> tmpEntry : tmpOriginAtomToCopyMap.entrySet()) {
+            IAtom tmpFragmentAtom = tmpEntry.getKey();
+            IAtom tmpOriginAtom = tmpEntry.getValue();
             IStereoElement<IChemObject, IChemObject> tmpOriginStereoElement = aStereoChemMap.get(tmpOriginAtom);
-            IStereoElement<IChemObject, IChemObject> tmpFragmentStereoElement;
-            //i dont know how to create a new stereo element in the fragment atom container
-        }
+            IChemObject tmpOriginFocus = tmpOriginStereoElement.getFocus();
+            List<IChemObject> tmpOriginCarrierList = tmpOriginStereoElement.getCarriers();
 
-
-        for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
-            System.out.println("Config class: " + tmpEntry.getValue().getConfigClass());
-            System.out.println("Config: " + tmpEntry.getValue().getConfig());
-            System.out.println("config Order: " + tmpEntry.getValue().getConfigOrder());
         }
+//        for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
+//            System.out.println("Config class: " + tmpEntry.getValue().getConfigClass());
+//            System.out.println("Config: " + tmpEntry.getValue().getConfig());
+//            System.out.println("config Order: " + tmpEntry.getValue().getConfigOrder());
+//        }
 //        for (IAtom tmpAtom : aFragment.atoms()) {
 //            int tmpAtomIndex = tmpAtom.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_ATOM_INDEX_PROPERTY_KEY);
 //            for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
@@ -1974,6 +1996,14 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 //                }
 //            }
 //        }
+        */
+        //interpret coordinates for stereo chemistry
+        Stereocenters tmpStereocenters = Stereocenters.of(aFragment);
+        StereoElementFactory stereoElementFactory = StereoElementFactory.using3DCoordinates(aFragment)
+                //use Fischer
+                //Chair/Haworth do not work!
+                .interpretProjections(Projection.Fischer);
+        aFragment.setStereoElements(stereoElementFactory.createAll());
         return aFragment;
     }
     //

@@ -112,7 +112,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             int tmpPreFragmentationCount = this.countAtoms(tmpAC);
             List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpAC);
             if (this.checkChemicalFormula(tmpPreFragmentationCount, tmpACList)) {
-                tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+                tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
             }
         }
         //check if match
@@ -353,7 +353,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-             tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+             tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C");
@@ -374,7 +374,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC(C)(C)C");
@@ -404,7 +404,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C");
@@ -423,7 +423,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC");
@@ -441,7 +441,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("C");
@@ -460,7 +460,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpFragmentsSMILESList.clear();
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("C1=CCCCC1");
@@ -486,7 +486,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CCCCC1");
@@ -503,7 +503,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("c1ccccc1");
@@ -529,7 +529,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CC2CCCC2C1");
@@ -546,7 +546,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("C=1C=CC(=CC1)C2=CC=CC=C2");
@@ -572,7 +572,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CCCCC1");
@@ -588,7 +588,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
@@ -612,7 +612,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C1CCC2(CC1)CCCCC2");
@@ -639,7 +639,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("CC(C)(C)C1CCCCC1");
@@ -654,7 +654,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("*C(*)(*)*");
@@ -673,7 +673,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("*C(C)(C)C");
@@ -689,7 +689,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC(C)(C)C1CCCCC1");
@@ -713,7 +713,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C(=C)=C");
@@ -741,7 +741,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("c1ccc(cc1)c2ccccc2");
@@ -762,7 +762,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpCarbonChainAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("CC");
@@ -779,7 +779,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpCarbonChainAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.add("CCCCCCC");
         tmpExpectedSMILESList.add("CCCCCCC");
@@ -793,7 +793,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpCarbonChainAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.add("CCCCCCCCCCCCCC");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
@@ -824,7 +824,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C");
@@ -853,7 +853,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C");
@@ -875,7 +875,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC");
@@ -904,7 +904,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("C=CC=C");
@@ -934,7 +934,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("*C(*)(*)*");
@@ -952,11 +952,51 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC(C)(C)C");
         tmpExpectedSMILESList.add("C=C1CCCC2CC12");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+    }
+    /**
+     * Tests correct functionality of stereo chemistry preservation with derivative molecule of "didymellamide B"
+     * (to be exact: the ring structures with stereo chemistry) .
+     *
+     * @throws InvalidSmilesException if SMILES cannot be parsed
+     * @throws CloneNotSupportedException if cloning of the original molecule is not supported
+     */
+    @Test
+    public void specificTest05() throws InvalidSmilesException, CloneNotSupportedException {
+        //test structure: C[C@H]1C[C@H]2C=C[C@@H](C)C[C@@H]2CC1
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C[C@H]1C[C@H]2C=C[C@@H](C)C[C@@H]2CC1");
+        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
+                false, false, true);
+        int tmpPreFragmenationCount = this.countAtoms(tmpTestStructureAC);
+
+        List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
+        List<String> tmpFragmentsSMILESList = new ArrayList<>();
+        if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, true));
+        }
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("C1=C[C@@H]2CCCC[C@H]2CC1");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        tmpASF.setPreserveStereoChemistrySetting(false);
+        tmpFragmentsSMILESList.clear();
+        tmpExpectedSMILESList.clear();
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C1=CC2CCCCC2CC1");
+        if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
+        }
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
@@ -977,7 +1017,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>(12);
         tmpExpectedSMILESList.add("c1ccc(cc1)C(C)C"); //ring structure with connected tertiary carbon system
@@ -1002,7 +1042,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("c1ccc(cc1)C(C)C"); //ring structure with connected tertiary carbon system
@@ -1027,7 +1067,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("c1ccc(cc1)C(C)C"); //ring structure with connected tertiary carbon system
@@ -1054,7 +1094,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("*C(*)(*)*");
@@ -1083,7 +1123,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC(C)(C)C");
@@ -1105,7 +1145,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC(C)(C)C");
@@ -1139,7 +1179,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>(5);
         tmpExpectedSMILESList.add("C");
@@ -1160,7 +1200,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.add("CCCCCC");
         tmpExpectedSMILESList.add("CCCCCC");
@@ -1181,7 +1221,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.add("CCCCCC");
         tmpExpectedSMILESList.add("CCCCCC");
@@ -1202,7 +1242,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.add("CCCCCCCC");
         tmpExpectedSMILESList.add("CCCCCCC");
@@ -1223,7 +1263,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C1CCCCCCCCC1");
@@ -1378,7 +1418,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         tmpExpectedSMILESList.add("*C(*)*");
@@ -1396,7 +1436,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
-            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList));
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         tmpExpectedSMILESList.clear();
         tmpExpectedSMILESList.add("CC(C)C");
@@ -1434,10 +1474,10 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
      * @param anACList given List of IAtomContainers
      * @return List with SMILES Strings of originally given List of IAtomContainers
      */
-    private List<String> generateSMILESFromACList(List<IAtomContainer> anACList) {
+    private List<String> generateSMILESFromACList(List<IAtomContainer> anACList, boolean isStereoChemEncoded) {
         List<String> tmpReturnSmilesList = new ArrayList<>(anACList.size());
         for (IAtomContainer tmpAC: anACList) {
-            tmpReturnSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC, false, true));
+            tmpReturnSmilesList.add(ChemUtil.createUniqueSmiles(tmpAC, isStereoChemEncoded, true));
         }
         return tmpReturnSmilesList;
     }
