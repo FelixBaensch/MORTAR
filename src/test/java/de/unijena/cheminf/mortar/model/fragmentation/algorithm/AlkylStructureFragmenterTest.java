@@ -77,7 +77,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
      * Constructor of AlkylStructureFragmenter test class.
      */
     private AlkylStructureFragmenterTest() {}
-
+    //
+    //<editor-fold desc="Example Usage">
     /**
      * Method to showcase the usage of the AlkylStructureFragmenter class.
      * The molecules used in this 'test' are all molecules used in the tests below, complemented by various substructures
@@ -106,7 +107,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         //generate fragments and add SMILES to fragment list
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
-        for (IAtomContainer tmpAC: tmpStructuresSet.atomContainers()) {
+        for (IAtomContainer tmpAC : tmpStructuresSet.atomContainers()) {
             this.preprocessTestMolecule(tmpASF, tmpAC,
                     false, false, true);
             int tmpPreFragmentationCount = this.countAtoms(tmpAC);
@@ -121,7 +122,8 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             Assertions.fail();
         }
     }
-
+    //</editor-fold>
+    //
     //<editor-fold desc="Unit Tests">
     /**
      * Method for unit testing the internal method AlkylStructureFragmenter.extractFragments().
@@ -157,9 +159,10 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         }
         Assertions.assertTrue(this.compareListsIgnoringOrder(tmpActualFragmentList, tmpExpectedFragmentList));
     }
+    //<editor-fold desc="Mark Tests">
     @Disabled
     @Test
-    //currently tert/quat cannot be marked in test, without any visible cause
+    //currently tert/quat cannot be marked in test (in actual use it works fine), without any visible cause
     public void testMarkTertQuatAndNeighbors() throws InvalidSmilesException{
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpMolecule = tmpParser.parseSmiles("CC(C)C");
@@ -267,9 +270,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         //custom assert for MolecularArrays match/equal
         Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
     }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Unit Tests">
     /**
      * Method to test the internal algorithm for detecting and marking conjugated pi bond systems.
      * The used molecule to test this functionality is a short C5-chain with alternating double bonds.
@@ -305,6 +305,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         //custom assert for MolecularArrays match/equal
         Assertions.assertTrue(this.assertMolecularArraysEquals(tmpExpectedMolecularArrays, tmpTestMolecularArrays));
     }
+    //</editor-fold>
     /**
      * Test for correct deepCopy methods by copying a butene molecule which used to make problems in earlier versions.
      * A seemingly unused MolecularArrays instance is instanced here. This is needed for correct filling of internal atom
