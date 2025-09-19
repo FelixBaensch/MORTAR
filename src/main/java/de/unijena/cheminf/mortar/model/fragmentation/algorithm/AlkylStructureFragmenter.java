@@ -311,7 +311,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     /**
      * String format for logger output when exceptions are thrown.
      */
-    private static final String LOGGER_EXCEPTION_STRING_FORMAT = "Exception: %1s, Molecule ID: %2s, Cause: %3s";
+    private static final String LOGGER_EXCEPTION_STRING_FORMAT = "Exception: %1s, Molecule ID: %2s, Cause: %3s, Additional Context: %4s";
     /**
      * String format for logger output without an exception.
      */
@@ -768,6 +768,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PreFragAtomCount: {0}", tmpPreFragmentationAtomCount);
         }
         //</editor-fold>
+        //process stereo chem for original molecule
+        this.processStereoChem(tmpClone);
         //internal arrays are filled with atoms and bonds in wrapping class MolecularArrays instance
         MolecularArrays tmpMolecularArrays = new MolecularArrays(tmpClone);
         //preserve original molecule stereo chemistry
@@ -802,12 +804,11 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 if (this.preserveStereoChemistrySetting.get()) {
-                    //System.out.println("fragment stereo elements: " + StreamSupport.stream(tmpAtomContainer.stereoElements().spliterator(), false).count());
-                    //some null pointer exception: "field 'x' cannot be read cause field 'prevXy' is null" ????
                     try {
-                        tmpFragmentList.add(this.remapStereoChem(tmpAtomContainer, tmpStereoChemOriginMoleculeMap));
+                        this.processStereoChem(tmpAtomContainer);
+                        tmpFragmentList.add(tmpAtomContainer);
+                        //tmpFragmentList.add(this.remapStereoChem(tmpAtomContainer, tmpStereoChemOriginMoleculeMap));
                     } catch (Exception aStereoChemException) {
-                        System.out.println("remap expection");
                         throw new RuntimeException(aStereoChemException);
                     }
                     //debug
@@ -1892,7 +1893,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
 
     /**
-     * Utility method creating a map of [@link IChemObject] and [@link IStereoElement] of the IChemObjects (atoms and bonds)
+     * Utility method creating a map of {@link IChemObject} and {@link IStereoElement} of the IChemObjects (atoms and bonds)
      * of a given atom container.
      *
      * @param aStereoMolecule atom container from which the map is to be created
@@ -1917,7 +1918,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 
     /**
      * Utility method remapping the original molecule's stereo chemistry configuration onto a given molecule fragment where possible.
-     * IMPORTANT! Currently, remapping is not possible, instead a re-evaluation of the stereo centers is done!
+     * IMPORTANT! Currently, remapping is not possible, instead a re-evaluation of the stereo centers is done ({@link #processStereoChem(IAtomContainer) processStereoChem})!
      *
      * @param aFragment atom container onto which stereo chemistry configuration is added
      * @param aStereoChemMap with the original stereo chemistry configuration
@@ -1997,14 +1998,30 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
 //            }
 //        }
         */
-        //interpret coordinates for stereo chemistry
-        Stereocenters tmpStereocenters = Stereocenters.of(aFragment);
-        StereoElementFactory stereoElementFactory = StereoElementFactory.using3DCoordinates(aFragment)
-                //use Fischer
-                //Chair/Haworth do not work!
-                .interpretProjections(Projection.Fischer);
-        aFragment.setStereoElements(stereoElementFactory.createAll());
         return aFragment;
+    }
+
+    /**
+     * Utility method to process (generate/create) the stereo chemistry from the 3D coordinates in a given atom container.
+     * If no coordinates are present, a NullpointerException is thrown by {@link StereoElementFactory}. This is caught and
+     * logged with a message declaring no stereo chemistry could be set for the given atom container.
+     *
+     * @param anAtomContainer in which the stereo chemistry is to be processed
+     */
+    protected void processStereoChem(IAtomContainer anAtomContainer) {
+        //interpret coordinates for stereo chemistry
+        try {
+            Stereocenters tmpStereocenters = Stereocenters.of(anAtomContainer);
+            StereoElementFactory stereoElementFactory = StereoElementFactory.using3DCoordinates(anAtomContainer)
+                    //use Fischer
+                    //Chair/Haworth do not work as expected in alkyl context!
+                    .interpretProjections(Projection.Fischer);
+            anAtomContainer.setStereoElements(stereoElementFactory.createAll());
+        } catch (NullPointerException aNullPointerException) {
+            AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(LOGGER_EXCEPTION_STRING_FORMAT,
+                    aNullPointerException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                    aNullPointerException, "Stereo chemistry could not be computed for this molecule."));
+        }
     }
     //
     //</editor-fold>
