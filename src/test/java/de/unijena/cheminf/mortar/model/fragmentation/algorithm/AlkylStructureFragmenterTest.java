@@ -970,20 +970,21 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
      */
     @Test
     public void specificTest05() throws InvalidSmilesException, CloneNotSupportedException {
-        //test structure: C[C@H]1C[C@H]2C=C[C@@H](C)C[C@@H]2CC1
+        //test structure: C[C@H]1 C [C@H]2C=C[C@@H]( C ) C [ C @@H]2CC1
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C[C@H]1C[C@H]2C=C[C@@H](C)C[C@@H]2CC1");
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC(C)C/C=C/[C@]1(C)CC[C@]23CC[C@H]4[C@@H](CC[C@H]5CC(=C)C=C[C@@]54C)[C@@H]2CC[C@@H]31");
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
                 false, false, true);
         int tmpPreFragmenationCount = this.countAtoms(tmpTestStructureAC);
-
+        tmpASF.setPreserveStereoChemistrySetting(true);
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
             tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, true));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
+        System.out.println(tmpFragmentsSMILESList);
         tmpExpectedSMILESList.add("C1=C[C@@H]2CCCC[C@H]2CC1");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("C");
