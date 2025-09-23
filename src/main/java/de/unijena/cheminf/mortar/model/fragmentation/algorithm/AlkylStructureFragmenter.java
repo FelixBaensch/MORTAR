@@ -1945,42 +1945,53 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 }
             }
         }
-        //create mapping of fragment (aFragemnt) bonds to the original stereo chem map
+        //create mapping of fragment (aFragment) bonds to the original stereo chem map
         for (IBond tmpFragmentBond : aFragment.bonds()) {
             if (!this.isPseudoAtom(tmpFragmentBond.getBegin()) && !this.isPseudoAtom(tmpFragmentBond.getEnd())) {
                 int tmpBondIndex = tmpFragmentBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY);
                 for (Map.Entry<IChemObject, IStereoElement<IChemObject, IChemObject>> tmpEntry : aStereoChemMap.entrySet()) {
                     if (tmpEntry.getKey() instanceof IBond tmpStereoMapBond
                             && (int) tmpStereoMapBond.getProperty(AlkylStructureFragmenter.INTERNAL_ASF_BOND_INDEX_PROPERTY_KEY) == tmpBondIndex) {
-                        tmpStereoChemOriginBondToCopyMap.put(tmpFragmentBond, (IBond) tmpEntry.getKey());
+                        tmpStereoChemOriginBondToCopyMap.put((IBond) tmpEntry.getKey(), tmpFragmentBond);
                     }
                 }
             }
         }
+
         for (Map.Entry<IAtom, IAtom> tmpEntry : tmpOriginAtomToCopyMap.entrySet()) {
             IAtom tmpFragmentAtom = tmpEntry.getValue();
             IAtom tmpOriginAtom = tmpEntry.getKey();
-            IStereoElement tmpOriginStereoElement = aStereoChemMap.get(tmpOriginAtom);
-            if (tmpOriginStereoElement instanceof TetrahedralChirality) {
-                List<IAtom> tmpOriginCarrierList = tmpOriginStereoElement.getCarriers();
-                System.out.println("carrier list size: " + tmpOriginCarrierList.size());
-                ArrayList<IAtom> tmpFragmentCarrierAtomList = new ArrayList<>(4);
-                boolean tmpAreAllCarriersPresent = true;
-                for (IAtom tmpCarrierAtom : tmpOriginCarrierList) {
-                    if (tmpCarrierAtom == tmpOriginStereoElement.getFocus()) {
-                        System.out.println("carrier == focus");
+            if (aStereoChemMap.get(tmpOriginAtom) != null) {
+                IStereoElement tmpOriginStereoElement = aStereoChemMap.get(tmpOriginAtom);
+                if (tmpOriginStereoElement instanceof TetrahedralChirality) {
+                    List<IAtom> tmpOriginCarrierList = tmpOriginStereoElement.getCarriers();
+                    IAtom tmpOriginFocusAtom = (IAtom) tmpOriginStereoElement.getFocus();
+                    //
+                    if (tmpOriginAtomToCopyMap.get(tmpOriginFocusAtom) == tmpFragmentAtom) {
+                        IAtom tmpFragmentFocusAtom = tmpOriginAtomToCopyMap.get(tmpOriginFocusAtom);
+                        ArrayList<IAtom> tmpFragmentCarrierAtomList = new ArrayList<>(4);
+                        for (IAtom tmpOriginCarrierAtom : tmpOriginCarrierList) {
+                            if (tmpOriginAtomToCopyMap.containsKey(tmpOriginCarrierAtom)) {
+                                tmpFragmentCarrierAtomList.add(tmpOriginAtomToCopyMap.get(tmpOriginCarrierAtom));
+                            }
+                        }
+                        boolean tmpAreAllCarriersPresent = false;
+                        for (IAtom tmpFragmentCarrierAtom : tmpFragmentCarrierAtomList) {
+                            if (tmpOriginAtomToCopyMap.containsKey(tmpFragmentCarrierAtom)) {
+                                tmpAreAllCarriersPresent = true;
+                            } else {
+                                tmpAreAllCarriersPresent = false;
+                                break;
+                            }
+                        }
+                        if (tmpAreAllCarriersPresent && tmpFragmentAtom == tmpFragmentFocusAtom) {
+                            TetrahedralChirality tmpNewTetraHedralChirality = new TetrahedralChirality(
+                                    tmpFragmentAtom, //chiral (focus) atom
+                                    tmpFragmentCarrierAtomList.toArray(new IAtom[0]), //list of the stereo carriers
+                                    tmpOriginStereoElement.getConfig()); //get config of "old" stereo element
+                            aFragment.addStereoElement(tmpNewTetraHedralChirality);
+                        }
                     }
-                    if (tmpOriginAtomToCopyMap.containsKey(tmpCarrierAtom)) {
-                        tmpFragmentCarrierAtomList.add(tmpOriginAtomToCopyMap.get(tmpCarrierAtom));
-                    } else {
-                        tmpAreAllCarriersPresent = false;
-                        break;
-                    }
-                }
-                System.out.println("all carriers present: " + tmpAreAllCarriersPresent);
-                if (tmpAreAllCarriersPresent) {
-                    TetrahedralChirality tmpNewTetraHedralChirality = new TetrahedralChirality(tmpFragmentAtom, tmpFragmentCarrierAtomList.toArray(new IAtom[0]), tmpOriginStereoElement.getConfig());
-                    aFragment.addStereoElement(tmpNewTetraHedralChirality);
                 }
             }
         }
