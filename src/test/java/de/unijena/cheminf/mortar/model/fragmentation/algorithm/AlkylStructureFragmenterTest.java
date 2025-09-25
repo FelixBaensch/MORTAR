@@ -972,11 +972,13 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
     public void specificTest05() throws InvalidSmilesException, CloneNotSupportedException {
         //test structure: C[C@H]1 C [C@H]2C=C[C@@H]( C ) C [ C @@H]2CC1
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CC(C)C/C=C/[C@]1(C)CC[C@]23CC[C@H]4[C@@H](CC[C@H]5CC(=C)C=C[C@@]54C)[C@@H]2CC[C@@H]31");
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C1CCC(C1)[C@](c1cccc2ccccc12)(C1CCCCC1)c1ccccc1");
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
         this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
                 false, false, true);
         int tmpPreFragmenationCount = this.countAtoms(tmpTestStructureAC);
+        tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
+        tmpASF.setIsolateTertQuatCarbonsSetting(false);
         tmpASF.setPreserveStereoChemistrySetting(true);
         List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
         List<String> tmpFragmentsSMILESList = new ArrayList<>();
