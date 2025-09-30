@@ -37,10 +37,14 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IStereoElement;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.stereo.TetrahedralChirality;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -1003,6 +1007,38 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         }
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+    }
+    @Test
+    void stereoChemExperiments() throws Exception {
+        //String smiles = "C=C1C[C@@H](OC(=O)C2=CC=CC=C2)[C@H]2[C@](C)(CO)CCC[C@]2(C)[C@H]1CCC(C)=CCO";
+        String smiles = "C1CCC(C1)[C@](c1cccc2ccccc12)(C1CCCCC1)c1ccccc1";
+        IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles);
+        for (IStereoElement elem : mol.stereoElements()) {
+            System.out.println(elem);
+            System.out.println("Focus index: " + mol.indexOf((IAtom) elem.getFocus()));
+            for (Object carrier : elem.getCarriers()) {
+                if (carrier instanceof IAtom) {
+                    System.out.println("Carrier atom index: " + mol.indexOf((IAtom) carrier));
+                } else if (carrier instanceof IBond) {
+                    System.out.println("Carrier bond index: " + mol.indexOf((IBond) carrier));
+                }
+            }
+        }
+        //String smiles2 = "C=C1CC(OC(=O)C2=CC=CC=C2)C2C(C)(CO)CCCC2(C)C1CCC(C)=CCO";
+        String smiles2 = "C1CCC(C1)C(c1cccc2ccccc12)(C1CCCCC1)c1ccccc1";
+        IAtomContainer mol2 = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles2);
+        for (IStereoElement elem : mol.stereoElements()) {
+            IAtom focus = mol2.getAtom(mol.indexOf((IAtom) elem.getFocus()));
+            List<IAtom> newCarriers = new ArrayList<>();
+            for (Object carrier : elem.getCarriers()) {
+                newCarriers.add(mol2.getAtom(mol.indexOf((IAtom) carrier)));
+            }
+            IStereoElement stereo = new TetrahedralChirality(focus, newCarriers.toArray(new IAtom[0]), elem.getConfig());
+            stereo.setGroupInfo(elem.getGroupInfo());
+            mol2.addStereoElement(stereo);
+        }
+        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Canonical | SmiFlavor.Stereo | SmiFlavor.UseAromaticSymbols);
+        System.out.println(smiGen.create(mol2));
     }
     /**
      * Method to test a default alkyl structure fragmentation on a concept molecule covering a broad range of resulting fragments.

@@ -1968,7 +1968,13 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     //
                     System.out.println("tetrahedral");
                     List<IAtom> tmpOriginCarrierList = tmpOriginStereoElement.getCarriers();
-
+                    boolean tmpAreAllCarriersInFragmentPresent = true;
+                    for (IAtom tmpOriginCarrierAtom : tmpOriginCarrierList) {
+                        if (!aFragment.contains(tmpOriginCarrierAtom)) {
+                            tmpAreAllCarriersInFragmentPresent = false;
+                            break;
+                        }
+                    }
                     //
                     List<IAtom> tmpOriginAtomList = new ArrayList<>(5);
                     tmpOriginAtomList.addAll(tmpOriginAtomList);
@@ -1990,17 +1996,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                             }
                         }
                         System.out.println("fragment carriers: " + tmpFragmentCarrierAtomList.size());
-                        boolean tmpAreAllCarriersPresent = false;
-                        for (IAtom tmpFragmentCarrierAtom : tmpFragmentCarrierAtomList) {
-                            if (tmpOriginAtomToCopyMap.containsValue(tmpFragmentCarrierAtom)) {
-                                System.out.println("contains");
-                                tmpAreAllCarriersPresent = true;
-                            } else {
-                                tmpAreAllCarriersPresent = false;
-                                break;
-                            }
-                        }
-                        if (tmpAreAllCarriersPresent) {
+                        if (tmpAreAllCarriersInFragmentPresent) {
                             System.out.println("in add stereo elem");
                             TetrahedralChirality tmpNewTetraHedralChirality = new TetrahedralChirality(
                                     tmpFragmentAtom, //chiral (focus) atom
