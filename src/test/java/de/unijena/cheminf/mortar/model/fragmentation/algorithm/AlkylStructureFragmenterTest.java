@@ -37,14 +37,10 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
-import org.openscience.cdk.interfaces.IStereoElement;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.stereo.TetrahedralChirality;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -966,15 +962,16 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
     /**
-     * Tests correct functionality of stereo chemistry preservation with derivative molecule of "didymellamide B"
-     * (to be exact: the ring structures with stereo chemistry) .
+     * Tests correct functionality of tetrahedral stereo chemistry preservation with concept molecule containing a central
+     * chiral atom, surrounded by four ring structures.
      *
      * @throws InvalidSmilesException if SMILES cannot be parsed
      * @throws CloneNotSupportedException if cloning of the original molecule is not supported
      */
+    @Disabled //due to bug in IntelliJ test files until further notice
     @Test
     public void specificTest05() throws InvalidSmilesException, CloneNotSupportedException {
-        //test structure: C[C@H]1 C [C@H]2C=C[C@@H]( C ) C [ C @@H]2CC1
+        //test structure: C1CCC(C1)[C@](c1cccc2ccccc12)(C1CCCCC1)c1ccccc1
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C1CCC(C1)[C@](c1cccc2ccccc12)(C1CCCCC1)c1ccccc1");
         AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
@@ -991,54 +988,56 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
         System.out.println(tmpFragmentsSMILESList);
-        tmpExpectedSMILESList.add("C1=C[C@@H]2CCCC[C@H]2CC1");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C1=CC=C(C=C1)[C@@](C2CCCCC2)(C3CCCC3)C4=CC=CC5=C4C=CC=C5");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         tmpASF.setPreserveStereoChemistrySetting(false);
         tmpFragmentsSMILESList.clear();
         tmpExpectedSMILESList.clear();
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C");
-        tmpExpectedSMILESList.add("C1=CC2CCCCC2CC1");
+        tmpExpectedSMILESList.add("C1=CC=C(C=C1)C(C2=CC=CC=3C=CC=CC32)(C4CCCCC4)C5CCCC5");
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
             tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
     }
+    /**
+     * Tests correct functionality of double bond stereo chemistry preservation with concept molecule with consecutive double bonds.
+     *
+     * @throws InvalidSmilesException if SMILES cannot be parsed
+     * @throws CloneNotSupportedException if cloning of the original molecule is not supported
+     */
     @Test
-    void stereoChemExperiments() throws Exception {
-        //String smiles = "C=C1C[C@@H](OC(=O)C2=CC=CC=C2)[C@H]2[C@](C)(CO)CCC[C@]2(C)[C@H]1CCC(C)=CCO";
-        String smiles = "C1CCC(C1)[C@](c1cccc2ccccc12)(C1CCCCC1)c1ccccc1";
-        IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles);
-        for (IStereoElement elem : mol.stereoElements()) {
-            System.out.println(elem);
-            System.out.println("Focus index: " + mol.indexOf((IAtom) elem.getFocus()));
-            for (Object carrier : elem.getCarriers()) {
-                if (carrier instanceof IAtom) {
-                    System.out.println("Carrier atom index: " + mol.indexOf((IAtom) carrier));
-                } else if (carrier instanceof IBond) {
-                    System.out.println("Carrier bond index: " + mol.indexOf((IBond) carrier));
-                }
-            }
+    void specificTest06() throws InvalidSmilesException, CloneNotSupportedException {
+        //test structure: C=C\C=C/C=C
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("C=C\\C=C/C=C");
+        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
+                false, false, true);
+        int tmpPreFragmenationCount = this.countAtoms(tmpTestStructureAC);
+        tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
+        tmpASF.setIsolateTertQuatCarbonsSetting(false);
+        tmpASF.setPreserveStereoChemistrySetting(true);
+        List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
+        List<String> tmpFragmentsSMILESList = new ArrayList<>();
+        if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, true));
         }
-        //String smiles2 = "C=C1CC(OC(=O)C2=CC=CC=C2)C2C(C)(CO)CCCC2(C)C1CCC(C)=CCO";
-        String smiles2 = "C1CCC(C1)C(c1cccc2ccccc12)(C1CCCCC1)c1ccccc1";
-        IAtomContainer mol2 = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles2);
-        for (IStereoElement elem : mol.stereoElements()) {
-            IAtom focus = mol2.getAtom(mol.indexOf((IAtom) elem.getFocus()));
-            List<IAtom> newCarriers = new ArrayList<>();
-            for (Object carrier : elem.getCarriers()) {
-                newCarriers.add(mol2.getAtom(mol.indexOf((IAtom) carrier)));
-            }
-            IStereoElement stereo = new TetrahedralChirality(focus, newCarriers.toArray(new IAtom[0]), elem.getConfig());
-            stereo.setGroupInfo(elem.getGroupInfo());
-            mol2.addStereoElement(stereo);
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        System.out.println(tmpFragmentsSMILESList);
+        tmpExpectedSMILESList.add("C=C/C=C\\C=C");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        tmpASF.setPreserveStereoChemistrySetting(false);
+        tmpFragmentsSMILESList.clear();
+        tmpExpectedSMILESList.clear();
+        tmpExpectedSMILESList.add("C=CC=CC=C");
+        if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
-        SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Canonical | SmiFlavor.Stereo | SmiFlavor.UseAromaticSymbols);
-        System.out.println(smiGen.create(mol2));
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
     }
     /**
      * Method to test a default alkyl structure fragmentation on a concept molecule covering a broad range of resulting fragments.
