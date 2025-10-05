@@ -963,12 +963,12 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
     }
     /**
      * Tests correct functionality of tetrahedral stereo chemistry preservation with concept molecule containing a central
-     * chiral atom, surrounded by four ring structures.
+     * chiral atom, surrounded by four ring structures. Additionally, a second concept molecule is tested, with three
+     * ligand groups and an implicit hydrogen connected to the chiral atom.
      *
      * @throws InvalidSmilesException if SMILES cannot be parsed
      * @throws CloneNotSupportedException if cloning of the original molecule is not supported
      */
-    @Disabled //due to bug in IntelliJ test files until further notice
     @Test
     public void specificTest05() throws InvalidSmilesException, CloneNotSupportedException {
         //test structure: C1CCC(C1)[C@](c1cccc2ccccc12)(C1CCCCC1)c1ccccc1
@@ -987,14 +987,39 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, true));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
-        System.out.println(tmpFragmentsSMILESList);
-        tmpExpectedSMILESList.add("C1=CC=C(C=C1)[C@@](C2CCCCC2)(C3CCCC3)C4=CC=CC5=C4C=CC=C5");
+        tmpExpectedSMILESList.add("c1ccc(cc1)[C@@](C2CCCCC2)(C3CCCC3)c4cccc5ccccc54");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         tmpASF.setPreserveStereoChemistrySetting(false);
         tmpFragmentsSMILESList.clear();
         tmpExpectedSMILESList.clear();
-        tmpExpectedSMILESList.add("C1=CC=C(C=C1)C(C2=CC=CC=3C=CC=CC32)(C4CCCCC4)C5CCCC5");
+        tmpExpectedSMILESList.add("c1ccc(cc1)C(c2cccc3ccccc32)(C4CCCCC4)C5CCCC5");
+        if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
+        }
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        //test structure: c1ccccc1[C@@H](C1CCC2CCCC12)C1CCCCC1
+        tmpTestStructureAC = tmpParser.parseSmiles("c1ccccc1[C@@H](C1CCC2CCCC12)C1CCCCC1");
+        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
+                false, false, true);
+        tmpPreFragmenationCount = this.countAtoms(tmpTestStructureAC);
+        tmpASF.setSeparateTertQuatCarbonFromRingSetting(false);
+        tmpASF.setIsolateTertQuatCarbonsSetting(false);
+        tmpASF.setPreserveStereoChemistrySetting(true);
+        tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
+        tmpFragmentsSMILESList.clear();
+        if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, true));
+        }
+        tmpExpectedSMILESList.clear();
+        tmpExpectedSMILESList.add("c1ccc(cc1)[C@H](C2CCCCC2)C3CCC4CCCC43");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
+        tmpASF.setPreserveStereoChemistrySetting(false);
+        tmpFragmentsSMILESList.clear();
+        tmpExpectedSMILESList.clear();
+        tmpExpectedSMILESList.add("c1ccc(cc1)C(C2CCCCC2)C3CCC4CCCC43");
         if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
             tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, false));
         }
@@ -1025,7 +1050,6 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
             tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, true));
         }
         List<String> tmpExpectedSMILESList = new ArrayList<>();
-        System.out.println(tmpFragmentsSMILESList);
         tmpExpectedSMILESList.add("C=C/C=C\\C=C");
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));

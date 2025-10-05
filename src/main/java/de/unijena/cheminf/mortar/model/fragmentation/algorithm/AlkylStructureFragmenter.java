@@ -806,7 +806,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     try {
                         tmpFragmentList.add(this.remapStereoChem(tmpAtomContainer, tmpStereoChemOriginMoleculeMap));
                     } catch (Exception aStereoChemException) {
-                        throw new RuntimeException(aStereoChemException);
+                        tmpFragmentList.add(tmpAtomContainer);
+                        AlkylStructureFragmenter.LOGGER.log(Level.WARNING, "{0}", String.format(LOGGER_WARNING_STRING_FORMAT,
+                                "Stereo Chemistry Remap", tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                                "The stereo chemistry remap for a fragment was not possible."));
                     }
                     //debug
 //                    Iterable<IStereoElement> tmpStereoChemIterable = tmpFragmentList.getFirst().stereoElements();
@@ -1921,8 +1924,17 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      * @return fragment atom container with added stereo chemistry
      */
     protected IAtomContainer remapStereoChem(IAtomContainer aFragment, Map<IChemObject, IStereoElement<IChemObject, IChemObject>> aStereoChemMap) {
-        if (aFragment.getAtomCount() < 5 || aFragment.getBondCount() < 3) {
-            return aFragment;
+        //checks for different non-viable conditions for stereo chemistry
+        if (aFragment.getAtomCount() <= 5 || aFragment.getBondCount() < 3) {
+            int tmpPseudoCount = 0;
+            for (IAtom tmpAtom : aFragment.atoms()) {
+                if (this.isPseudoAtom(tmpAtom)) {
+                    tmpPseudoCount++;
+                }
+            }
+            if ((tmpPseudoCount == 3 && aFragment.getAtomCount() == 4) || tmpPseudoCount == 4) {
+                return aFragment;
+            }
         }
         //aStereoChemMap: origin focus(atom/bond) -> origin stereo element
         //key: stereo map atom (original molecule), value: fragment atom -> analog for bonds
