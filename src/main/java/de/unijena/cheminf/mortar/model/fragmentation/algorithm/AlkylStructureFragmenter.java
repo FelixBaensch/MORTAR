@@ -104,6 +104,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
          * Private IBond array for storing given bonds.
          */
         private IBond[] bondArray;
+        public String moleculeName;
         /**
          * Constructor for MolecularArrays.
          * Initializes the atom and bond arrays with size determined by aMolecule atom and bond count.
@@ -112,6 +113,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
          * @param aMolecule to store in class arrays
          */
         protected MolecularArrays(IAtomContainer aMolecule) {
+            this.setMoleculeName(aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             ArrayList<IAtom> tmpAtomArrayList = new ArrayList<>(aMolecule.getAtomCount());
             ArrayList<IBond> tmpBondArrayList = new ArrayList<>(aMolecule.getBondCount());
             //<editor-fold desc="Fill Atom Array">
@@ -180,6 +182,22 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
          */
         public void setBondArray(IBond[] aBondArray) {
             this.bondArray = aBondArray;
+        }
+        /**
+         * Public set method for preserving original molecule name.
+         *
+         * @param moleculeName String of original molecule name
+         */
+        public void setMoleculeName(String moleculeName) {
+            this.moleculeName = moleculeName;
+        }
+        /**
+         * Public get method for original molecule name.
+         *
+         * @return String of molecule name
+         */
+        public String getMoleculeName() {
+            return moleculeName;
         }
     }
     //</editor-fold
@@ -767,8 +785,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             AlkylStructureFragmenter.LOGGER.log(Level.FINEST, "PreFragAtomCount: {0}", tmpPreFragmentationAtomCount);
         }
         //</editor-fold>
-        //process stereo chem for original molecule
-        //this.processStereoChem(tmpClone);
         //internal arrays are filled with atoms and bonds in wrapping class MolecularArrays instance
         MolecularArrays tmpMolecularArrays = new MolecularArrays(tmpClone);
         //preserve original molecule stereo chemistry
@@ -1218,7 +1234,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     protected IAtomContainerSet extractBonds(IBond[] aBondsArray, IAtomContainerSet anExtractedAtomsContainingACSet) {
         Objects.requireNonNull(aBondsArray);
         Objects.requireNonNull(anExtractedAtomsContainingACSet);
-        //break down to using only param ACSet
+        //future improvement: break down to using only param ACSet
         IAtomContainerSet tmpExtractedAtomAndBondACSet = new AtomContainerSet();
         IAtomContainer tmpRingFragmentationContainer = anExtractedAtomsContainingACSet.getAtomContainer(0);
         IAtomContainer tmpChainFragmentationContainer = anExtractedAtomsContainingACSet.getAtomContainer(1);
