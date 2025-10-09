@@ -1062,7 +1062,41 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         }
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
+    }/**
+     * Tests correct functionality of specific ring, tertiary and linear chain configuration.
+     * It is tested with a derivative of Cholesterin (CNP0174859.1), moreover, the alkyl base structure
+     * (SMILES: CCCC[C@H](C)[C@H]1CC[C@]2(C)[C@H](CC[C@@H]2[C@H]1C)[C@H](C)CCCC(C)C ).
+     *
+     * @throws InvalidSmilesException if SMILES cannot be parsed
+     * @throws CloneNotSupportedException if cloning of the original molecule is not supported
+     */
+    @Test
+    void specificTest07() throws InvalidSmilesException, CloneNotSupportedException {
+        //test structure: CCCC[C@H](C)[C@H]1CC[C@]2(C)[C@H](CC[C@@H]2[C@H]1C)[C@H](C)CCCC(C)C
+        SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpTestStructureAC = tmpParser.parseSmiles("CCCC[C@H](C)[C@H]1CC[C@]2(C)[C@H](CC[C@@H]2[C@H]1C)[C@H](C)CCCC(C)C");
+        AlkylStructureFragmenter tmpASF = new AlkylStructureFragmenter();
+        this.preprocessTestMolecule(tmpASF, tmpTestStructureAC,
+                false, false, true);
+        int tmpPreFragmenationCount = this.countAtoms(tmpTestStructureAC);
+        List<IAtomContainer> tmpACList = tmpASF.fragmentMolecule(tmpTestStructureAC);
+        List<String> tmpFragmentsSMILESList = new ArrayList<>();
+        if (this.checkChemicalFormula(tmpPreFragmenationCount, tmpACList)) {
+            tmpFragmentsSMILESList.addAll(this.generateSMILESFromACList(tmpACList, true));
+        }
+        List<String> tmpExpectedSMILESList = new ArrayList<>();
+        tmpExpectedSMILESList.add("*C(*)*");
+        tmpExpectedSMILESList.add("C[C@H](C)[C@H]1CCC2[C@H](CC[C@@H]2[C@H](C)C)C1");
+        tmpExpectedSMILESList.add("CCC");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("CC");
+        tmpExpectedSMILESList.add("C");
+        tmpExpectedSMILESList.add("C");
+        Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
+                new ArrayList<>(tmpExpectedSMILESList)));
     }
+
     /**
      * Method to test a default alkyl structure fragmentation on a concept molecule covering a broad range of resulting fragments.
      *
@@ -1273,6 +1307,7 @@ public class AlkylStructureFragmenterTest extends AlkylStructureFragmenter {
         tmpExpectedSMILESList.add("CC");
         tmpExpectedSMILESList.add("C");
         tmpExpectedSMILESList.add("*C(*)(*)*");
+        System.out.println("Result: " + tmpFragmentsSMILESList);
         Assertions.assertTrue(this.compareListsIgnoringOrder(new ArrayList<>(tmpFragmentsSMILESList),
                 new ArrayList<>(tmpExpectedSMILESList)));
         //alternate settings
