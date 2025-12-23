@@ -82,6 +82,8 @@ public class ViewToolsManager {
      * OverviewViewController instance.
      */
     private final OverviewViewController overviewViewController;
+    //ToDo: instance cluster histogram controller in this class
+    private final ClusterHistogramViewController clusterHistogramViewController;
     /**
      * Configuration class to read resource file paths from.
      */
@@ -97,11 +99,14 @@ public class ViewToolsManager {
      */
     public ViewToolsManager(IConfiguration aConfiguration) {
         this.configuration = aConfiguration;
-        this.viewToolsArray = new IViewToolController[2];
+        this.viewToolsArray = new IViewToolController[3];
         this.histogramViewController = new HistogramViewController(this.configuration);
         this.viewToolsArray[0] = this.histogramViewController;
         this.overviewViewController = new OverviewViewController(this.configuration);
         this.viewToolsArray[1] = this.overviewViewController;
+        //Todo: cluster histogram here
+        this.clusterHistogramViewController = new ClusterHistogramViewController(this.configuration);
+        this.viewToolsArray[2] = this.clusterHistogramViewController;
         try {
             this.checkViewTools();
         } catch (Exception anException) {
@@ -150,6 +155,14 @@ public class ViewToolsManager {
             List<MoleculeDataModel> aMoleculeDataModelList)
             throws NullPointerException {
         this.overviewViewController.initializeAndShowOverviewView(aMainStage, aDataSource, aTabName, aMoleculeDataModelList);
+    }
+    public void openClusterHistogramView(
+            Stage aMainStage,
+            List<MoleculeDataModel> aRepresentativeMoleculeDataModelList
+    ) {
+        this.clusterHistogramViewController.openClusterHistogramView(aMainStage, aRepresentativeMoleculeDataModelList);
+        //this.histogramViewController.openHistogramView(aMainStage, aRepresentativeMoleculeDataModelList);
+
     }
     /**
      * See {@link OverviewViewController#getCachedIndexOfStructureInMoleculeDataModelList()}.

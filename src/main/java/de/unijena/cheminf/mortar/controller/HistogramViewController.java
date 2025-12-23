@@ -789,7 +789,7 @@ public class HistogramViewController implements IViewToolController {
             tmpSeries.getData().add(tmpStringNumberData);
         }
         //</editor-fold>
-        //<editor-fold desc="layout histogram bar chart" defauktstate="collapsed">
+        //<editor-fold desc="layout histogram bar chart" defaultstate="collapsed">
         double tmpHistogramSize = aHistogramDefaultSize * tmpSublistFrequency.size();
         tmpHistogramBarChart.setPrefHeight(tmpHistogramSize);
         tmpHistogramBarChart.setMinHeight(tmpHistogramSize);

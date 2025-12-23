@@ -152,6 +152,7 @@ public class MainMenuBar extends MenuBar {
      * MenuItem to open the OverviewView.
      */
     private final MenuItem overviewViewMenuItem;
+    //Todo: cluster histogram here
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">

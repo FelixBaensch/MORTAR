@@ -807,6 +807,14 @@ public class MainViewController {
         this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
     //
+     //todo: make all necessary methods
+    private void openClusterHistogramView() {
+        //todo: get moleculeDataModel list from clustering
+        //temporary list
+        List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS);
+        this.viewToolsManager.openClusterHistogramView(this.primaryStage, tmpMoleculesList);
+    }
+    //
     /**
      * Adds CheckMenuItems for fragmentation algorithms to MainMenuBar.
      */
@@ -1276,13 +1284,20 @@ public class MainViewController {
         tmpOpenOverviewViewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
         Button tmpOpenHistogramViewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
         tmpOpenHistogramViewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
-        tmpViewButtonsHBox.getChildren().addAll(tmpOpenOverviewViewButton, tmpOpenHistogramViewButton);
+        //ToDo: get text from message file
+        Button tmpOpenClusterHistogramViewButton = GuiUtil.getButtonOfStandardSize("Cluster");
+        tmpOpenClusterHistogramViewButton.setTooltip(GuiUtil.createTooltip("Open Cluster Histogram"));
+        //
+        tmpViewButtonsHBox.getChildren().addAll(tmpOpenOverviewViewButton, tmpOpenHistogramViewButton, tmpOpenClusterHistogramViewButton);
         tmpFragmentsTab.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
         tmpOpenOverviewViewButton.setOnAction(event -> this.openOverviewView(OverviewViewController.DataSources.FRAGMENTS_TAB));
         tmpOpenHistogramViewButton.setOnAction(event -> this.openHistogramView());
+        //ToDo: method for cluster histogram
+        tmpOpenClusterHistogramViewButton.setOnAction(event -> this.openClusterHistogramView());
         if (tmpList.isEmpty()) {
             tmpOpenOverviewViewButton.setDisable(true);
             tmpOpenHistogramViewButton.setDisable(true);
+            tmpOpenClusterHistogramViewButton.setDisable(true);
         }
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         tmpFragmentsDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event -> GuiUtil.sortTableViewGlobally(event, tmpPagination, tmpRowsPerPage));
