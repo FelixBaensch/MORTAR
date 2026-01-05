@@ -99,6 +99,7 @@ public class ClusterHistogramView extends AnchorPane {
      */
     private final CheckBox barStylingCheckBox;
 
+    //constructor
     public ClusterHistogramView(int aMaxClusterNumber) {
         super();
         this.clusterHistogramScrollPane = new ScrollPane();
@@ -148,26 +149,27 @@ public class ClusterHistogramView extends AnchorPane {
         this.displayedClustersNumberTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         //Todo: message from message file
         this.displayedClustersNumberTextField.setTooltip(GuiUtil.createTooltip(
-                Message.get("Specify the maximum number of clusters to display. Maximum available clusters:")
+                Message.get("ClusterHistogramView.displayedClusters.numberTextField")
                         + " " + aMaxClusterNumber));
         this.displayedClustersNumberTextField.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.displayedClustersNumberTextField.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.displayedClustersNumberTextField.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
         this.displayedClustersNumberTextField.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
         this.displayedClustersNumberTextField.setAlignment(Pos.CENTER_RIGHT);
-        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("Apply"));
-        this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("Refreshes histogram")));
-        this.displayedClusterNumberLabel = new Label(Message.get("displayed clusters:"));
+        this.displayedClusterNumberLabel = new Label(Message.get("ClusterHistogramView.displayedClusters.label"));
         this.displayedClusterNumberLabel.setTooltip(GuiUtil.createTooltip(Message.get("displays clusters") + " " + aMaxClusterNumber));
+        //apply button
+        this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("ClusterHistogramView.applyButton.text"));
+        this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("ClusterHistogramView.applyButton.tooltip")));
         this.barWidthsComboBox = new ComboBox<>();
         for (HistogramViewController.BarWidthOption tmpBarWidthOptionConstant : HistogramViewController.BarWidthOption.values()) {
             this.barWidthsComboBox.getItems().add(tmpBarWidthOptionConstant.getDisplayName());
         }
-        this.barWidthsComboBox.setTooltip(GuiUtil.createTooltip(Message.get("3 options for setting the bars widths. The gap between the bars is also adjusted.")));
+        this.barWidthsComboBox.setTooltip(GuiUtil.createTooltip(Message.get("ClusterHistogramView.comboBox.tooltip")));
         this.barWidthsComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
         this.barWidthsComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_MAX_WIDTH_VALUE);
-        this.barWidthsLabel = new Label(Message.get("Bar widths"));
-        this.barWidthsLabel.setTooltip(GuiUtil.createTooltip(Message.get("3 options for setting the bars widths. The gap between the bars is also adjusted.")));
+        this.barWidthsLabel = new Label(Message.get("ClusterHistogramView.gapSettingLabel.text"));
+        this.barWidthsLabel.setTooltip(GuiUtil.createTooltip(Message.get("ClusterHistogramView.comboBox.tooltip")));
         tmpLeftSideGrid.setVgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
         tmpLeftSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -187,8 +189,9 @@ public class ClusterHistogramView extends AnchorPane {
         this.structureDisplayImageView.setEffect(new DropShadow(10,2,3, Color.BLACK));
         this.structureDisplayImageView.setStyle("fx-padding: 50px; fx-margin: 50px");
         // right side controls
-        this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.cancelButton.text"));
-        this.closeButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.cancelButton.toolTip")));
+        this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("ClusterHistogramView.closeButton.text"));
+        this.closeButton.setTooltip(GuiUtil.createTooltip(Message.get("ClusterHistogramView.closeButton.tooltip")));
+        //ToDo: add message properties
         this.displayBarLabelsCheckBox = new CheckBox(Message.get("HistogramView.checkBox.text"));
         this.displayBarLabelsCheckBox.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.checkBox.toolTip")));
         this.displayGridLinesCheckBox = new CheckBox(Message.get("HistogramView.checkBoxGridlines.text"));
@@ -216,5 +219,13 @@ public class ClusterHistogramView extends AnchorPane {
         tmpMainGrid.add(this.clusterHistogramScrollPane,0,0,4,4);
         tmpMainGrid.add(this.structureDisplayImageView,2,2);
         this.getChildren().add(tmpBorderPane);
+    }
+
+    public Button getApplyButton() {
+        return this.applyButton;
+    }
+
+    public Button getCloseButton() {
+        return this.closeButton;
     }
 }

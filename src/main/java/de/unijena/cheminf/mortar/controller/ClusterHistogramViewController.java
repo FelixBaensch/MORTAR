@@ -37,6 +37,8 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -56,8 +58,16 @@ public class ClusterHistogramViewController implements IViewToolController{
     private final SimpleBooleanProperty displayBarLabelsSetting;
     private final SimpleBooleanProperty displayBarShadowsSetting;
     private final SimpleBooleanProperty displayGridLinesSetting;
-
     private final List<Property<?>> settings;
+
+    private ImageView structureDisplayImageView;
+    private ScrollPane clusterHistogramScrollPane;
+
+
+    private ClusterHistogramView clusterHistogramView;
+    private Stage clusterHistogramStage;
+    private Scene clusterHistogramScene;
+
 
     public ClusterHistogramViewController(IConfiguration aConfiguration) {
         this.configuration = aConfiguration;
@@ -150,16 +160,26 @@ public class ClusterHistogramViewController implements IViewToolController{
         //ToDO: routine for opening cluster histogram (see HistogramView class)
         Objects.requireNonNull(aMainStage, "Main stage is null.");
         Objects.requireNonNull(aRepresentativeMoleculeDataModelList, "Given MoleculeDataModel list is null.");
-        ClusterHistogramView tmpTestClusterHistogramView = new ClusterHistogramView(10);
-        Scene tmpTestScene = new Scene(
-                tmpTestClusterHistogramView,
+        this.clusterHistogramView = new ClusterHistogramView(10);
+        this.clusterHistogramStage = new Stage();
+        //listeners for buttons -> extract into private method
+        this.clusterHistogramView.getCloseButton().setOnAction(event -> {
+            this.clusterHistogramStage.close();
+            //clear all gui caches
+            //this.clearAllGUICaches();
+        });
+        //ToDo: determine what to do on apply
+        this.clusterHistogramView.getApplyButton().setOnAction(event -> {
+
+        });
+        this.clusterHistogramScene = new Scene(
+                this.clusterHistogramView,
                 GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE
         );
-        Stage tmpTestStage = new Stage();
-        tmpTestStage.initOwner(aMainStage);
-        tmpTestStage.setScene(tmpTestScene);
-        tmpTestStage.show();
+        this.clusterHistogramStage.initOwner(aMainStage);
+        this.clusterHistogramStage.setScene(this.clusterHistogramScene);
+        this.clusterHistogramStage.show();
 
     }
     //extend HistogramViewController?
