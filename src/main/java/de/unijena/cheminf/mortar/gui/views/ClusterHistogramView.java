@@ -176,9 +176,9 @@ public class ClusterHistogramView extends AnchorPane {
         // grid positions
         tmpLeftSideGrid.add(this.barWidthsLabel, 0,0);
         tmpLeftSideGrid.add(this.barWidthsComboBox,1,0);
-        tmpLeftSideGrid.add(this.displayedClusterNumberLabel,2,1);
-        tmpLeftSideGrid.add(this.displayedClustersNumberTextField,3,1);
-        tmpLeftSideGrid.add(this.applyButton,4,1);
+        tmpLeftSideGrid.add(this.displayedClusterNumberLabel,2,0);
+        tmpLeftSideGrid.add(this.displayedClustersNumberTextField,3,0);
+        tmpLeftSideGrid.add(this.applyButton,4,0);
         tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
         tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxLeftSideControls.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -206,9 +206,9 @@ public class ClusterHistogramView extends AnchorPane {
         tmpRightSideGrid.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         // grid positions
         tmpRightSideGrid.add(this.displayBarLabelsCheckBox,0,0);
-        tmpRightSideGrid.add(this.barStylingCheckBox,0,1);
-        tmpRightSideGrid.add(this.displayGridLinesCheckBox,1,0);
-        tmpRightSideGrid.add(this.closeButton,2,1);
+        tmpRightSideGrid.add(this.barStylingCheckBox,1,0);
+        tmpRightSideGrid.add(this.displayGridLinesCheckBox,2,0);
+        tmpRightSideGrid.add(this.closeButton,3,0);
         tmpHBoxRightSideControls.getChildren().add(tmpRightSideGrid);
         tmpHBoxRightSideControls.setAlignment(Pos.CENTER_RIGHT);
         tmpHBoxRightSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
@@ -228,4 +228,11 @@ public class ClusterHistogramView extends AnchorPane {
     public Button getCloseButton() {
         return this.closeButton;
     }
+
+    public ScrollPane getClusterHistogramScrollPane() {
+        return this.clusterHistogramScrollPane;
+    }
+
+    //private BarChart<>
+
 }

@@ -36,9 +36,14 @@ import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.geometry.Side;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.ImageView;
+import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -60,9 +65,9 @@ public class ClusterHistogramViewController implements IViewToolController{
     private final SimpleBooleanProperty displayGridLinesSetting;
     private final List<Property<?>> settings;
 
-    private ImageView structureDisplayImageView;
-    private ScrollPane clusterHistogramScrollPane;
-
+    //Todo: type -> general: data transfer? when clustering?
+    private List<?> clusterListCopy;
+    private BarChart<Number, Number> clusterHistogramChart;
 
     private ClusterHistogramView clusterHistogramView;
     private Stage clusterHistogramStage;
@@ -172,15 +177,77 @@ public class ClusterHistogramViewController implements IViewToolController{
         this.clusterHistogramView.getApplyButton().setOnAction(event -> {
 
         });
+        //Todo: current call produces exception
+        this.clusterHistogramChart = this.createClusterHistogram(
+                10,
+                this.clusterHistogramView);
         this.clusterHistogramScene = new Scene(
                 this.clusterHistogramView,
                 GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
                 GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE
         );
         this.clusterHistogramStage.initOwner(aMainStage);
+        this.clusterHistogramStage.setTitle(Message.get("ClusterHistogramView.title"));
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+          this.configuration.getProperty("mortar.imagesFolder")
+                  + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        this.clusterHistogramStage.getIcons().add(new Image(tmpIconURL));
+
         this.clusterHistogramStage.setScene(this.clusterHistogramScene);
         this.clusterHistogramStage.show();
 
     }
+
+    private BarChart<Number, Number> createClusterHistogram(
+            int aClusterNumber,
+            ClusterHistogramView aClusterHistogramView
+
+    ) {
+        //Todo: get number of clusters -> check
+        //y axis (clusters)
+        NumberAxis tmpYAxis = new NumberAxis();
+        tmpYAxis.setTickLabelFill(Color.BLACK);
+        tmpYAxis.setLabel(Message.get("ClusterHistogramViewController.YAxisLabel.text"));
+        //x axis (individual cluster size)
+        NumberAxis tmpXAxis = new NumberAxis();
+        tmpXAxis.setSide(Side.TOP);
+        tmpXAxis.setAutoRanging(false);
+        tmpXAxis.setMinorTickCount(1);
+        tmpXAxis.setForceZeroInRange(true);
+        tmpXAxis.setTickLabelFill(Color.BLACK);
+        tmpXAxis.setLabel(Message.get("ClusterHistogramViewController.XAxisLabel.text"));
+        //create bar chart
+        BarChart<Number, Number> tmpClusterHistogramBarChart = new BarChart<>(tmpXAxis, tmpYAxis);
+        tmpClusterHistogramBarChart.setCategoryGap(0.0);
+        tmpClusterHistogramBarChart.setBarGap(0.0);
+        ScrollPane tmpScrollPane = aClusterHistogramView.getClusterHistogramScrollPane();
+        tmpScrollPane.setContent(tmpClusterHistogramBarChart);
+        //create chart data
+        //type order:    x   ,    y
+        XYChart.Series<Number, Number> tmpChartSeries = new XYChart.Series<>();
+        //Todo: tmp! replace with actual data routine
+        for (int i = 0; i < 10; i++) {
+            XYChart.Data<Number, Number> tmpClusterToSizeData
+                    = new XYChart.Data<>(i, 10 + i);
+            tmpChartSeries.getData().add(tmpClusterToSizeData);
+        }
+
+
+        //Todo: get list of cluster representatives + show when hover over cluster
+        //layout + data add
+        //todo: calc height value
+        double tmpPlaceholder = 10;
+        tmpClusterHistogramBarChart.setPrefHeight(tmpPlaceholder);
+        tmpClusterHistogramBarChart.setMinHeight(tmpPlaceholder);
+        tmpClusterHistogramBarChart.getData().add(tmpChartSeries);
+        tmpClusterHistogramBarChart.setLegendVisible(false);
+        tmpClusterHistogramBarChart.layout();
+        tmpClusterHistogramBarChart.setHorizontalGridLinesVisible(this.displayGridLinesSetting.get());
+        tmpClusterHistogramBarChart.setVerticalGridLinesVisible(this.displayGridLinesSetting.get());
+        tmpClusterHistogramBarChart.setAnimated(false);
+        //return created cluster histogram
+        return tmpClusterHistogramBarChart;
+    }
+    //Todo: methods for spacing calculation
     //extend HistogramViewController?
 }
