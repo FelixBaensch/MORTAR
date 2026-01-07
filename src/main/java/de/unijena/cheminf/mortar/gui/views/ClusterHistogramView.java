@@ -233,6 +233,26 @@ public class ClusterHistogramView extends AnchorPane {
         return this.clusterHistogramScrollPane;
     }
 
+    public ComboBox<String> getBarWidthsComboBox() {
+        return this.barWidthsComboBox;
+    }
+
+    public CheckBox getDisplayBarLabelsCheckBox() {
+        return this.displayBarLabelsCheckBox;
+    }
+
+    public CheckBox getDisplayGridLinesCheckBox() {
+        return this.displayGridLinesCheckBox;
+    }
+
+    public CheckBox getDisplayBarShadowsCheckBox() {
+        return this.barStylingCheckBox;
+    }
+
+    public TextField getDisplayedClustersNumberTextField() {
+        return this.displayedClustersNumberTextField;
+    }
+
     //private BarChart<>
 
 }

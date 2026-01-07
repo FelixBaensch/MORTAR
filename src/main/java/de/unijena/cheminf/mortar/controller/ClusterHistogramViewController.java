@@ -27,24 +27,31 @@ package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.ClusterHistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,13 +59,61 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 public class ClusterHistogramViewController implements IViewToolController{
+    public static enum BarWidthOption implements IDisplayEnum {
+        /**
+         * Small bar width.
+         */
+        SMALL(Message.get("ClusterHistogramView.barWidths.small.displayName"),
+                Message.get("ClusterHistogramView.barWidths.small.tooltip")),
+        /**
+         * Medium bar width.
+         */
+        MEDIUM(Message.get("ClusterHistogramView.barWidths.medium.displayName"),
+                Message.get("ClusterHistogramView.barWidths.medium.tooltip")),
+        /**
+         * Large bar width.
+         */
+        LARGE(Message.get("ClusterHistogramView.barWidths.large.displayName"),
+                Message.get("ClusterHistogramView.barWidths.large.tooltip"));
+        /**
+         * A name for the respective constant that is meant for display, i.e. taken from the Message file.
+         */
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor setting the display name and tooltip.
+         *
+         * @param aDisplayName display name
+         * @param aTooltip tooltip text
+         */
+        private BarWidthOption(String aDisplayName, String aTooltip) {
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltip;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
+        }
+    }
 
+    private static final boolean DEFAULT_DISPLAY_BAR_LABELS_SETTING = true;
     public static final int DEFAULT_NUMBER_OF_DISPLAYED_CLUSTER = 10;
+
+    public static final ClusterHistogramViewController.BarWidthOption DEFAULT_BAR_WIDTH = ClusterHistogramViewController.BarWidthOption.LARGE;
 
     private static final Logger LOGGER = Logger.getLogger(ClusterHistogramViewController.class.getName());
 
     private final IConfiguration configuration;
-    private final SimpleIntegerProperty displayedClusterNumberSetting;
+    private final SimpleIntegerProperty displayedClustersNumberSetting;
     private final SimpleIDisplayEnumConstantProperty barWidthSetting;
     private final SimpleBooleanProperty displayBarLabelsSetting;
     private final SimpleBooleanProperty displayBarShadowsSetting;
@@ -67,7 +122,7 @@ public class ClusterHistogramViewController implements IViewToolController{
 
     //Todo: type -> general: data transfer? when clustering?
     private List<?> clusterListCopy;
-    private BarChart<Number, Number> clusterHistogramChart;
+    private BarChart<Number, String> clusterHistogramChart;
 
     private ClusterHistogramView clusterHistogramView;
     private Stage clusterHistogramStage;
@@ -78,7 +133,7 @@ public class ClusterHistogramViewController implements IViewToolController{
         this.configuration = aConfiguration;
         //todo: init cap
         this.settings = new ArrayList<>();
-        this.displayedClusterNumberSetting = new SimpleIntegerProperty(this,
+        this.displayedClustersNumberSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
                 Message.get("ClusterHistogramView.displayedClusterNumberSetting.name"),
                 ClusterHistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_CLUSTER) {
@@ -89,7 +144,7 @@ public class ClusterHistogramViewController implements IViewToolController{
                 //value updated in addListenersToHistogramView(), listener of apply-button
             }
         };
-        this.settings.add(this.displayedClusterNumberSetting);
+        this.settings.add(this.displayedClustersNumberSetting);
         this.barWidthSetting = new SimpleIDisplayEnumConstantProperty(this,
                 "Bar width setting",
                 HistogramViewController.DEFAULT_BAR_WIDTH,
@@ -103,7 +158,7 @@ public class ClusterHistogramViewController implements IViewToolController{
         this.displayBarLabelsSetting = new SimpleBooleanProperty(this,
                 //the name could be displayed but is not used for that currently
                 Message.get("Display labels on bars setting"),
-                HistogramViewController.DEFAULT_DISPLAY_BAR_LABELS_SETTING) {
+                ClusterHistogramViewController.DEFAULT_DISPLAY_BAR_LABELS_SETTING) {
             @Override
             public void set(boolean newValue) {
                 super.set(newValue);
@@ -166,21 +221,26 @@ public class ClusterHistogramViewController implements IViewToolController{
         Objects.requireNonNull(aMainStage, "Main stage is null.");
         Objects.requireNonNull(aRepresentativeMoleculeDataModelList, "Given MoleculeDataModel list is null.");
         this.clusterHistogramView = new ClusterHistogramView(10);
-        this.clusterHistogramStage = new Stage();
-        //listeners for buttons -> extract into private method
-        this.clusterHistogramView.getCloseButton().setOnAction(event -> {
-            this.clusterHistogramStage.close();
-            //clear all gui caches
-            //this.clearAllGUICaches();
-        });
-        //ToDo: determine what to do on apply
-        this.clusterHistogramView.getApplyButton().setOnAction(event -> {
+        //set setting values
+        this.clusterHistogramView.getDisplayBarLabelsCheckBox().setSelected(this.displayBarLabelsSetting.get());
+        this.clusterHistogramView.getDisplayGridLinesCheckBox().setSelected(this.displayGridLinesSetting.get());
+        this.clusterHistogramView.getDisplayBarShadowsCheckBox().setSelected(this.displayBarShadowsSetting.get());
 
-        });
-        //Todo: current call produces exception
+        this.clusterHistogramStage = new Stage();
+        this.addListenersToComponents();
+        //Todo: calculateBarSpacing()
+        Double[] tmpClusterHistogramBarSpacing = this.calculateBarSpacing(
+                this.displayedClustersNumberSetting.get(),
+                this.getBarWidthOptionEnumConstantFromDisplayName(
+                        this.clusterHistogramView.getBarWidthsComboBox().getValue())
+        );
         this.clusterHistogramChart = this.createClusterHistogram(
-                10,
-                this.clusterHistogramView);
+                this.displayedClustersNumberSetting.get(),
+                this.clusterHistogramView,
+                this.clusterHistogramView.getDisplayBarLabelsCheckBox(),
+                this.clusterHistogramView.getDisplayBarShadowsCheckBox(),
+                tmpClusterHistogramBarSpacing
+        );
         this.clusterHistogramScene = new Scene(
                 this.clusterHistogramView,
                 GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
@@ -198,16 +258,32 @@ public class ClusterHistogramViewController implements IViewToolController{
 
     }
 
-    private BarChart<Number, Number> createClusterHistogram(
-            int aClusterNumber,
-            ClusterHistogramView aClusterHistogramView
+    private Double[] calculateBarSpacing(
+            int aNumberOfDisplayedClusters,
+            BarWidthOption aBarWidthOption
+    ) {
+        //Todo: see histogram for reference
+        return null;
+    }
 
+    private BarWidthOption getBarWidthOptionEnumConstantFromDisplayName(String aDisplayName) {
+        //Todo: see histogram for reference
+        return null;
+    }
+
+    private BarChart<Number, String> createClusterHistogram(
+            int aClusterNumber,
+            ClusterHistogramView aClusterHistogramView,
+            CheckBox aDisplayBarLabelsCheckBox,
+            CheckBox aDisplayBarShadowsCheckBox,
+            Double[] aClusterHistogramBarSpacing
     ) {
         //Todo: get number of clusters -> check
         //y axis (clusters)
-        NumberAxis tmpYAxis = new NumberAxis();
+        CategoryAxis tmpYAxis = new CategoryAxis();
         tmpYAxis.setTickLabelFill(Color.BLACK);
         tmpYAxis.setLabel(Message.get("ClusterHistogramViewController.YAxisLabel.text"));
+        System.out.println("y axis");
         //x axis (individual cluster size)
         NumberAxis tmpXAxis = new NumberAxis();
         tmpXAxis.setSide(Side.TOP);
@@ -216,21 +292,30 @@ public class ClusterHistogramViewController implements IViewToolController{
         tmpXAxis.setForceZeroInRange(true);
         tmpXAxis.setTickLabelFill(Color.BLACK);
         tmpXAxis.setLabel(Message.get("ClusterHistogramViewController.XAxisLabel.text"));
+        System.out.println("x axis");
         //create bar chart
-        BarChart<Number, Number> tmpClusterHistogramBarChart = new BarChart<>(tmpXAxis, tmpYAxis);
+        BarChart<Number, String> tmpClusterHistogramBarChart = null;
+        try {
+            tmpClusterHistogramBarChart = new BarChart<>(tmpXAxis, tmpYAxis);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         tmpClusterHistogramBarChart.setCategoryGap(0.0);
         tmpClusterHistogramBarChart.setBarGap(0.0);
+        System.out.println("bar chart");
         ScrollPane tmpScrollPane = aClusterHistogramView.getClusterHistogramScrollPane();
         tmpScrollPane.setContent(tmpClusterHistogramBarChart);
+        System.out.println("scroll pane");
         //create chart data
         //type order:    x   ,    y
-        XYChart.Series<Number, Number> tmpChartSeries = new XYChart.Series<>();
+        XYChart.Series<Number, String> tmpChartSeries = new XYChart.Series<>();
         //Todo: tmp! replace with actual data routine
         for (int i = 0; i < 10; i++) {
-            XYChart.Data<Number, Number> tmpClusterToSizeData
-                    = new XYChart.Data<>(i, 10 + i);
+            XYChart.Data<Number, String> tmpClusterToSizeData
+                    = new XYChart.Data<>(i, new String("# " + i));
             tmpChartSeries.getData().add(tmpClusterToSizeData);
         }
+        System.out.println("chart series");
 
 
         //Todo: get list of cluster representatives + show when hover over cluster
@@ -245,9 +330,67 @@ public class ClusterHistogramViewController implements IViewToolController{
         tmpClusterHistogramBarChart.setHorizontalGridLinesVisible(this.displayGridLinesSetting.get());
         tmpClusterHistogramBarChart.setVerticalGridLinesVisible(this.displayGridLinesSetting.get());
         tmpClusterHistogramBarChart.setAnimated(false);
+        System.out.println("bar chart settings + data");
+        //style settings
         //return created cluster histogram
         return tmpClusterHistogramBarChart;
+
     }
-    //Todo: methods for spacing calculation
+    //Todo: add settings listeners
+    private void addListenersToComponents() {
+        //close cluster histogram
+        this.clusterHistogramView.getCloseButton().setOnAction(event -> {
+            this.clusterHistogramStage.close();
+            this.clearAllGUICaches();
+        });
+        //apply changes to display
+        //ToDo: determine what to do on apply -> "rerun clustering" button for clustering parameter change
+        this.clusterHistogramView.getApplyButton().setOnAction(event -> {
+            //apply
+            //see histogram controller l.835
+        });
+        //disable apply button if displayed cluster number text field is empty
+        this.clusterHistogramView.getApplyButton().disableProperty().bind(
+                Bindings.isEmpty(this.clusterHistogramView.getDisplayedClustersNumberTextField().textProperty())
+        );
+        //ensures proper stage closure on window close request
+        this.clusterHistogramStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
+        //adding text formatter that only accepts integers and turns the input strings into those to the two text fields
+        this.clusterHistogramView.getDisplayedClustersNumberTextField().setTextFormatter(
+                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
+                        this.displayedClustersNumberSetting.get(), //default value
+                        GuiUtil.getPositiveIntegerFilter(false))
+        );
+        this.clusterHistogramView.getDisplayGridLinesCheckBox().selectedProperty()
+                .addListener((ObservableValue<? extends Boolean> ov, Boolean oldVal, Boolean newVal) -> {
+                    this.clusterHistogramChart.setVerticalGridLinesVisible(newVal);
+                    this.clusterHistogramChart.setHorizontalGridLinesVisible(newVal);
+                    //update setting
+                    this.displayGridLinesSetting.set(newVal);
+                });
+        this.clusterHistogramView.getDisplayBarShadowsCheckBox().selectedProperty()
+                .addListener((ObservableValue<? extends Boolean> ov, Boolean oldVal, Boolean newVal) -> {
+                    //Todo: stackpane for bar labels -> see histogram controller l.940
+                    //Todo: add stackpane in createClusterHistogram
+                    //Todo: add listeners to stackpane components -> bar styling -> histogram controller l.1055
+                });
+
+    }
+
+    /**
+     * Closes the cluster histogram view (stage) and clears all GUI caches when close window event was fired.
+     *
+     * @param anEvent WindowEvent
+     */
+    private void closeWindowEvent(WindowEvent anEvent) {
+        this.clusterHistogramStage.close();
+        this.clearAllGUICaches();
+    }
+    //Todo: set all class variables null
+    private void clearAllGUICaches() {
+        this.clusterHistogramView = null;
+        this.clusterHistogramStage = null;
+        this.clusterHistogramScene = null;
+    }
     //extend HistogramViewController?
 }
