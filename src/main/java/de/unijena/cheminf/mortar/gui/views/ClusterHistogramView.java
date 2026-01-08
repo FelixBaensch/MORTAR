@@ -253,6 +253,9 @@ public class ClusterHistogramView extends AnchorPane {
         return this.displayedClustersNumberTextField;
     }
 
+    public ImageView getStructureDisplayImageView() {
+        return this.structureDisplayImageView;
+    }
     //private BarChart<>
 
 }
