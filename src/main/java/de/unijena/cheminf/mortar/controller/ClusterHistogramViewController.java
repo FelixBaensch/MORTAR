@@ -70,6 +70,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -129,6 +130,8 @@ public class ClusterHistogramViewController implements IViewToolController{
     public static final int DEFAULT_NUMBER_OF_DISPLAYED_CLUSTER = 10;
     public static final String HISTOGRAM_BARS_COLOR_HEX_VALUE = "#1E90FF"; //dodger blue
     public static final String HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE = "#00008b"; //dark blue
+    public static final double HISTOGRAM_TICK_LABEL_LENGTH = 15.0;
+    public static final double HISTOGRAM_TICK_LABEL_GAP = 10.0;
     /**
      * Value for the width of the image corresponding to the structure of the fragments.
      */
@@ -327,18 +330,20 @@ public class ClusterHistogramViewController implements IViewToolController{
         this.clusterHistogramStage = new Stage();
         //this.addListenersToComponents();
         //Todo: calculateBarSpacing()
-        Double[] tmpClusterHistogramBarSpacing = this.calculateBarSpacing(
+        System.out.println("first getBarWidthOptionEnumConstantFromDisplayName()");
+        Double[] tmpClusterHistogramSizeGap = this.calculateBarSpacing(
                 this.displayedClustersNumberSetting.get(),
                 this.getBarWidthOptionEnumConstantFromDisplayName(
-                        this.clusterHistogramView.getBarWidthsComboBox().getValue())
-        );
+                        this.clusterHistogramView.getBarWidthsComboBox().getValue()));
+        System.out.println("first getBarWidthOptionEnumConstantFromDisplayName()");
         this.clusterHistogramChart = this.createClusterHistogram(
                 this.displayedClustersNumberSetting.get(),
                 this.clusterHistogramView,
                 this.clusterHistogramView.getDisplayBarLabelsCheckBox(),
                 this.clusterHistogramView.getDisplayBarShadowsCheckBox(),
-                tmpClusterHistogramBarSpacing
+                tmpClusterHistogramSizeGap[0]
         );
+        this.clusterHistogramChart.setCategoryGap(tmpClusterHistogramSizeGap[1]);
         this.clusterHistogramScene = new Scene(
                 this.clusterHistogramView,
                 GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE,
@@ -356,17 +361,23 @@ public class ClusterHistogramViewController implements IViewToolController{
 
     }
 
-    private Double[] calculateBarSpacing(
-            int aNumberOfDisplayedClusters,
-            BarWidthOption aBarWidthOption
-    ) {
-        //Todo: see histogram for reference
-        return null;
-    }
-
     private BarWidthOption getBarWidthOptionEnumConstantFromDisplayName(String aDisplayName) {
-        //Todo: see histogram for reference
-        return null;
+        if(Objects.isNull(aDisplayName) || aDisplayName.isBlank()) {
+            ClusterHistogramViewController.LOGGER.log(Level.WARNING, "Given string is null or empty, default bar width" +
+                    "option is returned.");
+            return ClusterHistogramViewController.DEFAULT_BAR_WIDTH;
+        }
+        ClusterHistogramViewController.BarWidthOption tmpEnumConstantBarWidth = null;
+        for (ClusterHistogramViewController.BarWidthOption tmpOption : ClusterHistogramViewController.BarWidthOption.values()) {
+            if (tmpOption.getDisplayName().equals(aDisplayName)) {
+                tmpEnumConstantBarWidth = tmpOption;
+            }
+        }
+        if (Objects.isNull(tmpEnumConstantBarWidth)) {
+            ClusterHistogramViewController.LOGGER.log(Level.WARNING, "Output of histogram view bar spacing combo box \"{0}\"did not equal any of the pre-set enum values and was reset to default.", aDisplayName);
+            tmpEnumConstantBarWidth = ClusterHistogramViewController.DEFAULT_BAR_WIDTH;
+        }
+        return tmpEnumConstantBarWidth;
     }
 
     private BarChart<Number, String> createClusterHistogram(
@@ -374,13 +385,17 @@ public class ClusterHistogramViewController implements IViewToolController{
             ClusterHistogramView aClusterHistogramView,
             CheckBox aDisplayBarLabelsCheckBox,
             CheckBox aDisplayBarShadowsCheckBox,
-            Double[] aClusterHistogramBarSpacing
+            double aClusterHistogramBarSpacing
     ) {
         //Todo: get number of clusters -> check
         //y axis (clusters)
         CategoryAxis tmpYAxis = new CategoryAxis();
         tmpYAxis.setTickLabelFill(Color.BLACK);
+        tmpYAxis.setTickLength(ClusterHistogramViewController.HISTOGRAM_TICK_LABEL_LENGTH);
+        tmpYAxis.setTickLabelGap(ClusterHistogramViewController.HISTOGRAM_TICK_LABEL_GAP);
         tmpYAxis.setLabel(Message.get("ClusterHistogramViewController.YAxisLabel.text"));
+        tmpYAxis.setTickMarkVisible(true);
+        tmpYAxis.setTickLabelsVisible(true);
         System.out.println("y axis");
         //x axis (individual cluster size)
         NumberAxis tmpXAxis = new NumberAxis();
@@ -392,18 +407,18 @@ public class ClusterHistogramViewController implements IViewToolController{
         tmpXAxis.setLabel(Message.get("ClusterHistogramViewController.XAxisLabel.text"));
         System.out.println("x axis");
         //create bar chart
-        BarChart<Number, String> tmpClusterHistogramBarChart = null;
-        try {
-            tmpClusterHistogramBarChart = new BarChart<>(tmpXAxis, tmpYAxis);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        BarChart<Number, String> tmpClusterHistogramBarChart = new BarChart<>(tmpXAxis, tmpYAxis);
         tmpClusterHistogramBarChart.setCategoryGap(0.0);
         tmpClusterHistogramBarChart.setBarGap(0.0);
         System.out.println("bar chart");
         ScrollPane tmpScrollPane = aClusterHistogramView.getClusterHistogramScrollPane();
         tmpScrollPane.setContent(tmpClusterHistogramBarChart);
         System.out.println("scroll pane");
+
+        //Todo: get data from Clustering DataModel
+        ArrayList<Integer> tmpClusterSizeList = new ArrayList<>();
+        //iterate over datamodels and put into list -> l.~700
+        tmpClusterSizeList.add(10);
         //create chart data
         //type order:    x   ,    y
         XYChart.Series<Number, String> tmpChartSeries = new XYChart.Series<>();
@@ -426,16 +441,52 @@ public class ClusterHistogramViewController implements IViewToolController{
             tmpClusterToSizeData.setNode(tmpClusterHistogramBarStackPane);
             tmpChartSeries.getData().add(tmpClusterToSizeData);
         }
-        //Todo: call createStackPane...()
         System.out.println("chart series");
 
+        double tmpMaxClusterSize = Collections.max(tmpClusterSizeList);
+        //make readable x-axis
+        double tmpXAxisTicks = 0.05 * tmpMaxClusterSize; // magic number
+        double tmpXAxisExtension = 0.15 * tmpMaxClusterSize; // magic number
+        int tmpIntTmpXAxisTick = (int) Math.round(tmpXAxisTicks);
+        int tmpIntXAxisExtension = (int) Math.round(tmpXAxisExtension);
+        if (tmpIntTmpXAxisTick == 0 || tmpIntXAxisExtension == 0) {
+            tmpXAxis.setTickUnit(1.0);
+            tmpXAxis.setUpperBound(tmpMaxClusterSize + 1.0);
+        } else {
+            if (tmpIntTmpXAxisTick < 10) {
+                tmpXAxis.setTickUnit(tmpIntTmpXAxisTick);
+                tmpXAxis.setUpperBound(this.calculateXAxisUpperBoundWithSpaceForLabels((int) tmpMaxClusterSize, tmpIntTmpXAxisTick));
+            } else {
+                int tmpNewXAxisTick = tmpIntTmpXAxisTick;
+                String tmpTickStringRepresentation = String.valueOf(tmpNewXAxisTick);
+                String tmpFirstValue = String.valueOf(tmpTickStringRepresentation.charAt(0));
+                int tmpFirstIntValue = Integer.parseInt(tmpFirstValue);
+                if (tmpFirstIntValue <= 5) {
+                    //If the first digit of tmpIntTmpXAxisTick is smaller than 5, we look for a suitable "round" number
+                    // for the ticks, e.g. tmpIntTmpXAxisTick = 356 -> tmpNewXAxisTick = 400
+                    int tmpDigit = tmpTickStringRepresentation.length() - 1;
+                    int tmpPowerOfTen = (int) Math.pow(10, tmpDigit);
+                    if (tmpNewXAxisTick % tmpPowerOfTen != 0) {
+                        do {
+                            tmpNewXAxisTick++;
+                        } while (tmpNewXAxisTick % (tmpPowerOfTen) != 0);
+                    }
+                } else {
+                    //If the first digit of tmpIntTmpXAxisTick is greater than 5, we choose a suitable, "round" power of 10 for
+                    // the ticks, e.g. tmpIntTmpXAxisTick = 7896 -> tmpNewXAxisTick = 10.000
+                    tmpNewXAxisTick = (int) Math.pow(10, tmpTickStringRepresentation.length());
+                }
+                tmpXAxis.setTickUnit(tmpNewXAxisTick);
+                tmpXAxis.setUpperBound(this.calculateXAxisUpperBoundWithSpaceForLabels((int) tmpMaxClusterSize, tmpNewXAxisTick));
+            }
+        }
 
         //Todo: get list of cluster representatives + show when hover over cluster
         //layout + data add
         //todo: calc height value
-        double tmpPlaceholder = 10;
-        tmpClusterHistogramBarChart.setPrefHeight(tmpPlaceholder);
-        tmpClusterHistogramBarChart.setMinHeight(tmpPlaceholder);
+        double tmpClusterHistogramSize = aClusterHistogramBarSpacing * tmpChartSeries.getData().size();
+        tmpClusterHistogramBarChart.setPrefHeight(tmpClusterHistogramSize);
+        tmpClusterHistogramBarChart.setMinHeight(tmpClusterHistogramSize);
         tmpClusterHistogramBarChart.getData().add(tmpChartSeries);
         tmpClusterHistogramBarChart.setLegendVisible(false);
         tmpClusterHistogramBarChart.layout();
@@ -473,62 +524,30 @@ public class ClusterHistogramViewController implements IViewToolController{
 //        );
         //todo: change update to recalc of cluster -> remove apply button
         //apply button, update histogram
-//        this.clusterHistogramView.getApplyButton().setOnAction(event -> {
-//            //if both text fields are empty, "apply" is disabled, see above
-//            // but if only one text field is empty, it is reset to default here along with its tied setting property
-//            if (this.clusterHistogramView.getMaximumSMILESLengthTextFieldContent().isEmpty()) {
-//                //maximum SMILES length text field is empty -> reset this setting to default and parse displayed
-//                // fragments number setting from text field
-//                this.displayedClustersNumberSetting.set(Integer.parseInt(this.clusterHistogramView.getDisplayedFragmentsNumberTextFieldContent()));
-//                if (this.displayedClustersNumberSetting.get() > this.fragmentListCopy.size()) {
-//                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
-//                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
-//                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
-//                    //no resets of settings or text field content, the user has to take care of that
-//                    return;
-//                }
-//                this.maximumSMILESLengthSetting.set(HistogramViewController.DEFAULT_MAX_SMILES_LENGTH);
-//                this.clusterHistogramView.getMaximumSMILESLengthTextField().setText(String.valueOf(this.maximumSMILESLengthSetting.get()));
-//            } else if (this.clusterHistogramView.getDisplayedFragmentsNumberTextFieldContent().isEmpty()) {
-//                //displayed fragments nr text field is empty -> reset this setting to default and parse maximum SMILES length
-//                // setting from text field
-//                this.maximumSMILESLengthSetting.set(Integer.parseInt(this.clusterHistogramView.getMaximumSMILESLengthTextFieldContent()));
-//                this.displayedClustersNumberSetting.set(Math.min(this.fragmentListCopy.size(), HistogramViewController.DEFAULT_NUMBER_OF_DISPLAYED_FRAGMENTS));
-//                this.clusterHistogramView.getDisplayedClustersNumberTextField().setText(String.valueOf(this.displayedClustersNumberSetting.get()));
-//            } else {
-//                //both text fields have values -> parse and check
-//                this.displayedClustersNumberSetting.set(Integer.parseInt(this.clusterHistogramView.getDisplayedFragmentsNumberTextFieldContent()));
-//                this.maximumSMILESLengthSetting.set(Integer.parseInt(this.clusterHistogramView.getMaximumSMILESLengthTextFieldContent()));
-//                if (this.displayedClustersNumberSetting.get() > this.fragmentListCopy.size()) {
-//                    GuiUtil.guiMessageAlert(Alert.AlertType.WARNING, Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
-//                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Header"),
-//                            Message.get("HistogramViewController.HistogramFrequencyRefreshWarning.Content"));
-//                    //no resets of settings or text field content, the user has to take care of that
-//                    return;
-//                }
-//            }
-//            HistogramViewController.BarWidthOption tmpBarWidthSettingEnumValue = this.getBarWidthOptionEnumConstantFromDisplayName(
-//                    this.clusterHistogramView.getBarWidthsComboBox().getValue());
-//            this.barWidthSetting.set(tmpBarWidthSettingEnumValue);
-//            Double[] tmpHistogramSizeGap = this.calculateBarSpacing(
-//                    this.displayedClustersNumberSetting.get(),
-//                    tmpBarWidthSettingEnumValue);
-//            this.displayFrequencySetting.set(this.getFrequencyOptionEnumConstantFromDisplayName(this.clusterHistogramView.getFrequencyComboBox().getValue()));
-//            this.clusterHistogramChart = this.createHistogram(
-//                    this.displayedClustersNumberSetting.get(),
-//                    this.clusterHistogramView,
-//                    this.maximumSMILESLengthSetting.get(),
-//                    this.clusterHistogramView.getDisplayBarLabelsCheckBox(),
-//                    this.clusterHistogramView.getDisplayBarShadowsCheckBox(),
-//                    tmpHistogramSizeGap[0]);
-//            this.clusterHistogramChart.setCategoryGap(tmpHistogramSizeGap[1]);
-//            boolean tmpDisplayGridLines = this.displayGridLinesSetting.get();
-//            this.clusterHistogramChart.setVerticalGridLinesVisible(tmpDisplayGridLines);
-//            this.clusterHistogramChart.setHorizontalGridLinesVisible(tmpDisplayGridLines);
-//            boolean tmpDisplaySMILES = this.displaySMILESSetting.get();
-//            this.categoryAxis.setTickMarkVisible(tmpDisplaySMILES);
-//            this.categoryAxis.setTickLabelsVisible(tmpDisplaySMILES);
-//        });
+        //only relevant for bar width change
+        //Todo: changeListener for barWidthComboBox -> without producing stackoverflow
+        this.clusterHistogramView.getApplyButton().setOnAction(event -> {
+            System.out.println("second getBarWidthOptionEnumConstantFromDisplayName()");
+            ClusterHistogramViewController.BarWidthOption tmpBarWidthSettingEnumValue = this.getBarWidthOptionEnumConstantFromDisplayName(
+                    this.clusterHistogramView.getBarWidthsComboBox().getValue());
+            System.out.println("second getBarWidthOptionEnumConstantFromDisplayName()");
+            //fixme: this thing keeps spiraling into stack overflow for no apparent reason
+            this.barWidthSetting.set(tmpBarWidthSettingEnumValue);
+            System.out.println("set barwidthsetting");
+            Double[] tmpHistogramSizeGap = this.calculateBarSpacing(
+                    this.displayedClustersNumberSetting.get(),
+                    tmpBarWidthSettingEnumValue);
+            this.clusterHistogramChart = this.createClusterHistogram(
+                    this.displayedClustersNumberSetting.get(),
+                    this.clusterHistogramView,
+                    this.clusterHistogramView.getDisplayBarLabelsCheckBox(),
+                    this.clusterHistogramView.getDisplayBarShadowsCheckBox(),
+                    tmpHistogramSizeGap[0]);
+            this.clusterHistogramChart.setCategoryGap(tmpHistogramSizeGap[1]);
+            boolean tmpDisplayGridLines = this.displayGridLinesSetting.get();
+            this.clusterHistogramChart.setVerticalGridLinesVisible(tmpDisplayGridLines);
+            this.clusterHistogramChart.setHorizontalGridLinesVisible(tmpDisplayGridLines);
+        });
 
         this.clusterHistogramView.getDisplayGridLinesCheckBox().selectedProperty()
                 .addListener((ObservableValue<? extends Boolean> ov, Boolean oldVal, Boolean newVal) -> {
@@ -557,21 +576,6 @@ public class ClusterHistogramViewController implements IViewToolController{
             }
             this.imageWidth = 100.0 + this.imageHeight;
             this.imageZoomFactor = (ClusterHistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR / ClusterHistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_WIDTH) * this.imageWidth;
-        });
-        this.clusterHistogramView.getBarWidthsComboBox().valueProperty().addListener((observable, oldValue, newValue) -> {
-            this.clusterHistogramChart = this.createClusterHistogram(
-                    //Todo: tmp! cluster value
-                    10,
-                    this.clusterHistogramView,
-                    this.clusterHistogramView.getDisplayBarLabelsCheckBox(),
-                    this.clusterHistogramView.getDisplayBarShadowsCheckBox(),
-                    //Todo: tmp! bar spacing
-                    this.calculateBarSpacing(
-                            this.displayedClustersNumberSetting.get(),
-                            this.getBarWidthOptionEnumConstantFromDisplayName(this.clusterHistogramView.getBarWidthsComboBox().getValue())
-                    )
-            );
-            System.out.println("refreshed histogram");
         });
     }
 
@@ -614,41 +618,85 @@ public class ClusterHistogramViewController implements IViewToolController{
             this.displayBarShadowsSetting.set(newVal);
         });
     }
-    //Todo: add settings listeners
-    private void addListenersToComponents() {
-        //close cluster histogram
-        this.clusterHistogramView.getCloseButton().setOnAction(event -> {
-            this.clusterHistogramStage.close();
-            this.clearAllGUICaches();
-        });
-        //apply changes to display
-        //ToDo: determine what to do on apply -> "rerun clustering" button for clustering parameter change
-        this.clusterHistogramView.getApplyButton().setOnAction(event -> {
-            //apply
-            //see histogram controller l.835
-        });
-        //ensures proper stage closure on window close request
-        this.clusterHistogramStage.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, (this::closeWindowEvent));
-        //adding text formatter that only accepts integers and turns the input strings into those to the two text fields
-        this.clusterHistogramView.getDisplayedClustersNumberTextField().setTextFormatter(
-                new TextFormatter<>(GuiUtil.getStringToIntegerConverter(),
-                        this.displayedClustersNumberSetting.get(), //default value
-                        GuiUtil.getPositiveIntegerFilter(false))
-        );
-        this.clusterHistogramView.getDisplayGridLinesCheckBox().selectedProperty()
-                .addListener((ObservableValue<? extends Boolean> ov, Boolean oldVal, Boolean newVal) -> {
-                    this.clusterHistogramChart.setVerticalGridLinesVisible(newVal);
-                    this.clusterHistogramChart.setHorizontalGridLinesVisible(newVal);
-                    //update setting
-                    this.displayGridLinesSetting.set(newVal);
-                });
-        this.clusterHistogramView.getDisplayBarShadowsCheckBox().selectedProperty()
-                .addListener((ObservableValue<? extends Boolean> ov, Boolean oldVal, Boolean newVal) -> {
-                    //Todo: stackpane for bar labels -> see histogram controller l.940
-                    //Todo: add stackpane in createClusterHistogram
-                    //Todo: add listeners to stackpane components -> bar styling -> histogram controller l.1055
-                });
 
+    /**
+     * Method which calculates an optimal value for the x-axis upper bound that leaves enough room for the frequency labels.
+     *
+     * @param aMaxValue is the value of the highest frequency that occurs in the data set.
+     * @param aTickValue is the calculated tick
+     * @return an upper limit for the x-axis that leaves enough room for the frequency labels
+     */
+    private int calculateXAxisUpperBoundWithSpaceForLabels(int aMaxValue, int aTickValue) {
+        int tmpTickNumber = Math.round((float) aMaxValue / aTickValue);
+        int tmpXAxisExtensionValue;
+        if ((aTickValue * tmpTickNumber) > aMaxValue) {
+            tmpXAxisExtensionValue = (aTickValue * tmpTickNumber) + aTickValue;
+        } else {
+            tmpXAxisExtensionValue = (aTickValue * tmpTickNumber) + (2 * aTickValue);
+        }
+        return tmpXAxisExtensionValue;
+    }
+
+
+    private Double[] calculateBarSpacing(
+            int aNumberOfDisplayedCluster,
+            ClusterHistogramViewController.BarWidthOption aBarWidthOptionConstant
+    ) {
+        Double[] tmpHistogramHeightFactorAndCategoryGap = new Double[2];
+        double tmpCurrentHistogramHeight;
+        double tmpGapDeviation;
+        double tmpGapSpacing;
+        double tmpCategoryGap;
+        double tmpFinalHistogramHeight = 0.0; //return value is initialised here with a default value
+        double tmpFinalGapSpacing;
+        switch (aBarWidthOptionConstant) {
+            case ClusterHistogramViewController.BarWidthOption.SMALL:
+                if (aNumberOfDisplayedCluster <= 24) { //magic number
+                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedCluster;
+                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 24.0);
+                    tmpGapSpacing = ClusterHistogramViewController.GUI_HISTOGRAM_SMALL_BAR_GAP_CONST * tmpGapDeviation;
+                    tmpFinalGapSpacing = tmpCurrentHistogramHeight - tmpGapSpacing;
+                    tmpCategoryGap = tmpFinalGapSpacing - ClusterHistogramViewController.GUI_HISTOGRAM_SMALL_BAR_WIDTH;
+                } else {
+                    tmpFinalHistogramHeight = ClusterHistogramViewController.GUI_HISTOGRAM_SMALL_HISTOGRAM_HEIGHT_VALUE;
+                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * aNumberOfDisplayedCluster - 85.0;
+                    tmpGapSpacing = tmpCurrentHistogramHeight / aNumberOfDisplayedCluster;
+                    tmpCategoryGap = tmpGapSpacing - ClusterHistogramViewController.GUI_HISTOGRAM_SMALL_BAR_WIDTH;
+                }
+                break;
+            case ClusterHistogramViewController.BarWidthOption.MEDIUM:
+                if (aNumberOfDisplayedCluster <= 17) { //magic number
+                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedCluster;
+                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 17.0);
+                    tmpGapSpacing = ClusterHistogramViewController.GUI_HISTOGRAM_MEDIUM_BAR_GAP_CONST * tmpGapDeviation;
+                    tmpFinalGapSpacing = tmpCurrentHistogramHeight - tmpGapSpacing;
+                    tmpCategoryGap = tmpFinalGapSpacing - ClusterHistogramViewController.GUI_HISTOGRAM_MEDIUM_BAR_WIDTH;
+                } else {
+                    tmpFinalHistogramHeight = ClusterHistogramViewController.GUI_HISTOGRAM_MEDIUM_HISTOGRAM_HEIGHT_VALUE;
+                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * aNumberOfDisplayedCluster - 85.0;
+                    tmpGapSpacing = tmpCurrentHistogramHeight / aNumberOfDisplayedCluster;
+                    tmpCategoryGap = tmpGapSpacing - ClusterHistogramViewController.GUI_HISTOGRAM_MEDIUM_BAR_WIDTH ;
+                }
+                break;
+            case ClusterHistogramViewController.BarWidthOption.LARGE:
+            default:
+                if (aNumberOfDisplayedCluster <= 13) { //magic number
+                    tmpCurrentHistogramHeight = GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / aNumberOfDisplayedCluster;
+                    tmpGapDeviation = tmpCurrentHistogramHeight / (GuiDefinitions.GUI_NOT_SCROLLABLE_HEIGHT / 13.0);
+                    tmpGapSpacing = ClusterHistogramViewController.GUI_HISTOGRAM_LARGE_BAR_GAP_CONST * tmpGapDeviation;
+                    tmpFinalGapSpacing = tmpCurrentHistogramHeight - tmpGapSpacing;
+                    tmpCategoryGap = tmpFinalGapSpacing - ClusterHistogramViewController.GUI_HISTOGRAM_LARGE_BAR_WIDTH;
+                } else {
+                    tmpFinalHistogramHeight = ClusterHistogramViewController.GUI_HISTOGRAM_LARGE_HISTOGRAM_HEIGHT_VALUE;
+                    tmpCurrentHistogramHeight = tmpFinalHistogramHeight * aNumberOfDisplayedCluster - 85.0;
+                    tmpGapSpacing = tmpCurrentHistogramHeight / aNumberOfDisplayedCluster;
+                    tmpCategoryGap = tmpGapSpacing - ClusterHistogramViewController.GUI_HISTOGRAM_LARGE_BAR_WIDTH;
+                }
+                break;
+        }
+        tmpHistogramHeightFactorAndCategoryGap[0] = tmpFinalHistogramHeight;
+        tmpHistogramHeightFactorAndCategoryGap[1] = tmpCategoryGap;
+        return tmpHistogramHeightFactorAndCategoryGap;
     }
 
     private StackPane createStackPaneWithContextMenuAndStructureDisplayForBar(

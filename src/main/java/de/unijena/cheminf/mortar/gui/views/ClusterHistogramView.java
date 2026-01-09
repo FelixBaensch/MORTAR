@@ -25,7 +25,7 @@
 
 package de.unijena.cheminf.mortar.gui.views;
 
-import de.unijena.cheminf.mortar.controller.HistogramViewController;
+import de.unijena.cheminf.mortar.controller.ClusterHistogramViewController;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
@@ -162,7 +162,7 @@ public class ClusterHistogramView extends AnchorPane {
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("ClusterHistogramView.applyButton.text"));
         this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("ClusterHistogramView.applyButton.tooltip")));
         this.barWidthsComboBox = new ComboBox<>();
-        for (HistogramViewController.BarWidthOption tmpBarWidthOptionConstant : HistogramViewController.BarWidthOption.values()) {
+        for (ClusterHistogramViewController.BarWidthOption tmpBarWidthOptionConstant : ClusterHistogramViewController.BarWidthOption.values()) {
             this.barWidthsComboBox.getItems().add(tmpBarWidthOptionConstant.getDisplayName());
         }
         this.barWidthsComboBox.setTooltip(GuiUtil.createTooltip(Message.get("ClusterHistogramView.comboBox.tooltip")));
