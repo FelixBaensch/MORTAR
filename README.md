@@ -36,10 +36,10 @@ See the GitHub repository here: [https://github.com/FelixBaensch/MORTAR](https:/
 MORTAR ('MOlecule fRagmenTation fRamework') is a free and open-source graphical desktop application that supports 
 molecular <i>in silico</i> fragmentation and substructure analysis. The Java/JavaFX rich client offers extensive graphical 
 functions for visualizing the fragmentation results of individual compounds or entire compound sets. 
-In addition to three currently integrated methods for fragmentation and substructure analysis - 
+In addition to four currently integrated methods for fragmentation and substructure analysis - 
 <a href="https://github.com/JonasSchaub/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
 <a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a> (with the <a href="https://github.com/cdk/cdk/pull/1225">Sugar Detection Utility</a> extension), 
-and <a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a> - MORTAR allows straightforward integration of 
+<a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a>, and <a href="https://gitlab.com/glycoinfo/molwurcs">MolWURCS</a> - MORTAR allows straightforward integration of 
 additional fragmentation algorithms to support the development of new methods at an early stage. 
 All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
 The scientific article describing MORTAR can be found here: 
@@ -76,7 +76,7 @@ to run MORTAR from the command line.
 
 <p>
 <b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.5.0/MORTAR_v1.5.0.0_WINx64_setup.exe">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR_v1.6.0.0_WINx64_setup.exe">here</a> to 
 automatically download the setup.exe of the latest version). Download the installer 
 executable, start it, and follow the instructions to install MORTAR. During installation, you are asked whether desktop 
 or start menu icons/shortcuts should be created. The executable (batch file) denoted "MORTAR" uses up to 4 GB of RAM, 
@@ -84,7 +84,7 @@ while the "MORTAR 20GB" configuration allocates up to 20 GB of your RAM for runn
 will be created, so creating at least one of the shortcuts is recommended. To start MORTAR after installation, double-click 
 one of the created shortcuts. 
 <br>
-The MORTAR program folder is located at "C:\Program Files\MORTAR\MORTARv1.5.0.0" by default, but can be adjusted during 
+The MORTAR program folder is located at "C:\Program Files\MORTAR\MORTARv1.6.0.0" by default, but can be adjusted during 
 installation. MORTAR can be uninstalled by the provided "unins000.exe" executable in the MORTAR program folder or by 
 standard Windows functions (Settings -> Apps -> Installed Apps). Note that the installation includes a full Java Runtime 
 Environment (JRE).
@@ -127,7 +127,7 @@ command line:
 </p>
 
 ```shell
-sudo dpkg -i <path to>MORTAR-1.5.0.deb
+sudo dpkg -i <path to>MORTAR-1.6.0.deb
 ```
 
 Execute the command in the directory where the package is situated or use its explicit 
@@ -147,7 +147,7 @@ command line:
 </p>
 
 ```shell
-sudo rpm -i <path to>MORTAR-1.5.0.rpm
+sudo rpm -i <path to>MORTAR-1.6.0.rpm
 ```
 
 Execute the command in the directory where the package is situated or use its explicit
@@ -158,15 +158,15 @@ installation not work for you, you can run MORTAR directly from the command line
 (see below).
 
 <p><b>JAR execution via command line (all platforms)</b>: 
-Every release has the executable JAR "MORTAR-fat-1.5.0.0.jar"
+Every release has the executable JAR "MORTAR-fat-1.6.0.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.5.0/MORTAR-fat-1.5.0.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR-fat-1.6.0.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.5.0.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.6.0.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
@@ -176,9 +176,9 @@ Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx
 
 <p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all four platforms) and AArch64/ARM 
 (on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.5.0.0.jar" is available from the distributions attached 
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.6.0.0.jar" is available from the distributions attached 
 to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.5.0/MORTAR-fat-aarch64-1.5.0.0.jar">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR-fat-aarch64-1.6.0.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
@@ -214,13 +214,16 @@ will take care of it automatically.
 * Chemistry Development Kit (CDK) version 2.12-SNAPSHOT
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
+* MolWURCS version 0.12.1
+  * [MolWURCS GitLab repository](https://gitlab.com/glycoinfo/molwurcs)
+  * License: Unknown
 * JUnit version 5.11.4
     * [JUnit 5](https://junit.org/junit5/)
     * License: Eclipse Public License 2.0
 * LibrePDF OpenPDF version 2.0.3
   * [OpenPDF GitHub repository](https://github.com/LibrePDF/OpenPDF)
   * License: GNU Lesser General Public License 2.1
-* Spotless version 7.0.2
+* Spotless version 8.1.0
   * [Spotless GitHub repository](https://github.com/diffplug/spotless)
   * License: Apache-2.0 license
 
@@ -254,6 +257,11 @@ fragmentation (Baensch et al. 2023)</a>).
 * [T. Varin et al., “Compound Set Enrichment: A Novel Approach to Analysis of Primary HTS Data,” J. Chem. Inf. Model., vol. 50, no. 12, pp. 2067–2078, Dec. 2010, doi: 10.1021/ci100203e.](https://doi.org/10.1021/ci100203e)
 * [T. Varin, A. Schuffenhauer, P. Ertl, and S. Renner, “Mining for Bioactive Scaffolds with Scaffold Networks: Improved Compound Set Enrichment from Primary Screening Data,” J. Chem. Inf. Model., vol. 51, no. 7, pp. 1528–1538, Jul. 2011, doi: 10.1021/ci2000924.](https://doi.org/10.1021/ci2000924)
 * [C. Manelfi et al., “‘Molecular Anatomy’: a new multi-dimensional hierarchical scaffold analysis tool,” J Cheminform, vol. 13, no. 1, p. 54, Dec. 2021, doi: 10.1186/s13321-021-00526-y.](https://doi.org/10.1186/s13321-021-00526-y)
+
+**WURCS**
+* [Matsubara, M., Bolton, E.E., Aoki-Kinoshita, K.F. et al. Toward integration of glycan chemical databases: an algorithm and software tool for extracting sugars from chemical structures. Anal Bioanal Chem 417, 945–956 (2025). https://doi.org/10.1007/s00216-024-05508-1](https://doi.org/10.1007/s00216-024-05508-1)
+* [Masaaki Matsubara, Kiyoko F. Aoki-Kinoshita, Nobuyuki P. Aoki, Issaku Yamada, and Hisashi Narimatsu. WURCS 2.0 Update To Encapsulate Ambiguous Carbohydrate Structures. Journal of Chemical Information and Modeling 2017 57 (4), 632-637. https://doi.org/10.1021/acs.jcim.6b00650](https://doi.org/10.1021/acs.jcim.6b00650)
+* [Kenichi Tanaka, Kiyoko F. Aoki-Kinoshita, Masaaki Kotera, Hiromichi Sawaki, Shinichiro Tsuchiya, Noriaki Fujita, Toshihide Shikanai, Masaki Kato, Shin Kawano, Issaku Yamada, and Hisashi Narimatsu. WURCS: The Web3 Unique Representation of Carbohydrate Structures. Journal of Chemical Information and Modeling 2014 54 (6), 1558-1566. https://doi.org/10.1021/ci400571e](https://doi.org/10.1021/ci400571e)
 
 **Chemistry Development Kit (CDK)**
 * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
