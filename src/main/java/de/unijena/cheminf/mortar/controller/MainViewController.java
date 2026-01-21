@@ -1246,8 +1246,8 @@ public class MainViewController {
      * @return Tab
      */
     private Tab createFragmentsTab(String aFragmentationName){
-        FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView(this.configuration);
-        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
+        final FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView(this.configuration);
+        final GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
 
         // make the fragmentation tab closeable and set cleanup function
         tmpFragmentsTab.setOnClosed(tmpEvent -> cleanupFragmentsTab(tmpFragmentsTab));
@@ -1356,6 +1356,8 @@ public class MainViewController {
             for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
                 tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
             }
+            this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
+            this.fragmentationService.clearCache();
         }
 
         Pagination tmpPagination = aFragmentsTab.getPagination();
@@ -1396,11 +1398,11 @@ public class MainViewController {
      * @return Tab
      */
     private Tab createItemsTab(String aFragmentationName){
-        ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(aFragmentationName, this.configuration);
+        final ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(aFragmentationName, this.configuration);
         tmpItemizationDataTableView.setItemsList(
                 //developers note: a modifiable list is needed for sorting, so don't let SonarCloud tell you that the Collectors are not needed here!
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
-        GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
+        final GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
 
         // make the fragmentation tab closeable and set cleanup function
         tmpItemizationTab.setOnClosed(tmpEvent -> cleanupItemizationTab(tmpItemizationTab));
@@ -1499,37 +1501,39 @@ public class MainViewController {
             for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
                 tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
             }
+            this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
+            this.fragmentationService.clearCache();
         }
 
-        Pagination pagination = aItemizationTab.getPagination();
-        if (pagination != null) {
-            pagination.setPageFactory(null);
+        Pagination tmpPagination = aItemizationTab.getPagination();
+        if (tmpPagination != null) {
+            tmpPagination.setPageFactory(null);
         }
 
-        TableView<?> table = aItemizationTab.getTableView();
-        if (table != null) {
-            table.setOnSort(null);
-            table.setOnKeyPressed(null);
+        TableView<?> tmpTable = aItemizationTab.getTableView();
+        if (tmpTable != null) {
+            tmpTable.setOnSort(null);
+            tmpTable.setOnKeyPressed(null);
 
             // clear items and replace with empty observable list to break references
-            ObservableList<?> items = table.getItems();
-            if (items != null) items.clear();
-            table.setItems(FXCollections.observableArrayList());
+            ObservableList<?> tmpItems = tmpTable.getItems();
+            if (tmpItems != null) tmpItems.clear();
+            tmpTable.setItems(FXCollections.observableArrayList());
 
             // clear columns and any dynamically created subcolumns (fragment columns)
-            table.getColumns().clear();
+            tmpTable.getColumns().clear();
 
         }
 
         // best-effort: remove button handlers and unbind visibleProperty by scanning grid children
-        Node content = aItemizationTab.getContent(); // likely null already
-        if (content instanceof GridPane gp) {
-            for (Node n : gp.getChildren()) {
-                if (n instanceof Button) {
-                    ((Button) n).setOnAction(null);
-                    n.visibleProperty().unbind();
-                } else if (n instanceof Parent) {
-                    for (Node child : ((Parent) n).getChildrenUnmodifiable()) {
+        Node tmpContent = aItemizationTab.getContent(); // likely null already
+        if (tmpContent instanceof GridPane tmpGridPane) {
+            for (Node tmpNode : tmpGridPane.getChildren()) {
+                if (tmpNode instanceof Button) {
+                    ((Button) tmpNode).setOnAction(null);
+                    tmpNode.visibleProperty().unbind();
+                } else if (tmpNode instanceof Parent) {
+                    for (Node child : ((Parent) tmpNode).getChildrenUnmodifiable()) {
                         if (child instanceof Button) {
                             ((Button) child).setOnAction(null);
                             child.visibleProperty().unbind();
@@ -1537,9 +1541,9 @@ public class MainViewController {
                     }
                 }
             }
-            gp.getChildren().clear();
-            gp.getColumnConstraints().clear();
-            gp.getRowConstraints().clear();
+            tmpGridPane.getChildren().clear();
+            tmpGridPane.getColumnConstraints().clear();
+            tmpGridPane.getRowConstraints().clear();
         }
 
         aItemizationTab.getProperties().clear();
