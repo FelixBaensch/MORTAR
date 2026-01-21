@@ -62,10 +62,14 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
@@ -79,6 +83,7 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -1243,6 +1248,25 @@ public class MainViewController {
     private Tab createFragmentsTab(String aFragmentationName){
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView(this.configuration);
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
+
+        // make the fragmentation tab closeable and set cleanup function
+        tmpFragmentsTab.setOnClosed(tmpEvent -> cleanupFragmentsTab(tmpFragmentsTab));
+        tmpFragmentsTab.setClosable(true);
+
+        // add close all context menu and confirmation menu
+        MenuItem tmpCloseAllItem = new MenuItem("Close All Tabs");
+        tmpCloseAllItem.setOnAction(event -> {
+            ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
+                    Message.get("MainViewController.Warning.CloseAllTabs.Title"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Header"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
+
+            if (tmpConfirmationResult == ButtonType.OK) {
+                this.mainTabPane.getTabs().removeIf(Tab::isClosable);
+            }
+        });
+        tmpFragmentsTab.setContextMenu(new ContextMenu(tmpCloseAllItem));
+
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         ObservableList<MoleculeDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
         for (MoleculeDataModel tmpMoleculeDataModel : tmpList) {
@@ -1305,6 +1329,66 @@ public class MainViewController {
     }
     //
     /**
+     * Perform cleanup of a GridTabForTableView to help release UI and model references so
+     * the tab's contents can be garbage-collected.
+     *
+     * @param aFragmentsTab the GridTabForTableView to clean up
+     */
+    private void cleanupFragmentsTab(GridTabForTableView aFragmentsTab) {
+        aFragmentsTab.setContent(null);
+
+        // Clear fragments if there is no other tab with the same fragmentation name.
+        // Because the fragments are used in the itemization tab as well as in the fragments tab
+        // it is necessary to check if BOTH are closed. (could probablybe a bit more robust if relying on
+        // some registry handling or some set relationship between tabs)
+        boolean isCleanable = true;
+        String tmpFragmentationName = aFragmentsTab.getFragmentationNameOutOfTitle();
+        for (Tab tmpTab : this.mainTabPane.getTabs()) {
+            if (!(tmpTab instanceof GridTabForTableView)) {
+                continue;
+            }
+            if (Objects.equals(tmpFragmentationName, ((GridTabForTableView) tmpTab).getFragmentationNameOutOfTitle())) {
+                isCleanable = false;
+                break;
+            }
+        }
+        if (isCleanable) {
+            for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
+                tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
+            }
+        }
+
+        Pagination tmpPagination = aFragmentsTab.getPagination();
+        if (tmpPagination != null) {
+            tmpPagination.setPageFactory(null);
+        }
+
+        // TableView: unbind, clear listeners/handlers and clear items
+        TableView<?> tmpTable = aFragmentsTab.getTableView();
+        if (tmpTable != null) {
+            tmpTable.setOnSort(null);
+            tmpTable.setOnKeyPressed(null);
+
+            // clear items list to break model references
+            ObservableList<?> items = tmpTable.getItems();
+            if (items != null) items.clear();
+            tmpTable.setItems(FXCollections.observableArrayList());
+
+            // clear columns to break cell/skin references
+            tmpTable.getColumns().clear();
+        }
+
+        aFragmentsTab.getProperties().clear();
+        aFragmentsTab.setId(null);
+        aFragmentsTab.setText(null);
+
+        // Remove tab from TabPane to stop it being strongly referenced by UI.
+        if (this.mainTabPane != null) {
+            this.mainTabPane.getTabs().remove(aFragmentsTab);
+        }
+    }
+    //
+    /**
      * Creates and returns a tab which visualizes the resulting fragments of each molecule that has undergone the
      * fragmentation with the given name.
      *
@@ -1317,6 +1401,25 @@ public class MainViewController {
                 //developers note: a modifiable list is needed for sorting, so don't let SonarCloud tell you that the Collectors are not needed here!
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
+
+        // make the fragmentation tab closeable and set cleanup function
+        tmpItemizationTab.setOnClosed(tmpEvent -> cleanupItemizationTab(tmpItemizationTab));
+        tmpItemizationTab.setClosable(true);
+
+        // add close all context menu and confirmation menu
+        MenuItem tmpCloseAllItem = new MenuItem("Close All Tabs");
+        tmpCloseAllItem.setOnAction(event -> {
+            ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
+                    Message.get("MainViewController.Warning.CloseAllTabs.Title"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Header"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
+
+            if (tmpConfirmationResult == ButtonType.OK) {
+                this.mainTabPane.getTabs().removeIf(Tab::isClosable);
+            }
+        });
+        tmpItemizationTab.setContextMenu(new ContextMenu(tmpCloseAllItem));
+
         this.mainTabPane.getTabs().add(tmpItemizationTab);
         Pagination tmpPagination = this.createPaginationWithSuitablePageCount(tmpItemizationDataTableView.getItemsList().size());
         tmpPagination.setPageFactory(pageIndex -> tmpItemizationDataTableView.createItemizationTableViewPage(pageIndex, aFragmentationName, this.settingsContainer));
@@ -1366,6 +1469,86 @@ public class MainViewController {
             tmpOpenHistogramViewButton.setDisable(true);
         }
         return tmpItemizationTab;
+    }
+    //
+    /**
+     * Perform cleanup of a GridTabForTableView created for itemization to help release UI and model
+     * references so the tab's contents can be garbage-collected.
+     *
+     * @param aItemizationTab the GridTabForTableView to clean up
+     */
+    private void cleanupItemizationTab(GridTabForTableView aItemizationTab) {
+        aItemizationTab.setContent(null);
+
+        // Clear fragments if there is no other tab with the same fragmentation name.
+        // Because the fragments are used in the itemization tab as well as in the fragments tab
+        // it is necessary to check if BOTH are closed. (could probablybe a bit more robust if relying on
+        // some registry handling or some set relationship between tabs)
+        boolean isCleanable = true;
+        String tmpFragmentationName = aItemizationTab.getFragmentationNameOutOfTitle();
+        for (Tab tmpTab : this.mainTabPane.getTabs()) {
+            if (!(tmpTab instanceof GridTabForTableView)) {
+                continue;
+            }
+            if (Objects.equals(tmpFragmentationName, ((GridTabForTableView) tmpTab).getFragmentationNameOutOfTitle())) {
+                isCleanable = false;
+                break;
+            }
+        }
+        if (isCleanable) {
+            for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
+                tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
+            }
+        }
+
+        Pagination pagination = aItemizationTab.getPagination();
+        if (pagination != null) {
+            pagination.setPageFactory(null);
+        }
+
+        TableView<?> table = aItemizationTab.getTableView();
+        if (table != null) {
+            table.setOnSort(null);
+            table.setOnKeyPressed(null);
+
+            // clear items and replace with empty observable list to break references
+            ObservableList<?> items = table.getItems();
+            if (items != null) items.clear();
+            table.setItems(FXCollections.observableArrayList());
+
+            // clear columns and any dynamically created subcolumns (fragment columns)
+            table.getColumns().clear();
+
+        }
+
+        // best-effort: remove button handlers and unbind visibleProperty by scanning grid children
+        Node content = aItemizationTab.getContent(); // likely null already
+        if (content instanceof GridPane gp) {
+            for (Node n : gp.getChildren()) {
+                if (n instanceof Button) {
+                    ((Button) n).setOnAction(null);
+                    n.visibleProperty().unbind();
+                } else if (n instanceof Parent) {
+                    for (Node child : ((Parent) n).getChildrenUnmodifiable()) {
+                        if (child instanceof Button) {
+                            ((Button) child).setOnAction(null);
+                            child.visibleProperty().unbind();
+                        }
+                    }
+                }
+            }
+            gp.getChildren().clear();
+            gp.getColumnConstraints().clear();
+            gp.getRowConstraints().clear();
+        }
+
+        aItemizationTab.getProperties().clear();
+        aItemizationTab.setId(null);
+        aItemizationTab.setText(null);
+
+        if (this.mainTabPane != null) {
+            this.mainTabPane.getTabs().remove(aItemizationTab);
+        }
     }
     //
     /**
