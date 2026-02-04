@@ -1246,26 +1246,17 @@ public class MainViewController {
      * @return Tab
      */
     private Tab createFragmentsTab(String aFragmentationName){
-        final FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView(this.configuration);
-        final GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
+        FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView(this.configuration);
+        GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
 
         // make the fragmentation tab closeable and set cleanup function
-        tmpFragmentsTab.setOnClosed(tmpEvent -> cleanupFragmentsTab(tmpFragmentsTab));
+        tmpFragmentsTab.setOnClosed(tmpEvent -> this.cleanupGridTab(tmpFragmentsTab));
         tmpFragmentsTab.setClosable(true);
 
-        // add close all context menu and confirmation menu
-        MenuItem tmpCloseAllItem = new MenuItem("Close All Tabs");
-        tmpCloseAllItem.setOnAction(event -> {
-            ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
-                    Message.get("MainViewController.Warning.CloseAllTabs.Title"),
-                    Message.get("MainViewController.Warning.CloseAllTabs.Header"),
-                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
-
-            if (tmpConfirmationResult == ButtonType.OK) {
-                this.mainTabPane.getTabs().removeIf(Tab::isClosable);
-            }
-        });
-        tmpFragmentsTab.setContextMenu(new ContextMenu(tmpCloseAllItem));
+        // add close all and close Tab context menu and confirmation menu
+        MenuItem tmpCloseAllItem = getCloseAllMenuItem();
+        MenuItem tmpCloseTabItem = getCloseTabMenuItem(tmpFragmentsTab);
+        tmpFragmentsTab.setContextMenu(new ContextMenu(tmpCloseTabItem, tmpCloseAllItem));
 
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
         ObservableList<MoleculeDataModel> tmpList = FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName));
@@ -1329,30 +1320,99 @@ public class MainViewController {
     }
     //
     /**
-     * Perform cleanup of a GridTabForTableView to help release UI and model references so
-     * the tab's contents can be garbage-collected.
+     * Makes a menu item to close all tabs upon pressing and confirming a warning message.
+     * The warning message prompts the user to confirm that he wants to close all tabs and
+     * therefore is fine with deleting the fragmentation results if not exported.
      *
-     * @param aFragmentsTab the GridTabForTableView to clean up
+     * @return the menu item
      */
-    private void cleanupFragmentsTab(GridTabForTableView aFragmentsTab) {
-        aFragmentsTab.setContent(null);
+    private MenuItem getCloseAllMenuItem() {
+        MenuItem tmpCloseAllItem = new MenuItem("Close All Tabs");
+        tmpCloseAllItem.setOnAction(event -> {
+            ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
+                    Message.get("MainViewController.Warning.CloseAllTabs.Title"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Header"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
 
-        // Clear fragments if there is no other tab with the same fragmentation name.
-        // Because the fragments are used in the itemization tab as well as in the fragments tab
-        // it is necessary to check if BOTH are closed. (could probablybe a bit more robust if relying on
-        // some registry handling or some set relationship between tabs)
-        boolean isCleanable = true;
-        String tmpFragmentationName = aFragmentsTab.getFragmentationNameOutOfTitle();
+            if (tmpConfirmationResult == ButtonType.OK) {
+                List<GridTabForTableView> toCleanup = new ArrayList<>();
+                mainTabPane.getTabs().removeIf(tmpTab -> {
+                    // it is assumed here that MORTAR does NOT have any other
+                    // types of tabs that could be closed besides the GridTableView
+                    // as the itemization tab and fragmentation tab are both constructed
+                    // as GridTableViews
+                    if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
+                        toCleanup.add(tmpGridTab);
+                        return true;
+                    }
+                    return false;
+                });
+                toCleanup.forEach(this::cleanupGridTab);
+            }
+        });
+        return tmpCloseAllItem;
+    }
+    //
+    /**
+     * Makes a new menu item to close the tab of the displayed menu with a
+     * confirmation dialogue if this would clean up the data.
+     *
+     * @return the menu item to close this specific tab.
+     */
+    private MenuItem getCloseTabMenuItem(GridTabForTableView aGridTableView) {
+        MenuItem tmpCloseTabItem = new MenuItem("Close Tab");
+        tmpCloseTabItem.setOnAction(event -> {
+            if (isGridTabCleanable(aGridTableView)) {
+                ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
+                        Message.get("MainViewController.Warning.CloseTab.Title"),
+                        Message.get("MainViewController.Warning.CloseTab.Header"),
+                        Message.get("MainViewController.Warning.CloseTab.Content"));
+
+                if (tmpConfirmationResult == ButtonType.OK) {
+                    this.mainTabPane.getTabs().remove(aGridTableView);
+                    this.cleanupGridTab(aGridTableView);
+                }
+
+            } else {
+                this.mainTabPane.getTabs().remove(aGridTableView);
+            }
+        });
+        return tmpCloseTabItem;
+    }
+    //
+    /**
+     *
+     * Check if there is no other tab with the same fragmentation name.
+     * Because the fragments are used in the itemization tab as well as in the fragments tab
+     * it is necessary to check if BOTH are closed.
+     *
+     * @param aGridTab the tab to check if can be cleaned up
+     * @return true if it can be cleaned up false otherwise
+     */
+    private boolean isGridTabCleanable(GridTabForTableView aGridTab) {
+        String tmpFragmentationName = aGridTab.getFragmentationNameOutOfTitle();
         for (Tab tmpTab : this.mainTabPane.getTabs()) {
             if (!(tmpTab instanceof GridTabForTableView)) {
                 continue;
             }
             if (Objects.equals(tmpFragmentationName, ((GridTabForTableView) tmpTab).getFragmentationNameOutOfTitle())) {
-                isCleanable = false;
-                break;
+                return false;
             }
         }
-        if (isCleanable) {
+        return true;
+    }
+    //
+    /**
+     * Perform cleanup of a GridTabForTableView to help release UI and model references so
+     * the tab's contents can be garbage-collected.
+     *
+     * @param aGridTab the GridTabForTableView to clean up
+     */
+    private void cleanupGridTab(GridTabForTableView aGridTab) {
+        aGridTab.setContent(null);
+
+        String tmpFragmentationName = aGridTab.getFragmentationNameOutOfTitle();
+        if (isGridTabCleanable(aGridTab)) {
             for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
                 tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
             }
@@ -1360,34 +1420,34 @@ public class MainViewController {
             this.fragmentationService.clearCache();
         }
 
-        Pagination tmpPagination = aFragmentsTab.getPagination();
+        Pagination tmpPagination = aGridTab.getPagination();
         if (tmpPagination != null) {
             tmpPagination.setPageFactory(null);
         }
 
         // TableView: unbind, clear listeners/handlers and clear items
-        TableView<?> tmpTable = aFragmentsTab.getTableView();
+        TableView<?> tmpTable = aGridTab.getTableView();
         if (tmpTable != null) {
             tmpTable.setOnSort(null);
             tmpTable.setOnKeyPressed(null);
 
             // clear items list to break model references
             ObservableList<?> items = tmpTable.getItems();
-            if (items != null) items.clear();
+            if (items != null) {
+                items.clear();
+            }
             tmpTable.setItems(FXCollections.observableArrayList());
 
             // clear columns to break cell/skin references
             tmpTable.getColumns().clear();
         }
 
-        aFragmentsTab.getProperties().clear();
-        aFragmentsTab.setId(null);
-        aFragmentsTab.setText(null);
+        aGridTab.getProperties().clear();
+        aGridTab.setId(null);
+        aGridTab.setText(null);
 
-        // Remove tab from TabPane to stop it being strongly referenced by UI.
-        if (this.mainTabPane != null) {
-            this.mainTabPane.getTabs().remove(aFragmentsTab);
-        }
+        // Remove tab from TabPane to stop it being strongly referenced by UI
+        this.mainTabPane.getTabs().remove(aGridTab);
     }
     //
     /**
@@ -1398,29 +1458,20 @@ public class MainViewController {
      * @return Tab
      */
     private Tab createItemsTab(String aFragmentationName){
-        final ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(aFragmentationName, this.configuration);
+        ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(aFragmentationName, this.configuration);
         tmpItemizationDataTableView.setItemsList(
                 //developers note: a modifiable list is needed for sorting, so don't let SonarCloud tell you that the Collectors are not needed here!
                 this.moleculeDataModelList.stream().filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)).collect(Collectors.toList()));
-        final GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
+        GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
 
         // make the fragmentation tab closeable and set cleanup function
-        tmpItemizationTab.setOnClosed(tmpEvent -> cleanupItemizationTab(tmpItemizationTab));
+        tmpItemizationTab.setOnClosed(tmpEvent -> this.cleanupGridTab(tmpItemizationTab));
         tmpItemizationTab.setClosable(true);
 
-        // add close all context menu and confirmation menu
-        MenuItem tmpCloseAllItem = new MenuItem("Close All Tabs");
-        tmpCloseAllItem.setOnAction(event -> {
-            ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
-                    Message.get("MainViewController.Warning.CloseAllTabs.Title"),
-                    Message.get("MainViewController.Warning.CloseAllTabs.Header"),
-                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
-
-            if (tmpConfirmationResult == ButtonType.OK) {
-                this.mainTabPane.getTabs().removeIf(Tab::isClosable);
-            }
-        });
-        tmpItemizationTab.setContextMenu(new ContextMenu(tmpCloseAllItem));
+        // add close all and close Tab context menu and confirmation menu
+        MenuItem tmpCloseAllItem = getCloseAllMenuItem();
+        MenuItem tmpCloseTabItem = getCloseTabMenuItem(tmpItemizationTab);
+        tmpItemizationTab.setContextMenu(new ContextMenu(tmpCloseTabItem, tmpCloseAllItem));
 
         this.mainTabPane.getTabs().add(tmpItemizationTab);
         Pagination tmpPagination = this.createPaginationWithSuitablePageCount(tmpItemizationDataTableView.getItemsList().size());
@@ -1471,88 +1522,6 @@ public class MainViewController {
             tmpOpenHistogramViewButton.setDisable(true);
         }
         return tmpItemizationTab;
-    }
-    //
-    /**
-     * Perform cleanup of a GridTabForTableView created for itemization to help release UI and model
-     * references so the tab's contents can be garbage-collected.
-     *
-     * @param aItemizationTab the GridTabForTableView to clean up
-     */
-    private void cleanupItemizationTab(GridTabForTableView aItemizationTab) {
-        aItemizationTab.setContent(null);
-
-        // Clear fragments if there is no other tab with the same fragmentation name.
-        // Because the fragments are used in the itemization tab as well as in the fragments tab
-        // it is necessary to check if BOTH are closed. (could probablybe a bit more robust if relying on
-        // some registry handling or some set relationship between tabs)
-        boolean isCleanable = true;
-        String tmpFragmentationName = aItemizationTab.getFragmentationNameOutOfTitle();
-        for (Tab tmpTab : this.mainTabPane.getTabs()) {
-            if (!(tmpTab instanceof GridTabForTableView)) {
-                continue;
-            }
-            if (Objects.equals(tmpFragmentationName, ((GridTabForTableView) tmpTab).getFragmentationNameOutOfTitle())) {
-                isCleanable = false;
-                break;
-            }
-        }
-        if (isCleanable) {
-            for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
-                tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
-            }
-            this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
-            this.fragmentationService.clearCache();
-        }
-
-        Pagination tmpPagination = aItemizationTab.getPagination();
-        if (tmpPagination != null) {
-            tmpPagination.setPageFactory(null);
-        }
-
-        TableView<?> tmpTable = aItemizationTab.getTableView();
-        if (tmpTable != null) {
-            tmpTable.setOnSort(null);
-            tmpTable.setOnKeyPressed(null);
-
-            // clear items and replace with empty observable list to break references
-            ObservableList<?> tmpItems = tmpTable.getItems();
-            if (tmpItems != null) tmpItems.clear();
-            tmpTable.setItems(FXCollections.observableArrayList());
-
-            // clear columns and any dynamically created subcolumns (fragment columns)
-            tmpTable.getColumns().clear();
-
-        }
-
-        // best-effort: remove button handlers and unbind visibleProperty by scanning grid children
-        Node tmpContent = aItemizationTab.getContent(); // likely null already
-        if (tmpContent instanceof GridPane tmpGridPane) {
-            for (Node tmpNode : tmpGridPane.getChildren()) {
-                if (tmpNode instanceof Button) {
-                    ((Button) tmpNode).setOnAction(null);
-                    tmpNode.visibleProperty().unbind();
-                } else if (tmpNode instanceof Parent) {
-                    for (Node child : ((Parent) tmpNode).getChildrenUnmodifiable()) {
-                        if (child instanceof Button) {
-                            ((Button) child).setOnAction(null);
-                            child.visibleProperty().unbind();
-                        }
-                    }
-                }
-            }
-            tmpGridPane.getChildren().clear();
-            tmpGridPane.getColumnConstraints().clear();
-            tmpGridPane.getRowConstraints().clear();
-        }
-
-        aItemizationTab.getProperties().clear();
-        aItemizationTab.setId(null);
-        aItemizationTab.setText(null);
-
-        if (this.mainTabPane != null) {
-            this.mainTabPane.getTabs().remove(aItemizationTab);
-        }
     }
     //
     /**

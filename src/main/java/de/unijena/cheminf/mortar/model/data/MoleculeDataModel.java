@@ -404,11 +404,7 @@ public class MoleculeDataModel {
      * @param aFragmentationName the fragmentation name of the fragments that should be cleared.
      */
     public void clearFragmentsForFragmentation(String aFragmentationName) {
-        System.out.println("currently in the cleanup for fragments of a specific fragmentation");
-        List<FragmentDataModel> tmpDeleted =  this.fragments.remove(aFragmentationName);
-        for (FragmentDataModel tmpFragmentDataModel : tmpDeleted) {
-            System.out.println("deleted: " + tmpFragmentDataModel.getUniqueSmiles() + "\t for fragmentation: " + aFragmentationName);
-        }
+        this.fragments.remove(aFragmentationName);
         this.fragmentFrequencies.remove(aFragmentationName);
     }
     //</editor-fold>
