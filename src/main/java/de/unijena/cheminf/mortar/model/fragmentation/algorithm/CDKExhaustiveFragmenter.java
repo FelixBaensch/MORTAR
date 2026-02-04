@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2026  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -61,6 +61,69 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
+    //<editor-fold desc="Enum SugarTypeToRemoveOption">
+    /**
+     * Enum for options concerning the type of sugars to remove or detect.
+     */
+//    public enum SaturationOption implements IDisplayEnum {
+//        /**
+//         * Remove/detect only circular sugars.
+//         */
+//        (
+//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Circular.displayName"),
+//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Circular.tooltip")),
+//
+//        /**
+//         * Remove/detect only linear sugars.
+//         */
+//        ExhaustiveFragmenter(Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Linear.displayName"),
+//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Linear.tooltip")),
+//
+//        /**
+//         * Remove/detect both circular and linear sugars.
+//         */
+//        CIRCULAR_AND_LINEAR(Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Both.displayName"),
+//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Both.tooltip"));
+//        /**
+//         * Language-specific name for display in GUI.
+//         */
+//        private final String displayName;
+//        /**
+//         * Language-specific tooltip text for display in GUI.
+//         */
+//        private final String tooltip;
+//
+//        /**
+//         * Constructor.
+//         *
+//         * @param aDisplayName display name
+//         * @param aTooltip     tooltip text
+//         */
+//        private SaturationOption(String aDisplayName, String aTooltip) {
+//            this.displayName = aDisplayName;
+//            this.tooltip = aTooltip;
+//        }
+//        //
+//        @Override
+//        public String getDisplayName() {
+//            return this.displayName;
+//        }
+//        //
+//        @Override
+//        public String getTooltipText() {
+//            return this.tooltip;
+//        }
+//
+//        static {
+//            for (SaturationOption tmpSatOption : values()) {
+//                if (tmpSatOption.name() != ExhaustiveFragmenter.Saturation[])
+//            }
+//            if (!(values().length == ExhaustiveFragmenter.Saturation.values().length)) {
+//                throw new IllegalStateException("Every option from the Saturation enum of the CDK must be covered");
+//            }
+//        }
+//    }
+    //
     //<editor-fold desc="Public static final variables">
     /**
      * The default value for the minimum fragment size used for the fragmentation.
@@ -108,7 +171,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Constructor">
     /**
-     * Constructor, all settings are initialised with their default values as declared in the respective public constants.
+     * Constructor, all settings are initialized with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
         int tmpNumberOfSettingsForTooltipMapSize = 1;
@@ -208,21 +271,18 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         return Message.get("CDKExhaustiveFragmenter.displayName");
     }
 
-    @Override
     public FragmentSaturationOption getFragmentSaturationSetting() throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
         // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
         throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
-    @Override
     public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
         // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
         throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
     }
 
-    @Override
     public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws UnsupportedOperationException {
         //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
         // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.

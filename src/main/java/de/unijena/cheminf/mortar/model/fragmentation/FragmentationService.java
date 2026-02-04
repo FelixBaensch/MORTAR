@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2026  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -36,7 +36,6 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragment
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.MolWURCSFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGeneratorFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
@@ -208,6 +207,11 @@ public class FragmentationService {
     private final IMoleculeFragmenter cdkCircularF;
     //
     /**
+     * Exhaustive fragmenter.
+     */
+    private final IMoleculeFragmenter cdkEF;
+    //
+    /**
      * Property of display name of selected fragmenter.
      */
     private final SimpleStringProperty selectedFragmenterDisplayNameProperty;
@@ -230,6 +234,8 @@ public class FragmentationService {
         this.fragmenters[3] = this.molWURCSF;
         this.cdkCircularF = new CDKCircularFragmenter();
         this.fragmenters[4] = this.cdkCircularF;
+        this.cdkEF = new CDKExhaustiveFragmenter();
+        this.fragmenters[4] = this.cdkEF;
         //
         this.selectedFragmenterDisplayNameProperty = new SimpleStringProperty();
         try {
