@@ -1334,40 +1334,35 @@ public class MainViewController {
      * @return the menu item
      */
     private MenuItem getCloseAllMenuItem() {
-        MenuItem tmpCloseAllItem = new MenuItem("Close All Tabs");
-        tmpCloseAllItem.setOnAction(event -> {
-            if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
+        MenuItem closeAllItem = new MenuItem("Close All Tabs");
+        closeAllItem.setOnAction(event -> closeAllTabs());
+        return closeAllItem;
+    }
+    //
+    /**
+     * Closes all tabs that are closeable and cleans up the data.
+     */
+    private void closeAllTabs() {
+        if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
 
-                Pair<Boolean, ButtonType> tmpCcheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
-                        Message.get("MainViewController.Warning.CloseAllTabs.Title"),
-                        Message.get("MainViewController.Warning.CloseAllTabs.Header"),
-                        Message.get("MainViewController.Warning.CloseAllTabs.Content"));
-                ButtonType tmpConfirmationResult = tmpCcheckAndConfirmationResult.getValue();
-                boolean isCheckboxChecked = tmpCcheckAndConfirmationResult.getKey();
+            Pair<Boolean, ButtonType> tmpCcheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+                    Message.get("MainViewController.Warning.CloseAllTabs.Title"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Header"),
+                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
+            ButtonType tmpConfirmationResult = tmpCcheckAndConfirmationResult.getValue();
+            boolean isCheckboxChecked = tmpCcheckAndConfirmationResult.getKey();
 
-                if (tmpConfirmationResult == ButtonType.OK) {
-                    List<GridTabForTableView> toCleanup = new ArrayList<>();
-                    mainTabPane.getTabs().removeIf(tmpTab -> {
-                        // it is assumed here that MORTAR does NOT have any other
-                        // types of tabs that could be closed besides the GridTableView
-                        // as the itemization tab and fragmentation tab are both constructed
-                        // as GridTableViews
-                        if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
-                            toCleanup.add(tmpGridTab);
-                            return true;
-                        }
-                        return false;
-                    });
-                    toCleanup.forEach(this::cleanupGridTab);
+            if (isCheckboxChecked) {
+                this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
+            }
 
-                    if (isCheckboxChecked) {
-                        this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
-                    }
-
-                }
-            } else {
+            if (tmpConfirmationResult == ButtonType.OK) {
                 List<GridTabForTableView> toCleanup = new ArrayList<>();
                 mainTabPane.getTabs().removeIf(tmpTab -> {
+                    // it is assumed here that MORTAR does NOT have any other
+                    // types of tabs that could be closed besides the GridTableView
+                    // as the itemization tab and fragmentation tab are both constructed
+                    // as GridTableViews
                     if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
                         toCleanup.add(tmpGridTab);
                         return true;
@@ -1375,10 +1370,18 @@ public class MainViewController {
                     return false;
                 });
                 toCleanup.forEach(this::cleanupGridTab);
-
             }
-        });
-        return tmpCloseAllItem;
+        } else {
+            List<GridTabForTableView> toCleanup = new ArrayList<>();
+            mainTabPane.getTabs().removeIf(tmpTab -> {
+                if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
+                    toCleanup.add(tmpGridTab);
+                    return true;
+                }
+                return false;
+            });
+            toCleanup.forEach(this::cleanupGridTab);
+        }
     }
     //
     /**
@@ -1387,25 +1390,34 @@ public class MainViewController {
      *
      * @return the menu item to close this specific tab.
      */
-    private MenuItem getCloseTabMenuItem(GridTabForTableView aGridTableView) {
-        MenuItem tmpCloseTabItem = new MenuItem("Close Tab");
-        tmpCloseTabItem.setOnAction(event -> {
-            if (isGridTabCleanable(aGridTableView)) {
-                ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
-                        Message.get("MainViewController.Warning.CloseTab.Title"),
-                        Message.get("MainViewController.Warning.CloseTab.Header"),
-                        Message.get("MainViewController.Warning.CloseTab.Content"));
+    private MenuItem getCloseTabMenuItem(GridTabForTableView gridTableView) {
+        MenuItem closeTabItem = new MenuItem("Close Tab");
 
-                if (tmpConfirmationResult == ButtonType.OK) {
-                    this.mainTabPane.getTabs().remove(aGridTableView);
-                    this.cleanupGridTab(aGridTableView);
-                }
+        closeTabItem.setOnAction(event -> closeTab(gridTableView));
 
-            } else {
-                this.mainTabPane.getTabs().remove(aGridTableView);
+        return closeTabItem;
+    }
+    //
+    /**
+     * Closes the tab of the grid table and cleans up the referenced data if possible.
+     *
+     * @param gridTableView the tab to remove.
+     */
+    private void closeTab(GridTabForTableView gridTableView) {
+        if (isGridTabCleanable(gridTableView)) {
+            Pair<Boolean, ButtonType> confirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+                    Message.get("MainViewController.Warning.CloseTab.Title"),
+                    Message.get("MainViewController.Warning.CloseTab.Header"),
+                    Message.get("MainViewController.Warning.CloseTab.Content")
+            );
+            if (confirmationResult.getValue() != ButtonType.OK) {
+                return;
             }
-        });
-        return tmpCloseTabItem;
+        }
+
+        // Remove the tab and cleanup
+        mainTabPane.getTabs().remove(gridTableView);
+        cleanupGridTab(gridTableView);
     }
     //
     /**

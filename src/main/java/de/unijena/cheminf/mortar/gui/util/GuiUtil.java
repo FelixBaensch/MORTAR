@@ -210,7 +210,6 @@ public class GuiUtil {
      */
     public static Pair<Boolean, ButtonType> guiConfirmationWithDeactivationAlert(String aTitle, String aHeaderText, String aContentText) {
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        //tmpAlert.setResizable(true);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
         tmpAlert.setContentText(aContentText);
