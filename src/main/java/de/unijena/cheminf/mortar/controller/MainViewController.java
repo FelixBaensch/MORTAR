@@ -87,6 +87,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -448,10 +449,19 @@ public class MainViewController {
                     Message.get("MainViewController.Warning.FragmentationRunning.Header"),
                     Message.get("MainViewController.Warning.FragmentationRunning.Content"));
         } else {
-            tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
-                    Message.get("MainViewController.Warning.DataLoss.Title"),
-                    Message.get("MainViewController.Warning.DataLoss.Header"),
-                    Message.get("MainViewController.Warning.DataLoss.Content"));
+            if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
+                Pair<Boolean, ButtonType> tmpConfirmation = GuiUtil.guiConfirmationWithDeactivationAlert(
+                        Message.get("MainViewController.Warning.DataLoss.Title"),
+                        Message.get("MainViewController.Warning.DataLoss.Header"),
+                        Message.get("MainViewController.Warning.DataLoss.Content"));
+
+                if (tmpConfirmation.getKey()) {
+                    this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
+                }
+                tmpConfirmationResult = tmpConfirmation.getValue();
+            } else {
+                return true;
+            }
         }
         return tmpConfirmationResult == ButtonType.OK;
     }
@@ -1326,18 +1336,38 @@ public class MainViewController {
     private MenuItem getCloseAllMenuItem() {
         MenuItem tmpCloseAllItem = new MenuItem("Close All Tabs");
         tmpCloseAllItem.setOnAction(event -> {
-            ButtonType tmpConfirmationResult = GuiUtil.guiConfirmationAlert(
-                    Message.get("MainViewController.Warning.CloseAllTabs.Title"),
-                    Message.get("MainViewController.Warning.CloseAllTabs.Header"),
-                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
+            if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
 
-            if (tmpConfirmationResult == ButtonType.OK) {
+                Pair<Boolean, ButtonType> tmpCcheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+                        Message.get("MainViewController.Warning.CloseAllTabs.Title"),
+                        Message.get("MainViewController.Warning.CloseAllTabs.Header"),
+                        Message.get("MainViewController.Warning.CloseAllTabs.Content"));
+                ButtonType tmpConfirmationResult = tmpCcheckAndConfirmationResult.getValue();
+                boolean isCheckboxChecked = tmpCcheckAndConfirmationResult.getKey();
+
+                if (tmpConfirmationResult == ButtonType.OK) {
+                    List<GridTabForTableView> toCleanup = new ArrayList<>();
+                    mainTabPane.getTabs().removeIf(tmpTab -> {
+                        // it is assumed here that MORTAR does NOT have any other
+                        // types of tabs that could be closed besides the GridTableView
+                        // as the itemization tab and fragmentation tab are both constructed
+                        // as GridTableViews
+                        if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
+                            toCleanup.add(tmpGridTab);
+                            return true;
+                        }
+                        return false;
+                    });
+                    toCleanup.forEach(this::cleanupGridTab);
+
+                    if (isCheckboxChecked) {
+                        this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
+                    }
+
+                }
+            } else {
                 List<GridTabForTableView> toCleanup = new ArrayList<>();
                 mainTabPane.getTabs().removeIf(tmpTab -> {
-                    // it is assumed here that MORTAR does NOT have any other
-                    // types of tabs that could be closed besides the GridTableView
-                    // as the itemization tab and fragmentation tab are both constructed
-                    // as GridTableViews
                     if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
                         toCleanup.add(tmpGridTab);
                         return true;
@@ -1345,6 +1375,7 @@ public class MainViewController {
                     return false;
                 });
                 toCleanup.forEach(this::cleanupGridTab);
+
             }
         });
         return tmpCloseAllItem;

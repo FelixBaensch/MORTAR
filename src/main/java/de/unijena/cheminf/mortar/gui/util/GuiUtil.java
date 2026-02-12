@@ -39,6 +39,7 @@ import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -59,8 +60,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.util.Pair;
 import javafx.util.StringConverter;
 
 import org.openscience.cdk.exception.CDKException;
@@ -194,6 +197,36 @@ public class GuiUtil {
                 GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
         tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
+    }
+    /**
+     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
+     * It also checks a global setting and also has the possibility to change that setting
+     * if the checkbox in the alert window was checked.
+     *
+     * @param aTitle Title of the confirmation alert
+     * @param aHeaderText Header of the confirmation alert
+     * @param aContentText Text that the confirmation alert contains
+     * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
+     */
+    public static Pair<Boolean, ButtonType> guiConfirmationWithDeactivationAlert(String aTitle, String aHeaderText, String aContentText) {
+        Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        //tmpAlert.setResizable(true);
+        tmpAlert.setTitle(aTitle);
+        tmpAlert.setHeaderText(aHeaderText);
+        tmpAlert.setContentText(aContentText);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        CheckBox tmpDeactivateCheckBox = new CheckBox("Do not show this message again");
+
+        // Use setGraphic to add the checkbox without replacing buttons
+        tmpAlert.getDialogPane().setContent(new VBox(10, tmpDeactivateCheckBox));
+        Optional<ButtonType> result = tmpAlert.showAndWait();
+        return new Pair<>(tmpDeactivateCheckBox.isSelected(),
+                result.orElse(ButtonType.CANCEL));
     }
     //
     /**

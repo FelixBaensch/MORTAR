@@ -124,6 +124,11 @@ public class SettingsContainer {
      * Default value of whether to keep last fragment.
      */
     public static final boolean KEEP_LAST_FRAGMENT_SETTING_DEFAULT = false;
+    /**
+     * Default value of whether to show a warning if upon closing tabs or the entire application
+     * would result in a loss of data.
+     */
+    public static final boolean SHOW_WARNING_FOR_DATA_LOSS_DEFAULT = true;
     //</editor-fold>
     //
     //<editor-fold desc="private static final constants" defaultstate="collapsed">
@@ -165,6 +170,7 @@ public class SettingsContainer {
     @Deprecated
     private SimpleBooleanProperty keepLastFragmentSetting;
 
+    private SimpleBooleanProperty showDataWillBeLostWarningSetting;
     /**
      * List of setting to display in the general settings dialogue; excludes recent directory path because this is only
      * for internal use, not intended to be changed by the user via this dialogue.
@@ -563,7 +569,7 @@ public class SettingsContainer {
             throw new IllegalArgumentException("Given separator for csv export is null, empty, blank or not valid");
         }
     }
-
+    //
     /**
      * Sets the setting for whether the last fragment is to be kept if no new fragment is created in a
      * pipeline fragmentation step or whether it is discarded.
@@ -574,6 +580,24 @@ public class SettingsContainer {
     @Deprecated
     public void setKeepLastFragmentSetting(boolean aBoolean){
         this.keepLastFragmentSetting.set(aBoolean);
+    }
+    //
+    /**
+     * Query if a warning should be displayed if a data loss would occur.
+     *
+     * @return true if the user has not turned the warning messages off, false otherwise.
+     */
+    public boolean isShowDataWillBeLostWarningSetting() {
+        return showDataWillBeLostWarningSetting.get();
+    }
+    //
+    /**
+     * Sets the setting for whether there should always be a warning if data will be lost.
+     *
+     * @param aBoolean whether to keep showing a warning if the data will be lost.
+     */
+    public void setShowDataWillBeLostWarningSetting(boolean aBoolean){
+        this.showDataWillBeLostWarningSetting.set(aBoolean);
     }
 
     /**
@@ -677,7 +701,7 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        int tmpNumberOfSettings = 7;
+        int tmpNumberOfSettings = 8;
         int tmpInitialCapacityForSettingNameMaps = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -817,6 +841,11 @@ public class SettingsContainer {
                 //do nothing, the value should remain false!
             }
         };
+        this.showDataWillBeLostWarningSetting = new SimpleBooleanProperty(this,
+                "Show a warning if data will be lost",
+                SettingsContainer.SHOW_WARNING_FOR_DATA_LOSS_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.showDataWillBeLostWarningSetting.getName(), Message.get("SettingsContainer.showDataWillBeLostWarning.tooltip"));
+        this.settingNameDisplayNameMap.put(this.showDataWillBeLostWarningSetting.getName(), Message.get("SettingsContainer.showDataWillBeLostWarning.displayName"));
         //this.settingNameTooltipTextMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.tooltip"));
         //this.settingNameDisplayNameMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.displayName"));
         this.settings = new ArrayList<>(tmpNumberOfSettings);
@@ -831,6 +860,7 @@ public class SettingsContainer {
         //DEPRECATED
         //this.settings.add(this.keepLastFragmentSetting);
         this.settings.add(this.csvExportSeparatorSetting);
+        this.settings.add(this.showDataWillBeLostWarningSetting);
         //note: recent directory path is only internal, all settings in the list are for the user
     }
 
