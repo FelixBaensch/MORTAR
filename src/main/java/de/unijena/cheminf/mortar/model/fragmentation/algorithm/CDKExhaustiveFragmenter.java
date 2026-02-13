@@ -30,14 +30,20 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
+import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
+import javafx.beans.property.SimpleObjectProperty;
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.ArrayList;
@@ -65,64 +71,61 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Enum for options concerning the type of sugars to remove or detect.
      */
-//    public enum SaturationOption implements IDisplayEnum {
-//        /**
-//         * Remove/detect only circular sugars.
-//         */
-//        (
-//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Circular.displayName"),
-//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Circular.tooltip")),
-//
-//        /**
-//         * Remove/detect only linear sugars.
-//         */
-//        ExhaustiveFragmenter(Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Linear.displayName"),
-//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Linear.tooltip")),
-//
-//        /**
-//         * Remove/detect both circular and linear sugars.
-//         */
-//        CIRCULAR_AND_LINEAR(Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Both.displayName"),
-//                Message.get("SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.Both.tooltip"));
-//        /**
-//         * Language-specific name for display in GUI.
-//         */
-//        private final String displayName;
-//        /**
-//         * Language-specific tooltip text for display in GUI.
-//         */
-//        private final String tooltip;
-//
-//        /**
-//         * Constructor.
-//         *
-//         * @param aDisplayName display name
-//         * @param aTooltip     tooltip text
-//         */
-//        private SaturationOption(String aDisplayName, String aTooltip) {
-//            this.displayName = aDisplayName;
-//            this.tooltip = aTooltip;
-//        }
-//        //
-//        @Override
-//        public String getDisplayName() {
-//            return this.displayName;
-//        }
-//        //
-//        @Override
-//        public String getTooltipText() {
-//            return this.tooltip;
-//        }
-//
-//        static {
-//            for (SaturationOption tmpSatOption : values()) {
-//                if (tmpSatOption.name() != ExhaustiveFragmenter.Saturation[])
-//            }
-//            if (!(values().length == ExhaustiveFragmenter.Saturation.values().length)) {
-//                throw new IllegalStateException("Every option from the Saturation enum of the CDK must be covered");
-//            }
-//        }
-//    }
+    /**
+     * Specifies whether generated fragments should be saturated (hydrogens added)
+     * or unsaturated.
+     */
+    public enum SaturationDisplay implements IDisplayEnum {
+        /**
+         * Fragments will be returned in their saturated form
+         * (implicit hydrogen atoms added).
+         */
+        HYDROGEN_SATURATED_FRAGMENTS(Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.displayName"),
+                Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.tooltip")),
+
+        /**
+         * Fragments will be saturated with R atoms.
+         */
+        R_SATURATED_FRAGMENTS(Message.get("CDKExhaustiveFragmenter.Saturation.Rest.displayName"),
+                Message.get("CDKExhaustiveFragmenter.Saturation.Rest.tooltip")),
+
+        /**
+         * Fragments will be returned in their unsaturated form
+         * (no additional hydrogen atoms). The unsaturated atoms are the atoms
+         * of the split bonds.
+         */
+        UNSATURATED_FRAGMENTS(Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.displayName"),
+                Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.tooltip"));
+        /**
+         * Language-specific name for display in GUI.
+         */
+        private final String displayName;
+        /**
+         * Language-specific tooltip text for display in GUI.
+         */
+        private final String tooltip;
+        /**
+         * Constructor.
+         *
+         * @param aDisplayName display name
+         * @param aTooltip tooltip text
+         */
+        private SaturationDisplay(String aDisplayName, String aTooltip) {
+            this.displayName = aDisplayName;
+            this.tooltip = aTooltip;
+        }
+        //
+        @Override
+        public String getDisplayName() {
+            return this.displayName;
+        }
+        //
+        @Override
+        public String getTooltipText() {
+            return this.tooltip;
+        }
+    }
+
     //
     //<editor-fold desc="Public static final variables">
     /**
@@ -133,10 +136,28 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * The name of the algorithm used for fragmentation.
      */
+    private static final int DEFAULT_MIN_FRAG_SIZE = 6;
+    private static final SaturationDisplay DEFAULT_SATURATION =
+            SaturationDisplay.UNSATURATED_FRAGMENTS;
+    private static final SmilesGenerator DEFAULT_SMILES_GENERATOR =
+            new SmilesGenerator(
+                    SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols
+            );
+    // assuming each fragment is unique (as if there was no deduplication)
+    // 27 would be the maximum tree depth to hold all fragments in the
+    // hashmap.
+    private static final int DEFAULT_INCLUSIVE_MAX_TREE_DEPTH = 27;
+    private static final boolean DEFAULT_COPY_STEREO_INFO = false;
     public static final String ALGORITHM_NAME = "Exhaustive Fragmenter";
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
+
+    private final SmilesGenerator smilesGenerator;
+    private int inclusiveMaxTreeDepth;
+    private int minFragSize;
+    private SimpleIDisplayEnumConstantProperty saturationSetting;
+    private boolean preserveStereo;
     /**
      * The minimum size of the returned fragments. This size consists of all atoms, that are connected by more than
      * a single bond or have more than one single bond.
@@ -174,7 +195,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Constructor, all settings are initialized with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
-        int tmpNumberOfSettingsForTooltipMapSize = 1;
+        int tmpNumberOfSettingsForTooltipMapSize = 5;
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -204,12 +225,100 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
-        this.settingNameTooltipTextMap.put(this.minimumFragmentSizeSetting.getName(),
+        SimpleIntegerProperty inclusiveMaxTreeDepthSetting = new SimpleIntegerProperty(this,
+                "Inclusive Maximum Tree Depth",
+                DEFAULT_INCLUSIVE_MAX_TREE_DEPTH) {
+            @Override
+            public void set(int newValue) {
+                if (newValue > 0 && newValue < 31) {
+                    CDKExhaustiveFragmenter.this.inclusiveMaxTreeDepth = newValue;
+                    super.set(newValue);
+                }
+                else {
+                    IllegalArgumentException anException = new IllegalArgumentException(
+                            "The inclusive max tree depth must be positive and smaller than 31" +
+                            "to mitigate the runtime of O(n!)");
+                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
+                    throw anException;
+                }
+            }
+        };
+
+        this.saturationSetting = new SimpleIDisplayEnumConstantProperty(this,
+                "Saturation Display Setting",
+                DEFAULT_SATURATION,
+                CDKExhaustiveFragmenter.SaturationDisplay.class) {
+
+            @Override
+            public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
+                try {
+                    super.set(newValue);
+                } catch (NullPointerException | IllegalArgumentException anException) {
+                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
+                    throw anException;
+                }
+            }
+        };
+
+        SimpleBooleanProperty preserveStereoSetting = new SimpleBooleanProperty(this,
+                "Preserve Stereo Information",
+                DEFAULT_COPY_STEREO_INFO) {
+            @Override
+            public void set(boolean newValue) {
+                CDKExhaustiveFragmenter.this.preserveStereo = newValue;
+                super.set(newValue);
+            }
+        };
+
+        SimpleObjectProperty<SmilesGenerator> smilesGeneratorSetting = new SimpleObjectProperty<>(this,
+                "SMILES Generator",
+                DEFAULT_SMILES_GENERATOR);
+
+        this.settingNameTooltipTextMap.put(minimumFragmentSizeSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.tooltip"));
-        this.settingNameDisplayNameMap.put(this.minimumFragmentSizeSetting.getName(),
+        this.settingNameDisplayNameMap.put(minimumFragmentSizeSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.minFragmentSize.displayName"));
+
+        this.settingNameTooltipTextMap.put(inclusiveMaxTreeDepthSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.inclusiveMaxTreeDepth.tooltip"));
+        this.settingNameDisplayNameMap.put(inclusiveMaxTreeDepthSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.inclusiveMaxTreeDepth.displayName"));
+
+        this.settingNameTooltipTextMap.put(saturationSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.saturationSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(saturationSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.saturationSetting.displayName"));
+
+        this.settingNameTooltipTextMap.put(preserveStereoSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.preserveStereo.tooltip"));
+        this.settingNameDisplayNameMap.put(preserveStereoSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.preserveStereo.displayName"));
+
+        this.settingNameTooltipTextMap.put(smilesGeneratorSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.smilesGenerator.tooltip"));
+        this.settingNameDisplayNameMap.put(smilesGeneratorSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.smilesGenerator.displayName"));
+
         this.settings = new ArrayList<>(tmpNumberOfSettingsForTooltipMapSize);
-        this.settings.add(this.minimumFragmentSizeSetting);
+        this.settings.add(minimumFragmentSizeSetting);
+        this.settings.add(inclusiveMaxTreeDepthSetting);
+        this.settings.add(saturationSetting);
+        this.settings.add(preserveStereoSetting);
+        this.settings.add(smilesGeneratorSetting);
+
+        this.inclusiveMaxTreeDepth = DEFAULT_INCLUSIVE_MAX_TREE_DEPTH;
+        this.minFragSize = DEFAULT_MINIMUM_FRAGMENT_SIZE;
+        this.saturationSetting.set(DEFAULT_SATURATION);
+        this.preserveStereo = DEFAULT_COPY_STEREO_INFO;
+        this.smilesGenerator = DEFAULT_SMILES_GENERATOR;
     }
     //</editor-fold>
     //
