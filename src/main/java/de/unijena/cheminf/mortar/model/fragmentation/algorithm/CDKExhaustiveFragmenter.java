@@ -31,14 +31,13 @@ import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
-import de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty;
 import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-
 import javafx.beans.property.SimpleObjectProperty;
+
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -148,15 +147,37 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     // hashmap.
     private static final int DEFAULT_INCLUSIVE_MAX_TREE_DEPTH = 27;
     private static final boolean DEFAULT_COPY_STEREO_INFO = false;
+    /**
+     * The name of this fragmenter.
+     */
     public static final String ALGORITHM_NAME = "Exhaustive Fragmenter";
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
 
+    /**
+     * The smiles generator to use.
+     */
     private final SmilesGenerator smilesGenerator;
+    //
+    /**
+     * The maximum tree depth which represents the maximum number of bonds that will be split in a fragmentation.
+     */
     private int inclusiveMaxTreeDepth;
+    //
+    /**
+     * The minimum number of explicit atoms to be regarded as one fragment.
+     */
     private int minFragSize;
+    //
+    /**
+     * The saturation setting specifying the {{@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation}}
+     */
     private SimpleIDisplayEnumConstantProperty saturationSetting;
+    //
+    /**
+     * Whether to try to conserve the stereochemistry information of the molecules to split.
+     */
     private boolean preserveStereo;
     /**
      * The minimum size of the returned fragments. This size consists of all atoms, that are connected by more than
@@ -379,25 +400,24 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public String getFragmentationAlgorithmDisplayName() {
         return Message.get("CDKExhaustiveFragmenter.displayName");
     }
-
-    public FragmentSaturationOption getFragmentSaturationSetting() throws UnsupportedOperationException {
-        //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
-        throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
+    //
+    /**
+     * Get the {{@link SaturationDisplay}}.
+     *
+     * @return the
+     */
+    public SimpleIDisplayEnumConstantProperty getFragmentSaturationSetting() {
+        return this.saturationSetting;
     }
-
-    public SimpleIDisplayEnumConstantProperty fragmentSaturationSettingProperty() throws UnsupportedOperationException {
-        //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
-        throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
+    //
+    /**
+     * Sets the fragment saturation.
+     * @param saturationSetting the new saturation value.
+     */
+    public void setFragmentSaturationSetting(IDisplayEnum saturationSetting) {
+        this.saturationSetting.set(saturationSetting);
     }
-
-    public void setFragmentSaturationSetting(FragmentSaturationOption anOption) throws UnsupportedOperationException {
-        //TODO: there is currently no possibility to implement saturation settings for the exhaustive fragmenter.
-        // Because the exhaustive fragmenter in the CDK saturates the fragments by default and is not configurable.
-        throw new UnsupportedOperationException("The saturation is currently not configurable for the " + CDKExhaustiveFragmenter.ALGORITHM_NAME);
-    }
-
+    //
     @Override
     public IMoleculeFragmenter copy() {
         CDKExhaustiveFragmenter tmpCopy = new CDKExhaustiveFragmenter();
