@@ -1261,8 +1261,8 @@ public class MainViewController {
         tmpFragmentsTab.setClosable(true);
 
         // add close all and close Tab context menu and confirmation menu
-        MenuItem tmpCloseAllItem = getCloseAllMenuItem();
-        MenuItem tmpCloseTabItem = getCloseTabMenuItem(tmpFragmentsTab);
+        MenuItem tmpCloseAllItem = this.getCloseAllMenuItem();
+        MenuItem tmpCloseTabItem = this.getCloseTabMenuItem(tmpFragmentsTab);
         tmpFragmentsTab.setContextMenu(new ContextMenu(tmpCloseTabItem, tmpCloseAllItem));
 
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
@@ -1334,8 +1334,8 @@ public class MainViewController {
      * @return the menu item
      */
     private MenuItem getCloseAllMenuItem() {
-        MenuItem closeAllItem = new MenuItem("Close All Tabs");
-        closeAllItem.setOnAction(event -> closeAllTabs());
+        MenuItem closeAllItem = new MenuItem(Message.get("MainView.tabMenuBar.closeAll.text"));
+        closeAllItem.setOnAction(event -> this.closeAllTabs());
         return closeAllItem;
     }
     //
@@ -1344,44 +1344,31 @@ public class MainViewController {
      */
     private void closeAllTabs() {
         if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
-
-            Pair<Boolean, ButtonType> tmpCcheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+            Pair<Boolean, ButtonType> tmpCheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
                     Message.get("MainViewController.Warning.CloseAllTabs.Title"),
                     Message.get("MainViewController.Warning.CloseAllTabs.Header"),
                     Message.get("MainViewController.Warning.CloseAllTabs.Content"));
-            ButtonType tmpConfirmationResult = tmpCcheckAndConfirmationResult.getValue();
-            boolean isCheckboxChecked = tmpCcheckAndConfirmationResult.getKey();
+            boolean tmpIsCheckboxChecked = tmpCheckAndConfirmationResult.getKey();
+            ButtonType tmpConfirmationResult = tmpCheckAndConfirmationResult.getValue();
 
-            if (isCheckboxChecked) {
+            if (tmpConfirmationResult != ButtonType.OK) {
+                return;
+            }
+            if (tmpIsCheckboxChecked) {
                 this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
             }
-
-            if (tmpConfirmationResult == ButtonType.OK) {
-                List<GridTabForTableView> toCleanup = new ArrayList<>();
-                mainTabPane.getTabs().removeIf(tmpTab -> {
-                    // it is assumed here that MORTAR does NOT have any other
-                    // types of tabs that could be closed besides the GridTableView
-                    // as the itemization tab and fragmentation tab are both constructed
-                    // as GridTableViews
-                    if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
-                        toCleanup.add(tmpGridTab);
-                        return true;
-                    }
-                    return false;
-                });
-                toCleanup.forEach(this::cleanupGridTab);
-            }
-        } else {
-            List<GridTabForTableView> toCleanup = new ArrayList<>();
-            mainTabPane.getTabs().removeIf(tmpTab -> {
-                if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
-                    toCleanup.add(tmpGridTab);
-                    return true;
-                }
-                return false;
-            });
-            toCleanup.forEach(this::cleanupGridTab);
         }
+        mainTabPane.getTabs().removeIf(tmpTab -> {
+            // it is assumed here that MORTAR does NOT have any other
+            // types of tabs that could be closed besides the GridTableView
+            // as the itemization tab and fragmentation tab are both constructed
+            // as GridTableViews
+            if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
+                this.cleanupGridTab(tmpGridTab);
+                return true;
+            }
+            return false;
+        });
     }
     //
     /**
@@ -1391,10 +1378,8 @@ public class MainViewController {
      * @return the menu item to close this specific tab.
      */
     private MenuItem getCloseTabMenuItem(GridTabForTableView gridTableView) {
-        MenuItem closeTabItem = new MenuItem("Close Tab");
-
-        closeTabItem.setOnAction(event -> closeTab(gridTableView));
-
+        MenuItem closeTabItem = new MenuItem(Message.get("MainView.tabMenuBar.closeTab.text"));
+        closeTabItem.setOnAction(event -> this.closeTab(gridTableView));
         return closeTabItem;
     }
     //
@@ -1404,38 +1389,44 @@ public class MainViewController {
      * @param gridTableView the tab to remove.
      */
     private void closeTab(GridTabForTableView gridTableView) {
-        if (isGridTabCleanable(gridTableView)) {
-            Pair<Boolean, ButtonType> confirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
-                    Message.get("MainViewController.Warning.CloseTab.Title"),
-                    Message.get("MainViewController.Warning.CloseTab.Header"),
-                    Message.get("MainViewController.Warning.CloseTab.Content")
-            );
-            if (confirmationResult.getValue() != ButtonType.OK) {
-                return;
+        if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
+            if (isGridTabCleanable(gridTableView)) {
+                Pair<Boolean, ButtonType> tmpCheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+                        Message.get("MainViewController.Warning.CloseTab.Title"),
+                        Message.get("MainViewController.Warning.CloseTab.Header"),
+                        Message.get("MainViewController.Warning.CloseTab.Content")
+                );
+                boolean tmpIsCheckboxChecked = tmpCheckAndConfirmationResult.getKey();
+                ButtonType tmpConfirmationResult = tmpCheckAndConfirmationResult.getValue();
+
+                if (tmpConfirmationResult != ButtonType.OK) {
+                    return;
+                }
+
+                if (tmpIsCheckboxChecked) {
+                    this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
+                }
             }
         }
-
-        // Remove the tab and cleanup
         mainTabPane.getTabs().remove(gridTableView);
         cleanupGridTab(gridTableView);
     }
     //
     /**
-     *
      * Check if there is no other tab with the same fragmentation name.
      * Because the fragments are used in the itemization tab as well as in the fragments tab
      * it is necessary to check if BOTH are closed.
      *
-     * @param aGridTab the tab to check if can be cleaned up
+     * @param aGridTab the tab to check if it can be cleaned up
      * @return true if it can be cleaned up false otherwise
      */
     private boolean isGridTabCleanable(GridTabForTableView aGridTab) {
         String tmpFragmentationName = aGridTab.getFragmentationNameOutOfTitle();
         for (Tab tmpTab : this.mainTabPane.getTabs()) {
-            if (!(tmpTab instanceof GridTabForTableView)) {
+            if (!(tmpTab instanceof GridTabForTableView tmpGridTableTab) || tmpTab == aGridTab) {
                 continue;
             }
-            if (Objects.equals(tmpFragmentationName, ((GridTabForTableView) tmpTab).getFragmentationNameOutOfTitle())) {
+            if (tmpFragmentationName.equals(tmpGridTableTab.getFragmentationNameOutOfTitle())) {
                 return false;
             }
         }
@@ -1452,11 +1443,13 @@ public class MainViewController {
         aGridTab.setContent(null);
 
         String tmpFragmentationName = aGridTab.getFragmentationNameOutOfTitle();
-        if (isGridTabCleanable(aGridTab)) {
+        if (this.isGridTabCleanable(aGridTab)) {
             for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
                 tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
             }
             this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
+            // TODO: check if it is more appropriate to just remove the fragments of the specific fragmentation
+            //       in the fragmentation service
             this.fragmentationService.clearCache();
         }
 
@@ -1485,9 +1478,6 @@ public class MainViewController {
         aGridTab.getProperties().clear();
         aGridTab.setId(null);
         aGridTab.setText(null);
-
-        // Remove tab from TabPane to stop it being strongly referenced by UI
-        this.mainTabPane.getTabs().remove(aGridTab);
     }
     //
     /**
@@ -1509,8 +1499,8 @@ public class MainViewController {
         tmpItemizationTab.setClosable(true);
 
         // add close all and close Tab context menu and confirmation menu
-        MenuItem tmpCloseAllItem = getCloseAllMenuItem();
-        MenuItem tmpCloseTabItem = getCloseTabMenuItem(tmpItemizationTab);
+        MenuItem tmpCloseAllItem = this.getCloseAllMenuItem();
+        MenuItem tmpCloseTabItem = this.getCloseTabMenuItem(tmpItemizationTab);
         tmpItemizationTab.setContextMenu(new ContextMenu(tmpCloseTabItem, tmpCloseAllItem));
 
         this.mainTabPane.getTabs().add(tmpItemizationTab);

@@ -219,7 +219,11 @@ public class GuiUtil {
         String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
                 GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
         tmpAlertStage.getIcons().add(new Image(tmpIconURL));
-        CheckBox tmpDeactivateCheckBox = new CheckBox("Do not show this message again");
+        Label tmpContentLabel = new Label(aContentText);
+        tmpContentLabel.setWrapText(true);
+        CheckBox tmpDeactivateCheckBox = new CheckBox(Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text"));
+        VBox tmpContentBox = new VBox(10, tmpContentLabel, tmpDeactivateCheckBox);
+        tmpAlert.getDialogPane().setContent(tmpContentBox);
 
         // Use setGraphic to add the checkbox without replacing buttons
         tmpAlert.getDialogPane().setContent(new VBox(10, tmpDeactivateCheckBox));
