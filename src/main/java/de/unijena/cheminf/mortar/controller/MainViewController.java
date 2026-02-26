@@ -87,7 +87,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import javafx.util.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -450,15 +449,15 @@ public class MainViewController {
                     Message.get("MainViewController.Warning.FragmentationRunning.Content"));
         } else {
             if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
-                Pair<Boolean, ButtonType> tmpConfirmation = GuiUtil.guiConfirmationWithDeactivationAlert(
+                GuiUtil.CheckboxAndButtonResult tmpConfirmation = GuiUtil.guiConfirmationWithDeactivationAlert(
                         Message.get("MainViewController.Warning.DataLoss.Title"),
                         Message.get("MainViewController.Warning.DataLoss.Header"),
                         Message.get("MainViewController.Warning.DataLoss.Content"));
 
-                if (tmpConfirmation.getKey()) {
+                if (tmpConfirmation.isCheckboxChecked()) {
                     this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
                 }
-                tmpConfirmationResult = tmpConfirmation.getValue();
+                tmpConfirmationResult = tmpConfirmation.buttonType();
             } else {
                 return true;
             }
@@ -1344,17 +1343,15 @@ public class MainViewController {
      */
     private void closeAllTabs() {
         if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
-            Pair<Boolean, ButtonType> tmpCheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
                     Message.get("MainViewController.Warning.CloseAllTabs.Title"),
                     Message.get("MainViewController.Warning.CloseAllTabs.Header"),
                     Message.get("MainViewController.Warning.CloseAllTabs.Content"));
-            boolean tmpIsCheckboxChecked = tmpCheckAndConfirmationResult.getKey();
-            ButtonType tmpConfirmationResult = tmpCheckAndConfirmationResult.getValue();
 
-            if (tmpConfirmationResult != ButtonType.OK) {
+            if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
                 return;
             }
-            if (tmpIsCheckboxChecked) {
+            if (tmpCheckboxAndConfirmationResult.isCheckboxChecked()) {
                 this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
             }
         }
@@ -1389,23 +1386,18 @@ public class MainViewController {
      * @param gridTableView the tab to remove.
      */
     private void closeTab(GridTabForTableView gridTableView) {
-        if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
-            if (isGridTabCleanable(gridTableView)) {
-                Pair<Boolean, ButtonType> tmpCheckAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
-                        Message.get("MainViewController.Warning.CloseTab.Title"),
-                        Message.get("MainViewController.Warning.CloseTab.Header"),
-                        Message.get("MainViewController.Warning.CloseTab.Content")
-                );
-                boolean tmpIsCheckboxChecked = tmpCheckAndConfirmationResult.getKey();
-                ButtonType tmpConfirmationResult = tmpCheckAndConfirmationResult.getValue();
+        if (this.settingsContainer.isShowDataWillBeLostWarningSetting() && isGridTabCleanable(gridTableView)) {
+            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+                    Message.get("MainViewController.Warning.CloseTab.Title"),
+                    Message.get("MainViewController.Warning.CloseTab.Header"),
+                    Message.get("MainViewController.Warning.CloseTab.Content")
+            );
+            if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
+                return;
+            }
 
-                if (tmpConfirmationResult != ButtonType.OK) {
-                    return;
-                }
-
-                if (tmpIsCheckboxChecked) {
-                    this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
-                }
+            if (tmpCheckboxAndConfirmationResult.isCheckboxChecked()) {
+                this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
             }
         }
         mainTabPane.getTabs().remove(gridTableView);
@@ -1448,9 +1440,7 @@ public class MainViewController {
                 tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
             }
             this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
-            // TODO: check if it is more appropriate to just remove the fragments of the specific fragmentation
-            //       in the fragmentation service
-            this.fragmentationService.clearCache();
+            this.fragmentationService.clearFragments(tmpFragmentationName);
         }
 
         Pagination tmpPagination = aGridTab.getPagination();

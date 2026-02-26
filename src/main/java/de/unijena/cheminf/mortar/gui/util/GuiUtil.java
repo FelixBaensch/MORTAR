@@ -63,7 +63,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import javafx.util.Pair;
 import javafx.util.StringConverter;
 
 import org.openscience.cdk.exception.CDKException;
@@ -198,6 +197,16 @@ public class GuiUtil {
         tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
+    //
+    /**
+     * Small utility type to return the result of the gui confirmation dialogue with a checkbox and the button type
+     * that was pressed.
+     *
+     * @param isCheckboxChecked true if the checkbox is checked upon closing the window.
+     * @param buttonType the button tye that was pressed by the user
+     */
+    public record CheckboxAndButtonResult(boolean isCheckboxChecked, ButtonType buttonType) {}
+    //
     /**
      * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
      * It also checks a global setting and also has the possibility to change that setting
@@ -206,9 +215,10 @@ public class GuiUtil {
      * @param aTitle Title of the confirmation alert
      * @param aHeaderText Header of the confirmation alert
      * @param aContentText Text that the confirmation alert contains
-     * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
+     * @return a pair of a boolean specifying if the checkbox was marked and the button type
+     * selected by user - ButtonType.OK or ButtonType.CANCEL
      */
-    public static Pair<Boolean, ButtonType> guiConfirmationWithDeactivationAlert(String aTitle, String aHeaderText, String aContentText) {
+    public static CheckboxAndButtonResult guiConfirmationWithDeactivationAlert(String aTitle, String aHeaderText, String aContentText) {
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -222,13 +232,11 @@ public class GuiUtil {
         Label tmpContentLabel = new Label(aContentText);
         tmpContentLabel.setWrapText(true);
         CheckBox tmpDeactivateCheckBox = new CheckBox(Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text"));
-        VBox tmpContentBox = new VBox(10, tmpContentLabel, tmpDeactivateCheckBox);
+        VBox tmpContentBox = new VBox(25, tmpContentLabel, tmpDeactivateCheckBox);
         tmpAlert.getDialogPane().setContent(tmpContentBox);
 
-        // Use setGraphic to add the checkbox without replacing buttons
-        tmpAlert.getDialogPane().setContent(new VBox(10, tmpDeactivateCheckBox));
         Optional<ButtonType> result = tmpAlert.showAndWait();
-        return new Pair<>(tmpDeactivateCheckBox.isSelected(),
+        return new CheckboxAndButtonResult(tmpDeactivateCheckBox.isSelected(),
                 result.orElse(ButtonType.CANCEL));
     }
     //

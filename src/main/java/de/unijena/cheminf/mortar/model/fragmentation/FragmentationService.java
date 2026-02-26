@@ -859,6 +859,16 @@ public class FragmentationService {
         this.fragments = null;
         this.currentFragmentationName = null;
     }
+
+    /**
+     * Clears all fragments of a specific fragmentation by the name of the fragmentation.
+     *
+     * @param aFragmentationName the name of the fragmentation that produced the fragments to delete.
+     */
+    public void clearFragments(String aFragmentationName) {
+        this.existingFragmentations.remove(aFragmentationName);
+        this.fragments.remove(aFragmentationName);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="public properties" defaultstate="collapsed">

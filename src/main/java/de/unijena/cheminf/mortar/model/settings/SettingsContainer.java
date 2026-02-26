@@ -585,7 +585,7 @@ public class SettingsContainer {
     /**
      * Query if a warning should be displayed if a data loss would occur.
      *
-     * @return true if the user has not turned the warning messages off, false otherwise.
+     * @return true if the user has turned on the warning messages, false otherwise.
      */
     public boolean isShowDataWillBeLostWarningSetting() {
         return showDataWillBeLostWarningSetting.get();
