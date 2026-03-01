@@ -151,6 +151,14 @@ public class GridTabForTableView extends Tab {
         this.pagination = aPagination;
         this.addNodeToGridPane(this.pagination, 0, 0, 3, 2);
     }
+
+    /**
+     * Register and add an event with the respective handler.
+     *
+     * @param anEventTye the type of the event.
+     * @param aHandler the handler for the event.
+     * @param <E> a specific event.
+     */
     public <E extends Event> void registerEventHandler(EventType<E> anEventTye, EventHandler<? super E> aHandler) {
         this.registeredHandlers.add(aHandler);
         this.addEventHandler(anEventTye, aHandler);
