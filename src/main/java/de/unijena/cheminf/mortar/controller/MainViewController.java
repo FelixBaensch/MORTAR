@@ -1453,6 +1453,19 @@ public class MainViewController {
             tmpPagination.setPageFactory(null);
         }
 
+        // unbind the context menu from the tab
+        ContextMenu tmpContextMenu = aGridTab.getContextMenu();
+        if (tmpContextMenu != null) {
+            tmpContextMenu.hide();
+            for (MenuItem tmpMenuItem : tmpContextMenu.getItems()) {
+                tmpMenuItem.setOnAction(null);
+            }
+            tmpContextMenu.getItems().clear();
+            aGridTab.setContextMenu(null);
+        }
+
+        // this.mainView.getMainCenterPane().
+
         // TableView: unbind, clear listeners/handlers and clear items
         TableView<?> tmpTable = aGridTab.getTableView();
         if (tmpTable != null) {
@@ -1464,10 +1477,13 @@ public class MainViewController {
             if (items != null) {
                 items.clear();
             }
-            tmpTable.setItems(FXCollections.observableArrayList());
+            tmpTable.setItems(FXCollections.emptyObservableList());
 
             // clear columns to break cell/skin references
             tmpTable.getColumns().clear();
+
+            // tmpTable.widthProperty().removeListener();
+            tmpTable.getProperties().clear();
         }
 
         aGridTab.getProperties().clear();

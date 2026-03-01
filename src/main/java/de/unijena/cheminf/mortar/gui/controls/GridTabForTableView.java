@@ -28,6 +28,9 @@ package de.unijena.cheminf.mortar.gui.controls;
 import de.unijena.cheminf.mortar.controller.TabNames;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.HPos;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tab;
@@ -36,6 +39,9 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Custom tab which contains a grid pane.
@@ -57,6 +63,10 @@ public class GridTabForTableView extends Tab {
      * Encapsulated table view.
      */
     private final TableView tableView;
+    /**
+     * A list of all listeners that were added to this tab.
+     */
+    private List<EventHandler> registeredHandlers;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors">
@@ -112,6 +122,7 @@ public class GridTabForTableView extends Tab {
         tmpColCon3.setPrefWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         tmpColCon3.setHalignment(HPos.RIGHT);
         this.gridPane.getColumnConstraints().add(tmpColCon3);
+        this.registeredHandlers = new ArrayList<>(8);
     }
     //</editor-fold>
     //
@@ -139,6 +150,10 @@ public class GridTabForTableView extends Tab {
     public void addPaginationToGridPane(Pagination aPagination) {
         this.pagination = aPagination;
         this.addNodeToGridPane(this.pagination, 0, 0, 3, 2);
+    }
+    public <E extends Event> void registerEventHandler(EventType<E> anEventTye, EventHandler<? super E> aHandler) {
+        this.registeredHandlers.add(aHandler);
+        this.addEventHandler(anEventTye, aHandler);
     }
     //
     /**
