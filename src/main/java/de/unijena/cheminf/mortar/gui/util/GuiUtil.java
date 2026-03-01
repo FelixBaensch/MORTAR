@@ -202,10 +202,10 @@ public class GuiUtil {
      * Small utility type to return the result of the gui confirmation dialogue with a checkbox and the button type
      * that was pressed.
      *
-     * @param isCheckboxChecked true if the checkbox is checked upon closing the window.
+     * @param checkboxChecked true if the checkbox is checked upon closing the window.
      * @param buttonType the button tye that was pressed by the user
      */
-    public record CheckboxAndButtonResult(boolean isCheckboxChecked, ButtonType buttonType) {}
+    public record CheckboxAndButtonResult(boolean checkboxChecked, ButtonType buttonType) {}
     //
     /**
      * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
@@ -215,14 +215,14 @@ public class GuiUtil {
      * @param aTitle Title of the confirmation alert
      * @param aHeaderText Header of the confirmation alert
      * @param aContentText Text that the confirmation alert contains
+     * @param aCheckboxText Explanation to display on the right side of the checkbox
      * @return a pair of a boolean specifying if the checkbox was marked and the button type
      * selected by user - ButtonType.OK or ButtonType.CANCEL
      */
-    public static CheckboxAndButtonResult guiConfirmationWithDeactivationAlert(String aTitle, String aHeaderText, String aContentText) {
+    public static CheckboxAndButtonResult guiConfirmationWithDeactivationAlert(String aTitle, String aHeaderText, String aContentText, String aCheckboxText) {
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.setContentText(aContentText);
         tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
         tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
         Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
@@ -231,8 +231,11 @@ public class GuiUtil {
         tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         Label tmpContentLabel = new Label(aContentText);
         tmpContentLabel.setWrapText(true);
-        CheckBox tmpDeactivateCheckBox = new CheckBox(Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text"));
-        VBox tmpContentBox = new VBox(25, tmpContentLabel, tmpDeactivateCheckBox);
+        tmpContentLabel.maxWidthProperty().bind(tmpAlert.getDialogPane().widthProperty().subtract(40));
+        VBox.setVgrow(tmpContentLabel, Priority.ALWAYS);
+        CheckBox tmpDeactivateCheckBox = new CheckBox(aCheckboxText);
+        VBox tmpContentBox = new VBox(20, tmpContentLabel, tmpDeactivateCheckBox);
+        tmpContentBox.setFillWidth(true);
         tmpAlert.getDialogPane().setContent(tmpContentBox);
 
         Optional<ButtonType> result = tmpAlert.showAndWait();

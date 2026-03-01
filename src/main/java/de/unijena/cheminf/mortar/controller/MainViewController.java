@@ -452,9 +452,11 @@ public class MainViewController {
                 GuiUtil.CheckboxAndButtonResult tmpConfirmation = GuiUtil.guiConfirmationWithDeactivationAlert(
                         Message.get("MainViewController.Warning.DataLoss.Title"),
                         Message.get("MainViewController.Warning.DataLoss.Header"),
-                        Message.get("MainViewController.Warning.DataLoss.Content"));
+                        Message.get("MainViewController.Warning.DataLoss.Content"),
+                        Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
+                );
 
-                if (tmpConfirmation.isCheckboxChecked()) {
+                if (tmpConfirmation.checkboxChecked()) {
                     this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
                 }
                 tmpConfirmationResult = tmpConfirmation.buttonType();
@@ -1346,12 +1348,14 @@ public class MainViewController {
             GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
                     Message.get("MainViewController.Warning.CloseAllTabs.Title"),
                     Message.get("MainViewController.Warning.CloseAllTabs.Header"),
-                    Message.get("MainViewController.Warning.CloseAllTabs.Content"));
+                    Message.get("MainViewController.Warning.CloseAllTabs.Content"),
+                    Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
+            );
 
             if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
                 return;
             }
-            if (tmpCheckboxAndConfirmationResult.isCheckboxChecked()) {
+            if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
                 this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
             }
         }
@@ -1390,13 +1394,14 @@ public class MainViewController {
             GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
                     Message.get("MainViewController.Warning.CloseTab.Title"),
                     Message.get("MainViewController.Warning.CloseTab.Header"),
-                    Message.get("MainViewController.Warning.CloseTab.Content")
+                    Message.get("MainViewController.Warning.CloseTab.Content"),
+                    Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
             );
             if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
                 return;
             }
 
-            if (tmpCheckboxAndConfirmationResult.isCheckboxChecked()) {
+            if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
                 this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
             }
         }
