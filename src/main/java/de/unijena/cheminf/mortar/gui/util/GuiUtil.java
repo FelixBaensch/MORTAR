@@ -199,7 +199,7 @@ public class GuiUtil {
     }
     //
     /**
-     * Small utility type to return the result of the gui confirmation dialogue with a checkbox and the button type
+     * Small utility type to return the result of a gui confirmation dialogue with a checkbox and the button type
      * that was pressed.
      *
      * @param checkboxChecked true if the checkbox is checked upon closing the window.
