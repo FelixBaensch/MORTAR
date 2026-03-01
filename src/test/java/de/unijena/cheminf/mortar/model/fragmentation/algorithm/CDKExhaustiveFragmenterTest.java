@@ -88,7 +88,7 @@ public class CDKExhaustiveFragmenterTest {
         Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
         Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
         Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
-        Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSizeSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSizeSettingProperty);
         Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSize);
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {

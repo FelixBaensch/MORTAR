@@ -40,10 +40,8 @@ import javafx.beans.property.SimpleObjectProperty;
 
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
-import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,12 +64,9 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
-    //<editor-fold desc="Enum SugarTypeToRemoveOption">
+    //<editor-fold desc="Enum FragmentSaturationOption">
     /**
-     * Enum for options concerning the type of sugars to remove or detect.
-     */
-    /**
-     * Specifies whether generated fragments should be saturated (hydrogens added)
+     * Specifies whether generated fragments should be saturated (hydrogens added, or R-groups added)
      * or unsaturated.
      */
     public enum SaturationDisplay implements IDisplayEnum {
@@ -79,22 +74,26 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
          * Fragments will be returned in their saturated form
          * (implicit hydrogen atoms added).
          */
-        HYDROGEN_SATURATED_FRAGMENTS(Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.tooltip")),
-
+        HYDROGEN_SATURATED_FRAGMENTS(
+                Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.displayName"),
+                Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.tooltip")
+        ),
         /**
          * Fragments will be saturated with R atoms.
          */
-        R_SATURATED_FRAGMENTS(Message.get("CDKExhaustiveFragmenter.Saturation.Rest.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Saturation.Rest.tooltip")),
-
+        R_SATURATED_FRAGMENTS(
+                Message.get("CDKExhaustiveFragmenter.Saturation.Rest.displayName"),
+                Message.get("CDKExhaustiveFragmenter.Saturation.Rest.tooltip")
+        ),
         /**
          * Fragments will be returned in their unsaturated form
          * (no additional hydrogen atoms). The unsaturated atoms are the atoms
          * of the split bonds.
          */
-        UNSATURATED_FRAGMENTS(Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.tooltip"));
+        UNSATURATED_FRAGMENTS (
+                Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.displayName"),
+                Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.tooltip")
+        );
         /**
          * Language-specific name for display in GUI.
          */
@@ -156,29 +155,27 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="Private final variables">
 
     /**
-     * The smiles generator to use.
+     * The smiles flavor to use for the generator.
      */
-    private final SmilesGenerator smilesGenerator;
+    // TODO: Find a good way to present the options of setting AND COMBINING SmiFlavors
+    //       for the user:
+    //          1. option: make a preset of flavor combination and expose these via enum
+    // private final SimpleIntegerProperty smilesFlavorSetting;
     //
     /**
      * The maximum tree depth which represents the maximum number of bonds that will be split in a fragmentation.
      */
-    private int inclusiveMaxTreeDepth;
-    //
-    /**
-     * The minimum number of explicit atoms to be regarded as one fragment.
-     */
-    private int minFragSize;
+    private final SimpleIntegerProperty inclusiveMaxTreeDepthSetting;
     //
     /**
      * The saturation setting specifying the {{@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation}}
      */
-    private SimpleIDisplayEnumConstantProperty saturationSetting;
+    private final SimpleIDisplayEnumConstantProperty saturationSetting;
     //
     /**
      * Whether to try to conserve the stereochemistry information of the molecules to split.
      */
-    private boolean preserveStereo;
+    private final SimpleBooleanProperty preserveStereoSetting;
     /**
      * The minimum size of the returned fragments. This size consists of all atoms, that are connected by more than
      * a single bond or have more than one single bond.
@@ -246,13 +243,13 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 }
             }
         };
-        SimpleIntegerProperty inclusiveMaxTreeDepthSetting = new SimpleIntegerProperty(this,
+
+        this.inclusiveMaxTreeDepthSetting = new SimpleIntegerProperty(this,
                 "Inclusive Maximum Tree Depth",
                 DEFAULT_INCLUSIVE_MAX_TREE_DEPTH) {
             @Override
             public void set(int newValue) {
                 if (newValue > 0 && newValue < 31) {
-                    CDKExhaustiveFragmenter.this.inclusiveMaxTreeDepth = newValue;
                     super.set(newValue);
                 }
                 else {
@@ -289,12 +286,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             }
         };
 
-        SimpleBooleanProperty preserveStereoSetting = new SimpleBooleanProperty(this,
+
+        this.preserveStereoSetting = new SimpleBooleanProperty(this,
                 "Preserve Stereo Information",
                 DEFAULT_COPY_STEREO_INFO) {
             @Override
             public void set(boolean newValue) {
-                CDKExhaustiveFragmenter.this.preserveStereo = newValue;
                 super.set(newValue);
             }
         };
@@ -334,12 +331,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settings.add(saturationSetting);
         this.settings.add(preserveStereoSetting);
         this.settings.add(smilesGeneratorSetting);
-
-        this.inclusiveMaxTreeDepth = DEFAULT_INCLUSIVE_MAX_TREE_DEPTH;
-        this.minFragSize = DEFAULT_MINIMUM_FRAGMENT_SIZE;
-        this.saturationSetting.set(DEFAULT_SATURATION);
-        this.preserveStereo = DEFAULT_COPY_STEREO_INFO;
-        this.smilesGenerator = DEFAULT_SMILES_GENERATOR;
     }
     //</editor-fold>
     //
@@ -349,9 +340,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      *
      * @return the setting for the minimum fragment size.
      */
-    public SimpleIntegerProperty getMinimumFragmentSizeSetting() {
-        return this.minimumFragmentSizeSetting;
+    public SimpleIntegerProperty getMinimumFragmentSizeSettingProperty() {
+        return minimumFragmentSizeSetting;
     }
+
     /**
      * Returns the minimum fragment size currently set.
      *
@@ -360,10 +352,58 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public int getMinimumFragmentSize() {
         return this.minimumFragmentSizeSetting.get();
     }
+    /**
+     * Returns the list of all setting properties exposed by this component.
+     *
+     * @return an unmodifiable list of property objects representing the configurable settings;
+     */
+    public List<Property<?>> getSettings() {
+        return settings;
+    }
+
+    /**
+     * Indicates whether stereochemistry should be preserved when generating SMILES/fragments.
+     *
+     * @return true if stereochemistry preservation is enabled; false otherwise
+     */
+    public boolean isPreserveStereoSetting() {
+        return preserveStereoSetting.get();
+    }
+
+    public SimpleBooleanProperty preserveStereoSettingProperty() {
+        return preserveStereoSetting;
+    }
+
+    /**
+     * Gets the currently selected saturation display option.
+     *
+     * @return the selected {@link IDisplayEnum} value (e.g., HYDROGEN_SATURATED_FRAGMENTS,
+     *         R_SATURATED_FRAGMENTS, UNSATURATED_FRAGMENTS)
+     */
+    public ExhaustiveFragmenter.Saturation getSaturationSetting() {
+        return ExhaustiveFragmenter.Saturation.valueOf(this.saturationSetting.getName());
+    }
+
+    public SimpleIDisplayEnumConstantProperty saturationSettingProperty() {
+        return saturationSetting;
+    }
+
+    /**
+     * Gets the inclusive maximum tree depth used by the exhaustive fragmenter. This value is inclusive:
+     * a value of N means the fragmenter will include nodes at depth N.
+     *
+     * @return the inclusive maximum tree depth as an int
+     */
+    public int getInclusiveMaxTreeDepthSetting() {
+        return inclusiveMaxTreeDepthSetting.get();
+    }
+
+    public SimpleIntegerProperty inclusiveMaxTreeDepthSettingProperty() {
+        return inclusiveMaxTreeDepthSetting;
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Public properties set">
-
     /**
      * Sets the minimum fragment size.
      *
@@ -372,10 +412,43 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public void setMinimumFragmentSize(int minimumFragmentSize) {
         this.minimumFragmentSizeSetting.set(minimumFragmentSize);
     }
+
+    /**
+     * Enable or disable stereochemistry preservation when generating SMILES/fragments.
+     *
+     * @param preserve true to preserve stereochemistry; false to ignore it
+     */
+    public void setPreserveStereoSetting(boolean preserve) {
+        this.preserveStereoSetting.set(preserve);
+    }
+
+    /**
+     * Set the saturation display option.
+     *
+     * @param saturation the saturation display enum constant to use; must not be null
+     * @throws NullPointerException if saturation is null
+     */
+    public void setSaturationSetting(ExhaustiveFragmenter.Saturation saturation) {
+        Objects.requireNonNull(saturation, "saturation must not be null");
+        this.saturationSetting.set(SaturationDisplay.valueOf(saturation.name()));
+    }
+
+    /**
+     * Set the inclusive maximum tree depth for the exhaustive fragmenter.
+     * The value is inclusive: a value of N means nodes at depth N are included.
+     *
+     * @param depth the new inclusive maximum tree depth; must be >= 0
+     * @throws IllegalArgumentException if depth is negative
+     */
+    public void setInclusiveMaxTreeDepthSetting(int depth) {
+        if (depth < 0) {
+            throw new IllegalArgumentException("inclusiveMaxTreeDepth must be >= 0");
+        }
+        this.inclusiveMaxTreeDepthSetting.set(depth);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
-
     @Override
     public List<Property<?>> settingsProperties() {
         return this.settings;
@@ -399,23 +472,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     @Override
     public String getFragmentationAlgorithmDisplayName() {
         return Message.get("CDKExhaustiveFragmenter.displayName");
-    }
-    //
-    /**
-     * Get the {{@link SaturationDisplay}}.
-     *
-     * @return the
-     */
-    public SimpleIDisplayEnumConstantProperty getFragmentSaturationSetting() {
-        return this.saturationSetting;
-    }
-    //
-    /**
-     * Sets the fragment saturation.
-     * @param saturationSetting the new saturation value.
-     */
-    public void setFragmentSaturationSetting(IDisplayEnum saturationSetting) {
-        this.saturationSetting.set(saturationSetting);
     }
     //
     @Override
@@ -444,15 +500,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         int fragmentListSizeEstimation = tmpMoleculeClone.getAtomCount() / 2;
         List<IAtomContainer> tmpFragments = new ArrayList<>(fragmentListSizeEstimation);
         try {
-            SmilesParser tmpSmilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             this.cdkEFInstance.generateFragments(tmpMoleculeClone);
-            // TODO: there is also an option to extract atom containers directly with getFragmentsAsContainers but this
-            //  oversaturates fragments described in this issue https://github.com/cdk/cdk/issues/1119.
-            List<String> tmpSmiles = new ArrayList<>(List.of(this.cdkEFInstance.getFragments()));
-            for (String smile : tmpSmiles) {
-                tmpFragments.add(tmpSmilesParser.parseSmiles(smile));
-            }
-
+            tmpFragments.addAll(List.of(this.cdkEFInstance.getFragmentsAsContainers()));
         } catch (Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString() + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
