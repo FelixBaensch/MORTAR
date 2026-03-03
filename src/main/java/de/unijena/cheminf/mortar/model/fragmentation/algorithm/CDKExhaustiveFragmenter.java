@@ -122,108 +122,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             return this.tooltip;
         }
     }
-    /**
-     * Specifies the type of SMILES generation options to use.
-     */
-    public enum SmilesSettingDisplay implements IDisplayEnum {
-        /**
-         * Absolute SMILES: canonical SMILES with stereochemistry, atomic masses.
-         */
-        ABSOLUTE(
-                SmiFlavor.Absolute,
-                Message.get("CDKExhaustiveFragmenter.Smiles.Absolute.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Smiles.Absolute.tooltip")
-        ),
-        /**
-         * Canonical SMILES: Output SMILES in a canonical order.
-         */
-        CANONICAL(
-                SmiFlavor.Canonical,
-                Message.get("CDKExhaustiveFragmenter.Smiles.Canonical.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Smiles.Canonical.tooltip")
-        ),
-        /**
-         * Default SMILES: Default SMILES output write Stereochemistry, Atomic Mass, and CXSMILES layers.
-         */
-        DEFAULT(
-                SmiFlavor.Default,
-                Message.get("CDKExhaustiveFragmenter.Smiles.Default.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Smiles.Default.tooltip")
-        ),
-        /**
-         * Generic SMILES: Output non-canonical SMILES without stereochemistry, atomic masses.
-         */
-        GENERIC(
-                SmiFlavor.Generic,
-                Message.get("CDKExhaustiveFragmenter.Smiles.Generic.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Smiles.Generic.tooltip")
-        ),
-        /**
-         * Stereo SMILES: Output supported stereochemistry types.
-         */
-        STEREO(
-                SmiFlavor.Stereo,
-                Message.get("CDKExhaustiveFragmenter.Smiles.Stereo.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Smiles.Stereo.tooltip")
-        ),
-        /**
-         * Universal SMILES: Output canonical SMILES with stereochemistry and atomic masses, This output uses the InChI
-         * labeling algorithm to generate a 'Universal SMILES' [O'Boyle, Noel. Journal of Cheminformatics. 2012. 4].
-         */
-        UNIVERSAL_SMILES(
-                SmiFlavor.UniversalSmiles,
-                Message.get("CDKExhaustiveFragmenter.Smiles.UniversalSmiles.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Smiles.UniversalSmiles.tooltip")
-        ),
-        /**
-         * Writes aromatic atoms as lower case letters.
-         */
-        USE_AROMATIC_SYMBOLS(
-                SmiFlavor.UseAromaticSymbols,
-                Message.get("CDKExhaustiveFragmenter.Smiles.UseAromaticSymbols.displayName"),
-                Message.get("CDKExhaustiveFragmenter.Smiles.UseAromaticSymbols.tooltip")
-        );
-        /**
-         * Underlying CDK SmiFlavor value.
-         */
-        private final int smilesFlavor;
-        /**
-         * Language-specific name for display in GUI.
-         */
-        private final String displayName;
-        /**
-         * Language-specific tooltip text for display in GUI.
-         */
-        private final String tooltip;
-        /**
-         * Construct a SmilesSettingDisplay.
-         *
-         * @param aSmilesFlavor integer code representing the CDK SmiFlavor
-         * @param aDisplayName localized display name (from resource bundle)
-         * @param aTooltip localized tooltip text (from resource bundle)
-         */
-        private SmilesSettingDisplay(int aSmilesFlavor, String aDisplayName, String aTooltip) {
-            this.smilesFlavor = aSmilesFlavor;
-            this.displayName = aDisplayName;
-            this.tooltip = aTooltip;
-        }
-        /**
-         * Get the CDK SMILES flavor value associated with this enum constant.
-         *
-         * @return integer SmiFlavor value
-         */
-        public int getSmilesFlavor() {
-            return this.smilesFlavor;
-        }
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-        @Override
-        public String getTooltipText() {
-            return this.tooltip;
-        }
-    }
     //
     //<editor-fold desc="Public static final variables">
     /**
@@ -232,23 +130,44 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
     //
     /**
-     * The name of the algorithm used for fragmentation.
-     */
-    public static final int DEFAULT_MIN_FRAG_SIZE = 6;
-    /**
      * The default setting for saturation is {{@code UNSATURATED_Fragments}}.
      */
     public static final SaturationDisplay DEFAULT_SATURATION =  SaturationDisplay.UNSATURATED_FRAGMENTS;
-    /**
-     * Default smiles flavor to be used for the {{@link SmilesGenerator}}.
-     */
-    public static final SmilesSettingDisplay DEFAULT_SMILES_SETTING =
-                    SmilesSettingDisplay.ABSOLUTE;
     // assuming each fragment is unique (as if there was no deduplication)
     // 27 would be the maximum tree depth to hold all fragments in the
     // hashmap.
     private static final int DEFAULT_INCLUSIVE_MAX_TREE_DEPTH = 27;
     private static final boolean DEFAULT_COPY_STEREO_INFO = false;
+    /**
+     * Default setting: use canonical SMILES ordering.
+     */
+    public static final boolean DEFAULT_USE_CANONICAL = true;
+    //
+    /**
+     * Default setting: include stereochemistry information.
+     */
+    public static final boolean DEFAULT_INCLUDE_STEREO = true;
+    //
+    /**
+     * Default setting: include atomic mass information.
+     */
+    public static final boolean DEFAULT_INCLUDE_ATOMIC_MASS = true;
+    //
+    /**
+     * Default setting: do not use aromatic symbols.
+     */
+    public static final boolean DEFAULT_USE_AROMATIC_SYMBOLS = false;
+    //
+    /**
+     * Default setting: do not include CXSMILES layers.
+     */
+    public static final boolean DEFAULT_INCLUDE_CXSMILES = false;
+    //
+    /**
+     * Default setting: do not use universal labeling.
+     */
+    public static final boolean DEFAULT_USE_UNIVERSAL_LABELING = false;
+    //
     /**
      * The name of this fragmenter.
      */
@@ -256,27 +175,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
-
-    /**
-     * The smiles flavor to use for the generator.
-     */
-    // TODO: Find a good way to present the options of setting AND COMBINING SmiFlavors
-    //       for the user:
-    //          1. option: make a preset of flavor combination and expose these via enum
-    //
-    // TODO:
-    // additionally it would be nice to get some kind of relationship
-    // between for example preserve stereo and the type of smilesGenerator
-    // because the smilesGnerator needs to also be capable of producing
-    // stereo information if one wants to try to preserve it.
-    // Idea:
-    //      1. if one turns preserve stereo on/off it automatically makes
-    //          a new smilesGenerator with or without the most appropriate
-    //          stereo information setting
-    //
-    //
-    // private final SimpleIntegerProperty smilesFlavorSetting;
-    //
     /**
      * The maximum tree depth which represents the maximum number of bonds that will be split in a fragmentation.
      */
@@ -288,12 +186,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     private final SimpleIDisplayEnumConstantProperty saturationSetting;
     //
     /**
-     * The smiles setting for the {{@link SmilesGenerator}} specifying the configuration
-     * with the {{@link SmiFlavor}}.
-     */
-    private final SimpleIDisplayEnumConstantProperty smilesSetting;
-    //
-    /**
      * Whether to try to conserve the stereochemistry information of the molecules to split.
      */
     private final SimpleBooleanProperty preserveStereoSetting;
@@ -302,6 +194,36 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * a single bond or have more than one single bond.
      */
     private final SimpleIntegerProperty minimumFragmentSizeSetting;
+    //
+    /**
+     * Whether to use canonical SMILES ordering.
+     */
+    private final SimpleBooleanProperty useCanonicalSetting;
+    //
+    /**
+     * Whether to include stereochemistry information in SMILES output.
+     */
+    private final SimpleBooleanProperty includeStereoSetting;
+    //
+    /**
+     * Whether to include atomic mass information in SMILES output.
+     */
+    private final SimpleBooleanProperty includeAtomicMassSetting;
+    //
+    /**
+     * Whether to write aromatic atoms as lowercase letters.
+     */
+    private final SimpleBooleanProperty useAromaticSymbolsSetting;
+    //
+    /**
+     * Whether to include CXSMILES layers in output.
+     */
+    private final SimpleBooleanProperty includeCxsmilesSetting;
+    //
+    /**
+     * Whether to use InChI labeling algorithm for universal SMILES.
+     */
+    private final SimpleBooleanProperty useUniversalLabelingSetting;
     //
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
@@ -336,7 +258,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Constructor, all settings are initialized with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
-        int tmpNumberOfSettingsForTooltipMapSize = 5;
+        int tmpNumberOfSettingsForTooltipMapSize = 10;
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -353,8 +275,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 if (newValue > 0) {
                     CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
                     super.set(newValue);
-                }
-                else {
+                } else {
                     IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size can not be zero");
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
@@ -374,8 +295,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             public void set(int newValue) {
                 if (newValue > 0 && newValue < 31) {
                     super.set(newValue);
-                }
-                else {
+                } else {
                     IllegalArgumentException anException = new IllegalArgumentException(
                             "The inclusive max tree depth must be positive and smaller than 31" +
                             "to mitigate the runtime of O(n!)");
@@ -409,28 +329,63 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             }
         };
 
-        this.smilesSetting = new SimpleIDisplayEnumConstantProperty(this,
-                "Smiles Display Setting",
-                DEFAULT_SMILES_SETTING,
-                CDKExhaustiveFragmenter.SmilesSettingDisplay.class) {
-
+        this.useCanonicalSetting = new SimpleBooleanProperty(this,
+                "Use Canonical SMILES",
+                DEFAULT_USE_CANONICAL) {
             @Override
-            public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
-                try {
-                    if (newValue instanceof SmilesSettingDisplay tmpSmilesFlavor) {
-                        // this.smilesGenerator = new SmilesGenerator(tmpSmilesFlavor.smilesFlavor);
-                        super.set(tmpSmilesFlavor);
-                    } else {
-                        throw new IllegalArgumentException("");
-                    }
-                } catch (NullPointerException | IllegalArgumentException anException) {
-                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
-                            Message.get("Fragmenter.IllegalSettingValue.Header"),
-                            anException.toString(),
-                            anException);
-                    throw anException;
-                }
+            public void set(boolean newValue) {
+                super.set(newValue);
+                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
+            }
+        };
+
+        this.includeStereoSetting = new SimpleBooleanProperty(this,
+                "Include Stereochemistry",
+                DEFAULT_INCLUDE_STEREO) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
+            }
+        };
+
+        this.includeAtomicMassSetting = new SimpleBooleanProperty(this,
+                "Include Atomic Mass",
+                DEFAULT_INCLUDE_ATOMIC_MASS) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
+            }
+        };
+
+        this.useAromaticSymbolsSetting = new SimpleBooleanProperty(this,
+                "Use Aromatic Symbols",
+                DEFAULT_USE_AROMATIC_SYMBOLS) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
+            }
+        };
+
+        this.includeCxsmilesSetting = new SimpleBooleanProperty(this,
+                "Include CXSMILES",
+                DEFAULT_INCLUDE_CXSMILES) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
+            }
+        };
+
+        this.useUniversalLabelingSetting = new SimpleBooleanProperty(this,
+                "Use Universal Labeling",
+                DEFAULT_USE_UNIVERSAL_LABELING) {
+            @Override
+            public void set(boolean newValue) {
+                super.set(newValue);
+                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
             }
         };
 
@@ -458,22 +413,85 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap.put(saturationSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.saturationSetting.displayName"));
 
+        this.settingNameTooltipTextMap.put(useCanonicalSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.useCanonical.tooltip"));
+        this.settingNameDisplayNameMap.put(useCanonicalSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.useCanonical.displayName"));
+
+        this.settingNameTooltipTextMap.put(includeStereoSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.includeStereo.tooltip"));
+        this.settingNameDisplayNameMap.put(includeStereoSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.includeStereo.displayName"));
+
+        this.settingNameTooltipTextMap.put(includeAtomicMassSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.includeAtomicMass.tooltip"));
+        this.settingNameDisplayNameMap.put(includeAtomicMassSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.includeAtomicMass.displayName"));
+
+        this.settingNameTooltipTextMap.put(useAromaticSymbolsSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.useAromaticSymbols.tooltip"));
+        this.settingNameDisplayNameMap.put(useAromaticSymbolsSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.useAromaticSymbols.displayName"));
+
+        this.settingNameTooltipTextMap.put(includeCxsmilesSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.includeCxsmiles.tooltip"));
+        this.settingNameDisplayNameMap.put(includeCxsmilesSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.includeCxsmiles.displayName"));
+
+        this.settingNameTooltipTextMap.put(useUniversalLabelingSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.useUniversalLabeling.tooltip"));
+        this.settingNameDisplayNameMap.put(useUniversalLabelingSetting.getName(),
+                Message.get("CDKExhaustiveFragmenter.useUniversalLabeling.displayName"));
+
         this.settingNameTooltipTextMap.put(preserveStereoSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.preserveStereo.tooltip"));
         this.settingNameDisplayNameMap.put(preserveStereoSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.preserveStereo.displayName"));
 
-        this.settingNameTooltipTextMap.put(smilesSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.smilesGenerator.tooltip"));
-        this.settingNameDisplayNameMap.put(smilesSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.smilesGenerator.displayName"));
 
         this.settings = new ArrayList<>(tmpNumberOfSettingsForTooltipMapSize);
         this.settings.add(minimumFragmentSizeSetting);
         this.settings.add(inclusiveMaxTreeDepthSetting);
         this.settings.add(saturationSetting);
         this.settings.add(preserveStereoSetting);
-        this.settings.add(smilesSetting);
+        this.settings.add(useCanonicalSetting);
+        this.settings.add(includeStereoSetting);
+        this.settings.add(includeAtomicMassSetting);
+        this.settings.add(useAromaticSymbolsSetting);
+        this.settings.add(includeCxsmilesSetting);
+        this.settings.add(useUniversalLabelingSetting);
+
+        this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private functions">
+    /**
+     * Computes the combined SmiFlavor integer value based on current boolean settings.
+     *
+     * @return integer SmiFlavor value combining all active settings
+     */
+    private int computeSmilesFlavor() {
+        int flavor = 0;
+        if (this.useCanonicalSetting.get()) {
+            flavor |= SmiFlavor.Canonical;
+        }
+        if (this.includeStereoSetting.get()) {
+            flavor |= SmiFlavor.Stereo;
+        }
+        if (this.includeAtomicMassSetting.get()) {
+            flavor |= SmiFlavor.AtomicMass;
+        }
+        if (this.useAromaticSymbolsSetting.get()) {
+            flavor |= SmiFlavor.UseAromaticSymbols;
+        }
+        if (this.includeCxsmilesSetting.get()) {
+            flavor |= SmiFlavor.CxSmiles;
+        }
+        if (this.useUniversalLabelingSetting.get()) {
+            flavor |= SmiFlavor.UniversalSmiles;
+        }
+        return flavor;
     }
     //</editor-fold>
     //
