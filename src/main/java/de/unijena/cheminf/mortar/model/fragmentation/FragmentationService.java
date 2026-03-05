@@ -151,6 +151,7 @@ public class FragmentationService {
     private List<String> existingFragmentations;
     /**
      * Map that holds the parent molecules in a unique SMILES format as keys and the fragments as values.
+     * FIXME: Is this description even right ?
      * TODO: Why do we store parent molecule and fragments if the fragmentDataModel has explicit fields for those ?
      */
     private Map<String, FragmentDataModel> fragments;
@@ -371,6 +372,7 @@ public class FragmentationService {
                                 tmpParentFragment.getParentMolecules().clear();
                                 if (tmpParentFragment.getParentMolecules().add(tmpMolecule))
                                     tmpParentFragment.setMoleculeFrequency(1);
+                                // FIXME: Why do we store parent and parent in this map with unique as key and presumably non-unique smiles as value ?
                                 this.fragments.put(tmpParentFragment.getUniqueSmiles(), tmpParentFragment);
                                 tmpParentFragment.setAbsoluteFrequency(
                                     tmpMolecule.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles())
