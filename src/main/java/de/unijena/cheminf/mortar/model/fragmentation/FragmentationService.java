@@ -150,7 +150,8 @@ public class FragmentationService {
      */
     private List<String> existingFragmentations;
     /**
-     * Map for fragments.
+     * Map that holds the parent molecules in a unique SMILES format as keys and the fragments as values.
+     * TODO: Why do we store parent molecule and fragments if the fragmentDataModel has explicit fields for those ?
      */
     private Map<String, FragmentDataModel> fragments;
     /**
@@ -864,10 +865,13 @@ public class FragmentationService {
      * Clears all fragments of a specific fragmentation by the name of the fragmentation.
      *
      * @param aFragmentationName the name of the fragmentation that produced the fragments to delete.
+     * @param aListOfFragmentsToDelete the list of parent molecules whose fragments need to be deleted
      */
-    public void clearFragments(String aFragmentationName) {
+    public void clearFragments(String aFragmentationName, List<String> aListOfFragmentsToDelete) {
         this.existingFragmentations.remove(aFragmentationName);
-        this.fragments.remove(aFragmentationName);
+        for (String tmpFragment : aListOfFragmentsToDelete) {
+            this.fragments.remove(tmpFragment);
+        }
     }
     //</editor-fold>
     //

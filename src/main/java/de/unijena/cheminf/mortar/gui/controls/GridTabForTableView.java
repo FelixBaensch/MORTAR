@@ -28,10 +28,11 @@ package de.unijena.cheminf.mortar.gui.controls;
 import de.unijena.cheminf.mortar.controller.TabNames;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 
-import javafx.event.Event;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableView;
@@ -40,8 +41,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Custom tab which contains a grid pane.
@@ -63,10 +62,6 @@ public class GridTabForTableView extends Tab {
      * Encapsulated table view.
      */
     private final TableView tableView;
-    /**
-     * A list of all listeners that were added to this tab.
-     */
-    private List<EventHandler> registeredHandlers;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors">
@@ -122,7 +117,6 @@ public class GridTabForTableView extends Tab {
         tmpColCon3.setPrefWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         tmpColCon3.setHalignment(HPos.RIGHT);
         this.gridPane.getColumnConstraints().add(tmpColCon3);
-        this.registeredHandlers = new ArrayList<>(8);
     }
     //</editor-fold>
     //
@@ -152,17 +146,6 @@ public class GridTabForTableView extends Tab {
         this.addNodeToGridPane(this.pagination, 0, 0, 3, 2);
     }
 
-    /**
-     * Register and add an event with the respective handler.
-     *
-     * @param anEventTye the type of the event.
-     * @param aHandler the handler for the event.
-     * @param <E> a specific event.
-     */
-    public <E extends Event> void registerEventHandler(EventType<E> anEventTye, EventHandler<? super E> aHandler) {
-        this.registeredHandlers.add(aHandler);
-        this.addEventHandler(anEventTye, aHandler);
-    }
     //
     /**
      * Sets the given string as title of this tab.
@@ -210,6 +193,53 @@ public class GridTabForTableView extends Tab {
             return TabNames.MOLECULES.name();
         }
         return this.getText().split("-", 2)[1].trim();
+    }
+    /**
+     * Cleans up all resources associated with this tab.
+     * Call this before the tab is removed from the TabPane.
+     */
+    public void cleanup() {
+        Pagination tmpPagination = this.getPagination();
+        if (tmpPagination != null) {
+            tmpPagination.setPageFactory(null);
+        }
+
+        // unbind the context menu from the tab
+        ContextMenu tmpContextMenu = this.getContextMenu();
+        if (tmpContextMenu != null) {
+            tmpContextMenu.hide();
+            for (MenuItem tmpMenuItem : tmpContextMenu.getItems()) {
+                tmpMenuItem.setOnAction(null);
+            }
+            tmpContextMenu.getItems().clear();
+            this.setContextMenu(null);
+        }
+
+        // this.mainView.getMainCenterPane().
+
+        // TableView: unbind, clear listeners/handlers and clear items
+        TableView<?> tmpTable = this.getTableView();
+        if (tmpTable != null) {
+            tmpTable.setOnSort(null);
+            tmpTable.setOnKeyPressed(null);
+
+            // clear items list to break model references
+            ObservableList<?> items = tmpTable.getItems();
+            if (items != null) {
+                items.clear();
+            }
+            tmpTable.setItems(FXCollections.emptyObservableList());
+
+            // clear columns to break cell/skin references
+            tmpTable.getColumns().clear();
+
+            // tmpTable.widthProperty().removeListener();
+            tmpTable.getProperties().clear();
+        }
+
+        this.getProperties().clear();
+        this.setId(null);
+        this.setText(null);
     }
     //</editor-fold>
 }

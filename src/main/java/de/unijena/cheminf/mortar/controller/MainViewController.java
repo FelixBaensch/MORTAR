@@ -92,6 +92,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1441,54 +1442,25 @@ public class MainViewController {
 
         String tmpFragmentationName = aGridTab.getFragmentationNameOutOfTitle();
         if (this.isGridTabCleanable(aGridTab)) {
+            ArrayList<String> tmpFragmentsToDelete = new ArrayList<>(this.moleculeDataModelList.size());
             for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
                 tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
+                // TODO: find out how to remove the fragments of the fragmentationService. My trouble
+                //      is that I can not seem to find a good way to get all relevant parent molecules
+                //      which are needed because the fragments map stores <smiles of parent, smiles of all fragments>
+                //
+                List<FragmentDataModel> tmpAllFragments = tmpMoleculeDataModel.getAllFragments().get(tmpFragmentationName);
+                if (tmpAllFragments != null) {
+                    for (FragmentDataModel tmpFragment : tmpAllFragments) {
+                        tmpFragmentsToDelete.add(tmpFragment.getParentMoleculeName());
+                    }
+                }
             }
             this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
-            this.fragmentationService.clearFragments(tmpFragmentationName);
+            this.fragmentationService.clearFragments(tmpFragmentationName, tmpFragmentsToDelete);
         }
 
-        Pagination tmpPagination = aGridTab.getPagination();
-        if (tmpPagination != null) {
-            tmpPagination.setPageFactory(null);
-        }
-
-        // unbind the context menu from the tab
-        ContextMenu tmpContextMenu = aGridTab.getContextMenu();
-        if (tmpContextMenu != null) {
-            tmpContextMenu.hide();
-            for (MenuItem tmpMenuItem : tmpContextMenu.getItems()) {
-                tmpMenuItem.setOnAction(null);
-            }
-            tmpContextMenu.getItems().clear();
-            aGridTab.setContextMenu(null);
-        }
-
-        // this.mainView.getMainCenterPane().
-
-        // TableView: unbind, clear listeners/handlers and clear items
-        TableView<?> tmpTable = aGridTab.getTableView();
-        if (tmpTable != null) {
-            tmpTable.setOnSort(null);
-            tmpTable.setOnKeyPressed(null);
-
-            // clear items list to break model references
-            ObservableList<?> items = tmpTable.getItems();
-            if (items != null) {
-                items.clear();
-            }
-            tmpTable.setItems(FXCollections.emptyObservableList());
-
-            // clear columns to break cell/skin references
-            tmpTable.getColumns().clear();
-
-            // tmpTable.widthProperty().removeListener();
-            tmpTable.getProperties().clear();
-        }
-
-        aGridTab.getProperties().clear();
-        aGridTab.setId(null);
-        aGridTab.setText(null);
+        aGridTab.cleanup();
     }
     //
     /**
