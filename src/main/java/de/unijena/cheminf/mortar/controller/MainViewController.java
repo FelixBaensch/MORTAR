@@ -1451,7 +1451,7 @@ public class MainViewController {
                 List<FragmentDataModel> tmpAllFragments = tmpMoleculeDataModel.getAllFragments().get(tmpFragmentationName);
                 if (tmpAllFragments != null) {
                     for (FragmentDataModel tmpFragment : tmpAllFragments) {
-                        tmpFragmentsToDelete.add(tmpFragment.getParentMoleculeName());
+                        tmpFragmentsToDelete.add(tmpFragment.getUniqueSmiles());
                     }
                 }
             }

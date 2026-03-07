@@ -150,9 +150,8 @@ public class FragmentationService {
      */
     private List<String> existingFragmentations;
     /**
-     * Map that holds the parent molecules in a unique SMILES format as keys and the fragments as values.
-     * FIXME: Is this description even right ?
-     * TODO: Why do we store parent molecule and fragments if the fragmentDataModel has explicit fields for those ?
+     * Map that holds the unique smiles string of every unique fragment as key and the corresponding
+     * {@link FragmentDataModel} instance as value.
      */
     private Map<String, FragmentDataModel> fragments;
     /**
