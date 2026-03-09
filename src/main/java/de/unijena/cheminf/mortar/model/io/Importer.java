@@ -236,28 +236,17 @@ public class Importer {
         if (tmpInputFileType == null) {
             return null;
         }
-        IAtomContainerSet tmpImportedMoleculesSet;
-        switch (tmpInputFileType) {
-            case Importer.ValidImportFileTypes.MOL_FILE:
-                tmpImportedMoleculesSet = this.importMolFile(aFile);
-                break;
-            case Importer.ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE:
-                tmpImportedMoleculesSet = this.importSDFile(aFile);
-                break;
+        IAtomContainerSet tmpImportedMoleculesSet = switch (tmpInputFileType) {
+            case ValidImportFileTypes.MOL_FILE -> this.importMolFile(aFile);
+            case ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE -> this.importSDFile(aFile);
             //Needs more work before it can be made available
             /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
                 break;*/
-            case Importer.ValidImportFileTypes.SMILES_FILE,
-                 Importer.ValidImportFileTypes.TEXT_FILE,
-                 Importer.ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE,
-                 Importer.ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE:
-                tmpImportedMoleculesSet = this.importSMILESFile(aFile);
-                break;
-            default:
-                throw new UnsupportedOperationException(String.format("Input file type %s is defined but not treated " +
-                        "in Importer.importMoleculeFile() yet.", tmpInputFileType.toString()));
-        }
+            case ValidImportFileTypes.SMILES_FILE, ValidImportFileTypes.TEXT_FILE,
+                 ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE, ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE ->
+                    this.importSMILESFile(aFile);
+        };
         this.preprocessMoleculeSet(tmpImportedMoleculesSet, isFillOpenValencesWithImplH);
         this.fileName = aFile.getName();
         List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced);
