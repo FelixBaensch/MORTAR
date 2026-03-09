@@ -371,7 +371,6 @@ public class FragmentationService {
                                 tmpParentFragment.getParentMolecules().clear();
                                 if (tmpParentFragment.getParentMolecules().add(tmpMolecule))
                                     tmpParentFragment.setMoleculeFrequency(1);
-                                // FIXME: Why do we store parent and parent in this map with unique as key and presumably non-unique smiles as value ?
                                 this.fragments.put(tmpParentFragment.getUniqueSmiles(), tmpParentFragment);
                                 tmpParentFragment.setAbsoluteFrequency(
                                     tmpMolecule.getFragmentFrequencyOfSpecificFragmentation(tmpPipelineFragmentationName).get(tmpParentFragment.getUniqueSmiles())
