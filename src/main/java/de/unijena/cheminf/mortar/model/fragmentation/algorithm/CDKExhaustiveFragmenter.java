@@ -133,40 +133,26 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * The default setting for saturation is {{@code UNSATURATED_Fragments}}.
      */
     public static final SaturationDisplay DEFAULT_SATURATION =  SaturationDisplay.UNSATURATED_FRAGMENTS;
-    // assuming each fragment is unique (as if there was no deduplication)
-    // 27 would be the maximum tree depth to hold all fragments in the
-    // hashmap.
-    private static final int DEFAULT_INCLUSIVE_MAX_TREE_DEPTH = 27;
-    private static final boolean DEFAULT_COPY_STEREO_INFO = false;
-    /**
-     * Default setting: use canonical SMILES ordering.
-     */
-    public static final boolean DEFAULT_USE_CANONICAL = true;
     //
-    /**
-     * Default setting: include stereochemistry information.
+    /** Default number of bonds that get split in one fragmentation.
+     * This value is based on the assumption each fragment is unique (as if there was no deduplication)
+     * this 27 would be the maximum tree depth to hold all fragments in the
+     * hashmap.
      */
-    public static final boolean DEFAULT_INCLUDE_STEREO = true;
-    //
+    public static final int DEFAULT_INCLUSIVE_MAX_TREE_DEPTH = 27;
     /**
-     * Default setting: include atomic mass information.
+     * Do not copy stereochemistry information by default
      */
-    public static final boolean DEFAULT_INCLUDE_ATOMIC_MASS = true;
+    public static final boolean DEFAULT_COPY_STEREO_INFO = false;
     //
     /**
      * Default setting: do not use aromatic symbols.
      */
     public static final boolean DEFAULT_USE_AROMATIC_SYMBOLS = false;
-    //
     /**
-     * Default setting: do not include CXSMILES layers.
+     * The base {@link SmiFlavor} for the {@link SmilesGenerator}.
      */
-    public static final boolean DEFAULT_INCLUDE_CXSMILES = false;
-    //
-    /**
-     * Default setting: do not use universal labeling.
-     */
-    public static final boolean DEFAULT_USE_UNIVERSAL_LABELING = false;
+    public static final int DEFAULT_SMILES_FLAVOUR = SmiFlavor.Unique;
     //
     /**
      * The name of this fragmenter.
@@ -196,34 +182,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     private final SimpleIntegerProperty minimumFragmentSizeSetting;
     //
     /**
-     * Whether to use canonical SMILES ordering.
-     */
-    private final SimpleBooleanProperty useCanonicalSetting;
-    //
-    /**
-     * Whether to include stereochemistry information in SMILES output.
-     */
-    private final SimpleBooleanProperty includeStereoSetting;
-    //
-    /**
-     * Whether to include atomic mass information in SMILES output.
-     */
-    private final SimpleBooleanProperty includeAtomicMassSetting;
-    //
-    /**
      * Whether to write aromatic atoms as lowercase letters.
      */
     private final SimpleBooleanProperty useAromaticSymbolsSetting;
-    //
-    /**
-     * Whether to include CXSMILES layers in output.
-     */
-    private final SimpleBooleanProperty includeCxsmilesSetting;
-    //
-    /**
-     * Whether to use InChI labeling algorithm for universal SMILES.
-     */
-    private final SimpleBooleanProperty useUniversalLabelingSetting;
     //
     /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
@@ -258,7 +219,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Constructor, all settings are initialized with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
-        int tmpNumberOfSettingsForTooltipMapSize = 10;
+        int tmpNumberOfSettingsForTooltipMapSize = 5;
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -329,59 +290,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             }
         };
 
-        this.useCanonicalSetting = new SimpleBooleanProperty(this,
-                "Use Canonical SMILES",
-                DEFAULT_USE_CANONICAL) {
-            @Override
-            public void set(boolean newValue) {
-                super.set(newValue);
-                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
-            }
-        };
-
-        this.includeStereoSetting = new SimpleBooleanProperty(this,
-                "Include Stereochemistry",
-                DEFAULT_INCLUDE_STEREO) {
-            @Override
-            public void set(boolean newValue) {
-                super.set(newValue);
-                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
-            }
-        };
-
-        this.includeAtomicMassSetting = new SimpleBooleanProperty(this,
-                "Include Atomic Mass",
-                DEFAULT_INCLUDE_ATOMIC_MASS) {
-            @Override
-            public void set(boolean newValue) {
-                super.set(newValue);
-                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
-            }
-        };
-
         this.useAromaticSymbolsSetting = new SimpleBooleanProperty(this,
                 "Use Aromatic Symbols",
                 DEFAULT_USE_AROMATIC_SYMBOLS) {
-            @Override
-            public void set(boolean newValue) {
-                super.set(newValue);
-                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
-            }
-        };
-
-        this.includeCxsmilesSetting = new SimpleBooleanProperty(this,
-                "Include CXSMILES",
-                DEFAULT_INCLUDE_CXSMILES) {
-            @Override
-            public void set(boolean newValue) {
-                super.set(newValue);
-                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
-            }
-        };
-
-        this.useUniversalLabelingSetting = new SimpleBooleanProperty(this,
-                "Use Universal Labeling",
-                DEFAULT_USE_UNIVERSAL_LABELING) {
             @Override
             public void set(boolean newValue) {
                 super.set(newValue);
@@ -413,35 +324,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap.put(saturationSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.saturationSetting.displayName"));
 
-        this.settingNameTooltipTextMap.put(useCanonicalSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.useCanonical.tooltip"));
-        this.settingNameDisplayNameMap.put(useCanonicalSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.useCanonical.displayName"));
-
-        this.settingNameTooltipTextMap.put(includeStereoSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.includeStereo.tooltip"));
-        this.settingNameDisplayNameMap.put(includeStereoSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.includeStereo.displayName"));
-
-        this.settingNameTooltipTextMap.put(includeAtomicMassSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.includeAtomicMass.tooltip"));
-        this.settingNameDisplayNameMap.put(includeAtomicMassSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.includeAtomicMass.displayName"));
-
         this.settingNameTooltipTextMap.put(useAromaticSymbolsSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.useAromaticSymbols.tooltip"));
         this.settingNameDisplayNameMap.put(useAromaticSymbolsSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.useAromaticSymbols.displayName"));
-
-        this.settingNameTooltipTextMap.put(includeCxsmilesSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.includeCxsmiles.tooltip"));
-        this.settingNameDisplayNameMap.put(includeCxsmilesSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.includeCxsmiles.displayName"));
-
-        this.settingNameTooltipTextMap.put(useUniversalLabelingSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.useUniversalLabeling.tooltip"));
-        this.settingNameDisplayNameMap.put(useUniversalLabelingSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.useUniversalLabeling.displayName"));
 
         this.settingNameTooltipTextMap.put(preserveStereoSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.preserveStereo.tooltip"));
@@ -454,12 +340,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settings.add(inclusiveMaxTreeDepthSetting);
         this.settings.add(saturationSetting);
         this.settings.add(preserveStereoSetting);
-        this.settings.add(useCanonicalSetting);
-        this.settings.add(includeStereoSetting);
-        this.settings.add(includeAtomicMassSetting);
         this.settings.add(useAromaticSymbolsSetting);
-        this.settings.add(includeCxsmilesSetting);
-        this.settings.add(useUniversalLabelingSetting);
 
         this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
     }
@@ -472,24 +353,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @return integer SmiFlavor value combining all active settings
      */
     private int computeSmilesFlavor() {
-        int flavor = 0;
-        if (this.useCanonicalSetting.get()) {
-            flavor |= SmiFlavor.Canonical;
-        }
-        if (this.includeStereoSetting.get()) {
+        int flavor = DEFAULT_SMILES_FLAVOUR;
+        if (this.preserveStereoSetting.get()) {
             flavor |= SmiFlavor.Stereo;
-        }
-        if (this.includeAtomicMassSetting.get()) {
-            flavor |= SmiFlavor.AtomicMass;
         }
         if (this.useAromaticSymbolsSetting.get()) {
             flavor |= SmiFlavor.UseAromaticSymbols;
-        }
-        if (this.includeCxsmilesSetting.get()) {
-            flavor |= SmiFlavor.CxSmiles;
-        }
-        if (this.useUniversalLabelingSetting.get()) {
-            flavor |= SmiFlavor.UniversalSmiles;
         }
         return flavor;
     }
