@@ -195,7 +195,7 @@ public class GridTabForTableView extends Tab {
         return this.getText().split("-", 2)[1].trim();
     }
     /**
-     * Cleans up all resources associated with this tab.
+     * Cleans up all UI resources associated with this tab.
      * Call this before the tab is removed from the TabPane.
      */
     public void cleanup() {
@@ -232,14 +232,8 @@ public class GridTabForTableView extends Tab {
 
             // clear columns to break cell/skin references
             tmpTable.getColumns().clear();
-
-            // tmpTable.widthProperty().removeListener();
             tmpTable.getProperties().clear();
         }
-
-        this.getProperties().clear();
-        this.setId(null);
-        this.setText(null);
     }
     //</editor-fold>
 }

@@ -216,8 +216,8 @@ public class GuiUtil {
      * @param aHeaderText Header of the confirmation alert
      * @param aContentText Text that the confirmation alert contains
      * @param aCheckboxText Explanation to display on the right side of the checkbox
-     * @return a pair of a boolean specifying if the checkbox was marked and the button type
-     * selected by user - ButtonType.OK or ButtonType.CANCEL
+     * @return a {@link CheckboxAndButtonResult} containing a boolean specifying if the checkbox was marked
+     * and the button type selected by user - ButtonType.OK or ButtonType.CANCEL
      */
     public static CheckboxAndButtonResult guiConfirmationWithDeactivationAlert(String aTitle, String aHeaderText, String aContentText, String aCheckboxText) {
         Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);

@@ -58,6 +58,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
@@ -449,17 +450,17 @@ public class MainViewController {
                     Message.get("MainViewController.Warning.FragmentationRunning.Content"));
         } else {
             if (this.settingsContainer.isShowDataWillBeLostWarningSetting()) {
-                GuiUtil.CheckboxAndButtonResult tmpConfirmation = GuiUtil.guiConfirmationWithDeactivationAlert(
+                GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
                         Message.get("MainViewController.Warning.DataLoss.Title"),
                         Message.get("MainViewController.Warning.DataLoss.Header"),
                         Message.get("MainViewController.Warning.DataLoss.Content"),
                         Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
                 );
 
-                if (tmpConfirmation.checkboxChecked()) {
+                if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
                     this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
                 }
-                tmpConfirmationResult = tmpConfirmation.buttonType();
+                tmpConfirmationResult = tmpCheckboxAndConfirmationResult.buttonType();
             } else {
                 return true;
             }
@@ -1258,7 +1259,7 @@ public class MainViewController {
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
 
         // make the fragmentation tab closeable and set cleanup function
-        tmpFragmentsTab.setOnClosed(tmpEvent -> this.cleanupGridTab(tmpFragmentsTab));
+        tmpFragmentsTab.setOnCloseRequest(tmpEvent -> this.closeTabWithEvent(tmpEvent, tmpFragmentsTab));
         tmpFragmentsTab.setClosable(true);
 
         // add close all and close Tab context menu and confirmation menu
@@ -1408,6 +1409,41 @@ public class MainViewController {
         mainTabPane.getTabs().remove(gridTableView);
         cleanupGridTab(gridTableView);
     }
+    /**
+     * Closes the tab of the grid table and cleans up the referenced data if possible after
+     * the warning dialogue of data loss is acknowledged by the user with pressing OK on the
+     * information popup.
+     *
+     * @param aEvent the Event to consume if cancel gets pressed on the warning window.
+     * @param gridTableView the tab to remove.
+     */
+    private void closeTabWithEvent(Event aEvent, GridTabForTableView gridTableView) {
+        if (this.settingsContainer.isShowDataWillBeLostWarningSetting() && isGridTabCleanable(gridTableView)) {
+            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+                    Message.get("MainViewController.Warning.CloseTab.Title"),
+                    Message.get("MainViewController.Warning.CloseTab.Header"),
+                    Message.get("MainViewController.Warning.CloseTab.Content"),
+                    Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
+            );
+            if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
+                // the following line is the only difference to the closeTab implementation
+                // another option would be to also use this function in the closeTab context menu
+                // and manually fire an event.
+                // manually fire event:
+                // pro: closeTab function could be removed.
+                // contra: maybe a little harder to understand why closeAllTabs does not need an event
+                //         and maybe infringing a little on consistency
+                aEvent.consume();
+                return;
+            }
+
+            if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
+                this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
+            }
+        }
+        mainTabPane.getTabs().remove(gridTableView);
+        cleanupGridTab(gridTableView);
+    }
     //
     /**
      * Check if there is no other tab with the same fragmentation name.
@@ -1444,10 +1480,6 @@ public class MainViewController {
             ArrayList<String> tmpFragmentsToDelete = new ArrayList<>(this.moleculeDataModelList.size());
             for (MoleculeDataModel tmpMoleculeDataModel : this.moleculeDataModelList) {
                 tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
-                // TODO: find out how to remove the fragments of the fragmentationService. My trouble
-                //      is that I can not seem to find a good way to get all relevant parent molecules
-                //      which are needed because the fragments map stores <smiles of parent, smiles of all fragments>
-                //
                 List<FragmentDataModel> tmpAllFragments = tmpMoleculeDataModel.getAllFragments().get(tmpFragmentationName);
                 if (tmpAllFragments != null) {
                     for (FragmentDataModel tmpFragment : tmpAllFragments) {
@@ -1477,7 +1509,7 @@ public class MainViewController {
         GridTabForTableView tmpItemizationTab = new GridTabForTableView(Message.get("MainTabPane.itemizationTab.title") + " - " + aFragmentationName, TabNames.ITEMIZATION.name(), tmpItemizationDataTableView);
 
         // make the fragmentation tab closeable and set cleanup function
-        tmpItemizationTab.setOnClosed(tmpEvent -> this.cleanupGridTab(tmpItemizationTab));
+        tmpItemizationTab.setOnCloseRequest(tmpEvent -> this.closeTabWithEvent(tmpEvent, tmpItemizationTab));
         tmpItemizationTab.setClosable(true);
 
         // add close all and close Tab context menu and confirmation menu
