@@ -39,10 +39,10 @@ import javafx.beans.property.SimpleIntegerProperty;
 
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -151,7 +151,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
     //
     /**
-     * The default setting for saturation is {{@code UNSATURATED_Fragments}}.
+     * The default setting for saturation is {@code UNSATURATED_Fragments}.
      */
     public static final SaturationDisplay DEFAULT_SATURATION =  SaturationDisplay.UNSATURATED_FRAGMENTS;
     //
@@ -167,13 +167,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public static final boolean DEFAULT_PRESERVE_STEREO_INFO = false;
     //
     /**
-     * Use aromatic symbols by default.
+     * The maximum number of bonds split in one fragmentation.
      */
-    public static final boolean DEFAULT_USE_AROMATIC_SYMBOLS = true;
-    /**
-     * The base {@link SmiFlavor} for the {@link SmilesGenerator}.
-     */
-    public static final int DEFAULT_SMILES_FLAVOUR = SmiFlavor.Unique;
+    public static final int MAX_TREE_DEPTH_LIMIT = 31;
     //
     /**
      * The name of this fragmenter.
@@ -192,7 +188,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     private final SimpleIntegerProperty inclusiveMaxTreeDepthSetting;
     //
     /**
-     * The saturation setting specifying the {{@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation}}
+     * The saturation setting specifying the {@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation}
      */
     private final SimpleIDisplayEnumConstantProperty saturationSetting;
     //
@@ -295,7 +291,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 DEFAULT_INCLUSIVE_MAX_TREE_DEPTH) {
             @Override
             public void set(int newValue) {
-                if (newValue > 0 && newValue < 31) {
+                if (newValue > 0 && newValue < CDKExhaustiveFragmenter.MAX_TREE_DEPTH_LIMIT) {
                     CDKExhaustiveFragmenter.this.cdkEFInstance.setInclusiveMaxTreeDepth(newValue);
                     super.set(newValue);
                 } else {
@@ -320,8 +316,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
-                    if (newValue instanceof SaturationDisplay) {
-                        CDKExhaustiveFragmenter.this.cdkEFInstance.setSaturationSetting(((SaturationDisplay) newValue).getSaturationValue());
+                    if (newValue instanceof SaturationDisplay newSaturation) {
+                        CDKExhaustiveFragmenter.this.cdkEFInstance.setSaturationSetting(newSaturation.getSaturationValue());
                         super.set(newValue);
                     }
                 } catch (NullPointerException | IllegalArgumentException anException) {
@@ -474,16 +470,25 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @param minimumFragmentSize the new minimum fragment size.
      */
     public void setMinimumFragmentSize(int minimumFragmentSize) {
+        if (minimumFragmentSize <= 0) {
+            throw new IllegalArgumentException(
+                    "Minimum fragment size must be positive");
+        }
         this.minimumFragmentSizeSetting.set(minimumFragmentSize);
     }
 
     /**
-     * Sets the threshold for filtering. Molecules with more then the specified number here
+     * Sets the threshold for filtering. Molecules with more than the specified number here
      * will not be fragmented.
      *
      * @param aThresholdForSplittableBonds the maximum number of splittable bonds to still be fragmented.
+     * @throws IllegalArgumentException if the value is less than zero.
      */
     public void setThresholdForSplittableBonds(int aThresholdForSplittableBonds) {
+        if (aThresholdForSplittableBonds <= 0) {
+            throw new IllegalArgumentException(
+                    "Threshold for splittable bonds must be positive");
+        }
         this.inclusiveSplittableBondsThreshold.set(aThresholdForSplittableBonds);
     }
 
@@ -497,14 +502,21 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     }
 
     /**
-     * Set the saturation display option.
+     * Set the saturation display option using a CDK saturation enum value.
      *
-     * @param saturation the saturation display enum constant to use; must not be null
+     * @param aSaturation the {@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation}
+     *                   enum constant to convert; must not be null
      * @throws NullPointerException if saturation is null
+     * @throws IllegalArgumentException if the saturation enum cannot be converted to SaturationDisplay
      */
-    public void setSaturationSetting(ExhaustiveFragmenter.Saturation saturation) {
-        Objects.requireNonNull(saturation, "saturation must not be null");
-        this.saturationSetting.set(SaturationDisplay.valueOf(saturation.name()));
+    public void setSaturationSetting(ExhaustiveFragmenter.Saturation aSaturation) {
+        Objects.requireNonNull(aSaturation, "saturation must not be null");
+        try {
+            this.saturationSetting.set(SaturationDisplay.valueOf(aSaturation.name()));
+        } catch (IllegalArgumentException anException) {
+            LOGGER.log(Level.WARNING, "Failed to convert saturation: " + aSaturation.name(), anException);
+            throw new IllegalArgumentException("Unsupported saturation type: " + aSaturation.name(), anException);
+        }
     }
 
     /**
@@ -515,8 +527,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @throws IllegalArgumentException if depth is negative
      */
     public void setInclusiveMaxTreeDepthSetting(int depth) {
-        if (depth < 0) {
-            throw new IllegalArgumentException("inclusiveMaxTreeDepth must be >= 0");
+        if (depth < 0 || depth >= MAX_TREE_DEPTH_LIMIT) {
+            throw new IllegalArgumentException(
+                    "inclusiveMaxTreeDepth must be >= 0 and < " + MAX_TREE_DEPTH_LIMIT);
         }
         this.inclusiveMaxTreeDepthSetting.set(depth);
     }
@@ -525,17 +538,17 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="IMoleculeFragmenter methods">
     @Override
     public List<Property<?>> settingsProperties() {
-        return this.settings;
+        return Collections.unmodifiableList(this.settings);
     }
 
     @Override
     public Map<String, String> getSettingNameToTooltipTextMap() {
-        return this.settingNameTooltipTextMap;
+        return Collections.unmodifiableMap(this.settingNameTooltipTextMap);
     }
 
     @Override
     public Map<String, String> getSettingNameToDisplayNameMap() {
-        return this.settingNameDisplayNameMap;
+        return Collections.unmodifiableMap(this.settingNameDisplayNameMap);
     }
 
     @Override
@@ -592,10 +605,13 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
+        if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
+            return true;
+        }
         if (ExhaustiveFragmenter.getSplittableBonds(aMolecule).length > this.inclusiveSplittableBondsThreshold.get()) {
             return true;
         }
-        return (Objects.isNull(aMolecule) || aMolecule.isEmpty());
+        return false;
     }
 
     @Override
