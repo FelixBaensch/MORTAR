@@ -74,6 +74,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
          * (implicit hydrogen atoms added).
          */
         HYDROGEN_SATURATED_FRAGMENTS(
+                ExhaustiveFragmenter.Saturation.HYDROGEN_SATURATED_FRAGMENTS,
                 Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.displayName"),
                 Message.get("CDKExhaustiveFragmenter.Saturation.Hydrogen.tooltip")
         ),
@@ -81,6 +82,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
          * Fragments will be saturated with R atoms.
          */
         R_SATURATED_FRAGMENTS(
+                ExhaustiveFragmenter.Saturation.R_SATURATED_FRAGMENTS,
                 Message.get("CDKExhaustiveFragmenter.Saturation.Rest.displayName"),
                 Message.get("CDKExhaustiveFragmenter.Saturation.Rest.tooltip")
         ),
@@ -90,9 +92,14 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
          * of the split bonds.
          */
         UNSATURATED_FRAGMENTS (
+                ExhaustiveFragmenter.Saturation.UNSATURATED_FRAGMENTS,
                 Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.displayName"),
                 Message.get("CDKExhaustiveFragmenter.Saturation.Unsaturated.tooltip")
         );
+        /**
+         * The actual value of the {@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation}.
+         */
+        private final ExhaustiveFragmenter.Saturation saturationValue;
         /**
          * Language-specific name for display in GUI.
          */
@@ -107,9 +114,19 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
          * @param aDisplayName display name
          * @param aTooltip tooltip text
          */
-        private SaturationDisplay(String aDisplayName, String aTooltip) {
+        private SaturationDisplay(ExhaustiveFragmenter.Saturation aSaturationValue, String aDisplayName, String aTooltip) {
+            this.saturationValue = aSaturationValue;
             this.displayName = aDisplayName;
             this.tooltip = aTooltip;
+        }
+        //
+        /**
+         * Gets the wrapped {@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation} value.
+         *
+         * @return the wrapped {@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation} value.
+         */
+        public ExhaustiveFragmenter.Saturation getSaturationValue() {
+            return this.saturationValue;
         }
         //
         @Override
@@ -264,7 +281,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(int newValue) {
                 if (newValue > 0) {
-                    CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
                     super.set(newValue);
                 } else {
                     IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size can not be zero");
@@ -285,6 +301,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(int newValue) {
                 if (newValue > 0 && newValue < 31) {
+                    CDKExhaustiveFragmenter.this.cdkEFInstance.setInclusiveMaxTreeDepth(newValue);
                     super.set(newValue);
                 } else {
                     IllegalArgumentException anException = new IllegalArgumentException(
@@ -308,7 +325,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
-                    super.set(newValue);
+                    if (newValue instanceof SaturationDisplay) {
+                        CDKExhaustiveFragmenter.this.cdkEFInstance.setSaturationSetting(((SaturationDisplay) newValue).getSaturationValue());
+                        super.set(newValue);
+                    }
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
@@ -325,6 +345,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 DEFAULT_USE_AROMATIC_SYMBOLS) {
             @Override
             public void set(boolean newValue) {
+                // NOTE: it is important to first set the value and then compute the new smiles flavor
+                // as th compute method relies on the setting fields of this class.
                 super.set(newValue);
                 CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
             }
@@ -336,6 +358,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(boolean newValue) {
                 super.set(newValue);
+                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
             }
         };
 
@@ -495,6 +518,16 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      */
     public void setMinimumFragmentSize(int minimumFragmentSize) {
         this.minimumFragmentSizeSetting.set(minimumFragmentSize);
+    }
+
+    /**
+     * Sets the threshold for filtering. Molecules with more then the specified number here
+     * will not be fragmented.
+     *
+     * @param aThresholdForSplittableBonds the maximum number of splittable bonds to still be fragmented.
+     */
+    public void setThresholdForSplittableBonds(int aThresholdForSplittableBonds) {
+        this.inclusiveSplittableBondsThreshold.set(aThresholdForSplittableBonds);
     }
 
     /**
