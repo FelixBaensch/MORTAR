@@ -207,11 +207,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     private final SimpleIntegerProperty minimumFragmentSizeSetting;
     //
     /**
-     * Whether to write aromatic atoms as lowercase letters.
-     */
-    private final SimpleBooleanProperty useAromaticSymbolsSetting;
-    //
-    /**
      * All settings of this fragmenter, encapsulated in JavaFX properties for binding in GUI.
      */
     private final List<Property<?>> settings;
@@ -244,7 +239,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Constructor, all settings are initialized with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
-        int tmpNumberOfSettingsForTooltipMapSize = 6;
+        int tmpNumberOfSettingsForTooltipMapSize = 5;
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -283,7 +278,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 if (newValue > 0) {
                     super.set(newValue);
                 } else {
-                    IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size can not be zero");
+                    IllegalArgumentException anException = new IllegalArgumentException("The threshold of splittable bonds can not be zero");
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
                             Message.get("Fragmenter.IllegalSettingValue.Header"),
@@ -340,25 +335,13 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             }
         };
 
-        this.useAromaticSymbolsSetting = new SimpleBooleanProperty(this,
-                "Use Aromatic Symbols",
-                DEFAULT_USE_AROMATIC_SYMBOLS) {
-            @Override
-            public void set(boolean newValue) {
-                // NOTE: it is important to first set the value and then compute the new smiles flavor
-                // as th compute method relies on the setting fields of this class.
-                super.set(newValue);
-                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
-            }
-        };
-
         this.preserveStereoSetting = new SimpleBooleanProperty(this,
                 "Preserve Stereo Information",
                 DEFAULT_PRESERVE_STEREO_INFO) {
             @Override
             public void set(boolean newValue) {
                 super.set(newValue);
-                CDKExhaustiveFragmenter.this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
+                CDKExhaustiveFragmenter.this.cdkEFInstance.setPreserveStereo(newValue);
             }
         };
 
@@ -382,11 +365,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap.put(saturationSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.saturationSetting.displayName"));
 
-        this.settingNameTooltipTextMap.put(useAromaticSymbolsSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.useAromaticSymbols.tooltip"));
-        this.settingNameDisplayNameMap.put(useAromaticSymbolsSetting.getName(),
-                Message.get("CDKExhaustiveFragmenter.useAromaticSymbols.displayName"));
-
         this.settingNameTooltipTextMap.put(preserveStereoSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.preserveStereo.tooltip"));
         this.settingNameDisplayNameMap.put(preserveStereoSetting.getName(),
@@ -399,27 +377,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settings.add(inclusiveMaxTreeDepthSetting);
         this.settings.add(saturationSetting);
         this.settings.add(preserveStereoSetting);
-        this.settings.add(useAromaticSymbolsSetting);
-
-        this.smilesGenerator = new SmilesGenerator(computeSmilesFlavor());
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Private functions">
-    /**
-     * Computes the combined SmiFlavor integer value based on current boolean settings.
-     *
-     * @return integer SmiFlavor value combining all active settings
-     */
-    private int computeSmilesFlavor() {
-        int tmpFlavor = DEFAULT_SMILES_FLAVOUR;
-        if (this.preserveStereoSetting.get()) {
-            tmpFlavor |= SmiFlavor.Stereo;
-        }
-        if (this.useAromaticSymbolsSetting.get()) {
-            tmpFlavor |= SmiFlavor.UseAromaticSymbols;
-        }
-        return tmpFlavor;
     }
     //</editor-fold>
     //
@@ -599,7 +556,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         tmpCopy.inclusiveMaxTreeDepthSetting.set(this.inclusiveMaxTreeDepthSetting.get());
         tmpCopy.saturationSetting.set(this.saturationSetting.get());
         tmpCopy.preserveStereoSetting.set(this.preserveStereoSetting.get());
-        tmpCopy.useAromaticSymbolsSetting.set(this.useAromaticSymbolsSetting.get());
         return tmpCopy;
     }
 
@@ -610,7 +566,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.inclusiveMaxTreeDepthSetting.set(CDKExhaustiveFragmenter.DEFAULT_INCLUSIVE_MAX_TREE_DEPTH);
         this.saturationSetting.set(CDKExhaustiveFragmenter.DEFAULT_SATURATION);
         this.preserveStereoSetting.set(CDKExhaustiveFragmenter.DEFAULT_PRESERVE_STEREO_INFO);
-        this.useAromaticSymbolsSetting.set(CDKExhaustiveFragmenter.DEFAULT_USE_AROMATIC_SYMBOLS);
     }
 
     @Override
