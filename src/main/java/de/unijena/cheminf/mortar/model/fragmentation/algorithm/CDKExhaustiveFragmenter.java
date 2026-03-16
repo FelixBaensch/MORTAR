@@ -425,7 +425,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Indicates whether stereochemistry should be preserved when generating SMILES/fragments.
      *
-     * @return true if stereochemistry preservation is enabled; false otherwise
+     * @return true if stereochemistry preservation is enabled; false otherwise.
      */
     public boolean getPreserveStereoSetting() {
         return this.preserveStereoSetting.get();
@@ -452,7 +452,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Gets the inclusive maximum tree depth used by the exhaustive fragmenter. This value is inclusive:
      * a value of N means the fragmenter will include nodes at depth N.
      *
-     * @return the inclusive maximum tree depth as an int
+     * @return the inclusive maximum tree depth.
      */
     public int getInclusiveMaxTreeDepthSetting() {
         return this.inclusiveMaxTreeDepthSetting.get();
@@ -468,6 +468,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Sets the minimum fragment size.
      *
      * @param minimumFragmentSize the new minimum fragment size.
+     * @throws IllegalArgumentException if the fragment size is negative.
      */
     public void setMinimumFragmentSize(int minimumFragmentSize) {
         if (minimumFragmentSize <= 0) {
@@ -495,7 +496,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Enable or disable stereochemistry preservation when generating SMILES/fragments.
      *
-     * @param preserve true to preserve stereochemistry; false to ignore it
+     * @param preserve true to preserve stereochemistry; false to ignore it.
      */
     public void setPreserveStereoSetting(boolean preserve) {
         this.preserveStereoSetting.set(preserve);
@@ -506,8 +507,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      *
      * @param aSaturation the {@link org.openscience.cdk.fragment.ExhaustiveFragmenter.Saturation}
      *                   enum constant to convert; must not be null
-     * @throws NullPointerException if saturation is null
-     * @throws IllegalArgumentException if the saturation enum cannot be converted to SaturationDisplay
+     * @throws NullPointerException if saturation is null.
+     * @throws IllegalArgumentException if the saturation enum cannot be converted to SaturationDisplay.
      */
     public void setSaturationSetting(ExhaustiveFragmenter.Saturation aSaturation) {
         Objects.requireNonNull(aSaturation, "saturation must not be null");
@@ -523,8 +524,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Set the inclusive maximum tree depth for the exhaustive fragmenter.
      * The value is inclusive: a value of N means nodes at depth N are included.
      *
-     * @param depth the new inclusive maximum tree depth; must be >= 0
-     * @throws IllegalArgumentException if depth is negative
+     * @param depth the new inclusive maximum tree depth; must be >= 0.
+     * @throws IllegalArgumentException if depth is negative.
      */
     public void setInclusiveMaxTreeDepthSetting(int depth) {
         if (depth < 0 || depth >= MAX_TREE_DEPTH_LIMIT) {
