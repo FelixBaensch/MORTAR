@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
@@ -89,6 +90,10 @@ public class CDKExhaustiveFragmenterTest {
         Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
         Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
         Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSizeSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::inclusiveSplittableBondsThresholdSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getInclusiveMaxTreeDepthSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getSaturationSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::preserveStereoSettingProperty);
         Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSize);
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {
@@ -98,4 +103,36 @@ public class CDKExhaustiveFragmenterTest {
         tmpFragmenter.setMinimumFragmentSize(tmpMinimumFragmentSize);
         Assertions.assertEquals(tmpMinimumFragmentSize, tmpFragmenter.getMinimumFragmentSize());
     }
+    //
+    /**
+     * Does a test fragmentation to test stereochemistry functions on
+     * the COCONUT natural product CNP0381655.1.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void fragmentationTestStereo() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Canonical));
+        IAtomContainer tmpOriginalMolecule;
+        List<IAtomContainer> tmpFragmentList;
+        CDKExhaustiveFragmenter tmpFragmenter = new CDKExhaustiveFragmenter();
+        tmpOriginalMolecule = tmpSmiPar.parseSmiles(
+                // CNP0381655.1
+                "CCCCC[C@H]1O[C@@H]1/C=C/C=O");
+
+        Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
+        // setting preserve stereo manually to false to check that preprocessing works correctly
+        // as molecules with stereo information should be preprocessed if this setting is false
+        tmpFragmenter.preserveStereoSettingProperty().set(false);
+        Assertions.assertTrue(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
+        Assertions.assertEquals("O=CC=CC1OC1CCCCC", tmpSmiGen.create(tmpFragmenter.applyPreprocessing(tmpOriginalMolecule)));
+        Assertions.assertFalse(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
+        IAtomContainer tmpPreprocessedMol = tmpFragmenter.applyPreprocessing(tmpOriginalMolecule);
+        tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpPreprocessedMol);
+        for (IAtomContainer tmpFragment : tmpFragmentList) {
+            Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
+        }
+    }
+
 }

@@ -125,6 +125,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //
     //<editor-fold desc="Public static final variables">
     /**
+     * The default threshold at which molecules will be filtered out for the fragmentation.
+     */
+    public static final int DEFAULT_THRESHOLD_FOR_SPLITTABLE_BONDS = 31;
+    /**
      * The default value for the minimum fragment size used for the fragmentation.
      */
     public static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
@@ -143,12 +147,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Do not copy stereochemistry information by default
      */
-    public static final boolean DEFAULT_COPY_STEREO_INFO = false;
+    public static final boolean DEFAULT_PRESERVE_STEREO_INFO = false;
     //
     /**
-     * Default setting: do not use aromatic symbols.
+     * Use aromatic symbols by default.
      */
-    public static final boolean DEFAULT_USE_AROMATIC_SYMBOLS = false;
+    public static final boolean DEFAULT_USE_AROMATIC_SYMBOLS = true;
     /**
      * The base {@link SmiFlavor} for the {@link SmilesGenerator}.
      */
@@ -161,6 +165,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
+    /**
+     * The threshold of the (inclusive) number of splittable bonds one molecule can contain before being filtered.
+     */
+    private final SimpleIntegerProperty inclusiveSplittableBondsThreshold;
     /**
      * The maximum tree depth which represents the maximum number of bonds that will be split in a fragmentation.
      */
@@ -219,7 +227,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Constructor, all settings are initialized with their default values as declared in the respective public constants.
      */
     public CDKExhaustiveFragmenter() {
-        int tmpNumberOfSettingsForTooltipMapSize = 5;
+        int tmpNumberOfSettingsForTooltipMapSize = 6;
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettingsForTooltipMapSize,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -228,9 +236,31 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.cdkEFInstance = new ExhaustiveFragmenter();
+
         this.minimumFragmentSizeSetting = new SimpleIntegerProperty(this,
                 "Minimum Size for the returned fragments",
                 CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE) {
+            @Override
+            public void set(int newValue) {
+                if (newValue > 0) {
+                    CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
+                    super.set(newValue);
+                } else {
+                    IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size can not be zero");
+                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
+                            Message.get("Fragmenter.IllegalSettingValue.Header"),
+                            anException.toString(),
+                            anException);
+                    //re-throws the exception to properly reset the binding
+                    throw anException;
+                }
+            }
+        };
+
+        this.inclusiveSplittableBondsThreshold = new SimpleIntegerProperty(this,
+                "Inclusive number of the filter threshold of splittable bonds",
+                CDKExhaustiveFragmenter.DEFAULT_THRESHOLD_FOR_SPLITTABLE_BONDS) {
             @Override
             public void set(int newValue) {
                 if (newValue > 0) {
@@ -302,7 +332,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
 
         this.preserveStereoSetting = new SimpleBooleanProperty(this,
                 "Preserve Stereo Information",
-                DEFAULT_COPY_STEREO_INFO) {
+                DEFAULT_PRESERVE_STEREO_INFO) {
             @Override
             public void set(boolean newValue) {
                 super.set(newValue);
@@ -318,6 +348,11 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 Message.get("CDKExhaustiveFragmenter.inclusiveMaxTreeDepth.tooltip"));
         this.settingNameDisplayNameMap.put(inclusiveMaxTreeDepthSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.inclusiveMaxTreeDepth.displayName"));
+
+        this.settingNameTooltipTextMap.put(inclusiveSplittableBondsThreshold.getName(),
+                Message.get("CDKExhaustiveFragmenter.splittableBondsThreshold.tooltip"));
+        this.settingNameDisplayNameMap.put(inclusiveSplittableBondsThreshold.getName(),
+                Message.get("CDKExhaustiveFragmenter.splittableBondsThreshold.displayName"));
 
         this.settingNameTooltipTextMap.put(saturationSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.saturationSetting.tooltip"));
@@ -337,6 +372,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
 
         this.settings = new ArrayList<>(tmpNumberOfSettingsForTooltipMapSize);
         this.settings.add(minimumFragmentSizeSetting);
+        this.settings.add(inclusiveSplittableBondsThreshold);
         this.settings.add(inclusiveMaxTreeDepthSetting);
         this.settings.add(saturationSetting);
         this.settings.add(preserveStereoSetting);
@@ -353,25 +389,44 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @return integer SmiFlavor value combining all active settings
      */
     private int computeSmilesFlavor() {
-        int flavor = DEFAULT_SMILES_FLAVOUR;
+        int tmpFlavor = DEFAULT_SMILES_FLAVOUR;
         if (this.preserveStereoSetting.get()) {
-            flavor |= SmiFlavor.Stereo;
+            tmpFlavor |= SmiFlavor.Stereo;
         }
         if (this.useAromaticSymbolsSetting.get()) {
-            flavor |= SmiFlavor.UseAromaticSymbols;
+            tmpFlavor |= SmiFlavor.UseAromaticSymbols;
         }
-        return flavor;
+        return tmpFlavor;
     }
     //</editor-fold>
     //
     //<editor-fold desc="Public properties get">
+    /**
+     * Returns the setting for the threshold of splittable bonds.
+     * If fragments have more splittable bonds then the value of this setting
+     * they will not be fragmented.
+     *
+     * @return the setting for the minimum fragment size.
+     */
+    public SimpleIntegerProperty inclusiveSplittableBondsThresholdSettingProperty() {
+        return this.inclusiveSplittableBondsThreshold;
+    }
+
+    /**
+     * Returns the threshold of splittable bonds for the filtering.
+     *
+     * @return the currently set minimum fragment size.
+     */
+    public int getInclusiveThresholdForSplittableBonds() {
+        return this.inclusiveSplittableBondsThreshold.get();
+    }
     /**
      * Returns the setting for the minimum fragment size.
      *
      * @return the setting for the minimum fragment size.
      */
     public SimpleIntegerProperty getMinimumFragmentSizeSettingProperty() {
-        return minimumFragmentSizeSetting;
+        return this.minimumFragmentSizeSetting;
     }
 
     /**
@@ -388,7 +443,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @return an unmodifiable list of property objects representing the configurable settings;
      */
     public List<Property<?>> getSettings() {
-        return settings;
+        return this.settings;
     }
 
     /**
@@ -396,26 +451,25 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      *
      * @return true if stereochemistry preservation is enabled; false otherwise
      */
-    public boolean isPreserveStereoSetting() {
-        return preserveStereoSetting.get();
+    public boolean getPreserveStereoSetting() {
+        return this.preserveStereoSetting.get();
     }
 
     public SimpleBooleanProperty preserveStereoSettingProperty() {
-        return preserveStereoSetting;
+        return this.preserveStereoSetting;
     }
 
     /**
      * Gets the currently selected saturation display option.
      *
-     * @return the selected {@link IDisplayEnum} value (e.g., HYDROGEN_SATURATED_FRAGMENTS,
-     *         R_SATURATED_FRAGMENTS, UNSATURATED_FRAGMENTS)
+     * @return the selected {@link SaturationDisplay}.
      */
-    public ExhaustiveFragmenter.Saturation getSaturationSetting() {
-        return ExhaustiveFragmenter.Saturation.valueOf(this.saturationSetting.getName());
+    public SaturationDisplay getSaturationSetting() {
+        return (SaturationDisplay) this.saturationSetting.get();
     }
 
     public SimpleIDisplayEnumConstantProperty saturationSettingProperty() {
-        return saturationSetting;
+        return this.saturationSetting;
     }
 
     /**
@@ -425,11 +479,11 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @return the inclusive maximum tree depth as an int
      */
     public int getInclusiveMaxTreeDepthSetting() {
-        return inclusiveMaxTreeDepthSetting.get();
+        return this.inclusiveMaxTreeDepthSetting.get();
     }
 
     public SimpleIntegerProperty inclusiveMaxTreeDepthSettingProperty() {
-        return inclusiveMaxTreeDepthSetting;
+        return this.inclusiveMaxTreeDepthSetting;
     }
     //</editor-fold>
     //
@@ -508,12 +562,22 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public IMoleculeFragmenter copy() {
         CDKExhaustiveFragmenter tmpCopy = new CDKExhaustiveFragmenter();
         tmpCopy.minimumFragmentSizeSetting.set(this.minimumFragmentSizeSetting.get());
+        tmpCopy.inclusiveSplittableBondsThreshold.set(this.inclusiveSplittableBondsThreshold.get());
+        tmpCopy.inclusiveMaxTreeDepthSetting.set(this.inclusiveMaxTreeDepthSetting.get());
+        tmpCopy.saturationSetting.set(this.saturationSetting.get());
+        tmpCopy.preserveStereoSetting.set(this.preserveStereoSetting.get());
+        tmpCopy.useAromaticSymbolsSetting.set(this.useAromaticSymbolsSetting.get());
         return tmpCopy;
     }
 
     @Override
     public void restoreDefaultSettings() {
         this.minimumFragmentSizeSetting.set(CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE);
+        this.inclusiveSplittableBondsThreshold.set(CDKExhaustiveFragmenter.DEFAULT_THRESHOLD_FOR_SPLITTABLE_BONDS);
+        this.inclusiveMaxTreeDepthSetting.set(CDKExhaustiveFragmenter.DEFAULT_INCLUSIVE_MAX_TREE_DEPTH);
+        this.saturationSetting.set(CDKExhaustiveFragmenter.DEFAULT_SATURATION);
+        this.preserveStereoSetting.set(CDKExhaustiveFragmenter.DEFAULT_PRESERVE_STEREO_INFO);
+        this.useAromaticSymbolsSetting.set(CDKExhaustiveFragmenter.DEFAULT_USE_AROMATIC_SYMBOLS);
     }
 
     @Override
@@ -540,12 +604,18 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
 
     @Override
     public boolean shouldBeFiltered(IAtomContainer aMolecule) {
+        if (ExhaustiveFragmenter.getSplittableBonds(aMolecule).length > this.inclusiveSplittableBondsThreshold.get()) {
+            return true;
+        }
         return (Objects.isNull(aMolecule) || aMolecule.isEmpty());
     }
 
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (!this.getPreserveStereoSetting() && aMolecule.stereoElements().iterator().hasNext()) {
+            return true;
+        }
         return false;
     }
 
@@ -564,7 +634,11 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         }
-        return aMolecule.clone();
+        IAtomContainer tmpMoleculeClone = aMolecule.clone();
+        if (this.shouldBePreprocessed(aMolecule)) {
+            tmpMoleculeClone.setStereoElements(new ArrayList<>(0));
+        }
+        return tmpMoleculeClone;
     }
     //</editor-fold>
 }
