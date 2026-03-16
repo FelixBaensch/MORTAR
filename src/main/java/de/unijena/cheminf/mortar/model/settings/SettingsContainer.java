@@ -128,7 +128,7 @@ public class SettingsContainer {
      * Default value of whether to show a warning if upon closing tabs or the entire application
      * would result in a loss of data.
      */
-    public static final boolean SHOW_WARNING_FOR_DATA_LOSS_DEFAULT = true;
+    public static final boolean SHOW_WARNING_FOR_DATA_LOSS_SETTING_DEFAULT = true;
     //</editor-fold>
     //
     //<editor-fold desc="private static final constants" defaultstate="collapsed">
@@ -587,10 +587,18 @@ public class SettingsContainer {
      *
      * @return true if the user has turned on the warning messages, false otherwise.
      */
-    public boolean isShowDataWillBeLostWarningSetting() {
-        return showDataWillBeLostWarningSetting.get();
+    public boolean getShowDataWillBeLostWarningSetting() {
+        return this.showDataWillBeLostWarningSetting.get();
     }
     //
+    /**
+     * Gets the setting of whether a warning should be shown upon data loss.
+     *
+     * @return the setting to control whether warning should pop up if a data loss is confirmed.
+     */
+    public SimpleBooleanProperty getShowDataWillBeLostSettingProperty() {
+        return this.showDataWillBeLostWarningSetting;
+    }
     /**
      * Sets the setting for whether there should always be a warning if data will be lost.
      *
@@ -841,13 +849,13 @@ public class SettingsContainer {
                 //do nothing, the value should remain false!
             }
         };
-        this.showDataWillBeLostWarningSetting = new SimpleBooleanProperty(this,
-                "Show a warning if data will be lost",
-                SettingsContainer.SHOW_WARNING_FOR_DATA_LOSS_DEFAULT);
-        this.settingNameTooltipTextMap.put(this.showDataWillBeLostWarningSetting.getName(), Message.get("SettingsContainer.showDataWillBeLostWarning.tooltip"));
-        this.settingNameDisplayNameMap.put(this.showDataWillBeLostWarningSetting.getName(), Message.get("SettingsContainer.showDataWillBeLostWarning.displayName"));
         //this.settingNameTooltipTextMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.tooltip"));
         //this.settingNameDisplayNameMap.put(this.keepLastFragmentSetting.getName(), Message.get("SettingsContainer.keepLastFragmentSetting.displayName"));
+        this.showDataWillBeLostWarningSetting = new SimpleBooleanProperty(this,
+                "Show a warning if data will be lost",
+                SettingsContainer.SHOW_WARNING_FOR_DATA_LOSS_SETTING_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.showDataWillBeLostWarningSetting.getName(), Message.get("SettingsContainer.showDataWillBeLostWarningSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.showDataWillBeLostWarningSetting.getName(), Message.get("SettingsContainer.showDataWillBeLostWarningSetting.displayName"));
         this.settings = new ArrayList<>(tmpNumberOfSettings);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);

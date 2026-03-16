@@ -41,7 +41,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 
-
 /**
  * Custom tab which contains a grid pane.
  *
@@ -145,7 +144,6 @@ public class GridTabForTableView extends Tab {
         this.pagination = aPagination;
         this.addNodeToGridPane(this.pagination, 0, 0, 3, 2);
     }
-
     //
     /**
      * Sets the given string as title of this tab.
@@ -199,11 +197,11 @@ public class GridTabForTableView extends Tab {
      * Call this before the tab is removed from the TabPane.
      */
     public void cleanup() {
+        this.setContent(null);
         Pagination tmpPagination = this.getPagination();
         if (tmpPagination != null) {
             tmpPagination.setPageFactory(null);
         }
-
         // unbind the context menu from the tab
         ContextMenu tmpContextMenu = this.getContextMenu();
         if (tmpContextMenu != null) {
@@ -214,22 +212,17 @@ public class GridTabForTableView extends Tab {
             tmpContextMenu.getItems().clear();
             this.setContextMenu(null);
         }
-
-        // this.mainView.getMainCenterPane().
-
         // TableView: unbind, clear listeners/handlers and clear items
         TableView<?> tmpTable = this.getTableView();
         if (tmpTable != null) {
             tmpTable.setOnSort(null);
             tmpTable.setOnKeyPressed(null);
-
             // clear items list to break model references
             ObservableList<?> items = tmpTable.getItems();
             if (items != null) {
                 items.clear();
             }
             tmpTable.setItems(FXCollections.emptyObservableList());
-
             // clear columns to break cell/skin references
             tmpTable.getColumns().clear();
             tmpTable.getProperties().clear();

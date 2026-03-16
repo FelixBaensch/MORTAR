@@ -865,12 +865,11 @@ public class FragmentationService {
      * Clears all fragments of a specific fragmentation by the name of the fragmentation.
      *
      * @param aFragmentationName the name of the fragmentation that produced the fragments to delete.
-     * @param aListOfFragmentsToDelete the list of parent molecules whose fragments need to be deleted
      */
-    public void clearFragments(String aFragmentationName, List<String> aListOfFragmentsToDelete) {
+    public void clearFragments(String aFragmentationName) {
         this.existingFragmentations.remove(aFragmentationName);
-        for (String tmpFragment : aListOfFragmentsToDelete) {
-            this.fragments.remove(tmpFragment);
+        if (this.currentFragmentationName.equals(aFragmentationName)) {
+            this.fragments = null;
         }
     }
     //</editor-fold>
