@@ -1410,11 +1410,13 @@ public class MainViewController {
                     this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
                 }
             }
-            // TODO: could eventually result in a lag if data is cleaned up before tab is closed in the UI.
+            this.mainTabPane.getTabs().remove(aGridTableView);
+            aGridTableView.cleanupUIElements();
             this.cleanupGridTabData(aGridTableView);
+        } else {
+            this.mainTabPane.getTabs().remove(aGridTableView);
+            aGridTableView.cleanupUIElements();
         }
-        this.mainTabPane.getTabs().remove(aGridTableView);
-        aGridTableView.cleanupUIElements();
     }
     /**
      * Closes the tab of the grid table and cleans up the referenced data if possible after
