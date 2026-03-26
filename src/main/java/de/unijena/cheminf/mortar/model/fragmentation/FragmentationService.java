@@ -151,7 +151,7 @@ public class FragmentationService {
     private List<String> existingFragmentations;
     /**
      * Map that holds the unique smiles string of every unique fragment as key and the corresponding
-     * {@link FragmentDataModel} instance as value.
+     * {@link FragmentDataModel} instance as value. This field gets overridden on each new fragmentation!
      */
     private Map<String, FragmentDataModel> fragments;
     /**
@@ -863,12 +863,14 @@ public class FragmentationService {
 
     /**
      * Clears all fragments of a specific fragmentation by the name of the fragmentation.
+     * This is only necessary if the fragmentation is the last one that was executed because
+     * the {@link FragmentationService#fragments} get overwritten in each new fragmentation.
      *
      * @param aFragmentationName the name of the fragmentation that produced the fragments to delete.
      */
-    public void clearFragments(String aFragmentationName) {
+    public void clearFragmentation(String aFragmentationName) {
         this.existingFragmentations.remove(aFragmentationName);
-        if (this.currentFragmentationName.equals(aFragmentationName)) {
+        if (this.currentFragmentationName != null &&  this.currentFragmentationName.equals(aFragmentationName)) {
             this.fragments = null;
         }
     }

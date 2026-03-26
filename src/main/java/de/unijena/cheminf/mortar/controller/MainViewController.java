@@ -450,7 +450,7 @@ public class MainViewController {
             return tmpConfirmationResult == ButtonType.OK;
 
         } else if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
-            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
                     Message.get("MainViewController.Warning.DataLoss.Title"),
                     Message.get("MainViewController.Warning.DataLoss.Header"),
                     Message.get("MainViewController.Warning.DataLoss.Content"),
@@ -1331,7 +1331,7 @@ public class MainViewController {
     //
     /**
      * Creates a menu item to close all tabs upon clicking and confirming a warning message.
-     * The warning message prompts the user to confirm that they want to close all fragmentation tabs and
+     * The warning message prompts the user to confirm that they want to close all fragmentation result tabs and
      * therefore is fine with deleting the fragmentation results if not exported.
      *
      * @return the menu item
@@ -1343,11 +1343,11 @@ public class MainViewController {
     }
     //
     /**
-     * Closes all tabs that are closeable (so only the fragmentation and items tabs) and cleans up the data.
+     * Closes all tabs that are closeable (everything except the molecules tab) and cleans up the data.
      */
     private void closeAllTabs() {
         if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
-            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
                     Message.get("MainViewController.Warning.CloseAllTabs.Title"),
                     Message.get("MainViewController.Warning.CloseAllTabs.Header"),
                     Message.get("MainViewController.Warning.CloseAllTabs.Content"),
@@ -1361,17 +1361,19 @@ public class MainViewController {
                 this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
             }
         }
-        this.mainTabPane.getTabs().removeIf(tmpTab -> {
+        for (int i = this.mainTabPane.getTabs().size() - 1; i >= 0; i--) {
+            Tab tmpTab = this.mainTabPane.getTabs().get(i);
             // it is assumed here that MORTAR does NOT have any other
             // types of tabs that could be closed besides the GridTableView
             // as the itemization tab and fragmentation tab are both constructed
             // as GridTableViews
             if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
-                this.cleanupGridTabData(tmpGridTab);
-                return true;
+                if (isGridTabDataCleanable(tmpGridTab)) {
+                    this.cleanupGridTabData(tmpGridTab);
+                }
+                this.mainTabPane.getTabs().remove(i);
             }
-            return false;
-        });
+        }
     }
     //
     /**
@@ -1395,7 +1397,7 @@ public class MainViewController {
     private void closeTab(GridTabForTableView aGridTableView) {
         if (this.isGridTabDataCleanable(aGridTableView)) {
             if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
-                GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationWithDeactivationAlert(
+                GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
                         Message.get("MainViewController.Warning.CloseTab.Title"),
                         Message.get("MainViewController.Warning.CloseTab.Header"),
                         Message.get("MainViewController.Warning.CloseTab.Content"),
@@ -1412,7 +1414,7 @@ public class MainViewController {
             this.cleanupGridTabData(aGridTableView);
         }
         this.mainTabPane.getTabs().remove(aGridTableView);
-        aGridTableView.cleanup();
+        aGridTableView.cleanupUIElements();
     }
     /**
      * Closes the tab of the grid table and cleans up the referenced data if possible after
@@ -1449,9 +1451,9 @@ public class MainViewController {
     }
     //
     /**
-     * Perform cleanup of the data of the given GridTabForTableView so the contents can be garbage-collected.
-     * Please check if the data of a tab can be cleaned up by calling {@code isGridTabDataCleanable} before
-     * cleaning this function.
+     * Perform cleanup of the data of the given GridTabForTableView so the contents of a fragmentation result
+     * can be garbage-collected. Please check if the data of a tab can be cleaned up by calling
+     * {@code isGridTabDataCleanable} before cleaning this function.
      *
      * @param aGridTab the GridTabForTableView whose data needs to be cleaned up.
      */
@@ -1461,7 +1463,7 @@ public class MainViewController {
             tmpMoleculeDataModel.clearFragmentsForFragmentation(tmpFragmentationName);
         }
         this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
-        this.fragmentationService.clearFragments(tmpFragmentationName);
+        this.fragmentationService.clearFragmentation(tmpFragmentationName);
     }
     //
     /**

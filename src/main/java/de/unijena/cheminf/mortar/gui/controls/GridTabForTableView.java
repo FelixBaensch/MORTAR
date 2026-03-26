@@ -196,7 +196,7 @@ public class GridTabForTableView extends Tab {
      * Cleans up all UI resources associated with this tab.
      * Call this before the tab is removed from the TabPane.
      */
-    public void cleanup() {
+    public void cleanupUIElements() {
         this.setContent(null);
         Pagination tmpPagination = this.getPagination();
         if (tmpPagination != null) {

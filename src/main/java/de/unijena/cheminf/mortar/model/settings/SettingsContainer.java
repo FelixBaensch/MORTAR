@@ -622,6 +622,7 @@ public class SettingsContainer {
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
         this.csvExportSeparatorSetting.set(SettingsContainer.CSV_EXPORT_SEPARATOR_SETTING_DEFAULT);
         this.regardStereochemistrySetting.set(SettingsContainer.REGARD_STEREOCHEMISTRY_SETTING_DEFAULT);
+        this.showDataWillBeLostWarningSetting.set(SettingsContainer.SHOW_WARNING_FOR_DATA_LOSS_SETTING_DEFAULT);
         //DEPRECATED
         //this.keepLastFragmentSetting.set(SettingsContainer.KEEP_LAST_FRAGMENT_SETTING_DEFAULT);
     }
