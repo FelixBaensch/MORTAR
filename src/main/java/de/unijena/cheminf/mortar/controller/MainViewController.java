@@ -1408,6 +1408,7 @@ public class MainViewController {
                     this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
                 }
             }
+            // TODO: could eventually result in a lag if data is cleaned up before tab is closed in the UI.
             this.cleanupGridTabData(aGridTableView);
         }
         this.mainTabPane.getTabs().remove(aGridTableView);
