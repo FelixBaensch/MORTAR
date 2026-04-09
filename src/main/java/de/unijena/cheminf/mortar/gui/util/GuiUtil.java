@@ -134,7 +134,7 @@ public class GuiUtil {
      * </ul>
      * </p>
      */
-    private sealed interface Content {
+    private interface Content {
         /**
          * Applies this content configuration to the given Alert dialog pane.
          * <p>
@@ -256,7 +256,11 @@ public class GuiUtil {
      *                           typically a stack trace, error details, or other verbose information.
      *                           Must not be null.
      */
-    private record ExpandableContent(String aContentText, String aLabelText, String anExpandableString) implements Content {
+    private record ExpandableContent(
+            String aContentText,
+            String aLabelText,
+            String anExpandableString
+    ) implements Content {
         /**
          * Applies the expandable content to the Alert by creating a GridPane layout with a label
          * and read-only TextArea, and setting it as the dialog pane's expandable content.
@@ -333,7 +337,12 @@ public class GuiUtil {
      *         The Alert is not yet displayed; call {@link Alert#showAndWait()} or
      *         {@link Alert#show()} to display it to the user.
      */
-    private static <T extends Content> Alert createGenericAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, T aContent) {
+    private static <T extends Content> Alert createGenericAlert(
+            Alert.AlertType anAlertType,
+            String aTitle,
+            String aHeaderText,
+            T aContent
+    ) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
         tmpAlert.setHeaderText(aHeaderText);
@@ -358,7 +367,12 @@ public class GuiUtil {
      * @return ButtonType selected by user, options depend on the given alert type (INFORMATION, WARNING, ERROR -> OK,
      * CONFIRMATION -> OK / CANCEL)
      */
-    public static Optional<ButtonType> guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
+    public static Optional<ButtonType> guiMessageAlert(
+            Alert.AlertType anAlertType,
+            String aTitle,
+            String aHeaderText,
+            String aContentText
+    ) {
         Alert tmpAlert = createGenericAlert(anAlertType, aTitle, aHeaderText, new StringContent(aContentText));
         return tmpAlert.showAndWait();
     }
@@ -427,7 +441,12 @@ public class GuiUtil {
      * @return a {@link CheckboxAndButtonResult} containing a boolean specifying if the checkbox was marked
      * and the button type selected by user - ButtonType.OK or ButtonType.CANCEL
      */
-    public static CheckboxAndButtonResult guiConfirmationAlertWithCheckbox(String aTitle, String aHeaderText, String aContentText, String aCheckboxText) {
+    public static CheckboxAndButtonResult guiConfirmationAlertWithCheckbox(
+            String aTitle,
+            String aHeaderText,
+            String aContentText,
+            String aCheckboxText
+    ) {
         CheckBox tmpCheckBox = new CheckBox(aCheckboxText);
         Alert tmpAlert = createGenericAlert(
                 Alert.AlertType.CONFIRMATION,
@@ -453,7 +472,11 @@ public class GuiUtil {
      * @param aContentText Text that the confirmation alert contains
      * @return ButtonType selected by user - ButtonType.YES, ButtonType.NO, or ButtonType.CANCEL.
      */
-    public static ButtonType guiYesNoCancelConfirmationAlert(String aTitle, String aHeaderText, String aContentText) {
+    public static ButtonType guiYesNoCancelConfirmationAlert(
+            String aTitle,
+            String aHeaderText,
+            String aContentText
+    ) {
         Alert tmpAlert = createGenericAlert(
                 Alert.AlertType.CONFIRMATION,
                 aTitle, aHeaderText,
@@ -474,7 +497,12 @@ public class GuiUtil {
      * @param aContentText Text of the alert dialog
      * @param anException exception to report, may be null
      */
-    public static void guiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException) {
+    public static void guiExceptionAlert(
+            String aTitle,
+            String aHeaderText,
+            String aContentText,
+            Exception anException
+    ) {
         String tmpExceptionString;
         if (Objects.isNull(anException)) {
             tmpExceptionString = "Exception is null.";
@@ -497,7 +525,13 @@ public class GuiUtil {
      * @param aLabelText Text to show above expandable area
      * @param anExpandableString Text to show in expandable area
      */
-    public static void guiExpandableAlert(String aTitle, String aHeaderText, String aContentText, String aLabelText, String anExpandableString) {
+    public static void guiExpandableAlert(
+            String aTitle,
+            String aHeaderText,
+            String aContentText,
+            String aLabelText,
+            String anExpandableString
+    ) {
         try {
             Alert tmpAlert = createGenericAlert(
                     Alert.AlertType.ERROR,

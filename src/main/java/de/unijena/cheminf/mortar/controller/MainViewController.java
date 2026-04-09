@@ -617,11 +617,12 @@ public class MainViewController {
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
             return;
         }
+        GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
+        String tmpFragmentationName = tmpSelectedTab.getFragmentationNameOutOfTitle();
+        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(this.mapOfFragmentDataModelLists.get(tmpFragmentationName));
         switch (anExportType) {
             case Exporter.ExportTypes.FRAGMENT_CSV_FILE, Exporter.ExportTypes.FRAGMENT_PDB_FILE, Exporter.ExportTypes.FRAGMENT_PDF_FILE, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE, FRAGMENT_MULTIPLE_SD_FILES:
-                if (this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS) == null ||
-                        this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS).isEmpty() ||
-                        ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
+                if (tmpFragmentsList.isEmpty() || tmpFragmentationName == null) {
                     GuiUtil.guiMessageAlert(
                             Alert.AlertType.INFORMATION,
                             Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
@@ -632,10 +633,7 @@ public class MainViewController {
                 }
                 break;
             case Exporter.ExportTypes.ITEM_CSV_FILE, Exporter.ExportTypes.ITEM_PDF_FILE:
-                if (this.getItemsListOfSelectedFragmentationByTabId(TabNames.ITEMIZATION) == null ||
-                        this.getItemsListOfSelectedFragmentationByTabId(TabNames.ITEMIZATION).isEmpty() ||
-                        this.moleculeDataModelList == null || this.moleculeDataModelList.isEmpty() ||
-                        ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
+                if (tmpFragmentsList.isEmpty() || this.moleculeDataModelList == null || this.moleculeDataModelList.isEmpty() || tmpFragmentationName == null) {
                     GuiUtil.guiMessageAlert(
                             Alert.AlertType.INFORMATION,
                             Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
@@ -684,30 +682,30 @@ public class MainViewController {
                 return switch (anExportType) {
                     case Exporter.ExportTypes.FRAGMENT_CSV_FILE -> tmpExporter.exportCsvFile(
                             tmpExportFile,
-                            MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
-                            ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                            MainViewController.this.moleculeDataModelList,
+                            tmpFragmentationName,
                             MainViewController.this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                             TabNames.FRAGMENTS
                     );
                     case Exporter.ExportTypes.FRAGMENT_PDB_FILE ->
                             tmpExporter.exportFragmentsAsChemicalFile(
                                     tmpExportFile,
-                                    MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
+                                    tmpFragmentsList,
                                     ChemFileTypes.PDB,
                                     tmpGenerate2dAtomCoordinatesFinal
                             );
                     case Exporter.ExportTypes.FRAGMENT_PDF_FILE -> tmpExporter.exportPdfFile(
                             tmpExportFile,
-                            MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
+                            tmpFragmentsList,
                             MainViewController.this.moleculeDataModelList,
-                            ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                            tmpFragmentationName,
                             MainViewController.this.importedFileName,
                             TabNames.FRAGMENTS
                     );
                     case Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE ->
                             tmpExporter.exportFragmentsAsChemicalFile(
                                     tmpExportFile,
-                                    MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
+                                    tmpFragmentsList,
                                     ChemFileTypes.SDF,
                                     tmpGenerate2dAtomCoordinatesFinal,
                                     true
@@ -715,7 +713,7 @@ public class MainViewController {
                     case Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
                             tmpExporter.exportFragmentsAsChemicalFile(
                                     tmpExportFile,
-                                    MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
+                                    tmpFragmentsList,
                                     ChemFileTypes.SDF,
                                     tmpGenerate2dAtomCoordinatesFinal,
                                     false
@@ -723,15 +721,15 @@ public class MainViewController {
                     case Exporter.ExportTypes.ITEM_CSV_FILE -> tmpExporter.exportCsvFile(
                             tmpExportFile,
                             MainViewController.this.moleculeDataModelList,
-                            ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                            tmpFragmentationName,
                             MainViewController.this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                             TabNames.ITEMIZATION
                     );
                     case Exporter.ExportTypes.ITEM_PDF_FILE -> tmpExporter.exportPdfFile(
                             tmpExportFile,
-                            MainViewController.this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS),
+                            tmpFragmentsList,
                             MainViewController.this.moleculeDataModelList,
-                            ((GridTabForTableView) MainViewController.this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle(),
+                            tmpFragmentationName,
                             MainViewController.this.importedFileName,
                             TabNames.ITEMIZATION
                     );
@@ -815,11 +813,9 @@ public class MainViewController {
      * Opens HistogramView.
      */
     private void openHistogramView()  {
-        List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS);
-        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
-        for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
-            tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
-        }
+        GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
+        String tmpFragmentationName = tmpSelectedTab.getFragmentationNameOutOfTitle();
+        List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(this.mapOfFragmentDataModelLists.get(tmpFragmentationName));
         this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
     //
@@ -1374,6 +1370,10 @@ public class MainViewController {
                 this.mainTabPane.getTabs().remove(i);
             }
         }
+        // disable the buttons for fragmentation results (here namely the export and histogram buttons).
+        // because all fragmentation results were closed
+        this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
     }
     //
     /**
@@ -1411,11 +1411,16 @@ public class MainViewController {
                 }
             }
             this.mainTabPane.getTabs().remove(aGridTableView);
-            aGridTableView.cleanupUIElements();
             this.cleanupGridTabData(aGridTableView);
         } else {
             this.mainTabPane.getTabs().remove(aGridTableView);
-            aGridTableView.cleanupUIElements();
+        }
+
+        // Check if all fragmentation tabs were closed to disable the buttons for
+        // fragmentation results (here namely the export and histogram buttons)
+        if (this.mainTabPane.getTabs().size() <= 1) {
+            this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+            this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
         }
     }
     /**

@@ -28,11 +28,7 @@ package de.unijena.cheminf.mortar.gui.controls;
 import de.unijena.cheminf.mortar.controller.TabNames;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableView;
@@ -191,42 +187,6 @@ public class GridTabForTableView extends Tab {
             return TabNames.MOLECULES.name();
         }
         return this.getText().split("-", 2)[1].trim();
-    }
-    /**
-     * Cleans up all UI resources associated with this tab.
-     * Call this before the tab is removed from the TabPane.
-     */
-    public void cleanupUIElements() {
-        this.setContent(null);
-        Pagination tmpPagination = this.getPagination();
-        if (tmpPagination != null) {
-            tmpPagination.setPageFactory(null);
-        }
-        // unbind the context menu from the tab
-        ContextMenu tmpContextMenu = this.getContextMenu();
-        if (tmpContextMenu != null) {
-            tmpContextMenu.hide();
-            for (MenuItem tmpMenuItem : tmpContextMenu.getItems()) {
-                tmpMenuItem.setOnAction(null);
-            }
-            tmpContextMenu.getItems().clear();
-            this.setContextMenu(null);
-        }
-        // TableView: unbind, clear listeners/handlers and clear items
-        TableView<?> tmpTable = this.getTableView();
-        if (tmpTable != null) {
-            tmpTable.setOnSort(null);
-            tmpTable.setOnKeyPressed(null);
-            // clear items list to break model references
-            ObservableList<?> items = tmpTable.getItems();
-            if (items != null) {
-                items.clear();
-            }
-            tmpTable.setItems(FXCollections.emptyObservableList());
-            // clear columns to break cell/skin references
-            tmpTable.getColumns().clear();
-            tmpTable.getProperties().clear();
-        }
     }
     //</editor-fold>
 }
