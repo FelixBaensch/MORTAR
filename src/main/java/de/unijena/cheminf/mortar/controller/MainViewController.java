@@ -680,6 +680,8 @@ public class MainViewController {
             @Override
             protected List<String> call() throws Exception {
                 return switch (anExportType) {
+                    // TODO: consider disabling the export of e.g. the fragments if the respective tab was closed
+                    //       and be aware that the sorting of the fragmentation tab is considered in the export.
                     case Exporter.ExportTypes.FRAGMENT_CSV_FILE -> tmpExporter.exportCsvFile(
                             tmpExportFile,
                             MainViewController.this.moleculeDataModelList,
