@@ -49,7 +49,7 @@ import java.util.Locale;
 public class CDKExhaustiveFragmenterTest {
 
     /**
-     * Constructor that sets the default locale to british english, which is important for the correct functioning of the
+     * Constructor that sets the default locale to British English, which is important for the correct functioning of the
      * fragmenter because the settings tooltips are imported from the message.properties file.
      */
     CDKExhaustiveFragmenterTest() {
@@ -89,7 +89,7 @@ public class CDKExhaustiveFragmenterTest {
         Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
         Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
         Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
-        Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSizeSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::minimumFragmentSizeSettingProperty);
         Assertions.assertDoesNotThrow(tmpFragmenter::inclusiveSplittableBondsThresholdSettingProperty);
         Assertions.assertDoesNotThrow(tmpFragmenter::getInclusiveMaxTreeDepthSetting);
         Assertions.assertDoesNotThrow(tmpFragmenter::getSaturationSetting);
