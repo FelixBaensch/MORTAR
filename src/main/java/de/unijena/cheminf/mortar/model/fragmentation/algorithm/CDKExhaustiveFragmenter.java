@@ -166,7 +166,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * The default threshold at which molecules will be filtered out for the fragmentation.
      */
-    public static final int DEFAULT_LIMIT_FOR_SPLITTABLE_BONDS = 31;
+    public static final int DEFAULT_LIMIT_FOR_SPLITTABLE_BONDS = 15;
     /**
      * The default value for the minimum fragment size used for the fragmentation.
      */
@@ -288,7 +288,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(boolean newValue) {
                 super.set(newValue);
-                CDKExhaustiveFragmenter.this.cdkEFInstance.setPreserveStereo(newValue);
             }
         };
 
@@ -524,7 +523,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * will not be fragmented.
      *
      * @param aLimitForSplittableBonds the maximum number of splittable bonds to still be fragmented.
-     * @throws IllegalArgumentException if the value is less than zero.
+     * @throws IllegalArgumentException if the value is less than or equal to zero.
      */
     public void setLimitForSplittableBonds(int aLimitForSplittableBonds) {
         if (aLimitForSplittableBonds > 0) {
@@ -568,7 +567,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Set the inclusive maximum tree depth for the exhaustive fragmenter.
      * The value is inclusive: a value of N means nodes at depth N are included.
      *
-     * @param aDepth the new inclusive maximum tree depth; must be >= 0.
+     * @param aDepth the new inclusive maximum tree depth; must be > 0.
      * @throws IllegalArgumentException if depth is negative.
      */
     public void setInclusiveMaxTreeDepthSetting(int aDepth) {
@@ -576,7 +575,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             this.inclusiveMaxTreeDepthSetting.set(aDepth);
         }
         throw new IllegalArgumentException(
-                "inclusiveMaxTreeDepth must be >= 0 and < " + CDKExhaustiveFragmenter.MAX_TREE_DEPTH_LIMIT);
+                "inclusiveMaxTreeDepth must be > 0 and < " + CDKExhaustiveFragmenter.MAX_TREE_DEPTH_LIMIT);
     }
     //</editor-fold>
     //
@@ -610,6 +609,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public IMoleculeFragmenter copy() {
         CDKExhaustiveFragmenter tmpCopy = new CDKExhaustiveFragmenter();
         tmpCopy.minimumFragmentSizeSetting.set(this.minimumFragmentSizeSetting.get());
+        tmpCopy.activateSplittableBondsLimitSetting.set(this.activateSplittableBondsLimitSetting.get());
         tmpCopy.inclusiveSplittableBondsLimit.set(this.inclusiveSplittableBondsLimit.get());
         tmpCopy.inclusiveMaxTreeDepthSetting.set(this.inclusiveMaxTreeDepthSetting.get());
         tmpCopy.saturationSetting.set(this.saturationSetting.get());
