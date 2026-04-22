@@ -399,6 +399,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
 
         this.settings = new ArrayList<>(tmpNumberOfSettingsForTooltipMapSize);
         this.settings.add(this.minimumFragmentSizeSetting);
+        this.settings.add(this.activateSplittableBondsLimitSetting);
         this.settings.add(this.inclusiveSplittableBondsLimit);
         this.settings.add(this.inclusiveMaxTreeDepthSetting);
         this.settings.add(this.saturationSetting);
