@@ -1,6 +1,6 @@
 /*
  * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2024  Felix Baensch, Jonas Schaub (felix.baensch@w-hs.de, jonas.schaub@uni-jena.de)
+ * Copyright (C) 2026  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
  *
  * Source code is available at <https://github.com/FelixBaensch/MORTAR>
  *
@@ -223,7 +223,7 @@ public class FragmentationService {
      */
     public FragmentationService() {
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
-        this.fragmenters = new IMoleculeFragmenter[5];
+        this.fragmenters = new IMoleculeFragmenter[6];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
@@ -235,7 +235,7 @@ public class FragmentationService {
         this.cdkCircularF = new CDKCircularFragmenter();
         this.fragmenters[4] = this.cdkCircularF;
         this.cdkEF = new CDKExhaustiveFragmenter();
-        this.fragmenters[4] = this.cdkEF;
+        this.fragmenters[5] = this.cdkEF;
         //
         this.selectedFragmenterDisplayNameProperty = new SimpleStringProperty();
         try {
