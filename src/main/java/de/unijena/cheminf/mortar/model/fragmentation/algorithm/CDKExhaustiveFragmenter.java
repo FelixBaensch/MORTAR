@@ -558,7 +558,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             this.saturationSetting.set(aSaturation);
         } catch (IllegalArgumentException anException) {
             CDKExhaustiveFragmenter.LOGGER.log(
-                    Level.WARNING, "Invalid saturation setting: " + aSaturation.name(), anException
+                    Level.WARNING, String.format("Invalid saturation setting: %s", aSaturation.name()), anException
             );
             throw new IllegalArgumentException("Unsupported saturation type: " + aSaturation.name(), anException);
         }
