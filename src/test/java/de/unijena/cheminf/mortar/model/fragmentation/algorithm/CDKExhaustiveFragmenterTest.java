@@ -52,7 +52,7 @@ public class CDKExhaustiveFragmenterTest {
      * Constructor that sets the default locale to British English, which is important for the correct functioning of the
      * fragmenter because the settings tooltips are imported from the message.properties file.
      */
-    CDKExhaustiveFragmenterTest() {
+    public CDKExhaustiveFragmenterTest() {
         Locale.setDefault(Locale.of("en", "GB"));
     }
     //

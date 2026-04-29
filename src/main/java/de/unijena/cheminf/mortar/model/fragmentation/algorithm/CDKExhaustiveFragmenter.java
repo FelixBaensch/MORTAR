@@ -189,9 +189,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      */
     public static final boolean DEFAULT_PRESERVE_STEREO_INFO = false;
     /**
-     * The maximum number of bonds split in one fragmentation.
+     * The inclusive maximum number of bonds split in one fragmentation.
      */
-    public static final int MAX_TREE_DEPTH_LIMIT = 32;
+    public static final int INCLUSIVE_MAX_TREE_DEPTH_LIMIT = 32;
     /**
      * The name of this fragmenter.
      */
@@ -270,7 +270,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                     CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
                     super.set(newValue);
                 } else {
-                    IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size can not be zero");
+                    IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size must be positive");
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
                             Message.get("Fragmenter.IllegalSettingValue.Header"),
@@ -299,7 +299,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 if (newValue > 0) {
                     super.set(newValue);
                 } else {
-                    IllegalArgumentException anException = new IllegalArgumentException("The threshold of splittable bonds can not be zero");
+                    IllegalArgumentException anException = new IllegalArgumentException("The threshold of splittable bonds must be positive");
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
                             Message.get("Fragmenter.IllegalSettingValue.Header"),
@@ -316,7 +316,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 CDKExhaustiveFragmenter.DEFAULT_INCLUSIVE_MAX_TREE_DEPTH) {
             @Override
             public void set(int newValue) {
-                if (newValue > 0 && newValue < CDKExhaustiveFragmenter.MAX_TREE_DEPTH_LIMIT) {
+                if (newValue > 0 && newValue <= CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT) {
                     CDKExhaustiveFragmenter.this.cdkEFInstance.setInclusiveMaxTreeDepth(newValue);
                     super.set(newValue);
                 } else {
@@ -341,10 +341,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             @Override
             public void set(IDisplayEnum newValue) throws NullPointerException, IllegalArgumentException {
                 try {
-                    if (newValue instanceof SaturationDisplay newSaturation) {
-                        CDKExhaustiveFragmenter.this.cdkEFInstance.setSaturationSetting(newSaturation.getSaturationValue());
-                        super.set(newValue);
-                    }
+                    CDKExhaustiveFragmenter.this.cdkEFInstance.setSaturationSetting(((SaturationDisplay) newValue).getSaturationValue());
+                    super.set(newValue);
                 } catch (NullPointerException | IllegalArgumentException anException) {
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
@@ -571,11 +569,11 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @throws IllegalArgumentException if depth is negative.
      */
     public void setInclusiveMaxTreeDepthSetting(int aDepth) {
-        if (aDepth > 0 && aDepth < CDKExhaustiveFragmenter.MAX_TREE_DEPTH_LIMIT) {
+        if (aDepth > 0 && aDepth <= CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT) {
             this.inclusiveMaxTreeDepthSetting.set(aDepth);
         }
         throw new IllegalArgumentException(
-                "inclusiveMaxTreeDepth must be > 0 and < " + CDKExhaustiveFragmenter.MAX_TREE_DEPTH_LIMIT);
+                "inclusiveMaxTreeDepth must be > 0 and <= " + CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT);
     }
     //</editor-fold>
     //
