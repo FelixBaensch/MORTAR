@@ -197,7 +197,7 @@ public class MainViewController {
     /**
      * BooleanProperty whether export is running.
      */
-    private final BooleanProperty isExportRunningProperty;
+    public final BooleanProperty isExportRunningProperty;
     /**
      * Thread safe list to hold running threads to update StatusBar.
      */
@@ -610,7 +610,7 @@ public class MainViewController {
      *
      * @param anExportType Enum to specify what type of file to export
      */
-    private void exportFile(Exporter.ExportTypes anExportType) {
+    public void exportFile(Exporter.ExportTypes anExportType) {
         if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
@@ -814,7 +814,7 @@ public class MainViewController {
     /**
      * Opens HistogramView.
      */
-    private void openHistogramView()  {
+    public void openHistogramView()  {
         GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
         String tmpFragmentationName = tmpSelectedTab.getFragmentationNameOutOfTitle();
         List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(this.mapOfFragmentDataModelLists.get(tmpFragmentationName));
@@ -895,7 +895,7 @@ public class MainViewController {
      *
      * @param aDataSource Source of the data to be shown in the overview view
      */
-    private void openOverviewView(OverviewViewController.DataSources aDataSource) {
+    public void openOverviewView(OverviewViewController.DataSources aDataSource) {
         try {
             switch (aDataSource) {
                 case OverviewViewController.DataSources.MOLECULES_TAB -> {
@@ -1085,7 +1085,7 @@ public class MainViewController {
      * @param aListSize number of molecules/fragments to display
      * @return configured pagination control instance
      */
-    private Pagination createPaginationWithSuitablePageCount(int aListSize) {
+    public Pagination createPaginationWithSuitablePageCount(int aListSize) {
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = aListSize / tmpRowsPerPage;
         if (aListSize % tmpRowsPerPage > 0) {
@@ -1112,7 +1112,7 @@ public class MainViewController {
     /**
      * Cancels export task and interrupts the corresponding thread.
      */
-    private void interruptExport() {
+    public void interruptExport() {
         this.exportTask.cancel();
         this.exporterThread.interrupt();
     }
@@ -1343,7 +1343,7 @@ public class MainViewController {
     /**
      * Closes all tabs that are closeable (everything except the molecules tab) and cleans up the data.
      */
-    private void closeAllTabs() {
+    public void closeAllTabs() {
         if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
             GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
                     Message.get("MainViewController.Warning.CloseAllTabs.Title"),
@@ -1396,7 +1396,7 @@ public class MainViewController {
      *
      * @param aGridTableView the tab to remove.
      */
-    private void closeTab(GridTabForTableView aGridTableView) {
+    public void closeTab(GridTabForTableView aGridTableView) {
         if (this.isGridTabDataCleanable(aGridTableView)) {
             if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
                 GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
@@ -1413,6 +1413,9 @@ public class MainViewController {
                 }
             }
             this.mainTabPane.getTabs().remove(aGridTableView);
+            switch (aGridTableView) {
+                case
+            }
             this.cleanupGridTabData(aGridTableView);
         } else {
             this.mainTabPane.getTabs().remove(aGridTableView);
@@ -1433,7 +1436,7 @@ public class MainViewController {
      * @param anEvent the Event to consume if cancel gets pressed on the warning window.
      * @param aGridTableView the tab to remove.
      */
-    private void closeTabWithEvent(Event anEvent, GridTabForTableView aGridTableView) {
+    public void closeTabWithEvent(Event anEvent, GridTabForTableView aGridTableView) {
         closeTab(aGridTableView);
         anEvent.consume();
     }
