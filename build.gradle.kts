@@ -17,7 +17,7 @@ version = providers.gradleProperty("appVersion").get()
 
 // Creates javadoc and sources jars
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
     withJavadocJar()
     withSourcesJar()
 }
@@ -33,8 +33,10 @@ repositories {
 }
 
 dependencies {
-    testImplementation(platform(libs.junit))
-    testImplementation(libs.jupiter)
+    testImplementation(libs.jupiterApi)
+    testRuntimeOnly(libs.jupiterEngine)
+    testRuntimeOnly(libs.junitPlatformLauncher)
+
     //<editor-fold desc="CDK dependencies">
     implementation(libs.cdkPdb)
     implementation(libs.cdkSilent)

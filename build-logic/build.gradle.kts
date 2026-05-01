@@ -2,7 +2,7 @@ import java.time.LocalDateTime
 import java.util.Properties
 
 plugins {
-    id("org.gradle.kotlin.kotlin-dsl") version "5.2.0"
+    id("org.gradle.kotlin.kotlin-dsl") version "6.5.7"
 }
 
 repositories {

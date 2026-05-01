@@ -174,7 +174,10 @@ object DeployUtil {
      */
     fun ensureJpackageIsAvailable(aProject: Project): Unit {
         try {
-            aProject.exec { commandLine("jpackage", "--version") }
+            val process = ProcessBuilder("jpackage", "--version")
+                .start()
+
+            check(process.waitFor() == 0) { "jpackage command failed" }
         } catch (anException: Exception) {
             throw IllegalStateException(MortarBundle.message(PropertyNames.MSG_JPACKAGE_NOT_FOUND), anException)
         }
