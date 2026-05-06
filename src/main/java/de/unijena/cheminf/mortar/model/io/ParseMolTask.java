@@ -1,46 +1,12 @@
-/*
- * MORTAR - MOlecule fRagmenTAtion fRamework
- * Copyright (C) 2026  Felix Baensch, Jonas Schaub (felix.j.baensch@gmail.com, jonas.schaub@uni-jena.de)
- *
- * Source code is available at <https://github.com/FelixBaensch/MORTAR>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 package de.unijena.cheminf.mortar.model.io;
 
-import de.unijena.cheminf.mortar.gui.util.GuiUtil;
-import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
-import de.unijena.cheminf.mortar.model.util.LogUtil;
-
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.CDKConstants;
-import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -50,16 +16,13 @@ import org.openscience.cdk.io.FormatFactory;
 import org.openscience.cdk.io.IChemObjectReader;
 import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.io.MDLV3000Reader;
-import org.openscience.cdk.io.PDBReader;
 import org.openscience.cdk.io.formats.IChemFormat;
 import org.openscience.cdk.io.formats.MDLV2000Format;
 import org.openscience.cdk.io.formats.MDLV3000Format;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
-import org.openscience.cdk.io.setting.IOSetting;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
-import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
 import org.openscience.cdk.tools.manipulator.HydrogenState;
 
 import java.io.BufferedInputStream;
@@ -68,190 +31,38 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-/**
- * Importer.
- *
- * @author Felix Baensch
- * @author Samuel Behr
- * @author Jonas Schaub
- * @version 1.0.0.0
- */
-public class Importer {
-    //<editor-fold desc="Enum ValidImportFileTypes">
-    /**
-     * Enum of file types that can be imported with their specific file extensions.
-     */
-    public enum ValidImportFileTypes {
-        /**
-         * MDL MOL file V2000 or V3000.
-         */
-        MOL_FILE(".mol"),
-        /**
-         * Structure-data format file, concatenation of MOL files.
-         */
-        STRUCTURE_DATA_FORMAT_FILE(".sdf"),
-        /**
-         * A SMILES file, i.e. each line of the text-based file should contain one SMILES code. This is the minimum
-         * requirement, all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
-         */
-        SMILES_FILE(".smi"),
-        /**
-         * Text file that will be read as SMILES / delimiter-separated value file. Each line should contain one SMILES code,
-         * all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
-         */
-        TEXT_FILE(".txt"),
-        /**
-         * Comma-separated value file where each line should contain one SMILES code,
-         * all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
-         */
-        COMMA_SEPARATED_VALUES_FILE(".csv"),
-        /**
-         * Tab-separated value file where each line should contain one SMILES code,
-         * all additional elements in the file will be parsed or not according to the DynamicSMILESFileReader.
-         */
-        TAB_SEPARATED_VALUES_FILE(".tsv"),
-        ;
-        /**
-         * File extension of the respective file type.
-         */
-        private final String fileExtension;
-        /**
-         * Constructor.
-         */
-        private ValidImportFileTypes(String aFileExtension) {
-            this.fileExtension = aFileExtension;
-        }
-        /**
-         * Get the file extension of this file type, formatted as ".xyz".
-         *
-         * @return associated file extension as ".xyz"
-         */
-        public String getFileExtension() {
-            return this.fileExtension;
-        }
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="public static final class constants">
-    /**
-     * Property key that is used to store the detected molecule names on the imported atom containers.
-     */
-    public static final String MOLECULE_NAME_PROPERTY_KEY = "MORTAR_IMPORTER_NAME";
-    /**
-     * Unmodifiable Set of valid files extensions for file import.
-     */
-    public static final Set<String> VALID_IMPORT_FILE_EXTENSIONS_SET;
-    static {
-        HashSet<String> tmpSet = new HashSet<>(10, BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        for (Importer.ValidImportFileTypes tmpType : Importer.ValidImportFileTypes.values()) {
-            tmpSet.add(tmpType.getFileExtension());
-        }
-        VALID_IMPORT_FILE_EXTENSIONS_SET = Collections.unmodifiableSet(tmpSet);
-    }
-    public record MoleculeChunk(
-            ValidImportFileTypes importFileType,
-            int chunkId,
-            long fileStartOffset,
-            long fileEndOffset,
-            MemorySegment mappedSegment) {}
-    //</editor-fold>
-    //
-    //<editor-fold desc="private static final class constants" defaultstate="collapsed">
-    /**
-     * Logger of this class.
-     */
-    private static final Logger LOGGER = Logger.getLogger(Importer.class.getName());
-    //</editor-fold>
-    //
-    //<editor-fold desc="private class variables" defaultstate="collapsed">
-    /**
-     * Name of the last imported file.
-     */
-    private String fileName;
-    /**
-     * Container of general MORTAR settings, providing the recent directory path and other import-related settings.
-     */
-    private final SettingsContainer settingsContainer;
-    //</editor-fold>
-    //
-    //<editor-fold desc="Constructor" defaultstate="collapsed">
-    /**
-     * Constructor. Should the recent directory path provided by the settings container be faulty, it is set to its default value.
-     *
-     * @param aSettingsContainer the MORTAR general settings container providing a recent directory path and other
-     *                           import-related settings
-     * @throws NullPointerException if the settings container is null
-     */
-    public Importer(SettingsContainer aSettingsContainer) throws NullPointerException {
-        Objects.requireNonNull(aSettingsContainer, "Given settings container is null.");
-        this.settingsContainer = aSettingsContainer;
-        String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
-        if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
-        }
-        this.fileName = null;
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="public methods" defaultstate="collapsed">
-    /**
-     * Imports a molecule file, user can choose between three types - mol, sdf, and smi. A text file (.txt) and a
-     * CSV/TSV/DSV file will be treated
-     * as a SMILES file. If the respective setting is activated, incomplete valences of the imported atoms are filled
-     * with implicit hydrogen atoms. If no molecule name or ID is given in the input file, the file name with an appended
-     * counter is used as such and added to the returned atom containers as a property.
-     *
-     * @param aFile File to import
-     * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
-     * @param isFillOpenValencesWithImplH whether open valences in the imported molecules should be filled with implicit hydrogen atoms
-     * @param isKekulizationEnforced whether imported molecules should always be kekulized, which means aromaticity
-     *                               will not(!) be encoded in the internal SMILES strings
-     * @return List of MoleculeDataModels which contains the imported molecules or null if the file chooser was
-     * closed by the user or a not importable file type was chosen
-     * @throws CDKException if the given file cannot be parsed
-     * @throws IOException if the given file cannot be found or read
-     * @throws NullPointerException if the given file is null
-     */
-    public List<MoleculeDataModel> importMoleculeFile(File aFile, boolean isRegardStereo, boolean isFillOpenValencesWithImplH, boolean isKekulizationEnforced)
-            throws NullPointerException, IOException, CDKException {
-        Objects.requireNonNull(aFile, "aFile is null");
-        String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
-        if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
-        }
-        String tmpFilePath = aFile.getPath();
-        String tmpFileExtension = FileUtil.getFileExtension(tmpFilePath);
-        Importer.ValidImportFileTypes tmpInputFileType = null;
-        for (Importer.ValidImportFileTypes tmpType : Importer.ValidImportFileTypes.values()) {
-            if (tmpType.getFileExtension().equals(tmpFileExtension)) {
-                tmpInputFileType = tmpType;
-            }
-        }
-        if (tmpInputFileType == null) {
-            return null;
-        }
-        IAtomContainerSet tmpImportedMoleculesSet = switch (tmpInputFileType) {
-            case ValidImportFileTypes.MOL_FILE -> this.importMolFile(aFile);
-            case ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE -> this.importSDFile(aFile);
+public record ParseMolTask(
+    Importer.MoleculeChunk chunkOfMolecules,
+    List<MoleculeDataModel> resultList,
+    AtomicInteger totalParsed) implements Callable<Integer> {
+
+
+    @Override
+    public Integer call() throws Exception {
+
+        Objects.requireNonNull(
+                this.chunkOfMolecules.mappedSegment(),
+                "the memory provided for parsing is null"
+        );
+        IAtomContainerSet tmpImportedMoleculesSet = switch (this.chunkOfMolecules().importFileType()) {
+            case Importer.ValidImportFileTypes.MOL_FILE -> this.importMolFile(aFile);
+            case Importer.ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE -> this.importSDFile(aFile);
             //Needs more work before it can be made available
             /*case ".pdb":
                 tmpImportedMoleculesSet = this.importPDBFile(aFile);
                 break;*/
-            case ValidImportFileTypes.SMILES_FILE, ValidImportFileTypes.TEXT_FILE,
-                 ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE, ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE ->
+            case Importer.ValidImportFileTypes.SMILES_FILE, Importer.ValidImportFileTypes.TEXT_FILE,
+                 Importer.ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE, Importer.ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE ->
                     this.importSMILESFile(aFile);
         };
         this.preprocessMoleculeSet(tmpImportedMoleculesSet, isFillOpenValencesWithImplH);
@@ -259,7 +70,8 @@ public class Importer {
         List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced);
         return tmpReturnList;
     }
-    //
+
+
     /**
      * Parses an atom container set into a list of the MORTAR-internal MoleculeDataModel instances. If the parameter is null or empty, an empty
      * list is returned. Most time-consuming step is the SMILES generation, especially if stereochemistry is regarded because
@@ -272,9 +84,9 @@ public class Importer {
      *                               will not(!) be encoded in the internal SMILES strings (if false, aromaticity will be(!) encoded)
      * @return list of MoleculeDataModel instances or empty list if the input set is empty or null
      */
-    private List<MoleculeDataModel> parse(IAtomContainerSet anAtomContainerSet, boolean isRegardStereo, boolean isKekulizationEnforced) {
+    private Integer parse(IAtomContainerSet anAtomContainerSet, boolean isRegardStereo, boolean isKekulizationEnforced) {
         if (anAtomContainerSet == null || anAtomContainerSet.isEmpty()) {
-            return new ArrayList<>(0);
+            return 0;
         }
         List<MoleculeDataModel> tmpReturnList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
         int tmpExceptionCount = 0;
@@ -286,76 +98,19 @@ public class Importer {
                 continue;
             }
             MoleculeDataModel tmpMoleculeDataModel;
-            if (this.settingsContainer.getKeepAtomContainerInDataModelSetting()) {
-                tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer, isRegardStereo);
-            } else {
-                tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
-            }
+            tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             tmpReturnList.add(tmpMoleculeDataModel);
         }
-        int finalTmpExceptionCount = tmpExceptionCount;
-        Importer.LOGGER.log(Level.INFO, () -> String.format("Successfully imported %d molecules from file: %s; " +
-                "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
-                "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
-                anAtomContainerSet.getAtomContainerCount() - finalTmpExceptionCount, this.getFileName(), finalTmpExceptionCount));
-        return tmpReturnList;
+        this.resultQueue.addAll(tmpReturnList);
+        return tmpExceptionCount;
+        // TODO: move this to the caller
+//        Importer.LOGGER.log(Level.INFO, () -> String.format("Successfully imported %d molecules from file: %s; " +
+//                        "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
+//                        "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
+//                anAtomContainerSet.getAtomContainerCount() - finalTmpExceptionCount, this.getFileName(), finalTmpExceptionCount));
     }
-    //
-    /**
-     * Returns the name of the last successfully imported file. Might be null if no file was imported yet.
-     *
-     * @return file name
-     */
-    public String getFileName(){
-        return this.fileName;
-    }
-    //
-    /**
-     * Opens a file chooser and loads the chosen file.
-     *
-     * @param aParentStage Stage where FileChooser should be shown
-     * @return File which should contain molecules or null if no file is imported
-     * @throws NullPointerException if the given stage is null
-     */
-    public File openFile(Stage aParentStage) throws NullPointerException {
-        Objects.requireNonNull(aParentStage, "aParentStage (instance of Stage) is null");
-        FileChooser tmpFileChooser = new FileChooser();
-        tmpFileChooser.setTitle(Message.get("Importer.fileChooser.title"));
-        List<String> tmpFormattedExtensionsList = new ArrayList<>(10);
-        for (String tmpUnformattedExtension : Importer.VALID_IMPORT_FILE_EXTENSIONS_SET) {
-            tmpFormattedExtensionsList.add("*" + tmpUnformattedExtension);
-        }
-        tmpFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-                Message.get("Importer.fileChooser.MoleculeFilter.Description"),
-                tmpFormattedExtensionsList));
-        File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
-        if (!tmpRecentDirectory.isDirectory()) {
-            tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
-        }
-        tmpFileChooser.setInitialDirectory(tmpRecentDirectory);
-        File tmpFile;
-        try {
-           tmpFile = tmpFileChooser.showOpenDialog(aParentStage);
-           if (tmpFile != null) {
-               this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent() + File.separator);
-           }
-           return tmpFile;
-        } catch (Exception anException){
-           Importer.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-           GuiUtil.guiExceptionAlert(
-                   Message.get("Error.ExceptionAlert.Title"),
-                   Message.get("Importer.FileImportExceptionAlert.Header"),
-                   Message.get("Importer.FileImportExceptionAlert.Text") + "\n" + LogUtil.getLogFileDirectoryPath(),
-                   anException);
-           return null;
-        }
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="private methods" defaultstate="collapsed">
+
     /**
      * Imports a mol file as AtomContainer and adds the first line of the mol file (name of the
      * molecule in most cases) as "name-property". MDL v2000 and v3000 MOL files are accepted and the used format
@@ -393,7 +148,7 @@ public class Importer {
         if (tmpName == null) {
             try (BufferedReader tmpBufferedReader = new BufferedReader(new FileReader(aFile))) {
                 tmpName = tmpBufferedReader.readLine();
-                if (tmpName == null || tmpName.isBlank() || tmpName.isEmpty()) {
+                if (tmpName == null || tmpName.isBlank()) {
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile);
                 }
             }
@@ -402,7 +157,8 @@ public class Importer {
         tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
         return tmpAtomContainerSet;
     }
-    //
+
+
     /**
      * Imports an SD file. If no name can be detected for a structure, the file name extended with the index of the
      * structure in the file is used as name of the structure.
@@ -479,52 +235,7 @@ public class Importer {
         }
         return tmpAtomContainerSet;
     }
-    //
-    /**
-     * Imports a PDB file.
-     *
-     * @param aFile PDB file
-     * @return the imported molecules in an IAtomContainerSet
-     * @throws CDKException if the given PDB file cannot be read
-     * @throws IOException if a file input stream cannot be opened or closed for the given file
-     * @deprecated Currently out of use! Needs more work before it can be made available. See importMoleculeFile() and loadFile()
-     */
-    @Deprecated
-    private IAtomContainerSet importPDBFile(File aFile) throws IOException, CDKException {
-        IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
-        try (PDBReader tmpPDBReader = new PDBReader(new FileInputStream(aFile))) {
-            for (IOSetting setting : tmpPDBReader.getIOSettings()) {
-                if (setting.getName().equals("UseRebondTool")) {
-                    //default false
-                    //CDK seems unable to read all info in the "CONECT" block, and often it is not there at all; therefore, we
-                    // re-bond the whole molecule based on the atom distances with this setting
-                    // BUT this is unable to re-create double bonds!
-                    setting.setSetting("true");
-                }
-                if (setting.getName().equals("ReadConnectSection")) {
-                    //default true
-                }
-                if (setting.getName().equals("UseHetDictionary")) {
-                    //default false
-                }
-            }
-            ChemFile tmpChemFile = tmpPDBReader.read(new ChemFile());
-            int tmpCounter = 0;
-            for (IAtomContainer tmpAtomContainer : ChemFileManipulator.getAllAtomContainers(tmpChemFile)) {
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
-                }
-                String tmpName = this.findMoleculeName(tmpAtomContainer);
-                if(tmpName == null || tmpName.isBlank() || tmpName.isEmpty())
-                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
-                tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-                tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
-                tmpCounter++;
-            }
-            return tmpAtomContainerSet;
-        }
-    }
-    //
+
     /**
      * Searches the properties of the given atom container for a property
      * containing either 'name' or 'ID' in its key string and
@@ -589,7 +300,7 @@ public class Importer {
                         tmpMoleculesWithRadicalsCounter++;
                     }
                     CDKHydrogenAdder.getInstance(tmpMolecule.getBuilder()).addImplicitHydrogens(tmpMolecule);
-                //otherwise, just set implicit hydrogen counts to zero if unset to prevent exceptions
+                    //otherwise, just set implicit hydrogen counts to zero if unset to prevent exceptions
                 } else {
                     for (IAtom tmpAtom : tmpMolecule.atoms()) {
                         if (tmpAtom.getImplicitHydrogenCount() == CDKConstants.UNSET
@@ -620,5 +331,4 @@ public class Importer {
                     new Object[]{tmpExceptionsCounter, tmpMoleculesWithRadicalsCounter});
         }
     }
-    //</editor-fold>
 }
