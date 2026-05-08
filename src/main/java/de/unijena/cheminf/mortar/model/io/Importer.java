@@ -69,6 +69,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -164,7 +165,14 @@ public class Importer {
             int chunkId,
             long fileStartOffset,
             long fileEndOffset,
+            Path sourceFile,
             MemorySegment mappedSegment) {}
+
+    public record ParserConfiguration(
+            boolean aRegardStereoSetting,
+            boolean aForceKekulizationSetting,
+            boolean a
+    )
     //</editor-fold>
     //
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">

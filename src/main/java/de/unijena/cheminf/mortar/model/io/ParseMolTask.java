@@ -1,7 +1,6 @@
 package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
-import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import org.openscience.cdk.AtomContainer;
@@ -36,16 +35,26 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+
+public record ParseConfiguration(
+        boolean aRegardStereoSetting,
+        boolean aForceKekulizationSetting,
+        boolean afillOpenValencesWithImplicitH
+) {}
 
 public record ParseMolTask(
     Importer.MoleculeChunk chunkOfMolecules,
     List<MoleculeDataModel> resultList,
     AtomicInteger totalParsed) implements Callable<Integer> {
 
+    public ParseMolTask {
+        Objects.requireNonNull(chunkOfMolecules.mappedSegment(), "Memory segment cannot be null");
+        Objects.requireNonNull(chunkOfMolecules.sourceFile(), "Source file path cannot be null");
+        Objects.requireNonNull(config, "Parse configuration cannot be null");
+    }
 
     @Override
     public Integer call() throws Exception {
