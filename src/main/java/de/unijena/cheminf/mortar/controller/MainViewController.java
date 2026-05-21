@@ -99,6 +99,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -1039,13 +1040,14 @@ public class MainViewController {
                 (EventHandler<SortEvent<TableView>>) event ->
                         GuiUtil.sortTableViewGlobally(event, tmpMoleculesTab.getPagination(), tmpRowsPerPage)
         );
-        tmpMoleculesTab.setOnTableWidthChanged(newValue -> {
+        Consumer<Number> tmpWidthChangeListener = newValue -> {
             for (Object tmpObject : this.moleculesDataTableView.getItems()) {
                 ((MoleculeDataModel) tmpObject).setStructureImageWidth(
                         this.moleculesDataTableView.getStructureColumn().getWidth()
                 );
             }
-        });
+        };
+        tmpMoleculesTab.setOnTableWidthChanged(tmpWidthChangeListener);
         this.moleculesDataTableView.addTableViewHeightListener(this.settingsContainer);
         this.moleculesDataTableView.getCopyMenuItem().setOnAction(
                 event -> GuiUtil.copySelectedTableViewCellsToClipboard(this.moleculesDataTableView)

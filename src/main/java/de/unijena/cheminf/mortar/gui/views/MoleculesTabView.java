@@ -30,12 +30,28 @@ public class MoleculesTabView extends GridTabForTableView {
     //
     //<editor-fold desc="private final instance variables">
     private final Pagination pagination;
+    /**
+     * The molecule data table view that is contained in this view (currently only used to add a width change listener).
+     */
+    private final MoleculesDataTableView moleculesDataTableView;
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
+    /**
+     * the button to start a fragmentation.
+     */
     private Button fragmentationButton;
+    /**
+     * the button to cancel a fragmentation.
+     */
     private Button cancelFragmentationButton;
+    /**
+     * the button to open a new window with the overview of the molecules of this tab.
+     */
     private Button overviewButton;
+    /**
+     * the function that runsupon pressing.
+     */
     private Runnable onFragmentation;
     private Runnable onCancelFragmentation;
     private Runnable onOverview;
@@ -63,6 +79,7 @@ public class MoleculesTabView extends GridTabForTableView {
                 TabNames.MOLECULES.name(),
                 aMoleculesDataTableView
         );
+        this.moleculesDataTableView = aMoleculesDataTableView;
         aMoleculesDataTableView.setItemsList(aMoleculeDataModelList);
         this.pagination = this.createPaginationWithSuitablePageCount(
                 aMoleculeDataModelList.size(),
@@ -75,13 +92,7 @@ public class MoleculesTabView extends GridTabForTableView {
         this.addNodeToGridPane(tmpFragmentationButtonsHBox, 0, 1, 1, 1);
         HBox tmpViewButtonsHBox = this.createViewButtonsBox();
         this.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
-        aMoleculesDataTableView.widthProperty().addListener(
-                (observable, oldValue, newValue) -> {
-                    if (this.onTableWidthChanged != null) {
-                        this.onTableWidthChanged.accept(newValue);
-                    }
-                }
-        );
+        // TODO: also in the controller (every listener in the controller) (every listener in the controller)
     }
     //</editor-fold>
     //
@@ -205,6 +216,9 @@ public class MoleculesTabView extends GridTabForTableView {
 
     public void setOnTableWidthChanged(Consumer<Number> aCallback) {
         this.onTableWidthChanged = aCallback;
+        this.moleculesDataTableView.widthProperty().addListener(
+                (observable, oldValue, newValue) -> aCallback.accept(newValue)
+        );
     }
 
     public void bindCancelFragmentationButtonVisibility(BooleanProperty aProperty) {
