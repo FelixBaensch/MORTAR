@@ -55,7 +55,6 @@ import de.unijena.cheminf.mortar.model.util.LogUtil;
 
 import javafx.application.Platform;
 import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -64,8 +63,6 @@ import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -78,7 +75,6 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
@@ -87,7 +83,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -1370,9 +1365,7 @@ public class MainViewController {
             this.mainTabPane.getTabs().remove(aGridTableView);
             for (Tab tmpTab : this.mainTabPane.getTabs()) {
                 if (tmpTab instanceof GridTabForTableView tmpGridTab &&
-                        Objects.equals(
-                                tmpGridTab.getFragmentationNameOutOfTitle(),
-                                aGridTableView.getFragmentationNameOutOfTitle())
+                        tmpGridTab.getFragmentationNameOutOfTitle().equals(aGridTableView.getFragmentationNameOutOfTitle())
                 ) {
                     switch (tmpGridTab) {
                         case ItemizationTabView tmpItemizationView -> {
