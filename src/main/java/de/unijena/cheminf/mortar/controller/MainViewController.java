@@ -379,6 +379,27 @@ public class MainViewController {
                 keyEvent.consume();
             }
         });
+        this.mainTabPane.getSelectionModel().selectedItemProperty().addListener(
+                (tmpObservable, tmpOldTab, tmpNewTab) -> {
+                    if (tmpNewTab instanceof GridTabForTableView tmpGridTabView) {
+                        switch (tmpGridTabView) {
+                            case MoleculesTabView tmpMolTab -> {
+                                this.mainView.getMainMenuBar().getFragmentsExportMenu().setDisable(true);
+                                this.mainView.getMainMenuBar().getItemsExportMenu().setDisable(true);
+                            }
+                            case FragmentsTabView tmpFragTab -> {
+                                this.mainView.getMainMenuBar().getFragmentsExportMenu().setDisable(false);
+                                this.mainView.getMainMenuBar().getItemsExportMenu().setDisable(true);
+                            }
+                            case ItemizationTabView tmpItemsTab -> {
+                                this.mainView.getMainMenuBar().getFragmentsExportMenu().setDisable(true);
+                                this.mainView.getMainMenuBar().getItemsExportMenu().setDisable(false);
+                            }
+                            default -> throw new IllegalStateException("Unexpected value: " + tmpGridTabView);
+                        }
+                    }
+                }
+        );
         this.mainTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> Platform.runLater(() -> {
             if (newValue == null) {
                 return;
@@ -1363,25 +1384,6 @@ public class MainViewController {
                 }
             }
             this.mainTabPane.getTabs().remove(aGridTableView);
-            for (Tab tmpTab : this.mainTabPane.getTabs()) {
-                if (tmpTab instanceof GridTabForTableView tmpGridTab &&
-                        tmpGridTab.getFragmentationNameOutOfTitle().equals(aGridTableView.getFragmentationNameOutOfTitle())
-                ) {
-                    switch (tmpGridTab) {
-                        case ItemizationTabView tmpItemizationView -> {
-                            tmpItemizationView.getExportCsvButton().setDisable(true);
-                            tmpItemizationView.getExportPdfButton().setDisable(true);
-                        }
-                        case FragmentsTabView tmpFragmentsView -> {
-                            tmpFragmentsView.getExportCsvButton().setDisable(true);
-                            tmpFragmentsView.getExportPdfButton().setDisable(true);
-                        }
-                        default -> {
-                            throw new NullPointerException("This case is impossible but the compiler needs it");
-                        }
-                    }
-                }
-            }
             this.cleanupGridTabData(aGridTableView);
         } else {
             this.mainTabPane.getTabs().remove(aGridTableView);

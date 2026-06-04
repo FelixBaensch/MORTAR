@@ -436,11 +436,17 @@ public class FragmentsTabView extends GridTabForTableView {
      * Sets the callback function to be executed when the table view width changes.
      *
      * <p>The callback will be invoked whenever the width of the underlying fragments data table view changes,
+     * @param aCallback the function to call if the table width changed.
      */
      public void setOnTableWidthChanged(Consumer<Number> aCallback) {
         this.onTableWidthChanged = aCallback;
     }
 
+    /**
+     * Bind a boolean property to control the visibility of the {@code cancel} fragmentation button.
+     *
+     * @param aProperty the property that will control the visibility.
+     */
     public void bindCancelButtonVisibility(BooleanProperty aProperty) {
         this.cancelExportButton.visibleProperty().bind(aProperty);
     }
