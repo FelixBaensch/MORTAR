@@ -311,6 +311,7 @@ public class ItemizationTabView extends GridTabForTableView {
      *
      * @return the {@link Pagination} component; never null
      */
+    @Override
     public Pagination getPagination() {
         return this.pagination;
     }

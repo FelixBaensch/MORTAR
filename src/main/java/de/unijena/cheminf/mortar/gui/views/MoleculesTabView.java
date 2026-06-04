@@ -171,7 +171,6 @@ public class MoleculesTabView extends GridTabForTableView {
         this.addNodeToGridPane(tmpFragmentationButtonsHBox, 0, 1, 1, 1);
         HBox tmpViewButtonsHBox = this.createViewButtonsBox();
         this.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
-        // TODO: also in the controller (every listener in the controller) (every listener in the controller)
     }
     //</editor-fold>
     //
@@ -261,6 +260,7 @@ public class MoleculesTabView extends GridTabForTableView {
      *
      * @return the {@link Pagination} component; never null
      */
+    @Override
     public Pagination getPagination() {
         return this.pagination;
     }

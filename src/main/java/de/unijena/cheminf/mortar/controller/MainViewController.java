@@ -67,7 +67,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
@@ -699,8 +698,6 @@ public class MainViewController {
             @Override
             protected List<String> call() throws Exception {
                 return switch (anExportType) {
-                    // TODO: consider disabling the export of e.g. the fragments if the respective tab was closed
-                    //       and be aware that the sorting of the fragmentation tab is considered in the export.
                     case Exporter.ExportTypes.FRAGMENT_CSV_FILE -> tmpExporter.exportCsvFile(
                             tmpExportFile,
                             MainViewController.this.moleculeDataModelList,
@@ -1297,19 +1294,6 @@ public class MainViewController {
 
     //
     /**
-     * Creates a menu item to close all tabs upon clicking and confirming a warning message.
-     * The warning message prompts the user to confirm that they want to close all fragmentation result tabs and
-     * therefore is fine with deleting the fragmentation results if not exported.
-     *
-     * @return the menu item
-     */
-    private MenuItem createCloseAllMenuItem() {
-        MenuItem tmpCloseAllItem = new MenuItem(Message.get("MainView.tabMenuBar.closeAll.text"));
-        tmpCloseAllItem.setOnAction(event -> this.closeAllTabs());
-        return tmpCloseAllItem;
-    }
-    //
-    /**
      * Closes all tabs that are closeable (everything except the molecules tab) and cleans up the data.
      */
     private void closeAllTabs() {
@@ -1345,19 +1329,6 @@ public class MainViewController {
         // because all fragmentation results were closed
         this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
         this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
-    }
-    //
-    /**
-     * Creates a new menu item to close the tab of the displayed menu with a
-     * confirmation dialogue if this would clean up the data.
-     *
-     * @param aGridTableView the tab to close for this menu item.
-     * @return the menu item to close this specific tab.
-     */
-    private MenuItem createCloseTabMenuItem(GridTabForTableView aGridTableView) {
-        MenuItem tmpCloseTabItem = new MenuItem(Message.get("MainView.tabMenuBar.closeTab.text"));
-        tmpCloseTabItem.setOnAction(event -> this.closeTab(aGridTableView));
-        return tmpCloseTabItem;
     }
     //
     /**
