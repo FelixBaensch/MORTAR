@@ -163,16 +163,11 @@ public class Importer {
     public record MoleculeChunk(
             ValidImportFileTypes importFileType,
             int chunkId,
-            long fileStartOffset,
-            long fileEndOffset,
+            long offsetFromFileStart,
+            long chunkSize,
             Path sourceFile,
             MemorySegment mappedSegment) {}
 
-    public record ParserConfiguration(
-            boolean aRegardStereoSetting,
-            boolean aForceKekulizationSetting,
-            boolean a
-    )
     //</editor-fold>
     //
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">

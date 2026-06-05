@@ -39,26 +39,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
-public record ParseConfiguration(
-        boolean aRegardStereoSetting,
-        boolean aForceKekulizationSetting,
-        boolean afillOpenValencesWithImplicitH
-) {}
 
 public record ParseMolTask(
     Importer.MoleculeChunk chunkOfMolecules,
+    boolean isRegardStereo,
+    boolean isKekulizationEnforced,
+    boolean isFillOpenValencesWithImplH,
     List<MoleculeDataModel> resultList,
     AtomicInteger totalParsed) implements Callable<Integer> {
 
-    public ParseMolTask {
-        Objects.requireNonNull(chunkOfMolecules.mappedSegment(), "Memory segment cannot be null");
-        Objects.requireNonNull(chunkOfMolecules.sourceFile(), "Source file path cannot be null");
-        Objects.requireNonNull(config, "Parse configuration cannot be null");
-    }
-
     @Override
     public Integer call() throws Exception {
-
         Objects.requireNonNull(
                 this.chunkOfMolecules.mappedSegment(),
                 "the memory provided for parsing is null"
@@ -74,10 +65,9 @@ public record ParseMolTask(
                  Importer.ValidImportFileTypes.COMMA_SEPARATED_VALUES_FILE, Importer.ValidImportFileTypes.TAB_SEPARATED_VALUES_FILE ->
                     this.importSMILESFile(aFile);
         };
-        this.preprocessMoleculeSet(tmpImportedMoleculesSet, isFillOpenValencesWithImplH);
+        this.preprocessMoleculeSet(tmpImportedMoleculesSet, this.isFillOpenValencesWithImplH);
         this.fileName = aFile.getName();
-        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced);
-        return tmpReturnList;
+        return this.parse(tmpImportedMoleculesSet, this.isRegardStereo, this.isKekulizationEnforced);
     }
 
 
@@ -87,37 +77,25 @@ public record ParseMolTask(
      * then, the InChI numbering algorithm is used. Logs the size of the input data set and the number of exceptions that occurred during
      * SMILES generation (leads to molecule not being parsed into MoleculeDataModel).
      *
-     * @param anAtomContainerSet the set to parse
+     * @param anAtomContainer the set to parse
      * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
      * @param isKekulizationEnforced whether imported molecules should always be kekulized, which means aromaticity
      *                               will not(!) be encoded in the internal SMILES strings (if false, aromaticity will be(!) encoded)
      * @return list of MoleculeDataModel instances or empty list if the input set is empty or null
      */
-    private Integer parse(IAtomContainerSet anAtomContainerSet, boolean isRegardStereo, boolean isKekulizationEnforced) {
-        if (anAtomContainerSet == null || anAtomContainerSet.isEmpty()) {
-            return 0;
+    private MoleculeDataModel parse(IAtomContainer anAtomContainer, boolean isRegardStereo, boolean isKekulizationEnforced) {
+        if (anAtomContainer == null || anAtomContainer.isEmpty()) {
+            return null;
         }
-        List<MoleculeDataModel> tmpReturnList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
-        int tmpExceptionCount = 0;
-        for (IAtomContainer tmpAtomContainer : anAtomContainerSet.atomContainers()) {
-            //returns null if no SMILES code could be created
-            String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, isRegardStereo, !isKekulizationEnforced);
-            if (tmpSmiles == null || tmpSmiles.isBlank()) {
-                tmpExceptionCount++;
-                continue;
-            }
-            MoleculeDataModel tmpMoleculeDataModel;
-            tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
-            tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-            tmpReturnList.add(tmpMoleculeDataModel);
+        //returns null if no SMILES code could be created
+        String tmpSmiles = ChemUtil.createUniqueSmiles(anAtomContainer, isRegardStereo, !isKekulizationEnforced);
+        if (tmpSmiles == null || tmpSmiles.isBlank()) {
+            return null;
         }
-        this.resultQueue.addAll(tmpReturnList);
-        return tmpExceptionCount;
-        // TODO: move this to the caller
-//        Importer.LOGGER.log(Level.INFO, () -> String.format("Successfully imported %d molecules from file: %s; " +
-//                        "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
-//                        "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
-//                anAtomContainerSet.getAtomContainerCount() - finalTmpExceptionCount, this.getFileName(), finalTmpExceptionCount));
+        MoleculeDataModel tmpMoleculeDataModel;
+        tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, anAtomContainer.getTitle(), anAtomContainer.getProperties());
+        tmpMoleculeDataModel.setName(anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        return tmpMoleculeDataModel;
     }
 
     /**
