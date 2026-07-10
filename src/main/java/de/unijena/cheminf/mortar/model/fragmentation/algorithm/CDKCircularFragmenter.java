@@ -624,8 +624,8 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
                 //adding the atom count once more for the radius = 0 fragments
                 tmpFragments = new ArrayList<>(tmpMoleculeToWorkWith.getAtomCount() * (this.radiusSetting.get() + 1));
                 for (int i = 0; i <= this.radiusSetting.get(); i++) {
-                    //bypass of the radius setting property of this class, cave! Works here because the last iteration restores the previous state
-                    //the radius setting property is not touched and servers as preservation of the original value
+                    //bypass of the radius setting property of this class, beware! Works here because the last iteration restores the previous state;
+                    //the radius setting property is not touched and serves as preservation of the original value
                     this.circularFragmenterInstance.setRadius(i);
                     tmpFragments.addAll(this.circularFragmenterInstance.getCircularFragments(tmpMoleculeToWorkWith));
                 }

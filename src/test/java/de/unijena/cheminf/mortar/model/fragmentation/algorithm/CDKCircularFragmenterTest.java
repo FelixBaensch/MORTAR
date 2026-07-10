@@ -198,6 +198,9 @@ class CDKCircularFragmenterTest {
         List<IAtomContainer> tmpFrags = tmpFragmenter.fragmentMolecule(tmpBenzene);
         // 4 radii: 0, 1, 2, 3; one fragment created per atom in each round
         Assertions.assertEquals(tmpAtomCount * 4, tmpFrags.size());
+        // Verify that fragments from at least the smallest (0) and largest (3) radii are present
+        Assertions.assertTrue(tmpFrags.stream().anyMatch(f -> f.getAtomCount() == 1));
+        Assertions.assertTrue(tmpFrags.stream().anyMatch(f -> f.getAtomCount() == tmpAtomCount));
     }
     //
     /**
