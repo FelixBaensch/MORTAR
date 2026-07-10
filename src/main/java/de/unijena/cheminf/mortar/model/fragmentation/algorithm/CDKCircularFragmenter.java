@@ -81,6 +81,11 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
     public static final int RADIUS_SETTING_DEFAULT = 3;
 
     /**
+     * Default include smaller radii setting value.
+     */
+    public static final boolean INCLUDE_SMALLER_RADII_SETTING_DEFAULT = false;
+
+    /**
      * Default preserve stereo setting value, taken from {@link CircularFragmenter}.
      */
     public static final boolean PRESERVE_STEREO_SETTING_DEFAULT = false;
@@ -140,6 +145,8 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
     // for the get() method of the property and the private property itself as well
     private final SimpleIntegerProperty radiusSetting;
 
+    private final SimpleBooleanProperty includeSmallerRadiiSetting;
+
     private final SimpleBooleanProperty preserveStereoSetting;
 
     private final SimpleBooleanProperty markAttachmentsSetting;
@@ -181,7 +188,7 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
                 CDKCircularFragmenter.PRESERVE_STEREO_SETTING_DEFAULT,
                 CDKCircularFragmenter.MARK_ATTACHMENTS_SETTING_DEFAULT
         );
-        int tmpNumberOfSettings = 6;
+        int tmpNumberOfSettings = 7;
         this.settings = new ArrayList<>(tmpNumberOfSettings);
         int tmpInitialCapacityForSettingNameTooltipTextMap = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
@@ -213,6 +220,14 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
                 Message.get("CDKCircularFragmenter.radiusSetting.tooltip"));
         this.settingNameToDisplayNameMap.put(this.radiusSetting.getName(),
                 Message.get("CDKCircularFragmenter.radiusSetting.displayName"));
+
+        this.includeSmallerRadiiSetting = new SimpleBooleanProperty(this, "Include smaller radii setting",
+                CDKCircularFragmenter.INCLUDE_SMALLER_RADII_SETTING_DEFAULT);
+        this.settings.add(this.includeSmallerRadiiSetting);
+        this.settingNameToTooltipTextMap.put(this.includeSmallerRadiiSetting.getName(),
+                Message.get("CDKCircularFragmenter.includeSmallerRadiiSetting.tooltip"));
+        this.settingNameToDisplayNameMap.put(this.includeSmallerRadiiSetting.getName(),
+                Message.get("CDKCircularFragmenter.includeSmallerRadiiSetting.displayName"));
 
         this.preserveStereoSetting = new SimpleBooleanProperty(this,
                 "Preserve stereo setting",
@@ -339,6 +354,26 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Returns the currently set value of the include smaller radii setting which can be used to extract fragments for
+     * all the radii leading up to the one set above (starting at 0) in addition to the fragments for the set radius.
+     *
+     * @return current include smaller radii setting value
+     */
+    public boolean getIncludeSmallerRadiiSetting() {
+        return this.includeSmallerRadiiSetting.get();
+    }
+
+    /**
+     * Returns the property object of the include smaller radii setting that can be used to configure this setting.
+     *
+     * @return property object of the include smaller radii setting
+     */
+    public SimpleBooleanProperty includeSmallerRadiiSettingProperty() {
+        return this.includeSmallerRadiiSetting;
+    }
+
+
+    /**
      * Returns the current state of the preserve stereo setting.
      *
      * @return true if stereochemistry annotations should be preserved in fragments
@@ -444,6 +479,16 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
     }
 
     /**
+     * Sets the include smaller radii setting which can be used to extract fragments for
+     * all the radii leading up to the one set above (starting at 0) in addition to the fragments for the set radius.
+     *
+     * @param aBoolean true if smaller radii should be included
+     */
+    public void setIncludeSmallerRadiiSetting(boolean aBoolean) {
+        this.includeSmallerRadiiSetting.set(aBoolean);
+    }
+
+    /**
      * Sets the preserve stereo setting, defining whether stereochemistry annotations should be
      * preserved in the circular fragments.
      *
@@ -532,6 +577,7 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
     public IMoleculeFragmenter copy() {
         CDKCircularFragmenter tmpCopy = new CDKCircularFragmenter();
         tmpCopy.setRadiusSetting(this.radiusSetting.get());
+        tmpCopy.setIncludeSmallerRadiiSetting(this.includeSmallerRadiiSetting.get());
         tmpCopy.setPreserveStereoSetting(this.preserveStereoSetting.get());
         tmpCopy.setMarkAttachmentsSetting(this.markAttachmentsSetting.get());
         tmpCopy.setApplyAromaticityDetectionSetting(this.applyAromaticityDetectionSetting.get());
@@ -543,13 +589,12 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
     @Override
     public void restoreDefaultSettings() {
         this.radiusSetting.set(CDKCircularFragmenter.RADIUS_SETTING_DEFAULT);
+        this.includeSmallerRadiiSetting.set(CDKCircularFragmenter.INCLUDE_SMALLER_RADII_SETTING_DEFAULT);
         this.preserveStereoSetting.set(CDKCircularFragmenter.PRESERVE_STEREO_SETTING_DEFAULT);
         this.markAttachmentsSetting.set(CDKCircularFragmenter.MARK_ATTACHMENTS_SETTING_DEFAULT);
         this.applyAromaticityDetectionSetting.set(CDKCircularFragmenter.APPLY_AROMATICITY_DETECTION_SETTING_DEFAULT);
         this.cycleFinderSetting.set(CDKCircularFragmenter.CYCLE_FINDER_OPTION_DEFAULT);
-        this.setCycleFinderInstance(CDKCircularFragmenter.CYCLE_FINDER_OPTION_DEFAULT);
         this.electronDonationModelSetting.set(CDKCircularFragmenter.ELECTRON_DONATION_MODEL_OPTION_DEFAULT);
-        this.setAromaticityInstance(this.electronDonationInstance, this.cycleFinderInstance);
     }
 
     @Override
@@ -575,7 +620,17 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
             } else {
                 tmpMoleculeToWorkWith = aMolecule;
             }
-            tmpFragments = this.circularFragmenterInstance.getCircularFragments(tmpMoleculeToWorkWith);
+            if (this.includeSmallerRadiiSetting.get()) {
+                //adding the atom count once more for the radius = 0 fragments
+                tmpFragments = new ArrayList<>(tmpMoleculeToWorkWith.getAtomCount() * (this.radiusSetting.get() + 1));
+                for (int i = 0; i <= this.radiusSetting.get(); i++) {
+                    //bypass of the radius setting property of this class, cave! Works here because the last iteration restores the previous state
+                    this.circularFragmenterInstance.setRadius(i);
+                    tmpFragments.addAll(this.circularFragmenterInstance.getCircularFragments(tmpMoleculeToWorkWith));
+                }
+            } else {
+                tmpFragments = this.circularFragmenterInstance.getCircularFragments(tmpMoleculeToWorkWith);
+            }
         } catch (Exception anException) {
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString()
                     + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
