@@ -625,6 +625,7 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
                 tmpFragments = new ArrayList<>(tmpMoleculeToWorkWith.getAtomCount() * (this.radiusSetting.get() + 1));
                 for (int i = 0; i <= this.radiusSetting.get(); i++) {
                     //bypass of the radius setting property of this class, cave! Works here because the last iteration restores the previous state
+                    //the radius setting property is not touched and servers as preservation of the original value
                     this.circularFragmenterInstance.setRadius(i);
                     tmpFragments.addAll(this.circularFragmenterInstance.getCircularFragments(tmpMoleculeToWorkWith));
                 }
@@ -632,6 +633,8 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
                 tmpFragments = this.circularFragmenterInstance.getCircularFragments(tmpMoleculeToWorkWith);
             }
         } catch (Exception anException) {
+            //to restore the value should the include smaller radii setting be active and an exception be thrown
+            this.circularFragmenterInstance.setRadius(this.radiusSetting.get());
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString()
                     + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
