@@ -26,6 +26,7 @@
 * [Installation](#Installation)
     * [Application](#Application)
     * [Source code](#Source-code)
+* [Contribution](#Contribution)
 * [Dependencies](#Dependencies)
 * [Citation](#Citation)
 * [References and useful links](#References-and-useful-links)
@@ -198,6 +199,13 @@ For this to work, you need to create an "AdoptOpenJDK\jdk-21.0.1_12_jre\" folder
 into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be "bin", "conf", "legal", "lib", etc.).
 If you are only going to use our custom deployment Gradle tasks, you do not need to download the JRE manually, the tasks 
 will take care of it automatically.
+
+## Contribution
+If you want to contribute to MORTAR, please read the [CONTRIBUTING.md](./CONTRIBUTING.md) file. The most important thing
+is that you should contribute on a development branch branching off the ``production`` branch, not the ``main`` branch.
+The ``main`` branch is reserved for stable releases only. When you have finished your development, please create a pull 
+request to the ``production`` branch.
+If you are not sure about the contribution process, please contact us via email, GitHub issues, or GitHub discussions.
 
 ## Dependencies
 **Needs to be pre-installed:**
