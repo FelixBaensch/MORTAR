@@ -29,9 +29,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmiFlavor;
@@ -42,6 +40,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
@@ -82,8 +81,8 @@ public class ImporterTest extends Importer {
         MDLV2000Reader tmpReader = new MDLV2000Reader(new FileReader(tmpResourceFile));
         IAtomContainer tmpMolecule = tmpReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
         tmpReader.close();
-        IAtomContainerSet tmpSet = new AtomContainerSet();
-        tmpSet.addAtomContainer(tmpMolecule);
+        ArrayList<IAtomContainer> tmpSet = new ArrayList<>();
+        tmpSet.add(tmpMolecule);
         this.preprocessMoleculeSet(tmpSet, true);
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Canonical);
         Assertions.assertEquals("N=C1N=C2C3=C(N1)CCC3CC(C)C2CCCC", smiGen.create(tmpMolecule));
@@ -101,8 +100,8 @@ public class ImporterTest extends Importer {
     public void testHydrogenSaturationOnSMILES() throws Exception {
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("[CH2]CCCC([CH])CCC");
-        IAtomContainerSet tmpSet = new AtomContainerSet();
-        tmpSet.addAtomContainer(tmpMolecule);
+        ArrayList<IAtomContainer> tmpSet = new ArrayList<>();
+        tmpSet.add(tmpMolecule);
         this.preprocessMoleculeSet(tmpSet, true);
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Canonical);
         Assertions.assertEquals("CCCCC(C)CCC", smiGen.create(tmpMolecule));

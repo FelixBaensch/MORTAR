@@ -29,17 +29,17 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 
-import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
@@ -263,13 +263,13 @@ public class DynamicSMILESFileReader {
      * @return atom container set parsed from the file
      * @throws IOException if the given file cannot be found
      */
-    public IAtomContainerSet readFile(File aFile, DynamicSMILESFileFormat aFormat) throws IOException {
+    public List<IAtomContainer> readFile(File aFile, DynamicSMILESFileFormat aFormat) throws IOException {
         try (
                 // throws FileNotFoundException if file cannot be found, see catch block below
                 FileReader tmpSmilesFileReader = new FileReader(aFile);
                 BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader, BasicDefinitions.BUFFER_SIZE)
         ) {
-            IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+            List<IAtomContainer> tmpAtomContainerSet = new ArrayList<>(0);
             // AtomContainer to save the parsed SMILES in
             IAtomContainer tmpMolecule;
             String tmpSmilesFileCurrentLine;
@@ -320,7 +320,7 @@ public class DynamicSMILESFileReader {
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpLineInFileCounter;
                 }
                 tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-                tmpAtomContainerSet.addAtomContainer(tmpMolecule);
+                tmpAtomContainerSet.add(tmpMolecule);
             }
             return tmpAtomContainerSet;
         } catch (FileNotFoundException anException) {

@@ -17,7 +17,7 @@ version = providers.gradleProperty("appVersion").get()
 
 // Creates javadoc and sources jars
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = JavaVersion.VERSION_21
     withJavadocJar()
     withSourcesJar()
 }

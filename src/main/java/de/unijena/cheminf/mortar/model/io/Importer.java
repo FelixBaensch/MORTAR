@@ -33,7 +33,9 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
+import de.unijena.cheminf.mortar.model.util.MORTARException;
 
+import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -68,15 +70,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.foreign.MemorySegment;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -160,13 +167,6 @@ public class Importer {
         }
         VALID_IMPORT_FILE_EXTENSIONS_SET = Collections.unmodifiableSet(tmpSet);
     }
-    public record MoleculeChunk(
-            ValidImportFileTypes importFileType,
-            int chunkId,
-            long offsetFromFileStart,
-            long chunkSize,
-            Path sourceFile,
-            MemorySegment mappedSegment) {}
 
     //</editor-fold>
     //
@@ -186,6 +186,8 @@ public class Importer {
      * Container of general MORTAR settings, providing the recent directory path and other import-related settings.
      */
     private final SettingsContainer settingsContainer;
+
+    private ExecutorService executorService;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
@@ -246,7 +248,7 @@ public class Importer {
         if (tmpInputFileType == null) {
             return null;
         }
-        IAtomContainerSet tmpImportedMoleculesSet = switch (tmpInputFileType) {
+        List<IAtomContainer> tmpImportedMoleculesSet = switch (tmpInputFileType) {
             case ValidImportFileTypes.MOL_FILE -> this.importMolFile(aFile);
             case ValidImportFileTypes.STRUCTURE_DATA_FORMAT_FILE -> this.importSDFile(aFile);
             //Needs more work before it can be made available
@@ -259,7 +261,23 @@ public class Importer {
         };
         this.preprocessMoleculeSet(tmpImportedMoleculesSet, isFillOpenValencesWithImplH);
         this.fileName = aFile.getName();
-        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced);
+        // TODO: properly look at the mainview controller and take inspiration how the parallel startFragmentation
+        //       method gets called and try-catched!
+        List<MoleculeDataModel> tmpReturnList = null;
+        // tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced);
+        try {
+            // TODO: properly formulate this comment!
+            // NOTE: The estimation of the number of threads was done on a 32 GB RAM and 16 Core laptop and
+            //       was determined to be around 8 threads with an efficiency of about 80 percent.
+            tmpReturnList =  this.parseParallel(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced, settingsContainer.getNumberOfTasksForFragmentationSetting());
+        } catch (Exception anException) {
+            // TODO: What to do with the interrupted Exception (maybe look at the fragmentation service code?)
+            // NOTE:
+            GuiUtil.guiExceptionAlert(Message.get("Importer.FileImportExceptionAlert.Title"),
+                    Message.get("Importer.FileImportExceptionAlert.Header"),
+                    Message.get("Importer.FileImportOOME.Content"),
+                    anException);
+        }
         return tmpReturnList;
     }
     //
@@ -275,13 +293,13 @@ public class Importer {
      *                               will not(!) be encoded in the internal SMILES strings (if false, aromaticity will be(!) encoded)
      * @return list of MoleculeDataModel instances or empty list if the input set is empty or null
      */
-    private List<MoleculeDataModel> parse(IAtomContainerSet anAtomContainerSet, boolean isRegardStereo, boolean isKekulizationEnforced) {
+    private List<MoleculeDataModel> parse(List<IAtomContainer> anAtomContainerSet, boolean isRegardStereo, boolean isKekulizationEnforced) {
         if (anAtomContainerSet == null || anAtomContainerSet.isEmpty()) {
             return new ArrayList<>(0);
         }
-        List<MoleculeDataModel> tmpReturnList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
+        List<MoleculeDataModel> tmpReturnList = new ArrayList<>(anAtomContainerSet.size());
         int tmpExceptionCount = 0;
-        for (IAtomContainer tmpAtomContainer : anAtomContainerSet.atomContainers()) {
+        for (IAtomContainer tmpAtomContainer : anAtomContainerSet) {
             //returns null if no SMILES code could be created
             String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, isRegardStereo, !isKekulizationEnforced);
             if (tmpSmiles == null || tmpSmiles.isBlank()) {
@@ -301,8 +319,162 @@ public class Importer {
         Importer.LOGGER.log(Level.INFO, () -> String.format("Successfully imported %d molecules from file: %s; " +
                 "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
                 "See above how many molecules could not be read from the input file at all or produced exceptions while preprocessing.",
-                anAtomContainerSet.getAtomContainerCount() - finalTmpExceptionCount, this.getFileName(), finalTmpExceptionCount));
+                anAtomContainerSet.size() - finalTmpExceptionCount, this.getFileName(), finalTmpExceptionCount));
         return tmpReturnList;
+    }
+    //
+    private record ParseResult(int exceptionCount, List<MoleculeDataModel> resultList) {}
+    //
+    /**
+     * Parallelized parsing of a list of atom containers into a list of the MORTAR-internal MoleculeDataModel instances.
+     * If the parameter is null or empty, an empty list is returned. Most time-consuming step is the SMILES generation,
+     * especially if stereochemistry is regarded because then, the InChI numbering algorithm is used.
+     * Logs the size of the input data set and the number of exceptions that occurred during
+     * SMILES generation (leads to molecule not being parsed into MoleculeDataModel).
+     *
+     * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
+     * @param isKekulizationEnforced whether imported molecules should always be kekulized, which means aromaticity
+     *                               will not(!) be encoded in the internal SMILES strings (if false, aromaticity will be(!) encoded)
+     * @return list of MoleculeDataModel instances or empty list if the input set is empty or null
+     */
+    private List<MoleculeDataModel> parseParallel(List<IAtomContainer> aListOfMolecules,
+                                                  boolean isRegardStereo,
+                                                  boolean isKekulizationEnforced,
+                                                  int aNumberOfTasks)
+            throws InterruptedException {
+        if (aListOfMolecules.isEmpty() || aNumberOfTasks == 0) {
+            return new ArrayList<>(0);
+        }
+        int tmpNumberOfTasks = aNumberOfTasks;
+        List<MoleculeDataModel> tmpMoleculeResultList = new ArrayList<>(aListOfMolecules.size());
+        if (aListOfMolecules.size() < tmpNumberOfTasks) {
+            tmpNumberOfTasks = aListOfMolecules.size();
+        }
+        int tmpMoleculesPerTask = aListOfMolecules.size() / tmpNumberOfTasks;
+        int tmpMoleculeModulo = aListOfMolecules.size() % tmpNumberOfTasks;
+        int tmpFromIndex = 0; //low endpoint (inclusive) of the subList
+        int tmpToIndex = tmpMoleculesPerTask; //high endpoint (exclusive) of the subList
+        if(tmpMoleculeModulo > 0){
+            tmpToIndex++;
+            tmpMoleculeModulo--;
+        }
+        this.executorService = Executors.newFixedThreadPool(tmpNumberOfTasks, tmpThreadFactory -> {
+            // note: the Callables used as threads here catch basically everything
+            // and wrap it in an ExecutionException; setting the UncaughtExceptionHandler
+            // anyway just to be sure
+            Thread tmpThread = new Thread(tmpThreadFactory);
+            tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+            return tmpThread;
+        });
+        /* Explicit version that can be used to override methods:
+        this.executorService =  new ThreadPoolExecutor(tmpNumberOfTasks, tmpNumberOfTasks, 0L,
+                TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()) {
+            @Override
+            protected void afterExecute(Runnable r, Throwable t) {
+                super.afterExecute(r, t);
+            }
+        }; */
+        List<Callable<ParseResult>> tmpFragmentationTaskList = new LinkedList<>();
+        for (int i = 1; i <= tmpNumberOfTasks; i++) {
+            List<IAtomContainer> tmpMoleculesForTask = aListOfMolecules.subList(tmpFromIndex, tmpToIndex);
+            tmpFragmentationTaskList.add(() -> {
+                int tmpExceptionCount = 0;
+                ArrayList<MoleculeDataModel> tmpReturnList = new ArrayList<>(tmpMoleculesForTask.size());
+                for (IAtomContainer tmpAtomContainer : tmpMoleculesForTask) {
+                    String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, isRegardStereo, !isKekulizationEnforced);
+                    if (tmpSmiles == null || tmpSmiles.isBlank()) {
+                        tmpExceptionCount++;
+                        continue;
+                    }
+                    MoleculeDataModel tmpMoleculeDataModel;
+                    if (settingsContainer.getKeepAtomContainerInDataModelSetting()) {
+                        tmpMoleculeDataModel = new MoleculeDataModel(tmpAtomContainer, isRegardStereo);
+                    } else {
+                        tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
+                    }
+                    tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                    tmpReturnList.add(tmpMoleculeDataModel);
+                }
+                return new ParseResult(tmpExceptionCount, tmpReturnList);
+            });
+            tmpFromIndex = tmpToIndex;
+            tmpToIndex = tmpFromIndex + tmpMoleculesPerTask;
+            if(tmpMoleculeModulo > 0){
+                tmpToIndex++;
+                tmpMoleculeModulo--;
+            }
+            if (i == tmpNumberOfTasks - 1 ) {
+                tmpToIndex = aListOfMolecules.size();
+            }
+        }
+        List<Future<ParseResult>> tmpFuturesList;
+        long tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
+        Importer.LOGGER.log(Level.INFO, "Parsing-thread starting. Current memory consumption: {0} MB", tmpMemoryConsumption);
+        long tmpStartTime = System.currentTimeMillis();
+        int tmpExceptionsCounter = 0;
+        tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
+        if (this.executorService.isShutdown() || this.executorService.isTerminated()) {
+            Importer.LOGGER.log(Level.INFO, "Fragmentation cancelled");
+            return null;
+        }
+        List<Exception> tmpFutureExceptionsList = new ArrayList<>(tmpFuturesList.size());
+        for (Future<ParseResult> tmpFuture : tmpFuturesList) {
+            try {
+                ParseResult tmpResult = tmpFuture.get();
+                if (!Objects.isNull(tmpResult)) {
+                    tmpExceptionsCounter += tmpResult.exceptionCount;
+                    tmpMoleculeResultList.addAll(tmpResult.resultList);
+                } else {
+                    // go to catch
+                    throw new ExecutionException(new MORTARException("Result of parallel computation task was null for unknown reason."));
+                }
+            } catch (CancellationException | InterruptedException | ExecutionException aCancellationOrInterruptionException) {
+                Importer.LOGGER.log(Level.SEVERE, aCancellationOrInterruptionException.toString(), aCancellationOrInterruptionException);
+                tmpFutureExceptionsList.add(aCancellationOrInterruptionException);
+                // probably does nothing because a thread can interrupt itself any time
+                Thread.currentThread().interrupt();
+                //continue;
+            }
+        }
+        if (!tmpFutureExceptionsList.isEmpty()) {
+            int tmpOOMEIndex = -1;
+            for (int i = 0; i < tmpFutureExceptionsList.size(); i++) {
+                Exception tmpCaughtException = tmpFutureExceptionsList.get(i);
+                if (tmpCaughtException.getCause() instanceof OutOfMemoryError) {
+                    tmpOOMEIndex = i;
+                    break;
+                }
+            }
+            if (tmpOOMEIndex != -1) {
+                int finalTmpOOMEIndex = tmpOOMEIndex;
+                Platform.runLater(() -> {
+                    GuiUtil.guiExceptionAlert(Message.get("Importer.FileImportExceptionAlert.Title"),
+                            Message.get("Importer.FileImportExceptionAlert.Header"),
+                            Message.get("Importer.FileImportOOME.Content"),
+                            tmpFutureExceptionsList.get(finalTmpOOMEIndex));
+                });
+            } else {
+                Platform.runLater(() -> {
+                    GuiUtil.guiExceptionAlert(Message.get("Importer.FileImportExceptionAlert.Title"),
+                            Message.get("Importer.FileImportExceptionAlert.Header"),
+                            Message.get("Importer.FileImportOOME.Content"),
+                            tmpFutureExceptionsList.getFirst());
+                });
+            }
+        }
+        if (tmpExceptionsCounter > 0) {
+            Importer.LOGGER.log(Level.WARNING,
+                    "{0} molecules caused exceptions during import.",
+                    new Object[]{tmpExceptionsCounter});
+        }
+        this.executorService.shutdown();
+        tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
+        long tmpEndTime = System.currentTimeMillis();
+        long tmpDuration = tmpEndTime - tmpStartTime;
+        Importer.LOGGER.log(Level.INFO,
+                "Parsing of {0} molecules complete. It took {1} ms. Current memory consumption: {2} MB",
+                new Object[]{aListOfMolecules.size(), tmpDuration, tmpMemoryConsumption});
+        return tmpMoleculeResultList;
     }
     //
     /**
@@ -369,8 +541,8 @@ public class Importer {
      * @throws CDKException if the given mol file cannot be read
      * @throws IOException if the given file cannot be found or read
      */
-    private IAtomContainerSet importMolFile(File aFile) throws IOException, CDKException {
-        IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+    private List<IAtomContainer> importMolFile(File aFile) throws IOException, CDKException {
+        List<IAtomContainer> tmpAtomContainerSet = new ArrayList<>(4096);
         IChemFormat tmpFormat;
         try (BufferedInputStream tmpInputStream = new BufferedInputStream(new FileInputStream(aFile))) {
             FormatFactory tmpFactory = new FormatFactory();
@@ -402,7 +574,7 @@ public class Importer {
             }
         }
         tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-        tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
+        tmpAtomContainerSet.add(tmpAtomContainer);
         return tmpAtomContainerSet;
     }
     //
@@ -416,8 +588,8 @@ public class Importer {
      * @return the imported molecules in an IAtomContainerSet
      * @throws IOException if a file input stream cannot be opened or closed for the given file
      */
-    private IAtomContainerSet importSDFile(File aFile) throws IOException {
-        IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+    private List<IAtomContainer> importSDFile(File aFile) throws IOException {
+        List<IAtomContainer> tmpAtomContainerList = new ArrayList<>(4096);
         /*the IteratingSDFReader is not set to skip erroneous input molecules in its constructor to be able to log them*/
         try (IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile), SilentChemObjectBuilder.getInstance())) {
             int tmpCounter = 0;
@@ -445,14 +617,14 @@ public class Importer {
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
                 }
                 tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-                tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
+                tmpAtomContainerList.add(tmpAtomContainer);
                 tmpCounter++;
             }
-            int tmpFailedImportsCount = tmpCounter - tmpAtomContainerSet.getAtomContainerCount();
+            int tmpFailedImportsCount = tmpCounter - tmpAtomContainerList.size();
             if (tmpFailedImportsCount > 0) {
                 Importer.LOGGER.log(Level.WARNING, "The import from SD file failed for a total of {0} structure(s).", tmpFailedImportsCount);
             }
-            return tmpAtomContainerSet;
+            return tmpAtomContainerList;
         }
     }
     //
@@ -471,16 +643,16 @@ public class Importer {
      * @author Samuel Behr
      * @author Jonas Schaub
      */
-    private IAtomContainerSet importSMILESFile(File aFile) throws IOException {
+    private List<IAtomContainer> importSMILESFile(File aFile) throws IOException {
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(aFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
         // checks whether thread has been interrupted, logs faulty structures, and assigns names like the other methods
-        IAtomContainerSet tmpAtomContainerSet = tmpReader.readFile(aFile, tmpFormat);
+        List<IAtomContainer> tmpAtomContainerList = tmpReader.readFile(aFile, tmpFormat);
         if (tmpReader.getSkippedLinesCounter() > 0) {
             Importer.LOGGER.log(Level.WARNING, "The import from SMILES file failed for a total of {0} structures.",
                     tmpReader.getSkippedLinesCounter());
         }
-        return tmpAtomContainerSet;
+        return tmpAtomContainerList;
     }
     //
     /**
@@ -569,19 +741,19 @@ public class Importer {
      * are discarded after molecule set import and molecular information only represented by SMILES codes in
      * the molecule data models. Nevertheless, it is done here to ensure that the generated SMILES codes are correct.
      *
-     * @param aMoleculeSet the molecule set to process; may be empty but not null
+     * @param aMoleculeList the molecule set to process; may be empty but not null
      * @param isFillOpenValencesWithImplH whether open valences in the imported molecules should be filled with implicit
      *                                    hydrogen atoms
      * @throws NullPointerException if the given molecule set is null
      */
-    protected void preprocessMoleculeSet(IAtomContainerSet aMoleculeSet, boolean isFillOpenValencesWithImplH) throws NullPointerException {
-        Objects.requireNonNull(aMoleculeSet, "given molecule set is null.");
-        if (aMoleculeSet.isEmpty()) {
+    protected void preprocessMoleculeSet(List<IAtomContainer> aMoleculeList, boolean isFillOpenValencesWithImplH) throws NullPointerException {
+        Objects.requireNonNull(aMoleculeList, "given molecule set is null.");
+        if (aMoleculeList.isEmpty()) {
             return;
         }
         int tmpExceptionsCounter = 0;
         int tmpMoleculesWithRadicalsCounter = 0;
-        for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
+        for (IAtomContainer tmpMolecule : aMoleculeList) {
             try {
                 // perceive atom types and configure atoms is always done as preprocessing
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);

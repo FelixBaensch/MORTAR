@@ -30,11 +30,11 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * Test class for the DynamicSMILESFileReader class.
@@ -97,10 +97,10 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
-        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-        Assertions.assertEquals("SMILESTestFileOne5", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(3, tmpMolSet.size());
+        Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.get(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("SMILESTestFileOne5", tmpMolSet.get(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(2, tmpReader.getSkippedLinesCounter());
     }
     //
@@ -140,9 +140,9 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
-        Assertions.assertEquals(5, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("CNP0337481", tmpMolSet.getAtomContainer(4).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(5, tmpMolSet.size());
+        Assertions.assertEquals("CNP0337481", tmpMolSet.get(4).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
     //
@@ -182,10 +182,10 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
-        Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("Istanbulin A", tmpMolSet.getAtomContainer(1).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-        Assertions.assertEquals("Valdiazen", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(3, tmpMolSet.size());
+        Assertions.assertEquals("Istanbulin A", tmpMolSet.get(1).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("Valdiazen", tmpMolSet.get(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(2, tmpReader.getSkippedLinesCounter());
     }
     //
@@ -223,9 +223,9 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
-        Assertions.assertEquals(1, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("CNP0356547", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(1, tmpMolSet.size());
+        Assertions.assertEquals("CNP0356547", tmpMolSet.getFirst().getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
     //
@@ -267,11 +267,11 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         String[] tmpTestFileFiveSmiles = new String[] {"OC=1C=C(O)C=C(C1)C=2OC=3C=CC=CC3C2", "OC=1C=C(O)C(=C(C1)C(C)C(O)C)C"};
         String[] tmpTestFileFiveIDs = new String[] {"CNP0192622", "CNP0262448"};
         int i = 0;
-        for (IAtomContainer tmpAtomContainer : tmpMolSet.atomContainers()) {
+        for (IAtomContainer tmpAtomContainer : tmpMolSet) {
             Assertions.assertEquals(tmpTestFileFiveSmiles[i],ChemUtil.createUniqueSmiles(tmpAtomContainer, false));
             Assertions.assertEquals(tmpTestFileFiveIDs[i],tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             i++;
@@ -315,9 +315,9 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
-        Assertions.assertEquals(50, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("CNP0000001", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(50, tmpMolSet.size());
+        Assertions.assertEquals("CNP0000001", tmpMolSet.getFirst().getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
     //
@@ -359,10 +359,10 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
-        Assertions.assertEquals(37, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("cmnpd_id_10213", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-        Assertions.assertEquals("cmnpd_id_11687", tmpMolSet.getAtomContainer(36).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(37, tmpMolSet.size());
+        Assertions.assertEquals("cmnpd_id_10213", tmpMolSet.get(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("cmnpd_id_11687", tmpMolSet.get(36).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
     //
@@ -383,10 +383,10 @@ public class DynamicSMILESFileReaderTest {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         DynamicSMILESFileFormat tmpFormat = DynamicSMILESFileReader.detectFormat(tmpResourceFile);
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
-        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
-        Assertions.assertEquals(10, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("derivat-(1S)-6,8-dihydroxy-1-methyl-1,2-dihydrocyclopenta[c]isochromene-3,5-dione", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-        Assertions.assertEquals("derivat-6-chloro-3-(3-methylisoxazol-5-yl)-4-phenylquinolin-2(1H)-one", tmpMolSet.getAtomContainer(9).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        List<IAtomContainer> tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
+        Assertions.assertEquals(10, tmpMolSet.size());
+        Assertions.assertEquals("derivat-(1S)-6,8-dihydroxy-1-methyl-1,2-dihydrocyclopenta[c]isochromene-3,5-dione", tmpMolSet.get(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertEquals("derivat-6-chloro-3-(3-methylisoxazol-5-yl)-4-phenylquinolin-2(1H)-one", tmpMolSet.get(9).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
     }
 }
