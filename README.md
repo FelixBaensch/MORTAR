@@ -203,7 +203,7 @@ will take care of it automatically.
 ## Contribution
 If you want to contribute to MORTAR, please read the [CONTRIBUTING.md](./CONTRIBUTING.md) file. The most important thing
 is that you should contribute on a development branch branching off the ``production`` branch, not the ``main`` branch.
-The ``main`` branch is reserved for stable releases only. When you have finished your development, please create a pull 
+The ``main`` branch is reserved for stable releases only. When you have finished your development, please create a pull
 request to the ``production`` branch.
 If you are not sure about the contribution process, please contact us via email, GitHub issues, or GitHub discussions.
 
