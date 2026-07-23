@@ -101,11 +101,11 @@ MORTAR is a Gradle/Java/JavaFX project. To set up a local development environmen
 - Follow the existing code style and formatting already present in the source files.
   - This includes, i.a., a consistent use of the ``this`` statement for class variables and methods.
   - Static variables and methods should be indicated by explicitly giving the class name in front of them.
-  - Use explicit imports, no wildcard imports
+  - Use explicit imports, no wildcard imports.
 - Use meaningful, descriptive names for variables, methods, and classes.
-  - Method parameter names should be prefixed with "a"-/"an"-
-  - Temporary method variable names should be prefixed with "tmp"-
-  - Apart from that, follow the general Java naming conventions (e.g., public static constants should have all-caps names)
+  - Method parameter names should be prefixed with "a"-/"an"-.
+  - Temporary method variable names should be prefixed with "tmp"-.
+  - Apart from that, follow the general Java naming conventions (e.g., public static constants should have all-caps names).
 - Keep methods short and focused on a single responsibility.
 - Document public APIs with descriptive and informative Javadoc comments.
 - All new class files should have the same license header (see [License-header/License-header.txt](License-header/License-header.txt)).
