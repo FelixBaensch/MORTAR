@@ -67,6 +67,10 @@ public class HistogramView extends AnchorPane {
      */
     private final Button applyButton;
     /**
+     * Button to export the histogram data as CSV.
+     */
+    private final Button exportCSVButton;
+    /**
      * Text field for creating a new histogram with the given number of fragments.
      */
     private final TextField displayedFragmentsNumberTextField;
@@ -189,6 +193,8 @@ public class HistogramView extends AnchorPane {
         this.displayedFragmentsNumberTextField.setAlignment(Pos.CENTER_RIGHT);
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.refreshButton.text"));
         this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.refreshButton.toolTip")));
+        this.exportCSVButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.exportCSVButton.text"));
+        this.exportCSVButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.exportCSVButton.toolTip")));
         this.maximumSMILESLengthTextField = new TextField();
         this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.maximumSMILESLengthTextField.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.smilesField.toolTip")));
@@ -232,6 +238,7 @@ public class HistogramView extends AnchorPane {
         tmpLeftSideGrid.add(this.maximumSMILESLengthTextField,3,0);
         tmpLeftSideGrid.add(this.displayedFragmentsNumberTextField,3,1);
         tmpLeftSideGrid.add(this.applyButton,4,1);
+        tmpLeftSideGrid.add(this.exportCSVButton,5,1);
         tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
         tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxLeftSideControls.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -293,6 +300,14 @@ public class HistogramView extends AnchorPane {
      */
     public Button getApplyButton() {
         return this.applyButton;
+    }
+    //
+    /**
+     * Returns a button for generating a new histogram with updated fragment number, bar width, frequency, and SMILES length.
+     *
+     * @return button for applying updated settings to histogram
+     */
+    public Button getExportCSVButton() { return this.exportCSVButton;
     }
     //
     /**
