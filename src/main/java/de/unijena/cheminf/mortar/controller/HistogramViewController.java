@@ -1088,20 +1088,13 @@ public class HistogramViewController implements IViewToolController {
     /**
      * Exports the currently displayed histogram data to a CSV file selected by the user.
      */
-    /**
-     * Exports the currently displayed histogram data to a CSV file selected by the user.
-     */
     private void exportHistogramCsv() {
-        if (this.displayedHistogramSmiles == null
-                || this.displayedHistogramFrequencies == null
-                || this.displayedHistogramSmiles.isEmpty()) {
+        if (this.displayedHistogramSmiles == null || this.displayedHistogramFrequencies == null || this.displayedHistogramSmiles.isEmpty()) {
             return;
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
         File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(
-                this.mainStage,
-                ExportTypes.HISTOGRAM_CSV_FILE,
-                "");
+                this.mainStage, ExportTypes.HISTOGRAM_CSV_FILE, "");
         if (tmpExportFile == null) {
             return;
         }
@@ -1109,11 +1102,9 @@ public class HistogramViewController implements IViewToolController {
             tmpExporter.exportHistogramCsvFile(
                     tmpExportFile,
                     this.displayedHistogramSmiles,
-                    this.displayedHistogramFrequencies,
-                    ',');
+                    this.displayedHistogramFrequencies, ',');
         } catch (FileNotFoundException anException) {
-            Logger.getLogger(HistogramViewController.class.getName())
-                    .log(Level.SEVERE, anException.toString(), anException);
+            Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
         }
     }
     //
