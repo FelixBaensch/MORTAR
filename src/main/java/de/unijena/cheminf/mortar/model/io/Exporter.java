@@ -626,7 +626,8 @@ public class Exporter {
         }
         List<String> tmpFailedExportFragments = new LinkedList<>();
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
-            String tmpHistogramCsvHeader = "SMILES" + aSeparator + "Frequency";
+            String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.frequency");
             tmpWriter.write(tmpHistogramCsvHeader);
             for (int i = 0; i < aSmilesList.size(); i++) {
                 if (Thread.currentThread().isInterrupted()) {

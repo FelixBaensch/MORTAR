@@ -787,7 +787,7 @@ public class HistogramViewController implements IViewToolController {
                 tmpFrequencyList.size());
         List<String> tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber,
                 tmpFullSmilesLength.size());
-        this.displayedHistogramSmiles = new ArrayList<>(tmpSublistSmiles);
+        this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
         this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
         XYChart.Series<Number, String> tmpSeries = new XYChart.Series<>();
         if (tmpSublistSmiles.size() != tmpSublistFrequency.size() || tmpSublistSmiles.size() != tmpSmilesToDepict.size()) {
@@ -1102,7 +1102,8 @@ public class HistogramViewController implements IViewToolController {
             tmpExporter.exportHistogramCsvFile(
                     tmpExportFile,
                     this.displayedHistogramSmiles,
-                    this.displayedHistogramFrequencies, ',');
+                    this.displayedHistogramFrequencies,
+                    this.settingsContainer.getCsvExportSeparatorSettingCharacter());
         } catch (FileNotFoundException anException) {
             Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
         }

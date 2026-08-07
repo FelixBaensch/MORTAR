@@ -303,12 +303,11 @@ public class HistogramView extends AnchorPane {
     }
     //
     /**
-     * Returns a button for generating a new histogram with updated fragment number, bar width, frequency, and SMILES length.
+     * Returns the button for exporting the currently displayed histogram data as CSV.
      *
-     * @return button for applying updated settings to histogram
+     * @return export CSV button
      */
-    public Button getExportCSVButton() { return this.exportCSVButton;
-    }
+    public Button getExportCSVButton() { return this.exportCSVButton; }
     //
     /**
      * Returns content of displayed fragments number text field, i.e. string representation of the number of fragments to
