@@ -395,15 +395,14 @@ public class Exporter {
      * @param aSmilesList the displayed SMILES list
      * @param aFrequencyList the displayed frequency list
      * @param aSeparator the separator for the CSV file
-     * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if given file cannot be found
      */
-    public List<String> exportHistogramCsvFile(File aFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator)
+    public void exportHistogramCsvFile(File aFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator)
             throws FileNotFoundException{
         if (aFile == null) {
-            return null;
+            return;
         }
-        return this.createHistogramCsvFile(aFile, aSmilesList, aFrequencyList, aSeparator);
+        this.createHistogramCsvFile(aFile, aSmilesList, aFrequencyList, aSeparator);
     }
     //
     /**
@@ -619,34 +618,21 @@ public class Exporter {
      * @return List <String> SMILES codes that caused an error during export
      * @throws FileNotFoundException if given file cannot be found
      */
-    private List<String> createHistogramCsvFile(File aCsvFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator)
+    private void createHistogramCsvFile(File aCsvFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator)
             throws FileNotFoundException {
         if (aCsvFile == null || aSmilesList == null || aFrequencyList == null) {
-            return null;
+            return;
         }
-        List<String> tmpFailedExportFragments = new LinkedList<>();
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
             String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.frequency");
             tmpWriter.write(tmpHistogramCsvHeader);
             for (int i = 0; i < aSmilesList.size(); i++) {
                 if (Thread.currentThread().isInterrupted()) {
-                    return null;
+                    return;
                 }
-                try {
-                    tmpWriter.printf("%n%s%s%d",
-                            aSmilesList.get(i),
-                            aSeparator,
-                            aFrequencyList.get(i));
-                } catch (Exception anException) {
-                    Logger.getLogger(MoleculeDataModel.class.getName())
-                            .log(Level.SEVERE, anException.toString(), anException);
-
-                    tmpFailedExportFragments.add(aSmilesList.get(i));
-                }
+                tmpWriter.printf("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i));
             }
-
-            return tmpFailedExportFragments;
         }
     }
     //

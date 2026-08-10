@@ -789,6 +789,7 @@ public class HistogramViewController implements IViewToolController {
                 tmpFullSmilesLength.size());
         this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
         this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
+        this.histogramView.getExportCSVButton().setDisable(false);
         XYChart.Series<Number, String> tmpSeries = new XYChart.Series<>();
         if (tmpSublistSmiles.size() != tmpSublistFrequency.size() || tmpSublistSmiles.size() != tmpSmilesToDepict.size()) {
             throw new IllegalArgumentException("SMILES code and frequency sublists for display are of unequal size.");
@@ -1104,8 +1105,14 @@ public class HistogramViewController implements IViewToolController {
                     this.displayedHistogramSmiles,
                     this.displayedHistogramFrequencies,
                     this.settingsContainer.getCsvExportSeparatorSettingCharacter());
+            GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Exporter.Histogram.ExportSuccessful.title"),
+                    Message.get("Exporter.Histogram.ExportSuccessful.header"),
+                    Message.get("Exporter.Histogram.ExportSuccessful.content"));
         } catch (FileNotFoundException anException) {
             Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
+                    Message.get("Exporter.Histogram.ExportFailed.header"),
+                    Message.get("Exporter.Histogram.ExportFailed.content"));
         }
     }
     //
@@ -1126,6 +1133,8 @@ public class HistogramViewController implements IViewToolController {
         this.numberAxis = null;
         this.histogramChart = null;
         this.atomContainerForDisplayCache = null;
+        this.displayedHistogramSmiles = null;
+        this.displayedHistogramFrequencies = null;
     }
     //
     /**

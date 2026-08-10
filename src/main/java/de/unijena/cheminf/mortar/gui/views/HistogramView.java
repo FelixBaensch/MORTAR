@@ -195,6 +195,7 @@ public class HistogramView extends AnchorPane {
         this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.refreshButton.toolTip")));
         this.exportCSVButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.exportCSVButton.text"));
         this.exportCSVButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.exportCSVButton.toolTip")));
+        this.exportCSVButton.setDisable(true);
         this.maximumSMILESLengthTextField = new TextField();
         this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.maximumSMILESLengthTextField.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.smilesField.toolTip")));
@@ -238,7 +239,6 @@ public class HistogramView extends AnchorPane {
         tmpLeftSideGrid.add(this.maximumSMILESLengthTextField,3,0);
         tmpLeftSideGrid.add(this.displayedFragmentsNumberTextField,3,1);
         tmpLeftSideGrid.add(this.applyButton,4,1);
-        tmpLeftSideGrid.add(this.exportCSVButton,5,1);
         tmpHBoxLeftSideControls.setAlignment(Pos.CENTER_LEFT);
         tmpHBoxLeftSideControls.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpHBoxLeftSideControls.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
@@ -270,6 +270,7 @@ public class HistogramView extends AnchorPane {
         tmpRightSideGrid.add(this.barStylingCheckBox,0,1);
         tmpRightSideGrid.add(this.displayGridLinesCheckBox,1,0);
         tmpRightSideGrid.add(this.displaySMILESonYaxisCheckBox,1,1);
+        tmpRightSideGrid.add(this.exportCSVButton,2,0);
         tmpRightSideGrid.add(this.closeButton,2,1);
         tmpHBoxRightSideControls.getChildren().add(tmpRightSideGrid);
         tmpHBoxRightSideControls.setAlignment(Pos.CENTER_RIGHT);

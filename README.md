@@ -286,6 +286,7 @@ fragmentation (Baensch et al. 2023)</a>).
 * Zeynep Dagtekin
 * Tom Weiss
 * Martin Urban
+* Sareen Mohammad
 
 **Logo:**
 * Kohulan Rajan
