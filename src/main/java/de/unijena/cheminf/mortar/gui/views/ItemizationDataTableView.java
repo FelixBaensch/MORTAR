@@ -165,6 +165,44 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
                         + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
         this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
+        //-copyImageMenuItem
+        MenuItem tmpCopyImageMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        tmpCopyImageMenuItem.setOnAction(anActionEvent -> {
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+            if (tmpSelectedMolecule != null) {
+                GuiUtil.copyMoleculeStructureImageToClipboard(tmpSelectedMolecule);
+            }
+        });
+        this.contextMenu.getItems().add(tmpCopyImageMenuItem);
+
+        //-copySmilesMenuItem
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        tmpCopySmilesMenuItem.setOnAction(anActionEvent -> {
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+            if (tmpSelectedMolecule != null) {
+                GuiUtil.copyMoleculeSmilesToClipboard(tmpSelectedMolecule);
+            }
+        });
+        this.contextMenu.getItems().add(tmpCopySmilesMenuItem);
+
+        //-copyNameMenuItem
+        MenuItem tmpCopyNameMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        tmpCopyNameMenuItem.setOnAction(anActionEvent -> {
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+            if (tmpSelectedMolecule != null) {
+                GuiUtil.copyMoleculeNameToClipboard(tmpSelectedMolecule);
+            }
+        });
+        this.contextMenu.getItems().add(tmpCopyNameMenuItem);
         //-separatorMenuItem
         this.contextMenu.getItems().add(new SeparatorMenuItem());
         //-overviewViewMenuItem

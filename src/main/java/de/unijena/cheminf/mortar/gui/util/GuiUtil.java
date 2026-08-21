@@ -63,6 +63,9 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
+
+
+
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -537,6 +540,65 @@ public class GuiUtil {
                 Clipboard.getSystemClipboard().setContent(tmpClipboardContent);
             }
         }
+    }
+    /**
+     * Copies the given molecule structure image to the system clipboard.
+     *
+     * @param aMoleculeDataModel molecule whose structure should be copied
+     */
+    public static void copyMoleculeStructureImageToClipboard(MoleculeDataModel aMoleculeDataModel) {
+        if (aMoleculeDataModel == null) {
+            return;
+        }
+
+        try {
+            Image tmpStructureImage = DepictionUtil.depictImage(
+                    aMoleculeDataModel.getAtomContainer(),
+                    1.0,
+                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
+                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
+                    true,
+                    true);
+            ClipboardContent tmpContent = new ClipboardContent();
+            tmpContent.putImage(tmpStructureImage);
+            Clipboard.getSystemClipboard().setContent(tmpContent);
+        } catch (CDKException aCDKException) {
+            GuiUtil.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+            GuiUtil.guiExceptionAlert(
+                    Message.get("Error.ExceptionAlert.Title"),
+                    Message.get("Error.ExceptionAlert.Header"),
+                    aCDKException.toString(),
+                    aCDKException
+            );
+        }
+    }
+
+    /**
+     * Copies the unique SMILES of the given molecule to the system clipboard.
+     *
+     * @param aMoleculeDataModel molecule whose SMILES should be copied
+     */
+    public static void copyMoleculeSmilesToClipboard(MoleculeDataModel aMoleculeDataModel) {
+        if (aMoleculeDataModel == null) {
+            return;
+        }
+        ClipboardContent tmpContent = new ClipboardContent();
+        tmpContent.putString(aMoleculeDataModel.getUniqueSmiles());
+        Clipboard.getSystemClipboard().setContent(tmpContent);
+    }
+
+    /**
+     * Copies the name of the given molecule to the system clipboard.
+     *
+     * @param aMoleculeDataModel molecule whose name should be copied
+     */
+    public static void copyMoleculeNameToClipboard(MoleculeDataModel aMoleculeDataModel) {
+        if (aMoleculeDataModel == null) {
+            return;
+        }
+        ClipboardContent tmpContent = new ClipboardContent();
+        tmpContent.putString(aMoleculeDataModel.getName());
+        Clipboard.getSystemClipboard().setContent(tmpContent);
     }
     //
     /**

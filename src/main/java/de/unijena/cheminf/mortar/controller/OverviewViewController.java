@@ -61,8 +61,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -1269,56 +1267,25 @@ public class OverviewViewController implements IViewToolController {
         //copyImageMenuItem listener
         tmpCopyImageMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                try {
-                    //note: making the background transparent leads to problems on Windows, where the background then appears black
-                    Image tmpStructureImage = DepictionUtil.depictImage(
-                            this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getAtomContainer(),
-                            1.0,
-                            GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
-                            GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
-                            true,
-                            true);
-                    ClipboardContent tmpContent = new ClipboardContent();
-                    tmpContent.putImage(tmpStructureImage);
-                    Clipboard.getSystemClipboard().setContent(tmpContent);
-                } catch (CDKException aCDKException) {
-                    //should not happen since an initial depiction is needed to make the context menu accessible to the user
-                    OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-                    GuiUtil.guiExceptionAlert(
-                            Message.get("Error.ExceptionAlert.Title"),
-                            Message.get("Error.ExceptionAlert.Header"),
-                            aCDKException.toString(),
-                            aCDKException
-                    );
-                }
+                GuiUtil.copyMoleculeStructureImageToClipboard(
+                        this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
+                );
             }
         });
         //copySmilesMenuItem listener
         tmpCopySmilesMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                String tmpSmilesString;
-                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
-                    tmpSmilesString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getUniqueSmiles();
-                } else {
-                    tmpSmilesString = "";
-                }
-                ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putString(tmpSmilesString);
-                Clipboard.getSystemClipboard().setContent(tmpContent);
+                GuiUtil.copyMoleculeSmilesToClipboard(
+                        this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
+                );
             }
         });
         //copyNameMenuItem listener
         tmpCopyNameMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                String tmpNameString;
-                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
-                    tmpNameString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getName();
-                } else {
-                    tmpNameString = "";
-                }
-                ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putString(tmpNameString);
-                Clipboard.getSystemClipboard().setContent(tmpContent);
+                GuiUtil.copyMoleculeNameToClipboard(
+                        this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
+                );
             }
         });
         //add view-independent MenuItems

@@ -49,6 +49,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Stage;
+
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -303,6 +305,55 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
                         + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
         this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
+        //-copyImageMenuItem
+        MenuItem tmpCopyImageMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        tmpCopyImageMenuItem.setOnAction(anActionEvent -> {
+            FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+            if (tmpSelectedFragment != null) {
+                GuiUtil.copyMoleculeStructureImageToClipboard(tmpSelectedFragment);
+            }
+        });
+        this.contextMenu.getItems().add(tmpCopyImageMenuItem);
+        //-copySmilesMenuItem
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        tmpCopySmilesMenuItem.setOnAction(anActionEvent -> {
+            FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+            if (tmpSelectedFragment != null) {
+                GuiUtil.copyMoleculeSmilesToClipboard(tmpSelectedFragment);
+            }
+        });
+        this.contextMenu.getItems().add(tmpCopySmilesMenuItem);
+        //-copyNameMenuItem
+        MenuItem tmpCopyNameMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
+        tmpCopyNameMenuItem.setOnAction(anActionEvent -> {
+            FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+            if (tmpSelectedFragment != null) {
+                GuiUtil.copyMoleculeNameToClipboard(tmpSelectedFragment);
+            }
+        });
+        this.contextMenu.getItems().add(tmpCopyNameMenuItem);
+        //-enlargedStructureViewMenuItem
+        MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
+        tmpEnlargedStructureViewMenuItem.setOnAction(anActionEvent -> {
+            FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+
+            if (tmpSelectedFragment != null && this.getScene() != null
+                    && this.getScene().getWindow() instanceof Stage tmpOwnerStage) {
+                GuiUtil.showEnlargedStructureView(tmpSelectedFragment, tmpOwnerStage);
+            }
+        });
+        this.contextMenu.getItems().add(tmpEnlargedStructureViewMenuItem);
         //-separatorMenuItem
         this.contextMenu.getItems().add(new SeparatorMenuItem());
         //-overviewViewMenuItem
