@@ -139,6 +139,8 @@ public class SettingsContainer {
      * threads on this machine in the constructor.
      */
     private final int nrOfTasksForFragmentationSettingDefault;
+
+    private final int nrOfTasksForImportSettingDefault;
     //</editor-fold>
     //
     //<editor-fold desc="private variables">
@@ -146,6 +148,8 @@ public class SettingsContainer {
     private SimpleIntegerProperty rowsPerPageSetting;
 
     private SimpleIntegerProperty numberOfTasksForFragmentationSetting;
+
+    private SimpleIntegerProperty numberOfTasksForImportSetting;
 
     private SimpleStringProperty recentDirectoryPathSetting;
 
@@ -170,7 +174,7 @@ public class SettingsContainer {
      * for internal use, not intended to be changed by the user via this dialogue.
      */
     private List<Property<?>> settings;
-
+    //
     /**
      * Map to store pairs of {@literal <setting name, tooltip text>}.
      */
@@ -189,11 +193,18 @@ public class SettingsContainer {
     public SettingsContainer() {
         if (SettingsContainer.MAX_AVAILABLE_THREADS == 1) {
             this.nrOfTasksForFragmentationSettingDefault = 1;
+            this.nrOfTasksForImportSettingDefault = 1;
         } else if (SettingsContainer.MAX_AVAILABLE_THREADS < 4) {
             this.nrOfTasksForFragmentationSettingDefault = 2;
+            this.nrOfTasksForImportSettingDefault = 2;
         } else {
             //max available threads equal or higher than 4
             this.nrOfTasksForFragmentationSettingDefault = 4;
+            if (SettingsContainer.MAX_AVAILABLE_THREADS >= 8) {
+                this.nrOfTasksForImportSettingDefault = 8;
+            } else {
+                this.nrOfTasksForImportSettingDefault = 4;
+            }
         }
         this.initialiseSettings();
         try {
@@ -267,6 +278,15 @@ public class SettingsContainer {
     }
 
     /**
+     * Returns the current value of the number of tasks for import setting.
+     *
+     * @return number of tasks for import setting value
+     */
+    public int getNumberOfTasksForImportSetting() {
+        return this.numberOfTasksForImportSetting.get();
+    }
+
+    /**
      * Returns the property wrapping the number of tasks for fragmentation setting.
      *
      * @return number of tasks for fragmentation setting property
@@ -283,6 +303,16 @@ public class SettingsContainer {
      */
     public int getNumberOfTasksForFragmentationSettingDefault() {
         return this.nrOfTasksForFragmentationSettingDefault;
+    }
+
+    /**
+     * Returns the default value for the number of tasks for importing setting that is determined in the class
+     * constructor based on the number of maximum available threads on the specific machine.
+     *
+     * @return default value of number of tasks for importing setting
+     */
+    public int getNumberOfTasksForImportSettingDefault() {
+        return this.nrOfTasksForImportSettingDefault;
     }
 
     /**
@@ -471,12 +501,29 @@ public class SettingsContainer {
      * available processors
      */
     public void setNumberOfTasksForFragmentationSetting(int anInteger) throws IllegalArgumentException {
-        if (this.isLegalNumberOfTasksForFragmentationSetting(anInteger)) {
+        if (this.isLegalNumberOfTasks(anInteger)) {
             //synchronises the preference also
             this.numberOfTasksForFragmentationSetting.set(anInteger);
         } else {
             throw new IllegalArgumentException("The given number of tasks for fragmentation is 0 or negative or higher "
                    + "than the number of available processors.");
+        }
+    }
+
+    /**
+     * Sets the setting for how many parallel threads should be used for the import.
+     *
+     * @param anInteger the number of threads to use
+     * @throws IllegalArgumentException if the given parameter is 0 or negative or is higher than the number of
+     * available processors
+     */
+    public void setNumberOfTasksForImportSetting(int anInteger) throws IllegalArgumentException {
+        if (this.isLegalNumberOfTasks(anInteger)) {
+            //synchronises the preference also
+            this.numberOfTasksForImportSetting.set(anInteger);
+        } else {
+            throw new IllegalArgumentException("The given number of tasks for fragmentation is 0 or negative or higher "
+                    + "than the number of available processors.");
         }
     }
 
@@ -582,6 +629,7 @@ public class SettingsContainer {
     public void restoreDefaultSettings() {
         this.rowsPerPageSetting.set(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT);
         this.numberOfTasksForFragmentationSetting.set(this.nrOfTasksForFragmentationSettingDefault);
+        this.numberOfTasksForImportSetting.set(this.nrOfTasksForImportSettingDefault);
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.importAromaticsAsKekuleStructuresSetting.set(SettingsContainer.IMPORT_AROMATICS_AS_KEKULE_STRUCTURES_DEFAULT);
@@ -677,7 +725,7 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        int tmpNumberOfSettings = 7;
+        int tmpNumberOfSettings = 8;
         int tmpInitialCapacityForSettingNameMaps = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -710,7 +758,7 @@ public class SettingsContainer {
                 this.nrOfTasksForFragmentationSettingDefault) {
             @Override
             public void set(int newValue) throws IllegalArgumentException {
-                if (SettingsContainer.this.isLegalNumberOfTasksForFragmentationSetting(newValue)) {
+                if (SettingsContainer.this.isLegalNumberOfTasks(newValue)) {
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException("An illegal number of tasks for fragmentation was given: " + newValue);
@@ -728,6 +776,29 @@ public class SettingsContainer {
                 String.format(Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.tooltip"), SettingsContainer.MAX_AVAILABLE_THREADS));
         this.settingNameDisplayNameMap.put(this.numberOfTasksForFragmentationSetting.getName(),
                 Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.displayName"));
+        this.numberOfTasksForImportSetting = new SimpleIntegerProperty(this,
+                "Nr of tasks for the import setting",
+                this.nrOfTasksForImportSettingDefault) {
+            @Override
+            public void set(int newValue) throws IllegalArgumentException {
+                if (SettingsContainer.this.isLegalNumberOfTasks(newValue)) {
+                    super.set(newValue);
+                } else {
+                    IllegalArgumentException tmpException = new IllegalArgumentException("An illegal number of tasks for the import was given: " + newValue);
+                    SettingsContainer.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
+                    GuiUtil.guiExceptionAlert(Message.get("SettingsContainer.Error.invalidSettingArgument.Title"),
+                            Message.get("SettingsContainer.Error.invalidSettingArgument.Header"),
+                            tmpException.toString(),
+                            tmpException);
+                    //re-throws the exception to properly reset the binding
+                    throw tmpException;
+                }
+            }
+        };
+        this.settingNameTooltipTextMap.put(this.numberOfTasksForImportSetting.getName(),
+                String.format(Message.get("SettingsContainer.numberOfTasksForImportSetting.tooltip"), SettingsContainer.MAX_AVAILABLE_THREADS));
+        this.settingNameDisplayNameMap.put(this.numberOfTasksForImportSetting.getName(),
+                Message.get("SettingsContainer.numberOfTasksForImportSetting.displayName"));
         this.recentDirectoryPathSetting = new SimpleStringProperty(this,
                 "Recent directory path setting",
                 SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT) {
@@ -822,6 +893,7 @@ public class SettingsContainer {
         this.settings = new ArrayList<>(tmpNumberOfSettings);
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
+        this.settings.add(this.numberOfTasksForImportSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
         this.settings.add(this.importAromaticsAsKekuleStructuresSetting);
         //DEPRECATED
@@ -862,13 +934,13 @@ public class SettingsContainer {
     }
 
     /**
-     * Tests whether an integer value would be an allowed argument for the number of tasks for fragmentation setting. For
+     * Tests whether an integer value would be an allowed argument for the number of tasks. For
      * this, it must be positive, non-zero, and not higher than the number of available processors.
      *
      * @param anInteger the integer to test
      * @return true if the given parameter is a legal value for the setting
      */
-    private boolean isLegalNumberOfTasksForFragmentationSetting(int anInteger) {
+    private boolean isLegalNumberOfTasks(int anInteger) {
         return !(anInteger <= 0 || anInteger > SettingsContainer.MAX_AVAILABLE_THREADS);
     }
 

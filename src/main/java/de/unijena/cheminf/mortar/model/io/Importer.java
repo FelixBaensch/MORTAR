@@ -266,13 +266,15 @@ public class Importer {
         List<MoleculeDataModel> tmpReturnList = null;
         // tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced);
         try {
-            // TODO: properly formulate this comment!
             // NOTE: The estimation of the number of threads was done on a 32 GB RAM and 16 Core laptop and
-            //       was determined to be around 8 threads with an efficiency of about 80 percent.
-            tmpReturnList =  this.parseParallel(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced, settingsContainer.getNumberOfTasksForFragmentationSetting());
+            //       was estimated via snapshot to be around 8 threads with an efficiency of about 80 percent.
+            tmpReturnList =  this.parseParallel(
+                    tmpImportedMoleculesSet,
+                    isRegardStereo,
+                    isKekulizationEnforced,
+                    settingsContainer.getNumberOfTasksForImportSetting()
+            );
         } catch (Exception anException) {
-            // TODO: What to do with the interrupted Exception (maybe look at the fragmentation service code?)
-            // NOTE:
             GuiUtil.guiExceptionAlert(Message.get("Importer.FileImportExceptionAlert.Title"),
                     Message.get("Importer.FileImportExceptionAlert.Header"),
                     Message.get("Importer.FileImportOOME.Content"),
@@ -332,6 +334,7 @@ public class Importer {
      * Logs the size of the input data set and the number of exceptions that occurred during
      * SMILES generation (leads to molecule not being parsed into MoleculeDataModel).
      *
+     * @param aListOfMolecules the list of molecules to be parsed into a list of {@link MoleculeDataModel}s.
      * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
      * @param isKekulizationEnforced whether imported molecules should always be kekulized, which means aromaticity
      *                               will not(!) be encoded in the internal SMILES strings (if false, aromaticity will be(!) encoded)
