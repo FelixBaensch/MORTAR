@@ -211,7 +211,7 @@ will take care of it automatically.
 * JavaFX version 21.0.1
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
-* Chemistry Development Kit (CDK) version 2.13-SNAPSHOT
+* Chemistry Development Kit (CDK) version 2.13
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
 * MolWURCS version 0.12.1
