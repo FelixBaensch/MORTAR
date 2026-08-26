@@ -66,9 +66,17 @@ Feature requests and enhancement suggestions are welcome. Please open a [GitHub 
 MORTAR is a Gradle/Java/JavaFX project. To set up a local development environment:
 
 1. **Prerequisites:**
-   - Java Development Kit (JDK) version 21.0.1 or higher (e.g., [Adoptium OpenJDK / Temurin](https://adoptium.net))
-   - Gradle version 8.14.3 ([Gradle Build Tool](https://gradle.org)); a Gradle wrapper (`./gradlew`) is also included in this repository
-   - An IDE with Gradle support (e.g., IntelliJ IDEA)
+   - **Java Development Kit (JDK)**: MORTAR is currently built with Java version 21 as the set compiler source syntax level. 
+Higher versions of Java may work for building and running the project, but are not guaranteed to be compatible. The most 
+important factors for compatibility are the employed Gradle version (currently 8.14.3) and Kotlin-DSL Gradle plugin version 
+(currently 5.2.0, running Kotlin version 2.0.21 internally). Check the 
+[Gradle compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) and the 
+[Kotlin release history](https://kotlinlang.org/docs/releases.html?#release-history) for details on which Java 
+versions are supported by which Gradle and Kotlin version.
+Based on this, we currently recommend using JDK versions 21 to 22 for development. Make sure you have one of 
+them installed, e.g. sourced from [Adoptium OpenJDK / Temurin](https://adoptium.net). It needs to be accessible on your `PATH` (or via `JAVA_HOME`).
+   - **Gradle** version 8.14.3 ([Gradle Build Tool](https://gradle.org)); a Gradle wrapper (`./gradlew`) is also included in this repository
+   - An **IDE** with Gradle support (e.g., IntelliJ IDEA)
 
 2. **Clone the repository and switch to the `production` branch:**
    ```shell
