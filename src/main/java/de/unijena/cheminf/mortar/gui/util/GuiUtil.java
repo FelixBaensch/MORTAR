@@ -36,12 +36,15 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.TableColumn;
@@ -59,12 +62,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-
-
-
 
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -698,4 +700,71 @@ public class GuiUtil {
         return tmpTooltip;
     }
     //</editor-fold>
+    /**
+     * Shows an enlarged view of the given molecule structure.
+     *
+     * @param aMoleculeDataModel molecule whose structure should be displayed
+     * @param anOwnerStage owner stage of the enlarged view
+     */
+    public static void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel, Stage anOwnerStage) {
+        Objects.requireNonNull(aMoleculeDataModel);
+        Objects.requireNonNull(anOwnerStage);
+        Stage tmpEnlargedStructureViewStage = new Stage();
+        StackPane tmpEnlargedStructureViewStackPane = new StackPane();
+        tmpEnlargedStructureViewStackPane.setStyle(
+                "-fx-background-color: WHITE;"
+        );
+        Scene tmpScene = new Scene(
+                tmpEnlargedStructureViewStackPane,
+                500.0,
+                400.0
+        );
+        tmpEnlargedStructureViewStage.setScene(tmpScene);
+        tmpEnlargedStructureViewStage.setMinWidth(250.0);
+        tmpEnlargedStructureViewStage.setMinHeight(200.0);
+        tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
+        tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
+        ImageView tmpStructureImage;
+        try {
+            tmpStructureImage = new ImageView(
+                    DepictionUtil.depictImage(
+                            aMoleculeDataModel.getAtomContainer(),
+                            1.0,
+                            500.0 * 0.9,
+                            400.0 * 0.9,
+                            true,
+                            true
+                    )
+            );
+        } catch (CDKException aCDKException) {
+            LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+            return;
+        }
+        tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);
+        ContextMenu tmpContextMenu = new ContextMenu();
+        MenuItem tmpCopyImageMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        tmpCopyImageMenuItem.setOnAction(anActionEvent ->
+                copyMoleculeStructureImageToClipboard(aMoleculeDataModel));
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        tmpCopySmilesMenuItem.setOnAction(anActionEvent ->
+                copyMoleculeSmilesToClipboard(aMoleculeDataModel));
+        MenuItem tmpCopyNameMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        tmpCopyNameMenuItem.setOnAction(anActionEvent ->
+                copyMoleculeNameToClipboard(aMoleculeDataModel));
+        tmpContextMenu.getItems().addAll(
+                tmpCopyImageMenuItem,
+                tmpCopySmilesMenuItem,
+                tmpCopyNameMenuItem
+        );
+        tmpStructureImage.setOnContextMenuRequested(anEvent ->
+                tmpContextMenu.show(
+                        tmpStructureImage,
+                        anEvent.getScreenX(),
+                        anEvent.getScreenY()
+                ));
+        tmpEnlargedStructureViewStage.show();
+    }
 }

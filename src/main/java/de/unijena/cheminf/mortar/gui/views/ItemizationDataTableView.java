@@ -47,6 +47,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
@@ -203,6 +204,19 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
             }
         });
         this.contextMenu.getItems().add(tmpCopyNameMenuItem);
+        //-enlargedStructureViewMenuItem
+        MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(
+                Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
+        tmpEnlargedStructureViewMenuItem.setOnAction(anActionEvent -> {
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
+                    .getSelectedItem();
+
+            if (tmpSelectedMolecule != null && this.getScene() != null
+                    && this.getScene().getWindow() instanceof Stage tmpOwnerStage) {
+                GuiUtil.showEnlargedStructureView(tmpSelectedMolecule, tmpOwnerStage);
+            }
+        });
+        this.contextMenu.getItems().add(tmpEnlargedStructureViewMenuItem);
         //-separatorMenuItem
         this.contextMenu.getItems().add(new SeparatorMenuItem());
         //-overviewViewMenuItem

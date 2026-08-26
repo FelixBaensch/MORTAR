@@ -51,7 +51,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
-
 import java.text.DecimalFormat;
 import java.util.List;
 
