@@ -42,6 +42,7 @@ If you find a bug, please open a [GitHub issue](https://github.com/FelixBaensch/
 - Your operating system and MORTAR version
 - The MORTAR log file (within the application, there is a "Log file" button in the "About" view that opens the log file directory)
 - Any relevant screenshots
+<!-- To do: adjust this according to issue templates that will be implemented in the future -->
 
 ### Suggesting Enhancements
 
@@ -63,31 +64,78 @@ Feature requests and enhancement suggestions are welcome. Please open a [GitHub 
 
 ## Development Setup
 
-MORTAR is a Gradle/Java/JavaFX project. To set up a local development environment:
+MORTAR is a Java+Gradle project. To set up a local development environment:
 
 1. **Prerequisites:**
    - **Java Development Kit (JDK)**: MORTAR is currently built with Java version 21 as the set compiler source syntax level. 
-Higher versions of Java may work for building and running the project, but are not guaranteed to be compatible. The most 
-important factors for compatibility are the employed Gradle version (currently 8.14.3) and Kotlin-DSL Gradle plugin version 
-(currently 5.2.0, running Kotlin version 2.0.21 internally). Check the 
-[Gradle compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) and the 
-[Kotlin release history](https://kotlinlang.org/docs/releases.html?#release-history) for details on which Java 
-versions are supported by which Gradle and Kotlin version.
-Based on this, we currently recommend using JDK versions 21 to 22 for development. Make sure you have one of 
-them installed, e.g. sourced from [Adoptium OpenJDK / Temurin](https://adoptium.net). It needs to be accessible on your `PATH` (or via `JAVA_HOME`).
-   - **Gradle** version 8.14.3 ([Gradle Build Tool](https://gradle.org)); a Gradle wrapper (`./gradlew`) is also included in this repository
-   - An **IDE** with Gradle support (e.g., IntelliJ IDEA)
+     Higher versions of Java may work for building and running the project, but are not guaranteed to be compatible. The most 
+     important factors for compatibility are the employed Gradle version (currently 8.14.3) and Kotlin-DSL Gradle plugin version 
+     (currently 5.2.0, running Kotlin version 2.0.21 internally). Check the 
+     [Gradle compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) and the 
+     [Kotlin release history](https://kotlinlang.org/docs/releases.html?#release-history) for details on which Java 
+     versions are supported by which Gradle and Kotlin version.
+     Based on this, we currently recommend using JDK versions 21 to 22 for development. Make sure you have one of 
+     them installed, e.g. sourced from [Adoptium OpenJDK / Temurin](https://adoptium.net). It needs to be accessible on 
+     your `PATH` or via the `$JAVA_HOME` environment variable. Otherwise, you can try passing the path to the specific 
+     JDK installation to Gradle via the argument `-Dorg.gradle.java.home=/JDK_PATH` during the build (see step 3).
+   
+   - **Git**: Version control system to clone the repository and manage branches. Optionally, you can use a Git GUI client 
+     (e.g., SourceTree) for easier management.
+   
+   - Optional: An Integrated Development Environment (IDE) with Gradle support (e.g., IntelliJ IDEA; also provides a Git GUI client).
 
 2. **Clone the repository and switch to the `production` branch:**
+   - a) If you just want to explore or build the project locally, run the following commands in your terminal:
+     ```shell
+      git clone https://github.com/FelixBaensch/MORTAR.git
+      cd MORTAR
+      git checkout production
+     ```
+     (Alternatively, do these steps within your Git GUI client)
+
+   - b) If you want to contribute, fork the repository on GitHub first, then clone your fork and switch to the 
+     `production` branch there:
+     ```shell
+      git clone https://github.com/YOUR_USERNAME/MORTAR.git
+      cd MORTAR
+      git checkout production
+     ```
+     (Alternatively, do these steps within your Git GUI client)
+
+3. **Build the project**: a Gradle wrapper (`./gradlew`) of version 8.14.3 is included in this repository and should be 
+   used to build the project. 
+   Run the following command in your terminal:
    ```shell
-   git clone https://github.com/FelixBaensch/MORTAR.git
-   cd MORTAR
-   git checkout production
+    ./gradlew build
    ```
+   (`build` optionally preceded by `clean`)
+   
+   Alternatively, to immediately build and run MORTAR from the command line, you can use:
+   ```shell
+    ./gradlew run
+   ```
+   (`run` optionally preceded by `clean`)
+   
+   To make the wrapper executable on Linux or macOS, you might first have to run:
+    ```shell
+     chmod +x gradlew
+    ```
+   Alternatively, open the project in your IDE as a Gradle project and run the `build.gradle.kts` build file. It might 
+   be necessary to set your project JDK to version 21. or higher (see above) in your IDE settings.
+   
+   Gradle will resolve all dependencies automatically.
+   
+   Now, you are good to go, happy coding!
 
-3. **Open the project** in your IDE as a Gradle project and run the `build.gradle.kts` build file. Gradle will resolve all dependencies automatically.
-
-4. **Set your project JDK** to version 21.0.1 or higher in your IDE settings. Now, you are good to go!
+### Note on creating Distributions
+   
+   The Gradle distribution commands (e.g. `installDist` etc.) are configured to include 
+   a specific Java Runtime Environment (JRE) which is supposed to be used in generated execution scripts.
+   For this to work, you need to create an "AdoptOpenJDK\jdk-21.0.1_12_jre\" folder in the repository root directory and 
+   put the JRE with the specified version into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be 
+   "bin", "conf", "legal", "lib", etc.).
+   If you are only going to use our custom deployment Gradle tasks (e.g. `localWinDeploy` etc.), you do not need to download the JRE manually, the tasks
+   will take care of it automatically.
 
 ---
 
@@ -149,6 +197,7 @@ Please write clear and concise commit messages. A suggested format based on [Con
   ```shell
   ./gradlew test
   ```
+  (`test` optionally preceded by `clean`)
 - New features and bug fixes should be accompanied by appropriate test coverage.
 
 ---
