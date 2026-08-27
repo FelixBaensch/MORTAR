@@ -72,7 +72,7 @@ MORTAR is a Java+Gradle project. To set up a local development environment:
      important factors for compatibility are the employed Gradle version (currently 8.14.3) and Kotlin-DSL Gradle plugin version 
      (currently 5.2.0, running Kotlin version 2.0.21 internally). Check the 
      [Gradle compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) and the 
-     [Kotlin release history](https://kotlinlang.org/docs/releases.html?#release-history) for details on which Java 
+     [Kotlin release history](https://kotlinlang.org/docs/releases.html#release-history) for details on which Java 
      versions are supported by which Gradle and Kotlin version.
      Based on this, we currently recommend using JDK versions 21 to 22 for development. Make sure you have one of 
      them installed, e.g. sourced from [Adoptium OpenJDK / Temurin](https://adoptium.net). It needs to be accessible on 
@@ -121,7 +121,7 @@ MORTAR is a Java+Gradle project. To set up a local development environment:
      chmod +x gradlew
     ```
    Alternatively, open the project in your IDE as a Gradle project and run the `build.gradle.kts` build file. It might 
-   be necessary to set your project JDK to version 21. or higher (see above) in your IDE settings.
+   be necessary to set your project JDK to version 21 or higher (see above) in your IDE settings.
    
    Gradle will resolve all dependencies automatically.
    
