@@ -40,7 +40,7 @@ If you find a bug, please open a [GitHub issue](https://github.com/FelixBaensch/
 - Steps to reproduce the problem
 - Expected and actual behavior
 - Your operating system and MORTAR version
-- The MORTAR log file (within the application, there is a "Log file" button in the "About" view that opens the log file directory)
+- The MORTAR log file (within the application, there is a `Log file` button in the `About` view that opens the log file directory)
 - Any relevant screenshots
 <!-- To do: adjust this according to issue templates that will be implemented in the future -->
 
@@ -70,8 +70,9 @@ MORTAR is a Java+Gradle project. To set up a local development environment:
    - **Java Development Kit (JDK)**: MORTAR is currently built with Java version 21 as the set compiler source syntax level. 
      Higher versions of Java may work for building and running the project, but are not guaranteed to be compatible. The most 
      important factors for compatibility are the employed Gradle version (currently 8.14.3) and Kotlin-DSL Gradle plugin version 
-     (currently 5.2.0, running Kotlin version 2.0.21 internally). Check the 
-     [Gradle compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) and the 
+     (currently 5.2.0, running Kotlin version 2.0.21 internally, see 
+     [plugin dependency metadata](https://mvnrepository.com/artifact/org.gradle.kotlin/gradle-kotlin-dsl-plugins/5.2.0/dependencies)). 
+     Check the [Gradle compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) and the 
      [Kotlin release history](https://kotlinlang.org/docs/releases.html#release-history) for details on which Java 
      versions are supported by which Gradle and Kotlin version.
      Based on this, we currently recommend using JDK versions 21 to 22 for development. Make sure you have one of 
@@ -131,9 +132,9 @@ MORTAR is a Java+Gradle project. To set up a local development environment:
    
    The Gradle distribution commands (e.g. `installDist` etc.) are configured to include 
    a specific Java Runtime Environment (JRE) which is supposed to be used in generated execution scripts.
-   For this to work, you need to create an "AdoptOpenJDK\jdk-21.0.1_12_jre\" folder in the repository root directory and 
-   put the JRE with the specified version into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be 
-   "bin", "conf", "legal", "lib", etc.).
+   For this to work, you need to create an `AdoptOpenJDK\jdk-21.0.1_12_jre` folder in the repository root directory and 
+   put the JRE with the specified version into it (i.e. sub-folders of `AdoptOpenJDK\jdk-21.0.1_12_jre` need to be 
+   `bin`, `conf`, `legal`, `lib`, etc.).
    If you are only going to use our custom deployment Gradle tasks (e.g. `localWinDeploy` etc.), you do not need to download the JRE manually, the tasks
    will take care of it automatically.
 
@@ -155,12 +156,12 @@ MORTAR is a Java+Gradle project. To set up a local development environment:
 ## Coding Guidelines
 
 - Follow the existing code style and formatting already present in the source files.
-  - This includes, i.a., a consistent use of the ``this`` statement for class variables and methods.
+  - This includes, for example, a consistent use of the ``this`` keyword for class variables and methods.
   - Static variables and methods should be indicated by explicitly giving the class name in front of them.
   - Use explicit imports, no wildcard imports.
 - Use meaningful, descriptive names for variables, methods, and classes.
-  - Method parameter names should be prefixed with "a"-/"an"-.
-  - Temporary method variable names should be prefixed with "tmp"-.
+  - Method parameter names should be prefixed with `a`-/`an`-.
+  - Temporary method variable names should be prefixed with `tmp`-.
   - Apart from that, follow the general Java naming conventions (e.g., public static constants should have all-caps names).
 - Keep methods short and focused on a single responsibility.
 - Document public APIs with descriptive and informative Javadoc comments.
