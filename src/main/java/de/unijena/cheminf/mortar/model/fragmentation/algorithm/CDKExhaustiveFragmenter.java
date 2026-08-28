@@ -60,19 +60,23 @@ import java.util.logging.Logger;
  * <p>Example:</p>
  * <pre>
  *
- *                               [O]
- *  Non-terminal (splittable)   //
- *                     |       // &lt;-- double bond (not splittable)
- *                     |      //
- *     [H]-------[C]-------[C]
- *              / |           \
- *            /   |            \ &lt;-- terminal bond (not splittable)
- *          /     |             \
- *       [H]     [H]           [O-]
+ *        Non-terminal (splittable)
+ *                       |
+ *          terminal     |       [O]
+ *      (not splittable) |      //
+ *              |        |     //  &lt;-- double bond (not splittable)
+ *              |        |    //
+ *  [H]----[C]-----[C]-----[C]
+ *         / |     / |        \
+ *        /  |    /  |         \ &lt;-- terminal bond (not splittable)
+ *       /   |   /   |          \
+ *    [H]  [H] [H] [H]          [O-]
+ *
  *
  * </pre>
  * <ul>
- *     <li>The C-C bond in the middle IS splittable (because both have a degree greater than one)</li>
+ *     <li>The C-C bond on the left IS NOT splittable (because the left one has no further heavy atoms bonded)</li>
+ *     <li>The C-C bond on the right IS splittable (because both have a degree greater than one)</li>
  *     <li>The C=O bond on the right is NOT splittable as it is a double bond.</li>
  *     <li>The C-[O-] bond on the right is also NOT splittable because the negatively charged oxygen
  *     is only connected by one bond to another heavy atom, making it a terminal bond.</li>
@@ -178,7 +182,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public static final SaturationDisplay DEFAULT_SATURATION =  SaturationDisplay.HYDROGEN_SATURATED_FRAGMENTS;
     //
     /**
-     * Default number of bonds that get split in one fragmentation.
+     * Maximum number of bonds that get split in one fragmentation.
      * This value is based on the assumption each fragment is unique (as if there was no deduplication)
      * this 27 would be the maximum tree depth to hold all fragments in the
      * hashmap.
@@ -199,14 +203,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
-    /**
-     * Accompanying boolean setting to de/activate the splittable bonds limit.
-     */
     private final SimpleBooleanProperty activateSplittableBondsLimitSetting;
-    /**
-     * The threshold of the (inclusive) number of splittable bonds one molecule can contain before being filtered.
-     */
-    private final SimpleIntegerProperty inclusiveSplittableBondsLimit;
+    private final SimpleIntegerProperty inclusiveSplittableBondsLimitSetting;
     /**
      * The maximum tree depth which represents the maximum number of bonds that will be split in a fragmentation.
      */
@@ -270,28 +268,23 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                     CDKExhaustiveFragmenter.this.cdkEFInstance.setMinimumFragmentSize(newValue);
                     super.set(newValue);
                 } else {
-                    IllegalArgumentException anException = new IllegalArgumentException("The minimum fragment size must be positive");
-                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    IllegalArgumentException tmpException = new IllegalArgumentException("The minimum fragment size must be positive");
+                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
                             Message.get("Fragmenter.IllegalSettingValue.Header"),
-                            anException.toString(),
-                            anException);
+                            tmpException.toString(),
+                            tmpException);
                     //re-throws the exception to properly reset the binding
-                    throw anException;
+                    throw tmpException;
                 }
             }
         };
 
         this.activateSplittableBondsLimitSetting = new SimpleBooleanProperty(this,
                 "Activate the splittable bonds limit",
-                CDKExhaustiveFragmenter.DEFAULT_ACTIVATE_SPLITTABLE_BONDS_LIMIT) {
-            @Override
-            public void set(boolean newValue) {
-                super.set(newValue);
-            }
-        };
+                CDKExhaustiveFragmenter.DEFAULT_ACTIVATE_SPLITTABLE_BONDS_LIMIT);
 
-        this.inclusiveSplittableBondsLimit = new SimpleIntegerProperty(this,
+        this.inclusiveSplittableBondsLimitSetting = new SimpleIntegerProperty(this,
                 "Inclusive number of the filter threshold of splittable bonds",
                 CDKExhaustiveFragmenter.DEFAULT_LIMIT_FOR_SPLITTABLE_BONDS) {
             @Override
@@ -321,7 +314,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } else {
                     IllegalArgumentException anException = new IllegalArgumentException(
-                            "The inclusive max tree depth must be positive and smaller than 32"
+                            "The inclusive max tree depth must be positive and smaller than or equal to 32"
                     );
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
@@ -359,8 +352,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 CDKExhaustiveFragmenter.DEFAULT_PRESERVE_STEREO_INFO) {
             @Override
             public void set(boolean newValue) {
-                super.set(newValue);
                 CDKExhaustiveFragmenter.this.cdkEFInstance.setPreserveStereo(newValue);
+                super.set(newValue);
             }
         };
 
@@ -379,9 +372,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap.put(this.inclusiveMaxTreeDepthSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.inclusiveMaxTreeDepthSetting.displayName"));
 
-        this.settingNameTooltipTextMap.put(this.inclusiveSplittableBondsLimit.getName(),
+        this.settingNameTooltipTextMap.put(this.inclusiveSplittableBondsLimitSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.splittableBondsLimitSetting.tooltip"));
-        this.settingNameDisplayNameMap.put(this.inclusiveSplittableBondsLimit.getName(),
+        this.settingNameDisplayNameMap.put(this.inclusiveSplittableBondsLimitSetting.getName(),
                 Message.get("CDKExhaustiveFragmenter.splittableBondsLimitSetting.displayName"));
 
         this.settingNameTooltipTextMap.put(this.saturationSetting.getName(),
@@ -397,7 +390,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settings = new ArrayList<>(tmpNumberOfSettingsForTooltipMapSize);
         this.settings.add(this.minimumFragmentSizeSetting);
         this.settings.add(this.activateSplittableBondsLimitSetting);
-        this.settings.add(this.inclusiveSplittableBondsLimit);
+        this.settings.add(this.inclusiveSplittableBondsLimitSetting);
         this.settings.add(this.inclusiveMaxTreeDepthSetting);
         this.settings.add(this.saturationSetting);
         this.settings.add(this.preserveStereoSetting);
@@ -412,8 +405,17 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      *
      * @return the currently set inclusive threshold of splittable bonds.
      */
-    public SimpleIntegerProperty inclusiveSplittableBondsThresholdSettingProperty() {
-        return this.inclusiveSplittableBondsLimit;
+    public SimpleIntegerProperty inclusiveSplittableBondsLimitSettingProperty() {
+        return this.inclusiveSplittableBondsLimitSetting;
+    }
+
+    /**
+     * Returns the limit of splittable bonds for the filtering.
+     *
+     * @return the currently set limit. Molecules above this limit will be excluded for fragmentation.
+     */
+    public int getInclusiveLimitForSplittableBonds() {
+        return this.inclusiveSplittableBondsLimitSetting.get();
     }
 
     /**
@@ -425,17 +427,13 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         return activateSplittableBondsLimitSetting.get();
     }
 
+    /**
+     * Gets the boolean setting of the de/activate the splittable bonds limit.
+     *
+     * @return the setting of the splittable bonds limit which can be active (true) or inactive(false)
+     */
     public SimpleBooleanProperty activateSplittableBondsLimitSettingProperty() {
         return this.activateSplittableBondsLimitSetting;
-    }
-
-    /**
-     * Returns the limit of splittable bonds for the filtering.
-     *
-     * @return the currently set limit. Molecules above this limit will be excluded for fragmentation.
-     */
-    public int getInclusiveLimitForSplittableBonds() {
-        return this.inclusiveSplittableBondsLimit.get();
     }
 
     public SimpleIntegerProperty minimumFragmentSizeSettingProperty() {
@@ -496,12 +494,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Sets the minimum fragment size.
      *
-     * @param minimumFragmentSize the new minimum fragment size.
+     * @param aMinimumFragmentSize the new minimum fragment size.
      * @throws IllegalArgumentException if the fragment size is negative.
      */
-    public void setMinimumFragmentSize(int minimumFragmentSize) {
-        if (minimumFragmentSize > 0) {
-            this.minimumFragmentSizeSetting.set(minimumFragmentSize);
+    public void setMinimumFragmentSize(int aMinimumFragmentSize) {
+        if (aMinimumFragmentSize > 0) {
+            this.minimumFragmentSizeSetting.set(aMinimumFragmentSize);
         } else {
             throw new IllegalArgumentException("Minimum fragment size must be positive");
         }
@@ -510,10 +508,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Activate or deactivate the splittable bonds limit.
      *
-     * @param aActivation true if the setting should be activated, false otherwise.
+     * @param anActivation true if the setting should be activated, false otherwise.
      */
-    public void setActivateSplittableBondsLimitSetting(boolean aActivation) {
-        this.activateSplittableBondsLimitSetting.set(aActivation);
+    public void setActivateSplittableBondsLimitSetting(boolean anActivation) {
+        this.activateSplittableBondsLimitSetting.set(anActivation);
     }
 
     /**
@@ -525,7 +523,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      */
     public void setLimitForSplittableBonds(int aLimitForSplittableBonds) {
         if (aLimitForSplittableBonds > 0) {
-            this.inclusiveSplittableBondsLimit.set(aLimitForSplittableBonds);
+            this.inclusiveSplittableBondsLimitSetting.set(aLimitForSplittableBonds);
         } else {
             throw new IllegalArgumentException(
                     "Threshold for splittable bonds must be positive");
@@ -542,42 +540,36 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     }
 
     /**
-     * Set the saturation display option using a CDK saturation enum value.
+     * Set the saturation display option using the according {@link SaturationDisplay} enum value.
      *
      * @param aSaturation the {@link SaturationDisplay} wrapper which holds the {@link ExhaustiveFragmenter.Saturation}
      *                    as well as the display name.
      * @throws NullPointerException if saturation is null.
-     * @throws IllegalArgumentException if the saturation enum cannot be converted to SaturationDisplay.
      */
     public void setSaturationSetting(SaturationDisplay aSaturation) {
         Objects.requireNonNull(aSaturation, "saturation must not be null");
-        try {
             this.saturationSetting.set(aSaturation);
-        } catch (IllegalArgumentException anException) {
-            CDKExhaustiveFragmenter.LOGGER.log(
-                    Level.WARNING, String.format("Invalid saturation setting: %s", aSaturation.name()), anException
-            );
-            throw new IllegalArgumentException("Unsupported saturation type: " + aSaturation.name(), anException);
-        }
     }
 
     /**
      * Set the inclusive maximum tree depth for the exhaustive fragmenter.
      * The value is inclusive: a value of N means nodes at depth N are included.
      *
-     * @param aDepth the new inclusive maximum tree depth; must be > 0.
-     * @throws IllegalArgumentException if depth is negative.
+     * @param aDepth the new inclusive maximum tree depth; must be positive and smaller than 32.
+     * @throws IllegalArgumentException if depth is negative or bigger than 32.
      */
     public void setInclusiveMaxTreeDepthSetting(int aDepth) {
         if (aDepth > 0 && aDepth <= CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT) {
             this.inclusiveMaxTreeDepthSetting.set(aDepth);
+        } else {
+            throw new IllegalArgumentException(
+                    "inclusiveMaxTreeDepth must be > 0 and <= " + CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT);
         }
-        throw new IllegalArgumentException(
-                "inclusiveMaxTreeDepth must be > 0 and <= " + CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT);
     }
     //</editor-fold>
     //
     //<editor-fold desc="IMoleculeFragmenter methods">
+
     @Override
     public List<Property<?>> settingsProperties() {
         return this.settings;
@@ -608,7 +600,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         CDKExhaustiveFragmenter tmpCopy = new CDKExhaustiveFragmenter();
         tmpCopy.minimumFragmentSizeSetting.set(this.minimumFragmentSizeSetting.get());
         tmpCopy.activateSplittableBondsLimitSetting.set(this.activateSplittableBondsLimitSetting.get());
-        tmpCopy.inclusiveSplittableBondsLimit.set(this.inclusiveSplittableBondsLimit.get());
+        tmpCopy.inclusiveSplittableBondsLimitSetting.set(this.inclusiveSplittableBondsLimitSetting.get());
         tmpCopy.inclusiveMaxTreeDepthSetting.set(this.inclusiveMaxTreeDepthSetting.get());
         tmpCopy.saturationSetting.set(this.saturationSetting.get());
         tmpCopy.preserveStereoSetting.set(this.preserveStereoSetting.get());
@@ -619,7 +611,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public void restoreDefaultSettings() {
         this.minimumFragmentSizeSetting.set(CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE);
         this.activateSplittableBondsLimitSetting.set(CDKExhaustiveFragmenter.DEFAULT_ACTIVATE_SPLITTABLE_BONDS_LIMIT);
-        this.inclusiveSplittableBondsLimit.set(CDKExhaustiveFragmenter.DEFAULT_LIMIT_FOR_SPLITTABLE_BONDS);
+        this.inclusiveSplittableBondsLimitSetting.set(CDKExhaustiveFragmenter.DEFAULT_LIMIT_FOR_SPLITTABLE_BONDS);
         this.inclusiveMaxTreeDepthSetting.set(CDKExhaustiveFragmenter.DEFAULT_INCLUSIVE_MAX_TREE_DEPTH);
         this.saturationSetting.set(CDKExhaustiveFragmenter.DEFAULT_SATURATION);
         this.preserveStereoSetting.set(CDKExhaustiveFragmenter.DEFAULT_PRESERVE_STEREO_INFO);
@@ -649,7 +641,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * {@inheritDoc}
      *
      * Checks if {@link #activateSplittableBondsLimitSetting} is true to determine if molecules should be filtered based
-     * on the {@link #inclusiveSplittableBondsLimit} so that molecules with more splittable bonds will be filtered out.
+     * on the {@link #inclusiveSplittableBondsLimitSetting} so that molecules with more splittable bonds will be filtered out.
      *
      * @param aMolecule the molecule to check.
      * @return true if the molecule should be filtered out, false otherwise.
@@ -660,7 +652,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
             return true;
         }
         if (this.activateSplittableBondsLimitSetting.get() &&
-                ExhaustiveFragmenter.getSplittableBonds(aMolecule).length > this.inclusiveSplittableBondsLimit.get()) {
+                ExhaustiveFragmenter.getSplittableBonds(aMolecule).length > this.inclusiveSplittableBondsLimitSetting.get()) {
             return true;
         }
         return false;
@@ -669,9 +661,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
-        if (!this.getPreserveStereoSetting() && aMolecule.stereoElements().iterator().hasNext()) {
-            return true;
-        }
         return false;
     }
 
@@ -683,18 +672,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         return !(tmpShouldBeFiltered || tmpShouldBePreprocessed);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * This method checks {@link #preserveStereoSetting} to either remove all stereochemistry elements before fragmenting
-     * if it is false or just return it will return the molecule without any alterations.
-     *
-     * @param aMolecule the molecule to preprocess.
-     * @return the preprocessed molecule.
-     * @throws NullPointerException if molecule is null.
-     * @throws IllegalArgumentException if the molecule should have been filtered.
-     * @throws CloneNotSupportedException if the molecule does not support cloning.
-     */
     @Override
     public IAtomContainer applyPreprocessing(IAtomContainer aMolecule) throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
@@ -702,11 +679,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         if (tmpShouldBeFiltered) {
             throw new IllegalArgumentException("The given molecule cannot be preprocessed but should be filtered.");
         }
-        IAtomContainer tmpMoleculeClone = aMolecule.clone();
-        if (this.shouldBePreprocessed(aMolecule)) {
-            tmpMoleculeClone.setStereoElements(new ArrayList<>(0));
-        }
-        return tmpMoleculeClone;
+        return aMolecule.clone();
     }
     //</editor-fold>
 }

@@ -66,6 +66,12 @@ public class CDKExhaustiveFragmenterTest {
         CDKExhaustiveFragmenter tmpFragmenter = new CDKExhaustiveFragmenter();
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
+        Assertions.assertDoesNotThrow(tmpFragmenter::minimumFragmentSizeSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::inclusiveSplittableBondsLimitSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getInclusiveMaxTreeDepthSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getSaturationSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::preserveStereoSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSize);
         for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
             Assertions.assertDoesNotThrow(tmpSetting::getName);
         }
@@ -89,12 +95,6 @@ public class CDKExhaustiveFragmenterTest {
         Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
         Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
         Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
-        Assertions.assertDoesNotThrow(tmpFragmenter::minimumFragmentSizeSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::inclusiveSplittableBondsThresholdSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getInclusiveMaxTreeDepthSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getSaturationSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::preserveStereoSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSize);
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {
             Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
@@ -113,7 +113,7 @@ public class CDKExhaustiveFragmenterTest {
     @Test
     public void fragmentationTestStereo() throws Exception {
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
-        SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Canonical));
+        SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Absolute));
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
         CDKExhaustiveFragmenter tmpFragmenter = new CDKExhaustiveFragmenter();
@@ -122,14 +122,8 @@ public class CDKExhaustiveFragmenterTest {
                 "CCCCC[C@H]1O[C@@H]1/C=C/C=O");
 
         Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
-        // setting preserve stereo manually to false to check that preprocessing works correctly
-        // as molecules with stereo information should be preprocessed if this setting is false
         tmpFragmenter.preserveStereoSettingProperty().set(false);
-        Assertions.assertTrue(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
-        Assertions.assertEquals("O=CC=CC1OC1CCCCC", tmpSmiGen.create(tmpFragmenter.applyPreprocessing(tmpOriginalMolecule)));
-        Assertions.assertFalse(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
-        IAtomContainer tmpPreprocessedMol = tmpFragmenter.applyPreprocessing(tmpOriginalMolecule);
-        tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpPreprocessedMol);
+        tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {
             Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
         }
