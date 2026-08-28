@@ -1454,9 +1454,7 @@ public class OverviewViewController implements IViewToolController {
         tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
         tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
         tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
-        String tmpIconURL = this.getClass().getClassLoader().getResource(
-                this.configuration.getProperty("mortar.imagesFolder")
-                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        String tmpIconURL = this.getClass().getClassLoader().getResource(this.configuration.getProperty("mortar.imagesFolder") + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
         tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
         tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
@@ -1470,10 +1468,8 @@ public class OverviewViewController implements IViewToolController {
             //depiction of the structure
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(
                     aMoleculeDataModel.getAtomContainer(),1.0,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH
-                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT
-                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
                     true, true
             ));
             tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);

@@ -36,6 +36,8 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -765,6 +767,25 @@ public class GuiUtil {
                         anEvent.getScreenX(),
                         anEvent.getScreenY()
                 ));
+        ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) ->
+                Platform.runLater(() -> {
+                    try {
+                        tmpStructureImage.setImage(
+                                DepictionUtil.depictImage(
+                                        aMoleculeDataModel.getAtomContainer(),
+                                        1.0,
+                                        tmpEnlargedStructureViewStackPane.getWidth() * 0.9,
+                                        tmpEnlargedStructureViewStackPane.getHeight() * 0.9,
+                                        true,
+                                        true
+                                )
+                        );
+                    } catch (CDKException aCDKException) {
+                        LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+                    }
+                });
+        tmpEnlargedStructureViewStage.heightProperty().addListener(tmpStageResizeEventListener);
+        tmpEnlargedStructureViewStage.widthProperty().addListener(tmpStageResizeEventListener);
         tmpEnlargedStructureViewStage.show();
     }
 }
