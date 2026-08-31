@@ -340,6 +340,8 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
             }
         });
         this.contextMenu.getItems().add(tmpCopyNameMenuItem);
+        //-separatorMenuItem
+        this.contextMenu.getItems().add(new SeparatorMenuItem());
         //-enlargedStructureViewMenuItem
         MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(
                 Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
@@ -353,8 +355,6 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
             }
         });
         this.contextMenu.getItems().add(tmpEnlargedStructureViewMenuItem);
-        //-separatorMenuItem
-        this.contextMenu.getItems().add(new SeparatorMenuItem());
         //-overviewViewMenuItem
         this.overviewViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.fragmentsTab.overviewViewMenuItem"));
         this.contextMenu.getItems().add(this.overviewViewMenuItem);
