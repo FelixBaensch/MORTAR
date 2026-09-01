@@ -61,6 +61,8 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -1267,25 +1269,56 @@ public class OverviewViewController implements IViewToolController {
         //copyImageMenuItem listener
         tmpCopyImageMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                GuiUtil.copyMoleculeStructureImageToClipboard(
-                        this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
-                );
+                try {
+                    //note: making the background transparent leads to problems on Windows, where the background then appears black
+                    Image tmpStructureImage = DepictionUtil.depictImage(
+                            this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getAtomContainer(),
+                            1.0,
+                            GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
+                            GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
+                            true,
+                            true);
+                    ClipboardContent tmpContent = new ClipboardContent();
+                    tmpContent.putImage(tmpStructureImage);
+                    Clipboard.getSystemClipboard().setContent(tmpContent);
+                } catch (CDKException aCDKException) {
+                    //should not happen since an initial depiction is needed to make the context menu accessible to the user
+                    OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+                    GuiUtil.guiExceptionAlert(
+                            Message.get("Error.ExceptionAlert.Title"),
+                            Message.get("Error.ExceptionAlert.Header"),
+                            aCDKException.toString(),
+                            aCDKException
+                    );
+                }
             }
         });
         //copySmilesMenuItem listener
         tmpCopySmilesMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                GuiUtil.copyMoleculeSmilesToClipboard(
-                        this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
-                );
+                String tmpSmilesString;
+                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
+                    tmpSmilesString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getUniqueSmiles();
+                } else {
+                    tmpSmilesString = "";
+                }
+                ClipboardContent tmpContent = new ClipboardContent();
+                tmpContent.putString(tmpSmilesString);
+                Clipboard.getSystemClipboard().setContent(tmpContent);
             }
         });
         //copyNameMenuItem listener
         tmpCopyNameMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                GuiUtil.copyMoleculeNameToClipboard(
-                        this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
-                );
+                String tmpNameString;
+                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
+                    tmpNameString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getName();
+                } else {
+                    tmpNameString = "";
+                }
+                ClipboardContent tmpContent = new ClipboardContent();
+                tmpContent.putString(tmpNameString);
+                Clipboard.getSystemClipboard().setContent(tmpContent);
             }
         });
         //add view-independent MenuItems
@@ -1454,7 +1487,9 @@ public class OverviewViewController implements IViewToolController {
         tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
         tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
         tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
-        String tmpIconURL = this.getClass().getClassLoader().getResource(this.configuration.getProperty("mortar.imagesFolder") + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
+        String tmpIconURL = this.getClass().getClassLoader().getResource(
+                this.configuration.getProperty("mortar.imagesFolder")
+                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
         tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
         tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
@@ -1468,8 +1503,10 @@ public class OverviewViewController implements IViewToolController {
             //depiction of the structure
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(
                     aMoleculeDataModel.getAtomContainer(),1.0,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH
+                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT
+                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
                     true, true
             ));
             tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);
