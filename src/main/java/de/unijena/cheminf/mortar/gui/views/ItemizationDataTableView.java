@@ -167,12 +167,10 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
         //-copyImageMenuItem
-        MenuItem tmpCopyImageMenuItem = new MenuItem(
-                Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
         tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopyImageMenuItem.setOnAction(anActionEvent -> {
-            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
-                    .getSelectedItem();
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
             if (tmpSelectedMolecule != null) {
                 GuiUtil.copyMoleculeStructureImageToClipboard(tmpSelectedMolecule);
             }
@@ -180,25 +178,20 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.contextMenu.getItems().add(tmpCopyImageMenuItem);
 
         //-copySmilesMenuItem
-        MenuItem tmpCopySmilesMenuItem = new MenuItem(
-                Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
         tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopySmilesMenuItem.setOnAction(anActionEvent -> {
-            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
-                    .getSelectedItem();
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
             if (tmpSelectedMolecule != null) {
                 GuiUtil.copyMoleculeSmilesToClipboard(tmpSelectedMolecule);
             }
         });
         this.contextMenu.getItems().add(tmpCopySmilesMenuItem);
-
         //-copyNameMenuItem
-        MenuItem tmpCopyNameMenuItem = new MenuItem(
-                Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyNameMenuItem"));
         tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopyNameMenuItem.setOnAction(anActionEvent -> {
-            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
-                    .getSelectedItem();
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
             if (tmpSelectedMolecule != null) {
                 GuiUtil.copyMoleculeNameToClipboard(tmpSelectedMolecule);
             }
@@ -210,16 +203,13 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(
                 Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
         tmpEnlargedStructureViewMenuItem.setOnAction(anActionEvent -> {
-            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel()
-                    .getSelectedItem();
-
-            if (tmpSelectedMolecule != null && this.getScene() != null
-                    && this.getScene().getWindow() instanceof Stage tmpOwnerStage) {
+            MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
+            if (tmpSelectedMolecule != null && this.getScene() != null && this.getScene().getWindow() instanceof Stage tmpOwnerStage) {
                 GuiUtil.showEnlargedStructureView(tmpSelectedMolecule, tmpOwnerStage);
             }
         });
         this.contextMenu.getItems().add(tmpEnlargedStructureViewMenuItem);
-        //-overviewViewMenuItem
+        //overviewViewMenuItem
         this.overviewViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.itemsTab.overviewViewMenuItem"));
         this.contextMenu.getItems().add(this.overviewViewMenuItem);
     }
