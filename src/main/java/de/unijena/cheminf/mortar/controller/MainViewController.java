@@ -256,7 +256,6 @@ public class MainViewController {
         this.scene.getStylesheets().add(tmpStyleSheetURL);
         this.primaryStage.setTitle(Message.get("Title.text"));
         this.primaryStage.setScene(this.scene);
-        this.primaryStage.show();
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         String tmpIconURL = this.getClass().getClassLoader().getResource(
@@ -269,6 +268,7 @@ public class MainViewController {
         this.threadList = new CopyOnWriteArrayList<>();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
+        this.primaryStage.show();
     }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">

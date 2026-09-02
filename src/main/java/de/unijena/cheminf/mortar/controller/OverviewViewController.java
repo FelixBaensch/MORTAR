@@ -1493,9 +1493,6 @@ public class OverviewViewController implements IViewToolController {
         tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
         tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
-        //
-        tmpEnlargedStructureViewStage.show();
-        //
         //generation of context menu for the options of copying the structure's image or SMILES String to the clipboard
         ContextMenu tmpContextMenu = this.generateContextMenuWithListeners(true);
         //
@@ -1552,6 +1549,7 @@ public class OverviewViewController implements IViewToolController {
             );
             tmpEnlargedStructureViewStage.close();
         }
+        tmpEnlargedStructureViewStage.show();
     }
     //</editor-fold>
 }
