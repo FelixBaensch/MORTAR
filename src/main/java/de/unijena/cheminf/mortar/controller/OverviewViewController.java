@@ -1548,6 +1548,7 @@ public class OverviewViewController implements IViewToolController {
                     Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.text")
             );
             tmpEnlargedStructureViewStage.close();
+            return;
         }
         tmpEnlargedStructureViewStage.show();
     }
