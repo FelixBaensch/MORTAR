@@ -167,7 +167,12 @@ MORTAR is a Java+Gradle project. To set up a local development environment:
 - Keep methods short and focused on a single responsibility.
 - Document public APIs with descriptive and informative Javadoc comments.
 - All new class files should have the same license header (see [License-header/License-header.txt](License-header/License-header.txt)).
-- When building, the [spotless plugin](https://github.com/diffplug/spotless) checks some code style aspects (see [build.gradle.kts](build.gradle.kts) for its configuration).
+- When building, the [spotless plugin](https://github.com/diffplug/spotless) checks some code style aspects (see [build.gradle.kts](build.gradle.kts) for its configuration)
+  and will throw errors if the code does not adhere to the specified style. You can run the `spotlessApply` Gradle task 
+  to automatically fix some of the issues:
+    ```shell
+     ./gradlew spotlessApply
+    ```
 - We recommend using the [SonarQube for IDE plugin](https://www.sonarsource.com/products/sonarqube/ide/) to catch code issues before committing (since SonarQube will also check the code when you create a pull request).
 
 ---
