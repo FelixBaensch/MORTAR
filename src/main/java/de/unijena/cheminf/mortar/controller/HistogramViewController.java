@@ -32,6 +32,9 @@ import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.io.Exporter;
+import de.unijena.cheminf.mortar.model.io.Exporter.ExportTypes;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
@@ -73,6 +76,8 @@ import javafx.stage.WindowEvent;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -300,6 +305,10 @@ public class HistogramViewController implements IViewToolController {
      */
     private final IConfiguration configuration;
     /**
+     * Settings container to access application settings.
+     */
+    private final SettingsContainer settingsContainer;
+    /**
      * Setting for number of displayed fragments.
      */
     private final SimpleIntegerProperty displayedFragmentsNumberSetting;
@@ -359,6 +368,14 @@ public class HistogramViewController implements IViewToolController {
      */
     private List<FragmentDataModel> fragmentListCopy;
     /**
+     * Smiles currently displayed in the histogram.
+     */
+    private List<String> displayedHistogramSmiles;
+    /**
+     * Frequencies currently displayed in the histogram.
+     */
+    private List<Integer> displayedHistogramFrequencies;
+    /**
      * Width of molecule depictions displayed when the cursor hovers over a bar. Changes when histogram is resized.
      */
     private double imageWidth;
@@ -392,10 +409,13 @@ public class HistogramViewController implements IViewToolController {
     /**
      * Constructor, initialises all settings with their default values. Does *not* open the view.
      *
-     * @param aConfiguration configuration instance to read resource file paths from
+     * @param aConfiguration configuration instance.
+     * @param aSettingsContainer the setting container.
      */
-    public HistogramViewController(IConfiguration aConfiguration) {
+    public HistogramViewController(IConfiguration aConfiguration,
+                                   SettingsContainer aSettingsContainer) {
         this.configuration = aConfiguration;
+        this.settingsContainer = aSettingsContainer;
         this.settings = new ArrayList<>(8);
         this.displayedFragmentsNumberSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
@@ -767,6 +787,9 @@ public class HistogramViewController implements IViewToolController {
                 tmpFrequencyList.size());
         List<String> tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber,
                 tmpFullSmilesLength.size());
+        this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
+        this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
+        this.histogramView.getExportCSVButton().setDisable(false);
         XYChart.Series<Number, String> tmpSeries = new XYChart.Series<>();
         if (tmpSublistSmiles.size() != tmpSublistFrequency.size() || tmpSublistSmiles.size() != tmpSmilesToDepict.size()) {
             throw new IllegalArgumentException("SMILES code and frequency sublists for display are of unequal size.");
@@ -888,6 +911,7 @@ public class HistogramViewController implements IViewToolController {
             this.categoryAxis.setTickMarkVisible(tmpDisplaySMILES);
             this.categoryAxis.setTickLabelsVisible(tmpDisplaySMILES);
         });
+        this.histogramView.getExportCSVButton().setOnAction(event -> this.exportHistogramCsv());
         this.histogramView.getDisplayGridLinesCheckBox().selectedProperty()
                 .addListener((ObservableValue<? extends Boolean> ov, Boolean oldVal, Boolean newVal) -> {
             this.histogramChart.setVerticalGridLinesVisible(newVal);
@@ -1062,6 +1086,35 @@ public class HistogramViewController implements IViewToolController {
             this.displayBarShadowsSetting.set(newVal);
         });
     }
+    /**
+     * Exports the currently displayed histogram data to a CSV file selected by the user.
+     */
+    private void exportHistogramCsv() {
+        if (this.displayedHistogramSmiles == null || this.displayedHistogramFrequencies == null || this.displayedHistogramSmiles.isEmpty()) {
+            return;
+        }
+        Exporter tmpExporter = new Exporter(this.settingsContainer);
+        File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(
+                this.mainStage, ExportTypes.HISTOGRAM_CSV_FILE, "");
+        if (tmpExportFile == null) {
+            return;
+        }
+        try {
+            tmpExporter.exportHistogramCsvFile(
+                    tmpExportFile,
+                    this.displayedHistogramSmiles,
+                    this.displayedHistogramFrequencies,
+                    this.settingsContainer.getCsvExportSeparatorSettingCharacter());
+            GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Exporter.Histogram.ExportSuccessful.title"),
+                    Message.get("Exporter.Histogram.ExportSuccessful.header"),
+                    Message.get("Exporter.Histogram.ExportSuccessful.content"));
+        } catch (FileNotFoundException anException) {
+            Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
+                    Message.get("Exporter.Histogram.ExportFailed.header"),
+                    Message.get("Exporter.Histogram.ExportFailed.content"));
+        }
+    }
     //
     /**
      * Discards all GUI variable values for when the view is closed.
@@ -1080,6 +1133,8 @@ public class HistogramViewController implements IViewToolController {
         this.numberAxis = null;
         this.histogramChart = null;
         this.atomContainerForDisplayCache = null;
+        this.displayedHistogramSmiles = null;
+        this.displayedHistogramFrequencies = null;
     }
     //
     /**

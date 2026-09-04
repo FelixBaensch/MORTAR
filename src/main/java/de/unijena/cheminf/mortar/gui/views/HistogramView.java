@@ -67,6 +67,10 @@ public class HistogramView extends AnchorPane {
      */
     private final Button applyButton;
     /**
+     * Button to export the histogram data as CSV.
+     */
+    private final Button exportCSVButton;
+    /**
      * Text field for creating a new histogram with the given number of fragments.
      */
     private final TextField displayedFragmentsNumberTextField;
@@ -189,6 +193,9 @@ public class HistogramView extends AnchorPane {
         this.displayedFragmentsNumberTextField.setAlignment(Pos.CENTER_RIGHT);
         this.applyButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.refreshButton.text"));
         this.applyButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.refreshButton.toolTip")));
+        this.exportCSVButton = GuiUtil.getButtonOfStandardSize(Message.get("HistogramView.exportCSVButton.text"));
+        this.exportCSVButton.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.exportCSVButton.toolTip")));
+        this.exportCSVButton.setDisable(true);
         this.maximumSMILESLengthTextField = new TextField();
         this.maximumSMILESLengthTextField.setPrefWidth(GuiDefinitions.GUI_TEXT_FIELD_WIDTH);
         this.maximumSMILESLengthTextField.setTooltip(GuiUtil.createTooltip(Message.get("HistogramView.smilesField.toolTip")));
@@ -263,6 +270,7 @@ public class HistogramView extends AnchorPane {
         tmpRightSideGrid.add(this.barStylingCheckBox,0,1);
         tmpRightSideGrid.add(this.displayGridLinesCheckBox,1,0);
         tmpRightSideGrid.add(this.displaySMILESonYaxisCheckBox,1,1);
+        tmpRightSideGrid.add(this.exportCSVButton,2,0);
         tmpRightSideGrid.add(this.closeButton,2,1);
         tmpHBoxRightSideControls.getChildren().add(tmpRightSideGrid);
         tmpHBoxRightSideControls.setAlignment(Pos.CENTER_RIGHT);
@@ -294,6 +302,13 @@ public class HistogramView extends AnchorPane {
     public Button getApplyButton() {
         return this.applyButton;
     }
+    //
+    /**
+     * Returns the button for exporting the currently displayed histogram data as CSV.
+     *
+     * @return export CSV button
+     */
+    public Button getExportCSVButton() { return this.exportCSVButton; }
     //
     /**
      * Returns content of displayed fragments number text field, i.e. string representation of the number of fragments to
