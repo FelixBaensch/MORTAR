@@ -122,7 +122,8 @@ MORTAR is a Java+Gradle project. To set up a local development environment:
      chmod +x gradlew
     ```
    Alternatively, open the project in your IDE as a Gradle project and run the `build.gradle.kts` build file. It might 
-   be necessary to set your project JDK to version 21 or higher (see above) in your IDE settings.
+   be necessary to set your project JDK to version 21 or 22 (see notes in "1. Prerequisites" → "Java Development Kit 
+   (JDK)" above) in your IDE settings.
    
    Gradle will resolve all dependencies automatically.
    
