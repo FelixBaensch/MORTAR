@@ -26,6 +26,7 @@
 * [Installation](#Installation)
     * [Application](#Application)
     * [Source code](#Source-code)
+* [Contribution](#Contribution)
 * [Dependencies](#Dependencies)
 * [Citation](#Citation)
 * [References and useful links](#References-and-useful-links)
@@ -70,7 +71,8 @@ on macOS, an RPM Package Manager (RPM) package for Red Hat-based Linux distribut
 available for installation on Debian-based Linux distributions like Ubuntu.
 On all three operating systems (Windows, macOS, and Linux), MORTAR can also be run from the command line using the 
 supplied “fat” Java ARchive (JAR) which gives you full control, e.g., over how much memory should be used. A Java 
-Development Kit or Runtime Environment (JDK/JRE) of version 21.0.1 or higher must be pre-installed on your system
+Development Kit or Runtime Environment (JDK/JRE) of version 21.0.1 or higher (see [CONTRIBUTING.md](./CONTRIBUTING.md) 
+for details on compatibility with higher versions) must be pre-installed on your system
 to run MORTAR from the command line.
 
 
@@ -169,7 +171,8 @@ execute the JAR from the command-line using</p>
 java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.6.0.0.jar
 ```
 
-A JDK or JRE of version 21.0.1 or higher needs to be installed on your system and linked to the "java" command. 
+A JDK or JRE of version 21.0.1 or higher (see [CONTRIBUTING.md](./CONTRIBUTING.md) for details on compatibility with 
+higher versions) needs to be installed on your system and linked to the "java" command. 
 Otherwise, replace "java" with the path to the java command of your JDK or JRE.<br>
 Execute the command in the directory where the JAR is situated or use its explicit path instead of ```<path to>```.<br>
 Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx) according to your preferences.
@@ -190,24 +193,22 @@ for or recommend this way of deployment, similar to using the WSL as mentioned a
 </p>
 
 ### Source code
-This is a Gradle project. In order to use the source code for your own software or do your own MORTAR build, download or 
-clone the repository and open it in a Gradle-supporting IDE (e.g. IntelliJ) as a Gradle project and execute the 
-build.gradle.kts file. Gradle will then take care of installing all dependencies. A Java Development Kit (JDK) of version 21.0.1 
-or higher must also be pre-installed and set as project JDK / project compiler.
-The Gradle build process is configured to include a specific Java Runtime Environment (JRE) in the distributions.
-For this to work, you need to create an "AdoptOpenJDK\jdk-21.0.1_12_jre\" folder and put the JRE with the specified version 
-into it (i.e. sub-folders of "AdoptOpenJDK\jdk-21.0.1_12_jre\" need to be "bin", "conf", "legal", "lib", etc.).
-If you are only going to use our custom deployment Gradle tasks, you do not need to download the JRE manually, the tasks 
-will take care of it automatically.
+See the [CONTRIBUTING.md](./CONTRIBUTING.md) file, section "Development Setup", for information on how to obtain and 
+build the source code of MORTAR locally. 
+
+## Contribution
+If you want to contribute to MORTAR, please read the [CONTRIBUTING.md](./CONTRIBUTING.md) file. The most important thing
+is that you should contribute on a development branch branching off the ``production`` branch, not the ``main`` branch.
+The ``main`` branch is reserved for stable releases only. When you have finished your development, please create a pull
+request to the ``production`` branch.
+If you are not sure about the contribution process, please contact us via email, GitHub issues, or GitHub discussions.
 
 ## Dependencies
 **Needs to be pre-installed:**
-* Java Development Kit (JDK) version 21.0.1 or higher
+* Java Development Kit (JDK) version 21.0.1 or higher (see [CONTRIBUTING.md](./CONTRIBUTING.md) for details on compatibility with higher versions)
     * [Adoptium Open JDK](https://adoptium.net) (as one possible source of the JDK)
-* Gradle version 8.14.3
-    * [Gradle Build Tool](https://gradle.org)
 
-**Managed by Gradle:**
+**Managed by Gradle (a [Gradle Build Tool](https://gradle.org) wrapper of version 8.14.3 is included in this repository):**
 * JavaFX version 21.0.1
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
