@@ -1,0 +1,80 @@
+name: Bug Report
+description: Report a bug to help improve MORTAR
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please provide as much detail as possible to help us diagnose the issue.
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Please describe the exact steps needed to trigger the bug.
+      placeholder: 1. Open the app... 2. Click on...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual-behavior
+    attributes:
+      label: Expected and Actual Behavior
+      description: What did you expect to happen, and what actually happened?
+      placeholder: |
+        Expected: The application should...
+        Actual: The application crashes when...
+    validations:
+      required: true
+  - type: dropdown
+    id: algorithm
+    attributes:
+      label: Fragmentation Algorithm
+      description: Which algorithm was in use when the bug occurred?
+      options:
+        - Not algorithm-related
+        - ErtlFunctionalGroupsFinder
+        - Sugar Removal Utility
+        - CDK-Scaffold (ScaffoldGenerator)
+        - MolWURCS
+        - Pipeline (multiple algorithms)
+    validations:
+      required: true
+  - type: textarea
+    id: input-data
+    attributes:
+      label: Input Data
+      description: The molecule(s) or file that trigger the bug - a SMILES string is ideal, or attach a minimal MOL/SDF/SMILES file.
+      placeholder: e.g. CC(=O)Oc1ccccc1C(=O)O
+    validations:
+      required: false
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: Please include the version.
+      placeholder: e.g. Windows 11, macOS Sonoma 14.5, Alma Linux 9
+    validations:
+      required: true
+  - type: input
+    id: mortar-version
+    attributes:
+      label: MORTAR Version and Installation
+      description: The MORTAR version plus how you installed and started it (platform installer, fat JAR, or built from source). If you use the fat JAR, please also state your JDK version - MORTAR requires 21.0.1 or newer.
+      placeholder: e.g. MORTAR v1.2.3, Windows installer
+    validations:
+      required: true
+  - type: textarea
+    id: log-file
+    attributes:
+      label: MORTAR Log File
+      description: Please attach or paste the log file if available. Within the application, there is a "Log file" button in the "About" view that opens the log file directory.
+      placeholder: Paste log contents here or upload the file to the issue.
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Relevant Screenshots
+      description: Please drag and drop any screenshots that help illustrate the problem.
+      placeholder: Add screenshots here.
+    validations:
+      required: false

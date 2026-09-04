@@ -1,0 +1,40 @@
+name: Feature Request
+description: Suggest a new feature or improvement for MORTAR
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the feature as concretely as possible, including what you are trying to achieve with it.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case
+      description: What are you trying to do that MORTAR does not support (well) today?
+      placeholder: When fragmenting large SD files, I need to...
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature or behaviour you would like to see.
+      placeholder: MORTAR should offer...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Are there workarounds or other approaches you have tried or thought about?
+      placeholder: Currently I work around this by...
+    validations:
+      required: false
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Literature references, screenshots, mock-ups, or example molecules/files that illustrate the request.
+      placeholder: Add any further context here.
+    validations:
+      required: false
