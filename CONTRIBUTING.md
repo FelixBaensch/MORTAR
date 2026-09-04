@@ -190,7 +190,7 @@ Please write clear and concise commit messages. A suggested format based on [Con
 <optional body explaining the motivation and details>
 ```
 
-**Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+**Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `build`, `ci`
 
 **Examples:**
 - `feat: add SMARTS-based fragmentation algorithm`
