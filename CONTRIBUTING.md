@@ -60,6 +60,9 @@ Feature requests and enhancement suggestions are welcome. Please open a [GitHub 
 4. Ensure your changes build and all tests pass.
 5. Open a pull request targeting the `production` branch with a clear description of your changes.
 
+Please note: By submitting a pull request, you agree that your contributions will be licensed under the project's
+[MIT License](LICENSE.txt).
+
 ---
 
 ## Development Setup
