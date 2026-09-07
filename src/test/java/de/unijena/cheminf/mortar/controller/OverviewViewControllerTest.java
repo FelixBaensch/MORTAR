@@ -34,6 +34,7 @@ import javafx.beans.property.Property;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 
@@ -152,7 +153,10 @@ public class OverviewViewControllerTest {
     //
     /**
      * Exercises the cached-structure-index accessors on a fresh, headless controller: the index reads back as -1 (no
-     * return-to-structure event has occurred) and the reset keeps it at -1.
+     * return-to-structure event has occurred), and after both pieces of return-to-structure state have been forced away
+     * from their defaults through the private fields, the reset puts them back — the index to the -1 marker and the
+     * return-to-structure flag to {@code false}. Setting the non-default values first is what makes this a test of the
+     * reset rather than of the initial state; the flag has no accessor, so it is read back reflectively.
      *
      * @throws Exception if anything goes wrong
      */
@@ -160,8 +164,53 @@ public class OverviewViewControllerTest {
     public void cachedIndexAccessorsTest() throws Exception {
         OverviewViewController tmpController = new OverviewViewController(Configuration.getInstance(), new SettingsContainer());
         Assertions.assertEquals(-1, tmpController.getCachedIndexOfStructureInMoleculeDataModelList());
+        OverviewViewControllerTest.setPrivateField(tmpController, "cachedIndexOfStructureInMoleculeDataModelList", 7);
+        OverviewViewControllerTest.setPrivateField(tmpController, "returnToStructureEventOccurred", true);
+        Assertions.assertEquals(7, tmpController.getCachedIndexOfStructureInMoleculeDataModelList(),
+                "the non-default index must be in place before the reset, otherwise the reset is not being tested");
         tmpController.resetCachedIndexOfStructureInMoleculeDataModelList();
-        Assertions.assertEquals(-1, tmpController.getCachedIndexOfStructureInMoleculeDataModelList());
+        Assertions.assertEquals(-1, tmpController.getCachedIndexOfStructureInMoleculeDataModelList(),
+                "the reset must put the cached index back to the -1 marker");
+        Assertions.assertEquals(false, OverviewViewControllerTest.getPrivateField(tmpController, "returnToStructureEventOccurred"),
+                "the reset must clear the return-to-structure flag");
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private helper methods" defaultstate="collapsed">
+    /**
+     * Sets a private instance field of the given controller reflectively. Used to force the return-to-structure state
+     * away from its defaults, which production only ever changes from the GUI handlers this toolkit-free test class
+     * cannot reach.
+     *
+     * @param aController the controller whose field is set
+     * @param aFieldName name of the private instance field
+     * @param aValue the value to set
+     */
+    private static void setPrivateField(OverviewViewController aController, String aFieldName, Object aValue) {
+        try {
+            Field tmpField = OverviewViewController.class.getDeclaredField(aFieldName);
+            tmpField.setAccessible(true);
+            tmpField.set(aController, aValue);
+        } catch (NoSuchFieldException | IllegalAccessException anException) {
+            throw new IllegalStateException("could not set field " + aFieldName, anException);
+        }
+    }
+    //
+    /**
+     * Reads a private instance field of the given controller reflectively.
+     *
+     * @param aController the controller whose field is read
+     * @param aFieldName name of the private instance field
+     * @return the current field value
+     */
+    private static Object getPrivateField(OverviewViewController aController, String aFieldName) {
+        try {
+            Field tmpField = OverviewViewController.class.getDeclaredField(aFieldName);
+            tmpField.setAccessible(true);
+            return tmpField.get(aController);
+        } catch (NoSuchFieldException | IllegalAccessException anException) {
+            throw new IllegalStateException("could not read field " + aFieldName, anException);
+        }
     }
     //</editor-fold>
 }
