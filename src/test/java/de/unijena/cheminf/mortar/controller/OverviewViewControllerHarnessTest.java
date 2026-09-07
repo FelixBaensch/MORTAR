@@ -77,8 +77,16 @@ import java.util.function.BiConsumer;
  * stage's scene root ({@code (OverviewView) stage.getScene().getRoot()}, no production widening) and fires the reachable
  * handlers before the helper's {@code finally} always closes the stage. Every drive is wrapped in a
  * {@code try (MockedStatic<GuiUtil> ...)} so no handler reaches a real headless {@code Alert}. The enlarged-structure
- * view opens a second, non-modal stage; the same window listener detects and closes it, and the driver guards against
- * being re-entered for that sub-stage (its scene root is not an {@link OverviewView}).
+ * view opens a SECOND {@link Stage} — window-modal like the overview stage and owned by it, but shown with a
+ * non-blocking {@code show()} rather than {@code showAndWait()}, so the driver is not suspended by it; the same window
+ * listener detects and closes it, and the driver guards against being re-entered for that sub-stage (its scene root is
+ * not an {@link OverviewView}).
+ * <p>
+ * Every drive runs against a molecule list in which the model at index 1 deliberately carries an unparsable SMILES
+ * string, so {@code createOverviewViewPage} exercises its depiction-failure error-label branch (see
+ * {@link #buildMolecules(int)}). That structure is the source of the {@code InvalidSmilesException} warnings this class
+ * logs to the console; they are expected output, not a defect. Index 0 is always a valid structure so the click and
+ * context-menu drives have a real depiction to target.
  * <p>
  * Private state that production never widens (the cached structure index, the structure context menu, and the
  * {@code createOverviewViewPage}/{@code showEnlargedStructureView} entry points) is reached via reflection, mirroring
@@ -350,7 +358,12 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     }
     //
     /**
-     * Builds a list of the given number of {@link MoleculeDataModel} instances from a small pool of valid SMILES codes.
+     * Builds a list of the given number of {@link MoleculeDataModel} instances from a small pool of valid SMILES codes,
+     * with one deliberate exception: if the requested count is greater than one, the model at index 1 is replaced by one
+     * carrying an unparsable SMILES string, so {@code createOverviewViewPage} exercises its depiction-failure
+     * error-label branch. That model is what makes this class log {@code InvalidSmilesException} warnings to the
+     * console; the warnings are expected. Index 0 always stays a valid structure so the click and context-menu drives
+     * have a real depiction to target.
      *
      * @param aCount number of molecule data models to build
      * @return a mutable list of molecule data models
