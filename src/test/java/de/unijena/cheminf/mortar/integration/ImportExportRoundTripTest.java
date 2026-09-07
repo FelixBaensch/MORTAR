@@ -56,12 +56,19 @@ import java.util.Set;
  * that molecules survive a full import &rarr; export &rarr; re-import cycle without loss of structural identity. Because
  * {@link Importer} populates every model's {@code getUniqueSmiles()} via the same {@code ChemUtil.createUniqueSmiles}
  * contract on every pass, structural identity is checkable as unique-SMILES set equality without any golden literals
- * (D-04/D-05). The SD/MOL and SMILES legs perform a real round trip; the CSV leg is an export-succeeds + content smoke
- * check only, because there is no CSV importer in MORTAR. Fixtures are reused in place from the {@code model/io}
+ * (D-04/D-05). All three legs — SD/MOL, SMILES and CSV — perform a real round trip; the CSV one works because
+ * {@code .csv} is a valid import extension that {@code Importer} routes to its SMILES reader, which picks the SMILES
+ * code out of either of the first two columns of a row. Fixtures are reused in place from the {@code model/io}
  * resources by absolute classpath path (D-06), since {@code getClass().getResource} resolves relative to this test's own
  * package. The en-GB locale guard is load-bearing for Message-resolved headers.
+ * <p>
+ * <strong>Round-tripping is a test device here, not a MORTAR use case.</strong> The application's real data flow is
+ * uni-directional: molecules are imported and fragments are exported, and the exported fragments are not meant to be
+ * read back in. Feeding an export back into the importer is done purely because it makes structural identity across the
+ * import and export routines checkable in one assertion; nothing in this class should be read as a statement about how
+ * MORTAR is used.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class ImportExportRoundTripTest {
@@ -80,7 +87,7 @@ public class ImportExportRoundTripTest {
     /**
      * Constructor. Sets the en-GB locale (load-bearing for Message-resolved export headers) and builds plain Importer and
      * Exporter instances with real, classpath-configured settings containers. Plain instances suffice because INT-03 only
-     * needs the public {@link Importer#importMoleculeFile(File, boolean, boolean)} entry point.
+     * needs the public {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} entry point.
      */
     public ImportExportRoundTripTest() {
         Locale.setDefault(Locale.of("en", "GB"));
