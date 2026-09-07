@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
@@ -39,18 +40,19 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Class to test the correct working of
- * {@link de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter}.
+ * Class to test the correct workings of
+ * {@link de.unijena.cheminf.mortar.model.fragmentation.algorithm.CDKExhaustiveFragmenter}.
  *
- * @author Jonas Schaub
+ * @author Tom Weiß
  * @version 1.0.0.0
  */
-public class SugarRemovalUtilityFragmenterTest {
+public class CDKExhaustiveFragmenterTest {
+
     /**
      * Constructor that sets the default locale to British English, which is important for the correct functioning of the
      * fragmenter because the settings tooltips are imported from the message.properties file.
      */
-    public SugarRemovalUtilityFragmenterTest() {
+    public CDKExhaustiveFragmenterTest() {
         Locale.setDefault(Locale.of("en", "GB"));
     }
     //
@@ -61,17 +63,22 @@ public class SugarRemovalUtilityFragmenterTest {
      */
     @Test
     public void basicTest() throws Exception {
-        SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
+        CDKExhaustiveFragmenter tmpFragmenter = new CDKExhaustiveFragmenter();
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getSugarTypeToRemoveSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::minimumFragmentSizeSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::inclusiveSplittableBondsLimitSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getInclusiveMaxTreeDepthSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getSaturationSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::preserveStereoSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getMinimumFragmentSize);
         for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
             Assertions.assertDoesNotThrow(tmpSetting::getName);
         }
     }
     //
     /**
-     * Does a test fragmentation on the COCONUT natural product CNP0151033 and prints the results.
+     * Does a test fragmentation on the COCONUT natural product CNP0151033.
      *
      * @throws Exception if anything goes wrong
      */
@@ -81,34 +88,45 @@ public class SugarRemovalUtilityFragmenterTest {
         SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Canonical));
         IAtomContainer tmpOriginalMolecule;
         List<IAtomContainer> tmpFragmentList;
-        String tmpSmilesCode;
-        SugarRemovalUtilityFragmenter tmpSRUFragmenter = new SugarRemovalUtilityFragmenter();
-        tmpSRUFragmenter.setReturnedFragmentsSetting(SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ALL_FRAGMENTS);
+        CDKExhaustiveFragmenter tmpFragmenter = new CDKExhaustiveFragmenter();
         tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 //CNP0151033
                 "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4");
-        Assertions.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpOriginalMolecule));
-        Assertions.assertFalse(tmpSRUFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
-        Assertions.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpOriginalMolecule));
-        tmpFragmentList = tmpSRUFragmenter.fragmentMolecule(tmpOriginalMolecule);
-        tmpSmilesCode = tmpSmiGen.create(tmpFragmentList.getFirst());
-        Assertions.assertNotNull(tmpFragmentList.getFirst().getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
-        //The sugar ring is not terminal and should not be removed, so the molecule remains unchanged
-        Assertions.assertEquals("O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4", tmpSmilesCode);
-        tmpSRUFragmenter.setRemoveOnlyTerminalSugarsSetting(false);
-        tmpFragmentList = tmpSRUFragmenter.fragmentMolecule(tmpOriginalMolecule);
-        tmpSmilesCode = tmpSmiGen.create(tmpFragmentList.getFirst());
-        Assertions.assertNotNull(tmpFragmentList.getFirst().getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
-        //Now that all sugars are removed, the sugar ring is removed and an unconnected structure remains
-        // the unconnected fragments are separated into different atom containers in the returned list
-        Assertions.assertEquals("O=C(OCC1(O)C(O)CC2C(=COC(OC(=O)CC(C)C)C21)CO)C", tmpSmilesCode);
-        Assertions.assertEquals("O=C(O)C=CC1=CC=C(O)C=C1", tmpSmiGen.create(tmpFragmentList.get(1)));
-        Assertions.assertNotNull(tmpFragmentList.get(2).getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
-        tmpSRUFragmenter.setRemoveOnlyTerminalSugarsSetting(true);
-        Assertions.assertFalse(tmpSRUFragmenter.shouldBeFiltered(tmpFragmentList.getFirst()));
-        Assertions.assertFalse(tmpSRUFragmenter.shouldBePreprocessed(tmpFragmentList.getFirst()));
-        Assertions.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpFragmentList.getFirst()));
-        IAtomContainer tmpAfterPreprocessing = tmpSRUFragmenter.applyPreprocessing(tmpFragmentList.getFirst());
-        Assertions.assertTrue(tmpSRUFragmenter.canBeFragmented(tmpAfterPreprocessing));
+        Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
+        Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
+        Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
+        tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
+        for (IAtomContainer tmpFragment : tmpFragmentList) {
+            Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
+        }
+        int tmpMinimumFragmentSize = 8;
+        tmpFragmenter.setMinimumFragmentSize(tmpMinimumFragmentSize);
+        Assertions.assertEquals(tmpMinimumFragmentSize, tmpFragmenter.getMinimumFragmentSize());
     }
+    //
+    /**
+     * Does a test fragmentation to test stereochemistry functions on
+     * the COCONUT natural product CNP0381655.1.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void fragmentationTestStereo() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        SmilesGenerator tmpSmiGen = new SmilesGenerator((SmiFlavor.Absolute));
+        IAtomContainer tmpOriginalMolecule;
+        List<IAtomContainer> tmpFragmentList;
+        CDKExhaustiveFragmenter tmpFragmenter = new CDKExhaustiveFragmenter();
+        tmpOriginalMolecule = tmpSmiPar.parseSmiles(
+                // CNP0381655.1
+                "CCCCC[C@H]1O[C@@H]1/C=C/C=O");
+
+        Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
+        tmpFragmenter.preserveStereoSettingProperty().set(false);
+        tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
+        for (IAtomContainer tmpFragment : tmpFragmentList) {
+            Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
+        }
+    }
+
 }
