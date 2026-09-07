@@ -131,51 +131,80 @@ public class SettingsViewControllerTest extends AbstractFxTestCase {
     }
     //
     /**
-     * Fires the cancel button and asserts both change-flag getters are still {@code false} — the cancel handler restores
-     * the recent properties and closes the stage without ever computing the flags, so they remain at their default. This
-     * is the false path for {@code hasKeepAtomContainerInDataModelChanged} (unreachable via apply). Exercises the cancel
-     * handler and its {@code setRecentProperties} restore branch.
+     * Moves the rows-per-page setting away from the captured baseline and then fires the cancel button, asserting that
+     * the {@code setRecentProperties} restore actually put the setting back — without the deliberate change first, the
+     * restore would be indistinguishable from doing nothing. Both change-flag getters are still {@code false}, because
+     * the cancel handler restores and closes without ever computing them; this is also the false path for
+     * {@code hasKeepAtomContainerInDataModelChanged}, which apply cannot reach.
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
     @Test
     public void cancelRestoresAndClosesLeavesBothFlagsFalseTest() throws Exception {
-        SettingsViewController tmpController = this.driveModal(
-                (aStage, aView, aContainer, aBaseline) -> aView.getCancelButton().fire());
+        AtomicReference<SettingsContainer> tmpContainerReference = new AtomicReference<>();
+        AtomicReference<Integer> tmpBaselineReference = new AtomicReference<>();
+        SettingsViewController tmpController = this.driveModal((aStage, aView, aContainer, aBaseline) -> {
+            tmpContainerReference.set(aContainer);
+            tmpBaselineReference.set(aBaseline.rowsPerPage());
+            aContainer.rowsPerPageSettingProperty().setValue(aBaseline.rowsPerPage() + 1);
+            aView.getCancelButton().fire();
+        });
         Assertions.assertNotNull(tmpController);
+        //the restore runs in a Platform.runLater, which driveModal drains before returning
+        Assertions.assertEquals(tmpBaselineReference.get().intValue(), tmpContainerReference.get().getRowsPerPageSetting(),
+                "cancelling must restore the rows-per-page setting the view was opened with");
         Assertions.assertFalse(tmpController.hasRowsPerPageChanged());
         Assertions.assertFalse(tmpController.hasKeepAtomContainerInDataModelChanged());
     }
     //
     /**
-     * Fires the default button and asserts the controller was constructed and the modal was driven without a throwable
-     * surfacing, exercising the default handler's {@code restoreDefaultSettings} branch (which does not close the stage;
-     * the harness's driver always closes it afterwards). Neither change flag is computed by this handler, so both stay
+     * Moves the rows-per-page setting away from its default and then fires the default button, asserting that the
+     * handler's {@code restoreDefaultSettings} branch actually put the setting back to
+     * {@link SettingsContainer#ROWS_PER_PAGE_SETTING_DEFAULT} — without the deliberate change first, the assertion would
+     * hold on a fresh container regardless of what the handler does. The handler does not close the stage; the
+     * harness's driver always closes it afterwards. Neither change flag is computed by this handler, so both stay
      * {@code false}.
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
     @Test
     public void defaultRestoresDefaultSettingsTest() throws Exception {
-        SettingsViewController tmpController = this.driveModal(
-                (aStage, aView, aContainer, aBaseline) -> aView.getDefaultButton().fire());
+        AtomicReference<SettingsContainer> tmpContainerReference = new AtomicReference<>();
+        SettingsViewController tmpController = this.driveModal((aStage, aView, aContainer, aBaseline) -> {
+            tmpContainerReference.set(aContainer);
+            aContainer.rowsPerPageSettingProperty().setValue(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 1);
+            aView.getDefaultButton().fire();
+        });
         Assertions.assertNotNull(tmpController);
+        Assertions.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT,
+                tmpContainerReference.get().getRowsPerPageSetting(),
+                "the default button must restore the rows-per-page setting to its default");
         Assertions.assertFalse(tmpController.hasRowsPerPageChanged());
         Assertions.assertFalse(tmpController.hasKeepAtomContainerInDataModelChanged());
     }
     //
     /**
-     * Invokes the stage close-request handler and asserts the controller was constructed and the modal was driven
-     * without a throwable surfacing, exercising the close-request lambda body and its {@code setRecentProperties}
-     * restore branch. Neither change flag is computed by this handler, so both stay {@code false}.
+     * Moves the rows-per-page setting away from the captured baseline and then invokes the stage close-request handler,
+     * asserting that its {@code setRecentProperties} restore actually put the setting back — as with cancel, the
+     * restore is only observable if the setting was changed first. Neither change flag is computed by this handler, so
+     * both stay {@code false}.
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
     @Test
     public void closeRequestHandlerRestoresAndClosesTest() throws Exception {
-        SettingsViewController tmpController = this.driveModal((aStage, aView, aContainer, aBaseline) ->
-                aStage.getOnCloseRequest().handle(new WindowEvent(aStage, WindowEvent.WINDOW_CLOSE_REQUEST)));
+        AtomicReference<SettingsContainer> tmpContainerReference = new AtomicReference<>();
+        AtomicReference<Integer> tmpBaselineReference = new AtomicReference<>();
+        SettingsViewController tmpController = this.driveModal((aStage, aView, aContainer, aBaseline) -> {
+            tmpContainerReference.set(aContainer);
+            tmpBaselineReference.set(aBaseline.rowsPerPage());
+            aContainer.rowsPerPageSettingProperty().setValue(aBaseline.rowsPerPage() + 1);
+            aStage.getOnCloseRequest().handle(new WindowEvent(aStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+        });
         Assertions.assertNotNull(tmpController);
+        //the restore runs in a Platform.runLater, which driveModal drains before returning
+        Assertions.assertEquals(tmpBaselineReference.get().intValue(), tmpContainerReference.get().getRowsPerPageSetting(),
+                "the close request must restore the rows-per-page setting the view was opened with");
         Assertions.assertFalse(tmpController.hasRowsPerPageChanged());
         Assertions.assertFalse(tmpController.hasKeepAtomContainerInDataModelChanged());
     }
