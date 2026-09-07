@@ -127,7 +127,7 @@ public class ViewToolsManager {
      * @param aFragmentDataModelList ObservableList that holds FragmentDataModel objects for visualisation in histogram
      * @throws NullPointerException if any param is null
      */
-    public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList) throws NullPointerException {
+    public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aFragmentDataModelList) throws NullPointerException {
         this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList);
     }
     /**
