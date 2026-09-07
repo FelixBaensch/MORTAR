@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -157,7 +158,8 @@ public abstract class AbstractFxTestCase {
                 Thread.setDefaultUncaughtExceptionHandler((aThread, aThrowable) -> {
                     if (Platform.isFxApplicationThread()) {
                         AbstractFxTestCase.FX_UNCAUGHT.set(aThrowable);
-                        AbstractFxTestCase.LOGGER.severe("Uncaught throwable on the JavaFX Application Thread: " + aThrowable);
+                        AbstractFxTestCase.LOGGER.log(Level.SEVERE,
+                                "Uncaught throwable on the JavaFX Application Thread: " + aThrowable, aThrowable);
                     } else {
                         AbstractFxTestCase.LOGGER.severe("Uncaught throwable on thread " + aThread.getName() + ": " + aThrowable);
                         if (tmpPreviousHandler != null) {
@@ -193,23 +195,41 @@ public abstract class AbstractFxTestCase {
     }
     //
     /**
-     * Always restores the original {@code user.home} system property and resets the {@link FileUtil} {@code appDirPath}
-     * cache. Instead of a JVM-wide {@code LogManager.reset()} (which would close and remove every handler on every
-     * logger in the entire JVM and is never restored), only {@link FileHandler}s on the root logger are closed and
-     * removed. This surgically releases any file handler that may have been rooted in the per-test temporary
-     * {@code user.home} (so the {@link TempDir} can be deleted, notably on Windows) without wiping the JVM-global
-     * logging configuration that sibling tests rely on.
+     * Fails the test if a throwable escaped onto the JavaFX Application Thread during it, and always restores the
+     * original {@code user.home} system property and resets the {@link FileUtil} {@code appDirPath} cache.
+     * <p>
+     * The FX-failure check has to live here rather than only in {@link #runAndWait(Runnable)} and
+     * {@link #waitForFxEvents()}: those surface whatever {@link #FX_UNCAUGHT} holds at the moment they are called, so a
+     * throwable raised by work that was deferred with {@code Platform.runLater} and dispatched after the test body's
+     * last call was silently overwritten by the next test's {@link #isolateUserHome(Path)} and the test passed green.
+     * The queue is therefore drained once more here before the slot is read. Because the check can fail the test, the
+     * restore work runs in a {@code finally} block so no temporary home or file handler leaks into a sibling test.
+     * <p>
+     * Instead of a JVM-wide {@code LogManager.reset()} (which would close and remove every handler on every logger in
+     * the entire JVM and is never restored), only {@link FileHandler}s on the root logger are closed and removed. This
+     * surgically releases any file handler that may have been rooted in the per-test temporary {@code user.home} (so
+     * the {@link TempDir} can be deleted, notably on Windows) without wiping the JVM-global logging configuration that
+     * sibling tests rely on.
      *
      * @throws Exception if the {@code appDirPath} cache field cannot be reset
      */
     @AfterEach
-    public void restoreUserHome() throws Exception {
-        AppDirTestUtil.restoreAppDirPath(this.originalUserHome);
-        Logger tmpRootLogger = LogManager.getLogManager().getLogger("");
-        for (Handler tmpHandler : tmpRootLogger.getHandlers()) {
-            if (tmpHandler instanceof FileHandler) {
-                tmpHandler.close();
-                tmpRootLogger.removeHandler(tmpHandler);
+    public void surfaceFxFailuresAndRestoreUserHome() throws Exception {
+        try {
+            AbstractFxTestCase.waitForFxEvents();
+            Throwable tmpUncaught = AbstractFxTestCase.FX_UNCAUGHT.getAndSet(null);
+            if (tmpUncaught != null) {
+                throw new AssertionError("A throwable escaped onto the JavaFX Application Thread during this test",
+                        tmpUncaught);
+            }
+        } finally {
+            AppDirTestUtil.restoreAppDirPath(this.originalUserHome);
+            Logger tmpRootLogger = LogManager.getLogManager().getLogger("");
+            for (Handler tmpHandler : tmpRootLogger.getHandlers()) {
+                if (tmpHandler instanceof FileHandler) {
+                    tmpHandler.close();
+                    tmpRootLogger.removeHandler(tmpHandler);
+                }
             }
         }
     }
