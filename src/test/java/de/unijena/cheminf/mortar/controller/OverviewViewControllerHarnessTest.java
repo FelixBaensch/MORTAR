@@ -225,7 +225,7 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     /**
      * Drives the FRAGMENTS_TAB data source (a distinct title branch and the "fragments" show-in-main-view menu-item
      * text) and fires the show-in-main-view context-menu item, which sets the return-to-structure flag and closes the
-     * view. Behavioral assertion: the drive completes without an exception escaping the FX thread.
+     * view. Behavioral assertion: the stage is no longer showing and the controller has discarded its GUI caches.
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
@@ -236,15 +236,17 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
             ContextMenu tmpContextMenu = (ContextMenu) OverviewViewControllerHarnessTest.getField(aController, "structureContextMenu");
             //last item is the enabled show-in-main-view item for a tab data source
             MenuItem tmpShowInMainViewItem = tmpContextMenu.getItems().get(tmpContextMenu.getItems().size() - 1);
+            Stage tmpStage = (Stage) aView.getScene().getWindow();
             tmpShowInMainViewItem.fire();
+            OverviewViewControllerHarnessTest.assertOverviewViewClosed(aController, tmpStage);
         });
     }
     //
     /**
      * Drives the PARENT_MOLECULES_SAMPLE data source (which highlights the first structure and disables the
      * show-in-main-view option) and closes the view through a fired {@code WINDOW_CLOSE_REQUEST}, exercising the
-     * close-request event filter and {@code closeOverviewViewEvent}. Behavioral assertion: the drive completes without
-     * an exception escaping the FX thread.
+     * close-request event filter and {@code closeOverviewViewEvent}. Behavioral assertion: the stage is no longer
+     * showing and the controller has discarded its GUI caches.
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
@@ -255,13 +257,14 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
             OverviewViewControllerHarnessTest.invokeCreateOverviewViewPage(aController, 0, 5, 5);
             Stage tmpStage = (Stage) aView.getScene().getWindow();
             tmpStage.fireEvent(new WindowEvent(tmpStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+            OverviewViewControllerHarnessTest.assertOverviewViewClosed(aController, tmpStage);
         });
     }
     //
     /**
      * Drives the ITEM_WITH_FRAGMENTS_SAMPLE data source (its own title branch) and closes the view via the close button,
-     * exercising the close-button action handler and {@code closeOverviewViewEvent}. Behavioral assertion: the drive
-     * completes without an exception escaping the FX thread.
+     * exercising the close-button action handler and {@code closeOverviewViewEvent}. Behavioral assertion: the stage is
+     * no longer showing and the controller has discarded its GUI caches.
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
@@ -270,7 +273,9 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
         this.driveOverview(OverviewViewController.DataSources.ITEM_WITH_FRAGMENTS_SAMPLE, null, (aController, aView) -> {
             OverviewViewControllerHarnessTest.setBooleanField(aController, "createStructureImages", true);
             OverviewViewControllerHarnessTest.invokeCreateOverviewViewPage(aController, 0, 5, 5);
+            Stage tmpStage = (Stage) aView.getScene().getWindow();
             aView.getCloseButton().fire();
+            OverviewViewControllerHarnessTest.assertOverviewViewClosed(aController, tmpStage);
         });
     }
     //
@@ -355,6 +360,27 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
         if (tmpDriverError.get() != null) {
             throw new AssertionError("Overview driver failed on the JavaFX Application Thread", tmpDriverError.get());
         }
+    }
+    //
+    /**
+     * Asserts that a close path has actually torn the overview view down: the modal stage is no longer showing and the
+     * controller's GUI caches ({@code overviewViewStage}, {@code overviewView}, {@code overviewViewTitle} and
+     * {@code structureContextMenu}) have been nulled by {@code clearGUICachesAtClosing}. The controller instance itself
+     * survives a close, so only its caches can be asserted on.
+     *
+     * @param aController the controller whose view was closed
+     * @param aStage the modal overview stage that was showing before the close was triggered
+     */
+    private static void assertOverviewViewClosed(OverviewViewController aController, Stage aStage) {
+        Assertions.assertFalse(aStage.isShowing(), "the overview stage must no longer be showing after the close");
+        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "overviewViewStage"),
+                "closing must discard the cached overview stage");
+        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "overviewView"),
+                "closing must discard the cached overview view");
+        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "overviewViewTitle"),
+                "closing must discard the cached overview view title");
+        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "structureContextMenu"),
+                "closing must discard the cached structure context menu");
     }
     //
     /**
