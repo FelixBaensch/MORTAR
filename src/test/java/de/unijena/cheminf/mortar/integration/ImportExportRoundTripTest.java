@@ -165,20 +165,24 @@ public class ImportExportRoundTripTest {
     }
     //
     /**
-     * CSV export smoke leg: builds a list of real {@link FragmentDataModel} instances (mirroring the
-     * {@code ExporterTest.buildFragmentList()} idiom), exports them to a {@code @TempDir} CSV via
-     * {@link Exporter#exportCsvFile(File, List, String, char, TabNames)} on the FRAGMENTS tab, and asserts the returned
-     * failed-list is empty, the file exists and is non-empty, and the file content contains at least one of the fragments'
-     * unique SMILES. Real {@code FragmentDataModel} instances are required because the FRAGMENTS branch casts every
-     * element to {@code FragmentDataModel} (a plain imported {@code MoleculeDataModel} would land in the failed-list and
-     * write no data rows). There is no CSV importer in MORTAR, so this is an export-succeeds + content smoke check only,
-     * not a structural re-import; the round-trip identity is covered by the SD/MOL and SMILES legs.
+     * CSV round-trip identity: builds a list of real {@link FragmentDataModel} instances (mirroring the
+     * {@code ExporterTest.buildFragmentList()} idiom), collects unique-SMILES set A, exports them to a {@code @TempDir}
+     * CSV via {@link Exporter#exportCsvFile(File, List, String, char, TabNames)} on the FRAGMENTS tab, asserts the
+     * returned failed-list is empty and the file exists and is non-empty, re-imports the exported file, collects
+     * unique-SMILES set B, and asserts the two sets are equal. Real {@code FragmentDataModel} instances are required
+     * because the FRAGMENTS branch casts every element to {@code FragmentDataModel} (a plain imported
+     * {@code MoleculeDataModel} would land in the failed-list and write no data rows).
+     * <p>
+     * The re-import goes through the very same {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)}
+     * entry point as the other two legs: {@code .csv} is a valid import extension that {@code Importer} routes to its
+     * SMILES reader, which finds a SMILES code in either of the first two columns of each row — and the fragments-tab
+     * CSV writes the unique SMILES into column one.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void exportCsvFragmentsTabWritesFragmentUniqueSmiles(@TempDir Path aTempDir) throws Exception {
+    public void roundTripCsvFragmentsTabPreservesUniqueSmilesIdentity(@TempDir Path aTempDir) throws Exception {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         List<MoleculeDataModel> tmpFragmentList = new ArrayList<>();
         String[] tmpSmilesCodes = {"c1ccccc1", "CCO", "O=CO"};
@@ -191,21 +195,23 @@ public class ImportExportRoundTripTest {
             tmpFragment.setMoleculePercentage(0.20);
             tmpFragmentList.add(tmpFragment);
         }
+        Set<String> tmpSetA = new HashSet<>();
+        for (MoleculeDataModel tmpFragment : tmpFragmentList) {
+            tmpSetA.add(tmpFragment.getUniqueSmiles());
+        }
         File tmpOut = aTempDir.resolve("out.csv").toFile();
         List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpFragmentList, "INT03", ',', TabNames.FRAGMENTS);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
         Assertions.assertTrue(tmpOut.exists());
         Assertions.assertTrue(tmpOut.length() > 0);
-        String tmpContent = Files.readString(tmpOut.toPath());
-        boolean tmpContainsExpectedFragment = false;
-        for (MoleculeDataModel tmpFragment : tmpFragmentList) {
-            if (tmpContent.contains(tmpFragment.getUniqueSmiles())) {
-                tmpContainsExpectedFragment = true;
-                break;
-            }
+        List<MoleculeDataModel> tmpReimported = this.importer.importMoleculeFile(tmpOut, false, true, false);
+        Assertions.assertNotNull(tmpReimported);
+        Set<String> tmpSetB = new HashSet<>();
+        for (MoleculeDataModel tmpModel : tmpReimported) {
+            tmpSetB.add(tmpModel.getUniqueSmiles());
         }
-        Assertions.assertTrue(tmpContainsExpectedFragment);
+        Assertions.assertEquals(tmpSetA, tmpSetB);
     }
     //</editor-fold>
 }
