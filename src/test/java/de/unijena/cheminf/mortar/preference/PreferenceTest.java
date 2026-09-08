@@ -195,9 +195,10 @@ public class PreferenceTest {
         Assertions.assertEquals("Hello world", tmpPref.getContent());
         Assertions.assertThrows(IllegalArgumentException.class, () -> tmpPref.setContent("invalid#term"));
         Assertions.assertTrue(SingleTermPreference.isValidContent("A valid term"));
-        //a tilde is legal: it occurs in 8.3 short paths on Windows (C:\Users\RUNNER~1\...) and in home-relative
-        //paths on Linux, and the recent-directory setting is persisted through this preference
-        Assertions.assertTrue(SingleTermPreference.isValidContent("C:\\Users\\RUNNER~1\\AppData\\Local\\Temp"));
+        //a tilde is legal: it occurs in 8.3 short paths on Windows and in home-relative paths on Linux, and the
+        //recent-directory setting is persisted through this preference. The short-path case is what made this matter:
+        //a Windows account whose name exceeds eight characters is abbreviated this way in the temporary directory path.
+        Assertions.assertTrue(SingleTermPreference.isValidContent("C:\\Users\\LONGUS~1\\AppData\\Local\\Temp"));
         Assertions.assertTrue(SingleTermPreference.isValidContent("~/molecules"));
         Assertions.assertDoesNotThrow(() -> new SingleTermPreference("Tilde path", "~/molecules"));
         Assertions.assertFalse(SingleTermPreference.isValidContent(null));
