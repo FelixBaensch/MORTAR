@@ -40,6 +40,8 @@ import java.awt.Graphics2D;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link DepictionUtil}.
@@ -48,20 +50,39 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 class DepictionUtilTest {
+    //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
+    /**
+     * Bounded wait (in seconds) for the JavaFX toolkit boot, so a stuck start fails fast instead of hanging the build.
+     * Matches the bound {@code AbstractFxTestCase} applies to the same boot for the controller tests.
+     */
+    private static final long TOOLKIT_BOOT_TIMEOUT_SECONDS = 10L;
+    //</editor-fold>
+    //
     //<editor-fold desc="Tests">
     /**
      * Boots the JavaFX toolkit once per JVM (headless via Monocle, configured in {@code tasks.test}) so the
      * image-producing methods of {@link DepictionUtil} — which convert an AWT {@link java.awt.image.BufferedImage} to a
-     * JavaFX {@link Image} via {@code SwingFXUtils} — can allocate {@code WritableImage}s. Guarded against a repeated
-     * start should a sibling test already have booted the toolkit in this JVM.
+     * JavaFX {@link Image} via {@code SwingFXUtils} — can allocate {@code WritableImage}s.
+     * <p>
+     * {@link Platform#startup(Runnable)} returns before the toolkit is actually up, so the boot is awaited on a bounded
+     * latch rather than assumed to have completed; a plain call would let the first test run against a toolkit that is
+     * still starting. A second start throws {@link IllegalStateException}, which means a sibling test class already
+     * booted the toolkit in this JVM and there is nothing left to wait for.
+     *
+     * @throws InterruptedException if the wait for the toolkit boot is interrupted
      */
     @BeforeAll
-    static void initToolkit() {
+    static void initToolkit() throws InterruptedException {
+        CountDownLatch tmpLatch = new CountDownLatch(1);
         try {
-            Platform.startup(() -> { });
+            Platform.startup(tmpLatch::countDown);
         } catch (IllegalStateException anException) {
-            //toolkit already started by another test in this JVM -> nothing to do
+            //toolkit already started by another test class in this JVM -> already usable, nothing to await
+            return;
         }
+        Assertions.assertTrue(tmpLatch.await(DepictionUtilTest.TOOLKIT_BOOT_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                "the JavaFX toolkit did not start within "
+                        + DepictionUtilTest.TOOLKIT_BOOT_TIMEOUT_SECONDS + " seconds");
     }
     //
     /**

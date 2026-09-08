@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -775,7 +776,7 @@ public class FragmentationServiceTest {
                 tmpGuiUtilMock.when(() -> GuiUtil.guiMessageAlert(Mockito.any(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
                         .thenAnswer(anInvocation -> {
                             tmpAlertCount.incrementAndGet();
-                            return java.util.Optional.empty();
+                            return Optional.empty();
                         });
                 Assertions.assertDoesNotThrow(tmpService::persistFragmenterSettings);
                 Assertions.assertDoesNotThrow(tmpService::persistSelectedFragmenterAndPipeline);

@@ -35,6 +35,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -242,7 +243,7 @@ public class RGBColorPreferenceTest {
     @Test
     public void testMalformedComponentReload(@TempDir Path aTempDir) throws Exception {
         Path tmpFile = aTempDir.resolve("malformed-rgb.txt");
-        Files.write(tmpFile, java.util.List.of(
+        Files.write(tmpFile, List.of(
                 "1.0.0.0",
                 "Malformed colour",
                 "00000000-0000-0000-0000-000000000000",

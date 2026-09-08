@@ -31,7 +31,6 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -267,9 +266,7 @@ public class CollectionUtilTest {
      */
     @Test
     public void privateConstructorTest() throws Exception {
-        Constructor<CollectionUtil> tmpConstructor = CollectionUtil.class.getDeclaredConstructor();
-        tmpConstructor.setAccessible(true);
-        Assertions.assertNotNull(tmpConstructor.newInstance());
+        TestUtil.assertPrivateConstructorIsInvocable(CollectionUtil.class);
     }
     //</editor-fold>
 }

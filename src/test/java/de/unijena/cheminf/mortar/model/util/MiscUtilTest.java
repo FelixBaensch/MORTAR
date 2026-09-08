@@ -28,7 +28,6 @@ package de.unijena.cheminf.mortar.model.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Constructor;
 
 /**
  * Test class for the pure-logic MiscUtil routines: compareVersions, getTimestampInStandardFormat, getGloballyUniqueID
@@ -139,9 +138,7 @@ public class MiscUtilTest {
      */
     @Test
     public void privateConstructorTest() throws Exception {
-        Constructor<MiscUtil> tmpConstructor = MiscUtil.class.getDeclaredConstructor();
-        tmpConstructor.setAccessible(true);
-        Assertions.assertNotNull(tmpConstructor.newInstance());
+        TestUtil.assertPrivateConstructorIsInvocable(MiscUtil.class);
     }
     //</editor-fold>
 }

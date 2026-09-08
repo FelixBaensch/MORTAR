@@ -37,9 +37,9 @@ import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
+import java.util.Locale;
 
 /**
  * Tests for the utility functions in FileUtil. The deterministic helpers are exercised directly; the file/directory
@@ -59,7 +59,7 @@ class FileUtilTest {
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public FileUtilTest() throws Exception {
-        java.util.Locale.setDefault(java.util.Locale.of("en", "GB"));
+        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
@@ -411,10 +411,8 @@ class FileUtilTest {
      * Tests that the private parameter-less constructor of the FileUtil utility class can be invoked reflectively.
      */
     @Test
-    public void testPrivateConstructor() throws Exception {
-        Constructor<FileUtil> tmpConstructor = FileUtil.class.getDeclaredConstructor();
-        tmpConstructor.setAccessible(true);
-        Assertions.assertNotNull(tmpConstructor.newInstance());
+    public void privateConstructorTest() throws Exception {
+        TestUtil.assertPrivateConstructorIsInvocable(FileUtil.class);
     }
     //</editor-fold>
     //

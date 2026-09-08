@@ -41,10 +41,10 @@ import org.openscience.cdk.tools.manipulator.HydrogenState;
 
 import java.io.File;
 import java.io.FileReader;
-import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -450,7 +450,7 @@ class ChemUtilTest {
      */
     @Test
     public void testHasCoordinatesWithUnparseableSmiles() throws Exception {
-        MoleculeDataModel tmpMolecule = new MoleculeDataModel("not_a_valid_smiles", "BrokenMolecule", new java.util.HashMap<>());
+        MoleculeDataModel tmpMolecule = new MoleculeDataModel("not_a_valid_smiles", "BrokenMolecule", new HashMap<>());
         Assertions.assertFalse(ChemUtil.has2DCoordinates(tmpMolecule));
         Assertions.assertFalse(ChemUtil.has3DCoordinates(tmpMolecule));
     }
@@ -504,9 +504,7 @@ class ChemUtilTest {
      * otherwise-unreachable constructor line.
      */
     @Test
-    public void testPrivateConstructor() throws Exception {
-        Constructor<ChemUtil> tmpConstructor = ChemUtil.class.getDeclaredConstructor();
-        tmpConstructor.setAccessible(true);
-        Assertions.assertNotNull(tmpConstructor.newInstance());
+    public void privateConstructorTest() throws Exception {
+        TestUtil.assertPrivateConstructorIsInvocable(ChemUtil.class);
     }
 }

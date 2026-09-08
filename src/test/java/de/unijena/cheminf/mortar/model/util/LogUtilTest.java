@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
 import java.nio.file.Path;
+import java.util.Locale;
 
 /**
  * Tests for the logging utilities in LogUtil. Every environment-coupled test uses the mandatory isolation technique:
@@ -66,7 +66,7 @@ class LogUtilTest {
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public LogUtilTest() throws Exception {
-        java.util.Locale.setDefault(java.util.Locale.of("en", "GB"));
+        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
@@ -207,10 +207,8 @@ class LogUtilTest {
      * Tests that the private parameter-less constructor of the LogUtil utility class can be invoked reflectively.
      */
     @Test
-    public void testPrivateConstructor() throws Exception {
-        Constructor<LogUtil> tmpConstructor = LogUtil.class.getDeclaredConstructor();
-        tmpConstructor.setAccessible(true);
-        Assertions.assertNotNull(tmpConstructor.newInstance());
+    public void privateConstructorTest() throws Exception {
+        TestUtil.assertPrivateConstructorIsInvocable(LogUtil.class);
     }
     //</editor-fold>
     //
