@@ -73,10 +73,24 @@ import java.util.concurrent.atomic.AtomicInteger;
  * export path is exercised headlessly (CDK depiction renders to an AWT BufferedImage; JavaFX appears only as a thin
  * pixel-copy round trip), asserted by magic bytes only. The en-GB locale guard is load-bearing because the CSV/PDF
  * headers come from {@link Message}.
+ * <p>
+ * Several tests deliberately feed a data model carrying an unparsable SMILES string (see
+ * {@link #UNPARSABLE_SMILES}) into an export, so the export routine's per-item failure branch is reached and the model
+ * lands in the returned failed-list. CDK logs a parse warning for each of those models; that console output is expected
+ * here, not a defect.
  *
  * @author Felix Baensch
  */
 public class ExporterTest {
+    //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
+    /**
+     * A deliberately unparsable SMILES string. A data model carrying it cannot be depicted or written, which is how the
+     * tests below reach the per-item failure branches of the export routines; the CDK parse warnings it provokes on the
+     * console are expected output.
+     */
+    private static final String UNPARSABLE_SMILES = "not_a_valid_smiles";
+    //</editor-fold>
+    //
     //<editor-fold desc="static initializer">
     /**
      * Sets the default locale to British English so the {@link Message}-resolved CSV/PDF headers are deterministic.
@@ -886,7 +900,7 @@ public class ExporterTest {
     @Test
     public void testExportFragmentsAsChemicalFileSingleSdfInvalidFragment(@TempDir Path aTempDir) throws Exception {
         List<MoleculeDataModel> tmpFragments = new ArrayList<>();
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
+        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
         tmpInvalidFragment.setAbsoluteFrequency(1);
         tmpFragments.add(tmpInvalidFragment);
         File tmpOut = aTempDir.resolve("single_invalid.sdf").toFile();
@@ -908,7 +922,7 @@ public class ExporterTest {
     @Test
     public void testExportFragmentsAsChemicalFileSeparateSdfInvalidFragment(@TempDir Path aTempDir) throws Exception {
         List<MoleculeDataModel> tmpFragments = new ArrayList<>();
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
+        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
         tmpInvalidFragment.setAbsoluteFrequency(1);
         tmpFragments.add(tmpInvalidFragment);
         File tmpDir = aTempDir.toFile();
@@ -930,7 +944,7 @@ public class ExporterTest {
     @Test
     public void testExportFragmentsAsChemicalFilePdbInvalidFragment(@TempDir Path aTempDir) throws Exception {
         List<MoleculeDataModel> tmpFragments = new ArrayList<>();
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
+        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
         tmpInvalidFragment.setAbsoluteFrequency(1);
         tmpFragments.add(tmpInvalidFragment);
         File tmpDir = aTempDir.toFile();
@@ -952,7 +966,7 @@ public class ExporterTest {
     @Test
     public void testExportPdfFileFragmentsTabFragmentWithInvalidStructure(@TempDir Path aTempDir) throws Exception {
         List<MoleculeDataModel> tmpFragments = new ArrayList<>();
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
+        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
         tmpInvalidFragment.setAbsoluteFrequency(1);
         tmpFragments.add(tmpInvalidFragment);
         ObservableList<MoleculeDataModel> tmpMolecules = FXCollections.observableArrayList(tmpFragments);
@@ -978,7 +992,7 @@ public class ExporterTest {
     @Test
     public void testExportPdfFileItemizationTabMoleculeWithInvalidStructure(@TempDir Path aTempDir) throws Exception {
         List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        MoleculeDataModel tmpInvalidMolecule = new MoleculeDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
+        MoleculeDataModel tmpInvalidMolecule = new MoleculeDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
         ObservableList<MoleculeDataModel> tmpMolecules = FXCollections.observableArrayList(tmpInvalidMolecule);
         File tmpOut = aTempDir.resolve("items_invalid.pdf").toFile();
         List<String> tmpFailed = this.exporter.exportPdfFile(
@@ -1012,7 +1026,7 @@ public class ExporterTest {
         //a valid fragment (renders normally) plus a fragment whose unique SMILES is unparsable so getAtomContainer throws
         FragmentDataModel tmpValidFragment = new FragmentDataModel(tmpParser.parseSmiles("c1ccccc1"), false);
         tmpValidFragment.setAbsoluteFrequency(1);
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
+        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
         tmpInvalidFragment.setAbsoluteFrequency(1);
         List<FragmentDataModel> tmpMoleculeFragments =
                 new ArrayList<>(List.of(tmpValidFragment, tmpInvalidFragment));
