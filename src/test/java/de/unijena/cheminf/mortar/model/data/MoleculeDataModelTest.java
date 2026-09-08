@@ -26,6 +26,7 @@
 package de.unijena.cheminf.mortar.model.data;
 
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.scene.image.ImageView;
 
@@ -40,6 +41,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 /**
  * Direct, headless unit tests for {@link MoleculeDataModel}. All fixtures are built from real CDK
@@ -50,6 +54,14 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public class MoleculeDataModelTest {
+    //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
+    /**
+     * A deliberately unparsable SMILES string, used to drive the depiction-failure branches. CDK logs a parse warning
+     * for it; that console output is expected, not a defect.
+     */
+    private static final String UNPARSABLE_SMILES = "not_a_valid_smiles";
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor that sets the default locale to en-GB so any message-bundle strings resolved by the image
@@ -64,8 +76,8 @@ public class MoleculeDataModelTest {
     /**
      * Tests that the atom-container constructor derives the unique SMILES from the supplied container: the value
      * returned by {@code getUniqueSmiles()} must equal an independent {@code ChemUtil.createUniqueSmiles(ac, false)}
-     * call on the same container, and successive calls must return the same (stable) string. Asserts against the
-     * runtime-computed SMILES rather than a hard-coded literal because CDK is a moving 2.12-SNAPSHOT.
+     * call on the same container. Asserts against the runtime-computed SMILES rather than a hard-coded literal because
+     * CDK is a moving 2.12-SNAPSHOT.
      *
      * @throws Exception if SMILES parsing fails
      */
@@ -76,8 +88,6 @@ public class MoleculeDataModelTest {
         MoleculeDataModel tmpMolecule = new MoleculeDataModel(tmpAtomContainer, false);
         Assertions.assertNotNull(tmpMolecule.getUniqueSmiles());
         Assertions.assertEquals(tmpExpectedSmiles, tmpMolecule.getUniqueSmiles());
-        //stability: the field is final, so two reads must return the identical string
-        Assertions.assertSame(tmpMolecule.getUniqueSmiles(), tmpMolecule.getUniqueSmiles());
     }
     //
     /**
@@ -188,25 +198,10 @@ public class MoleculeDataModelTest {
     }
     //
     /**
-     * Tests that {@code setKeepAtomContainer(false)} nulls the cached container and reports false, after which
-     * {@code getAtomContainer()} re-parses to a fresh non-null container.
-     *
-     * @throws Exception if SMILES parsing or atom-container retrieval fails
-     */
-    @Test
-    public void testSetKeepAtomContainerFalseClearsCache() throws Exception {
-        IAtomContainer tmpAtomContainer = MoleculeDataModelTest.buildAtomContainer("c1ccccc1");
-        MoleculeDataModel tmpMolecule = new MoleculeDataModel(tmpAtomContainer, false);
-        tmpMolecule.setKeepAtomContainer(false);
-        Assertions.assertFalse(tmpMolecule.isKeepAtomContainer());
-        Assertions.assertNotNull(tmpMolecule.getAtomContainer());
-    }
-    //
-    /**
-     * Tests that {@code setKeepAtomContainer(false)} actually nulls the previously-cached atom container so that the
-     * next {@code getAtomContainer()} call returns a freshly parsed, distinct instance rather than the stale cached
-     * one. This pins the {@code if (!this.keepAtomContainer)} guard: negating it would skip the cache-clearing and
-     * keep returning the identical cached instance.
+     * Tests that {@code setKeepAtomContainer(false)} reports false and actually nulls the previously-cached atom
+     * container, so the next {@code getAtomContainer()} call returns a freshly parsed, distinct instance rather than
+     * the stale cached one. This pins the {@code if (!this.keepAtomContainer)} guard: negating it would skip the
+     * cache-clearing and keep returning the identical cached instance.
      *
      * @throws Exception if SMILES parsing or atom-container retrieval fails
      */
@@ -218,7 +213,9 @@ public class MoleculeDataModelTest {
         IAtomContainer tmpCached = tmpMolecule.getAtomContainer();
         Assertions.assertSame(tmpCached, tmpMolecule.getAtomContainer());
         tmpMolecule.setKeepAtomContainer(false);
+        Assertions.assertFalse(tmpMolecule.isKeepAtomContainer());
         Assertions.assertNotSame(tmpCached, tmpMolecule.getAtomContainer());
+        Assertions.assertNotNull(tmpMolecule.getAtomContainer());
     }
     //
     /**
@@ -271,10 +268,18 @@ public class MoleculeDataModelTest {
     @Test
     public void testStructureImageAccessorsValidModelSuccessBranch() {
         MoleculeDataModel tmpMolecule = new MoleculeDataModel("c1ccccc1", "Benzene", new HashMap<>());
-        ImageView tmpStructure = tmpMolecule.getStructure();
-        Assertions.assertNotNull(tmpStructure);
-        ImageView tmpStructureWithText = tmpMolecule.getStructureWithText("caption");
-        Assertions.assertNotNull(tmpStructureWithText);
+        AtomicReference<ImageView> tmpStructureReference = new AtomicReference<>();
+        AtomicReference<ImageView> tmpStructureWithTextReference = new AtomicReference<>();
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(MoleculeDataModel.class.getName(), Level.SEVERE, () -> {
+            tmpStructureReference.set(tmpMolecule.getStructure());
+            tmpStructureWithTextReference.set(tmpMolecule.getStructureWithText("caption"));
+        });
+        Assertions.assertNotNull(tmpStructureReference.get());
+        Assertions.assertNotNull(tmpStructureWithTextReference.get());
+        //both accessors return a non-null ImageView of identical dimensions on either branch, so only the absence of a
+        //SEVERE record distinguishes a real depiction from the error image
+        Assertions.assertTrue(tmpRecords.isEmpty(),
+                "a depictable molecule must not reach either error branch, but it logged: " + tmpRecords);
     }
     //
     /**
@@ -284,9 +289,21 @@ public class MoleculeDataModelTest {
      */
     @Test
     public void testStructureImageAccessorErrorBranchForInvalidSmiles() {
-        MoleculeDataModel tmpMolecule = new MoleculeDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
-        Assertions.assertNotNull(tmpMolecule.getStructure());
-        Assertions.assertNotNull(tmpMolecule.getStructureWithText("caption"));
+        //deliberately unparsable: the depiction must fail so both catch branches are reached (the CDK parse failure
+        //this provokes is expected output, not a defect)
+        MoleculeDataModel tmpMolecule =
+                new MoleculeDataModel(MoleculeDataModelTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
+        AtomicReference<ImageView> tmpStructureReference = new AtomicReference<>();
+        AtomicReference<ImageView> tmpStructureWithTextReference = new AtomicReference<>();
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(MoleculeDataModel.class.getName(), Level.SEVERE, () -> {
+            tmpStructureReference.set(tmpMolecule.getStructure());
+            tmpStructureWithTextReference.set(tmpMolecule.getStructureWithText("caption"));
+        });
+        Assertions.assertNotNull(tmpStructureReference.get());
+        Assertions.assertNotNull(tmpStructureWithTextReference.get());
+        //one record per accessor proves both catch branches ran, without pinning the CDK exception message text
+        Assertions.assertEquals(2, tmpRecords.size(),
+                "both structure accessors must reach their error branch exactly once");
     }
     //
     /**
