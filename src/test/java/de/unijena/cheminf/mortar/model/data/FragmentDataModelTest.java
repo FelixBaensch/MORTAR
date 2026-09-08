@@ -25,7 +25,13 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
+import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
+
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,7 +40,11 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 /**
  * Direct, headless unit tests for {@link FragmentDataModel}. All fixtures are built from real CDK
@@ -47,6 +57,14 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class FragmentDataModelTest {
+    //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
+    /**
+     * A deliberately unparsable SMILES string, used to drive the depiction-failure branches. CDK logs a parse warning
+     * for it; that console output is expected, not a defect.
+     */
+    private static final String UNPARSABLE_SMILES = "not_a_valid_smiles";
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor that sets the default locale to en-GB so any message-bundle strings resolved by the parent-structure
@@ -210,8 +228,11 @@ public class FragmentDataModelTest {
     /**
      * Tests the empty-parent-Set state of a freshly built fragment: {@code getFirstParentMolecule()} is null,
      * {@code getParentMoleculeName()} is the empty string, and {@code getParentMoleculeStructure()} returns the
-     * non-null "No parent molecules" error {@code ImageView} (headless-safe). Uses a fresh fragment so no cached
-     * first-parent leaks in from another state.
+     * "no parent molecules" error image. The returned image is compared pixel-for-pixel against an independently
+     * rendered {@code DepictionUtil.depictErrorImage} of the same message and size, so the test distinguishes the
+     * error-image branch from a real depiction instead of only checking for non-null (both branches return a non-null
+     * {@code ImageView} of identical dimensions). The message is resolved from the bundle, so this also pins that the
+     * caption is not a hardcoded string. Uses a fresh fragment so no cached first-parent leaks in from another state.
      *
      * @throws Exception if SMILES parsing fails
      */
@@ -222,6 +243,12 @@ public class FragmentDataModelTest {
         Assertions.assertEquals("", tmpFragment.getParentMoleculeName());
         ImageView tmpStructure = tmpFragment.getParentMoleculeStructure();
         Assertions.assertNotNull(tmpStructure);
+        Image tmpExpectedErrorImage = DepictionUtil.depictErrorImage(
+                Message.get("FragmentDataModel.parentMoleculeStructure.noParentMolecules"),
+                (int) tmpFragment.getStructureImageWidth(),
+                (int) tmpFragment.getStructureImageHeight());
+        Assertions.assertTrue(FragmentDataModelTest.imagesAreEqual(tmpExpectedErrorImage, tmpStructure.getImage()),
+                "an empty parent Set must yield the bundle-resolved 'no parent molecules' error image");
     }
     //
     /**
@@ -282,8 +309,13 @@ public class FragmentDataModelTest {
         FragmentDataModel tmpFragment = FragmentDataModelTest.buildFragment("c1ccccc1");
         MoleculeDataModel tmpParent = FragmentDataModelTest.buildParent("CCO", "Ethanol");
         tmpFragment.getParentMolecules().add(tmpParent);
-        ImageView tmpStructure = tmpFragment.getParentMoleculeStructure();
-        Assertions.assertNotNull(tmpStructure);
+        AtomicReference<ImageView> tmpStructureReference = new AtomicReference<>();
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(FragmentDataModel.class.getName(), Level.SEVERE,
+                () -> tmpStructureReference.set(tmpFragment.getParentMoleculeStructure()));
+        Assertions.assertNotNull(tmpStructureReference.get());
+        //the depiction branch logs nothing; only the catch branch publishes a SEVERE record
+        Assertions.assertTrue(tmpRecords.isEmpty(),
+                "a depictable parent must not reach the error branch, but it logged: " + tmpRecords);
     }
     //
     /**
@@ -296,14 +328,51 @@ public class FragmentDataModelTest {
     @Test
     public void testGetParentMoleculeStructureBadParentBranch() throws Exception {
         FragmentDataModel tmpFragment = FragmentDataModelTest.buildFragment("c1ccccc1");
-        MoleculeDataModel tmpBadParent = new MoleculeDataModel("not_a_valid_smiles", "Invalid", new HashMap<>());
+        //deliberately unparsable: the depiction of this parent must fail so the catch branch is reached (the CDK parse
+        //failure this provokes is expected output, not a defect)
+        MoleculeDataModel tmpBadParent = new MoleculeDataModel(FragmentDataModelTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
         tmpFragment.getParentMolecules().add(tmpBadParent);
-        ImageView tmpStructure = tmpFragment.getParentMoleculeStructure();
-        Assertions.assertNotNull(tmpStructure);
+        AtomicReference<ImageView> tmpStructureReference = new AtomicReference<>();
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(FragmentDataModel.class.getName(), Level.SEVERE,
+                () -> tmpStructureReference.set(tmpFragment.getParentMoleculeStructure()));
+        Assertions.assertNotNull(tmpStructureReference.get());
+        //exactly one SEVERE record proves the catch branch ran, without pinning the CDK exception message text
+        Assertions.assertEquals(1, tmpRecords.size(),
+                "an undepictable parent must reach the error branch exactly once");
+        Assertions.assertTrue(tmpRecords.getFirst().getMessage().contains("Invalid"),
+                "the logged record must name the offending parent molecule");
     }
     //</editor-fold>
     //
     //<editor-fold desc="Private methods" defaultstate="collapsed">
+    /**
+     * Compares two JavaFX images pixel by pixel. Used to tell the error-image branch of the parent-structure accessor
+     * apart from a real depiction: both return a non-null {@code ImageView} of identical dimensions, so only the pixels
+     * distinguish them. The expected error image is rendered independently by the same {@code DepictionUtil} entry
+     * point the production code uses, and its caption is bundle-resolved rather than CDK-derived, so the comparison is
+     * deterministic and unaffected by the moving CDK snapshot.
+     *
+     * @param anExpectedImage the independently rendered expected image
+     * @param anActualImage the image returned by the accessor under test
+     * @return true if both images have the same dimensions and identical pixels
+     */
+    private static boolean imagesAreEqual(Image anExpectedImage, Image anActualImage) {
+        if (anExpectedImage.getWidth() != anActualImage.getWidth()
+                || anExpectedImage.getHeight() != anActualImage.getHeight()) {
+            return false;
+        }
+        PixelReader tmpExpectedReader = anExpectedImage.getPixelReader();
+        PixelReader tmpActualReader = anActualImage.getPixelReader();
+        for (int i = 0; i < (int) anExpectedImage.getWidth(); i++) {
+            for (int j = 0; j < (int) anExpectedImage.getHeight(); j++) {
+                if (tmpExpectedReader.getArgb(i, j) != tmpActualReader.getArgb(i, j)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    //
     /**
      * Parses the given SMILES into a real CDK atom container using a silent builder and wraps it in a
      * {@link FragmentDataModel} (atom-container constructor, no stereochemistry encoding).
