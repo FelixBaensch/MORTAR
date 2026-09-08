@@ -29,12 +29,17 @@ import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGeneratorFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.util.AppDirTestUtil;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.TestUtil;
+
+import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
@@ -45,12 +50,15 @@ import org.mockito.Mockito;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -103,7 +111,7 @@ public class FragmentationServiceTest {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
         tmpMols.add(FragmentationServiceTest.buildMDM("c1ccccc1"));
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCC(=O)O"));
-        tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         tmpService.startSingleFragmentation(tmpMols, 1, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
         Assertions.assertNotNull(tmpFragments);
@@ -166,7 +174,7 @@ public class FragmentationServiceTest {
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCC"));
         //select the Ertl functional groups finder fragmenter (the default, first registered)
-        tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         tmpService.startSingleFragmentation(tmpMols, 2, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
         Assertions.assertNotNull(tmpFragments);
@@ -198,8 +206,8 @@ public class FragmentationServiceTest {
     public void pipelineFragmentationTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[0].copy(),
-                tmpService.getFragmenters()[0].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         String tmpPipelineName = "TestPipeline";
         tmpService.setPipeliningFragmentationName(tmpPipelineName);
@@ -218,8 +226,8 @@ public class FragmentationServiceTest {
         //drive the deprecated mol-by-mol pipeline on a fresh service over the same input
         FragmentationService tmpMolByMolService = new FragmentationService();
         tmpMolByMolService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpMolByMolService.getFragmenters()[0].copy(),
-                tmpMolByMolService.getFragmenters()[0].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpMolByMolService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpMolByMolService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         tmpMolByMolService.setPipeliningFragmentationName("MolByMolPipeline");
         List<MoleculeDataModel> tmpMolsForMolByMol = new ArrayList<>(2);
@@ -252,14 +260,14 @@ public class FragmentationServiceTest {
         tmpService.setPipeliningFragmentationName("CustomName");
         Assertions.assertEquals("CustomName", tmpService.getPipeliningFragmentationName());
         //setSelectedFragmenter + display-name property round-trip
-        String tmpSecondDisplayName = tmpService.getFragmenters()[1].getFragmentationAlgorithmDisplayName();
+        String tmpSecondDisplayName = FragmentationServiceTest.displayName(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME);
         tmpService.setSelectedFragmenter(tmpSecondDisplayName);
-        Assertions.assertEquals(tmpService.getFragmenters()[1].getFragmentationAlgorithmName(),
+        Assertions.assertEquals(SugarRemovalUtilityFragmenter.ALGORITHM_NAME,
                 tmpService.getSelectedFragmenter().getFragmentationAlgorithmName());
         tmpService.setSelectedFragmenterDisplayName(tmpSecondDisplayName);
         Assertions.assertEquals(tmpSecondDisplayName, tmpService.getSelectedFragmenterDisplayName());
         //createNewFragmenterObjectByAlgorithmName: valid name returns a fragmenter
-        String tmpValidAlgorithmName = tmpService.getFragmenters()[0].getFragmentationAlgorithmName();
+        String tmpValidAlgorithmName = ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME;
         IMoleculeFragmenter tmpNewFragmenter = tmpService.createNewFragmenterObjectByAlgorithmName(tmpValidAlgorithmName);
         Assertions.assertNotNull(tmpNewFragmenter);
         Assertions.assertEquals(tmpValidAlgorithmName, tmpNewFragmenter.getFragmentationAlgorithmName());
@@ -267,7 +275,7 @@ public class FragmentationServiceTest {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> tmpService.createNewFragmenterObjectByAlgorithmName("this-is-not-a-real-algorithm-name"));
         //two single fragmentations -> duplicate-name append branch in createAndCheckFragmentationName
-        tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         List<MoleculeDataModel> tmpMols = new ArrayList<>(1);
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
         tmpService.startSingleFragmentation(tmpMols, 1, false);
@@ -303,11 +311,11 @@ public class FragmentationServiceTest {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
             FragmentationService tmpService = new FragmentationService();
             //mutate the selected fragmenter to a non-default one and set a pipeline + name
-            String tmpSelectedDisplayName = tmpService.getFragmenters()[1].getFragmentationAlgorithmDisplayName();
+            String tmpSelectedDisplayName = FragmentationServiceTest.displayName(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME);
             tmpService.setSelectedFragmenter(tmpSelectedDisplayName);
             tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                    tmpService.getFragmenters()[0].copy(),
-                    tmpService.getFragmenters()[1].copy()
+                    FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                    FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME)
             });
             tmpService.setPipeliningFragmentationName("PersistedPipeline");
             tmpService.persistFragmenterSettings();
@@ -348,10 +356,10 @@ public class FragmentationServiceTest {
         try {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
             FragmentationService tmpService = new FragmentationService();
-            tmpService.setSelectedFragmenter(tmpService.getFragmenters()[1].getFragmentationAlgorithmDisplayName());
+            tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME));
             tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                    tmpService.getFragmenters()[0].copy(),
-                    tmpService.getFragmenters()[2].copy()
+                    FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                    FragmentationServiceTest.fragmenterCopy(tmpService, ScaffoldGeneratorFragmenter.ALGORITHM_NAME)
             });
             tmpService.setPipeliningFragmentationName("OverwritePipeline");
             //first persist creates the directories
@@ -459,15 +467,26 @@ public class FragmentationServiceTest {
                     + FragmentationService.FRAGMENTER_SETTINGS_SUBFOLDER_NAME + File.separator;
             File tmpFragmenterSettingsDir = new File(tmpFragmenterSettingsDirPath);
             Assertions.assertTrue(tmpFragmenterSettingsDir.exists() || tmpFragmenterSettingsDir.mkdirs());
-            //write a garbage (non-compressed) settings file named after the first fragmenter's simple class name
+            //write a garbage (non-compressed) settings file named after the Ertl fragmenter's simple class name
+            IMoleculeFragmenter tmpErtlFragmenter = FragmentationServiceTest.fragmenter(
+                    tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME);
             File tmpCorruptFile = new File(tmpFragmenterSettingsDirPath
-                    + tmpService.getFragmenters()[0].getClass().getSimpleName()
+                    + tmpErtlFragmenter.getClass().getSimpleName()
                     + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION);
-            java.nio.file.Files.writeString(tmpCorruptFile.toPath(), "this is not a valid preference container");
+            Files.writeString(tmpCorruptFile.toPath(), "this is not a valid preference container");
             Assertions.assertTrue(tmpCorruptFile.exists() && tmpCorruptFile.canRead());
-            //reload must swallow the corrupt-file exception and leave the fragmenter in default
+            //reload must swallow the corrupt-file exception and leave the fragmenter at its defaults
             Assertions.assertDoesNotThrow(tmpService::reloadFragmenterSettings);
-            Assertions.assertNotNull(tmpService.getFragmenters()[0].getFragmentationAlgorithmName());
+            IMoleculeFragmenter tmpPristineErtlFragmenter = FragmentationServiceTest.fragmenter(
+                    new FragmentationService(), ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME);
+            List<Property<?>> tmpReloadedSettings = tmpErtlFragmenter.settingsProperties();
+            List<Property<?>> tmpPristineSettings = tmpPristineErtlFragmenter.settingsProperties();
+            Assertions.assertEquals(tmpPristineSettings.size(), tmpReloadedSettings.size());
+            for (int i = 0; i < tmpPristineSettings.size(); i++) {
+                Assertions.assertEquals(tmpPristineSettings.get(i).getValue(), tmpReloadedSettings.get(i).getValue(),
+                        "a corrupt settings file must leave setting '" + tmpPristineSettings.get(i).getName()
+                                + "' at its default");
+            }
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
             TestUtil.releaseRootLoggerFileHandlers();
@@ -490,10 +509,10 @@ public class FragmentationServiceTest {
         try {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
             FragmentationService tmpService = new FragmentationService();
-            tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+            tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
             tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                    tmpService.getFragmenters()[0].copy(),
-                    tmpService.getFragmenters()[1].copy()
+                    FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                    FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME)
             });
             tmpService.setPipeliningFragmentationName("MissingFilePipeline");
             tmpService.persistSelectedFragmenterAndPipeline();
@@ -526,7 +545,7 @@ public class FragmentationServiceTest {
     @Test
     public void zeroTaskAndEmptyInputTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         List<MoleculeDataModel> tmpMols = new ArrayList<>(1);
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
         //aNumberOfTasks == 0 -> normalised to 1
@@ -535,7 +554,7 @@ public class FragmentationServiceTest {
         Assertions.assertFalse(tmpService.getFragments().isEmpty());
         //empty molecule list -> early-return branch of startFragmentation, empty but non-null map
         FragmentationService tmpEmptyService = new FragmentationService();
-        tmpEmptyService.setSelectedFragmenter(tmpEmptyService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpEmptyService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpEmptyService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         tmpEmptyService.startSingleFragmentation(new ArrayList<>(0), 0, false);
         Assertions.assertNotNull(tmpEmptyService.getFragments());
         Assertions.assertTrue(tmpEmptyService.getFragments().isEmpty());
@@ -554,7 +573,7 @@ public class FragmentationServiceTest {
     public void multiTaskModuloBoundaryTest() throws Exception {
         List<String> tmpSmilesList = List.of("O=C(O)CC", "O=C(O)CCC", "O=C(O)CCCC", "O=C(O)CCCCC", "O=C(O)CCCCCC");
         FragmentationService tmpThreeTaskService = new FragmentationService();
-        tmpThreeTaskService.setSelectedFragmenter(tmpThreeTaskService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpThreeTaskService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpThreeTaskService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         List<MoleculeDataModel> tmpMolsThreeTasks = new ArrayList<>(tmpSmilesList.size());
         for (String tmpSmiles : tmpSmilesList) {
             tmpMolsThreeTasks.add(FragmentationServiceTest.buildMDM(tmpSmiles));
@@ -570,7 +589,7 @@ public class FragmentationServiceTest {
         Assertions.assertEquals(1.0, tmpPercentageSum, 1e-9);
         //single-task drive over the same molecules must yield the same number of distinct fragments
         FragmentationService tmpSingleTaskService = new FragmentationService();
-        tmpSingleTaskService.setSelectedFragmenter(tmpSingleTaskService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpSingleTaskService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpSingleTaskService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         List<MoleculeDataModel> tmpMolsSingleTask = new ArrayList<>(tmpSmilesList.size());
         for (String tmpSmiles : tmpSmilesList) {
             tmpMolsSingleTask.add(FragmentationServiceTest.buildMDM(tmpSmiles));
@@ -592,8 +611,8 @@ public class FragmentationServiceTest {
     public void pipelineZeroTaskAndDefaultNameTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[0].copy(),
-                tmpService.getFragmenters()[0].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         //empty pipeline name -> default-name fallback branch
         tmpService.setPipeliningFragmentationName("");
@@ -640,9 +659,9 @@ public class FragmentationServiceTest {
     public void pipelineThreeStageNestedFragmentsTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[1].copy(),
-                tmpService.getFragmenters()[0].copy(),
-                tmpService.getFragmenters()[1].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("ThreeStagePipeline");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
@@ -664,8 +683,12 @@ public class FragmentationServiceTest {
     /**
      * Tests the nested mol-by-mol path with a three-stage pipeline (Sugar Removal Utility, Ertl functional groups finder,
      * Sugar Removal Utility) driven over glycoside molecules, so the deprecated {@code startPipelineFragmentationMolByMol}
-     * re-fragments each molecule's stage fragments across two consecutive stage-loop iterations. The drive must complete
-     * without throwing and leave a non-null fragment map.
+     * re-fragments each molecule's stage fragments across two consecutive stage-loop iterations.
+     * <p>
+     * Asserting only that the drive does not throw would pass for a single-stage run as well, so the resulting
+     * distinct-fragment set is additionally required to differ from the set the first stage alone produces over the
+     * same molecules. That comparison is between two live results and never against a golden SMILES literal, so it
+     * stays robust against CDK snapshot drift.
      *
      * @throws Exception if anything goes wrong
      */
@@ -673,9 +696,9 @@ public class FragmentationServiceTest {
     public void molByMolThreeStageNestedFragmentsTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[1].copy(),
-                tmpService.getFragmenters()[0].copy(),
-                tmpService.getFragmenters()[1].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("ThreeStageMolByMol");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
@@ -683,6 +706,14 @@ public class FragmentationServiceTest {
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"));
         Assertions.assertDoesNotThrow(() -> tmpService.startPipelineFragmentationMolByMol(tmpMols, 1, false));
         Assertions.assertNotNull(tmpService.getFragments());
+        Assertions.assertFalse(tmpService.getFragments().isEmpty());
+        Assertions.assertEquals("ThreeStageMolByMol", tmpService.getCurrentFragmentationName());
+        //discriminating cross-stage check: the three-stage result must differ from what stage one produces alone
+        Set<String> tmpFirstStageOnlyFragments = FragmentationServiceTest.singleStageFragmentSmiles(
+                SugarRemovalUtilityFragmenter.ALGORITHM_NAME, tmpMols);
+        Assertions.assertFalse(tmpFirstStageOnlyFragments.isEmpty());
+        Assertions.assertNotEquals(tmpFirstStageOnlyFragments, tmpService.getFragments().keySet(),
+                "the downstream stages must re-fragment the first stage's output");
     }
     //
     /**
@@ -696,15 +727,22 @@ public class FragmentationServiceTest {
     @Test
     public void pipelineZeroFrequencyTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        //the Scaffold Generator (index 2) yields no fragments for these molecules, driving the zero-total-frequency branch
+        //the Scaffold Generator yields no fragments for these molecules, which is what drives the zero-total-frequency
+        //branch; that precondition is asserted below rather than assumed, so a CDK snapshot that starts returning
+        //fragments here fails the test loudly instead of silently leaving the branch uncovered
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[2].copy(),
-                tmpService.getFragmenters()[0].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpService, ScaffoldGeneratorFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("ZeroFrequencyPipeline");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
         tmpMols.add(FragmentationServiceTest.buildMDM("c1ccc2c(c1)ccc3c2cccc3O"));
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCc1ccc(O)cc1"));
+        Assertions.assertTrue(
+                FragmentationServiceTest.singleStageFragmentSmiles(
+                        ScaffoldGeneratorFragmenter.ALGORITHM_NAME, tmpMols).isEmpty(),
+                "the Scaffold Generator must yield no fragments for these molecules, otherwise this test no longer "
+                        + "reaches the zero-total-frequency branch it exists for");
         Assertions.assertDoesNotThrow(() -> tmpService.startPipelineFragmentation(tmpMols, 1, false, false));
         Assertions.assertNotNull(tmpService.getFragments());
         Assertions.assertTrue(tmpService.getFragments().isEmpty());
@@ -713,8 +751,10 @@ public class FragmentationServiceTest {
     /**
      * Tests the deprecated mol-by-mol pipeline over a genuine two-stage pipeline with two distinct fragmenters (the Ertl
      * functional groups finder followed by the Sugar Removal Utility), driving the {@code i == 1} stage loop body that
-     * re-fragments each molecule's stage-one fragments. The drive must complete without throwing, the resulting fragment
-     * map must be non-null, and the empty-pipeline-name fallback branch is exercised by leaving the pipeline name empty.
+     * re-fragments each molecule's stage-one fragments. As in the three-stage test, the result is required to differ
+     * from the first stage's own output so the assertion cannot be satisfied by a single-stage run, and the
+     * empty-pipeline-name fallback branch is exercised by leaving the pipeline name empty — the fallback name is
+     * asserted to be non-blank rather than merely non-null.
      *
      * @throws Exception if anything goes wrong
      */
@@ -724,8 +764,8 @@ public class FragmentationServiceTest {
         //Sugar Removal Utility first then the Ertl functional groups finder so the i == 1 stage loop re-fragments the
         //stage-one fragments of each molecule
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[1].copy(),
-                tmpService.getFragmenters()[0].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         //empty pipeline name -> default-name fallback branch in the mol-by-mol path
         tmpService.setPipeliningFragmentationName("");
@@ -736,7 +776,16 @@ public class FragmentationServiceTest {
         //aNumberOfTasks == 0 -> normalised to 1
         Assertions.assertDoesNotThrow(() -> tmpService.startPipelineFragmentationMolByMol(tmpMols, 0, false));
         Assertions.assertNotNull(tmpService.getFragments());
+        Assertions.assertFalse(tmpService.getFragments().isEmpty());
+        //the empty pipeline name must have been replaced by the fallback, not merely stored as the empty string
         Assertions.assertNotNull(tmpService.getCurrentFragmentationName());
+        Assertions.assertFalse(tmpService.getCurrentFragmentationName().isBlank());
+        //discriminating cross-stage check, as in the three-stage test above
+        Set<String> tmpFirstStageOnlyFragments = FragmentationServiceTest.singleStageFragmentSmiles(
+                SugarRemovalUtilityFragmenter.ALGORITHM_NAME, tmpMols);
+        Assertions.assertFalse(tmpFirstStageOnlyFragments.isEmpty());
+        Assertions.assertNotEquals(tmpFirstStageOnlyFragments, tmpService.getFragments().keySet(),
+                "the second stage must re-fragment the first stage's output");
     }
     //
     /**
@@ -852,10 +901,10 @@ public class FragmentationServiceTest {
         try {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
             FragmentationService tmpService = new FragmentationService();
-            tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+            tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
             tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                    tmpService.getFragmenters()[0].copy(),
-                    tmpService.getFragmenters()[1].copy()
+                    FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                    FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME)
             });
             tmpService.setPipeliningFragmentationName("CorruptPipelineFile");
             tmpService.persistSelectedFragmenterAndPipeline();
@@ -899,7 +948,7 @@ public class FragmentationServiceTest {
     @Test
     public void abortExecutorInterruptedTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         List<MoleculeDataModel> tmpMols = new ArrayList<>(1);
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
         //run a fragmentation so the internal executor service exists
@@ -918,6 +967,75 @@ public class FragmentationServiceTest {
     //</editor-fold>
     //
     //<editor-fold desc="Private methods" defaultstate="collapsed">
+    /**
+     * Runs a single-stage fragmentation of the given molecules with the named algorithm through a fresh service and
+     * returns the resulting distinct-fragment unique-SMILES set (the fragment map is keyed by unique SMILES, so its key
+     * set is exactly that). Used as the discriminating baseline for the multi-stage pipeline tests: comparing a live
+     * single-stage result against a live multi-stage result proves the later stages did something, without pinning any
+     * golden SMILES literal that the moving CDK snapshot could invalidate.
+     *
+     * @param anAlgorithmName algorithm name of the single fragmenter to drive
+     * @param aMolecules the molecules to fragment; fresh copies are made so the caller's models keep their own results
+     * @return the distinct-fragment unique-SMILES set of the single-stage run
+     * @throws Exception if anything goes wrong while copying the molecules or driving the fragmentation
+     */
+    private static Set<String> singleStageFragmentSmiles(String anAlgorithmName, List<MoleculeDataModel> aMolecules)
+            throws Exception {
+        FragmentationService tmpSingleStageService = new FragmentationService();
+        tmpSingleStageService.setSelectedFragmenter(
+                FragmentationServiceTest.displayName(tmpSingleStageService, anAlgorithmName));
+        List<MoleculeDataModel> tmpFreshMolecules = new ArrayList<>(aMolecules.size());
+        for (MoleculeDataModel tmpMolecule : aMolecules) {
+            tmpFreshMolecules.add(FragmentationServiceTest.buildMDM(tmpMolecule.getUniqueSmiles()));
+        }
+        //synchronous-blocking: the map is fully populated on return
+        tmpSingleStageService.startSingleFragmentation(tmpFreshMolecules, 1, false);
+        return new HashSet<>(tmpSingleStageService.getFragments().keySet());
+    }
+    //
+    /**
+     * Returns the registered fragmenter with the given algorithm name. Looking the fragmenter up by name rather than by
+     * its position in {@code getFragmenters()} keeps these tests pinned to the algorithm they mean to drive: the array
+     * order is an implementation detail of the {@code FragmentationService} constructor, so registering a further
+     * algorithm would otherwise silently repoint every positional access.
+     *
+     * @param aService the service whose registered fragmenters are searched
+     * @param anAlgorithmName the algorithm name to look up
+     * @return the registered fragmenter carrying that algorithm name
+     */
+    private static IMoleculeFragmenter fragmenter(FragmentationService aService, String anAlgorithmName) {
+        for (IMoleculeFragmenter tmpFragmenter : aService.getFragmenters()) {
+            if (tmpFragmenter.getFragmentationAlgorithmName().equals(anAlgorithmName)) {
+                return tmpFragmenter;
+            }
+        }
+        throw new IllegalStateException("no fragmenter is registered under the algorithm name " + anAlgorithmName);
+    }
+    //
+    /**
+     * Returns a fresh copy of the registered fragmenter with the given algorithm name; see {@link
+     * #fragmenter(FragmentationService, String)} for why the lookup is by name.
+     *
+     * @param aService the service whose registered fragmenters are searched
+     * @param anAlgorithmName the algorithm name to look up
+     * @return an independent copy of that fragmenter
+     */
+    private static IMoleculeFragmenter fragmenterCopy(FragmentationService aService, String anAlgorithmName) {
+        return FragmentationServiceTest.fragmenter(aService, anAlgorithmName).copy();
+    }
+    //
+    /**
+     * Returns the display name of the registered fragmenter with the given algorithm name; see {@link
+     * #fragmenter(FragmentationService, String)} for why the lookup is by name.
+     *
+     * @param aService the service whose registered fragmenters are searched
+     * @param anAlgorithmName the algorithm name to look up
+     * @return the display name of that fragmenter
+     */
+    private static String displayName(FragmentationService aService, String anAlgorithmName) {
+        return FragmentationServiceTest.fragmenter(aService, anAlgorithmName).getFragmentationAlgorithmDisplayName();
+    }
+    //
     /**
      * Builds a MoleculeDataModel from a SMILES string using the verified (IAtomContainer, boolean) constructor.
      *
@@ -958,7 +1076,7 @@ public class FragmentationServiceTest {
      */
     private int runSingleAndCountFragments(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        tmpService.setSelectedFragmenter(tmpService.getFragmenters()[0].getFragmentationAlgorithmDisplayName());
+        tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         //fresh molecule data models per drive so previous fragmentation state does not interfere
         List<MoleculeDataModel> tmpFreshMols = new ArrayList<>(aListOfMolecules.size());
         for (MoleculeDataModel tmpMolecule : aListOfMolecules) {
@@ -985,8 +1103,8 @@ public class FragmentationServiceTest {
         //Sugar Removal Utility first (splits sugar moieties from aglycone), then the Ertl functional groups finder
         //re-fragments those stage-one fragments, producing the nested parent/child fragment structure
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[1].copy(),
-                tmpService.getFragmenters()[0].copy()
+                FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("TwoStagePipeline");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(4);
