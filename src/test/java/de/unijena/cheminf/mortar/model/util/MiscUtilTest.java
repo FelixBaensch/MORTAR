@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test;
  * and the otherwise-unreachable private constructor of this final utility class.
  *
  * @author Felix Baensch
- * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class MiscUtilTest {

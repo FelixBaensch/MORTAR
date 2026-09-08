@@ -32,7 +32,6 @@ import org.junit.jupiter.api.Test;
  * Test class for the MORTARException type, covering both of its constructors (message; message + cause).
  *
  * @author Felix Baensch
- * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class MORTARExceptionTest {

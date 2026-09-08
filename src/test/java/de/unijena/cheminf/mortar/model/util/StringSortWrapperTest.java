@@ -32,7 +32,6 @@ import org.junit.jupiter.api.Test;
  * Test class for the StringSortWrapper sort-helper: constructor guards, equals, hashCode, compareTo and the getters.
  *
  * @author Felix Baensch
- * @author Jonas Schaub
  * @version 1.0.0.0
  */
 public class StringSortWrapperTest {
