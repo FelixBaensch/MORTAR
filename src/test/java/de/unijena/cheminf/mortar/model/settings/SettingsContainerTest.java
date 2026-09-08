@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.util.AppDirTestUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.Property;
 
@@ -41,7 +42,6 @@ import org.mockito.Mockito;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
-import java.util.logging.LogManager;
 
 /**
  * Test class for testing and demonstrating the usage of SettingsContainer class.
@@ -111,7 +111,7 @@ public class SettingsContainerTest {
             tmpSecondContainer.preserveSettings();
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
 
@@ -232,7 +232,7 @@ public class SettingsContainerTest {
             Assertions.assertEquals(Exporter.CSVSeparator.SEMICOLON, tmpSecond.getCsvExportSeparatorSetting());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
 

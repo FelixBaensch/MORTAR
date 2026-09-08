@@ -34,6 +34,7 @@ import de.unijena.cheminf.mortar.model.util.AppDirTestUtil;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
@@ -50,7 +51,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.LogManager;
 
 /**
  * Direct, headless unit tests for {@link FragmentationService}. The service orchestrates single and pipeline
@@ -326,7 +326,7 @@ public class FragmentationServiceTest {
             }
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -368,7 +368,7 @@ public class FragmentationServiceTest {
             Assertions.assertEquals(2, tmpReloaded.getPipelineFragmenter().length);
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -403,7 +403,7 @@ public class FragmentationServiceTest {
             Assertions.assertEquals(FragmentationService.DEFAULT_PIPELINE_NAME, tmpReloadedFromInvalid.getPipeliningFragmentationName());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -434,7 +434,7 @@ public class FragmentationServiceTest {
             Assertions.assertEquals(tmpDefaultPipelineSize, tmpService.getPipelineFragmenter().length);
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -469,7 +469,7 @@ public class FragmentationServiceTest {
             Assertions.assertNotNull(tmpService.getFragmenters()[0].getFragmentationAlgorithmName());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -510,7 +510,7 @@ public class FragmentationServiceTest {
             Assertions.assertEquals(1, tmpReloaded.getPipelineFragmenter().length);
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -787,7 +787,7 @@ public class FragmentationServiceTest {
                 tmpAppDir.setWritable(true, false);
             }
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -830,7 +830,7 @@ public class FragmentationServiceTest {
             Assertions.assertEquals(1, tmpAlertCount.get());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -882,7 +882,7 @@ public class FragmentationServiceTest {
             Assertions.assertEquals("CorruptPipelineFile", tmpReloaded.getPipeliningFragmentationName());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //

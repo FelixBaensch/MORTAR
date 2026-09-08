@@ -31,6 +31,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.AppDirTestUtil;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
@@ -48,7 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
-import java.util.logging.LogManager;
 
 /**
  * Direct, headless unit tests for {@link ViewToolsManager}. The manager constructs its two sub-controllers
@@ -129,7 +129,7 @@ public class ViewToolsManagerTest {
             Assertions.assertEquals(tmpMutatedValue, tmpReloadedProperty.get());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -157,7 +157,7 @@ public class ViewToolsManagerTest {
             Assertions.assertEquals(tmpDefault, tmpProperty.get());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -181,7 +181,7 @@ public class ViewToolsManagerTest {
             Assertions.assertEquals(-1, tmpManager.getCachedIndexOfStructureInMoleculeDataModelList());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -216,7 +216,7 @@ public class ViewToolsManagerTest {
             Assertions.assertEquals(tmpMutatedValue, tmpReloadedProperty.get());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -251,7 +251,7 @@ public class ViewToolsManagerTest {
             Assertions.assertNotNull(tmpReloaded.getViewToolControllers());
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -297,7 +297,7 @@ public class ViewToolsManagerTest {
                 tmpViewToolsDir.setWritable(true, false);
             }
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //
@@ -335,7 +335,7 @@ public class ViewToolsManagerTest {
             }
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
-            LogManager.getLogManager().reset();
+            TestUtil.releaseRootLoggerFileHandlers();
         }
     }
     //</editor-fold>

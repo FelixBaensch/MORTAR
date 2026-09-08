@@ -34,14 +34,15 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.nio.file.Path;
-import java.util.logging.LogManager;
 
 /**
  * Tests for the logging utilities in LogUtil. Every environment-coupled test uses the mandatory isolation technique:
  * {@link AppDirTestUtil#redirectAppDirPath(java.nio.file.Path)} points the application data directory at a JUnit
  * {@link TempDir} (on every operating system, including Windows), and in a finally block the original
  * {@code user.home} is restored, the {@code FileUtil.appDirPath} cache is cleared again, and
- * {@link LogManager#reset()} is called to undo the global logging-handler mutation. As a result no real
+ * every {@link java.util.logging.FileHandler} the test opened on the root logger is closed and removed again
+ * (via {@link TestUtil#releaseRootLoggerFileHandlers()}, deliberately narrower than a JVM-wide
+ * {@code LogManager.reset()}, which would silence logging for every later test in the same JVM). As a result no real
  * {@code ~/MORTAR} directory is created and no global logging handler leaks into other tests. Only the safe
  * logging-only paths are exercised: the GUI / error / {@code System.exit} branches of the uncaught-exception handler
  * are never driven (they would block a headless run or kill the JVM).
@@ -217,7 +218,7 @@ class LogUtilTest {
     //
     /**
      * Restores the global state mutated by an environment-coupled test: restores the original {@code user.home} system
-     * property, nulls the FileUtil app-dir cache, and resets the global LogManager so no FileHandler leaks into other
+     * property, nulls the FileUtil app-dir cache, and releases the root logger file handlers so none leaks into other
      * tests.
      *
      * @param anOldUserHome the original value of the {@code user.home} system property
@@ -225,7 +226,7 @@ class LogUtilTest {
      */
     private void restoreGlobalState(String anOldUserHome) throws Exception {
         AppDirTestUtil.restoreAppDirPath(anOldUserHome);
-        LogManager.getLogManager().reset();
+        TestUtil.releaseRootLoggerFileHandlers();
     }
     //</editor-fold>
 }
