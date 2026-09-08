@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 
 import javafx.scene.image.ImageView;
@@ -233,7 +234,8 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public ImageView getParentMoleculeStructure() throws NullPointerException {
         if (this.parentMolecules.isEmpty()) {
-            return new ImageView(DepictionUtil.depictErrorImage("No parent molecules",
+            return new ImageView(DepictionUtil.depictErrorImage(
+                    Message.get("FragmentDataModel.parentMoleculeStructure.noParentMolecules"),
                     (int) super.getStructureImageWidth(),
                     (int) super.getStructureImageHeight()));
         }
