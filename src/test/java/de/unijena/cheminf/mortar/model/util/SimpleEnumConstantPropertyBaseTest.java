@@ -39,7 +39,7 @@ import java.util.Locale;
  * by the subclass tests; this class adds the base branches those tests do not reach — most notably the empty-enum
  * IllegalArgumentException branch, which requires a constant-less fixture enum.
  *
- * @author Jonas Schaub
+ * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class SimpleEnumConstantPropertyBaseTest {
