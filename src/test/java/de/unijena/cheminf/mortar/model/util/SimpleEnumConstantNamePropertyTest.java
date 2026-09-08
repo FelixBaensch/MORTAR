@@ -46,12 +46,11 @@ public class SimpleEnumConstantNamePropertyTest {
      * Constructor setting the default locale to en-GB. The fixture enum used in these tests resolves its display names
      * through the Message resource bundle whose static initializer loads the bundle for the default locale; pinning the
      * locale to en-GB ensures the bundle is found regardless of the test JVM's environment locale.
-     *
-     * @throws Exception if anything goes wrong
      */
-    public SimpleEnumConstantNamePropertyTest() throws Exception {
+    public SimpleEnumConstantNamePropertyTest() {
         Locale.setDefault(Locale.of("en", "GB"));
     }
+    //
     /**
      * Basic test for retrieval of associated enum, currently set option, and available options.
      *
@@ -72,7 +71,7 @@ public class SimpleEnumConstantNamePropertyTest {
             Assertions.assertDoesNotThrow(() -> tmpEnumProperty.set(tmpOption.name()));
         }
     }
-
+    //
     /**
      * Tests the alternative constructor without an initial value (bean, name, class). The associated enum class must be
      * retrievable and the names array must reflect all enum constants.
@@ -87,7 +86,7 @@ public class SimpleEnumConstantNamePropertyTest {
         Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.values().length,
                 tmpEnumProperty.getAssociatedEnumConstantNames().length);
     }
-
+    //
     /**
      * Tests the alternative constructor with an initial value but without bean and property name (initialValue, class).
      *
@@ -102,7 +101,7 @@ public class SimpleEnumConstantNamePropertyTest {
         Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION.name(),
                 tmpEnumProperty.get());
     }
-
+    //
     /**
      * Tests the alternative constructor taking only the associated enum class. The associated enum class must be
      * retrievable and the names array must reflect all enum constants.
@@ -117,7 +116,7 @@ public class SimpleEnumConstantNamePropertyTest {
         Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.values().length,
                 tmpEnumProperty.getAssociatedEnumConstantNames().length);
     }
-
+    //
     /**
      * Tests that setValue accepts a valid enum constant name and rejects an unknown name with an
      * IllegalArgumentException.
@@ -133,7 +132,7 @@ public class SimpleEnumConstantNamePropertyTest {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> tmpEnumProperty.setValue("NOT_AN_ENUM_CONSTANT_NAME"));
     }
-
+    //
     /**
      * Tests that getAssociatedEnumConstantNames returns the names of every enum constant of the associated enum class.
      *
@@ -150,7 +149,7 @@ public class SimpleEnumConstantNamePropertyTest {
             Assertions.assertTrue(tmpNameList.contains(tmpOption.name()));
         }
     }
-
+    //
     /**
      * Tests translateNameToEnumConstant for a valid name (returns the matching constant), a null argument (throws
      * NullPointerException), and an unknown name (throws IllegalArgumentException).

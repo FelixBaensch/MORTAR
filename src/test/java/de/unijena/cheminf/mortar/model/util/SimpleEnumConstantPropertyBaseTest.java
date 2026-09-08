@@ -46,12 +46,11 @@ public class SimpleEnumConstantPropertyBaseTest {
     /**
      * Constructor setting the default locale to en-GB to match the established convention of the property/enum
      * infrastructure tests.
-     *
-     * @throws Exception if anything goes wrong
      */
-    public SimpleEnumConstantPropertyBaseTest() throws Exception {
+    public SimpleEnumConstantPropertyBaseTest() {
         Locale.setDefault(Locale.of("en", "GB"));
     }
+    //
     /**
      * Tests that the base class rejects a constant-less enum class with an IllegalArgumentException. The branch is
      * reached through every constructor variant of a concrete subclass; a test-local enum that declares no constants
@@ -66,7 +65,7 @@ public class SimpleEnumConstantPropertyBaseTest {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> new SimpleEnumConstantNameProperty(this, "testProp", EmptyTestEnum.class));
     }
-
+    //
     /**
      * Tests that the base class rejects a non-enum class with an IllegalArgumentException across constructor variants.
      *
@@ -79,7 +78,7 @@ public class SimpleEnumConstantPropertyBaseTest {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> new SimpleEnumConstantNameProperty(this, "testProp", String.class));
     }
-
+    //
     /**
      * Tests that the base class rejects a null associated enum class with a NullPointerException across constructor
      * variants.
@@ -93,7 +92,7 @@ public class SimpleEnumConstantPropertyBaseTest {
         Assertions.assertThrows(NullPointerException.class,
                 () -> new SimpleEnumConstantNameProperty(this, "testProp", (Class) null));
     }
-
+    //
     /**
      * Tests the non-enum and empty-enum guard branches of the remaining base constructor variants — the
      * (initialValue, class) variant — so the defensive throws in every base constructor are exercised. A valid initial
@@ -108,7 +107,7 @@ public class SimpleEnumConstantPropertyBaseTest {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> new SimpleEnumConstantNameProperty("anyValue", EmptyTestEnum.class));
     }
-
+    //
     /**
      * Tests that the base getAssociatedEnum, getAssociatedEnumConstants, getEnumValue, and setEnumValue accessors behave
      * as expected when exercised through a concrete subclass over a valid enum class.
@@ -128,7 +127,7 @@ public class SimpleEnumConstantPropertyBaseTest {
         tmpProperty.setEnumValue(IMoleculeFragmenter.FragmentSaturationOption.NO_SATURATION);
         Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.NO_SATURATION, tmpProperty.getEnumValue());
     }
-
+    //
     /**
      * A test-local enum that declares no constants, used to drive the empty-enum guard branch in the abstract base
      * class constructors.
