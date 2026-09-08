@@ -50,8 +50,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Tests some functionalities of the {@link Importer} class.
@@ -404,8 +406,13 @@ public class ImporterTest extends Importer {
      * Tests the relaxed-parse fallback path of the SMILES file format detection (via {@code importSMILESFile} ->
      * {@code DynamicSMILESFileReader.detectFormat}). Loading {@code SingleColumnRelaxedSmiles.smi}, whose single-column
      * SMILES codes parse only when kekulization is disabled (they fail the initial kekulization-enabled parse), drives the
-     * detect-format catch-and-retry-relaxed branch as well as the no-ID-column header-detection retry. At least one
-     * molecule must be imported.
+     * detect-format catch-and-retry-relaxed branch as well as the no-ID-column header-detection retry.
+     * <p>
+     * The fixture holds three lines, all of them all-carbon aromatic rings that cannot be kekulized as neutral species
+     * — a five-membered and a seven-membered ring (cyclopentadienyl and tropylium written without their charge) — which
+     * is exactly why they force the relaxed retry. All three lines must be imported: asserting only that the result is
+     * non-empty would still pass if the relaxed retry recovered just one of them. Note that the first and third line
+     * canonicalise to the same structure, so the imported models are three but the distinct structures are two.
      *
      * @throws Exception if anything goes wrong
      */
@@ -415,7 +422,15 @@ public class ImporterTest extends Importer {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         List<MoleculeDataModel> tmpResultList = this.importMoleculeFile(tmpResourceFile, false, true, false);
         Assertions.assertNotNull(tmpResultList);
-        Assertions.assertFalse(tmpResultList.isEmpty());
+        Assertions.assertEquals(3, tmpResultList.size(),
+                "every line of the fixture must survive the relaxed-parse retry");
+        Set<String> tmpDistinctStructures = new HashSet<>();
+        for (MoleculeDataModel tmpModel : tmpResultList) {
+            Assertions.assertFalse(tmpModel.getUniqueSmiles().isBlank());
+            tmpDistinctStructures.add(tmpModel.getUniqueSmiles());
+        }
+        //the five-membered ring appears twice in the fixture, written once plainly and once with an explicit [cH]
+        Assertions.assertEquals(2, tmpDistinctStructures.size());
         Assertions.assertEquals("SingleColumnRelaxedSmiles.smi", this.getFileName());
     }
     /**
