@@ -29,7 +29,9 @@ import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import org.junit.jupiter.api.Assertions;
@@ -66,10 +68,22 @@ import java.util.Set;
  * against CDK version drift (it compares two live results to each other, never to a golden literal) while genuinely
  * demonstrating accumulation across both stages rather than a normalization identity that any non-empty map satisfies.
  *
- * @author Felix Baensch, Jonas Schaub
+ * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class PipelineFragmentationTest {
+    //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
+    /**
+     * The sugar-bearing input molecules of this test: a disaccharide and an aromatic glycoside carrying a carboxylic
+     * acid. Defined once here because both the pipeline drive and the single-stage baseline it is compared against must
+     * fragment exactly the same molecules for that comparison to mean anything.
+     */
+    private static final String[] INPUT_SMILES = {
+            "OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2O",
+            "O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"
+    };
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
      * Constructor that sets the default locale to en-GB (so the fragmenter settings tooltips and display names, which
@@ -99,16 +113,16 @@ public class PipelineFragmentationTest {
     @Test
     public void sugarRemovalToErtlPipelineAccumulationTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        //fragmenter array order is fixed: [0]=Ertl, [1]=SugarRemovalUtility, [2]=ScaffoldGenerator, [3]=MolWURCS;
-        //SugarRemovalUtility -> Ertl pipeline (D-08): stage 1 deglycosylates, stage 2 extracts functional groups
+        //SugarRemovalUtility -> Ertl pipeline (D-08): stage 1 deglycosylates, stage 2 extracts functional groups.
+        //The fragmenters are looked up by algorithm name rather than by their position in getFragmenters(), because
+        //that order is an implementation detail of the FragmentationService constructor: registering a further
+        //algorithm would silently repoint a positional access at a different fragmenter.
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                tmpService.getFragmenters()[1].copy(),
-                tmpService.getFragmenters()[0].copy()
+                PipelineFragmentationTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME),
+                PipelineFragmentationTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("INT02Pipeline");
-        List<MoleculeDataModel> tmpMolecules = new ArrayList<>(2);
-        tmpMolecules.add(PipelineFragmentationTest.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2O"));
-        tmpMolecules.add(PipelineFragmentationTest.buildMDM("O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"));
+        List<MoleculeDataModel> tmpMolecules = PipelineFragmentationTest.buildInputMolecules();
         //the call blocks (invokeAll + Future.get) and returns with the fragment map fully populated; assert immediately
         tmpService.startPipelineFragmentation(tmpMolecules, 1, false, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
@@ -133,13 +147,45 @@ public class PipelineFragmentationTest {
         //two-stage pipeline from a single SugarRemovalUtility stage.
         Set<String> tmpPipelineFragmentSmilesSet = tmpFragments.keySet();
         Set<String> tmpSugarRemovalOnlyFragmentSmilesSet = PipelineFragmentationTest.fragmentSmilesSetForSingleStage(
-                tmpService.getFragmenters()[1].copy());
+                PipelineFragmentationTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME));
         Assertions.assertFalse(tmpSugarRemovalOnlyFragmentSmilesSet.isEmpty());
         Assertions.assertNotEquals(tmpSugarRemovalOnlyFragmentSmilesSet, tmpPipelineFragmentSmilesSet);
     }
     //</editor-fold>
     //
     //<editor-fold desc="Private static methods" defaultstate="collapsed">
+    /**
+     * Builds a fresh molecule data model for every entry of {@link #INPUT_SMILES}. Both the pipeline drive and the
+     * single-stage baseline call this, so the two runs are guaranteed to see the same input molecules while each gets
+     * its own models.
+     *
+     * @return the input molecules of this test, as fresh models
+     * @throws Exception if a SMILES cannot be parsed
+     */
+    private static List<MoleculeDataModel> buildInputMolecules() throws Exception {
+        List<MoleculeDataModel> tmpMolecules = new ArrayList<>(PipelineFragmentationTest.INPUT_SMILES.length);
+        for (String tmpSmiles : PipelineFragmentationTest.INPUT_SMILES) {
+            tmpMolecules.add(PipelineFragmentationTest.buildMDM(tmpSmiles));
+        }
+        return tmpMolecules;
+    }
+    //
+    /**
+     * Returns a fresh copy of the registered fragmenter carrying the given algorithm name.
+     *
+     * @param aService the service whose registered fragmenters are searched
+     * @param anAlgorithmName the algorithm name to look up
+     * @return an independent copy of that fragmenter
+     */
+    private static IMoleculeFragmenter fragmenterCopy(FragmentationService aService, String anAlgorithmName) {
+        for (IMoleculeFragmenter tmpFragmenter : aService.getFragmenters()) {
+            if (tmpFragmenter.getFragmentationAlgorithmName().equals(anAlgorithmName)) {
+                return tmpFragmenter.copy();
+            }
+        }
+        throw new IllegalStateException("no fragmenter is registered under the algorithm name " + anAlgorithmName);
+    }
+    //
     /**
      * Builds a molecule data model from a SMILES string by parsing it into an atom container via the project-standard
      * parse entry point (kekulize=false, perceive=false, matching the production import path) and wrapping it in a
@@ -171,9 +217,7 @@ public class PipelineFragmentationTest {
     private static Set<String> fragmentSmilesSetForSingleStage(IMoleculeFragmenter aFragmenter) throws Exception {
         FragmentationService tmpSingleStageService = new FragmentationService();
         tmpSingleStageService.setSelectedFragmenter(aFragmenter.getFragmentationAlgorithmDisplayName());
-        List<MoleculeDataModel> tmpMolecules = new ArrayList<>(2);
-        tmpMolecules.add(PipelineFragmentationTest.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2O"));
-        tmpMolecules.add(PipelineFragmentationTest.buildMDM("O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"));
+        List<MoleculeDataModel> tmpMolecules = PipelineFragmentationTest.buildInputMolecules();
         //synchronous-blocking: the map is fully populated on return
         tmpSingleStageService.startSingleFragmentation(tmpMolecules, 1, false);
         return new HashSet<>(tmpSingleStageService.getFragments().keySet());
