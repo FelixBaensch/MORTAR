@@ -362,7 +362,7 @@ public class Exporter {
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportCsvFile(File aFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator, TabNames aTabName)
+    public List<String> exportCsvFile(File aFile, List<FragmentDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator, TabNames aTabName)
             throws FileNotFoundException {
         if (aFile == null) {
             return null;
@@ -481,7 +481,7 @@ public class Exporter {
      * @author Betül Sevindik
      */
     private List<String> createItemizationTabCsvFile(File aCsvFile,
-                                             List<MoleculeDataModel> aMoleculeDataModelList,
+                                             List<FragmentDataModel> aMoleculeDataModelList,
                                              String aFragmentationName,
                                              char aSeparator) throws FileNotFoundException {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
@@ -546,7 +546,7 @@ public class Exporter {
      * @throws FileNotFoundException if given file cannot be found
      * @author Betül Sevindik
      */
-    private List<String> createFragmentsTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, char aSeparator)
+    private List<String> createFragmentsTabCsvFile(File aCsvFile, List<FragmentDataModel> aList, char aSeparator)
             throws FileNotFoundException {
         if (aCsvFile == null || aList == null) {
             return null;
@@ -559,12 +559,11 @@ public class Exporter {
                     Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage");
             tmpWriter.write(tmpFragmentationCsvHeader);
-            for (MoleculeDataModel tmpDataModel : aList) {
+            for (FragmentDataModel tmpFragmentDataModel : aList) {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
                 try {
-                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
                     tmpWriter.printf("%n%s%s%d%s%.4f%s%d%s%.4f",
                             tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
                             tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
@@ -572,8 +571,8 @@ public class Exporter {
                             tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
                             tmpFragmentDataModel.getMoleculePercentage());
                 } catch (Exception anException) {
-                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpDataModel.getName()), anException);
-                    tmpFailedExportFragments.add(tmpDataModel.getUniqueSmiles());
+                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
+                    tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
                     //continue;
                 }
             }
@@ -626,11 +625,10 @@ public class Exporter {
             tmpFragmentationTable.addCell(tmpMolFrequencyCell);
             tmpFragmentationTable.addCell(tmpMolPercentageCell);
             DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
-            for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
+            for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
-                FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
                 int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
                 String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
                 double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();

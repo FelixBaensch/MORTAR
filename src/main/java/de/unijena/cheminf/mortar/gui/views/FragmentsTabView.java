@@ -34,7 +34,9 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -46,8 +48,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-
-import java.util.function.Consumer;
 
 /**
  * A tab view for displaying fragmentation results with pagination, export controls, and data visualization options.
@@ -71,7 +71,7 @@ import java.util.function.Consumer;
  * <p>This tab is closable and created for each unique fragmentation job, with the tab title including
  * the fragmentation name for identification.
  *
- * @author [Your Name/Organization]
+ * @author Felix Bänsch, Tom Weiß
  * @version 1.0
  * @see GridTabForTableView
  * @see FragmentsDataTableView
@@ -146,14 +146,14 @@ public class FragmentsTabView extends GridTabForTableView {
     private Runnable onHistogram;
 
     /**
-     * The callback function that runs when the table view sort order changes.
+     * The handler function that runs when the table view sort order changes.
      */
-    private Consumer<SortEvent<TableView>> onSort;
+    private EventHandler<SortEvent<TableView>> onSort;
 
     /**
      * The callback function that runs when the table view width changes.
      */
-    private Consumer<Number> onTableWidthChanged;
+    private ChangeListener onTableWidthChanged;
 
     /**
      * Creates a fragmentation result tab that visualizes the resulting fragments from a fragmentation operation.
@@ -219,13 +219,6 @@ public class FragmentsTabView extends GridTabForTableView {
         }
         HBox tmpViewButtonsHBox = this.createViewButtonsBox();
         this.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
-        aFragmentsDataTableView.widthProperty().addListener(
-                (observable, oldValue, newValue) -> {
-                    if (this.onTableWidthChanged != null) {
-                        this.onTableWidthChanged.accept(newValue);
-                    }
-                }
-        );
     }
 
     /**
@@ -423,23 +416,31 @@ public class FragmentsTabView extends GridTabForTableView {
     /**
      * Sets the callback function to be executed when the table view sort order changes.
      *
-     * @param aCallback the callback to execute on table sort event; receives the sort event with the table view;
+     * @param aSortEventEventHandler the callback to execute on table sort event; receives the sort event with the table view;
      *                  must not be null
+     * @param aFragmentsDataTableView the underlying data table view which does the sorting
      *
      * @throws IllegalArgumentException if aCallback is null
      */
-    public void setOnSort(Consumer<SortEvent<TableView>> aCallback) {
-        this.onSort = aCallback;
+    public void setOnSort(EventHandler<SortEvent<TableView>> aSortEventEventHandler,
+                          FragmentsDataTableView aFragmentsDataTableView) {
+        this.onSort = aSortEventEventHandler;
+        aFragmentsDataTableView.setOnSort(aSortEventEventHandler);
     }
 
     /**
      * Sets the callback function to be executed when the table view width changes.
      *
-     * <p>The callback will be invoked whenever the width of the underlying fragments data table view changes,
-     * @param aCallback the function to call if the table width changed.
+     * <p>The callback will be invoked whenever the width of the underlying fragments data table view changes.
+     *
+     * @param aChangeListener the function to call if the table width changed.
+     * @param aFragmentsDataTableView the underlying table view that receives and calls the change listener.
      */
-     public void setOnTableWidthChanged(Consumer<Number> aCallback) {
-        this.onTableWidthChanged = aCallback;
+     public void setOnTableWidthChanged(ChangeListener<? super Number> aChangeListener,
+                                        FragmentsDataTableView aFragmentsDataTableView) {
+         // TODO: Really check if the FragmentsDataTableView is not accessible from in here
+         this.onTableWidthChanged = aChangeListener;
+         aFragmentsDataTableView.widthProperty().addListener(aChangeListener);
     }
 
     /**
