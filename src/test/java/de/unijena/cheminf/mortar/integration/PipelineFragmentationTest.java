@@ -74,12 +74,16 @@ import java.util.Set;
 public class PipelineFragmentationTest {
     //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
     /**
-     * The sugar-bearing input molecules of this test: a disaccharide and an aromatic glycoside carrying a carboxylic
-     * acid. Defined once here because both the pipeline drive and the single-stage baseline it is compared against must
+     * The glycosidic input molecules of this test: salicin (a phenolic glucoside whose aglycone is saligenin) and an
+     * aromatic glucoside carrying a carboxylic acid. Both consist of a sugar moiety attached to a non-sugar aglycone,
+     * which is what the first pipeline stage is meant to separate — a molecule that is nothing but sugar would leave
+     * the deglycosylation step with no aglycone to hand on, so it could not exercise the second stage at all. Both
+     * aglycones carry functional groups (phenol, primary alcohol, carboxylic acid) for the downstream Ertl stage to
+     * find. Defined once here because the pipeline drive and the single-stage baseline it is compared against must
      * fragment exactly the same molecules for that comparison to mean anything.
      */
     private static final String[] INPUT_SMILES = {
-            "OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2O",
+            "OCc1ccccc1OC1OC(CO)C(O)C(O)C1O",
             "O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"
     };
     //</editor-fold>
@@ -102,11 +106,20 @@ public class PipelineFragmentationTest {
     //<editor-fold desc="Tests" defaultstate="collapsed">
     /**
      * Drives a SugarRemovalUtility -&gt; ErtlFunctionalGroupsFinder pipeline (per decision D-08) through the
-     * fragmentation service over two sugar-bearing molecules: a disaccharide and an aromatic glycoside carrying a
-     * carboxylic acid. The first stage splits off the sugar moieties and the second stage re-fragments the resulting
-     * aglycone, so the fragment map reflects both stages. The {@code startPipelineFragmentation} call blocks until the
-     * executor tasks complete, so the assertions on the following lines observe a fully populated map without any wait
-     * construct. All assertions are invariant-based per decision D-04.
+     * fragmentation service over the two glycosides of {@link #INPUT_SMILES}. The first stage deglycosylates and the
+     * second stage re-fragments the resulting aglycone, so the fragment map reflects both stages.
+     * <p>
+     * The first stage is explicitly switched to
+     * {@link SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption#ONLY_AGLYCONE}, because that is what
+     * makes it a deglycosylation step: at the default {@code ALL_FRAGMENTS} the stage hands both the aglycone and the
+     * detached sugar moieties on to the second stage, so the pipeline would not be testing deglycosylation followed by
+     * functional-group extraction but functional-group extraction over everything the first stage happened to emit.
+     * The single-stage baseline below is configured identically, so the comparison isolates the second stage rather
+     * than a difference in the first stage's settings.
+     * <p>
+     * The {@code startPipelineFragmentation} call blocks until the executor tasks complete, so the assertions on the
+     * following lines observe a fully populated map without any wait construct. All assertions are invariant-based per
+     * decision D-04.
      *
      * @throws Exception if anything goes wrong
      */
@@ -118,7 +131,7 @@ public class PipelineFragmentationTest {
         //that order is an implementation detail of the FragmentationService constructor: registering a further
         //algorithm would silently repoint a positional access at a different fragmenter.
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                PipelineFragmentationTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME),
+                PipelineFragmentationTest.deglycosylatingSugarRemovalFragmenter(tmpService),
                 PipelineFragmentationTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("INT02Pipeline");
@@ -146,9 +159,11 @@ public class PipelineFragmentationTest {
         //to each other (never to a golden literal) keeps the check CDK-drift robust while genuinely discriminating a
         //two-stage pipeline from a single SugarRemovalUtility stage.
         Set<String> tmpPipelineFragmentSmilesSet = tmpFragments.keySet();
-        Set<String> tmpSugarRemovalOnlyFragmentSmilesSet = PipelineFragmentationTest.fragmentSmilesSetForSingleStage(
-                PipelineFragmentationTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME));
-        Assertions.assertFalse(tmpSugarRemovalOnlyFragmentSmilesSet.isEmpty());
+        Set<String> tmpSugarRemovalOnlyFragmentSmilesSet = PipelineFragmentationTest.aglyconesOfSingleSugarRemovalStage();
+        //the deglycosylation step must actually yield an aglycone per input molecule, otherwise the second stage would
+        //have had nothing to re-fragment and the comparison below would be meaningless
+        Assertions.assertEquals(PipelineFragmentationTest.INPUT_SMILES.length, tmpSugarRemovalOnlyFragmentSmilesSet.size(),
+                "each input molecule must leave exactly one aglycone for the second stage to work on");
         Assertions.assertNotEquals(tmpSugarRemovalOnlyFragmentSmilesSet, tmpPipelineFragmentSmilesSet);
     }
     //</editor-fold>
@@ -201,25 +216,46 @@ public class PipelineFragmentationTest {
     }
     //
     /**
-     * Runs a single-stage (single-algorithm) fragmentation of the two pipeline input molecules through a fresh
-     * fragmentation service using the supplied fragmenter, and returns the resulting distinct-fragment unique-SMILES
-     * set. The fragment map is keyed by unique SMILES, so its key set is exactly the distinct-fragment unique-SMILES
-     * set. This is used by the discriminating cross-stage invariant to compare a single-stage result against the
-     * two-stage pipeline result without ever comparing to a golden literal (so it remains robust against CDK drift). The
-     * drive is synchronous-blocking (the service joins via {@code invokeAll} + {@code Future.get}), so the fragment map
-     * is fully populated when the call returns and a defensive copy of the key set is taken before it could be reused.
+     * Returns a fresh copy of the registered SugarRemovalUtility fragmenter switched to
+     * {@link SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption#ONLY_AGLYCONE}, i.e. configured to
+     * perform a deglycosylation: it emits the aglycone of each molecule and discards the detached sugar moieties. Both
+     * the pipeline's first stage and the single-stage baseline use this, so the two differ only in what runs after it.
      *
-     * @param aFragmenter the single fragmenter to drive (a fresh copy independent of the pipeline fragmenters)
-     * @return the distinct-fragment unique-SMILES set produced by the single-stage fragmentation over the two pipeline
-     *         input molecules
+     * @param aService the service whose registered fragmenters are searched
+     * @return an independent, deglycosylating copy of the SugarRemovalUtility fragmenter
+     */
+    private static IMoleculeFragmenter deglycosylatingSugarRemovalFragmenter(FragmentationService aService) {
+        IMoleculeFragmenter tmpFragmenter = PipelineFragmentationTest.fragmenterCopy(
+                aService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME);
+        ((SugarRemovalUtilityFragmenter) tmpFragmenter).setReturnedFragmentsSetting(
+                SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_AGLYCONE);
+        return tmpFragmenter;
+    }
+    //
+    /**
+     * Runs the deglycosylation stage on its own over the same input molecules and returns the resulting
+     * distinct-fragment unique-SMILES set, i.e. exactly the aglycones the pipeline's first stage hands to its second
+     * stage. The fragment map is keyed by unique SMILES, so its key set is that set.
+     * <p>
+     * The stage is driven as a one-element pipeline rather than through {@code startSingleFragmentation}, because the
+     * latter selects a fragmenter by display name and would therefore run the service's own default-configured
+     * instance: the {@code ONLY_AGLYCONE} setting would be silently ignored and the baseline would differ from the
+     * pipeline's first stage in more than just what follows it. The drive is synchronous-blocking (the service joins
+     * via {@code invokeAll} + {@code Future.get}), so the map is fully populated when it returns and a defensive copy
+     * of the key set is taken.
+     *
+     * @return the aglycone unique-SMILES set produced by the deglycosylation stage alone
      * @throws Exception if anything goes wrong while building the molecules or driving the fragmentation
      */
-    private static Set<String> fragmentSmilesSetForSingleStage(IMoleculeFragmenter aFragmenter) throws Exception {
+    private static Set<String> aglyconesOfSingleSugarRemovalStage() throws Exception {
         FragmentationService tmpSingleStageService = new FragmentationService();
-        tmpSingleStageService.setSelectedFragmenter(aFragmenter.getFragmentationAlgorithmDisplayName());
-        List<MoleculeDataModel> tmpMolecules = PipelineFragmentationTest.buildInputMolecules();
+        tmpSingleStageService.setPipelineFragmenter(new IMoleculeFragmenter[] {
+                PipelineFragmentationTest.deglycosylatingSugarRemovalFragmenter(tmpSingleStageService)
+        });
+        tmpSingleStageService.setPipeliningFragmentationName("INT02DeglycosylationOnly");
         //synchronous-blocking: the map is fully populated on return
-        tmpSingleStageService.startSingleFragmentation(tmpMolecules, 1, false);
+        tmpSingleStageService.startPipelineFragmentation(
+                PipelineFragmentationTest.buildInputMolecules(), 1, false, false);
         return new HashSet<>(tmpSingleStageService.getFragments().keySet());
     }
     //</editor-fold>
