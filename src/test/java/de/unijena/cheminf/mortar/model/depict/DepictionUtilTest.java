@@ -58,6 +58,18 @@ class DepictionUtilTest {
     private static final long TOOLKIT_BOOT_TIMEOUT_SECONDS = 10L;
     //</editor-fold>
     //
+    //<editor-fold desc="static initializer">
+    /**
+     * Pins the default locale to en-GB, the locale the application itself runs under. The integer-formatting methods
+     * of {@link DepictionUtil} build their {@link java.text.DecimalFormatSymbols} from {@code Locale.getDefault()}, so
+     * the decimal separator of their output — and therefore any exact assertion on it — depends on the locale of the
+     * JVM running the tests.
+     */
+    static {
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Tests">
     /**
      * Boots the JavaFX toolkit once per JVM (headless via Monocle, configured in {@code tasks.test}) so the
@@ -144,7 +156,11 @@ class DepictionUtilTest {
      * Drives the guard branch of {@link DepictionUtil#getGraphicsInstanceWithStandardFont(int, int)} (non-positive
      * dimensions throw) and its happy path (a configured {@link Graphics2D} is returned), plus the early-fit return
      * branch of {@link DepictionUtil#fitIntegerDisplayToImageWidth(double, int, FontMetrics)} where a very wide image
-     * keeps the first, most detailed formatting.
+     * keeps the first, most detailed formatting. Because that first pattern is
+     * {@link DepictionUtil.IntegerFormatPattern#THREE_DECIMALS_SCIENTIFIC} ({@code "0.000E0"}), the exact output for
+     * the value 42 is asserted rather than only its non-nullness — that is what shows the loop returned on the first,
+     * most detailed pattern instead of falling through to a shorter one. The class pins the en-GB default locale, so
+     * the decimal separator in the expected string is deterministic.
      */
     @Test
     void graphicsInstanceGuardAndEarlyFitReturn() {
@@ -155,7 +171,7 @@ class DepictionUtilTest {
         FontMetrics tmpFontMetrics = tmpGraphics.getFontMetrics();
         //a very wide image -> the first (most detailed) formatting already fits, so the loop returns immediately
         String tmpResult = DepictionUtil.fitIntegerDisplayToImageWidth(100000.0, 42, tmpFontMetrics);
-        Assertions.assertNotNull(tmpResult);
+        Assertions.assertEquals("4.200E1", tmpResult);
     }
     //
     /**
