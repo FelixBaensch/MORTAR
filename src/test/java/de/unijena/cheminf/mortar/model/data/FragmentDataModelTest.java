@@ -269,20 +269,46 @@ public class FragmentDataModelTest {
     }
     //
     /**
-     * Tests that {@code setParentMolecule(...)} registers a parent that is then used by
-     * {@code getFirstParentMolecule()}. Note that the explicit setter populates the cached first-parent field but not
-     * the parent Set, so {@code getFirstParentMolecule()} (whose empty-Set guard short-circuits to null) is only
-     * reached here because the parent Set is also populated via the live getter; a fresh fragment is used.
+     * Tests that {@code setParentMolecule(...)} overrides the lazily resolved first parent: with one molecule in the
+     * parent Set and a <em>different</em> molecule passed to the setter, both {@code getFirstParentMolecule()} and
+     * {@code getParentMoleculeName()} must report the molecule that was set, not the one the Set would have yielded.
+     * <p>
+     * Setting the same molecule the Set already holds would not test the setter at all — the lazy resolution
+     * {@code parentMolecules.stream().findFirst()} returns that molecule anyway, so such a test passes even if the
+     * setter is a no-op. A single element is kept in the Set so the value the lazy resolution would produce is
+     * unambiguous; the Set is a {@code ConcurrentHashMap} key set and has no defined iteration order.
      *
      * @throws Exception if SMILES parsing fails
      */
     @Test
-    public void testSetParentMoleculeUsedByFirstParent() throws Exception {
+    public void testSetParentMoleculeOverridesLazilyResolvedFirstParent() throws Exception {
         FragmentDataModel tmpFragment = FragmentDataModelTest.buildFragment("c1ccccc1");
-        MoleculeDataModel tmpParent = FragmentDataModelTest.buildParent("CCO", "Ethanol");
-        tmpFragment.getParentMolecules().add(tmpParent);
-        tmpFragment.setParentMolecule(tmpParent);
-        Assertions.assertSame(tmpParent, tmpFragment.getFirstParentMolecule());
+        MoleculeDataModel tmpParentInSet = FragmentDataModelTest.buildParent("CCO", "Ethanol");
+        MoleculeDataModel tmpExplicitlySetParent = FragmentDataModelTest.buildParent("CCC", "Propane");
+        tmpFragment.getParentMolecules().add(tmpParentInSet);
+        tmpFragment.setParentMolecule(tmpExplicitlySetParent);
+        Assertions.assertSame(tmpExplicitlySetParent, tmpFragment.getFirstParentMolecule(),
+                "the explicitly set parent must win over the one the parent Set would resolve to");
+        Assertions.assertEquals("Propane", tmpFragment.getParentMoleculeName());
+    }
+    //
+    /**
+     * Tests the interaction that makes {@code setParentMolecule(...)} inert on its own: every reader of the cached
+     * first parent ({@code getFirstParentMolecule()}, {@code getParentMoleculeName()} and
+     * {@code getParentMoleculeStructure()}) first short-circuits on an empty parent Set, so setting a parent without
+     * also adding it to the Set has no observable effect whatsoever. The setter is currently called from nowhere in
+     * production; this pins the behaviour so the interaction is recorded rather than rediscovered.
+     *
+     * @throws Exception if SMILES parsing fails
+     */
+    @Test
+    public void testSetParentMoleculeAloneHasNoEffectWhileTheParentSetIsEmpty() throws Exception {
+        FragmentDataModel tmpFragment = FragmentDataModelTest.buildFragment("c1ccccc1");
+        tmpFragment.setParentMolecule(FragmentDataModelTest.buildParent("CCO", "Ethanol"));
+        Assertions.assertTrue(tmpFragment.getParentMolecules().isEmpty());
+        Assertions.assertNull(tmpFragment.getFirstParentMolecule(),
+                "the empty-Set guard must short-circuit before the cached parent is consulted");
+        Assertions.assertEquals("", tmpFragment.getParentMoleculeName());
     }
     //
     /**

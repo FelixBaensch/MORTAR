@@ -336,7 +336,12 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
-     * Sets the parent molecule of this fragment.
+     * Sets the parent molecule of this fragment, overriding the parent that {@link #getFirstParentMolecule()} would
+     * otherwise resolve lazily from the parent molecule Set.
+     * <br>NOTE: this only sets the cached first-parent field, it does not add the molecule to the parent Set returned
+     * by {@link #getParentMolecules()}. Every reader of the cached parent short-circuits while that Set is empty, so
+     * calling this method on a fragment with no registered parents has no observable effect; the molecule has to be in
+     * the Set as well. Nothing in the application currently calls this method.
      *
      * @param aParentMolecule parent molecule
      */
