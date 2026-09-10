@@ -151,8 +151,11 @@ public class MoleculeDataModelTest {
     //
     //<editor-fold desc="Atom-container, property, map, image, and size test methods" defaultstate="collapsed">
     /**
-     * Tests that a model built from the atom-container constructor returns its stored, non-null container directly
-     * from {@code getAtomContainer()} (the kept-container short-circuit path).
+     * Tests that a model built from the atom-container constructor returns its stored container directly from
+     * {@code getAtomContainer()} (the kept-container short-circuit path). The returned container must be the very
+     * instance that was handed to the constructor, not merely a non-null one: anything re-parsed from the unique
+     * SMILES would also be non-null and non-empty, so identity is what distinguishes the short-circuit from the lazy
+     * parse path.
      *
      * @throws Exception if SMILES parsing or atom-container retrieval fails
      */
@@ -161,7 +164,7 @@ public class MoleculeDataModelTest {
         IAtomContainer tmpAtomContainer = MoleculeDataModelTest.buildAtomContainer("c1ccccc1");
         MoleculeDataModel tmpMolecule = new MoleculeDataModel(tmpAtomContainer, false);
         IAtomContainer tmpReturned = tmpMolecule.getAtomContainer();
-        Assertions.assertNotNull(tmpReturned);
+        Assertions.assertSame(tmpAtomContainer, tmpReturned);
         Assertions.assertTrue(tmpReturned.getAtomCount() > 0);
     }
     //
