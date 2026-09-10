@@ -368,9 +368,14 @@ class CDKCircularFragmenterTest {
         tmpAromaticFragmenter.setApplyAromaticityDetectionSetting(true);
         tmpAromaticFragmenter.setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption.CDK);
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        //written in Kekule form on purpose: the fragmenter has to perceive the aromaticity itself
         IAtomContainer tmpBenzene = tmpSmiPar.parseSmiles("C1=CC=CC=C1");
         List<IAtomContainer> tmpFragments = tmpAromaticFragmenter.fragmentMolecule(tmpBenzene);
         Assertions.assertEquals(tmpBenzene.getAtomCount(), tmpFragments.size());
+        //lower-case ring atoms in the generated SMILES prove the aromaticity detection actually ran; without it the
+        //fragment would come back in the Kekule form it was parsed from and the fragment count alone would not notice
+        Assertions.assertEquals("c1ccccc1",
+                new SmilesGenerator(SmiFlavor.UseAromaticSymbols).create(tmpFragments.getFirst()));
     }
     //
     /**
