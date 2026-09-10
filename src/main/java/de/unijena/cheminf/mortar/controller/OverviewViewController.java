@@ -475,13 +475,8 @@ public class OverviewViewController implements IViewToolController {
         this.overviewViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.overviewViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         //
-        int tmpPageCount = this.moleculeDataModelList.size() / (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get());
-        if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get()) > 0) {
-            tmpPageCount++;
-        }
-        if (this.moleculeDataModelList.isEmpty()) {
-            tmpPageCount = 1;
-        }
+        int tmpPageCount = GuiUtil.calculatePageCount(this.moleculeDataModelList.size(),
+                this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get());
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
         tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
         tmpPagination.setPageFactory(aPageIndex -> this.createOverviewViewPage(aPageIndex,
@@ -528,8 +523,15 @@ public class OverviewViewController implements IViewToolController {
      */
     private void addListeners() {
         //listener for resize events
-        ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> Platform.runLater(() -> this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
-                this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get()));
+        ChangeListener<Number> tmpStageSizeListener = (observable, oldValue, newValue) -> Platform.runLater(() -> {
+            //closing the stage changes its height and its width, so this listener fires twice on every close; by the
+            //time the deferred repaint runs, closeOverviewViewEvent() has already discarded the view
+            if (this.isOverviewViewClosed()) {
+                return;
+            }
+            this.createOverviewViewPage(this.overviewView.getPagination().getCurrentPageIndex(),
+                    this.rowsPerPageSetting.get(), this.columnsPerPageSetting.get());
+        });
         this.overviewViewStage.heightProperty().addListener(tmpStageSizeListener);
         this.overviewViewStage.widthProperty().addListener(tmpStageSizeListener);
         //
@@ -573,12 +575,17 @@ public class OverviewViewController implements IViewToolController {
                             //scheduled single-click action
                             this.scheduledFuture = this.scheduledThreadPoolExecutor.schedule(
                                     //Platform runLater enables this method call in a separate thread
-                                    () -> Platform.runLater(() ->
-                                            this.showEnlargedStructureView(
-                                                    this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList),
-                                                    this.overviewViewStage
-                                            )
-                                    ),
+                                    () -> Platform.runLater(() -> {
+                                        //the view may have been closed during the double-click delay, e.g. by the
+                                        //close button or a window close request following the single click
+                                        if (this.isOverviewViewClosed()) {
+                                            return;
+                                        }
+                                        this.showEnlargedStructureView(
+                                                this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList),
+                                                this.overviewViewStage
+                                        );
+                                    }),
                                     GuiDefinitions.DOUBLE_CLICK_DELAY,
                                     TimeUnit.MILLISECONDS
                             );
@@ -694,6 +701,21 @@ public class OverviewViewController implements IViewToolController {
     }
     //
     /**
+     * Returns whether the overview view has been torn down by {@code clearGUICachesAtClosing()}, i.e. whether its GUI
+     * caches ({@code overviewView}, {@code overviewViewStage} and {@code moleculeDataModelList} among them) have been
+     * discarded. Work that is deferred onto the JavaFX Application Thread with {@code Platform.runLater} can be
+     * dispatched after the user has closed the window — closing the stage even fires the stage-size listener itself —
+     * so every such deferred body must check this before it dereferences one of those fields. Callbacks that can
+     * instead capture what they need into local finals before the deferral do that (see
+     * {@code takeScreenshotOfStructureGridPane()}) and do not need this guard.
+     *
+     * @return true if the view has been closed and its GUI caches discarded
+     */
+    private boolean isOverviewViewClosed() {
+        return this.overviewView == null;
+    }
+    //
+    /**
      * Discards all GUI variable values for when the view is closed.
      */
     private void clearGUICachesAtClosing() {
@@ -713,6 +735,13 @@ public class OverviewViewController implements IViewToolController {
         //else: this.cachedIndexOfStructureInMoleculeDataModelList and this.returnToStructureEventOccurred are reset
         // separately in resetCachedIndexOfStructureInMoleculeDataModelList()
         this.structureContextMenu = null;
+        //a delayed task still runs after shutdown() (executeExistingDelayedTasksAfterShutdownPolicy defaults to true),
+        //so a single-click action scheduled just before the close has to be cancelled explicitly; dropping the
+        //reference also keeps a stale future from being consulted if the same controller opens a view again
+        if (this.scheduledFuture != null) {
+            this.scheduledFuture.cancel(false);
+            this.scheduledFuture = null;
+        }
         this.scheduledThreadPoolExecutor.shutdown();
         this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
@@ -738,8 +767,8 @@ public class OverviewViewController implements IViewToolController {
     private void takeScreenshotOfStructureGridPane() {
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if (!tmpRecentDirectory.isDirectory()) {
-            tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            tmpRecentDirectory = new File(SettingsContainer.getRecentDirectoryPathSettingDefault());
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.getRecentDirectoryPathSettingDefault());
             OverviewViewController.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         //get the title of the overview without the number of molecules for the initial file name
@@ -1221,10 +1250,8 @@ public class OverviewViewController implements IViewToolController {
         this.overviewView.configureStructureGridPane(this.columnsPerPageSetting.get(), this.rowsPerPageSetting.get());
         //
         //aftermath (adaptions to page count and current page index of the pagination node)
-        int tmpNewPageCount = this.moleculeDataModelList.size() / (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get());
-        if (this.moleculeDataModelList.size() % (this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get()) > 0) {
-            tmpNewPageCount++;
-        }
+        int tmpNewPageCount = GuiUtil.calculatePageCount(this.moleculeDataModelList.size(),
+                this.rowsPerPageSetting.get() * this.columnsPerPageSetting.get());
         if (this.overviewView.getPagination().getPageCount() != tmpNewPageCount) {
             int tmpCurrentPageIndex = this.overviewView.getPagination().getCurrentPageIndex();
             this.overviewView.getPagination().setPageCount(tmpNewPageCount);
@@ -1333,12 +1360,16 @@ public class OverviewViewController implements IViewToolController {
             MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
             tmpEnlargedStructureViewMenuItem.setOnAction((ActionEvent anActionEvent) -> {
                 if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                    Platform.runLater(() ->
-                            this.showEnlargedStructureView(
-                                    this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList),
-                                    this.overviewViewStage
-                            )
-                    );
+                    Platform.runLater(() -> {
+                        //the view may have been closed between the menu item being fired and this deferred call
+                        if (this.isOverviewViewClosed()) {
+                            return;
+                        }
+                        this.showEnlargedStructureView(
+                                this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList),
+                                this.overviewViewStage
+                        );
+                    });
                 }
             });
             //showInMainView
@@ -1425,7 +1456,8 @@ public class OverviewViewController implements IViewToolController {
      * @return Integer value of the maximum amount of structure image columns per page
      * @throws IllegalArgumentException if the given parameter is less than or equal to zero
      */
-    private int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) throws IllegalArgumentException {
+    //note: package-private (not private) so a same-package unit test can pin the pure arithmetic directly
+    int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) throws IllegalArgumentException {
         if (aOverviewViewPaginationNodeWidth <= 0.0)
             throw new IllegalArgumentException("aOverviewViewPaginationNodeWidth (Double value) is < or = to zero.");
         //
@@ -1446,7 +1478,8 @@ public class OverviewViewController implements IViewToolController {
      * @return Integer value of the maximum amount of structure image rows per page
      * @throws IllegalArgumentException if the given parameter is less than or equal to zero
      */
-    private int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) throws IllegalArgumentException {
+    //note: package-private (not private) so a same-package unit test can pin the pure arithmetic directly
+    int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) throws IllegalArgumentException {
         if (aOverviewViewPaginationNodeHeight <= 0.0)
             throw new IllegalArgumentException("aOverviewViewPaginationNodeHeight (Double value) is < or = to zero.");
         //

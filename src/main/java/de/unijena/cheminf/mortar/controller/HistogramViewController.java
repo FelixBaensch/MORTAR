@@ -708,11 +708,8 @@ public class HistogramViewController implements IViewToolController {
         String tmpSortProperty = (tmpSortByFragmentFrequency ? "absoluteFrequency" : "moleculeFrequency");
         CollectionUtil.sortGivenFragmentListByPropertyAndSortType(this.fragmentListCopy, tmpSortProperty, true); // true to sort the list in ascending order
         for (FragmentDataModel tmpFragmentDataModel : this.fragmentListCopy) {
-            if (tmpFragmentDataModel.getUniqueSmiles().length() > aSmilesLength) {
-                tmpNewSmiles = Message.get("HistogramView.smilesTooLong") + " (" + tmpFragmentListIndexDecreasing + ")";
-            } else {
-                tmpNewSmiles = tmpFragmentDataModel.getUniqueSmiles();
-            }
+            tmpNewSmiles = this.abbreviateSmilesForDisplay(tmpFragmentDataModel.getUniqueSmiles(),
+                    aSmilesLength, tmpFragmentListIndexDecreasing);
             tmpSmilesList.add(tmpNewSmiles);
             tmpFragmentListIndexDecreasing--;
             tmpFullSmilesLength.add(tmpFragmentDataModel.getUniqueSmiles());
@@ -735,25 +732,7 @@ public class HistogramViewController implements IViewToolController {
                 this.numberAxis.setTickUnit(tmpIntTmpXAxisTick);
                 this.numberAxis.setUpperBound(this.calculateXAxisUpperBoundWithSpaceForLabels((int) tmpMaxFrequency, tmpIntTmpXAxisTick));
             } else {
-                int tmpNewXAxisTick = tmpIntTmpXAxisTick;
-                String tmpTickStringRepresentation = String.valueOf(tmpNewXAxisTick);
-                String tmpFirstValue = String.valueOf(tmpTickStringRepresentation.charAt(0));
-                int tmpFirstIntValue = Integer.parseInt(tmpFirstValue);
-                if (tmpFirstIntValue <= 5) {
-                    //If the first digit of tmpIntTmpXAxisTick is smaller than 5, we look for a suitable "round" number
-                    // for the ticks, e.g. tmpIntTmpXAxisTick = 356 -> tmpNewXAxisTick = 400
-                    int tmpDigit = tmpTickStringRepresentation.length() - 1;
-                    int tmpPowerOfTen = (int) Math.pow(10, tmpDigit);
-                    if (tmpNewXAxisTick % tmpPowerOfTen != 0) {
-                        do {
-                            tmpNewXAxisTick++;
-                        } while (tmpNewXAxisTick % (tmpPowerOfTen) != 0);
-                    }
-                } else {
-                    //If the first digit of tmpIntTmpXAxisTick is greater than 5, we choose a suitable, "round" power of 10 for
-                    // the ticks, e.g. tmpIntTmpXAxisTick = 7896 -> tmpNewXAxisTick = 10.000
-                    tmpNewXAxisTick = (int) Math.pow(10, tmpTickStringRepresentation.length());
-                }
+                int tmpNewXAxisTick = this.calculateNiceAxisTickUnit(tmpIntTmpXAxisTick);
                 this.numberAxis.setTickUnit(tmpNewXAxisTick);
                 this.numberAxis.setUpperBound(this.calculateXAxisUpperBoundWithSpaceForLabels((int) tmpMaxFrequency, tmpNewXAxisTick));
             }
@@ -1100,7 +1079,8 @@ public class HistogramViewController implements IViewToolController {
      * @param aBarWidthOptionConstant enum constant from BarWidthOption to set the bar width value
      * @return double array which contains both, a value for the histogram height factor [0] and a value for the category gap [1].
      */
-    private Double[] calculateBarSpacing(int aNumberOfDisplayedFragments, HistogramViewController.BarWidthOption aBarWidthOptionConstant) {
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    Double[] calculateBarSpacing(int aNumberOfDisplayedFragments, HistogramViewController.BarWidthOption aBarWidthOptionConstant) {
         Double[] tmpHistogramHeightFactorAndCategoryGap = new Double[2];
         double tmpCurrentHistogramHeight;
         double tmpGapDeviation;
@@ -1165,7 +1145,8 @@ public class HistogramViewController implements IViewToolController {
      * @param aTickValue is the calculated tick
      * @return an upper limit for the x-axis that leaves enough room for the frequency labels
      */
-    private int calculateXAxisUpperBoundWithSpaceForLabels(int aMaxValue, int aTickValue) {
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    int calculateXAxisUpperBoundWithSpaceForLabels(int aMaxValue, int aTickValue) {
         int tmpTickNumber = Math.round((float) aMaxValue / aTickValue);
         int tmpXAxisExtensionValue;
         if ((aTickValue * tmpTickNumber) > aMaxValue) {
@@ -1177,6 +1158,63 @@ public class HistogramViewController implements IViewToolController {
     }
     //
     /**
+     * Rounds an integer x-axis tick candidate to a readable, "round" number, reproducing exactly the arithmetic that
+     * was formerly inlined in {@link #createHistogram}. This is a pure extract-method: if the first digit of the
+     * candidate is {@literal <=} 5, the candidate is rounded up to the next multiple of the leading power of ten
+     * (e.g. 356 -&gt; 400); otherwise the next full power of ten is used (e.g. 7896 -&gt; 10000). Behavior is preserved
+     * exactly; no state is read or written.
+     * <p>
+     * Package-private (never public) so same-package characterization tests can pin this logic (RFCT-01).
+     *
+     * @param aRoundedTickCandidate the integer tick candidate (expected to have at least two digits, as guaranteed by
+     *                              the {@code >= 10} branch in createHistogram)
+     * @return the rounded, readable tick unit
+     */
+    int calculateNiceAxisTickUnit(int aRoundedTickCandidate) {
+        int tmpNewXAxisTick = aRoundedTickCandidate;
+        String tmpTickStringRepresentation = String.valueOf(tmpNewXAxisTick);
+        String tmpFirstValue = String.valueOf(tmpTickStringRepresentation.charAt(0));
+        int tmpFirstIntValue = Integer.parseInt(tmpFirstValue);
+        if (tmpFirstIntValue <= 5) {
+            //If the first digit of the candidate is smaller than 5, we look for a suitable "round" number
+            // for the ticks, e.g. candidate = 356 -> tmpNewXAxisTick = 400
+            int tmpDigit = tmpTickStringRepresentation.length() - 1;
+            int tmpPowerOfTen = (int) Math.pow(10, tmpDigit);
+            if (tmpNewXAxisTick % tmpPowerOfTen != 0) {
+                do {
+                    tmpNewXAxisTick++;
+                } while (tmpNewXAxisTick % (tmpPowerOfTen) != 0);
+            }
+        } else {
+            //If the first digit of the candidate is greater than 5, we choose a suitable, "round" power of 10 for
+            // the ticks, e.g. candidate = 7896 -> tmpNewXAxisTick = 10.000
+            tmpNewXAxisTick = (int) Math.pow(10, tmpTickStringRepresentation.length());
+        }
+        return tmpNewXAxisTick;
+    }
+    //
+    /**
+     * Decides the category label shown for a fragment's SMILES, reproducing exactly the decision that was formerly
+     * inlined in the abbreviation loop of {@link #createHistogram}. This is a pure extract-method: if the SMILES is
+     * longer than the allowed maximum, a localized "too long" placeholder with the reverse list index is returned
+     * (e.g. {@code "SMILES too long (12)"}); otherwise the unchanged SMILES is returned. Behavior is preserved exactly;
+     * no state is read or written.
+     * <p>
+     * Package-private (never public) so same-package characterization tests can pin this logic (RFCT-01).
+     *
+     * @param aUniqueSmiles the fragment's unique SMILES string
+     * @param aMaxSmilesLength the maximum SMILES length allowed before abbreviation
+     * @param aReverseIndex the decreasing fragment list index appended to the placeholder
+     * @return the SMILES unchanged, or the localized placeholder if it exceeds the maximum length
+     */
+    String abbreviateSmilesForDisplay(String aUniqueSmiles, int aMaxSmilesLength, int aReverseIndex) {
+        if (aUniqueSmiles.length() > aMaxSmilesLength) {
+            return Message.get("HistogramView.smilesTooLong") + " (" + aReverseIndex + ")";
+        }
+        return aUniqueSmiles;
+    }
+    //
+    /**
      * Returns the BarWidthOption enum constant with the given display name, e.g. taken from the bar width combo box in the
      * GUI. If the name is null, empty, or does not equal a display name in the enum, the default bar width
      * option is returned and a message logged.
@@ -1184,7 +1222,8 @@ public class HistogramViewController implements IViewToolController {
      * @param aDisplayName the displayed bar width option name
      * @return enum constant associated with the display name or default value
      */
-    private HistogramViewController.BarWidthOption getBarWidthOptionEnumConstantFromDisplayName(String aDisplayName) {
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    HistogramViewController.BarWidthOption getBarWidthOptionEnumConstantFromDisplayName(String aDisplayName) {
         if(Objects.isNull(aDisplayName) || aDisplayName.isBlank()) {
             HistogramViewController.LOGGER.log(Level.WARNING, "Given string is null or empty, default bar width" +
                     "option is returned.");
@@ -1210,7 +1249,8 @@ public class HistogramViewController implements IViewToolController {
      * @param aDisplayName the displayed frequency option name
      * @return enum constant associated with the display name or default value
      */
-    private HistogramViewController.FrequencyOption getFrequencyOptionEnumConstantFromDisplayName(String aDisplayName) {
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    HistogramViewController.FrequencyOption getFrequencyOptionEnumConstantFromDisplayName(String aDisplayName) {
         if(Objects.isNull(aDisplayName) || aDisplayName.isBlank()) {
             HistogramViewController.LOGGER.log(Level.WARNING, "Given string is null or empty, default frequency " +
                     "option is returned.");

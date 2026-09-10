@@ -309,6 +309,76 @@ class CDKCircularFragmenterTest {
     }
     //
     /**
+     * Exercises the settings surface not reached by the behavioural tests: every property accessor, the {@code copy()}
+     * deep-copy, all {@link IMoleculeFragmenter.CycleFinderOption} and {@link IMoleculeFragmenter.ElectronDonationModelOption}
+     * constants driven through their setters (covering the internal cycle-finder and electron-donation switch branches),
+     * the null-argument guards of the enum setters, the two setting name-to-text maps, and the guard branches of
+     * {@code fragmentMolecule} / {@code canBeFragmented} for a null and an empty molecule. Also drives the CDK-atom-types
+     * electron-donation branch of the aromaticity path.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    void settingsAccessorsCopyAndGuardsTest() throws Exception {
+        CDKCircularFragmenter tmpFragmenter = new CDKCircularFragmenter();
+        //every property accessor returns a non-null JavaFX property
+        Assertions.assertNotNull(tmpFragmenter.radiusSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.includeSmallerRadiiSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.preserveStereoSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.markAttachmentsSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.applyAromaticityDetectionSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.electronDonationModelSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.cycleFinderSettingProperty());
+        //the setting name-to-text maps carry one entry per exposed setting
+        Assertions.assertEquals(tmpFragmenter.settingsProperties().size(), tmpFragmenter.getSettingNameToTooltipTextMap().size());
+        Assertions.assertEquals(tmpFragmenter.settingsProperties().size(), tmpFragmenter.getSettingNameToDisplayNameMap().size());
+        //every cycle finder option is accepted by its setter and round-trips (drives the cycle-finder switch)
+        for (IMoleculeFragmenter.CycleFinderOption tmpOption : IMoleculeFragmenter.CycleFinderOption.values()) {
+            tmpFragmenter.setCycleFinderSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getCycleFinderSetting());
+        }
+        //every electron donation model option is accepted by its setter and round-trips (drives the donation switch)
+        for (IMoleculeFragmenter.ElectronDonationModelOption tmpOption : IMoleculeFragmenter.ElectronDonationModelOption.values()) {
+            tmpFragmenter.setElectronDonationModelSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getElectronDonationModelSetting());
+        }
+        //null guards of the enum setters (Objects.requireNonNull, before the property set())
+        Assertions.assertThrows(NullPointerException.class, () -> tmpFragmenter.setCycleFinderSetting(null));
+        Assertions.assertThrows(NullPointerException.class, () -> tmpFragmenter.setElectronDonationModelSetting(null));
+        //copy() produces an independent CDKCircularFragmenter carrying the same settings
+        tmpFragmenter.setRadiusSetting(4);
+        tmpFragmenter.setMarkAttachmentsSetting(!CDKCircularFragmenter.MARK_ATTACHMENTS_SETTING_DEFAULT);
+        tmpFragmenter.setCycleFinderSetting(IMoleculeFragmenter.CycleFinderOption.ALL);
+        tmpFragmenter.setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption.CDK);
+        IMoleculeFragmenter tmpCopy = tmpFragmenter.copy();
+        Assertions.assertInstanceOf(CDKCircularFragmenter.class, tmpCopy);
+        CDKCircularFragmenter tmpTypedCopy = (CDKCircularFragmenter) tmpCopy;
+        Assertions.assertEquals(4, tmpTypedCopy.getRadiusSetting());
+        Assertions.assertEquals(tmpFragmenter.getMarkAttachmentsSetting(), tmpTypedCopy.getMarkAttachmentsSetting());
+        Assertions.assertEquals(IMoleculeFragmenter.CycleFinderOption.ALL, tmpTypedCopy.getCycleFinderSetting());
+        Assertions.assertEquals(IMoleculeFragmenter.ElectronDonationModelOption.CDK, tmpTypedCopy.getElectronDonationModelSetting());
+        //guard branches: null molecule -> NPE; empty molecule -> not fragmentable, fragmentMolecule throws
+        Assertions.assertThrows(NullPointerException.class, () -> tmpFragmenter.fragmentMolecule(null));
+        IAtomContainer tmpEmpty = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertFalse(tmpFragmenter.canBeFragmented(tmpEmpty));
+        Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpEmpty));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> tmpFragmenter.fragmentMolecule(tmpEmpty));
+        //CDK-atom-types electron-donation branch of the aromaticity path
+        CDKCircularFragmenter tmpAromaticFragmenter = new CDKCircularFragmenter();
+        tmpAromaticFragmenter.setApplyAromaticityDetectionSetting(true);
+        tmpAromaticFragmenter.setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption.CDK);
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        //written in Kekule form on purpose: the fragmenter has to perceive the aromaticity itself
+        IAtomContainer tmpBenzene = tmpSmiPar.parseSmiles("C1=CC=CC=C1");
+        List<IAtomContainer> tmpFragments = tmpAromaticFragmenter.fragmentMolecule(tmpBenzene);
+        Assertions.assertEquals(tmpBenzene.getAtomCount(), tmpFragments.size());
+        //lower-case ring atoms in the generated SMILES prove the aromaticity detection actually ran; without it the
+        //fragment would come back in the Kekule form it was parsed from and the fragment count alone would not notice
+        Assertions.assertEquals("c1ccccc1",
+                new SmilesGenerator(SmiFlavor.UseAromaticSymbols).create(tmpFragments.getFirst()));
+    }
+    //
+    /**
      * Returns the center atom (depth 0) from the given circular fragment.
      *
      * @param aFragment a circular fragment produced by {@link CDKCircularFragmenter}

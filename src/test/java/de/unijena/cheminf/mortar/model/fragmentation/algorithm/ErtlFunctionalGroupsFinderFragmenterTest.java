@@ -41,6 +41,7 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Class to test the correct working of
@@ -202,6 +203,153 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
                     System.out.println("Fragment: " + tmpAlkylFragmentSmiles + "\n");
                 }
             }
+        }
+    }
+    //
+    /**
+     * Exercises every settings accessor and property getter, drives the boolean and enum setters
+     * (filter single atoms, apply input restrictions, cycle finder) with read-back assertions, checks the tooltip and
+     * display-name maps, and verifies that {@link ErtlFunctionalGroupsFinderFragmenter#copy()} preserves settings and
+     * {@link ErtlFunctionalGroupsFinderFragmenter#restoreDefaultSettings()} resets them to the documented defaults.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void settingsTest() throws Exception {
+        ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
+        //every get*Setting / *SettingProperty returns without throwing
+        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentSaturationSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::fragmentSaturationSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getEnvironmentModeSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::environmentModeSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getElectronDonationModelSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::electronDonationModelSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getReturnedFragmentsSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::returnedFragmentsSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getCycleFinderSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::cycleFinderSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getFilterSingleAtomsSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::filterSingleAtomsSettingProperty);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getApplyInputRestrictionsSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::applyInputRestrictionsSettingProperty);
+        //boolean setters with read-back
+        tmpFragmenter.setFilterSingleAtomsSetting(false);
+        Assertions.assertFalse(tmpFragmenter.getFilterSingleAtomsSetting());
+        tmpFragmenter.setFilterSingleAtomsSetting(true);
+        Assertions.assertTrue(tmpFragmenter.getFilterSingleAtomsSetting());
+        tmpFragmenter.setApplyInputRestrictionsSetting(true);
+        Assertions.assertTrue(tmpFragmenter.getApplyInputRestrictionsSetting());
+        tmpFragmenter.setApplyInputRestrictionsSetting(false);
+        Assertions.assertFalse(tmpFragmenter.getApplyInputRestrictionsSetting());
+        //enum setters with read-back, driving each value
+        for (ErtlFunctionalGroupsFinderFragmenter.FGEnvOption tmpOption
+                : ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.values()) {
+            tmpFragmenter.setEnvironmentModeSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getEnvironmentModeSetting());
+        }
+        for (ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption tmpOption
+                : ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.values()) {
+            tmpFragmenter.setReturnedFragmentsSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getReturnedFragmentsSetting());
+        }
+        for (IMoleculeFragmenter.CycleFinderOption tmpOption : IMoleculeFragmenter.CycleFinderOption.values()) {
+            tmpFragmenter.setCycleFinderSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getCycleFinderSetting());
+        }
+        for (IMoleculeFragmenter.ElectronDonationModelOption tmpOption
+                : IMoleculeFragmenter.ElectronDonationModelOption.values()) {
+            tmpFragmenter.setElectronDonationModelSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getElectronDonationModelSetting());
+        }
+        for (IMoleculeFragmenter.FragmentSaturationOption tmpOption
+                : IMoleculeFragmenter.FragmentSaturationOption.values()) {
+            tmpFragmenter.setFragmentSaturationSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getFragmentSaturationSetting());
+        }
+        //tooltip and display-name maps non-null/non-empty with an entry per setting
+        Map<String, String> tmpTooltipMap = tmpFragmenter.getSettingNameToTooltipTextMap();
+        Map<String, String> tmpDisplayMap = tmpFragmenter.getSettingNameToDisplayNameMap();
+        Assertions.assertNotNull(tmpTooltipMap);
+        Assertions.assertNotNull(tmpDisplayMap);
+        Assertions.assertFalse(tmpTooltipMap.isEmpty());
+        Assertions.assertFalse(tmpDisplayMap.isEmpty());
+        for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
+            Assertions.assertTrue(tmpTooltipMap.containsKey(tmpSetting.getName()));
+            Assertions.assertTrue(tmpDisplayMap.containsKey(tmpSetting.getName()));
+        }
+        //copy() preserves representative settings
+        tmpFragmenter.setEnvironmentModeSetting(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.NO_ENVIRONMENT);
+        tmpFragmenter.setCycleFinderSetting(IMoleculeFragmenter.CycleFinderOption.MCB);
+        tmpFragmenter.setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption.MDL);
+        tmpFragmenter.setFilterSingleAtomsSetting(false);
+        IMoleculeFragmenter tmpCopyAsInterface = tmpFragmenter.copy();
+        Assertions.assertInstanceOf(ErtlFunctionalGroupsFinderFragmenter.class, tmpCopyAsInterface);
+        ErtlFunctionalGroupsFinderFragmenter tmpCopy = (ErtlFunctionalGroupsFinderFragmenter) tmpCopyAsInterface;
+        Assertions.assertEquals(ErtlFunctionalGroupsFinderFragmenter.FGEnvOption.NO_ENVIRONMENT, tmpCopy.getEnvironmentModeSetting());
+        Assertions.assertEquals(IMoleculeFragmenter.CycleFinderOption.MCB, tmpCopy.getCycleFinderSetting());
+        Assertions.assertEquals(IMoleculeFragmenter.ElectronDonationModelOption.MDL, tmpCopy.getElectronDonationModelSetting());
+        Assertions.assertFalse(tmpCopy.getFilterSingleAtomsSetting());
+        //restoreDefaultSettings() resets representative settings to their documented defaults
+        tmpFragmenter.restoreDefaultSettings();
+        Assertions.assertEquals(ErtlFunctionalGroupsFinderFragmenter.ENVIRONMENT_MODE_OPTION_DEFAULT, tmpFragmenter.getEnvironmentModeSetting());
+        Assertions.assertEquals(ErtlFunctionalGroupsFinderFragmenter.CYCLE_FINDER_OPTION_DEFAULT, tmpFragmenter.getCycleFinderSetting());
+        Assertions.assertEquals(ErtlFunctionalGroupsFinderFragmenter.ELECTRON_DONATION_MODEL_OPTION_DEFAULT, tmpFragmenter.getElectronDonationModelSetting());
+        Assertions.assertEquals(ErtlFunctionalGroupsFinderFragmenter.RETURNED_FRAGMENTS_OPTION_DEFAULT, tmpFragmenter.getReturnedFragmentsSetting());
+        Assertions.assertEquals(ErtlFunctionalGroupsFinderFragmenter.FILTER_SINGLE_ATOMS_OPTION_DEFAULT, tmpFragmenter.getFilterSingleAtomsSetting());
+        Assertions.assertEquals(ErtlFunctionalGroupsFinderFragmenter.APPLY_INPUT_RESTRICTIONS_OPTION_DEFAULT, tmpFragmenter.getApplyInputRestrictionsSetting());
+    }
+    //
+    /**
+     * Drives the remaining edge branches of the fragmenter: with the filter-single-atoms setting enabled, a single-atom
+     * molecule hits the corresponding {@code shouldBeFiltered} branch; {@code applyPreprocessing} is exercised on a
+     * fragmentable molecule (asserting a non-null, fragmentable result); and every {@link IMoleculeFragmenter.CycleFinderOption}
+     * and every {@link IMoleculeFragmenter.ElectronDonationModelOption} value is set and used for a fragmentation run
+     * without throwing, covering the private instance-setter switches and the {@code IMoleculeFragmenter} nested enums (D-08).
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void edgeTest() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        //single-atom molecule (zero bonds) should be filtered when filterSingleAtoms is enabled
+        ErtlFunctionalGroupsFinderFragmenter tmpFilteringFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
+        tmpFilteringFragmenter.setFilterSingleAtomsSetting(true);
+        IAtomContainer tmpSingleAtomMolecule = tmpSmiPar.parseSmiles("[Ne]");
+        Assertions.assertTrue(tmpFilteringFragmenter.shouldBeFiltered(tmpSingleAtomMolecule));
+        Assertions.assertFalse(tmpFilteringFragmenter.canBeFragmented(tmpSingleAtomMolecule));
+        //with filtering disabled, the single-atom molecule is no longer filtered
+        tmpFilteringFragmenter.setFilterSingleAtomsSetting(false);
+        IAtomContainer tmpSingleAtomMolecule2 = tmpSmiPar.parseSmiles("[Ne]");
+        Assertions.assertFalse(tmpFilteringFragmenter.shouldBeFiltered(tmpSingleAtomMolecule2));
+        //applyPreprocessing on a fragmentable molecule returns a non-null, fragmentable container
+        ErtlFunctionalGroupsFinderFragmenter tmpPreprocessFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
+        //CNP0151033
+        String tmpSmiles = "O=C(OC1C(OCC2=COC(OC(=O)CC(C)C)C3C2CC(O)C3(O)COC(=O)C)OC(CO)C(O)C1O)C=CC4=CC=C(O)C=C4";
+        IAtomContainer tmpPreprocessMolecule = tmpSmiPar.parseSmiles(tmpSmiles);
+        Assertions.assertFalse(tmpPreprocessFragmenter.shouldBePreprocessed(tmpPreprocessMolecule));
+        IAtomContainer tmpPreprocessed = tmpPreprocessFragmenter.applyPreprocessing(tmpPreprocessMolecule);
+        Assertions.assertNotNull(tmpPreprocessed);
+        Assertions.assertTrue(tmpPreprocessFragmenter.canBeFragmented(tmpPreprocessed));
+        //applyPreprocessing throws if the molecule should be filtered
+        ErtlFunctionalGroupsFinderFragmenter tmpFilterThenPreprocess = new ErtlFunctionalGroupsFinderFragmenter();
+        tmpFilterThenPreprocess.setFilterSingleAtomsSetting(true);
+        IAtomContainer tmpSingleAtomForPreprocess = tmpSmiPar.parseSmiles("[Ne]");
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> tmpFilterThenPreprocess.applyPreprocessing(tmpSingleAtomForPreprocess));
+        //every CycleFinderOption value: set then fragment without throwing
+        for (IMoleculeFragmenter.CycleFinderOption tmpOption : IMoleculeFragmenter.CycleFinderOption.values()) {
+            ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
+            tmpFragmenter.setCycleFinderSetting(tmpOption);
+            IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles(tmpSmiles);
+            Assertions.assertDoesNotThrow(() -> tmpFragmenter.fragmentMolecule(tmpMolecule));
+        }
+        //every ElectronDonationModelOption value: set then fragment without throwing
+        for (IMoleculeFragmenter.ElectronDonationModelOption tmpOption
+                : IMoleculeFragmenter.ElectronDonationModelOption.values()) {
+            ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
+            tmpFragmenter.setElectronDonationModelSetting(tmpOption);
+            IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles(tmpSmiles);
+            Assertions.assertDoesNotThrow(() -> tmpFragmenter.fragmentMolecule(tmpMolecule));
         }
     }
 }

@@ -138,6 +138,37 @@ object DeployUtil {
                 throw RuntimeException("Failed to copy directory from ${aSource.absolutePath} to ${aDestination.absolutePath}", anException)
             }
         }
+
+    /**
+     * Copies the contents of the source directory to the destination directory recursively, copying only the files
+     * accepted by the given filter. Directories are always traversed; the filter is consulted for files only.
+     *
+     * Notes:
+     *  - Existing files in the destination will be overwritten.
+     *  - No checks are performed!
+     *
+     * @param aSource the source directory to copy from
+     * @param aDestination the destination directory to copy to
+     * @param aFileFilter predicate deciding whether a given file is copied
+     * @throws RuntimeException if the copy operation fails, providing a message with the source and destination paths
+     */
+    fun copyDir(aSource: File, aDestination: File, aFileFilter: (File) -> Boolean): Unit {
+            try {
+                if (!aSource.exists()) return
+                aSource.walkTopDown().forEach { tmpFile ->
+                    val tmpTarget = File(aDestination, tmpFile.toRelativeString(aSource))
+                    if (tmpFile.isDirectory) {
+                        tmpTarget.mkdirs()
+                    } else if (aFileFilter(tmpFile)) {
+                        tmpTarget.parentFile?.mkdirs()
+                        tmpFile.copyTo(tmpTarget, true)
+                    }
+                }
+            } catch (anException: Exception) {
+                // Rethrow as a RuntimeException to abort the Gradle build in a controlled manner
+                throw RuntimeException("Failed to copy directory from ${aSource.absolutePath} to ${aDestination.absolutePath}", anException)
+            }
+        }
     //</editor-fold>
     //
     //<editor-fold desc="operating system utilities">

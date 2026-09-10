@@ -1,14 +1,20 @@
 [versions]
 # libraries
 junit-version = "5.11.4"
+mockito-version = "5.18.0"
 cdk-version = "2.13"
 cdkScaffold-version = "2.13"
 javafx-version = "21.0.1"
 openpdf-version = "2.0.3"
+jacoco = "0.8.15"
+testfx-version = "4.0.18"
+monocle-version = "21.0.2"
 
 # plugins
 javafxplugin-version = "0.1.0"
 spotless-version = "8.1.0"
+pitest-plugin-version = "1.19.0"
+pitest-junit5-version = "1.2.3"
 
 [libraries]
 cdkPdb = { group = "org.openscience.cdk", name = "cdk-pdb", version.ref = "cdk-version" }
@@ -36,7 +42,13 @@ javafxGraphics = { group = "org.openjfx", name = "javafx-graphics", version.ref 
 javafxBase = { group = "org.openjfx", name = "javafx-base", version.ref = "javafx-version" }
 junit = { group = "org.junit", name = "junit-bom", version.ref = "junit-version" }
 jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+mockitoCore = { group = "org.mockito", name = "mockito-core", version.ref = "mockito-version" }
+testfxCore = { group = "org.testfx", name = "testfx-core", version.ref = "testfx-version" }
+testfxJunit5 = { group = "org.testfx", name = "testfx-junit5", version.ref = "testfx-version" }
+openjfxMonocle = { group = "org.testfx", name = "openjfx-monocle", version.ref = "monocle-version" }
+pitestJunit5 = { group = "org.pitest", name = "pitest-junit5-plugin", version.ref = "pitest-junit5-version" }
 
 [plugins]
 javafxplugin = { id = "org.openjfx.javafxplugin", version.ref = "javafxplugin-version" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless-version" }
+pitest = { id = "info.solidsoft.pitest", version.ref = "pitest-plugin-version" }

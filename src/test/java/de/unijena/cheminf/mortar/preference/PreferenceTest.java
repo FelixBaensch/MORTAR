@@ -36,6 +36,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.io.StringReader;
+import java.lang.reflect.Constructor;
 import java.util.Locale;
 
 /**
@@ -119,6 +121,150 @@ public class PreferenceTest {
     public void testSingleTermPreference() throws Exception {
         SingleTermPreference tmpPreference = new SingleTermPreference("Welcoming message", "Welcome to MORTAR");
         this.testPreferenceBasics(tmpPreference);
+    }
+    //
+    /**
+     * Tests the String-arg constructor, setContent overloads, static isValidContent, copy(), and the invalid-name /
+     * invalid-content guards of class SingleIntegerPreference with real valid and invalid input.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testSingleIntegerPreferenceValidationAndCopy() throws Exception {
+        SingleIntegerPreference tmpPref = new SingleIntegerPreference("Count", "42");
+        Assertions.assertEquals(42, tmpPref.getContent());
+        tmpPref.setContent(7);
+        Assertions.assertEquals(7, tmpPref.getContent());
+        tmpPref.setContent("13");
+        Assertions.assertEquals(13, tmpPref.getContent());
+        Assertions.assertTrue(SingleIntegerPreference.isValidContent("13"));
+        Assertions.assertFalse(SingleIntegerPreference.isValidContent("not-a-number"));
+        Assertions.assertFalse(SingleIntegerPreference.isValidContent(""));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new SingleIntegerPreference("Count", "xyz"));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new SingleIntegerPreference("lowercase-invalid-name", 1));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> tmpPref.setContent("oops"));
+        SingleIntegerPreference tmpCopy = tmpPref.copy();
+        Assertions.assertEquals(tmpPref, tmpCopy);
+        Assertions.assertEquals(tmpPref.getGUID(), tmpCopy.getGUID());
+        Assertions.assertNotSame(tmpPref, tmpCopy);
+    }
+    //
+    /**
+     * Tests the String-arg constructor, setContent overloads, static isValidContent overloads, copy(), and the
+     * invalid-name / NaN / Infinity guards of class SingleNumberPreference using clean doubles.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testSingleNumberPreferenceValidationAndCopy() throws Exception {
+        SingleNumberPreference tmpPref = new SingleNumberPreference("Layout parameter", "0.5");
+        Assertions.assertEquals(0.5, tmpPref.getContent(), 0.0);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new SingleNumberPreference("Layout parameter", "NaN"));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new SingleNumberPreference("lowercase-invalid-name", 1.0));
+        tmpPref.setContent(2.0);
+        Assertions.assertEquals(2.0, tmpPref.getContent(), 0.0);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> tmpPref.setContent(Double.POSITIVE_INFINITY));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> tmpPref.setContent(Double.NaN));
+        tmpPref.setContent("1.0");
+        Assertions.assertEquals(1.0, tmpPref.getContent(), 0.0);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> tmpPref.setContent("NaN"));
+        Assertions.assertTrue(SingleNumberPreference.isValidContent(2.0));
+        Assertions.assertFalse(SingleNumberPreference.isValidContent(Double.POSITIVE_INFINITY));
+        Assertions.assertFalse(SingleNumberPreference.isValidContent(Double.NaN));
+        Assertions.assertTrue(SingleNumberPreference.isValidContent("2.0"));
+        Assertions.assertFalse(SingleNumberPreference.isValidContent(null));
+        Assertions.assertFalse(SingleNumberPreference.isValidContent(" "));
+        Assertions.assertFalse(SingleNumberPreference.isValidContent("NaN"));
+        Assertions.assertFalse(SingleNumberPreference.isValidContent("Infinity"));
+        SingleNumberPreference tmpCopy = tmpPref.copy();
+        Assertions.assertEquals(tmpPref, tmpCopy);
+        Assertions.assertEquals(tmpPref.getGUID(), tmpCopy.getGUID());
+        Assertions.assertNotSame(tmpPref, tmpCopy);
+    }
+    //
+    /**
+     * Tests setContent, static isValidContent, copy(), and the invalid-content constructor guard of class
+     * SingleTermPreference with real valid and pattern-failing input.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testSingleTermPreferenceValidationAndCopy() throws Exception {
+        SingleTermPreference tmpPref = new SingleTermPreference("Welcoming message", "Welcome to MORTAR");
+        tmpPref.setContent("Hello world");
+        Assertions.assertEquals("Hello world", tmpPref.getContent());
+        Assertions.assertThrows(IllegalArgumentException.class, () -> tmpPref.setContent("invalid#term"));
+        Assertions.assertTrue(SingleTermPreference.isValidContent("A valid term"));
+        //a tilde is legal: it occurs in 8.3 short paths on Windows and in home-relative paths on Linux, and the
+        //recent-directory setting is persisted through this preference. The short-path case is what made this matter:
+        //a Windows account whose name exceeds eight characters is abbreviated this way in the temporary directory path.
+        Assertions.assertTrue(SingleTermPreference.isValidContent("C:\\Users\\LONGUS~1\\AppData\\Local\\Temp"));
+        Assertions.assertTrue(SingleTermPreference.isValidContent("~/molecules"));
+        Assertions.assertDoesNotThrow(() -> new SingleTermPreference("Tilde path", "~/molecules"));
+        Assertions.assertFalse(SingleTermPreference.isValidContent(null));
+        Assertions.assertFalse(SingleTermPreference.isValidContent("invalid#term"));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new SingleTermPreference("Bad content", "invalid#term"));
+        SingleTermPreference tmpCopy = tmpPref.copy();
+        Assertions.assertEquals(tmpPref, tmpCopy);
+        Assertions.assertEquals(tmpPref.getGUID(), tmpCopy.getGUID());
+        Assertions.assertNotSame(tmpPref, tmpCopy);
+    }
+    //
+    /**
+     * Tests setContent, copy(), and the invalid-name constructor guard of class BooleanPreference.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testBooleanPreferenceValidationAndCopy() throws Exception {
+        BooleanPreference tmpPref = new BooleanPreference("MORTAR is cool", false);
+        tmpPref.setContent(true);
+        Assertions.assertTrue(tmpPref.getContent());
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new BooleanPreference("lowercase-invalid-name", true));
+        BooleanPreference tmpCopy = tmpPref.copy();
+        Assertions.assertEquals(tmpPref, tmpCopy);
+        Assertions.assertEquals(tmpPref.getGUID(), tmpCopy.getGUID());
+        Assertions.assertNotSame(tmpPref, tmpCopy);
+    }
+    //
+    /**
+     * Tests the BasePreference equals (self / null / different-class / equal), compareTo (real compare + null
+     * NullPointerException), and isValidName(null) branches through a concrete subclass.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testBasePreferenceEqualsCompareToAndIsValidName() throws Exception {
+        BooleanPreference tmpPref = new BooleanPreference("Base preference setting", true);
+        Assertions.assertEquals(tmpPref, tmpPref);
+        Assertions.assertNotEquals(tmpPref, null);
+        Assertions.assertNotEquals(tmpPref, "a non-preference object");
+        BooleanPreference tmpEqual = tmpPref.copy();
+        Assertions.assertEquals(tmpPref, tmpEqual);
+        Assertions.assertEquals(0, tmpPref.compareTo(tmpEqual));
+        BooleanPreference tmpOther = new BooleanPreference("Another setting", false);
+        Assertions.assertNotEquals(0, tmpPref.compareTo(tmpOther));
+        Assertions.assertThrows(NullPointerException.class, () -> tmpPref.compareTo(null));
+        Assertions.assertFalse(BasePreference.isValidName(null));
+        Assertions.assertTrue(BasePreference.isValidName("Valid name"));
+    }
+    //
+    /**
+     * Tests the PreferenceFactory unknown-type-name IllegalArgumentException branch and its reflectively-invoked private
+     * parameter-less constructor.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testPreferenceFactoryUnknownTypeAndPrivateConstructor() throws Exception {
+        BufferedReader tmpReader = new BufferedReader(new StringReader("irrelevant"));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> PreferenceFactory.reinitializePreference("NOT_A_PREFERENCE_TYPE", tmpReader));
+        tmpReader.close();
+        Constructor<PreferenceFactory> tmpCtor = PreferenceFactory.class.getDeclaredConstructor();
+        tmpCtor.setAccessible(true);
+        Assertions.assertNotNull(tmpCtor.newInstance());
     }
     //
     /**

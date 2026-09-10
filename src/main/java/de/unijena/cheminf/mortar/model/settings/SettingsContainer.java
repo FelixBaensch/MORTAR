@@ -86,11 +86,6 @@ public class SettingsContainer {
     public static final int ROWS_PER_PAGE_SETTING_DEFAULT = 5;
 
     /**
-     * Default value of the recent directory to use when there is no last directory used by the user.
-     */
-    public static final String RECENT_DIRECTORY_PATH_SETTING_DEFAULT = System.getProperty("user.home");
-
-    /**
      * Default value of whether to add implicit hydrogen atoms to open valences in the imported molecules.
      */
     public static final boolean ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT = true;
@@ -124,6 +119,20 @@ public class SettingsContainer {
      * Default value of whether to keep last fragment.
      */
     public static final boolean KEEP_LAST_FRAGMENT_SETTING_DEFAULT = false;
+    //</editor-fold>
+    //
+    //<editor-fold desc="public static methods" defaultstate="collapsed">
+    /**
+     * Returns the default value of the recent directory to use when there is no last directory used by the user: the
+     * home directory of the user running the application. Resolved on every call rather than snapshotted into a
+     * constant, because {@code user.home} is read at class-initialization time otherwise, which freezes whatever value
+     * happened to be set when this class was first loaded.
+     *
+     * @return path of the user home directory
+     */
+    public static String getRecentDirectoryPathSettingDefault() {
+        return System.getProperty("user.home");
+    }
     //</editor-fold>
     //
     //<editor-fold desc="private static final constants" defaultstate="collapsed">
@@ -582,7 +591,7 @@ public class SettingsContainer {
     public void restoreDefaultSettings() {
         this.rowsPerPageSetting.set(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT);
         this.numberOfTasksForFragmentationSetting.set(this.nrOfTasksForFragmentationSettingDefault);
-        this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+        this.recentDirectoryPathSetting.set(SettingsContainer.getRecentDirectoryPathSettingDefault());
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.importAromaticsAsKekuleStructuresSetting.set(SettingsContainer.IMPORT_AROMATICS_AS_KEKULE_STRUCTURES_DEFAULT);
         //DEPRECATED
@@ -730,7 +739,7 @@ public class SettingsContainer {
                 Message.get("SettingsContainer.numberOfTasksForFragmentationSetting.displayName"));
         this.recentDirectoryPathSetting = new SimpleStringProperty(this,
                 "Recent directory path setting",
-                SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT) {
+                SettingsContainer.getRecentDirectoryPathSettingDefault()) {
             @Override
             public void set(String newValue) throws IllegalArgumentException {
                 if (SettingsContainer.this.isLegalRecentDirectoryPath(newValue)) {

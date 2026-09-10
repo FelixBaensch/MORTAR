@@ -227,6 +227,22 @@ If you are not sure about the contribution process, please contact us via email,
 * Spotless version 8.1.0
   * [Spotless GitHub repository](https://github.com/diffplug/spotless)
   * License: Apache-2.0 license
+* Mockito version 5.18.0
+  * [Mockito GitHub repository](https://github.com/mockito/mockito)
+  * License: MIT License
+* TestFX version 4.0.18
+  * [TestFX GitHub repository](https://github.com/TestFX/TestFX)
+  * License: European Union Public Licence v1.1
+* OpenJFX Monocle version 21.0.2
+  * [OpenJFX Monocle GitHub repository](https://github.com/TestFX/Monocle)
+  * License: GNU General Public License v2 with the Classpath Exception
+* JaCoCo version 0.8.15
+  * [JaCoCo GitHub repository](https://github.com/jacoco/jacoco)
+  * License: Eclipse Public License 2.0
+* PIT Mutation Testing (Gradle plugin version 1.19.0, JUnit 5 plugin version 1.2.3)
+  * [PIT GitHub repository](https://github.com/hcoles/pitest)
+  * [Gradle PIT plugin GitHub repository](https://github.com/szpak/gradle-pitest-plugin)
+  * License: Apache-2.0 license
 
 ## Citation
 You can cite this software or this repository as it is defined in the CITATION.cff file. Also, please cite our scientific 

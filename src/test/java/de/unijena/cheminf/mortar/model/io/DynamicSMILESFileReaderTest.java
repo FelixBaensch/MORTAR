@@ -29,12 +29,17 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 /**
  * Test class for the DynamicSMILESFileReader class.
@@ -44,6 +49,15 @@ import java.nio.file.Paths;
  * @version 2.0.0.0
  */
 public class DynamicSMILESFileReaderTest {
+    //<editor-fold desc="static initializer">
+    /**
+     * Sets the default locale to British English.
+     */
+    static {
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //</editor-fold>
+    //
     /**
      * Test containsOnlySMILESValidCharacters() for false-positives, e.g. two tab-separated strings, some of which can
      * be interpreted by the CDK SmilesParser (it only parses the first part up to the first whitespace character and
@@ -388,5 +402,93 @@ public class DynamicSMILESFileReaderTest {
         Assertions.assertEquals("derivat-(1S)-6,8-dihydroxy-1-methyl-1,2-dihydrocyclopenta[c]isochromene-3,5-dione", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals("derivat-6-chloro-3-(3-methylisoxazol-5-yl)-4-phenylquinolin-2(1H)-one", tmpMolSet.getAtomContainer(9).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(0, tmpReader.getSkippedLinesCounter());
+    }
+    //
+    /**
+     * Tests that detectFormat() throws an IOException when given an empty (0-byte) file, since no parsable SMILES code
+     * can be found and the file therefore does not fit the expected SMILES file format. An empty file is written
+     * on-the-fly into a temporary directory.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void detectFormatOnEmptyFileThrowsIOExceptionTest(@TempDir Path aTempDir) throws Exception {
+        File tmpEmptyFile = aTempDir.resolve("EmptyOnTheFly.txt").toFile();
+        try (FileWriter tmpWriter = new FileWriter(tmpEmptyFile)) {
+            // intentionally write nothing to keep the file empty
+        }
+        Assertions.assertTrue(tmpEmptyFile.exists());
+        Assertions.assertEquals(0, tmpEmptyFile.length());
+        Assertions.assertThrows(IOException.class, () -> DynamicSMILESFileReader.detectFormat(tmpEmptyFile));
+    }
+    //
+    /**
+     * Tests that detectFormat() throws an IOException when given the empty-file classpath fixture (EmptyFile.txt), since
+     * no parsable SMILES code can be found and the file therefore does not fit the expected SMILES file format.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void detectFormatOnEmptyFixtureThrowsIOExceptionTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("EmptyFile.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Assertions.assertEquals(0, tmpResourceFile.length());
+        Assertions.assertThrows(IOException.class, () -> DynamicSMILESFileReader.detectFormat(tmpResourceFile));
+    }
+    //
+    /**
+     * Tests that detectFormat() throws an IOException when given a file that does not exist on disk. This covers the
+     * FileNotFoundException outer catch block in detectFormat(), which rethrows as IOException. The non-existent file is
+     * resolved against a temporary directory.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void detectFormatOnMissingFileThrowsIOExceptionTest(@TempDir Path aTempDir) throws Exception {
+        File tmpMissingFile = aTempDir.resolve("DoesNotExist.txt").toFile();
+        Assertions.assertFalse(tmpMissingFile.exists());
+        Assertions.assertThrows(IOException.class, () -> DynamicSMILESFileReader.detectFormat(tmpMissingFile));
+    }
+    //
+    /**
+     * Tests that detectFormat() throws an IOException when given a file whose lines are all unparsable as SMILES codes
+     * (AllInvalidSmiles.txt classpath fixture), since no parsable SMILES code can be found and the file therefore does
+     * not fit the expected SMILES file format.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void detectFormatOnAllInvalidFileThrowsIOExceptionTest() throws Exception {
+        URL tmpURL = this.getClass().getResource("AllInvalidSmiles.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Assertions.assertThrows(IOException.class, () -> DynamicSMILESFileReader.detectFormat(tmpResourceFile));
+    }
+    //
+    /**
+     * Tests that readFile() skips every data line and returns an empty atom container set when given a file that has a
+     * header line followed by data lines that are all invalid SMILES codes. The skipped-lines counter must equal the
+     * number of (invalid) data lines, since the header line is not counted. The file is written on-the-fly into a
+     * temporary directory and the format is supplied directly (single column, with a header line) so that detectFormat()
+     * is not exercised here.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void readFileOnHeaderWithAllInvalidDataLinesSkipsAllAndReturnsEmptySetTest(@TempDir Path aTempDir) throws Exception {
+        File tmpFile = aTempDir.resolve("HeaderWithInvalidData.txt").toFile();
+        try (FileWriter tmpWriter = new FileWriter(tmpFile)) {
+            tmpWriter.write("SMILES" + System.lineSeparator());
+            tmpWriter.write("not_a_valid_smiles_one" + System.lineSeparator());
+            tmpWriter.write("not_a_valid_smiles_two" + System.lineSeparator());
+            tmpWriter.write("not_a_valid_smiles_three" + System.lineSeparator());
+        }
+        DynamicSMILESFileFormat tmpFormat = new DynamicSMILESFileFormat(true);
+        DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
+        IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpFile, tmpFormat);
+        Assertions.assertEquals(0, tmpMolSet.getAtomContainerCount());
+        Assertions.assertEquals(3, tmpReader.getSkippedLinesCounter());
     }
 }

@@ -37,6 +37,15 @@ jobs:
         run: echo $JAVA_HOME
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Run tests
+        run: .\gradlew test
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-test-report
+          path: build/reports/tests/test
+          retention-days: 30
       - name: Download Inno Setup installer
         run: Invoke-WebRequest -Uri https://github.com/jrsoftware/issrc/releases/download/is-6_4_2/innosetup-6.4.2.exe -OutFile inno-setup.exe
       - name: Install Inno Setup
@@ -76,6 +85,18 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+      # Run the suite on one macOS architecture only: this is a platform smoke test (headless JavaFX, file
+      # handling, path semantics), not an architecture-specific one, and macOS runner minutes are expensive.
+      - name: Run tests
+        if: matrix.os == 'macos-15'
+        run: ./gradlew test
+      - name: Upload test report
+        if: failure() && matrix.os == 'macos-15'
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-test-report
+          path: build/reports/tests/test
+          retention-days: 30
       - name: Package DMG (ARM)
         if: matrix.os == 'macos-15'
         run: ./gradlew --info --stacktrace localMacDmgArm

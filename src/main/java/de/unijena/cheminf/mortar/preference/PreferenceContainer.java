@@ -999,7 +999,19 @@ public class PreferenceContainer implements Comparable<PreferenceContainer> {
         if (tmpFileExtension.equals(PreferenceContainer.VALID_FILE_EXTENSIONS[0])) {
             tmpInStreamReader = new InputStreamReader(tmpFileIn, Charset.defaultCharset().displayName());
         } else if (tmpFileExtension.equals(PreferenceContainer.VALID_FILE_EXTENSIONS[1])) {
-            GZIPInputStream tmpGzipIn = new GZIPInputStream(tmpFileIn, BasicDefinitions.BUFFER_SIZE);
+            GZIPInputStream tmpGzipIn;
+            try {
+                tmpGzipIn = new GZIPInputStream(tmpFileIn, BasicDefinitions.BUFFER_SIZE);
+            } catch (IOException anException) {
+                //the GZIP header of a corrupt file makes the constructor throw; close the already opened file stream
+                //instead of leaking it (a leaked handle also blocks deletion of the file on Windows)
+                try {
+                    tmpFileIn.close();
+                } catch (IOException aCloseException) {
+                    //rethrown below anyway
+                }
+                throw anException;
+            }
             tmpInStreamReader = new InputStreamReader(tmpGzipIn, Charset.defaultCharset().displayName());
         } else {
             try {

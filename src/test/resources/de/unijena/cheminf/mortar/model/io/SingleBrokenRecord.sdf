@@ -1,0 +1,8 @@
+BrokenOnly
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+this line breaks the connection table parsing on purpose
+M  END
+$$$$

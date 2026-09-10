@@ -29,6 +29,7 @@ import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
+import com.lowagie.text.ExceptionConverter;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.Image;
@@ -603,10 +604,12 @@ public class Exporter {
                 aFragmentationName == null || anImportedFileName == null) {
             return null;
         }
-        try (Document tmpPDFDocument = new Document(PageSize.A4)) {
+        Document tmpPDFDocument = new Document(PageSize.A4);
+        FileOutputStream tmpPdfFileOutputStream = new FileOutputStream(aPdfFile.getPath());
+        try {
             List<String> tmpFailedExportFragments = new LinkedList<>();
             tmpPDFDocument.setPageSize(tmpPDFDocument.getPageSize().rotate());
-            PdfWriter.getInstance(tmpPDFDocument, new FileOutputStream(aPdfFile.getPath()));
+            PdfWriter.getInstance(tmpPDFDocument, tmpPdfFileOutputStream);
             tmpPDFDocument.open();
             float[] tmpCellLength = {70f, 120f, 50f, 50f, 55f, 55f}; // relative sizes, magic numbers
             PdfPTable tmpFragmentationTable = new PdfPTable(tmpCellLength);
@@ -677,6 +680,25 @@ public class Exporter {
             tmpPDFDocument.add(tmpSpace);
             tmpPDFDocument.add(tmpFragmentationTable);
             return tmpFailedExportFragments;
+        } finally {
+            //guard the close: on an interrupted/early-return path no pages were added yet (the content table is only
+            // added after the export loop), and iText's Document.close() then throws an ExceptionConverter
+            // ("The document has no pages."). Swallow that specific zero-page case so a cancelled export returns
+            // cleanly instead of propagating a spurious runtime exception. The success path adds pages, so close()
+            // there behaves exactly as before.
+            try {
+                tmpPDFDocument.close();
+            } catch (ExceptionConverter anExceptionConverter) {
+                Exporter.LOGGER.log(Level.WARNING, anExceptionConverter.toString(), anExceptionConverter);
+            }
+            //the document close above closes the output stream on the success path; on the guarded (zero-page) path it
+            //does not, so close it here explicitly - a second close is a no-op, a leaked handle blocks deletion of the
+            //file on Windows
+            try {
+                tmpPdfFileOutputStream.close();
+            } catch (IOException anException) {
+                Exporter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+            }
         }
     }
     //
@@ -704,9 +726,10 @@ public class Exporter {
                 anImportedFileName == null || anImportedFileName.isEmpty()) {
             return null;
         }
+        FileOutputStream tmpPdfFileOutputStream = new FileOutputStream(aPdfFile.getPath());
         try (Document tmpPDFDocument = new Document(PageSize.A4)) {
             List<String> tmpFailedExportFragments = new LinkedList<>();
-            PdfWriter.getInstance(tmpPDFDocument, new FileOutputStream(aPdfFile.getPath()));
+            PdfWriter.getInstance(tmpPDFDocument, tmpPdfFileOutputStream);
             tmpPDFDocument.open();
             // creates the pdf table
             Chunk tmpItemizationTabHeader = new Chunk(Message.get("Exporter.itemsTab.pdfCellHeader.header"),
@@ -779,9 +802,14 @@ public class Exporter {
                         } catch (CDKException anException) {
                             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpMoleculeDataModel.getName()), anException);
                             tmpFailedExportFragments.add(tmpFragmentDatModel.getUniqueSmiles());
+                            //advance the fragment counter so a persistently-failing fragment is skipped instead of
+                            // spinning the outer loop forever (the failing fragment is already recorded above)
+                            tmpFragmentNumber++;
                             continue;
                         }
                         if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
+                            //advance the fragment counter so the outer loop still makes progress on this path
+                            tmpFragmentNumber++;
                             continue;
                         }
                         String tmpFrequency = tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDatModel.getUniqueSmiles()).toString();
@@ -802,7 +830,11 @@ public class Exporter {
                         if(Thread.currentThread().isInterrupted()){
                             return null;
                         }
-                        if (tmpCellIterator < tmpImagesNumbers) {
+                        //bound the padding by the number of cells actually rendered (tmpCell), not by the number of
+                        // fragment slots attempted (tmpImagesNumbers): a skipped/failed fragment increments the attempt
+                        // count without adding a cell, so reading up to tmpImagesNumbers would overrun tmpCell. On the
+                        // all-success path tmpImagesNumbers == tmpCell.size(), so this is behavior-preserving.
+                        if (tmpCellIterator < tmpCell.size()) {
                             tmpFragmentationTable2.addCell(tmpCell.get(tmpCellIterator));
                         } else {
                             tmpFragmentationTable2.addCell(new Paragraph(""));
@@ -813,6 +845,15 @@ public class Exporter {
                 tmpPDFDocument.newPage();
             }
             return tmpFailedExportFragments;
+        } finally {
+            //the document close closes the output stream on the regular path; on an early return (interrupt) or a
+            //failing close it does not, so close it here explicitly - a second close is a no-op, a leaked handle
+            //blocks deletion of the file on Windows
+            try {
+                tmpPdfFileOutputStream.close();
+            } catch (IOException anException) {
+                Exporter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+            }
         }
     }
     //
@@ -1066,7 +1107,8 @@ public class Exporter {
                 File tmpPDBFile = new File(tmpPDBFilePathName);
                 //writing to file
                 try (
-                        PDBWriter tmpPDBWriter = new PDBWriter(new FileOutputStream(tmpPDBFile));
+                        FileOutputStream tmpPDBFileOutputStream = new FileOutputStream(tmpPDBFile);
+                        PDBWriter tmpPDBWriter = new PDBWriter(tmpPDBFileOutputStream);
                 ) {
                     try {
                         if (tmpPoint3dAvailable) {
@@ -1184,8 +1226,8 @@ public class Exporter {
         }
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if (!tmpRecentDirectory.isDirectory()) {
-            tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            tmpRecentDirectory = new File(SettingsContainer.getRecentDirectoryPathSettingDefault());
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.getRecentDirectoryPathSettingDefault());
             Exporter.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpFileChooser.setInitialDirectory(tmpRecentDirectory);
@@ -1215,8 +1257,8 @@ public class Exporter {
         tmpDirectoryChooser.setTitle(Message.get("Exporter.directoryChooser.title"));
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if (!tmpRecentDirectory.isDirectory()) {
-            tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            tmpRecentDirectory = new File(SettingsContainer.getRecentDirectoryPathSettingDefault());
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.getRecentDirectoryPathSettingDefault());
             Exporter.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpDirectoryChooser.setInitialDirectory(tmpRecentDirectory);

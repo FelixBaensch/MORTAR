@@ -25,14 +25,23 @@
 
 package de.unijena.cheminf.mortar.model.depict;
 
+import javafx.application.Platform;
+import javafx.scene.image.Image;
+
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
 
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link DepictionUtil}.
@@ -41,7 +50,130 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 class DepictionUtilTest {
+    //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
+    /**
+     * Bounded wait (in seconds) for the JavaFX toolkit boot, so a stuck start fails fast instead of hanging the build.
+     * Matches the bound {@code AbstractFxTestCase} applies to the same boot for the controller tests.
+     */
+    private static final long TOOLKIT_BOOT_TIMEOUT_SECONDS = 10L;
+    //</editor-fold>
+    //
+    //<editor-fold desc="static initializer">
+    /**
+     * Pins the default locale to en-GB, the locale the application itself runs under. The integer-formatting methods
+     * of {@link DepictionUtil} build their {@link java.text.DecimalFormatSymbols} from {@code Locale.getDefault()}, so
+     * the decimal separator of their output — and therefore any exact assertion on it — depends on the locale of the
+     * JVM running the tests.
+     */
+    static {
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Tests">
+    /**
+     * Boots the JavaFX toolkit once per JVM (headless via Monocle, configured in {@code tasks.test}) so the
+     * image-producing methods of {@link DepictionUtil} — which convert an AWT {@link java.awt.image.BufferedImage} to a
+     * JavaFX {@link Image} via {@code SwingFXUtils} — can allocate {@code WritableImage}s.
+     * <p>
+     * {@link Platform#startup(Runnable)} returns before the toolkit is actually up, so the boot is awaited on a bounded
+     * latch rather than assumed to have completed; a plain call would let the first test run against a toolkit that is
+     * still starting. A second start throws {@link IllegalStateException}, which means a sibling test class already
+     * booted the toolkit in this JVM and there is nothing left to wait for.
+     *
+     * @throws InterruptedException if the wait for the toolkit boot is interrupted
+     */
+    @BeforeAll
+    static void initToolkit() throws InterruptedException {
+        CountDownLatch tmpLatch = new CountDownLatch(1);
+        try {
+            Platform.startup(tmpLatch::countDown);
+        } catch (IllegalStateException anException) {
+            //toolkit already started by another test class in this JVM -> already usable, nothing to await
+            return;
+        }
+        Assertions.assertTrue(tmpLatch.await(DepictionUtilTest.TOOLKIT_BOOT_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                "the JavaFX toolkit did not start within "
+                        + DepictionUtilTest.TOOLKIT_BOOT_TIMEOUT_SECONDS + " seconds");
+    }
+    //
+    /**
+     * Drives every image-producing overload of {@link DepictionUtil} with a real molecule and asserts a non-null
+     * JavaFX {@link Image} is returned, covering the depiction (BufferedImage to FX Image) path of each overload.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    void depictImageOverloadsProduceNonNullImages() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("c1ccccc1");
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 300.0, 200.0));
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithDefaultWidthNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 200.0));
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithDefaultHeightNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 300.0));
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithDefaultWidthDefaultHeightNoFillToFitAndTransparentBackground(tmpMolecule, 1.5));
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithNoFillToFitAndTransparentBackground(tmpMolecule, 1.5, 300.0, 200.0));
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithTransparentBackground(tmpMolecule, 1.5, 300.0, 200.0, true));
+        Assertions.assertNotNull(
+                DepictionUtil.depictImage(tmpMolecule, 1.5, 300.0, 200.0, true, false));
+    }
+    //
+    /**
+     * Drives the two text-annotated image overloads of {@link DepictionUtil}, asserting a non-null JavaFX
+     * {@link Image} is returned for each.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    void depictImageWithTextOverloadsProduceNonNullImages() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("c1ccccc1");
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithTextNoFillToFitAndTransparentBackground(tmpMolecule, 1.5, 300.0, 200.0, "Benzene"));
+        Assertions.assertNotNull(
+                DepictionUtil.depictImageWithText(tmpMolecule, 1.5, 300.0, 200.0, "Benzene", true, false));
+    }
+    //
+    /**
+     * Drives {@link DepictionUtil#depictErrorImage(String, int, int)}: a normal message with valid dimensions plus the
+     * fallback branches for a blank message and for non-positive dimensions all return a non-null JavaFX {@link Image}.
+     */
+    @Test
+    void depictErrorImageProducesImageAndCoversFallbacks() {
+        Image tmpErrorImage = DepictionUtil.depictErrorImage("boom", 120, 80);
+        Assertions.assertNotNull(tmpErrorImage);
+        //blank message -> "Error" fallback; non-positive dimensions -> default size fallback
+        Assertions.assertNotNull(DepictionUtil.depictErrorImage("   ", -1, -1));
+        Assertions.assertNotNull(DepictionUtil.depictErrorImage(null, 0, 0));
+    }
+    //
+    /**
+     * Drives the guard branch of {@link DepictionUtil#getGraphicsInstanceWithStandardFont(int, int)} (non-positive
+     * dimensions throw) and its happy path (a configured {@link Graphics2D} is returned), plus the early-fit return
+     * branch of {@link DepictionUtil#fitIntegerDisplayToImageWidth(double, int, FontMetrics)} where a very wide image
+     * keeps the first, most detailed formatting. Because that first pattern is
+     * {@link DepictionUtil.IntegerFormatPattern#THREE_DECIMALS_SCIENTIFIC} ({@code "0.000E0"}), the exact output for
+     * the value 42 is asserted rather than only its non-nullness — that is what shows the loop returned on the first,
+     * most detailed pattern instead of falling through to a shorter one. The class pins the en-GB default locale, so
+     * the decimal separator in the expected string is deterministic.
+     */
+    @Test
+    void graphicsInstanceGuardAndEarlyFitReturn() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> DepictionUtil.getGraphicsInstanceWithStandardFont(0, 10));
+        Graphics2D tmpGraphics = DepictionUtil.getGraphicsInstanceWithStandardFont(100, 50);
+        Assertions.assertNotNull(tmpGraphics);
+        FontMetrics tmpFontMetrics = tmpGraphics.getFontMetrics();
+        //a very wide image -> the first (most detailed) formatting already fits, so the loop returns immediately
+        String tmpResult = DepictionUtil.fitIntegerDisplayToImageWidth(100000.0, 42, tmpFontMetrics);
+        Assertions.assertEquals("4.200E1", tmpResult);
+    }
+    //
     /**
      * Illustrates the effect of each format pattern defined in {@link DepictionUtil.IntegerFormatPattern}
      * enum on selected large integer values. The patterns are applied progressively (most detail → the least detail)

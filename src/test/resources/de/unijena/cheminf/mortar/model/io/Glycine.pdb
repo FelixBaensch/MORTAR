@@ -1,0 +1,13 @@
+HEADER    GLYCINE
+COMPND    GLYCINE
+HETATM    1  N   GLY A   1       1.931   0.090  -0.034  1.00  0.00           N
+HETATM    2  CA  GLY A   1       0.761  -0.799  -0.083  1.00  0.00           C
+HETATM    3  C   GLY A   1      -0.498   0.029  -0.011  1.00  0.00           C
+HETATM    4  O   GLY A   1      -0.412   1.245   0.046  1.00  0.00           O
+HETATM    5  OXT GLY A   1      -1.713  -0.553  -0.012  1.00  0.00           O
+CONECT    1    2
+CONECT    2    1    3
+CONECT    3    2    4    5
+CONECT    4    3
+CONECT    5    3
+END

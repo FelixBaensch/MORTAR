@@ -635,5 +635,30 @@ public class GuiUtil {
         tmpTooltip.setShowDuration(Duration.seconds(GuiDefinitions.GUI_TOOLTIP_SHOW_DURATION));
         return tmpTooltip;
     }
+    //
+    /**
+     * Calculates the page count for a JavaFX pagination control suitable for the given number of items and the given
+     * number of items per page: the integer ceiling of aItemCount / aItemsPerPage, and 1 for an empty list.
+     * <p>
+     * The clamp to a minimum of one page matters: {@link javafx.scene.control.Pagination} does not accept a page count
+     * below one and silently reverts to the previously set value instead (to the indeterminate
+     * {@code Integer.MAX_VALUE} on a freshly constructed control), so passing zero for an empty list either leaves a
+     * stale page count in place or produces an indeterminate pagination.
+     *
+     * @param aItemCount number of items to display (&gt;= 0)
+     * @param aItemsPerPage number of items per page (&gt;= 1); rows per page for the table views, rows multiplied by
+     *                      columns for the grid-based overview
+     * @return the suitable page count (&gt;= 1)
+     */
+    public static int calculatePageCount(int aItemCount, int aItemsPerPage) {
+        int tmpPageCount = aItemCount / aItemsPerPage;
+        if (aItemCount % aItemsPerPage > 0) {
+            tmpPageCount++;
+        }
+        if (aItemCount == 0) {
+            tmpPageCount = 1;
+        }
+        return tmpPageCount;
+    }
     //</editor-fold>
 }
