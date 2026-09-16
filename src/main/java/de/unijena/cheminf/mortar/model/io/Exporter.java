@@ -124,6 +124,10 @@ public class Exporter {
          */
         FRAGMENT_MULTIPLE_SD_FILES,
         /**
+         * enum value for histogram CSV file.
+         */
+        HISTOGRAM_CSV_FILE,
+        /**
          * enum value for pdb file.
          */
         FRAGMENT_PDB_FILE;
@@ -309,6 +313,14 @@ public class Exporter {
                 }
                 yield tmpFile;
             }
+            case ExportTypes.HISTOGRAM_CSV_FILE -> {
+                tmpFileName = "Histogram_Data";
+                tmpFile = this.chooseFile(aParentStage, "CSV", FileExtension.CSV.toString(), tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.CSV.extension.toLowerCase(Locale.ROOT))) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
+                }
+                yield tmpFile;
+            }
             case ExportTypes.FRAGMENT_PDB_FILE, ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
                     this.chooseDirectory(aParentStage);
             case ExportTypes.FRAGMENT_PDF_FILE -> {
@@ -375,6 +387,28 @@ public class Exporter {
             return this.createItemizationTabCsvFile(aFile, aMoleculeDataModelList, aFragmentationName, aSeparator);
         }
         return new ArrayList<>(0);
+    }
+    /**
+     * Exports the histogram data as a CSV file.
+     *
+     * @param aFile the CSV file to create
+     * @param aSmilesList the displayed SMILES list
+     * @param aFrequencyList the displayed frequency list
+     * @param aSeparator the separator for the CSV file
+     * @throws FileNotFoundException if given file cannot be found
+     */
+    public void exportHistogramCsvFile(File aFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator, boolean aSortByFragmentFrequency)
+            throws FileNotFoundException{
+        if (aFile == null) {
+            return;
+        }
+        if (aSmilesList.size() != aFrequencyList.size()) {
+            throw new IllegalArgumentException(
+                    "aSmilesList and aFrequencyList must have the same size, but were "
+                            + aSmilesList.size() + " and " + aFrequencyList.size() + "."
+            );
+        }
+        this.createHistogramCsvFile(aFile, aSmilesList, aFrequencyList, aSeparator, aSortByFragmentFrequency);
     }
     //
     /**
@@ -578,6 +612,33 @@ public class Exporter {
                 }
             }
             return tmpFailedExportFragments;
+        }
+    }
+    /**
+     * Exports the histogram data as displayed in the histogram view as a CSV file.
+     *
+     * @param aCsvFile                 the CSV file to create
+     * @param aSmilesList              the list of displayed SMILES
+     * @param aFrequencyList           the list of displayed frequencies
+     * @param aSeparator               the separator for the CSV file
+     * @param aSortByFragmentFrequency
+     * @throws FileNotFoundException if given file cannot be found
+     */
+    private void createHistogramCsvFile(File aCsvFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator, boolean aSortByFragmentFrequency)
+            throws FileNotFoundException {
+        if (aCsvFile == null || aSmilesList == null || aFrequencyList == null) {
+            return;
+        }
+        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+            String tmpFrequencyHeader = aSortByFragmentFrequency ? Message.get("Exporter.fragmentationTab.csvHeader.frequency") : Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency");
+            String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator + tmpFrequencyHeader;
+            tmpWriter.write(tmpHistogramCsvHeader);
+            for (int i = 0; i < aSmilesList.size(); i++) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return;
+                }
+                tmpWriter.printf("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i));
+            }
         }
     }
     //
