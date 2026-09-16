@@ -397,12 +397,18 @@ public class Exporter {
      * @param aSeparator the separator for the CSV file
      * @throws FileNotFoundException if given file cannot be found
      */
-    public void exportHistogramCsvFile(File aFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator)
+    public void exportHistogramCsvFile(File aFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator, boolean aSortByFragmentFrequency)
             throws FileNotFoundException{
         if (aFile == null) {
             return;
         }
-        this.createHistogramCsvFile(aFile, aSmilesList, aFrequencyList, aSeparator);
+        if (aSmilesList.size() != aFrequencyList.size()) {
+            throw new IllegalArgumentException(
+                    "aSmilesList and aFrequencyList must have the same size, but were "
+                            + aSmilesList.size() + " and " + aFrequencyList.size() + "."
+            );
+        }
+        this.createHistogramCsvFile(aFile, aSmilesList, aFrequencyList, aSeparator, aSortByFragmentFrequency);
     }
     //
     /**
@@ -611,21 +617,21 @@ public class Exporter {
     /**
      * Exports the histogram data as displayed in the histogram view as a CSV file.
      *
-     * @param aCsvFile the CSV file to create
-     * @param aSmilesList the list of displayed SMILES
-     * @param aFrequencyList the list of displayed frequencies
-     * @param aSeparator the separator for the CSV file
-     * @return List <String> SMILES codes that caused an error during export
+     * @param aCsvFile                 the CSV file to create
+     * @param aSmilesList              the list of displayed SMILES
+     * @param aFrequencyList           the list of displayed frequencies
+     * @param aSeparator               the separator for the CSV file
+     * @param aSortByFragmentFrequency
      * @throws FileNotFoundException if given file cannot be found
      */
-    private void createHistogramCsvFile(File aCsvFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator)
+    private void createHistogramCsvFile(File aCsvFile, List<String> aSmilesList, List<Integer> aFrequencyList, char aSeparator, boolean aSortByFragmentFrequency)
             throws FileNotFoundException {
         if (aCsvFile == null || aSmilesList == null || aFrequencyList == null) {
             return;
         }
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
-            String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
-                    Message.get("Exporter.fragmentationTab.csvHeader.frequency");
+            String tmpFrequencyHeader = aSortByFragmentFrequency ? Message.get("Exporter.fragmentationTab.csvHeader.frequency") : Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency");
+            String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator + tmpFrequencyHeader;
             tmpWriter.write(tmpHistogramCsvHeader);
             for (int i = 0; i < aSmilesList.size(); i++) {
                 if (Thread.currentThread().isInterrupted()) {

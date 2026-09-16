@@ -789,7 +789,8 @@ public class HistogramViewController implements IViewToolController {
                 tmpFullSmilesLength.size());
         this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
         this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
-        this.histogramView.getExportCSVButton().setDisable(false);
+        this.histogramView.getExportCSVButton().setDisable(
+                this.displayedHistogramSmiles == null || this.displayedHistogramSmiles.isEmpty() || this.displayedHistogramFrequencies == null || this.displayedHistogramFrequencies.isEmpty());
         XYChart.Series<Number, String> tmpSeries = new XYChart.Series<>();
         if (tmpSublistSmiles.size() != tmpSublistFrequency.size() || tmpSublistSmiles.size() != tmpSmilesToDepict.size()) {
             throw new IllegalArgumentException("SMILES code and frequency sublists for display are of unequal size.");
@@ -1104,7 +1105,8 @@ public class HistogramViewController implements IViewToolController {
                     tmpExportFile,
                     this.displayedHistogramSmiles,
                     this.displayedHistogramFrequencies,
-                    this.settingsContainer.getCsvExportSeparatorSettingCharacter());
+                    this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
+                    this.displayFrequencySetting.get().equals(HistogramViewController.FrequencyOption.ABSOLUTE_FREQUENCY));
             GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Exporter.Histogram.ExportSuccessful.title"),
                     Message.get("Exporter.Histogram.ExportSuccessful.header"),
                     Message.get("Exporter.Histogram.ExportSuccessful.content"));
@@ -1113,6 +1115,12 @@ public class HistogramViewController implements IViewToolController {
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
                     Message.get("Exporter.Histogram.ExportFailed.header"),
                     Message.get("Exporter.Histogram.ExportFailed.content"));
+        }
+        catch (IllegalArgumentException anException) {
+            Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
+                    Message.get("Exporter.Histogram.ExportFailed.header"),
+                    Message.get("Exporter.Histogram.ExportFailed.unequalListsContent"));
         }
     }
     //
