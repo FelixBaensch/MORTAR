@@ -630,7 +630,7 @@ public class Exporter {
             return;
         }
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
-            String tmpFrequencyHeader = aSortByFragmentFrequency ? Message.get("Exporter.fragmentationTab.csvHeader.frequency") : Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency");
+            String tmpFrequencyHeader = Message.get(aSortByFragmentFrequency ? "Exporter.fragmentationTab.csvHeader.frequency" : "Exporter.fragmentationTab.csvHeader.moleculeFrequency");
             String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator + tmpFrequencyHeader;
             tmpWriter.write(tmpHistogramCsvHeader);
             for (int i = 0; i < aSmilesList.size(); i++) {
