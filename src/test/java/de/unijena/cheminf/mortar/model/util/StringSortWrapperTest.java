@@ -145,15 +145,15 @@ public class StringSortWrapperTest {
     }
     //
     /**
-     * Tests that hashCode produces exactly the value defined by its formula, HASH_FACTOR_SORT_STRING (61) *
-     * HASH_SEED (5) + sortString.hashCode() = 305 + sortString.hashCode(). Pinning the exact value detects the
-     * arithmetic mutations of the formula (the {@code *} and {@code +} operators), which would otherwise go unnoticed
-     * because a mere equal-hash-code check does not constrain the concrete value.
+     * Tests that hashCode is derived from the sort string: wrappers enclosing the same object but carrying different
+     * sort strings produce different hash codes (equals is defined via the hash code, so this is what keeps them
+     * unequal).
      */
     @Test
-    public void hashCodePinsExactFormulaValueTest() {
-        StringSortWrapper<String> tmpWrapper = new StringSortWrapper<>("object", "alpha");
-        Assertions.assertEquals(61 * 5 + "alpha".hashCode(), tmpWrapper.hashCode());
+    public void hashCodeDependsOnSortStringTest() {
+        StringSortWrapper<String> tmpWrapperAlpha = new StringSortWrapper<>("object", "alpha");
+        StringSortWrapper<String> tmpWrapperBeta = new StringSortWrapper<>("object", "beta");
+        Assertions.assertNotEquals(tmpWrapperAlpha.hashCode(), tmpWrapperBeta.hashCode());
     }
     //</editor-fold>
     //

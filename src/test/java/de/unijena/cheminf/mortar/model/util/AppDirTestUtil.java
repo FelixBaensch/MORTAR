@@ -102,6 +102,17 @@ public final class AppDirTestUtil {
         }
         AppDirTestUtil.setAppDirPathCache(null);
     }
+    //
+    /**
+     * Clears the {@code appDirPath} cache of {@link FileUtil} without touching {@code user.home}, so the next call to
+     * {@link FileUtil#getAppDirPath()} re-resolves the data directory from the current environment. Used by the test of
+     * that resolution itself; the redirect for every other test is {@link #redirectAppDirPath(Path)}.
+     *
+     * @throws Exception if the cache field cannot be written
+     */
+    public static void clearAppDirPathCache() throws Exception {
+        AppDirTestUtil.setAppDirPathCache(null);
+    }
     //</editor-fold>
     //
     //<editor-fold desc="Private static methods" defaultstate="collapsed">

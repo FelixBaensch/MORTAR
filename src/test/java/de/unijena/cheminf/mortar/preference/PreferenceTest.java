@@ -26,18 +26,18 @@
 package de.unijena.cheminf.mortar.preference;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
-import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.lang.reflect.Constructor;
+import java.io.StringWriter;
 import java.util.Locale;
 
 /**
@@ -47,11 +47,34 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class PreferenceTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor to initialize locale and configuration.
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        PreferenceTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(PreferenceTest.originalLocale);
+    }
+    //</editor-fold>
+    //
+    /**
+     * Constructor to initialize the configuration.
      */
     public PreferenceTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //
@@ -258,17 +281,16 @@ public class PreferenceTest {
      */
     @Test
     public void testPreferenceFactoryUnknownTypeAndPrivateConstructor() throws Exception {
-        BufferedReader tmpReader = new BufferedReader(new StringReader("irrelevant"));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> PreferenceFactory.reinitializePreference("NOT_A_PREFERENCE_TYPE", tmpReader));
-        tmpReader.close();
-        Constructor<PreferenceFactory> tmpCtor = PreferenceFactory.class.getDeclaredConstructor();
-        tmpCtor.setAccessible(true);
-        Assertions.assertNotNull(tmpCtor.newInstance());
+        try (BufferedReader tmpReader = new BufferedReader(new StringReader("irrelevant"))) {
+            Assertions.assertThrows(IllegalArgumentException.class,
+                    () -> PreferenceFactory.reinitializePreference("NOT_A_PREFERENCE_TYPE", tmpReader));
+        }
+        TestUtil.assertPrivateConstructorIsInvocable(PreferenceFactory.class);
     }
     //
     /**
-     * Tests basic functionalities of given preference object, like management of public properties and persistence.
+     * Tests basic functionalities of given preference object, like management of public properties and a
+     * write-&gt;reinitialize round-trip of its representation.
      */
     private void testPreferenceBasics(IPreference aPreference) throws Exception {
         Assertions.assertDoesNotThrow(aPreference::getType);
@@ -277,17 +299,16 @@ public class PreferenceTest {
         Assertions.assertDoesNotThrow(aPreference::getName);
         Assertions.assertDoesNotThrow(aPreference::toString);
 
-        String tmpDir = FileUtil.getAppDirPath() + File.separatorChar + "Test";
-        (new File(tmpDir)).mkdirs();
-        File tmpPreferenceFile = new File(tmpDir + File.separatorChar + "preference.txt");
-        PrintWriter tmpWriter = new PrintWriter(tmpPreferenceFile);
-        tmpWriter.println(aPreference.getType());
-        aPreference.writeRepresentation(tmpWriter);
-        tmpWriter.flush();
-        BufferedReader tmpReader = new BufferedReader(new FileReader(tmpPreferenceFile));
-        IPreference tmpPreference = PreferenceFactory.reinitializePreference(tmpReader.readLine(), tmpReader);
-        tmpWriter.close();
-        tmpReader.close();
+        //round-trip through an in-memory representation, so no file is written anywhere
+        StringWriter tmpStringWriter = new StringWriter();
+        try (PrintWriter tmpWriter = new PrintWriter(tmpStringWriter)) {
+            tmpWriter.println(aPreference.getType());
+            aPreference.writeRepresentation(tmpWriter);
+        }
+        IPreference tmpPreference;
+        try (BufferedReader tmpReader = new BufferedReader(new StringReader(tmpStringWriter.toString()))) {
+            tmpPreference = PreferenceFactory.reinitializePreference(tmpReader.readLine(), tmpReader);
+        }
         Assertions.assertEquals(aPreference.getContentRepresentative(), tmpPreference.getContentRepresentative());
         Assertions.assertEquals(aPreference.getName(), tmpPreference.getName());
         Assertions.assertEquals(aPreference.getGUID(), tmpPreference.getGUID());

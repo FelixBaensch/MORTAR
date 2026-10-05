@@ -25,7 +25,9 @@
 
 package de.unijena.cheminf.mortar.configuration;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
@@ -39,15 +41,37 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class ConfigurationTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        ConfigurationTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(ConfigurationTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so message-bundle and configuration resources resolve
-     * deterministically) and bootstraps the Configuration singleton.
+     * Constructor that bootstraps the Configuration singleton.
      *
      * @throws Exception if the configuration properties resource cannot be loaded
      */
     public ConfigurationTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>

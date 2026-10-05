@@ -33,7 +33,9 @@ import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
@@ -50,14 +52,37 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class SettingsContainerTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        SettingsContainerTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(SettingsContainerTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor to initialize locale and configuration.
+     * Constructor to initialize the configuration.
      *
      * @throws Exception if anything goes wrong
      */
     public SettingsContainerTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
@@ -105,7 +130,7 @@ public class SettingsContainerTest {
             tmpSecondContainer.reloadGlobalSettings();
             Assertions.assertEquals(SettingsContainer.ROWS_PER_PAGE_SETTING_DEFAULT + 5, tmpSecondContainer.getRowsPerPageSetting());
             Assertions.assertEquals(!SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT, tmpSecondContainer.getAddImplicitHydrogensAtImportSetting());
-            Assertions.assertEquals(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSettingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+            Assertions.assertEquals(!SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT, tmpSecondContainer.getAlwaysMDLV3000FormatAtExportSetting());
             Assertions.assertEquals(tmpCsvExportSeparatorTest, tmpSecondContainer.getCsvExportSeparatorSetting());
             tmpSecondContainer.restoreDefaultSettings();
             tmpSecondContainer.preserveSettings();

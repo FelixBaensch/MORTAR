@@ -25,7 +25,9 @@
 
 package de.unijena.cheminf.mortar.model.io;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
@@ -37,12 +39,27 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class DynamicSMILESFileFormatTest {
-    //<editor-fold desc="static initializer">
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Sets the default locale to British English.
+     * Default locale before this test class ran, restored after all tests.
      */
-    static {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        DynamicSMILESFileFormatTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(DynamicSMILESFileFormatTest.originalLocale);
     }
     //</editor-fold>
     //

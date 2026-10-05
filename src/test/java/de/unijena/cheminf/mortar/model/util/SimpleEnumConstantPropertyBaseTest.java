@@ -27,7 +27,9 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
@@ -43,13 +45,29 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class SimpleEnumConstantPropertyBaseTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor setting the default locale to en-GB to match the established convention of the property/enum
-     * infrastructure tests.
+     * Default locale before this test class ran, restored after all tests.
      */
-    public SimpleEnumConstantPropertyBaseTest() {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        SimpleEnumConstantPropertyBaseTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
     }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(SimpleEnumConstantPropertyBaseTest.originalLocale);
+    }
+    //</editor-fold>
     //
     /**
      * Tests that the base class rejects a constant-less enum class with an IllegalArgumentException. The branch is

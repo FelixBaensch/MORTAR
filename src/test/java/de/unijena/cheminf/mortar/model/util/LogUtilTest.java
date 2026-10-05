@@ -27,13 +27,26 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Tests for the logging utilities in LogUtil. Every environment-coupled test uses the mandatory isolation technique:
@@ -42,8 +55,11 @@ import java.util.Locale;
  * {@code user.home} is restored, the {@code FileUtil.appDirPath} cache is cleared again, and
  * every {@link java.util.logging.FileHandler} the test opened on the root logger is closed and removed again
  * (via {@link TestUtil#releaseRootLoggerFileHandlers()}, deliberately narrower than a JVM-wide
- * {@code LogManager.reset()}, which would silence logging for every later test in the same JVM). As a result no real
- * {@code ~/MORTAR} directory is created and no global logging handler leaks into other tests. Only the safe
+ * {@code LogManager.reset()}, which would silence logging for every later test in the same JVM). Because
+ * {@code initializeLoggingEnvironment()} also removes every root handler (including the console handler), sets the
+ * root level and installs the JVM default uncaught-exception handler, the root handlers, the root level and the
+ * default uncaught-exception handler are snapshotted before each test and restored after it. As a result no real
+ * {@code ~/MORTAR} directory is created and no global logging state leaks into other tests. Only the safe
  * logging-only paths are exercised: the GUI / error / {@code System.exit} branches of the uncaught-exception handler
  * are never driven (they would block a headless run or kill the JVM).
  *
@@ -56,18 +72,92 @@ class LogUtilTest {
      * bidirectional-binding failures itself, so the handler must not intervene).
      */
     private static final String BINDING_FAILURE_MESSAGE = "Bidirectional binding failed, setting to the previous value";
+    /**
+     * Name of the logger the uncaught-exception handler logs to: the class name of the thread it is handed.
+     */
+    private static final String THREAD_LOGGER_NAME = Thread.class.getName();
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private static class variables" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private class variables" defaultstate="collapsed">
+    /**
+     * Root logger handlers before the current test, restored after it.
+     */
+    private Handler[] originalRootHandlers;
+    /**
+     * Root logger level before the current test, restored after it.
+     */
+    private Level originalRootLevel;
+    /**
+     * JVM default uncaught-exception handler before the current test, restored after it.
+     */
+    private Thread.UncaughtExceptionHandler originalDefaultUncaughtExceptionHandler;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so any message-bundle resolution is deterministic) and
-     * bootstraps the Configuration singleton from the classpath (no data directory is touched by this).
+     * Constructor that bootstraps the Configuration singleton from the classpath (no data directory is touched by
+     * this).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public LogUtilTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Setup and teardown" defaultstate="collapsed">
+    /**
+     * Sets the default locale to en-GB (so any message-bundle resolution is deterministic), remembering the original.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        LogUtilTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(LogUtilTest.originalLocale);
+    }
+    //
+    /**
+     * Snapshots the root logger handlers, the root logger level and the JVM default uncaught-exception handler, all of
+     * which initializeLoggingEnvironment() overwrites.
+     */
+    @BeforeEach
+    public void snapshotLoggingState() {
+        Logger tmpRootLogger = LogManager.getLogManager().getLogger("");
+        this.originalRootHandlers = tmpRootLogger.getHandlers();
+        this.originalRootLevel = tmpRootLogger.getLevel();
+        this.originalDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+    }
+    //
+    /**
+     * Closes the file handlers a test opened and restores the root logger handlers, the root logger level and the JVM
+     * default uncaught-exception handler snapshotted before the test.
+     */
+    @AfterEach
+    public void restoreLoggingState() {
+        TestUtil.releaseRootLoggerFileHandlers();
+        Logger tmpRootLogger = LogManager.getLogManager().getLogger("");
+        for (Handler tmpHandler : tmpRootLogger.getHandlers()) {
+            tmpRootLogger.removeHandler(tmpHandler);
+        }
+        for (Handler tmpHandler : this.originalRootHandlers) {
+            tmpRootLogger.addHandler(tmpHandler);
+        }
+        tmpRootLogger.setLevel(this.originalRootLevel);
+        Thread.setDefaultUncaughtExceptionHandler(this.originalDefaultUncaughtExceptionHandler);
     }
     //</editor-fold>
     //
@@ -75,7 +165,7 @@ class LogUtilTest {
     /**
      * Tests that initializeLoggingEnvironment, driven against a redirected temporary user home, returns true, creates
      * the log file directory under the temporary home (verified through getLogFileDirectoryPath), and that a log file is
-     * actually created there. The global logging state is fully restored in the finally block.
+     * actually created there. The global logging state is fully restored after the test.
      *
      * @param aTempHome temporary directory used as a fake user home
      */
@@ -95,7 +185,7 @@ class LogUtilTest {
             Assertions.assertNotNull(tmpLogFiles);
             Assertions.assertTrue(tmpLogFiles.length > 0, "No log file was created in the temporary log directory.");
         } finally {
-            this.restoreGlobalState(tmpOldHome);
+            AppDirTestUtil.restoreAppDirPath(tmpOldHome);
         }
     }
     //
@@ -119,14 +209,16 @@ class LogUtilTest {
             Assertions.assertNotNull(tmpLogFiles);
             Assertions.assertTrue(tmpLogFiles.length > 0, "No log file existed after reset.");
         } finally {
-            this.restoreGlobalState(tmpOldHome);
+            AppDirTestUtil.restoreAppDirPath(tmpOldHome);
         }
     }
     //
     /**
-     * Tests manageLogFilesFolderIfExists against a redirected temporary user home: it does not throw when the log
-     * directory exists and contains a few .txt files, and it returns early (also without throwing) when the log
-     * directory does not exist. The global logging state is fully restored in the finally block.
+     * Tests manageLogFilesFolderIfExists against a redirected temporary user home: it returns early without throwing
+     * when the log directory does not exist; when the directory holds more .txt log files than the upper limit plus a
+     * leftover .lck file, it deletes the .lck file and trims the folder by deleting the oldest
+     * {@link BasicDefinitions#FACTOR_TO_TRIM_LOG_FILE_FOLDER} share of the log files (by last-modified time), keeping
+     * the newest ones. The global logging state is fully restored after the test.
      *
      * @param aTempHome temporary directory used as a fake user home
      */
@@ -135,24 +227,43 @@ class LogUtilTest {
         String tmpOldHome = System.getProperty("user.home");
         try {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
-            //early-return path: log directory does not exist yet (only the data dir is created by getLogFileDirectoryPath's parents)
-            Assertions.assertDoesNotThrow(LogUtil::manageLogFilesFolderIfExists);
-            //populate the log directory with a few .txt files, then call again -> no throw
+            //early-return path: log directory does not exist yet
             File tmpLogDir = new File(LogUtil.getLogFileDirectoryPath());
-            Assertions.assertTrue(FileUtil.createDirectory(tmpLogDir.getAbsolutePath()));
-            for (int i = 0; i < 3; i++) {
-                Assertions.assertTrue(new File(tmpLogDir, "MORTAR_Log_test_" + i + ".txt").createNewFile());
-            }
+            Assertions.assertFalse(tmpLogDir.exists());
             Assertions.assertDoesNotThrow(LogUtil::manageLogFilesFolderIfExists);
+            Assertions.assertFalse(tmpLogDir.exists());
+            //populate the log directory with one file more than the upper limit, oldest first, plus a .lck leftover
+            Assertions.assertTrue(FileUtil.createDirectory(tmpLogDir.getAbsolutePath()));
+            int tmpFileCount = BasicDefinitions.UPPER_LIMIT_OF_LOG_FILES + 1;
+            long tmpBaseTime = System.currentTimeMillis() - 1_000_000L;
+            for (int i = 0; i < tmpFileCount; i++) {
+                File tmpLogFile = new File(tmpLogDir, LogUtilTest.logFileName(i));
+                Assertions.assertTrue(tmpLogFile.createNewFile());
+                Assertions.assertTrue(tmpLogFile.setLastModified(tmpBaseTime + i * 10_000L));
+            }
+            File tmpLckFile = new File(tmpLogDir, LogUtilTest.logFileName(0) + ".lck");
+            Assertions.assertTrue(tmpLckFile.createNewFile());
+            LogUtil.manageLogFilesFolderIfExists();
+            Assertions.assertFalse(tmpLckFile.exists(), "the .lck leftover was not deleted");
+            //one pass deletes ceil(count * factor) of the oldest files; the remainder is within the limit
+            int tmpExpectedDeleted = (int) Math.ceil(tmpFileCount * BasicDefinitions.FACTOR_TO_TRIM_LOG_FILE_FOLDER);
+            String[] tmpRemaining = tmpLogDir.list((dir, name) -> name.endsWith(".txt"));
+            Assertions.assertNotNull(tmpRemaining);
+            Set<String> tmpRemainingNames = Arrays.stream(tmpRemaining).collect(Collectors.toSet());
+            Assertions.assertEquals(tmpFileCount - tmpExpectedDeleted, tmpRemainingNames.size());
+            for (int i = 0; i < tmpFileCount; i++) {
+                Assertions.assertEquals(i >= tmpExpectedDeleted, tmpRemainingNames.contains(LogUtilTest.logFileName(i)),
+                        "unexpected presence state of " + LogUtilTest.logFileName(i));
+            }
         } finally {
-            this.restoreGlobalState(tmpOldHome);
+            AppDirTestUtil.restoreAppDirPath(tmpOldHome);
         }
     }
     //
     /**
      * Tests checkForLCKFileInLogDir against a redirected temporary user home: an existing log directory without any
      * .lck file returns false, and after creating a *.lck file it returns true. The global logging state is fully
-     * restored in the finally block.
+     * restored after the test.
      *
      * @param aTempHome temporary directory used as a fake user home
      */
@@ -169,7 +280,7 @@ class LogUtilTest {
             Assertions.assertTrue(new File(tmpLogDir, "MORTAR_Log_test.txt.lck").createNewFile());
             Assertions.assertTrue(LogUtil.checkForLCKFileInLogDir());
         } finally {
-            this.restoreGlobalState(tmpOldHome);
+            AppDirTestUtil.restoreAppDirPath(tmpOldHome);
         }
     }
     //
@@ -186,7 +297,8 @@ class LogUtilTest {
      * that belongs to a dedicated, non-"main" thread group (so the generic-exception case logs only and never reaches
      * the JavaFX GUI / {@code System.exit} branch, which is reserved for the main thread group): a throwable carrying
      * the bidirectional-binding-failure marker message hits the early-return path, and a generic (non-error) exception
-     * hits the SEVERE-log path. The error branch and the main-thread branch are intentionally never driven.
+     * hits the SEVERE-log path. Both paths log exactly one SEVERE record carrying the handed throwable to the logger
+     * named after the thread's class. The error branch and the main-thread branch are intentionally never driven.
      */
     @Test
     public void testUncaughtExceptionHandlerLoggingPaths() throws Exception {
@@ -196,11 +308,19 @@ class LogUtilTest {
         Thread tmpWorkerThread = new Thread(tmpTestGroup, () -> { }, "logUtilTestWorker");
         Assertions.assertEquals("test", tmpWorkerThread.getThreadGroup().getName());
         //binding-failure marker -> early return, logging only
-        Assertions.assertDoesNotThrow(
-                () -> tmpHandler.uncaughtException(tmpWorkerThread, new RuntimeException(BINDING_FAILURE_MESSAGE)));
+        RuntimeException tmpBindingFailure = new RuntimeException(LogUtilTest.BINDING_FAILURE_MESSAGE);
+        List<LogRecord> tmpBindingRecords = TestUtil.captureLogRecords(LogUtilTest.THREAD_LOGGER_NAME, Level.SEVERE,
+                () -> tmpHandler.uncaughtException(tmpWorkerThread, tmpBindingFailure));
+        Assertions.assertEquals(1, tmpBindingRecords.size());
+        Assertions.assertSame(tmpBindingFailure, tmpBindingRecords.getFirst().getThrown());
         //generic non-main-thread-group exception -> SEVERE log path, no GUI / no exit
-        Assertions.assertDoesNotThrow(
-                () -> tmpHandler.uncaughtException(tmpWorkerThread, new RuntimeException("generic test exception")));
+        RuntimeException tmpGenericException = new RuntimeException("generic test exception");
+        List<LogRecord> tmpGenericRecords = TestUtil.captureLogRecords(LogUtilTest.THREAD_LOGGER_NAME, Level.SEVERE,
+                () -> tmpHandler.uncaughtException(tmpWorkerThread, tmpGenericException));
+        Assertions.assertEquals(1, tmpGenericRecords.size());
+        Assertions.assertEquals(Level.SEVERE, tmpGenericRecords.getFirst().getLevel());
+        Assertions.assertSame(tmpGenericException, tmpGenericRecords.getFirst().getThrown());
+        Assertions.assertEquals(tmpGenericException.toString(), tmpGenericRecords.getFirst().getMessage());
     }
     //
     /**
@@ -213,18 +333,14 @@ class LogUtilTest {
     //</editor-fold>
     //
     //<editor-fold desc="Private methods" defaultstate="collapsed">
-    //
     /**
-     * Restores the global state mutated by an environment-coupled test: restores the original {@code user.home} system
-     * property, nulls the FileUtil app-dir cache, and releases the root logger file handlers so none leaks into other
-     * tests.
+     * Returns the name of the i-th synthetic log file, zero-padded so names sort like their indices.
      *
-     * @param anOldUserHome the original value of the {@code user.home} system property
-     * @throws Exception if the FileUtil cache field cannot be accessed
+     * @param anIndex index of the log file
+     * @return file name of the log file
      */
-    private void restoreGlobalState(String anOldUserHome) throws Exception {
-        AppDirTestUtil.restoreAppDirPath(anOldUserHome);
-        TestUtil.releaseRootLoggerFileHandlers();
+    private static String logFileName(int anIndex) {
+        return String.format(Locale.ROOT, "MORTAR_Log_test_%03d.txt", anIndex);
     }
     //</editor-fold>
 }

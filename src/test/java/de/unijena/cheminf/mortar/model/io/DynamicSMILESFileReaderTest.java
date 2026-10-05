@@ -27,7 +27,9 @@ package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -49,12 +51,27 @@ import java.util.Locale;
  * @version 2.0.0.0
  */
 public class DynamicSMILESFileReaderTest {
-    //<editor-fold desc="static initializer">
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Sets the default locale to British English.
+     * Default locale before this test class ran, restored after all tests.
      */
-    static {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        DynamicSMILESFileReaderTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(DynamicSMILESFileReaderTest.originalLocale);
     }
     //</editor-fold>
     //

@@ -36,7 +36,9 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedConstruction;
@@ -91,12 +93,27 @@ public class ExporterTest {
     private static final String UNPARSABLE_SMILES = "not_a_valid_smiles";
     //</editor-fold>
     //
-    //<editor-fold desc="static initializer">
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Sets the default locale to British English so the {@link Message}-resolved CSV/PDF headers are deterministic.
+     * Default locale before this test class ran, restored after all tests.
      */
-    static {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        ExporterTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(ExporterTest.originalLocale);
     }
     //</editor-fold>
     //
@@ -109,43 +126,19 @@ public class ExporterTest {
     //
     //<editor-fold desc="Constructor">
     /**
-     * Constructor. Re-asserts the en-GB locale (load-bearing for the golden header assertions) and builds the Exporter
-     * with a real, classpath-configured SettingsContainer.
+     * Constructor. Builds the Exporter with a real, classpath-configured SettingsContainer.
      */
     public ExporterTest() {
-        Locale.setDefault(Locale.of("en", "GB"));
         this.exporter = new Exporter(new SettingsContainer());
     }
     //</editor-fold>
     //
     //<editor-fold desc="Test methods" defaultstate="collapsed">
     /**
-     * Smoke test (written and run FIRST): a one-fragment FRAGMENTS-tab PDF export to a temporary file must succeed
-     * headlessly and produce a file whose first four bytes are the {@code %PDF} magic bytes. This validates the research
-     * headless verdict (A1) that the CDK depiction + OpenPDF render path needs no live JavaFX toolkit. If this throws a
-     * headless/toolkit error, the PDF coverage path is not reachable and the rest of the PDF work must stop.
-     *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testExportPdfFileFragmentsTabSmoke(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        ObservableList<MoleculeDataModel> tmpMolecules = FXCollections.observableArrayList(tmpFragments);
-        File tmpOut = aTempDir.resolve("smoke.pdf").toFile();
-        List<String> tmpFailed = this.exporter.exportPdfFile(
-                tmpOut, tmpFragments, tmpMolecules, "ErtlFG", "input.smi", TabNames.FRAGMENTS);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertTrue(tmpFailed.isEmpty());
-        Assertions.assertTrue(tmpOut.length() > 0);
-        byte[] tmpHead = Arrays.copyOf(Files.readAllBytes(tmpOut.toPath()), 4);
-        Assertions.assertEquals("%PDF", new String(tmpHead, StandardCharsets.US_ASCII));
-    }
-    //
-    /**
      * Tests that exporting the FRAGMENTS tab as a CSV file with a list of real FragmentDataModel instances succeeds
      * (empty failed-list), the file content starts with the en-GB golden header built from the five fragmentation-tab
-     * Message keys, and the chosen separator character is present.
+     * Message keys, and every fragment is written as one separator-joined data row (unique SMILES, absolute frequency,
+     * absolute percentage, molecule frequency, molecule percentage) in input order.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -164,8 +157,13 @@ public class ExporterTest {
                 Message.get("Exporter.fragmentationTab.csvHeader.percentage") + ',' +
                 Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + ',' +
                 Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage");
-        Assertions.assertTrue(tmpContent.startsWith(tmpExpectedHeader));
-        Assertions.assertTrue(tmpContent.contains(","));
+        List<String> tmpLines = tmpContent.lines().toList();
+        Assertions.assertEquals(tmpExpectedHeader, tmpLines.getFirst());
+        Assertions.assertEquals(tmpFragments.size() + 1, tmpLines.size());
+        for (int i = 0; i < tmpFragments.size(); i++) {
+            //values set by buildFragmentList; the percentages are printed with four decimals (en-GB locale)
+            Assertions.assertEquals(tmpFragments.get(i).getUniqueSmiles() + ",3,0.2500,2,0.2000", tmpLines.get(i + 1));
+        }
     }
     //
     /**
@@ -195,8 +193,8 @@ public class ExporterTest {
     //
     /**
      * Tests the wrong-type guard: passing a plain MoleculeDataModel (not a FragmentDataModel) into the FRAGMENTS-tab
-     * CSV export triggers the internal cast failure so the molecule's SMILES lands in the returned failed-export list
-     * (non-empty).
+     * CSV export triggers the internal cast failure so the molecule's SMILES is the only entry of the returned
+     * failed-export list.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -210,14 +208,14 @@ public class ExporterTest {
         tmpList.add(tmpPlainMolecule);
         File tmpOut = aTempDir.resolve("wrongtype.csv").toFile();
         List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpList, "ErtlFG", ',', TabNames.FRAGMENTS);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertFalse(tmpFailed.isEmpty());
+        Assertions.assertEquals(List.of(tmpPlainMolecule.getUniqueSmiles()), tmpFailed);
     }
     //
     /**
      * Tests that a single SD-file export of a list of FragmentDataModel instances (with 2D-coordinate generation
-     * enabled, the common case for SMILES-derived fragments) succeeds with an empty failed-export list and writes a
-     * file whose content contains the MDL record terminator {@code $$$$}, proving a valid SDF was written.
+     * enabled, the common case for SMILES-derived fragments) succeeds with an empty failed-export list and writes one
+     * MDL record per fragment. The fragments carry no coordinates, so 2D coordinates are generated and written as
+     * pseudo-3D: every z coordinate is zero, but the generated layout places the atoms away from the origin.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -236,12 +234,17 @@ public class ExporterTest {
         int tmpRecordTerminatorCount =
                 tmpContent.split("\\$\\$\\$\\$", -1).length - 1;
         Assertions.assertEquals(tmpFragments.size(), tmpRecordTerminatorCount);
+        List<List<double[]>> tmpRecords = ExporterTest.readSdfAtomCoordinates(tmpContent);
+        Assertions.assertEquals(tmpFragments.size(), tmpRecords.size());
+        for (List<double[]> tmpRecord : tmpRecords) {
+            ExporterTest.assertGeneratedPseudo3dCoordinates(tmpRecord);
+        }
     }
     //
     /**
      * Tests the single SD-file export with 2D-coordinate generation disabled, driving the zero-3D-coordinate branch of
-     * {@code handleFragmentWithNo3dInformationAvailable}. The export still succeeds (empty failed-list) and writes a
-     * non-empty file containing the MDL record terminator {@code $$$$}.
+     * {@code handleFragmentWithNo3dInformationAvailable}. The export still succeeds (empty failed-list) and writes one
+     * record per fragment in which every atom sits at the origin (x = y = z = 0).
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -254,14 +257,17 @@ public class ExporterTest {
                 tmpOut, tmpFragments, ChemFileTypes.SDF, false, true);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        Assertions.assertTrue(tmpOut.length() > 0);
-        Assertions.assertTrue(Files.readString(tmpOut.toPath()).contains("$$$$"));
+        List<List<double[]>> tmpRecords = ExporterTest.readSdfAtomCoordinates(Files.readString(tmpOut.toPath()));
+        Assertions.assertEquals(tmpFragments.size(), tmpRecords.size());
+        for (List<double[]> tmpRecord : tmpRecords) {
+            ExporterTest.assertZeroCoordinates(tmpRecord);
+        }
     }
     //
     /**
      * Tests the single SD-file export with the {@code alwaysMDLV3000FormatAtExport} setting enabled, exercising the
      * {@code SDFWriter.setAlwaysV3000(true)} branch. A local SettingsContainer and Exporter are used so the global
-     * instance under test is not mutated; the setting is restored in a {@code finally} block (FileUtilTest idiom). The
+     * instance under test is not mutated; the setting is restored in a {@code finally} block. The
      * file is written and contains the V3000 connection-table marker.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
@@ -292,8 +298,8 @@ public class ExporterTest {
     /**
      * Tests the separate SD-files export ({@code isSingleExport=false}): the method creates a sub-directory inside the
      * passed @TempDir directory and writes one {@code .sdf} file per fragment into it. Asserts an empty failed-list, that
-     * a sub-directory was created, and that it contains at least one {@code .sdf} file whose content carries the MDL
-     * record terminator {@code $$$$}.
+     * a sub-directory was created, and that it contains exactly one {@code .sdf} file per fragment, each holding a single
+     * MDL record.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -306,19 +312,18 @@ public class ExporterTest {
                 tmpDir, tmpFragments, ChemFileTypes.SDF, true, false);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
-        Assertions.assertNotNull(tmpSubDirs);
-        Assertions.assertEquals(1, tmpSubDirs.length);
-        File[] tmpSdfFiles = tmpSubDirs[0].listFiles((aDir, aName) -> aName.endsWith(".sdf"));
-        Assertions.assertNotNull(tmpSdfFiles);
-        Assertions.assertTrue(tmpSdfFiles.length > 0);
-        Assertions.assertTrue(Files.readString(tmpSdfFiles[0].toPath()).contains("$$$$"));
+        File[] tmpSdfFiles = ExporterTest.listExportedFiles(tmpDir, ".sdf");
+        Assertions.assertEquals(tmpFragments.size(), tmpSdfFiles.length);
+        for (File tmpSdfFile : tmpSdfFiles) {
+            Assertions.assertEquals(1, ExporterTest.readSdfAtomCoordinates(Files.readString(tmpSdfFile.toPath())).size());
+        }
     }
     //
     /**
      * Tests the PDB export: the method creates a sub-directory inside the passed @TempDir directory and writes one
-     * {@code .pdb} file per fragment into it. Asserts an empty failed-list, that a sub-directory was created, and that it
-     * contains at least one non-empty {@code .pdb} file.
+     * {@code .pdb} file per fragment into it. Asserts an empty failed-list, that a sub-directory was created holding
+     * exactly one {@code .pdb} file per fragment, and that each file carries the generated pseudo-3D coordinates (z = 0,
+     * atoms away from the origin) of its coordinate-less fragment.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -331,13 +336,11 @@ public class ExporterTest {
                 tmpDir, tmpFragments, ChemFileTypes.PDB, true);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
-        Assertions.assertNotNull(tmpSubDirs);
-        Assertions.assertEquals(1, tmpSubDirs.length);
-        File[] tmpPdbFiles = tmpSubDirs[0].listFiles((aDir, aName) -> aName.endsWith(".pdb"));
-        Assertions.assertNotNull(tmpPdbFiles);
-        Assertions.assertTrue(tmpPdbFiles.length > 0);
-        Assertions.assertTrue(tmpPdbFiles[0].length() > 0);
+        File[] tmpPdbFiles = ExporterTest.listExportedFiles(tmpDir, ".pdb");
+        Assertions.assertEquals(tmpFragments.size(), tmpPdbFiles.length);
+        for (File tmpPdbFile : tmpPdbFiles) {
+            ExporterTest.assertGeneratedPseudo3dCoordinates(ExporterTest.readPdbAtomCoordinates(tmpPdbFile));
+        }
     }
     //
     /**
@@ -417,10 +420,6 @@ public class ExporterTest {
         Assertions.assertNull(tmpFailed);
     }
     //
-    /**
-     * Tests that the nested enums of the Exporter ({@code ExportTypes}, {@code FileExtension}, {@code CSVSeparator})
-     * load and expose non-null accessors, loading their static initializers for coverage.
-     */
     /**
      * Tests the ITEMIZATION-tab CSV export with a molecule that has NOT undergone the requested fragmentation. This drives
      * the {@code !hasMoleculeUndergoneSpecificFragmentation} continue-branch of {@code createItemizationTabCsvFile}: the
@@ -569,10 +568,10 @@ public class ExporterTest {
     }
     //
     /**
-     * Tests the no-2D/no-3D coordinate branch of {@code handleFragmentWithNo3dInformationAvailable} via a single SD-file
-     * export with {@code generate2dCoords=false} of a fragment that has neither 2D nor 3D coordinates (parsed from
-     * SMILES). This drives the {@code generateZero3DCoordinates} branch (coordinates set to zero). The export succeeds
-     * with an empty failed-list and a non-empty file containing the MDL record terminator.
+     * Tests the no-2D/no-3D coordinate branch of {@code handleFragmentWithNo3dInformationAvailable} via a separate
+     * SD-files export with {@code generate2dCoords=false} of fragments that have neither 2D nor 3D coordinates (parsed
+     * from SMILES). This drives the {@code generateZero3DCoordinates} branch: the export succeeds with an empty
+     * failed-list and writes one file per fragment in which every atom sits at the origin.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -585,12 +584,13 @@ public class ExporterTest {
                 tmpDir, tmpFragments, ChemFileTypes.SDF, false, false);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
-        Assertions.assertNotNull(tmpSubDirs);
-        Assertions.assertEquals(1, tmpSubDirs.length);
-        File[] tmpSdfFiles = tmpSubDirs[0].listFiles((aDir, aName) -> aName.endsWith(".sdf"));
-        Assertions.assertNotNull(tmpSdfFiles);
-        Assertions.assertTrue(tmpSdfFiles.length > 0);
+        File[] tmpSdfFiles = ExporterTest.listExportedFiles(tmpDir, ".sdf");
+        Assertions.assertEquals(tmpFragments.size(), tmpSdfFiles.length);
+        for (File tmpSdfFile : tmpSdfFiles) {
+            List<List<double[]>> tmpRecords = ExporterTest.readSdfAtomCoordinates(Files.readString(tmpSdfFile.toPath()));
+            Assertions.assertEquals(1, tmpRecords.size());
+            ExporterTest.assertZeroCoordinates(tmpRecords.getFirst());
+        }
     }
     //
     /**
@@ -622,7 +622,7 @@ public class ExporterTest {
     /**
      * Tests that the PDB branch of {@code exportFragmentsAsChemicalFile} ignores the {@code anIsSingleExport} flag:
      * requesting PDB with {@code anIsSingleExport=true} and a valid directory still routes to the separate-PDB-files
-     * export, producing a sub-directory of {@code .pdb} files and an empty failed-list.
+     * export, producing a sub-directory with one {@code .pdb} file per fragment and an empty failed-list.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -635,16 +635,14 @@ public class ExporterTest {
                 tmpDir, tmpFragments, ChemFileTypes.PDB, true, true);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
-        Assertions.assertNotNull(tmpSubDirs);
-        Assertions.assertEquals(1, tmpSubDirs.length);
+        Assertions.assertEquals(tmpFragments.size(), ExporterTest.listExportedFiles(tmpDir, ".pdb").length);
     }
     //
     /**
      * Tests the single SD-file export of fragments that already carry 3D coordinates. This drives the
      * {@code tmpPoint3dAvailable} true branch of {@code createFragmentationTabSingleSDFile} (the original atom container is
-     * written directly without generating coordinates). The export succeeds with an empty failed-list and a file
-     * containing the MDL record terminator.
+     * written directly without generating coordinates). The export succeeds with an empty failed-list and every record
+     * carries the original 3D coordinates unchanged.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -657,14 +655,18 @@ public class ExporterTest {
                 tmpOut, tmpFragments, ChemFileTypes.SDF, false, true);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        Assertions.assertTrue(tmpOut.length() > 0);
-        Assertions.assertTrue(Files.readString(tmpOut.toPath()).contains("$$$$"));
+        List<List<double[]>> tmpRecords = ExporterTest.readSdfAtomCoordinates(Files.readString(tmpOut.toPath()));
+        Assertions.assertEquals(tmpFragments.size(), tmpRecords.size());
+        for (List<double[]> tmpRecord : tmpRecords) {
+            ExporterTest.assertOriginal3dCoordinates(tmpRecord);
+        }
     }
     //
     /**
      * Tests the single SD-file export of fragments that carry 2D (but not 3D) coordinates. This drives the
      * 2D-coordinates-available branch of {@code handleFragmentWithNo3dInformationAvailable} (pseudo-3D generated from the
-     * existing 2D coordinates, no coordinate generation performed). The export succeeds with an empty failed-list.
+     * existing 2D coordinates, no coordinate generation performed). The export succeeds with an empty failed-list and
+     * every record carries the original 2D coordinates as x/y with z = 0.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -677,14 +679,17 @@ public class ExporterTest {
                 tmpOut, tmpFragments, ChemFileTypes.SDF, false, true);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        Assertions.assertTrue(tmpOut.length() > 0);
-        Assertions.assertTrue(Files.readString(tmpOut.toPath()).contains("$$$$"));
+        List<List<double[]>> tmpRecords = ExporterTest.readSdfAtomCoordinates(Files.readString(tmpOut.toPath()));
+        Assertions.assertEquals(tmpFragments.size(), tmpRecords.size());
+        for (List<double[]> tmpRecord : tmpRecords) {
+            ExporterTest.assertPseudo3dFromOriginal2dCoordinates(tmpRecord);
+        }
     }
     //
     /**
      * Tests the separate SD-files export of fragments that already carry 3D coordinates, driving the
-     * {@code tmpPoint3dAvailable} true branch of {@code createFragmentationTabSeparateSDFiles}. A sub-directory of
-     * {@code .sdf} files is produced and the failed-list is empty.
+     * {@code tmpPoint3dAvailable} true branch of {@code createFragmentationTabSeparateSDFiles}. One {@code .sdf} file
+     * per fragment is produced, each carrying the original 3D coordinates unchanged, and the failed-list is empty.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -697,18 +702,19 @@ public class ExporterTest {
                 tmpDir, tmpFragments, ChemFileTypes.SDF, false, false);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
-        Assertions.assertNotNull(tmpSubDirs);
-        Assertions.assertEquals(1, tmpSubDirs.length);
-        File[] tmpSdfFiles = tmpSubDirs[0].listFiles((aDir, aName) -> aName.endsWith(".sdf"));
-        Assertions.assertNotNull(tmpSdfFiles);
-        Assertions.assertTrue(tmpSdfFiles.length > 0);
+        File[] tmpSdfFiles = ExporterTest.listExportedFiles(tmpDir, ".sdf");
+        Assertions.assertEquals(tmpFragments.size(), tmpSdfFiles.length);
+        for (File tmpSdfFile : tmpSdfFiles) {
+            List<List<double[]>> tmpRecords = ExporterTest.readSdfAtomCoordinates(Files.readString(tmpSdfFile.toPath()));
+            Assertions.assertEquals(1, tmpRecords.size());
+            ExporterTest.assertOriginal3dCoordinates(tmpRecords.getFirst());
+        }
     }
     //
     /**
      * Tests the PDB export of fragments that already carry 3D coordinates, driving the {@code tmpPoint3dAvailable} true
-     * branch of {@code createFragmentationTabPDBFiles}. A sub-directory of {@code .pdb} files is produced and the
-     * failed-list is empty.
+     * branch of {@code createFragmentationTabPDBFiles}. One {@code .pdb} file per fragment is produced, each carrying the
+     * original 3D coordinates unchanged, and the failed-list is empty.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -721,18 +727,17 @@ public class ExporterTest {
                 tmpDir, tmpFragments, ChemFileTypes.PDB, false);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
-        Assertions.assertNotNull(tmpSubDirs);
-        Assertions.assertEquals(1, tmpSubDirs.length);
-        File[] tmpPdbFiles = tmpSubDirs[0].listFiles((aDir, aName) -> aName.endsWith(".pdb"));
-        Assertions.assertNotNull(tmpPdbFiles);
-        Assertions.assertTrue(tmpPdbFiles.length > 0);
+        File[] tmpPdbFiles = ExporterTest.listExportedFiles(tmpDir, ".pdb");
+        Assertions.assertEquals(tmpFragments.size(), tmpPdbFiles.length);
+        for (File tmpPdbFile : tmpPdbFiles) {
+            ExporterTest.assertOriginal3dCoordinates(ExporterTest.readPdbAtomCoordinates(tmpPdbFile));
+        }
     }
     //
     /**
      * Tests the PDB export of fragments that carry 2D (but not 3D) coordinates, driving the 2D-available branch of
-     * {@code handleFragmentWithNo3dInformationAvailable} within the PDB export. A sub-directory of {@code .pdb} files is
-     * produced and the failed-list is empty.
+     * {@code handleFragmentWithNo3dInformationAvailable} within the PDB export. One {@code .pdb} file per fragment is
+     * produced, each carrying the original 2D coordinates as x/y with z = 0, and the failed-list is empty.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -745,19 +750,17 @@ public class ExporterTest {
                 tmpDir, tmpFragments, ChemFileTypes.PDB, false);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
-        Assertions.assertNotNull(tmpSubDirs);
-        Assertions.assertEquals(1, tmpSubDirs.length);
-        File[] tmpPdbFiles = tmpSubDirs[0].listFiles((aDir, aName) -> aName.endsWith(".pdb"));
-        Assertions.assertNotNull(tmpPdbFiles);
-        Assertions.assertTrue(tmpPdbFiles.length > 0);
+        File[] tmpPdbFiles = ExporterTest.listExportedFiles(tmpDir, ".pdb");
+        Assertions.assertEquals(tmpFragments.size(), tmpPdbFiles.length);
+        for (File tmpPdbFile : tmpPdbFiles) {
+            ExporterTest.assertPseudo3dFromOriginal2dCoordinates(ExporterTest.readPdbAtomCoordinates(tmpPdbFile));
+        }
     }
     //
     /**
-     * Tests the FRAGMENTS-tab PDF export of a fragment whose atom container carries no 3D information, driving the
-     * fragment-image rendering path with a fragment that has neither 2D nor 3D coordinates (the depiction generator lays
-     * the structure out itself). Asserts an empty failed-list and the {@code %PDF} magic bytes. This complements the
-     * happy-path PDF tests by ensuring the no-coordinate fragment path renders successfully.
+     * Tests the FRAGMENTS-tab PDF export of fragments whose atom containers carry explicit 3D coordinates, driving the
+     * fragment-image rendering path with such fragments (the depiction generator lays the structure out itself). Asserts
+     * an empty failed-list and the {@code %PDF} magic bytes.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -779,27 +782,34 @@ public class ExporterTest {
     /**
      * Tests the ITEMIZATION-tab CSV export of a molecule carrying four fragments, driving the multi-fragment row-writing
      * loop of {@code createItemizationTabCsvFile}. The export succeeds with an empty failed-list and the written content
-     * contains all four fragment SMILES codes.
+     * is the header plus one data row holding the molecule and all four fragment SMILES codes with their frequencies.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
      */
     @Test
     public void testExportCsvFileItemizationTabMultipleFragments(@TempDir Path aTempDir) throws Exception {
+        MoleculeDataModel tmpMolecule = ExporterTest.buildMoleculeWithMultipleFragments("ErtlFG");
         List<MoleculeDataModel> tmpMolecules = new ArrayList<>();
-        tmpMolecules.add(ExporterTest.buildMoleculeWithMultipleFragments("ErtlFG"));
+        tmpMolecules.add(tmpMolecule);
         File tmpOut = aTempDir.resolve("items_multi.csv").toFile();
         List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpMolecules, "ErtlFG", ',', TabNames.ITEMIZATION);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
         String tmpContent = Files.readString(tmpOut.toPath());
-        Assertions.assertFalse(tmpContent.isBlank());
         String tmpExpectedHeader =
                 Message.get("Exporter.itemsTab.csvHeader.moleculeName") + ',' +
                 Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + ',' +
                 Message.get("Exporter.itemsTab.csvHeader.smilesOfFragment") + ',' +
                 Message.get("Exporter.itemsTab.csvHeader.frequencyOfFragment");
-        Assertions.assertTrue(tmpContent.startsWith(tmpExpectedHeader));
+        //one data row: molecule name, molecule SMILES, then a (fragment SMILES, frequency) pair per fragment
+        StringBuilder tmpExpectedRow = new StringBuilder(tmpMolecule.getName() + ',' + tmpMolecule.getUniqueSmiles());
+        List<FragmentDataModel> tmpFragments = tmpMolecule.getFragmentsOfSpecificFragmentation("ErtlFG");
+        Assertions.assertEquals(4, tmpFragments.size());
+        for (FragmentDataModel tmpFragment : tmpFragments) {
+            tmpExpectedRow.append(',').append(tmpFragment.getUniqueSmiles()).append(",1");
+        }
+        Assertions.assertEquals(List.of(tmpExpectedHeader, tmpExpectedRow.toString()), tmpContent.lines().toList());
     }
     //
     /**
@@ -830,7 +840,7 @@ public class ExporterTest {
      * Tests the per-fragment exception branch of {@code createItemizationTabCsvFile}. A molecule has a fragment registered
      * under the fragmentation name, but the matching frequency map entry is missing, so the frequency lookup yields null
      * and the {@code .toString()} call throws a NullPointerException. The exception is caught, the fragment's SMILES is
-     * added to the failed-export list, and the export completes returning a non-empty failed-list.
+     * the only entry of the returned failed-export list.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -851,8 +861,7 @@ public class ExporterTest {
         tmpMolecules.add(tmpMolecule);
         File tmpOut = aTempDir.resolve("items_nofreq.csv").toFile();
         List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpMolecules, "ErtlFG", ',', TabNames.ITEMIZATION);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertFalse(tmpFailed.isEmpty());
+        Assertions.assertEquals(List.of(tmpFragment.getUniqueSmiles()), tmpFailed);
     }
     //
     /**
@@ -892,7 +901,7 @@ public class ExporterTest {
      * Tests the main exception-handling branch of {@code createFragmentationTabSingleSDFile}. A FragmentDataModel built
      * from an unparsable unique SMILES makes {@code getAtomContainer} throw a CDKException, which is caught by the
      * method's outer catch block: the fragment's SMILES is added to the failed-export list and the export continues. The
-     * returned failed-list is non-empty.
+     * returned failed-list holds exactly that SMILES.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -906,15 +915,14 @@ public class ExporterTest {
         File tmpOut = aTempDir.resolve("single_invalid.sdf").toFile();
         List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
                 tmpOut, tmpFragments, ChemFileTypes.SDF, true, true);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertFalse(tmpFailed.isEmpty());
+        Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
     }
     //
     /**
      * Tests the main exception-handling branch of {@code createFragmentationTabSeparateSDFiles}. A FragmentDataModel built
      * from an unparsable unique SMILES makes {@code getAtomContainer} throw a CDKException, caught by the method's outer
      * catch block: the fragment's SMILES is added to the failed-export list and the export continues. The sub-directory is
-     * still created and the returned failed-list is non-empty.
+     * still created and the returned failed-list holds exactly that SMILES.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -928,8 +936,7 @@ public class ExporterTest {
         File tmpDir = aTempDir.toFile();
         List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
                 tmpDir, tmpFragments, ChemFileTypes.SDF, true, false);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertFalse(tmpFailed.isEmpty());
+        Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
     }
     //
     /**
@@ -950,15 +957,14 @@ public class ExporterTest {
         File tmpDir = aTempDir.toFile();
         List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
                 tmpDir, tmpFragments, ChemFileTypes.PDB, true);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertFalse(tmpFailed.isEmpty());
+        Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
     }
     //
     /**
      * Tests the per-fragment atom-container-exception branch of the FRAGMENTS-tab PDF export. A FragmentDataModel built
      * from an unparsable unique SMILES (with no retained atom container) makes {@code getAtomContainer} throw a
      * CDKException during rendering; the fragment's SMILES is added to the failed-export list and rendering continues. The
-     * export still produces a valid {@code %PDF} file and a non-empty failed-list.
+     * export still produces a valid {@code %PDF} file and the failed-list holds exactly that SMILES.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -973,8 +979,7 @@ public class ExporterTest {
         File tmpOut = aTempDir.resolve("fragments_invalid.pdf").toFile();
         List<String> tmpFailed = this.exporter.exportPdfFile(
                 tmpOut, tmpFragments, tmpMolecules, "ErtlFG", "input.smi", TabNames.FRAGMENTS);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertFalse(tmpFailed.isEmpty());
+        Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
         Assertions.assertTrue(tmpOut.length() > 0);
         byte[] tmpHead = Arrays.copyOf(Files.readAllBytes(tmpOut.toPath()), 4);
         Assertions.assertEquals("%PDF", new String(tmpHead, StandardCharsets.US_ASCII));
@@ -984,7 +989,7 @@ public class ExporterTest {
      * Tests the molecule atom-container-exception branch of the ITEMIZATION-tab PDF export. A parent MoleculeDataModel
      * built from an unparsable unique SMILES makes {@code getAtomContainer} throw a CDKException while rendering the
      * molecule structure; the molecule's SMILES is added to the failed-export list and rendering continues to the next
-     * molecule. The export still produces a valid {@code %PDF} file and a non-empty failed-list.
+     * molecule. The export still produces a valid {@code %PDF} file and the failed-list holds exactly that SMILES.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -997,8 +1002,7 @@ public class ExporterTest {
         File tmpOut = aTempDir.resolve("items_invalid.pdf").toFile();
         List<String> tmpFailed = this.exporter.exportPdfFile(
                 tmpOut, tmpFragments, tmpMolecules, "ErtlFG", "input.smi", TabNames.ITEMIZATION);
-        Assertions.assertNotNull(tmpFailed);
-        Assertions.assertFalse(tmpFailed.isEmpty());
+        Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
         Assertions.assertTrue(tmpOut.length() > 0);
         byte[] tmpHead = Arrays.copyOf(Files.readAllBytes(tmpOut.toPath()), 4);
         Assertions.assertEquals("%PDF", new String(tmpHead, StandardCharsets.US_ASCII));
@@ -1070,10 +1074,10 @@ public class ExporterTest {
     /**
      * Tests the private {@code convertToITextImage(BufferedImage)} method (reached via reflection). A valid,
      * PNG-encodable {@link BufferedImage} is passed and the method must return a non-null {@link com.lowagie.text.Image}
-     * for use in the PDF export. This pins the {@code return Image.getInstance(bytes)} statement (Exporter L1131)
-     * directly: the full PDF export tests traverse this method but swallow a null return (the image simply does not
-     * appear in the PDF), so the {@code NullReturnVals} mutant survived without this assertion. A plain ARGB image is
-     * used because {@code ImageIO} can always PNG-encode it headlessly and deterministically.
+     * for use in the PDF export. This pins the {@code return Image.getInstance(bytes)} statement directly: the full PDF
+     * export tests traverse this method but swallow a null return (the image simply does not appear in the PDF), so a
+     * null-returning implementation would go unnoticed without this assertion. A plain ARGB image is used because
+     * {@code ImageIO} can always PNG-encode it headlessly and deterministically.
      *
      * @throws Exception if anything goes wrong
      */
@@ -1095,10 +1099,9 @@ public class ExporterTest {
      * SD/PDB export methods (createFragmentationTabSingleSDFile / createFragmentationTabSeparateSDFiles /
      * createFragmentationTabPDBFiles). Those blocks fire ONLY when the very first SDFWriter.write(...) /
      * PDBWriter.writeMolecule(...) throws a CDKException; with OptWriteAromaticBondTypes=true a real CDK writer never
-     * fails the first write for the fragments used here (verified empirically in plan 03-06), so the branch is
-     * unreachable with real objects. Mockito is authorized for THIS package only (the project's no-mock rule was
-     * explicitly overturned here); usage is kept minimal and targeted — the constructed writer is the only mock, the
-     * kekulization on the real fragment clone runs for real, and the returned failed-export list is asserted to be empty
+     * fails the first write for the fragments used here, so the branch is unreachable with real objects. Mock usage is
+     * kept minimal and targeted: the constructed writer is the only mock, the kekulization on the real fragment clone
+     * runs for real, and the returned failed-export list is asserted to be empty
      * so the retry's successful path (not the outer catch) is what is exercised.
      */
     /**
@@ -1106,7 +1109,7 @@ public class ExporterTest {
      * mock-constructed {@link SDFWriter} throws a {@link CDKException} on its first {@code write} call (forcing the inner
      * catch), then succeeds on the retried {@code write} of the kekulized clone. The fragments carry no 3D coordinates,
      * so the retry kekulizes the pre-built no-3D clone. The export returns an empty failed-list (the retry succeeded, the
-     * outer catch was not reached) and the writer received at least one more {@code write} call than there are fragments
+     * outer catch was not reached) and the writer received exactly one more {@code write} call than there are fragments
      * (proving exactly one retry occurred).
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
@@ -1130,7 +1133,7 @@ public class ExporterTest {
             Assertions.assertNotNull(tmpFailed);
             Assertions.assertTrue(tmpFailed.isEmpty());
             //one write per fragment plus the single extra retry write
-            Assertions.assertTrue(tmpWriteCounter.get() >= tmpFragments.size() + 1);
+            Assertions.assertEquals(tmpFragments.size() + 1, tmpWriteCounter.get());
         }
     }
     //
@@ -1138,7 +1141,8 @@ public class ExporterTest {
      * Drives the {@code tmpPoint3dAvailable == true} sub-branch of the kekulize-retry block of
      * {@code createFragmentationTabSingleSDFile} (line {@code tmpFragmentClone = tmpFragment.clone()}). The fragments
      * carry explicit 3D coordinates, so on retry the original atom container is cloned and kekulized. A mock-constructed
-     * {@link SDFWriter} throws on its first {@code write} then succeeds; the export returns an empty failed-list.
+     * {@link SDFWriter} throws on its first {@code write} then succeeds; the export returns an empty failed-list and the
+     * writer received exactly one retry {@code write}.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -1160,7 +1164,7 @@ public class ExporterTest {
                     tmpOut, tmpFragments, ChemFileTypes.SDF, true, true);
             Assertions.assertNotNull(tmpFailed);
             Assertions.assertTrue(tmpFailed.isEmpty());
-            Assertions.assertTrue(tmpWriteCounter.get() >= tmpFragments.size() + 1);
+            Assertions.assertEquals(tmpFragments.size() + 1, tmpWriteCounter.get());
         }
     }
     //
@@ -1168,7 +1172,7 @@ public class ExporterTest {
      * Drives the kekulize-retry block of {@code createFragmentationTabSeparateSDFiles}: a fresh {@link SDFWriter} is
      * mock-constructed per fragment (one writer per file), and the first one throws a {@link CDKException} on its first
      * {@code write}, forcing the inner catch and the retried {@code write} of the kekulized clone. The export returns an
-     * empty failed-list and a sub-directory is still created.
+     * empty failed-list, the writers received exactly one retry {@code write}, and a sub-directory is still created.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -1190,7 +1194,7 @@ public class ExporterTest {
                     tmpDir, tmpFragments, ChemFileTypes.SDF, true, false);
             Assertions.assertNotNull(tmpFailed);
             Assertions.assertTrue(tmpFailed.isEmpty());
-            Assertions.assertTrue(tmpWriteCounter.get() >= tmpFragments.size() + 1);
+            Assertions.assertEquals(tmpFragments.size() + 1, tmpWriteCounter.get());
             File[] tmpSubDirs = tmpDir.listFiles(File::isDirectory);
             Assertions.assertNotNull(tmpSubDirs);
             Assertions.assertEquals(1, tmpSubDirs.length);
@@ -1243,8 +1247,8 @@ public class ExporterTest {
      * Drives the outer exception branch reached when the kekulize retry itself fails in
      * {@code createFragmentationTabSingleSDFile}: a mock-constructed {@link SDFWriter} throws a {@link CDKException} on
      * every {@code write} call, so the first write throws, the retried write of the kekulized clone throws again, and the
-     * fragment falls through to the method's outer {@code catch} block. The returned failed-export list is therefore
-     * non-empty for every fragment.
+     * fragment falls through to the method's outer {@code catch} block. The returned failed-export list therefore holds
+     * the SMILES of every fragment.
      *
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
@@ -1261,6 +1265,9 @@ public class ExporterTest {
                     tmpOut, tmpFragments, ChemFileTypes.SDF, true, true);
             Assertions.assertNotNull(tmpFailed);
             Assertions.assertEquals(tmpFragments.size(), tmpFailed.size());
+            for (MoleculeDataModel tmpFragment : tmpFragments) {
+                Assertions.assertTrue(tmpFailed.contains(tmpFragment.getUniqueSmiles()));
+            }
         }
     }
     //</editor-fold>
@@ -1456,15 +1463,6 @@ public class ExporterTest {
     }
     //
     /**
-     * Builds an ITEMIZATION-tab export input: a parent MoleculeDataModel carrying a populated fragments map and a
-     * matching fragment-frequency map (keyed by the fragment unique SMILES) under the given fragmentation name. No
-     * fragmenter is involved; the maps are populated directly via the public API.
-     *
-     * @param aFragmentationName fragmentation name under which the fragments are registered
-     * @return parent molecule with attached fragments for the given fragmentation name
-     * @throws Exception if SMILES parsing fails
-     */
-    /**
      * Builds a list of FragmentDataModel instances whose atom containers carry explicit 3D coordinates (a {@code Point3d}
      * is assigned to every atom). Because the data model retains the given atom container, the export methods see these 3D
      * coordinates ({@code ChemUtil.has3DCoordinates} returns true), driving the 3D-coordinates-available export branch
@@ -1492,16 +1490,6 @@ public class ExporterTest {
     }
     //
     /**
-     * Builds a list of FragmentDataModel instances whose atom containers carry explicit 2D coordinates (a {@code Point2d}
-     * is assigned to every atom) but no 3D coordinates. Because the data model retains the given atom container, the
-     * export methods see 2D coordinates ({@code ChemUtil.has2DCoordinates} returns true), driving the
-     * 2D-coordinates-available branch of {@code handleFragmentWithNo3dInformationAvailable} (pseudo-3D from 2D, no
-     * coordinate generation needed).
-     *
-     * @return list of FragmentDataModel instances with 2D coordinates
-     * @throws Exception if SMILES parsing fails
-     */
-    /**
      * Builds a list of FragmentDataModel instances holding an aromatic ring (benzene) whose atoms carry explicit 3D
      * coordinates. Aromaticity makes {@link org.openscience.cdk.aromaticity.Kekulization#kekulize} meaningful, and the 3D
      * coordinates make {@code ChemUtil.has3DCoordinates} return true, so the kekulize-retry block's
@@ -1525,6 +1513,16 @@ public class ExporterTest {
         return tmpList;
     }
     //
+    /**
+     * Builds a list of FragmentDataModel instances whose atom containers carry explicit 2D coordinates (a {@code Point2d}
+     * is assigned to every atom) but no 3D coordinates. Because the data model retains the given atom container, the
+     * export methods see 2D coordinates ({@code ChemUtil.has2DCoordinates} returns true), driving the
+     * 2D-coordinates-available branch of {@code handleFragmentWithNo3dInformationAvailable} (pseudo-3D from 2D, no
+     * coordinate generation needed).
+     *
+     * @return list of FragmentDataModel instances with 2D coordinates
+     * @throws Exception if SMILES parsing fails
+     */
     private static List<MoleculeDataModel> buildFragmentListWith2dCoordinates() throws Exception {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         List<MoleculeDataModel> tmpList = new ArrayList<>();
@@ -1543,6 +1541,15 @@ public class ExporterTest {
         return tmpList;
     }
     //
+    /**
+     * Builds an ITEMIZATION-tab export input: a parent MoleculeDataModel carrying a populated fragments map and a
+     * matching fragment-frequency map (keyed by the fragment unique SMILES) under the given fragmentation name. No
+     * fragmenter is involved; the maps are populated directly via the public API.
+     *
+     * @param aFragmentationName fragmentation name under which the fragments are registered
+     * @return parent molecule with attached fragments for the given fragmentation name
+     * @throws Exception if SMILES parsing fails
+     */
     private static MoleculeDataModel buildMoleculeWithFragments(String aFragmentationName) throws Exception {
         SmilesParser tmpParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpParentAtomContainer = tmpParser.parseSmiles("c1ccccc1CCO");
@@ -1583,6 +1590,139 @@ public class ExporterTest {
         tmpMolecule.getAllFragments().put(aFragmentationName, tmpFragments);
         tmpMolecule.getFragmentFrequencies().put(aFragmentationName, tmpFrequencies);
         return tmpMolecule;
+    }
+    //
+    /**
+     * Returns the files with the given extension inside the single export sub-directory the separate-files exports
+     * create in the given directory, asserting that exactly one such sub-directory exists.
+     *
+     * @param aDirectory directory passed to the export
+     * @param anExtension file extension (including the dot) of the exported files
+     * @return the exported files, never null
+     */
+    private static File[] listExportedFiles(File aDirectory, String anExtension) {
+        File[] tmpSubDirs = aDirectory.listFiles(File::isDirectory);
+        Assertions.assertNotNull(tmpSubDirs);
+        Assertions.assertEquals(1, tmpSubDirs.length);
+        File[] tmpFiles = tmpSubDirs[0].listFiles((aDir, aName) -> aName.endsWith(anExtension));
+        Assertions.assertNotNull(tmpFiles);
+        return tmpFiles;
+    }
+    //
+    /**
+     * Parses the atom coordinates of every record of an MDL V2000 SD file: the counts line (marked V2000) gives the
+     * atom count, and each following atom line holds x, y and z in its first three ten-character columns.
+     *
+     * @param anSdfContent content of the SD file
+     * @return per record, the (x, y, z) triple of every atom in atom order
+     */
+    private static List<List<double[]>> readSdfAtomCoordinates(String anSdfContent) {
+        List<List<double[]>> tmpRecords = new ArrayList<>();
+        for (String tmpRecord : anSdfContent.split("\\$\\$\\$\\$")) {
+            List<String> tmpLines = tmpRecord.lines().toList();
+            //the title line may be blank, so the counts line is located by its V2000 marker instead of its position
+            int tmpCountsLineIndex = -1;
+            for (int i = 0; i < tmpLines.size(); i++) {
+                if (tmpLines.get(i).endsWith("V2000")) {
+                    tmpCountsLineIndex = i;
+                    break;
+                }
+            }
+            if (tmpCountsLineIndex < 0) {
+                //trailing text after the last record separator
+                Assertions.assertTrue(tmpRecord.isBlank(), "record without a V2000 counts line: " + tmpRecord);
+                continue;
+            }
+            int tmpAtomCount = Integer.parseInt(tmpLines.get(tmpCountsLineIndex).substring(0, 3).trim());
+            List<double[]> tmpCoordinates = new ArrayList<>(tmpAtomCount);
+            for (int i = 0; i < tmpAtomCount; i++) {
+                String tmpAtomLine = tmpLines.get(tmpCountsLineIndex + 1 + i);
+                tmpCoordinates.add(new double[] {
+                        Double.parseDouble(tmpAtomLine.substring(0, 10).trim()),
+                        Double.parseDouble(tmpAtomLine.substring(10, 20).trim()),
+                        Double.parseDouble(tmpAtomLine.substring(20, 30).trim())});
+            }
+            tmpRecords.add(tmpCoordinates);
+        }
+        return tmpRecords;
+    }
+    //
+    /**
+     * Parses the atom coordinates of a PDB file from the fixed columns (x 31-38, y 39-46, z 47-54) of its ATOM / HETATM
+     * records.
+     *
+     * @param aPdbFile PDB file to read
+     * @return the (x, y, z) triple of every atom in atom order
+     * @throws Exception if the file cannot be read
+     */
+    private static List<double[]> readPdbAtomCoordinates(File aPdbFile) throws Exception {
+        List<double[]> tmpCoordinates = new ArrayList<>();
+        for (String tmpLine : Files.readAllLines(aPdbFile.toPath())) {
+            if (tmpLine.startsWith("ATOM") || tmpLine.startsWith("HETATM")) {
+                tmpCoordinates.add(new double[] {
+                        Double.parseDouble(tmpLine.substring(30, 38).trim()),
+                        Double.parseDouble(tmpLine.substring(38, 46).trim()),
+                        Double.parseDouble(tmpLine.substring(46, 54).trim())});
+            }
+        }
+        Assertions.assertFalse(tmpCoordinates.isEmpty(), "no atom records in " + aPdbFile.getName());
+        return tmpCoordinates;
+    }
+    //
+    /**
+     * Asserts that every atom sits at the origin (the zero-3D-coordinates branch).
+     *
+     * @param aCoordinates atom coordinates of one exported fragment
+     */
+    private static void assertZeroCoordinates(List<double[]> aCoordinates) {
+        Assertions.assertFalse(aCoordinates.isEmpty());
+        for (double[] tmpPoint : aCoordinates) {
+            Assertions.assertArrayEquals(new double[] {0.0, 0.0, 0.0}, tmpPoint, 1.0e-4);
+        }
+    }
+    //
+    /**
+     * Asserts generated pseudo-3D coordinates: every z coordinate is zero but at least one atom lies away from the
+     * origin, i.e. a 2D layout was generated (the zero-3D branch would put every atom at the origin).
+     *
+     * @param aCoordinates atom coordinates of one exported fragment
+     */
+    private static void assertGeneratedPseudo3dCoordinates(List<double[]> aCoordinates) {
+        Assertions.assertFalse(aCoordinates.isEmpty());
+        boolean tmpAnyAwayFromOrigin = false;
+        for (double[] tmpPoint : aCoordinates) {
+            Assertions.assertEquals(0.0, tmpPoint[2], 1.0e-4);
+            if (Math.abs(tmpPoint[0]) > 1.0e-4 || Math.abs(tmpPoint[1]) > 1.0e-4) {
+                tmpAnyAwayFromOrigin = true;
+            }
+        }
+        Assertions.assertTrue(tmpAnyAwayFromOrigin, "all atoms at the origin: no 2D layout was generated");
+    }
+    //
+    /**
+     * Asserts the coordinates assigned by {@link #buildFragmentListWith2dCoordinates()}, carried over as pseudo-3D:
+     * atom i at (i, i, 0).
+     *
+     * @param aCoordinates atom coordinates of one exported fragment
+     */
+    private static void assertPseudo3dFromOriginal2dCoordinates(List<double[]> aCoordinates) {
+        Assertions.assertFalse(aCoordinates.isEmpty());
+        for (int i = 0; i < aCoordinates.size(); i++) {
+            Assertions.assertArrayEquals(new double[] {i, i, 0.0}, aCoordinates.get(i), 1.0e-4);
+        }
+    }
+    //
+    /**
+     * Asserts the coordinates assigned by {@link #buildFragmentListWith3dCoordinates()}, written unchanged: atom i at
+     * (i, i, i).
+     *
+     * @param aCoordinates atom coordinates of one exported fragment
+     */
+    private static void assertOriginal3dCoordinates(List<double[]> aCoordinates) {
+        Assertions.assertFalse(aCoordinates.isEmpty());
+        for (int i = 0; i < aCoordinates.size(); i++) {
+            Assertions.assertArrayEquals(new double[] {i, i, i}, aCoordinates.get(i), 1.0e-4);
+        }
     }
     //</editor-fold>
 }

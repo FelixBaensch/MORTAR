@@ -27,7 +27,9 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -42,14 +44,32 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class SimpleEnumConstantNamePropertyTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor setting the default locale to en-GB. The fixture enum used in these tests resolves its display names
-     * through the Message resource bundle whose static initializer loads the bundle for the default locale; pinning the
-     * locale to en-GB ensures the bundle is found regardless of the test JVM's environment locale.
+     * Default locale before this test class ran, restored after all tests.
      */
-    public SimpleEnumConstantNamePropertyTest() {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale. The
+     * fixture enum used in these tests resolves its display names through the Message resource bundle whose static
+     * initializer loads the bundle for the default locale; pinning the locale to en-GB ensures the bundle is found
+     * regardless of the test JVM's environment locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        SimpleEnumConstantNamePropertyTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
     }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(SimpleEnumConstantNamePropertyTest.originalLocale);
+    }
+    //</editor-fold>
     //
     /**
      * Basic test for retrieval of associated enum, currently set option, and available options.

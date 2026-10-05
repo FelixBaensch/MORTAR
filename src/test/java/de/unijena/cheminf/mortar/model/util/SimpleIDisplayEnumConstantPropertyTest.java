@@ -28,7 +28,9 @@ package de.unijena.cheminf.mortar.model.util;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -43,14 +45,30 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class SimpleIDisplayEnumConstantPropertyTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor setting the default locale.
-     *
-     * @throws Exception if anything goes wrong
+     * Default locale before this test class ran, restored after all tests.
      */
-    public SimpleIDisplayEnumConstantPropertyTest() throws Exception {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        SimpleIDisplayEnumConstantPropertyTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
     }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(SimpleIDisplayEnumConstantPropertyTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     /**
      * Basic test for retrieval of associated enum, currently set option, and available options.
      *

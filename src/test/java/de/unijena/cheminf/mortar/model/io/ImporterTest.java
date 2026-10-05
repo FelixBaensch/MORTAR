@@ -27,8 +27,11 @@ package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.openscience.cdk.Atom;
@@ -54,6 +57,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 /**
  * Tests some functionalities of the {@link Importer} class.
@@ -61,12 +66,27 @@ import java.util.Set;
  * @author Jonas Schaub
  */
 public class ImporterTest extends Importer {
-    //<editor-fold desc="static initializer">
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Sets the default locale to British English.
+     * Default locale before this test class ran, restored after all tests.
      */
-    static {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        ImporterTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(ImporterTest.originalLocale);
     }
     //</editor-fold>
     //
@@ -120,7 +140,7 @@ public class ImporterTest extends Importer {
     }
     /**
      * Tests the end-to-end import dispatch for a SMILES (.smi) file. Loading {@code SMILESTestFileTwo.smi} and importing
-     * it through {@link Importer#importMoleculeFile(File, boolean, boolean)} exercises the extension dispatch to
+     * it through {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} exercises the extension dispatch to
      * {@code importSMILESFile} as well as {@code parse}, {@code findMoleculeName}, and {@code getFileName} transitively.
      * The fixture contains five SMILES codes, so a list with five molecules is expected and the stored file name must
      * match the imported file's base name.
@@ -142,7 +162,7 @@ public class ImporterTest extends Importer {
     }
     /**
      * Tests the end-to-end import dispatch for a single MOL (.mol) file. Loading {@code Mirabilin_B.mol} and importing it
-     * through {@link Importer#importMoleculeFile(File, boolean, boolean)} exercises the extension dispatch to
+     * through {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} exercises the extension dispatch to
      * {@code importMolFile}. A single molecule with a non-null, non-blank unique SMILES is expected.
      *
      * @throws Exception if anything goes wrong
@@ -160,13 +180,13 @@ public class ImporterTest extends Importer {
     }
     /**
      * Tests the end-to-end import dispatch for a multi-record SD (.sdf) file. Loading {@code MultiRecord.sdf} and
-     * importing it through {@link Importer#importMoleculeFile(File, boolean, boolean)} exercises the extension dispatch
+     * importing it through {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} exercises the extension dispatch
      * to {@code importSDFile}, the iterating SDF reader, and the molecule-name fallback for records lacking a title. The
      * fixture contains three valid records in order: the titled {@code Ethanol}, an untitled ethane record, and the
      * titled {@code Benzene}. A list with three molecules is expected and the exact ordered names must be
      * {@code ["Ethanol", "MultiRecord1", "Benzene"]}: the middle record has no title, so {@code importSDFile} falls back
      * to {@code FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter}. The counter value {@code 1} is the index of
-     * that record in the file, so this assertion pins the post-increment of the molecule counter (Importer L443): a
+     * that record in the file, so this assertion pins the post-increment of the molecule counter: a
      * mutated (removed/incremented) counter would change the embedded index and this assertion would fail.
      *
      * @throws Exception if anything goes wrong
@@ -194,7 +214,7 @@ public class ImporterTest extends Importer {
      * untitled valid record — makes the iterating reader skip the broken middle record and continue. Both surviving
      * records lack a title, so their names fall back to {@code FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter}.
      * The first valid record's index is {@code 0}, and the second valid record's index is {@code 2} (NOT {@code 1}):
-     * the counter was incremented once inside the erroneous-entry skip branch (Importer L433) for the skipped record.
+     * the counter was incremented once inside the erroneous-entry skip branch for the skipped record.
      * Asserting the second molecule is named {@code MultiRecordUnnamedWithError2} therefore pins that skip-branch
      * increment — negating or removing it would yield {@code MultiRecordUnnamedWithError1} and fail this assertion.
      *
@@ -214,7 +234,7 @@ public class ImporterTest extends Importer {
     }
     /**
      * Tests that importing a file with an unsupported extension returns null. This exercises the
-     * {@code tmpInputFileType == null} branch in {@link Importer#importMoleculeFile(File, boolean, boolean)} that is
+     * {@code tmpInputFileType == null} branch in {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} that is
      * reached when the file extension does not match any of the valid import file types.
      *
      * @param aTempDir temporary directory provided by JUnit; auto-deleted after the test
@@ -231,8 +251,9 @@ public class ImporterTest extends Importer {
     /**
      * Tests the else-branch of {@link Importer#preprocessMoleculeSet(IAtomContainerSet, boolean)} that is reached when
      * {@code isFillOpenValencesWithImplH} is false. In this case open valences are not saturated; instead unset implicit
-     * hydrogen counts are set to zero. The existing preprocessing tests only cover the {@code true} path. The method must
-     * complete without throwing and leave the molecule in the set.
+     * hydrogen counts are set to zero. The method must complete without throwing, leave the molecule in the set, and,
+     * unlike the {@code true} path (which saturates them to methyl groups), leave the two open-valence carbons with their
+     * explicitly given hydrogen counts of two and one.
      *
      * @throws Exception if anything goes wrong
      */
@@ -244,10 +265,13 @@ public class ImporterTest extends Importer {
         tmpSet.addAtomContainer(tmpMolecule);
         Assertions.assertDoesNotThrow(() -> this.preprocessMoleculeSet(tmpSet, false));
         Assertions.assertEquals(1, tmpSet.getAtomContainerCount());
+        //atom 0 is the [CH2], atom 5 the [CH]; with filling enabled both would carry three implicit hydrogens
+        Assertions.assertEquals(2, tmpMolecule.getAtom(0).getImplicitHydrogenCount());
+        Assertions.assertEquals(1, tmpMolecule.getAtom(5).getImplicitHydrogenCount());
     }
     /**
      * Tests the end-to-end import of an MDL V3000 MOL file. Loading {@code MolV3000.mol} and importing it through
-     * {@link Importer#importMoleculeFile(File, boolean, boolean)} exercises the V3000-format detection branch of
+     * {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} exercises the V3000-format detection branch of
      * {@code importMolFile} that uses the {@code MDLV3000Reader} (as opposed to the V2000 reader covered by the
      * Mirabilin test). A single molecule with a non-null, non-blank unique SMILES is expected.
      *
@@ -267,8 +291,8 @@ public class ImporterTest extends Importer {
     /**
      * Tests the molecule-name fallback branch of {@code importMolFile}. Loading {@code UnnamedMol.mol}, whose title line
      * is blank and which carries no name/ID property, makes {@code findMoleculeName} return null; the importer then falls
-     * back to reading the first line and, since it is blank, to the file name without extension. A single molecule with a
-     * non-blank name (the fallback name) is expected.
+     * back to reading the first line and, since it is blank, to the file name without extension. A single molecule named
+     * {@code UnnamedMol} (the fallback name) is expected.
      *
      * @throws Exception if anything goes wrong
      */
@@ -279,8 +303,7 @@ public class ImporterTest extends Importer {
         List<MoleculeDataModel> tmpResultList = this.importMoleculeFile(tmpResourceFile, false, true, false);
         Assertions.assertNotNull(tmpResultList);
         Assertions.assertEquals(1, tmpResultList.size());
-        Assertions.assertNotNull(tmpResultList.get(0).getName());
-        Assertions.assertFalse(tmpResultList.get(0).getName().isBlank());
+        Assertions.assertEquals("UnnamedMol", tmpResultList.get(0).getName());
     }
     /**
      * Tests the import of an SD file that contains a deliberately broken record between two valid records. Loading
@@ -296,35 +319,38 @@ public class ImporterTest extends Importer {
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         List<MoleculeDataModel> tmpResultList = this.importMoleculeFile(tmpResourceFile, false, true, false);
         Assertions.assertNotNull(tmpResultList);
-        Assertions.assertTrue(tmpResultList.size() >= 2);
+        Assertions.assertEquals(2, tmpResultList.size());
         Assertions.assertEquals("SDFwithError.sdf", this.getFileName());
     }
     /**
-     * Tests the {@code parse} branch that keeps the atom container inside the data model. With the
-     * {@code keepAtomContainerInDataModelSetting} enabled, {@code parse} constructs the MoleculeDataModel from the atom
-     * container directly (rather than from the SMILES string), covering the alternative model-construction branch. The
-     * import must still produce the expected number of molecules with valid unique SMILES.
+     * Tests the {@code parse} branch that keeps the atom container inside the data model. The
+     * {@code keepAtomContainerInDataModelSetting} is a deprecated dummy whose getter always returns false (its setter is
+     * a no-op), so the branch cannot be reached through the public setter; a settings container whose getter is
+     * overridden to return true is used instead. {@code parse} then constructs the MoleculeDataModel from the atom
+     * container directly (rather than from the SMILES string). The import must still produce the expected number of
+     * molecules with valid unique SMILES, and every model must report that it keeps its atom container.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
+    @SuppressWarnings("deprecation")
     public void testImportMoleculeFileKeepingAtomContainerInDataModel() throws Exception {
-        SettingsContainer tmpSettingsContainer = new SettingsContainer();
-        boolean tmpOriginalSetting = tmpSettingsContainer.getKeepAtomContainerInDataModelSetting();
-        try {
-            tmpSettingsContainer.setKeepAtomContainerInDataModelSetting(true);
-            Importer tmpImporter = new Importer(tmpSettingsContainer);
-            URL tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
-            File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
-            List<MoleculeDataModel> tmpResultList = tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
-            Assertions.assertNotNull(tmpResultList);
-            Assertions.assertEquals(5, tmpResultList.size());
-            for (MoleculeDataModel tmpMolecule : tmpResultList) {
-                Assertions.assertNotNull(tmpMolecule.getUniqueSmiles());
-                Assertions.assertFalse(tmpMolecule.getUniqueSmiles().isBlank());
+        SettingsContainer tmpSettingsContainer = new SettingsContainer() {
+            @Override
+            public boolean getKeepAtomContainerInDataModelSetting() {
+                return true;
             }
-        } finally {
-            tmpSettingsContainer.setKeepAtomContainerInDataModelSetting(tmpOriginalSetting);
+        };
+        Importer tmpImporter = new Importer(tmpSettingsContainer);
+        URL tmpURL = this.getClass().getResource("SMILESTestFileTwo.smi");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        List<MoleculeDataModel> tmpResultList = tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
+        Assertions.assertNotNull(tmpResultList);
+        Assertions.assertEquals(5, tmpResultList.size());
+        for (MoleculeDataModel tmpMolecule : tmpResultList) {
+            Assertions.assertNotNull(tmpMolecule.getUniqueSmiles());
+            Assertions.assertFalse(tmpMolecule.getUniqueSmiles().isBlank());
+            Assertions.assertTrue(tmpMolecule.isKeepAtomContainer());
         }
     }
     /**
@@ -362,14 +388,14 @@ public class ImporterTest extends Importer {
         tmpSet.addAtomContainer(tmpMolecule);
         this.preprocessMoleculeSet(tmpSet, false);
         for (IAtom tmpAtom : tmpSet.getAtomContainer(0).atoms()) {
-            Assertions.assertNotNull(tmpAtom.getImplicitHydrogenCount());
+            Assertions.assertEquals(0, tmpAtom.getImplicitHydrogenCount());
         }
     }
     /**
      * Tests the exception-handling branch of {@link Importer#preprocessMoleculeSet(IAtomContainerSet, boolean)}. An empty
      * atom container (no atoms, no bonds) that cannot be kekulized causes an exception inside the per-molecule processing
-     * loop. The exception is caught and logged, the molecule remains in the set, and the method completes without
-     * propagating the exception.
+     * loop. The exception is caught and logged (exactly one WARNING record carrying the exception and naming the
+     * molecule), the molecule remains in the set, and the method completes without propagating the exception.
      *
      * @throws Exception if anything goes wrong
      */
@@ -382,8 +408,12 @@ public class ImporterTest extends Importer {
         tmpInvalidMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, "InvalidAromaticMolecule");
         IAtomContainerSet tmpSet = new AtomContainerSet();
         tmpSet.addAtomContainer(tmpInvalidMolecule);
-        Assertions.assertDoesNotThrow(() -> this.preprocessMoleculeSet(tmpSet, true));
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(Importer.class.getName(), Level.WARNING,
+                () -> this.preprocessMoleculeSet(tmpSet, true));
         Assertions.assertEquals(1, tmpSet.getAtomContainerCount());
+        Assertions.assertEquals(1, tmpRecords.size());
+        Assertions.assertNotNull(tmpRecords.getFirst().getThrown());
+        Assertions.assertTrue(tmpRecords.getFirst().getMessage().contains("InvalidAromaticMolecule"));
     }
     /**
      * Tests the end-to-end import of a SMILES file that contains some unparsable lines mixed with valid SMILES codes.
@@ -567,9 +597,9 @@ public class ImporterTest extends Importer {
      * distractor property. The container carries no title, exactly one key containing 'id' ({@code Compound_ID}) and
      * exactly one distractor key containing neither 'id' nor 'name' ({@code Weight}). Both the real predicate and its
      * negation therefore select deterministically regardless of HashMap iteration order. Asserting the returned name is
-     * the id value {@code CID-777} (not the distractor value {@code 180.16}) pins the id-branch {@code anyMatch}
-     * (Importer L544) and {@code filter} (Importer L545) lambdas: a negated predicate would select the {@code Weight}
-     * key and return {@code 180.16}, failing this assertion.
+     * the id value {@code CID-777} (not the distractor value {@code 180.16}) pins the id-branch {@code anyMatch} and
+     * {@code filter} lambdas: a negated predicate would select the {@code Weight} key and return {@code 180.16}, failing
+     * this assertion.
      *
      * @throws Exception if anything goes wrong
      */
@@ -588,9 +618,8 @@ public class ImporterTest extends Importer {
      * distractor property. The container carries no title, exactly one key containing 'name' ({@code Molecule_Name}) and
      * exactly one distractor key containing neither 'name' nor 'id' ({@code Comment}). Both the real predicate and its
      * negation therefore select deterministically regardless of HashMap iteration order. Asserting the returned name is
-     * the name value {@code Glucose} (not the distractor value {@code note}) pins the name-branch {@code filter} lambda
-     * (Importer L538): a negated predicate would select the {@code Comment} key and return {@code note}, failing this
-     * assertion.
+     * the name value {@code Glucose} (not the distractor value {@code note}) pins the name-branch {@code filter} lambda:
+     * a negated predicate would select the {@code Comment} key and return {@code note}, failing this assertion.
      *
      * @throws Exception if anything goes wrong
      */

@@ -47,6 +47,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.regex.Pattern;
 
 /**
@@ -247,8 +249,8 @@ class ChemUtilTest {
     //
     /**
      * Tests that ChemUtil.generateMolecularFormula() returns the correct molecular formula for a parsed molecule.
-     * Golden value is acceptable here because CDK is pinned to the 2.12 release; if CDK is bumped the expected
-     * formula string may need to be refreshed.
+     * Golden value is acceptable here because the CDK version is pinned in the version catalog; if CDK is bumped the
+     * expected formula string may need to be refreshed.
      */
     @Test
     public void testGenerateMolecularFormula() throws Exception {
@@ -358,8 +360,7 @@ class ChemUtilTest {
     //
     /**
      * Tests the isAromaticityEncoded=false path of ChemUtil.createUniqueSmiles(): the returned unique SMILES is
-     * non-null and round-trips back to the same unique SMILES when parsed again. Golden round-trip is acceptable
-     * because CDK is pinned to the 2.12 release; the expected value may need a refresh if CDK is bumped.
+     * non-null and round-trips back to the same unique SMILES when parsed again (an invariant, no golden value).
      */
     @Test
     public void testCreateUniqueSmilesWithoutAromaticityEncoding() throws Exception {
@@ -373,8 +374,8 @@ class ChemUtilTest {
     /**
      * Tests the CDKException -> fix-aromatic-nitrogen fallback path of ChemUtil.createUniqueSmiles(): a molecule
      * parsed from an aromatic SMILES that is missing an explicit hydrogen on an aromatic nitrogen cannot be
-     * kekulized directly, so createUniqueSmiles must take the fix-aromatic-N branch and still return a non-null
-     * unique SMILES.
+     * kekulized directly, so createUniqueSmiles must take the fix-aromatic-N branch (observable through the INFO record
+     * it logs after adding the hydrogen) and still return a non-null unique SMILES.
      */
     @Test
     public void testCreateUniqueSmilesAromaticNitrogenFallback() throws Exception {
@@ -384,27 +385,37 @@ class ChemUtilTest {
         tmpSmiPar.kekulise(false);
         IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles(tmpSmilesCode);
         //isAromaticityEncoded=false forces a kekulizing flavor, so the first generation fails and the fix-aromatic-N branch is taken
-        String tmpUniqueSmiles = ChemUtil.createUniqueSmiles(tmpMolecule, false, false);
-        Assertions.assertNotNull(tmpUniqueSmiles);
+        String[] tmpUniqueSmiles = new String[1];
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(ChemUtil.class.getName(), Level.INFO,
+                () -> tmpUniqueSmiles[0] = ChemUtil.createUniqueSmiles(tmpMolecule, false, false));
+        Assertions.assertNotNull(tmpUniqueSmiles[0]);
+        ChemUtilTest.assertAromaticNitrogenFixLogged(tmpRecords);
     }
     //
     /**
      * Tests ChemUtil.saturateWithHydrogen() guard branches: a null molecule throws NullPointerException and an empty
-     * atom container returns without throwing. Also checks that a real molecule is saturated without error.
+     * atom container returns without throwing. Also checks that a hydrogen-depleted ethanol skeleton (every implicit
+     * hydrogen count set to zero) is saturated to CH3, CH2 and OH.
      */
     @Test
     public void testSaturateWithHydrogen() throws Exception {
         Assertions.assertThrows(NullPointerException.class, () -> ChemUtil.saturateWithHydrogen(null));
         IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
         Assertions.assertDoesNotThrow(() -> ChemUtil.saturateWithHydrogen(tmpEmptyContainer));
-        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
-        Assertions.assertDoesNotThrow(() -> ChemUtil.saturateWithHydrogen(tmpMolecule));
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("CCO", false, false);
+        for (IAtom tmpAtom : tmpMolecule.atoms()) {
+            tmpAtom.setImplicitHydrogenCount(0);
+        }
+        ChemUtil.saturateWithHydrogen(tmpMolecule);
+        Assertions.assertEquals(3, tmpMolecule.getAtom(0).getImplicitHydrogenCount());
+        Assertions.assertEquals(2, tmpMolecule.getAtom(1).getImplicitHydrogenCount());
+        Assertions.assertEquals(1, tmpMolecule.getAtom(2).getImplicitHydrogenCount());
     }
     //
     /**
      * Tests ChemUtil.checkAndCorrectElectronConfiguration() guard branches: a null molecule throws
-     * NullPointerException and an empty atom container returns without throwing. Also checks that a real molecule
-     * is processed without error.
+     * NullPointerException and an empty atom container returns without throwing. Also checks that ethanol parsed from
+     * SMILES, which carries no lone pairs, gets the two lone pairs of its oxygen atom added (and none on the carbons).
      */
     @Test
     public void testCheckAndCorrectElectronConfiguration() throws Exception {
@@ -412,8 +423,11 @@ class ChemUtilTest {
                 () -> ChemUtil.checkAndCorrectElectronConfiguration(null));
         IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
         Assertions.assertDoesNotThrow(() -> ChemUtil.checkAndCorrectElectronConfiguration(tmpEmptyContainer));
-        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
-        Assertions.assertDoesNotThrow(() -> ChemUtil.checkAndCorrectElectronConfiguration(tmpMolecule));
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("CCO");
+        Assertions.assertEquals(0, tmpMolecule.getLonePairCount());
+        ChemUtil.checkAndCorrectElectronConfiguration(tmpMolecule);
+        Assertions.assertEquals(2, tmpMolecule.getLonePairCount());
+        Assertions.assertEquals(2, tmpMolecule.getConnectedLonePairsCount(tmpMolecule.getAtom(2)));
     }
     //
     /**
@@ -468,7 +482,8 @@ class ChemUtilTest {
     /**
      * Drives the fix-aromatic-nitrogen success branch of ChemUtil.createUniqueSmiles(): the first SMILES generation
      * fails to kekulize because of an aromatic nitrogen missing its explicit hydrogen, then the fix-aromatic-N
-     * routine succeeds and a non-null unique SMILES is produced. Uses a ChEBI molecule known to be fixable.
+     * routine succeeds (observable through the INFO record it logs) and a non-null unique SMILES is produced. Uses a
+     * ChEBI molecule known to be fixable.
      */
     @Test
     public void testCreateUniqueSmilesFixAromaticNitrogenSuccess() throws Exception {
@@ -478,8 +493,11 @@ class ChemUtilTest {
         tmpSmiPar.kekulise(false);
         IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles(tmpSmilesCode);
         //isAromaticityEncoded=false forces a kekulizing flavor, so the first generation fails and the fix-aromatic-N branch is taken
-        String tmpUniqueSmiles = ChemUtil.createUniqueSmiles(tmpMolecule, false, false);
-        Assertions.assertNotNull(tmpUniqueSmiles);
+        String[] tmpUniqueSmiles = new String[1];
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(ChemUtil.class.getName(), Level.INFO,
+                () -> tmpUniqueSmiles[0] = ChemUtil.createUniqueSmiles(tmpMolecule, false, false));
+        Assertions.assertNotNull(tmpUniqueSmiles[0]);
+        ChemUtilTest.assertAromaticNitrogenFixLogged(tmpRecords);
     }
     //
     /**
@@ -506,5 +524,18 @@ class ChemUtilTest {
     @Test
     public void privateConstructorTest() throws Exception {
         TestUtil.assertPrivateConstructorIsInvocable(ChemUtil.class);
+    }
+    //
+    /**
+     * Asserts that the captured records contain the INFO record createUniqueSmiles logs after the fix-aromatic-nitrogen
+     * routine succeeded, i.e. that the fallback actually ran (and not the plain-kekulization alternative, which logs a
+     * different record).
+     *
+     * @param aRecords records captured from the ChemUtil logger
+     */
+    private static void assertAromaticNitrogenFixLogged(List<LogRecord> aRecords) {
+        Assertions.assertTrue(aRecords.stream().anyMatch(aRecord -> aRecord.getLevel() == Level.INFO
+                        && aRecord.getMessage().startsWith("Added hydrogen atom to aromatic nitrogen atom")),
+                "the fix-aromatic-nitrogen fallback did not run");
     }
 }

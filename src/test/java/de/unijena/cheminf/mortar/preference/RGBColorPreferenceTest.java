@@ -27,7 +27,9 @@ package de.unijena.cheminf.mortar.preference;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -47,13 +49,36 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class RGBColorPreferenceTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor to initialize locale and configuration.
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        RGBColorPreferenceTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(RGBColorPreferenceTest.originalLocale);
+    }
+    //</editor-fold>
+    //
+    /**
+     * Constructor to initialize the configuration.
      *
      * @throws Exception if anything goes wrong
      */
     public RGBColorPreferenceTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //
@@ -248,8 +273,8 @@ public class RGBColorPreferenceTest {
                 "Malformed colour",
                 "00000000-0000-0000-0000-000000000000",
                 "0.0:0.5:1.0"));
-        BufferedReader tmpReader = new BufferedReader(new FileReader(tmpFile.toFile()));
-        Assertions.assertThrows(java.io.IOException.class, () -> new RGBColorPreference(tmpReader));
-        tmpReader.close();
+        try (BufferedReader tmpReader = new BufferedReader(new FileReader(tmpFile.toFile()))) {
+            Assertions.assertThrows(java.io.IOException.class, () -> new RGBColorPreference(tmpReader));
+        }
     }
 }

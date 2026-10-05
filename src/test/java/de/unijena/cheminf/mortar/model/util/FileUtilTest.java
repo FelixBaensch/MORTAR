@@ -27,8 +27,10 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
@@ -37,7 +39,7 @@ import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -51,15 +53,38 @@ import java.util.Locale;
  * @author Felix Baensch
  */
 class FileUtilTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        FileUtilTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(FileUtilTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so any message-bundle resolution is deterministic) and
-     * bootstraps the Configuration singleton from the classpath (no data directory is touched by this).
+     * Constructor that bootstraps the Configuration singleton from the classpath (no data directory is touched by
+     * this).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public FileUtilTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
@@ -254,7 +279,7 @@ class FileUtilTest {
         String tmpOldHome = System.getProperty("user.home");
         try {
             System.setProperty("user.home", aTempHome.toString());
-            this.resetAppDirPathCache();
+            AppDirTestUtil.clearAppDirPathCache();
             String tmpAppDirPath = FileUtil.getAppDirPath();
             Assertions.assertNotNull(tmpAppDirPath);
             Assertions.assertTrue(tmpAppDirPath.startsWith(aTempHome.toString()),
@@ -268,8 +293,7 @@ class FileUtilTest {
             Assertions.assertTrue(tmpSettingsDirPath.startsWith(aTempHome.toString()),
                     "Settings dir path was not resolved under the temporary home: " + tmpSettingsDirPath);
         } finally {
-            System.setProperty("user.home", tmpOldHome);
-            this.resetAppDirPathCache();
+            AppDirTestUtil.restoreAppDirPath(tmpOldHome);
         }
     }
     //
@@ -356,6 +380,9 @@ class FileUtilTest {
         Assertions.assertTrue(tmpFile.createNewFile());
         try {
             Assertions.assertTrue(tmpReadOnlyDir.setWritable(false));
+            //root (e.g. in a container) ignores the write bit, so the failure cannot be provoked there
+            Assumptions.assumeFalse(Files.isWritable(tmpReadOnlyDir.toPath()),
+                    "the directory is still writable after removing the write bit (running as root?)");
             Assertions.assertFalse(FileUtil.deleteSingleFile(tmpFile.getAbsolutePath()));
         } finally {
             tmpReadOnlyDir.setWritable(true);
@@ -379,6 +406,9 @@ class FileUtilTest {
         Assertions.assertTrue(new File(tmpReadOnlyDir, "a.txt").createNewFile());
         try {
             Assertions.assertTrue(tmpReadOnlyDir.setWritable(false));
+            //root (e.g. in a container) ignores the write bit, so the failure cannot be provoked there
+            Assumptions.assumeFalse(Files.isWritable(tmpReadOnlyDir.toPath()),
+                    "the directory is still writable after removing the write bit (running as root?)");
             Assertions.assertFalse(FileUtil.deleteAllFilesInDirectory(tmpReadOnlyDir.getAbsolutePath()));
         } finally {
             tmpReadOnlyDir.setWritable(true);
@@ -401,6 +431,9 @@ class FileUtilTest {
         Assertions.assertTrue(tmpReadOnlyDir.mkdirs());
         try {
             Assertions.assertTrue(tmpReadOnlyDir.setWritable(false));
+            //root (e.g. in a container) ignores the write bit, so the failure cannot be provoked there
+            Assumptions.assumeFalse(Files.isWritable(tmpReadOnlyDir.toPath()),
+                    "the directory is still writable after removing the write bit (running as root?)");
             Assertions.assertFalse(FileUtil.createEmptyFile(new File(tmpReadOnlyDir, "new.txt").getAbsolutePath()));
         } finally {
             tmpReadOnlyDir.setWritable(true);
@@ -413,20 +446,6 @@ class FileUtilTest {
     @Test
     public void privateConstructorTest() throws Exception {
         TestUtil.assertPrivateConstructorIsInvocable(FileUtil.class);
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Private methods" defaultstate="collapsed">
-    /**
-     * Reflectively resets the private static {@code appDirPath} cache of FileUtil to null, so the next call to
-     * getAppDirPath re-resolves the data directory from the current {@code user.home} system property.
-     *
-     * @throws Exception if the field cannot be accessed
-     */
-    private void resetAppDirPathCache() throws Exception {
-        Field tmpField = FileUtil.class.getDeclaredField("appDirPath");
-        tmpField.setAccessible(true);
-        tmpField.set(null, null);
     }
     //</editor-fold>
 }

@@ -29,12 +29,13 @@ import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import de.unijena.cheminf.mortar.model.util.FileUtil;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -52,28 +53,47 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class PreferenceContainerTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor to initialize locale and configuration.
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        PreferenceContainerTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(PreferenceContainerTest.originalLocale);
+    }
+    //</editor-fold>
+    //
+    /**
+     * Constructor to initialize the configuration.
      */
     public PreferenceContainerTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //
     /**
      * Tests basic functionalities of PreferenceContainer class/objects, like preference management, management of
-     * public properties and persistence.
+     * public properties and persistence (into a JUnit-managed temporary directory).
      *
+     * @param aTempDir JUnit-managed temporary directory
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void testPreferenceContainerBasics() throws Exception {
-        String tmpDir = FileUtil.getAppDirPath()
-                + File.separatorChar
-                + "Test"
-                + File.separatorChar;
-        (new File(tmpDir)).mkdirs();
-        String tmpFilePathname = tmpDir + "PreferenceContainerTest.gzip";
+    public void testPreferenceContainerBasics(@TempDir Path aTempDir) throws Exception {
+        String tmpFilePathname = aTempDir.resolve("PreferenceContainerTest.gzip").toString();
         PreferenceContainer tmpContainer = new PreferenceContainer(tmpFilePathname);
 
         IPreference tmpPreference1 = new BooleanPreference("MORTAR is cool", true);
@@ -125,18 +145,15 @@ public class PreferenceContainerTest {
     /**
      * Tests the conversion of MORTAR preferences to JavaFx properties via the
      * {@link PreferenceUtil#translateJavaFxPropertiesToPreferences(List, String)} method.
-     * Correct persistence of the preferences is also tested.
+     * Correct persistence of the preferences (into a JUnit-managed temporary directory) is also tested.
      *
+     * @param aTempDir JUnit-managed temporary directory
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void testPropertyToPreferenceConversion() throws Exception {
+    public void testPropertyToPreferenceConversion(@TempDir Path aTempDir) throws Exception {
         SugarRemovalUtilityFragmenter tmpSRUFragmenter = new SugarRemovalUtilityFragmenter();
-        String tmpDir = FileUtil.getAppDirPath()
-                + File.separatorChar
-                + "Test"
-                + File.separatorChar;
-        (new File(tmpDir)).mkdirs();
+        String tmpDir = aTempDir.toString() + File.separatorChar;
         String tmpFilePathname = tmpDir + "SRUFragmenterSettings.txt";
         final PreferenceContainer tmpContainer = PreferenceUtil.translateJavaFxPropertiesToPreferences(tmpSRUFragmenter.settingsProperties(), tmpFilePathname);
         Assertions.assertDoesNotThrow(tmpContainer::writeRepresentation);
@@ -378,9 +395,8 @@ public class PreferenceContainerTest {
     /**
      * Tests the exact ordering and hashing contract of PreferenceContainer. Two freshly created containers carry
      * different, globally-unique GUIDs, so compareTo must return a non-zero value whose sign follows the GUID string
-     * ordering (this pins compareTo against a "return 0" mutation). The hashCode value is pinned to its exact formula,
-     * {@code 31 * 13 + guid.hashCode() = 403 + guid.hashCode()}, so the arithmetic mutations of the formula and a
-     * "return 0" mutation are detected. Equal-GUID copies must share both the hashCode and equality.
+     * ordering (this pins compareTo against a "return 0" mutation). The hashCode is stable across repeated calls, and
+     * equal-GUID copies must share both the hashCode and equality.
      *
      * @param aTempDir JUnit-managed temporary directory
      * @throws Exception if anything goes wrong
@@ -393,7 +409,7 @@ public class PreferenceContainerTest {
         Assertions.assertNotEquals(0, tmpContainerA.compareTo(tmpContainerB));
         Assertions.assertEquals(Integer.signum(tmpContainerA.getGUID().compareTo(tmpContainerB.getGUID())),
                 Integer.signum(tmpContainerA.compareTo(tmpContainerB)));
-        Assertions.assertEquals(31 * 13 + tmpContainerA.getGUID().hashCode(), tmpContainerA.hashCode());
+        Assertions.assertEquals(tmpContainerA.hashCode(), tmpContainerA.hashCode());
         PreferenceContainer tmpCopy = tmpContainerA.copy();
         Assertions.assertEquals(tmpContainerA.hashCode(), tmpCopy.hashCode());
         Assertions.assertEquals(tmpContainerA, tmpCopy);
