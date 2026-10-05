@@ -27,7 +27,9 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.fragment.CircularFragmenter;
 import org.openscience.cdk.interfaces.IAtom;
@@ -48,13 +50,32 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 class CDKCircularFragmenterTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to British English, which is important for the correct functioning of the
-     * fragmenter because the settings tooltips are imported from the message.properties file.
+     * Default locale before this test class ran, restored after all tests.
      */
-    public CDKCircularFragmenterTest() {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        CDKCircularFragmenterTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
     }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(CDKCircularFragmenterTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //
     /**
      * Tests instantiation and basic settings retrieval, including verification that all default values match

@@ -27,13 +27,16 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -46,6 +49,32 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public class ScaffoldGeneratorFragmenterTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        ScaffoldGeneratorFragmenterTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(ScaffoldGeneratorFragmenterTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Private static final class constants">
     /**
      * SMILES of a fused bicyclic molecule carrying side chains (substituted tetralin with an ethyl group and a
@@ -55,31 +84,22 @@ public class ScaffoldGeneratorFragmenterTest {
     private static final String FUSED_BICYCLIC_WITH_SIDE_CHAINS_SMILES = "CCc1ccc2c(c1)CCCC2C(=O)O";
     //</editor-fold>
     //
-    //<editor-fold desc="Constructor">
-    /**
-     * Constructor that sets the default locale to british english, which is important for the correct functioning of the
-     * fragmenter because the settings tooltips are imported from the message.properties file.
-     */
-    public ScaffoldGeneratorFragmenterTest() {
-        Locale.setDefault(Locale.of("en", "GB"));
-    }
-    //</editor-fold>
-    //
     //<editor-fold desc="Test methods">
     /**
-     * Tests instantiation and basic settings retrieval: the algorithm name/display-name accessors and every
-     * settingsProperties() entry's getName() must not throw.
+     * Tests instantiation and basic settings retrieval: the algorithm name and a non-blank display name are returned,
+     * and every settingsProperties() entry has a tooltip and a display name registered under its name.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void basicTest() throws Exception {
         ScaffoldGeneratorFragmenter tmpFragmenter = new ScaffoldGeneratorFragmenter();
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
         Assertions.assertEquals(ScaffoldGeneratorFragmenter.ALGORITHM_NAME, tmpFragmenter.getFragmentationAlgorithmName());
+        Assertions.assertFalse(tmpFragmenter.getFragmentationAlgorithmDisplayName().isBlank());
+        Assertions.assertFalse(tmpFragmenter.settingsProperties().isEmpty());
         for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
-            Assertions.assertDoesNotThrow(tmpSetting::getName);
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToTooltipTextMap().containsKey(tmpSetting.getName()));
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToDisplayNameMap().containsKey(tmpSetting.getName()));
         }
     }
     //
@@ -130,8 +150,11 @@ public class ScaffoldGeneratorFragmenterTest {
     }
     //
     /**
-     * Drives fragmentMolecule across all three SideChainOption values on a fused bicyclic molecule with side chains.
-     * Setting each option and re-fragmenting must not throw, exercising the early-return and side-chain-append branches.
+     * Drives fragmentMolecule across all three SideChainOption values on a fused bicyclic molecule with side chains,
+     * exercising the side-chain early-return and side-chain-append branches, and asserts that the option changes the
+     * output in the documented way, judged by the fragment category property: ONLY_SCAFFOLDS returns no side chains,
+     * ONLY_SIDE_CHAINS returns side chains only, and BOTH returns exactly the fragments of the other two options
+     * together.
      *
      * @throws Exception if anything goes wrong
      */
@@ -140,51 +163,69 @@ public class ScaffoldGeneratorFragmenterTest {
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 ScaffoldGeneratorFragmenterTest.FUSED_BICYCLIC_WITH_SIDE_CHAINS_SMILES);
+        Map<ScaffoldGeneratorFragmenter.SideChainOption, List<IAtomContainer>> tmpResults = new HashMap<>(4);
         for (ScaffoldGeneratorFragmenter.SideChainOption tmpOption :
                 ScaffoldGeneratorFragmenter.SideChainOption.values()) {
             ScaffoldGeneratorFragmenter tmpFragmenter = new ScaffoldGeneratorFragmenter();
             tmpFragmenter.setSideChainSetting(tmpOption);
             Assertions.assertEquals(tmpOption, tmpFragmenter.getSideChainSetting());
-            Assertions.assertDoesNotThrow(() -> tmpFragmenter.fragmentMolecule(tmpOriginalMolecule),
-                    "SideChainOption " + tmpOption + " threw during fragmentation.");
+            tmpResults.put(tmpOption, tmpFragmenter.fragmentMolecule(tmpOriginalMolecule));
         }
+        List<IAtomContainer> tmpOnlyScaffolds = tmpResults.get(ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SCAFFOLDS);
+        List<IAtomContainer> tmpOnlySideChains = tmpResults.get(ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SIDE_CHAINS);
+        List<IAtomContainer> tmpBoth = tmpResults.get(ScaffoldGeneratorFragmenter.SideChainOption.BOTH);
+        //ONLY_SCAFFOLDS: scaffold fragments, no side chains
+        Assertions.assertFalse(tmpOnlyScaffolds.isEmpty());
+        Assertions.assertEquals(0, ScaffoldGeneratorFragmenterTest.countSideChains(tmpOnlyScaffolds));
+        //ONLY_SIDE_CHAINS: the ethyl and carboxylic-acid side chains, nothing else
+        Assertions.assertFalse(tmpOnlySideChains.isEmpty());
+        Assertions.assertEquals(tmpOnlySideChains.size(), ScaffoldGeneratorFragmenterTest.countSideChains(tmpOnlySideChains));
+        //BOTH: the scaffold fragments plus the side chains
+        Assertions.assertEquals(tmpOnlyScaffolds.size() + tmpOnlySideChains.size(), tmpBoth.size());
+        Assertions.assertEquals(tmpOnlySideChains.size(), ScaffoldGeneratorFragmenterTest.countSideChains(tmpBoth));
     }
     //
     /**
-     * Exercises every settings accessor and setter: each getter/property accessor must not throw, each setter must be
-     * reflected by the matching getter, at least two CycleFinderOption and two ElectronDonationModelOption values are
+     * Exercises every settings accessor and setter: each property accessor must return a property that is exposed by
+     * settingsProperties() and whose value equals the matching getter, each setter must be reflected by the getter, at least two CycleFinderOption and two ElectronDonationModelOption values are
      * applied, a non-default ScaffoldMode and SmilesGenerator are set, both fragment-saturation values are applied, the
-     * boolean settings are toggled, and the tooltip/display-name maps are non-empty. A final fragmentation exercises the
-     * saturation and instance-setter branches.
+     * boolean settings are toggled, and the tooltip/display-name maps are non-empty. A final fragmentation with the
+     * changed settings (enumerative decomposition, side chains included) exercises the saturation and instance-setter
+     * branches and must return both scaffold-derived fragments and side chains.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void settingsTest() throws Exception {
         ScaffoldGeneratorFragmenter tmpFragmenter = new ScaffoldGeneratorFragmenter();
-        //all getters / property accessors must not throw
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentSaturationSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::fragmentSaturationSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getScaffoldModeSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::scaffoldModeSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDetermineAromaticitySetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::determineAromaticitySettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getElectronDonationModelSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::electronDonationModelSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getCycleFinderSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::cycleFinderSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getSmilesGeneratorSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::smilesGeneratorSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getRuleSevenAppliedSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::ruleSevenAppliedSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getRetainOnlyHybridisationsAtAromaticBondsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::retainOnlyHybridisationsAtAromaticBondsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getRetainOnlyHybridisationAtAromaticBondsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::retainOnlyHybridisationAtAromaticBondsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationTypeSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::fragmentationTypeSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getSideChainSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::sideChainSettingProperty);
+        //every property accessor returns a property exposed by settingsProperties() that mirrors its getter
+        List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.fragmentSaturationSettingProperty(),
+                tmpFragmenter.getFragmentSaturationSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.scaffoldModeSettingProperty(),
+                tmpFragmenter.getScaffoldModeSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.determineAromaticitySettingProperty(),
+                tmpFragmenter.getDetermineAromaticitySetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.electronDonationModelSettingProperty(),
+                tmpFragmenter.getElectronDonationModelSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.cycleFinderSettingProperty(),
+                tmpFragmenter.getCycleFinderSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.smilesGeneratorSettingProperty(),
+                tmpFragmenter.getSmilesGeneratorSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.ruleSevenAppliedSettingProperty(),
+                tmpFragmenter.getRuleSevenAppliedSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.retainOnlyHybridisationsAtAromaticBondsSetting(),
+                tmpFragmenter.getRetainOnlyHybridisationsAtAromaticBondsSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.fragmentationTypeSettingProperty(),
+                tmpFragmenter.getFragmentationTypeSetting());
+        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.sideChainSettingProperty(),
+                tmpFragmenter.getSideChainSetting());
+        //the two spellings of the retain-only-hybridisation accessors expose one and the same setting
+        Assertions.assertSame(tmpFragmenter.retainOnlyHybridisationsAtAromaticBondsSetting(),
+                tmpFragmenter.retainOnlyHybridisationAtAromaticBondsSettingProperty());
+        Assertions.assertEquals(tmpFragmenter.getRetainOnlyHybridisationsAtAromaticBondsSetting(),
+                tmpFragmenter.getRetainOnlyHybridisationAtAromaticBondsSetting());
         //fragment saturation - both values
         tmpFragmenter.setFragmentSaturationSetting(IMoleculeFragmenter.FragmentSaturationOption.NO_SATURATION);
         Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.NO_SATURATION,
@@ -231,8 +272,10 @@ public class ScaffoldGeneratorFragmenterTest {
         //retain only hybridisation at aromatic bonds - toggle
         tmpFragmenter.setRetainOnlyHybridisationAtAromaticBondsSetting(true);
         Assertions.assertTrue(tmpFragmenter.getRetainOnlyHybridisationsAtAromaticBondsSetting());
+        Assertions.assertTrue(tmpFragmenter.getRetainOnlyHybridisationAtAromaticBondsSetting());
         tmpFragmenter.setRetainOnlyHybridisationAtAromaticBondsSetting(false);
         Assertions.assertFalse(tmpFragmenter.getRetainOnlyHybridisationsAtAromaticBondsSetting());
+        Assertions.assertFalse(tmpFragmenter.getRetainOnlyHybridisationAtAromaticBondsSetting());
         //fragmentation type and side chain setters reflected by getters
         tmpFragmenter.setFragmentationTypeSetting(ScaffoldGeneratorFragmenter.FragmentationTypeOption.ENUMERATIVE);
         Assertions.assertEquals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.ENUMERATIVE,
@@ -251,7 +294,10 @@ public class ScaffoldGeneratorFragmenterTest {
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpOriginalMolecule = tmpSmiPar.parseSmiles(
                 ScaffoldGeneratorFragmenterTest.FUSED_BICYCLIC_WITH_SIDE_CHAINS_SMILES);
-        Assertions.assertDoesNotThrow(() -> tmpFragmenter.fragmentMolecule(tmpOriginalMolecule));
+        List<IAtomContainer> tmpFragments = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
+        int tmpSideChainCount = ScaffoldGeneratorFragmenterTest.countSideChains(tmpFragments);
+        Assertions.assertTrue(tmpSideChainCount > 0, "SideChainOption.BOTH must return side chains");
+        Assertions.assertTrue(tmpFragments.size() > tmpSideChainCount, "SideChainOption.BOTH must return scaffolds");
     }
     //
     /**
@@ -275,7 +321,8 @@ public class ScaffoldGeneratorFragmenterTest {
     //
     /**
      * Tests copy() and restoreDefaultSettings(): the copy reflects a non-default FragmentationTypeSetting of the
-     * original, and restoreDefaultSettings() resets the FragmentationTypeSetting to its default.
+     * original, the copy is independent of the original (changing a setting on either one leaves the other unchanged),
+     * and restoreDefaultSettings() resets the FragmentationTypeSetting to its default.
      *
      * @throws Exception if anything goes wrong
      */
@@ -284,10 +331,53 @@ public class ScaffoldGeneratorFragmenterTest {
         ScaffoldGeneratorFragmenter tmpFragmenter = new ScaffoldGeneratorFragmenter();
         tmpFragmenter.setFragmentationTypeSetting(ScaffoldGeneratorFragmenter.FragmentationTypeOption.RING_DISSECTION);
         ScaffoldGeneratorFragmenter tmpCopy = (ScaffoldGeneratorFragmenter) tmpFragmenter.copy();
+        Assertions.assertNotSame(tmpFragmenter, tmpCopy);
         Assertions.assertEquals(tmpFragmenter.getFragmentationTypeSetting(), tmpCopy.getFragmentationTypeSetting());
+        //changing the original leaves the copy unchanged
+        tmpFragmenter.setFragmentationTypeSetting(ScaffoldGeneratorFragmenter.FragmentationTypeOption.ENUMERATIVE);
+        Assertions.assertEquals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.RING_DISSECTION,
+                tmpCopy.getFragmentationTypeSetting());
+        //changing the copy leaves the original unchanged
+        tmpCopy.setSideChainSetting(ScaffoldGeneratorFragmenter.SideChainOption.ONLY_SIDE_CHAINS);
+        Assertions.assertEquals(ScaffoldGeneratorFragmenter.SIDE_CHAIN_OPTION_DEFAULT, tmpFragmenter.getSideChainSetting());
         tmpFragmenter.restoreDefaultSettings();
         Assertions.assertEquals(ScaffoldGeneratorFragmenter.FRAGMENTATION_TYPE_OPTION_DEFAULT,
                 tmpFragmenter.getFragmentationTypeSetting());
+        //restoring the defaults of the original does not reset the copy
+        Assertions.assertEquals(ScaffoldGeneratorFragmenter.FragmentationTypeOption.RING_DISSECTION,
+                tmpCopy.getFragmentationTypeSetting());
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private static methods">
+    /**
+     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
+     * equals the value returned by the matching getter.
+     *
+     * @param aSettings the settingsProperties() list of the fragmenter
+     * @param aProperty the property returned by the property accessor under test
+     * @param aGetterValue the value returned by the matching getter
+     */
+    private static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
+        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
+        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
+    }
+    //
+    /**
+     * Counts the fragments that carry the side-chain fragment category.
+     *
+     * @param aFragments the fragments returned by the fragmenter
+     * @return the number of side-chain fragments
+     */
+    private static int countSideChains(List<IAtomContainer> aFragments) {
+        int tmpCount = 0;
+        for (IAtomContainer tmpFragment : aFragments) {
+            if (ScaffoldGeneratorFragmenter.FRAGMENT_CATEGORY_SIDE_CHAIN_VALUE.equals(
+                    tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY))) {
+                tmpCount++;
+            }
+        }
+        return tmpCount;
     }
     //</editor-fold>
 }

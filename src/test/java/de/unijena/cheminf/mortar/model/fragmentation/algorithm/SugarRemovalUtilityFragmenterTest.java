@@ -27,7 +27,9 @@ package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -47,27 +49,51 @@ import java.util.Map;
  * @version 1.0.0.0
  */
 public class SugarRemovalUtilityFragmenterTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to british english, which is important for the correct functioning of the
-     * fragmenter because the settings tooltips are imported from the message.properties file.
+     * Default locale before this test class ran, restored after all tests.
      */
-    public SugarRemovalUtilityFragmenterTest() {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        SugarRemovalUtilityFragmenterTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
     }
     //
     /**
-     * Tests instantiation and basic settings retrieval.
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(SugarRemovalUtilityFragmenterTest.originalLocale);
+    }
+    //</editor-fold>
+    //
+    //
+    /**
+     * Tests instantiation and basic settings retrieval: the algorithm name and a non-blank display name are returned, a
+     * fresh instance starts with the documented default sugar type to remove, and every settingsProperties() entry has
+     * a tooltip and a display name registered under its name.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void basicTest() throws Exception {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getSugarTypeToRemoveSetting);
+        Assertions.assertEquals(SugarRemovalUtilityFragmenter.ALGORITHM_NAME, tmpFragmenter.getFragmentationAlgorithmName());
+        Assertions.assertFalse(tmpFragmenter.getFragmentationAlgorithmDisplayName().isBlank());
+        Assertions.assertEquals(SugarRemovalUtilityFragmenter.SUGAR_TYPE_TO_REMOVE_OPTION_DEFAULT,
+                tmpFragmenter.getSugarTypeToRemoveSetting());
+        Assertions.assertFalse(tmpFragmenter.settingsProperties().isEmpty());
         for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
-            Assertions.assertDoesNotThrow(tmpSetting::getName);
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToTooltipTextMap().containsKey(tmpSetting.getName()));
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToDisplayNameMap().containsKey(tmpSetting.getName()));
         }
     }
     //
@@ -114,7 +140,8 @@ public class SugarRemovalUtilityFragmenterTest {
     }
     //
     /**
-     * Exercises every settings accessor and property getter, drives every value of the
+     * Checks that every property accessor returns a property exposed by settingsProperties() whose value mirrors the
+     * matching getter, drives every value of the
      * {@link SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption},
      * {@link SugarRemovalUtilityFragmenter.SRUFragmenterPreservationMode}, and
      * {@link SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption} enums through their setters
@@ -127,43 +154,44 @@ public class SugarRemovalUtilityFragmenterTest {
     @Test
     public void settingsTest() throws Exception {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
-        //every get*Setting / *SettingProperty returns without throwing
-        Assertions.assertDoesNotThrow(tmpFragmenter::getReturnedFragmentsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::returnedFragmentsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getSugarTypeToRemoveSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::sugarTypeToRemoveSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDetectCircularSugarsOnlyWithGlycosidicBondSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::detectCircularSugarsOnlyWithGlycosidicBondSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getRemoveOnlyTerminalSugarsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::removeOnlyTerminalSugarsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getPreservationModeSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::preservationModeSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getPreservationModeThresholdSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::preservationModeThresholdSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::exocyclicOxygenAtomsToAtomsInRingRatioThresholdSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDetectLinearSugarsInRingsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::detectLinearSugarsInRingsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getLinearSugarCandidateMinimumSizeSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::linearSugarCandidateMinimumSizeSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getLinearSugarCandidateMaximumSizeSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::linearSugarCandidateMaximumSizeSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDetectLinearAcidicSugarsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::detectLinearAcidicSugarsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDetectSpiroRingsAsCircularSugarsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::detectSpiroRingsAsCircularSugarsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDetectCircularSugarsWithKetoGroupsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::detectCircularSugarsWithKetoGroupsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getMarkAttachPointsByRSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::markAttachPointsByRSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getPostProcessSugarsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::postProcessSugarsSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getLimitPostprocessingBySizeSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::limitPostprocessingBySizeSettingProperty);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getDiscardTooSmallSugarModificationsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::discardTooSmallSugarModificationsSettingProperty);
+        //every property accessor returns a property exposed by settingsProperties() that mirrors its getter
+        List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.returnedFragmentsSettingProperty(), tmpFragmenter.getReturnedFragmentsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.sugarTypeToRemoveSettingProperty(), tmpFragmenter.getSugarTypeToRemoveSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.detectCircularSugarsOnlyWithGlycosidicBondSettingProperty(), tmpFragmenter.getDetectCircularSugarsOnlyWithGlycosidicBondSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.removeOnlyTerminalSugarsSettingProperty(), tmpFragmenter.getRemoveOnlyTerminalSugarsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.preservationModeSettingProperty(), tmpFragmenter.getPreservationModeSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.preservationModeThresholdSettingProperty(), tmpFragmenter.getPreservationModeThresholdSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSettingProperty(), tmpFragmenter.getDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSettingProperty(), tmpFragmenter.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.detectLinearSugarsInRingsSettingProperty(), tmpFragmenter.getDetectLinearSugarsInRingsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.linearSugarCandidateMinimumSizeSettingProperty(), tmpFragmenter.getLinearSugarCandidateMinimumSizeSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.linearSugarCandidateMaximumSizeSettingProperty(), tmpFragmenter.getLinearSugarCandidateMaximumSizeSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.detectLinearAcidicSugarsSettingProperty(), tmpFragmenter.getDetectLinearAcidicSugarsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.detectSpiroRingsAsCircularSugarsSettingProperty(), tmpFragmenter.getDetectSpiroRingsAsCircularSugarsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.detectCircularSugarsWithKetoGroupsSettingProperty(), tmpFragmenter.getDetectCircularSugarsWithKetoGroupsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.markAttachPointsByRSettingProperty(), tmpFragmenter.getMarkAttachPointsByRSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.postProcessSugarsSettingProperty(), tmpFragmenter.getPostProcessSugarsSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.limitPostprocessingBySizeSettingProperty(), tmpFragmenter.getLimitPostprocessingBySizeSetting());
+        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.discardTooSmallSugarModificationsSettingProperty(), tmpFragmenter.getDiscardTooSmallSugarModificationsSetting());
         //every boolean setting accepts a value and the getter reflects it
         tmpFragmenter.setDetectCircularSugarsOnlyWithGlycosidicBondSetting(true);
         Assertions.assertTrue(tmpFragmenter.getDetectCircularSugarsOnlyWithGlycosidicBondSetting());
@@ -248,10 +276,13 @@ public class SugarRemovalUtilityFragmenterTest {
     //
     /**
      * Fragments the COCONUT natural product CNP0151033 with every {@link SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption}
-     * value (each combined with non-terminal sugar removal) and with both circular and linear preservation modes, asserting that
-     * fragmentation does not throw and that the returned fragments carry the
-     * {@link IMoleculeFragmenter#FRAGMENT_CATEGORY_PROPERTY_KEY} property. This exercises the remaining
-     * {@code fragmentMolecule}/{@code partitionAndSortUnconnectedFragments} branches across the option matrix.
+     * value combined with every {@link SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption} value (each
+     * with non-terminal sugar removal), asserting that the returned fragments carry the category the returned-fragments
+     * option promises: only sugar moieties, only deglycosylated cores, or both. The molecule has one circular sugar and
+     * no linear one, so every combination returns at least one fragment except the linear-sugar-only removal restricted
+     * to sugar moieties, which must return none. This exercises the remaining
+     * {@code fragmentMolecule}/{@code partitionAndSortUnconnectedFragments} branches across the option matrix. A final
+     * run with sugar post-processing and discarding of too small sugar modifications must still return the sugar moiety.
      *
      * @throws Exception if anything goes wrong
      */
@@ -273,8 +304,19 @@ public class SugarRemovalUtilityFragmenterTest {
                 Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpMolecule));
                 List<IAtomContainer> tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpMolecule);
                 Assertions.assertNotNull(tmpFragmentList);
+                String tmpCombination = tmpSugarType + " / " + tmpReturnedOption;
+                boolean tmpNoSugarCanBeReturned =
+                        tmpSugarType == SugarRemovalUtilityFragmenter.SugarTypeToRemoveOption.LINEAR
+                        && tmpReturnedOption == SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES;
+                Assertions.assertEquals(tmpNoSugarCanBeReturned, tmpFragmentList.isEmpty(), tmpCombination);
                 for (IAtomContainer tmpFragment : tmpFragmentList) {
-                    Assertions.assertNotNull(tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
+                    Object tmpCategory = tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY);
+                    Assertions.assertNotNull(tmpCategory, tmpCombination);
+                    if (tmpReturnedOption == SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_SUGAR_MOIETIES) {
+                        Assertions.assertEquals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE, tmpCategory, tmpCombination);
+                    } else if (tmpReturnedOption == SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_AGLYCONE) {
+                        Assertions.assertEquals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_DEGLYCOSYLATED_CORE_VALUE, tmpCategory, tmpCombination);
+                    }
                 }
             }
         }
@@ -286,6 +328,26 @@ public class SugarRemovalUtilityFragmenterTest {
         tmpPostProcessFragmenter.setPostProcessSugarsSetting(true);
         tmpPostProcessFragmenter.setDiscardTooSmallSugarModificationsSetting(true);
         IAtomContainer tmpMoleculeForPostProcess = tmpSmiPar.parseSmiles(tmpSmiles);
-        Assertions.assertDoesNotThrow(() -> tmpPostProcessFragmenter.fragmentMolecule(tmpMoleculeForPostProcess));
+        List<IAtomContainer> tmpPostProcessedFragments = tmpPostProcessFragmenter.fragmentMolecule(tmpMoleculeForPostProcess);
+        Assertions.assertFalse(tmpPostProcessedFragments.isEmpty());
+        for (IAtomContainer tmpFragment : tmpPostProcessedFragments) {
+            Assertions.assertEquals(SugarRemovalUtilityFragmenter.FRAGMENT_CATEGORY_SUGAR_MOIETY_VALUE,
+                    tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
+        }
     }
+    //
+    //<editor-fold desc="Private static methods" defaultstate="collapsed">
+    /**
+     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
+     * equals the value returned by the matching getter.
+     *
+     * @param aSettings the settingsProperties() list of the fragmenter
+     * @param aProperty the property returned by the property accessor under test
+     * @param aGetterValue the value returned by the matching getter
+     */
+    private static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
+        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
+        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
+    }
+    //</editor-fold>
 }
