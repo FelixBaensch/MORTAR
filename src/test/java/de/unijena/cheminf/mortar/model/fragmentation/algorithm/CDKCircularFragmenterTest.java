@@ -86,17 +86,29 @@ class CDKCircularFragmenterTest {
     @Test
     void basicTest() throws Exception {
         CDKCircularFragmenter tmpFragmenter = new CDKCircularFragmenter();
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getRadiusSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getIncludeSmallerRadiiSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getPreserveStereoSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getMarkAttachmentsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getApplyAromaticityDetectionSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getElectronDonationModelSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getCycleFinderSetting);
-        for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
-            Assertions.assertDoesNotThrow(tmpSetting::getName);
+        Assertions.assertEquals(CDKCircularFragmenter.ALGORITHM_NAME, tmpFragmenter.getFragmentationAlgorithmName());
+        Assertions.assertFalse(tmpFragmenter.getFragmentationAlgorithmDisplayName().isBlank());
+        // Every setting is exposed through settingsProperties() and its property mirrors the getter
+        List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
+        Assertions.assertEquals(7, tmpSettings.size());
+        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.radiusSettingProperty(), tmpFragmenter.getRadiusSetting());
+        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.includeSmallerRadiiSettingProperty(), tmpFragmenter.getIncludeSmallerRadiiSetting());
+        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.preserveStereoSettingProperty(), tmpFragmenter.getPreserveStereoSetting());
+        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.markAttachmentsSettingProperty(), tmpFragmenter.getMarkAttachmentsSetting());
+        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.applyAromaticityDetectionSettingProperty(), tmpFragmenter.getApplyAromaticityDetectionSetting());
+        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.electronDonationModelSettingProperty(), tmpFragmenter.getElectronDonationModelSetting());
+        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+                tmpFragmenter.cycleFinderSettingProperty(), tmpFragmenter.getCycleFinderSetting());
+        // Every setting has a tooltip and a display name
+        for (Property<?> tmpSetting : tmpSettings) {
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToTooltipTextMap().containsKey(tmpSetting.getName()), tmpSetting.getName());
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToDisplayNameMap().containsKey(tmpSetting.getName()), tmpSetting.getName());
         }
         // Verify default values match the declared constants
         Assertions.assertEquals(CDKCircularFragmenter.RADIUS_SETTING_DEFAULT, tmpFragmenter.getRadiusSetting());
@@ -414,5 +426,18 @@ class CDKCircularFragmenterTest {
             }
         }
         throw new IllegalStateException("No center atom (depth 0) found in the fragment.");
+    }
+    //
+    /**
+     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
+     * equals the value returned by the matching getter.
+     *
+     * @param aSettings the settingsProperties() list of the fragmenter
+     * @param aProperty the property returned by the property accessor under test
+     * @param aGetterValue the value returned by the matching getter
+     */
+    private static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
+        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
+        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
     }
 }
