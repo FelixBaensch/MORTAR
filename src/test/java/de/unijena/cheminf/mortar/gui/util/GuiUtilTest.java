@@ -46,9 +46,9 @@ public class GuiUtilTest {
     //<editor-fold desc="calculatePageCount test methods" defaultstate="collapsed">
     /**
      * Tests that calculatePageCount returns the correct page count across all branches of its logic:
-     * the empty-list zero override, a single item and other less-than-one-page sizes, an exact
-     * multiple of the items per page, a size with a remainder (page bump), and a large list. Also
-     * asserts the page count is always at least 1 for a valid non-empty input.
+     * the empty-list override to one page, a single item and other less-than-one-page sizes, a list
+     * exactly filling one page, an exact multiple of the items per page, a size with a remainder
+     * (page bump), a single item per page, and a large list.
      */
     @Test
     public void calculatePageCountCoversAllBranchesTest() {
@@ -58,7 +58,8 @@ public class GuiUtilTest {
         Assertions.assertEquals(2, GuiUtil.calculatePageCount(20, 10));
         Assertions.assertEquals(3, GuiUtil.calculatePageCount(21, 10));
         Assertions.assertEquals(1000, GuiUtil.calculatePageCount(10000, 10));
-        Assertions.assertTrue(GuiUtil.calculatePageCount(7, 10) >= 1);
+        Assertions.assertEquals(1, GuiUtil.calculatePageCount(10, 10));
+        Assertions.assertEquals(7, GuiUtil.calculatePageCount(7, 1));
     }
     //</editor-fold>
 }
