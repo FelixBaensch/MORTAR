@@ -34,7 +34,9 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragment
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -46,11 +48,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Integration test for requirement INT-02: a multi-algorithm pipeline driving
+ * Integration test of a multi-algorithm pipeline driving
  * {@link FragmentationService#startPipelineFragmentation(List, int, boolean, boolean)} end-to-end with a
  * SugarRemovalUtility -&gt; ErtlFunctionalGroupsFinder chain (deglycosylate, then extract functional groups), exercising
  * the service orchestration (executor split, stage chaining, fragment merge/aggregation) that the direct-fragmenter
- * INT-01 test deliberately bypasses.
+ * {@link FragmentationRoundTripTest} deliberately bypasses.
  * <p>
  * The pipeline drive is synchronous-blocking: although the service is backed by an {@code ExecutorService}, it joins via
  * {@code invokeAll} + {@code Future.get} and returns only after the fragment map is fully populated, so the assertions
@@ -72,6 +74,32 @@ import java.util.Set;
  * @version 1.0.0.0
  */
 public class PipelineFragmentationTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        PipelineFragmentationTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(PipelineFragmentationTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
     /**
      * The glycosidic input molecules of this test: salicin (a phenolic glucoside whose aglycone is saligenin) and an
@@ -90,22 +118,20 @@ public class PipelineFragmentationTest {
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so the fragmenter settings tooltips and display names, which
-     * are resolved from the message.properties file during fragmenter instantiation, are deterministic) and bootstraps
-     * the Configuration singleton from the classpath. The configuration singleton is required here because the
-     * fragmentation service reads config during the pipeline drive (unlike the direct-fragmenter INT-01 test).
+     * Constructor that bootstraps the Configuration singleton from the classpath. The configuration singleton is
+     * required here because the fragmentation service reads config during the pipeline drive (unlike
+     * {@link FragmentationRoundTripTest}, which drives the fragmenters directly).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public PipelineFragmentationTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
     //
     //<editor-fold desc="Tests" defaultstate="collapsed">
     /**
-     * Drives a SugarRemovalUtility -&gt; ErtlFunctionalGroupsFinder pipeline (per decision D-08) through the
+     * Drives a SugarRemovalUtility -&gt; ErtlFunctionalGroupsFinder pipeline through the
      * fragmentation service over the two glycosides of {@link #INPUT_SMILES}. The first stage deglycosylates and the
      * second stage re-fragments the resulting aglycone, so the fragment map reflects both stages.
      * <p>
@@ -118,15 +144,15 @@ public class PipelineFragmentationTest {
      * than a difference in the first stage's settings.
      * <p>
      * The {@code startPipelineFragmentation} call blocks until the executor tasks complete, so the assertions on the
-     * following lines observe a fully populated map without any wait construct. All assertions are invariant-based per
-     * decision D-04.
+     * following lines observe a fully populated map without any wait construct. All assertions are invariant-based,
+     * never golden SMILES literals.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void sugarRemovalToErtlPipelineAccumulationTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        //SugarRemovalUtility -> Ertl pipeline (D-08): stage 1 deglycosylates, stage 2 extracts functional groups.
+        //SugarRemovalUtility -> Ertl pipeline: stage 1 deglycosylates, stage 2 extracts functional groups.
         //The fragmenters are looked up by algorithm name rather than by their position in getFragmenters(), because
         //that order is an implementation detail of the FragmentationService constructor: registering a further
         //algorithm would silently repoint a positional access at a different fragmenter.
@@ -134,7 +160,7 @@ public class PipelineFragmentationTest {
                 PipelineFragmentationTest.deglycosylatingSugarRemovalFragmenter(tmpService),
                 PipelineFragmentationTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
-        tmpService.setPipeliningFragmentationName("INT02Pipeline");
+        tmpService.setPipeliningFragmentationName("SugarRemovalToErtlPipeline");
         List<MoleculeDataModel> tmpMolecules = PipelineFragmentationTest.buildInputMolecules();
         //the call blocks (invokeAll + Future.get) and returns with the fragment map fully populated; assert immediately
         tmpService.startPipelineFragmentation(tmpMolecules, 1, false, false);
@@ -149,7 +175,7 @@ public class PipelineFragmentationTest {
             tmpAbsolutePercentageSum += tmpFragment.getAbsolutePercentage();
         }
         Assertions.assertEquals(1.0, tmpAbsolutePercentageSum, 1e-9);
-        Assertions.assertEquals("INT02Pipeline", tmpService.getCurrentFragmentationName());
+        Assertions.assertEquals("SugarRemovalToErtlPipeline", tmpService.getCurrentFragmentationName());
         //discriminating cross-stage invariant: the percentage-sum check above is a normalization identity that any
         //non-empty fragment map satisfies (a single-stage run would pass it identically), so it does not by itself
         //prove cross-stage accumulation. To prove the downstream Ertl stage actually re-fragmented the first stage's
@@ -252,7 +278,7 @@ public class PipelineFragmentationTest {
         tmpSingleStageService.setPipelineFragmenter(new IMoleculeFragmenter[] {
                 PipelineFragmentationTest.deglycosylatingSugarRemovalFragmenter(tmpSingleStageService)
         });
-        tmpSingleStageService.setPipeliningFragmentationName("INT02DeglycosylationOnly");
+        tmpSingleStageService.setPipeliningFragmentationName("DeglycosylationOnly");
         //synchronous-blocking: the map is fully populated on return
         tmpSingleStageService.startPipelineFragmentation(
                 PipelineFragmentationTest.buildInputMolecules(), 1, false, false);

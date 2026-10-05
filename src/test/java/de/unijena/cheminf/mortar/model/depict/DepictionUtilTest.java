@@ -25,9 +25,11 @@
 
 package de.unijena.cheminf.mortar.model.depict;
 
-import javafx.application.Platform;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+
 import javafx.scene.image.Image;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -40,66 +42,50 @@ import java.awt.Graphics2D;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Tests for {@link DepictionUtil}.
+ * Tests for {@link DepictionUtil}. The image-producing methods convert an AWT {@link java.awt.image.BufferedImage} to a
+ * JavaFX {@link Image} via {@code SwingFXUtils}; that conversion works without a started JavaFX toolkit (the class
+ * passes when run on its own, as do the data-model tests that depict structures), so nothing here boots the toolkit and
+ * the tests do not depend on another test class having booted it.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
 class DepictionUtilTest {
-    //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Bounded wait (in seconds) for the JavaFX toolkit boot, so a stuck start fails fast instead of hanging the build.
-     * Matches the bound {@code AbstractFxTestCase} applies to the same boot for the controller tests.
+     * Default locale before this test class ran, restored after all tests.
      */
-    private static final long TOOLKIT_BOOT_TIMEOUT_SECONDS = 10L;
-    //</editor-fold>
+    private static Locale originalLocale;
     //
-    //<editor-fold desc="static initializer">
     /**
-     * Pins the default locale to en-GB, the locale the application itself runs under. The integer-formatting methods
-     * of {@link DepictionUtil} build their {@link java.text.DecimalFormatSymbols} from {@code Locale.getDefault()}, so
-     * the decimal separator of their output — and therefore any exact assertion on it — depends on the locale of the
-     * JVM running the tests.
+     * Pins the default locale to en-GB, the locale the application itself runs under, remembering the original default
+     * locale. The integer-formatting methods of {@link DepictionUtil} build their {@link java.text.DecimalFormatSymbols}
+     * from {@code Locale.getDefault()}, so the decimal separator of their output, and therefore any exact assertion on
+     * it, depends on the locale of the JVM running the tests.
      */
-    static {
+    @BeforeAll
+    static void setLocale() {
+        DepictionUtilTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    static void restoreLocale() {
+        Locale.setDefault(DepictionUtilTest.originalLocale);
     }
     //</editor-fold>
     //
     //<editor-fold desc="Tests">
     /**
-     * Boots the JavaFX toolkit once per JVM (headless via Monocle, configured in {@code tasks.test}) so the
-     * image-producing methods of {@link DepictionUtil} — which convert an AWT {@link java.awt.image.BufferedImage} to a
-     * JavaFX {@link Image} via {@code SwingFXUtils} — can allocate {@code WritableImage}s.
-     * <p>
-     * {@link Platform#startup(Runnable)} returns before the toolkit is actually up, so the boot is awaited on a bounded
-     * latch rather than assumed to have completed; a plain call would let the first test run against a toolkit that is
-     * still starting. A second start throws {@link IllegalStateException}, which means a sibling test class already
-     * booted the toolkit in this JVM and there is nothing left to wait for.
-     *
-     * @throws InterruptedException if the wait for the toolkit boot is interrupted
-     */
-    @BeforeAll
-    static void initToolkit() throws InterruptedException {
-        CountDownLatch tmpLatch = new CountDownLatch(1);
-        try {
-            Platform.startup(tmpLatch::countDown);
-        } catch (IllegalStateException anException) {
-            //toolkit already started by another test class in this JVM -> already usable, nothing to await
-            return;
-        }
-        Assertions.assertTrue(tmpLatch.await(DepictionUtilTest.TOOLKIT_BOOT_TIMEOUT_SECONDS, TimeUnit.SECONDS),
-                "the JavaFX toolkit did not start within "
-                        + DepictionUtilTest.TOOLKIT_BOOT_TIMEOUT_SECONDS + " seconds");
-    }
-    //
-    /**
-     * Drives every image-producing overload of {@link DepictionUtil} with a real molecule and asserts a non-null
-     * JavaFX {@link Image} is returned, covering the depiction (BufferedImage to FX Image) path of each overload.
+     * Drives every image-producing overload of {@link DepictionUtil} with a real molecule and asserts that each returns a
+     * JavaFX {@link Image} of the requested size: the explicitly given width and height, or the
+     * {@link BasicDefinitions} default for the dimension an overload fixes. This covers the depiction (BufferedImage to
+     * FX Image) path of each overload and shows that every overload passes its dimensions on correctly.
      *
      * @throws Exception if anything goes wrong
      */
@@ -107,25 +93,27 @@ class DepictionUtilTest {
     void depictImageOverloadsProduceNonNullImages() throws Exception {
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("c1ccccc1");
-        Assertions.assertNotNull(
+        double tmpDefaultWidth = BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT;
+        double tmpDefaultHeight = BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT;
+        DepictionUtilTest.assertImageSize(300.0, 200.0,
                 DepictionUtil.depictImageWithNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 300.0, 200.0));
-        Assertions.assertNotNull(
+        DepictionUtilTest.assertImageSize(tmpDefaultWidth, 200.0,
                 DepictionUtil.depictImageWithDefaultWidthNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 200.0));
-        Assertions.assertNotNull(
+        DepictionUtilTest.assertImageSize(300.0, tmpDefaultHeight,
                 DepictionUtil.depictImageWithDefaultHeightNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 300.0));
-        Assertions.assertNotNull(
+        DepictionUtilTest.assertImageSize(tmpDefaultWidth, tmpDefaultHeight,
                 DepictionUtil.depictImageWithDefaultWidthDefaultHeightNoFillToFitAndTransparentBackground(tmpMolecule, 1.5));
-        Assertions.assertNotNull(
-                DepictionUtil.depictImageWithNoFillToFitAndTransparentBackground(tmpMolecule, 1.5, 300.0, 200.0));
-        Assertions.assertNotNull(
-                DepictionUtil.depictImageWithTransparentBackground(tmpMolecule, 1.5, 300.0, 200.0, true));
-        Assertions.assertNotNull(
-                DepictionUtil.depictImage(tmpMolecule, 1.5, 300.0, 200.0, true, false));
+        DepictionUtilTest.assertImageSize(310.0, 210.0,
+                DepictionUtil.depictImageWithNoFillToFitAndTransparentBackground(tmpMolecule, 1.5, 310.0, 210.0));
+        DepictionUtilTest.assertImageSize(320.0, 220.0,
+                DepictionUtil.depictImageWithTransparentBackground(tmpMolecule, 1.5, 320.0, 220.0, true));
+        DepictionUtilTest.assertImageSize(330.0, 230.0,
+                DepictionUtil.depictImage(tmpMolecule, 1.5, 330.0, 230.0, true, false));
     }
     //
     /**
-     * Drives the two text-annotated image overloads of {@link DepictionUtil}, asserting a non-null JavaFX
-     * {@link Image} is returned for each.
+     * Drives the two text-annotated image overloads of {@link DepictionUtil}, asserting that each returns a JavaFX
+     * {@link Image} of the requested total size (structure plus text label).
      *
      * @throws Exception if anything goes wrong
      */
@@ -133,10 +121,10 @@ class DepictionUtilTest {
     void depictImageWithTextOverloadsProduceNonNullImages() throws Exception {
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
         IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("c1ccccc1");
-        Assertions.assertNotNull(
+        DepictionUtilTest.assertImageSize(300.0, 200.0,
                 DepictionUtil.depictImageWithTextNoFillToFitAndTransparentBackground(tmpMolecule, 1.5, 300.0, 200.0, "Benzene"));
-        Assertions.assertNotNull(
-                DepictionUtil.depictImageWithText(tmpMolecule, 1.5, 300.0, 200.0, "Benzene", true, false));
+        DepictionUtilTest.assertImageSize(310.0, 210.0,
+                DepictionUtil.depictImageWithText(tmpMolecule, 1.5, 310.0, 210.0, "Benzene", true, false));
     }
     //
     /**
@@ -169,6 +157,7 @@ class DepictionUtilTest {
         Graphics2D tmpGraphics = DepictionUtil.getGraphicsInstanceWithStandardFont(100, 50);
         Assertions.assertNotNull(tmpGraphics);
         FontMetrics tmpFontMetrics = tmpGraphics.getFontMetrics();
+        tmpGraphics.dispose();
         //a very wide image -> the first (most detailed) formatting already fits, so the loop returns immediately
         String tmpResult = DepictionUtil.fitIntegerDisplayToImageWidth(100000.0, 42, tmpFontMetrics);
         Assertions.assertEquals("4.200E1", tmpResult);
@@ -311,6 +300,21 @@ class DepictionUtilTest {
                     "fitIntegerDisplayToImageWidth mismatch for width=" + tmpVeryNarrowImage
                             + ", value=" + tmpValue);
         }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private static methods" defaultstate="collapsed">
+    /**
+     * Asserts that the given image is non-null and has the expected width and height.
+     *
+     * @param anExpectedWidth expected image width
+     * @param anExpectedHeight expected image height
+     * @param anImage the image to check
+     */
+    private static void assertImageSize(double anExpectedWidth, double anExpectedHeight, Image anImage) {
+        Assertions.assertNotNull(anImage);
+        Assertions.assertEquals(anExpectedWidth, anImage.getWidth(), "image width");
+        Assertions.assertEquals(anExpectedHeight, anImage.getHeight(), "image height");
     }
     //</editor-fold>
 }

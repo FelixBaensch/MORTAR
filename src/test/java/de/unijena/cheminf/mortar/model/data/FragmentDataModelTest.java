@@ -33,7 +33,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -49,30 +51,46 @@ import java.util.logging.LogRecord;
 /**
  * Direct, headless unit tests for {@link FragmentDataModel}. All fixtures are built from real CDK
  * {@code IAtomContainer}s parsed from SMILES (no Mockito); the JavaFX {@code ImageView} parent-structure accessor is
- * verified to construct under {@code java.awt.headless=true} without a started toolkit. Frequency/percentage values
- * asserted here are the exact values set on the model (deterministic, not CDK-derived), while CDK-derived artefacts are
- * only checked for invariants (non-null, instance type) because CDK is a moving 2.12-SNAPSHOT.
+ * verified to construct under {@code java.awt.headless=true} without a started toolkit (nothing in this class starts
+ * it, and the class passes when run on its own). Frequency/percentage values asserted here are the exact values set on
+ * the model (deterministic, not CDK-derived), while CDK-derived artefacts are only checked for invariants (non-null,
+ * instance type) because CDK is a moving snapshot dependency.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class FragmentDataModelTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the message-bundle strings of the error-image captions are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        FragmentDataModelTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(FragmentDataModelTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
     /**
      * A deliberately unparsable SMILES string, used to drive the depiction-failure branches. CDK logs a parse warning
      * for it; that console output is expected, not a defect.
      */
     private static final String UNPARSABLE_SMILES = "not_a_valid_smiles";
-    //</editor-fold>
-    //
-    //<editor-fold desc="Constructor" defaultstate="collapsed">
-    /**
-     * Constructor that sets the default locale to en-GB so any message-bundle strings resolved by the parent-structure
-     * image accessor (error-image captions) are deterministic.
-     */
-    public FragmentDataModelTest() {
-        Locale.setDefault(Locale.of("en", "GB"));
-    }
     //</editor-fold>
     //
     //<editor-fold desc="Constructor, frequency, percentage, and validation test methods" defaultstate="collapsed">

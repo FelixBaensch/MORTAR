@@ -30,7 +30,9 @@ import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.scene.image.ImageView;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -48,12 +50,38 @@ import java.util.logging.LogRecord;
 /**
  * Direct, headless unit tests for {@link MoleculeDataModel}. All fixtures are built from real CDK
  * {@code IAtomContainer}s parsed from SMILES (no Mockito); the JavaFX {@code ImageView}/{@code BooleanProperty}
- * accessors are verified to construct under {@code java.awt.headless=true} without a started toolkit.
+ * accessors are verified to construct under {@code java.awt.headless=true} without a started toolkit (nothing in this
+ * class starts it, and the class passes when run on its own).
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class MoleculeDataModelTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the message-bundle strings resolved by the image accessors are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        MoleculeDataModelTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(MoleculeDataModelTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Private static final class constants" defaultstate="collapsed">
     /**
      * A deliberately unparsable SMILES string, used to drive the depiction-failure branches. CDK logs a parse warning
@@ -62,22 +90,12 @@ public class MoleculeDataModelTest {
     private static final String UNPARSABLE_SMILES = "not_a_valid_smiles";
     //</editor-fold>
     //
-    //<editor-fold desc="Constructor" defaultstate="collapsed">
-    /**
-     * Constructor that sets the default locale to en-GB so any message-bundle strings resolved by the image
-     * accessors are deterministic.
-     */
-    public MoleculeDataModelTest() {
-        Locale.setDefault(Locale.of("en", "GB"));
-    }
-    //</editor-fold>
-    //
     //<editor-fold desc="Constructor and identity-contract test methods" defaultstate="collapsed">
     /**
      * Tests that the atom-container constructor derives the unique SMILES from the supplied container: the value
      * returned by {@code getUniqueSmiles()} must equal an independent {@code ChemUtil.createUniqueSmiles(ac, false)}
      * call on the same container. Asserts against the runtime-computed SMILES rather than a hard-coded literal because
-     * CDK is a moving 2.12-SNAPSHOT.
+     * CDK is a moving snapshot dependency.
      *
      * @throws Exception if SMILES parsing fails
      */
@@ -171,7 +189,7 @@ public class MoleculeDataModelTest {
     /**
      * Tests that a string-constructor model lazily parses its unique SMILES into a non-null container (exercising the
      * kekulize-try / catch-fallback parse path) for a valid aromatic SMILES. Asserts structural non-emptiness rather
-     * than a golden atom count due to CDK 2.12-SNAPSHOT drift.
+     * than a golden atom count due to CDK snapshot drift.
      *
      * @throws Exception if atom-container retrieval fails
      */

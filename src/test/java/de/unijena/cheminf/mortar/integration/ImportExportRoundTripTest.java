@@ -33,7 +33,9 @@ import de.unijena.cheminf.mortar.model.io.Exporter;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -52,15 +54,18 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * INT-03 integration test wiring the Phase 3 {@link Importer} and {@link Exporter} subsystems end-to-end. It verifies
- * that molecules survive a full import &rarr; export &rarr; re-import cycle without loss of structural identity. Because
- * {@link Importer} populates every model's {@code getUniqueSmiles()} via the same {@code ChemUtil.createUniqueSmiles}
- * contract on every pass, structural identity is checkable as unique-SMILES set equality without any golden literals
- * (D-04/D-05). All three legs — SD/MOL, SMILES and CSV — perform a real round trip; the CSV one works because
- * {@code .csv} is a valid import extension that {@code Importer} routes to its SMILES reader, which picks the SMILES
- * code out of either of the first two columns of a row. Fixtures are reused in place from the {@code model/io}
- * resources by absolute classpath path (D-06), since {@code getClass().getResource} resolves relative to this test's own
- * package. The en-GB locale guard is load-bearing for Message-resolved headers.
+ * Integration test of the {@link Importer} together with the {@link Exporter}. Because {@link Importer} populates every
+ * model's {@code getUniqueSmiles()} via the same {@code ChemUtil.createUniqueSmiles} contract on every pass, structural
+ * identity is checkable as unique-SMILES set equality without any golden literals. Two legs are real import &rarr;
+ * export &rarr; re-import round trips through the {@link Exporter}: SD/MOL via
+ * {@link Exporter#exportFragmentsAsChemicalFile(File, List, ChemFileTypes, boolean, boolean)}, and CSV via
+ * {@link Exporter#exportCsvFile(File, List, String, char, TabNames)}, which works because {@code .csv} is a valid import
+ * extension that {@code Importer} routes to its SMILES reader, which picks the SMILES code out of either of the first two
+ * columns of a row. The SMILES leg does <em>not</em> use the {@link Exporter}: the exporter offers no SMILES-file export
+ * (only SD, PDB, CSV and PDF), so that leg writes the imported unique SMILES to a file itself and checks that re-importing them yields the
+ * same set, i.e. that the importer's unique-SMILES canonicalisation is stable under re-import. Fixtures are reused in
+ * place from the {@code model/io} resources by absolute classpath path, since {@code getClass().getResource} resolves
+ * relative to this test's own package. The en-GB locale guard is load-bearing for Message-resolved headers.
  * <p>
  * <strong>Round-tripping is a test device here, not a MORTAR use case.</strong> The application's real data flow is
  * uni-directional: molecules are imported and fragments are exported, and the exported fragments are not meant to be
@@ -72,6 +77,31 @@ import java.util.Set;
  * @version 1.0.0.0
  */
 public class ImportExportRoundTripTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the message-bundle-resolved export headers are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        ImportExportRoundTripTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(ImportExportRoundTripTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Private final variables">
     /**
      * Importer instance under test, constructed with a real settings container.
@@ -85,12 +115,11 @@ public class ImportExportRoundTripTest {
     //
     //<editor-fold desc="Constructor">
     /**
-     * Constructor. Sets the en-GB locale (load-bearing for Message-resolved export headers) and builds plain Importer and
-     * Exporter instances with real, classpath-configured settings containers. Plain instances suffice because INT-03 only
-     * needs the public {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} entry point.
+     * Constructor that builds plain Importer and Exporter instances with real, classpath-configured settings
+     * containers. Plain instances suffice because these tests only need the public
+     * {@link Importer#importMoleculeFile(File, boolean, boolean, boolean)} entry point and the public export methods.
      */
     public ImportExportRoundTripTest() {
-        Locale.setDefault(Locale.of("en", "GB"));
         this.importer = new Importer(new SettingsContainer());
         this.exporter = new Exporter(new SettingsContainer());
     }
@@ -134,9 +163,10 @@ public class ImportExportRoundTripTest {
     }
     //
     /**
-     * SMILES round-trip identity: imports the five-molecule {@code SMILESTestFileTwo.smi} fixture (by absolute classpath
-     * path), asserts every imported model carries a non-blank unique SMILES, builds the unique-SMILES set of the import,
-     * writes that set (one unique SMILES per line) into a {@code @TempDir} {@code .smi} file, re-imports it, builds the
+     * SMILES re-import stability (no {@link Exporter} involved): imports the five-molecule {@code SMILESTestFileTwo.smi}
+     * fixture (by absolute classpath path), asserts every imported model carries a non-blank unique SMILES, builds the
+     * unique-SMILES set of the import, writes that set itself (one unique SMILES per line) into a {@code @TempDir}
+     * {@code .smi} file, re-imports it, builds the
      * unique-SMILES set of the re-import, and asserts the two sets are equal. Identity is set-to-set equality only: a List
      * size is never compared against a Set size, because two input records may legitimately canonicalize to the same unique
      * SMILES. No golden SMILES literals are asserted.
@@ -145,7 +175,7 @@ public class ImportExportRoundTripTest {
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void roundTripSmilesPreservesUniqueSmilesIdentity(@TempDir Path aTempDir) throws Exception {
+    public void reimportOfImportedUniqueSmilesYieldsSameSet(@TempDir Path aTempDir) throws Exception {
         File tmpIn = Paths.get(this.getClass().getResource(
                 "/de/unijena/cheminf/mortar/model/io/SMILESTestFileTwo.smi").toURI()).toFile();
         List<MoleculeDataModel> tmpImported = this.importer.importMoleculeFile(tmpIn, false, true, false);
@@ -207,7 +237,7 @@ public class ImportExportRoundTripTest {
             tmpSetA.add(tmpFragment.getUniqueSmiles());
         }
         File tmpOut = aTempDir.resolve("out.csv").toFile();
-        List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpFragmentList, "INT03", ',', TabNames.FRAGMENTS);
+        List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpFragmentList, "RoundTripFragmentation", ',', TabNames.FRAGMENTS);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
         Assertions.assertTrue(tmpOut.exists());

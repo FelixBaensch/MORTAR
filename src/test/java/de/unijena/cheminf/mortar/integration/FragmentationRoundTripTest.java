@@ -33,7 +33,9 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGenerator
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -41,7 +43,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Integration test for requirement INT-01: an end-to-end parse -&gt; fragment -&gt; unique-SMILES round-trip for each of the
+ * Integration test of an end-to-end parse -&gt; fragment -&gt; unique-SMILES round-trip for each of the
  * five fragmentation algorithms (ErtlFunctionalGroupsFinder, SugarRemovalUtility, ScaffoldGenerator, MolWURCS,
  * CDKCircularFragmenter) driven directly through the
  * {@link IMoleculeFragmenter#fragmentMolecule(IAtomContainer)} contract against at least two representative molecules
@@ -57,17 +59,29 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class FragmentationRoundTripTest {
-    //<editor-fold desc="Constructor" defaultstate="collapsed">
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to British English, which is important for the correct functioning of
-     * the fragmenters because their settings tooltips and display names are imported from the message.properties file.
-     * No configuration singleton is touched here because INT-01 drives the fragmenters directly, bypassing the
-     * fragmentation service and configuration layer.
-     *
-     * @throws Exception if anything goes wrong
+     * Default locale before this test class ran, restored after all tests.
      */
-    public FragmentationRoundTripTest() throws Exception {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        FragmentationRoundTripTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(FragmentationRoundTripTest.originalLocale);
     }
     //</editor-fold>
     //
