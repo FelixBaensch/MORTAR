@@ -34,10 +34,13 @@ import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
@@ -61,14 +64,15 @@ import java.util.Locale;
  * <p>
  * Every filesystem-touching test is isolated to a JUnit {@link TempDir} by redirecting the {@code user.home} system
  * property and reflectively resetting the private static {@code appDirPath} cache of {@link FileUtil}, with the original
- * state always restored and the log manager reset in a finally block, so the real {@code ~/MORTAR} directory is never
- * written to or deleted.
+ * state always restored and the root logger's file handlers released in a finally block, so the real {@code ~/MORTAR}
+ * directory is never written to or deleted. The {@code en-GB} default locale is pinned before each test and the
+ * previous default restored after it, so no sibling test class runs under a leaked locale.
  * <p>
  * The two GUI-alert error branches of {@code persistViewToolsSettings} (the non-writable-directory guard and the
  * per-view-tool persistence-failure catch) cannot complete headless because they construct a JavaFX {@code Alert},
  * which throws "Toolkit not initialized" without a booted toolkit. Those two branches are driven with
- * {@link org.mockito.MockedStatic} neutralizing the static {@code GuiUtil} alert calls (the project's no-mock default is
- * extended to {@code controller/} under the QUAL-02 allowance for GUI-bound error branches), while the failing
+ * {@link org.mockito.MockedStatic} neutralizing the static {@code GuiUtil} alert calls (mocking is confined to these
+ * GUI-bound error branches, which cannot run headless otherwise), while the failing
  * condition itself is provoked with a real filesystem trap (a read-only directory, and a directory placed where a
  * preference file is expected). The Stage-taking delegations ({@code openHistogramView}/{@code openOverviewView}) and
  * the constructor's {@code checkViewTools} catch remain uncovered: they require a live {@code Stage} or an injected
@@ -78,17 +82,42 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class ViewToolsManagerTest {
+    //<editor-fold desc="Private instance variables" defaultstate="collapsed">
+    /**
+     * The JVM default locale observed before this test pinned {@code en-GB}, restored after the test.
+     */
+    private Locale originalDefaultLocale;
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so the sub-controller settings display names, which are
-     * resolved from the message.properties file during instantiation, are deterministic) and bootstraps the
+     * Default no-argument constructor; the per-test locale and configuration setup happens in {@link #pinLocale()}.
+     */
+    public ViewToolsManagerTest() {
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Lifecycle hooks" defaultstate="collapsed">
+    /**
+     * Pins the default locale to en-GB (so the sub-controller settings display names, which are resolved from the
+     * message bundle during instantiation, are deterministic), remembering the previous default, and bootstraps the
      * Configuration singleton from the classpath (no data directory is touched by this).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
-    public ViewToolsManagerTest() throws Exception {
+    @BeforeEach
+    public void pinLocale() throws Exception {
+        this.originalDefaultLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
+    }
+    //
+    /**
+     * Restores the default locale that was in effect before {@link #pinLocale()}.
+     */
+    @AfterEach
+    public void restoreLocale() {
+        Locale.setDefault(this.originalDefaultLocale);
     }
     //</editor-fold>
     //
@@ -99,8 +128,8 @@ public class ViewToolsManagerTest {
      * first boolean setting of its first sub-controller is flipped to a non-default value, and the manager persists all
      * view-tool settings to preference files under the temp-dir-isolated settings directory. A fresh manager then
      * reloads those settings, and the flipped value must round-trip back through the reloaded instance's matching
-     * property. The {@code user.home} system property and the {@code appDirPath} cache are always restored and the log
-     * manager reset in a finally block, so the real {@code ~/MORTAR} directory is never touched and no logger handler
+     * property. The {@code user.home} system property and the {@code appDirPath} cache are always restored and the root
+     * logger's file handlers released in a finally block, so the real {@code ~/MORTAR} directory is never touched and no logger handler
      * leaks into sibling tests.
      *
      * @param aTempHome temporary directory used as a fake user home
@@ -134,27 +163,38 @@ public class ViewToolsManagerTest {
     }
     //
     /**
-     * Tests that reloading when no settings files have been persisted yet leaves every view tool at its defaults and
-     * completes without throwing (exercising the "no persisted settings" branch of {@code reloadViewToolsSettings} for
-     * both view tools). The default value of the first boolean setting is captured before and after the reload and must
-     * be unchanged. Isolated to a {@link TempDir} exactly as the round-trip test.
+     * Tests the "no persisted settings" branch of {@code reloadViewToolsSettings} next to a regular reload in the same
+     * call. Both view tools persist their settings, then the first tool's file is deleted and one setting of each tool is
+     * changed in memory. The reload must restore the second tool's persisted value (so a reload that did nothing would
+     * fail) while leaving the first tool, which now has no persisted file, exactly as it is instead of failing or
+     * resetting it. Isolated to a {@link TempDir} exactly as the round-trip test.
      *
      * @param aTempHome temporary directory used as a fake user home
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void reloadWithoutPersistedFilesKeepsDefaults(@TempDir Path aTempHome) throws Exception {
+    public void reloadWithoutPersistedFileLeavesThatToolUnchanged(@TempDir Path aTempHome) throws Exception {
         String tmpOldHome = System.getProperty("user.home");
         try {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
             ViewToolsManager tmpManager = new ViewToolsManager(Configuration.getInstance(), new SettingsContainer());
-            BooleanProperty tmpProperty = ViewToolsManagerTest.findFirstBooleanProperty(
+            BooleanProperty tmpFirstToolProperty = ViewToolsManagerTest.findFirstBooleanProperty(
                     tmpManager.getViewToolControllers()[0].settingsProperties());
-            Assertions.assertNotNull(tmpProperty);
-            boolean tmpDefault = tmpProperty.get();
-            //no files exist under the settings dir, so reload must fall back to defaults for every view tool
+            IntegerProperty tmpSecondToolProperty = ViewToolsManagerTest.findFirstIntegerProperty(
+                    tmpManager.getViewToolControllers()[1].settingsProperties());
+            Assertions.assertNotNull(tmpFirstToolProperty);
+            Assertions.assertNotNull(tmpSecondToolProperty);
+            int tmpPersistedSecondValue = tmpSecondToolProperty.get();
+            tmpManager.persistViewToolsSettings();
+            Files.delete(ViewToolsManagerTest.settingsFileOf(tmpManager, 0).toPath());
+            boolean tmpChangedFirstValue = !tmpFirstToolProperty.get();
+            tmpFirstToolProperty.set(tmpChangedFirstValue);
+            tmpSecondToolProperty.set(tmpPersistedSecondValue + 1);
             tmpManager.reloadViewToolsSettings();
-            Assertions.assertEquals(tmpDefault, tmpProperty.get());
+            Assertions.assertEquals(tmpPersistedSecondValue, tmpSecondToolProperty.get(),
+                    "the tool with a persisted file must be reloaded from it");
+            Assertions.assertEquals(tmpChangedFirstValue, tmpFirstToolProperty.get(),
+                    "the tool without a persisted file must be left unchanged");
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
             TestUtil.releaseRootLoggerFileHandlers();
@@ -225,7 +265,8 @@ public class ViewToolsManagerTest {
      * the remaining view tools (exercising the {@code IllegalArgumentException | IOException} catch of
      * {@code reloadViewToolsSettings}). A manager persists valid files, one of them (the first view tool's file) is
      * overwritten with content that cannot be parsed as a preference container, and a fresh manager reloads: the reload
-     * must complete without throwing. Isolated to a {@link TempDir}.
+     * must complete without throwing and must still have reloaded the second view tool, whose persisted value differs
+     * from its default. Isolated to a {@link TempDir}.
      *
      * @param aTempHome temporary directory used as a fake user home
      * @throws Exception if anything goes wrong
@@ -236,19 +277,26 @@ public class ViewToolsManagerTest {
         try {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
             ViewToolsManager tmpManager = new ViewToolsManager(Configuration.getInstance(), new SettingsContainer());
+            IntegerProperty tmpSecondToolProperty = ViewToolsManagerTest.findFirstIntegerProperty(
+                    tmpManager.getViewToolControllers()[1].settingsProperties());
+            Assertions.assertNotNull(tmpSecondToolProperty);
+            String tmpSecondName = tmpSecondToolProperty.getName();
+            int tmpPersistedSecondValue = tmpSecondToolProperty.get() + 1;
+            tmpSecondToolProperty.set(tmpPersistedSecondValue);
             tmpManager.persistViewToolsSettings();
             //corrupt the first view tool's persisted file so its reload throws and is caught/skipped
-            String tmpViewToolsDirPath = FileUtil.getSettingsDirPath()
-                    + ViewToolsManager.VIEW_TOOLS_SETTINGS_SUBFOLDER_NAME + File.separator;
-            String tmpFirstToolClassName = tmpManager.getViewToolControllers()[0].getClass().getSimpleName();
-            File tmpCorruptFile = new File(tmpViewToolsDirPath
-                    + tmpFirstToolClassName
-                    + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION);
+            File tmpCorruptFile = ViewToolsManagerTest.settingsFileOf(tmpManager, 0);
             Files.writeString(tmpCorruptFile.toPath(), "not a valid preference container", StandardCharsets.UTF_8);
             ViewToolsManager tmpReloaded = new ViewToolsManager(Configuration.getInstance(), new SettingsContainer());
-            //must complete without throwing despite the corrupt file
+            IntegerProperty tmpReloadedSecondProperty = ViewToolsManagerTest.findIntegerPropertyByName(
+                    tmpReloaded.getViewToolControllers()[1].settingsProperties(), tmpSecondName);
+            Assertions.assertNotNull(tmpReloadedSecondProperty);
+            Assertions.assertNotEquals(tmpPersistedSecondValue, tmpReloadedSecondProperty.get(),
+                    "a fresh manager must start from the default, not the persisted value");
+            //must complete without throwing despite the corrupt file, and must not abort before the second tool
             tmpReloaded.reloadViewToolsSettings();
-            Assertions.assertNotNull(tmpReloaded.getViewToolControllers());
+            Assertions.assertEquals(tmpPersistedSecondValue, tmpReloadedSecondProperty.get(),
+                    "the view tool after the corrupt one must still be reloaded");
         } finally {
             AppDirTestUtil.restoreAppDirPath(tmpOldHome);
             TestUtil.releaseRootLoggerFileHandlers();
@@ -341,6 +389,51 @@ public class ViewToolsManagerTest {
     //</editor-fold>
     //
     //<editor-fold desc="Private methods" defaultstate="collapsed">
+    /**
+     * Returns the preference file the manager persists the settings of its view tool at the given index to.
+     *
+     * @param aManager the view tools manager
+     * @param anIndex the index of the view tool in {@link ViewToolsManager#getViewToolControllers()}
+     * @return the view tool's settings file (which may or may not exist)
+     */
+    private static File settingsFileOf(ViewToolsManager aManager, int anIndex) {
+        return new File(FileUtil.getSettingsDirPath()
+                + ViewToolsManager.VIEW_TOOLS_SETTINGS_SUBFOLDER_NAME + File.separator
+                + aManager.getViewToolControllers()[anIndex].getClass().getSimpleName()
+                + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION);
+    }
+    //
+    /**
+     * Returns the first {@link IntegerProperty} in the given settings list, or null if there is none.
+     *
+     * @param aSettings the settings properties of a view tool
+     * @return the first integer property, or null
+     */
+    private static IntegerProperty findFirstIntegerProperty(List<Property<?>> aSettings) {
+        for (Property<?> tmpProperty : aSettings) {
+            if (tmpProperty instanceof IntegerProperty tmpIntegerProperty) {
+                return tmpIntegerProperty;
+            }
+        }
+        return null;
+    }
+    //
+    /**
+     * Returns the {@link IntegerProperty} in the given settings list whose name matches the given name, or null if
+     * there is none.
+     *
+     * @param aSettings the settings properties of a view tool
+     * @param aName the property name to match
+     * @return the matching integer property, or null
+     */
+    private static IntegerProperty findIntegerPropertyByName(List<Property<?>> aSettings, String aName) {
+        for (Property<?> tmpProperty : aSettings) {
+            if (tmpProperty instanceof IntegerProperty tmpIntegerProperty && aName.equals(tmpProperty.getName())) {
+                return tmpIntegerProperty;
+            }
+        }
+        return null;
+    }
     //
     /**
      * Returns the first {@link BooleanProperty} in the given settings list, or null if there is none.

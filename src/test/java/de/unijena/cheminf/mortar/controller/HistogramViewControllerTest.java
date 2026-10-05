@@ -32,7 +32,9 @@ import de.unijena.cheminf.mortar.model.util.SimpleIDisplayEnumConstantProperty;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -61,17 +63,43 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class HistogramViewControllerTest {
+    //<editor-fold desc="Private instance variables" defaultstate="collapsed">
+    /**
+     * The JVM default locale observed before this test pinned {@code en-GB}, restored after the test.
+     */
+    private Locale originalDefaultLocale;
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so the setting names and messages resolved from the message
-     * bundle during controller instantiation and by the abbreviation logic are deterministic) and bootstraps the
+     * Default no-argument constructor; the per-test locale and configuration setup happens in {@link #pinLocale()}.
+     */
+    public HistogramViewControllerTest() {
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Lifecycle hooks" defaultstate="collapsed">
+    /**
+     * Pins the default locale to en-GB (so the setting names and messages resolved from the message
+     * bundle during controller instantiation and by the abbreviation logic are deterministic), remembering the previous default, and bootstraps the
      * Configuration singleton from the classpath (the controller reads config; no data directory is touched by this).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
-    public HistogramViewControllerTest() throws Exception {
+    @BeforeEach
+    public void pinLocale() throws Exception {
+        this.originalDefaultLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
+    }
+    //
+    /**
+     * Restores the default locale that was in effect before {@link #pinLocale()}, so no sibling test class runs under
+     * a leaked locale.
+     */
+    @AfterEach
+    public void restoreLocale() {
+        Locale.setDefault(this.originalDefaultLocale);
     }
     //</editor-fold>
     //

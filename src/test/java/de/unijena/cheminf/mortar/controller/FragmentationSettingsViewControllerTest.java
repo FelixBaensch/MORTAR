@@ -295,18 +295,27 @@ public class FragmentationSettingsViewControllerTest extends AbstractFxTestCase 
      * @param aFragmenter fragmenter whose first boolean setting is flipped
      * @return the flipped property and its value before the flip
      * @throws IllegalStateException if the fragmenter exposes no boolean setting
+     * @throws Exception if the flip does not complete on the FX thread
      */
     @SuppressWarnings("unchecked")
-    private static FlippedSetting flipFirstBooleanSetting(IMoleculeFragmenter aFragmenter) {
-        for (Property<?> tmpProperty : aFragmenter.settingsProperties()) {
-            if (tmpProperty.getValue() instanceof Boolean tmpOriginalValue) {
-                Property<Boolean> tmpBooleanProperty = (Property<Boolean>) tmpProperty;
-                tmpBooleanProperty.setValue(!tmpOriginalValue);
-                return new FlippedSetting(tmpBooleanProperty, tmpOriginalValue);
+    private static FlippedSetting flipFirstBooleanSetting(IMoleculeFragmenter aFragmenter) throws Exception {
+        AtomicReference<FlippedSetting> tmpFlipped = new AtomicReference<>();
+        //the settings are bound to the open view's controls, so they are mutated on the JavaFX Application Thread
+        AbstractFxTestCase.runAndWait(() -> {
+            for (Property<?> tmpProperty : aFragmenter.settingsProperties()) {
+                if (tmpProperty.getValue() instanceof Boolean tmpOriginalValue) {
+                    Property<Boolean> tmpBooleanProperty = (Property<Boolean>) tmpProperty;
+                    tmpBooleanProperty.setValue(!tmpOriginalValue);
+                    tmpFlipped.set(new FlippedSetting(tmpBooleanProperty, tmpOriginalValue));
+                    return;
+                }
             }
+        });
+        if (tmpFlipped.get() == null) {
+            throw new IllegalStateException("Fragmenter " + aFragmenter.getFragmentationAlgorithmDisplayName()
+                    + " exposes no boolean setting to flip.");
         }
-        throw new IllegalStateException("Fragmenter " + aFragmenter.getFragmentationAlgorithmDisplayName()
-                + " exposes no boolean setting to flip.");
+        return tmpFlipped.get();
     }
     //
     /**

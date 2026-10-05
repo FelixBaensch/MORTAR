@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.gui.views.HistogramView;
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 
 import javafx.event.Event;
@@ -49,6 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Headless coverage tests for the Stage-dependent residual of {@link HistogramViewController} (COV-03). This is the
@@ -186,8 +188,9 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
      * available fragments, exercising the apply handler's over-count warning branch. That branch shows a blocking
      * warning {@link javafx.scene.control.Alert}, so the apply is fired through
      * {@link FxTestUtil#runAndDriveModal(java.util.concurrent.Callable, java.util.function.Consumer)} which detects and
-     * closes the alert's modal stage. Behavioral assertion: the chart is still present afterwards (the warning path
-     * returns without a rebuild). The view is then closed via the close button.
+     * closes the alert's modal stage. Behavioral assertion: the warning alert (identified by its title) was shown, and
+     * the chart is the very same instance with the same number of bars afterwards, because the warning path returns
+     * without a rebuild. The view is then closed via a window close request.
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
@@ -198,7 +201,14 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
         this.openHistogram(tmpController, tmpFragments);
         try {
             HistogramView tmpView = (HistogramView) HistogramViewControllerHarnessTest.getField(tmpController, "histogramView");
+            AtomicReference<Object> tmpChartBefore = new AtomicReference<>();
+            AtomicReference<Integer> tmpBarCountBefore = new AtomicReference<>();
+            AbstractFxTestCase.runAndWait(() -> {
+                tmpChartBefore.set(HistogramViewControllerHarnessTest.getField(tmpController, "histogramChart"));
+                tmpBarCountBefore.set(HistogramViewControllerHarnessTest.barCount(tmpController));
+            });
             //fire the over-count apply through the modal driver: the warning Alert.showAndWait is detected and closed
+            AtomicReference<String> tmpAlertTitle = new AtomicReference<>();
             FxTestUtil.runAndDriveModal(
                     () -> {
                         tmpView.getMaximumSMILESLengthTextField().setText("10");
@@ -206,12 +216,17 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
                         tmpView.getApplyButton().fire();
                         return null;
                     },
-                    aAlertStage -> {
-                        //no interaction needed; the helper's finally closes the warning alert's stage
-                    });
+                    aAlertStage -> tmpAlertTitle.set(aAlertStage.getTitle()));
             AbstractFxTestCase.waitForFxEvents();
-            Assertions.assertNotNull(tmpView.getHistogramScrollPane().getContent(),
-                    "the chart must still be present after an over-count apply that was rejected");
+            Assertions.assertEquals(Message.get("HistogramViewController.HistogramGeneralRefreshWarning.Title"),
+                    tmpAlertTitle.get(), "the over-count apply must show the refresh warning alert");
+            AbstractFxTestCase.runAndWait(() -> {
+                Assertions.assertSame(tmpChartBefore.get(),
+                        HistogramViewControllerHarnessTest.getField(tmpController, "histogramChart"),
+                        "a rejected over-count apply must not rebuild the chart");
+                Assertions.assertEquals(tmpBarCountBefore.get(), HistogramViewControllerHarnessTest.barCount(tmpController),
+                        "a rejected over-count apply must leave the number of bars unchanged");
+            });
             //close the histogram view
             AbstractFxTestCase.runAndWait(() -> {
                 Stage tmpStage = (Stage) HistogramViewControllerHarnessTest.getField(tmpController, "histogramStage");
@@ -255,6 +270,22 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
     //</editor-fold>
     //
     //<editor-fold desc="Private helper methods" defaultstate="collapsed">
+    /**
+     * Returns the number of bars in the controller's current histogram chart, summed over all series. Must be called on
+     * the JavaFX Application Thread.
+     *
+     * @param aController the controller whose chart is read
+     * @return the total number of bars
+     */
+    private static int barCount(HistogramViewController aController) {
+        BarChart<?, ?> tmpChart = (BarChart<?, ?>) HistogramViewControllerHarnessTest.getField(aController, "histogramChart");
+        int tmpCount = 0;
+        for (XYChart.Series<?, ?> tmpSeries : tmpChart.getData()) {
+            tmpCount += tmpSeries.getData().size();
+        }
+        return tmpCount;
+    }
+    //
     /**
      * Closes the controller's histogram stage on the FX thread if it is still showing, so no window leaks into a sibling
      * test even when an assertion earlier in the test body threw before the in-body close ran. Reached via the same
