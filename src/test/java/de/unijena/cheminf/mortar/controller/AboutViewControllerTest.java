@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * Headless unit tests for {@link AboutViewController} (COV-06). This controller is a BLOCKING modal: its constructor
+ * Headless unit tests for {@link AboutViewController}. This controller is a BLOCKING modal: its constructor
  * ends in {@code aboutViewStage.showAndWait()} (see {@code AboutViewController.showAboutView}), which blocks the JavaFX
  * Application Thread in a nested event loop until the stage closes. A plain
  * {@link AbstractFxTestCase#runAndWait(Runnable)} over the construction would therefore hang to the harness timeout, so

@@ -77,13 +77,13 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Headless harness-drive tests for the large category-B regions of {@link MainViewController} (COV-01): construction
+ * Headless harness-drive tests for the large event-handler regions of {@link MainViewController}: construction
  * guard branches, the {@code addListener} event/menu/key lambdas, the direct import flow and its {@code Task}
  * callbacks, the status bar, the {@code interrupt*} methods, {@code isFragmentationStopAndDataLossConfirmed}, and the
  * GUARDED {@code closeApplication} early-return. This class is the primary coverage driver for everything that only
  * needs a constructed controller plus mocked alerts/{@code Desktop}, without touching the native file chooser or
- * {@code System.exit}. The blocking auxiliary views, the fragmentation flow and the result-tab builders are added in
- * the companion tasks of this plan and are documented on those test methods.
+ * {@code System.exit}. The auxiliary views, the fragmentation flow and the result-tab builders are driven here as
+ * well and are documented on their test methods.
  * <p>
  * The controller's constructor ends in a NON-blocking {@code primaryStage.show()}, so it is constructed with a plain
  * {@link AbstractFxTestCase#runAndWait(Runnable)} over the shared {@link FxTestUtil#newMainViewController(Stage, String)}

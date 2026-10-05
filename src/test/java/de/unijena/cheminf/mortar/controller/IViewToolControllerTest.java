@@ -37,15 +37,15 @@ import org.junit.jupiter.api.Test;
  * <strong>Coverage note:</strong> {@link IViewToolController} is a bodyless interface — it declares four methods
  * ({@code settingsProperties()}, {@code getViewToolNameForDisplay()}, {@code restoreDefaultSettings()},
  * {@code canBeUsedOnTab(TabNames)}) and contains NO executable statements, so it has 0/0 coverable lines in the JaCoCo
- * report (as recorded in the Phase 12 controller-coverage baseline). Its {@literal >=}80% line-coverage requirement is
+ * report. Its {@literal >=}80% line-coverage requirement is
  * therefore <em>vacuously satisfied</em>: there are no lines to miss. Rather than contort a test to "cover" an
  * interface with no body, this class exercises the interface transitively through its two concrete implementors and
  * pins the shared contract, guarding the seam against silent drift.
  * <p>
  * Both {@link OverviewViewController} and {@link HistogramViewController} implement {@link IViewToolController} and
- * (per the Phase 14 finding) construct toolkit-free from an {@code IConfiguration} alone, so no scene graph is built
+ * construct toolkit-free from an {@code IConfiguration} alone, so no scene graph is built
  * and no JavaFX toolkit boot is required for these assertions; the class still extends {@link AbstractFxTestCase} for
- * en-GB locale determinism and {@code user.home} isolation, consistent with the other Phase 15 controller tests.
+ * en-GB locale determinism and {@code user.home} isolation, consistent with the other controller tests.
  * Assertions are behavioral only.
  *
  * @author Felix Baensch

@@ -1079,7 +1079,7 @@ public class HistogramViewController implements IViewToolController {
      * @param aBarWidthOptionConstant enum constant from BarWidthOption to set the bar width value
      * @return double array which contains both, a value for the histogram height factor [0] and a value for the category gap [1].
      */
-    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic; package-private is the widest visibility it needs, never public
     Double[] calculateBarSpacing(int aNumberOfDisplayedFragments, HistogramViewController.BarWidthOption aBarWidthOptionConstant) {
         Double[] tmpHistogramHeightFactorAndCategoryGap = new Double[2];
         double tmpCurrentHistogramHeight;
@@ -1145,7 +1145,7 @@ public class HistogramViewController implements IViewToolController {
      * @param aTickValue is the calculated tick
      * @return an upper limit for the x-axis that leaves enough room for the frequency labels
      */
-    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic; package-private is the widest visibility it needs, never public
     int calculateXAxisUpperBoundWithSpaceForLabels(int aMaxValue, int aTickValue) {
         int tmpTickNumber = Math.round((float) aMaxValue / aTickValue);
         int tmpXAxisExtensionValue;
@@ -1164,7 +1164,7 @@ public class HistogramViewController implements IViewToolController {
      * (e.g. 356 -&gt; 400); otherwise the next full power of ten is used (e.g. 7896 -&gt; 10000). Behavior is preserved
      * exactly; no state is read or written.
      * <p>
-     * Package-private (never public) so same-package characterization tests can pin this logic (RFCT-01).
+     * Package-private (never public) so same-package characterization tests can pin this logic.
      *
      * @param aRoundedTickCandidate the integer tick candidate (expected to have at least two digits, as guaranteed by
      *                              the {@code >= 10} branch in createHistogram)
@@ -1200,7 +1200,7 @@ public class HistogramViewController implements IViewToolController {
      * (e.g. {@code "SMILES too long (12)"}); otherwise the unchanged SMILES is returned. Behavior is preserved exactly;
      * no state is read or written.
      * <p>
-     * Package-private (never public) so same-package characterization tests can pin this logic (RFCT-01).
+     * Package-private (never public) so same-package characterization tests can pin this logic.
      *
      * @param aUniqueSmiles the fragment's unique SMILES string
      * @param aMaxSmilesLength the maximum SMILES length allowed before abbreviation
@@ -1222,7 +1222,7 @@ public class HistogramViewController implements IViewToolController {
      * @param aDisplayName the displayed bar width option name
      * @return enum constant associated with the display name or default value
      */
-    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic; package-private is the widest visibility it needs, never public
     HistogramViewController.BarWidthOption getBarWidthOptionEnumConstantFromDisplayName(String aDisplayName) {
         if(Objects.isNull(aDisplayName) || aDisplayName.isBlank()) {
             HistogramViewController.LOGGER.log(Level.WARNING, "Given string is null or empty, default bar width" +
@@ -1249,7 +1249,7 @@ public class HistogramViewController implements IViewToolController {
      * @param aDisplayName the displayed frequency option name
      * @return enum constant associated with the display name or default value
      */
-    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic (RFCT-01); ceiling is package-private, not public
+    //note: package-private (widened from private) so same-package characterization tests can pin this pure logic; package-private is the widest visibility it needs, never public
     HistogramViewController.FrequencyOption getFrequencyOptionEnumConstantFromDisplayName(String aDisplayName) {
         if(Objects.isNull(aDisplayName) || aDisplayName.isBlank()) {
             HistogramViewController.LOGGER.log(Level.WARNING, "Given string is null or empty, default frequency " +

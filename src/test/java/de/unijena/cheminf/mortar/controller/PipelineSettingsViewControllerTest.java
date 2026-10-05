@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Headless unit tests for {@link PipelineSettingsViewController} (COV-04). This controller is the heaviest in-scope
+ * Headless unit tests for {@link PipelineSettingsViewController}. This controller is the heaviest in-scope
  * settings class and, like {@link SettingsViewController}, ends its constructor in the BLOCKING
  * {@code pipelineSettingsViewStage.showAndWait()} (see {@code PipelineSettingsViewController.showPipelineSettingsView}),
  * which parks the JavaFX Application Thread in a nested event loop until the stage is closed. A plain

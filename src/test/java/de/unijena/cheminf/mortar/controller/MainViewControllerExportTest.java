@@ -55,8 +55,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Headless unit tests for the export seams of {@link MainViewController} that Phase 16 Plan 1 lifted out of the
- * {@code exportFile} method into package-private members on the controller (COV-01): the export precondition guard
+ * Headless unit tests for the export seams of {@link MainViewController} that were extracted from the
+ * {@code exportFile} method into package-private members on the controller: the export precondition guard
  * {@code areExportPreconditionsMet} (E1), the per-type export dispatch {@code buildExportResult} (E2), the export
  * {@code Task} wiring and its success/cancel/failure callbacks {@code launchExportTask} (E3), plus the pure
  * {@code getStatusMessageByThreadType} switch and the {@link MainViewController.ThreadType} reverse lookup /

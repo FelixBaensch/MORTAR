@@ -55,7 +55,7 @@ import java.util.function.Consumer;
  * thread join, the import-and-drain drive and the fragments/itemization result-tab fixtures were copy-pasted across all
  * three test classes and had begun to drift; consolidating them here means a change to any of those conventions is made
  * once. Every helper is {@code static} and reads/writes the controller's private state via reflection, so NO production
- * visibility is widened beyond what Phase 16 already exposes (see {@code MainViewControllerExportTest} IN-02 note).
+ * visibility is widened beyond the package-private test seams the controller already exposes.
  * <p>
  * The FX-thread contract of the original per-class copies is preserved verbatim: {@link #constructController},
  * {@link #hideStage} and {@link #importFileAndDrain} marshal onto the JavaFX Application Thread themselves (via

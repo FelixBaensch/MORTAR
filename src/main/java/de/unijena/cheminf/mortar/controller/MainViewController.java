@@ -916,9 +916,11 @@ public class MainViewController {
      * Applies the global-settings changes to the currently open result tabs and data models: recomputes the pagination
      * page count / current page for every tab when the rows-per-page setting changed, and propagates the
      * keep-atom-container-in-data-model setting to every molecule and fragment when that setting changed. Extracted
-     * (behavior-preserving) from the {@code Platform.runLater} body of {@code openGlobalSettingsView} so the apply logic
-     * is unit-testable headlessly with populated tabs and explicit change flags; the loop bodies and branch conditions
-     * are unchanged.
+     * from the {@code Platform.runLater} body of {@code openGlobalSettingsView} so the apply logic is unit-testable
+     * headlessly with populated tabs and explicit change flags. One observable difference from the original body: for
+     * an empty items list {@link GuiUtil#calculatePageCount(int, int)} now yields a page count of 1 instead of 0. This
+     * is equivalent in effect, because {@link javafx.scene.control.Pagination} rejects page counts below 1 and keeps its
+     * previous value, so passing 0 never changed the pagination either.
      *
      * @param aRowsPerPageChanged whether the rows-per-page setting changed (triggers the pagination recompute)
      * @param aKeepAtomContainerChanged whether the keep-atom-container-in-data-model setting changed (triggers the

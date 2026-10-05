@@ -47,13 +47,13 @@ import java.util.Locale;
  * <p>
  * The primary purpose is a characterization pin on the two pure pagination-math methods
  * {@code calculateMaxColumnsPerPage(double)} and {@code calculateMaxRowsPerPage(double)}, which were widened from
- * private to package-private (RFCT-01) so they can be exercised directly here. The expected results are hard-coded
+ * private to package-private so they can be exercised directly here. The expected results are hard-coded
  * integer literals derived from the documented arithmetic and the public grid constants, so any future edit to the
  * formula or a constant is caught. The guard branch (IllegalArgumentException on a parameter {@literal <=} zero) is
  * pinned for both methods. A handful of other headless-reachable members are exercised for partial coverage.
  * <p>
- * This plan intentionally does NOT chase {@literal >=}80% line coverage on the controller: the Stage/Scene/GridPane
- * remainder is deferred to Phase 15 (COV-02). Real objects only, no mocks.
+ * This class intentionally does NOT chase line coverage of the Stage/Scene/GridPane remainder of the controller;
+ * that is driven headlessly by {@code OverviewViewControllerHarnessTest}. Real objects only, no mocks.
  *
  * @author Felix Baensch
  * @version 1.0.0.0

@@ -129,7 +129,7 @@ tasks.test {
                 && tmpForeignClassifiers.any { tmpClassifier -> tmpFile.name.endsWith("-$tmpClassifier.jar") })
     }
     systemProperty("java.awt.headless", "true")
-    // --- headless JavaFX (TestFX + Monocle) recipe (HARN-02) ---
+    // --- headless JavaFX (TestFX + Monocle) recipe ---
     // Set BEFORE any FX class loads so Monocle registers its headless platform.
     systemProperty("testfx.robot", "glass")
     systemProperty("testfx.headless", "true")
@@ -159,15 +159,6 @@ tasks.test {
     // redirect user.home to a per-test temporary directory, and Windows cannot delete a loaded DLL, so the
     // @TempDir cleanup fails there. Pin the cache to a stable build directory instead of a temporary home.
     systemProperty("javafx.cachedir", layout.buildDirectory.dir("javafx-cache").get().asFile.absolutePath)
-    // Empirical fallback module args — uncomment ONLY if the plan-02 smoke test
-    // throws InaccessibleObjectException / IllegalAccessError naming
-    // com.sun.glass.ui (resolved empirically in task 13-02-01). Add the
-    // com.sun.glass.utils / com.sun.prism variants only if a further access
-    // error names them.
-    // jvmArgs(
-    //     "--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED",
-    //     "--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED"
-    // )
     testLogging {
         events = setOf(
             org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
@@ -205,7 +196,7 @@ tasks.jacocoTestReport {
     classDirectories.setFrom(jacocoMeasuredClassDirectories())
 }
 
-// GATE-01 / GATE-02: per-package LINE coverage regression gate. Run explicitly (see the note below the task):
+// Per-package LINE coverage regression gate. Run explicitly (see the note below the task):
 // it is not part of `check`/`build`. Measures the exact same scope as jacocoTestReport (gui/main/message excluded).
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.test)
@@ -240,7 +231,7 @@ tasks.jacocoTestCoverageVerification {
     }
 }
 
-// GATE-01: the coverage gate is deliberately NOT wired into `check`/`build`. Per-package minimums are only
+// The coverage gate is deliberately NOT wired into `check`/`build`. Per-package minimums are only
 // reachable on a platform where the whole suite runs: a handful of tests are skipped on Windows because the
 // branches they drive (POSIX read-only directories, the non-Windows app-dir resolution) do not exist there, so
 // the same source would fail the gate on Windows while passing on Linux. Failing every local `./gradlew build`

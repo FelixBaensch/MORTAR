@@ -40,8 +40,8 @@ import org.mockito.MockedStatic;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Headless unit tests for {@link SettingsViewController} (COV-07). This controller is the reference BLOCKING modal of
- * this phase: its constructor ends in {@code settingsViewStage.showAndWait()} (see
+ * Headless unit tests for {@link SettingsViewController}. This controller is the reference BLOCKING modal of
+ * the settings views: its constructor ends in {@code settingsViewStage.showAndWait()} (see
  * {@code SettingsViewController.showSettingsView}), which blocks the JavaFX Application Thread in a nested event loop
  * until the stage is closed. A plain {@link AbstractFxTestCase#runAndWait(Runnable)} over the construction would
  * therefore hang to the harness timeout, so every test constructs the controller through

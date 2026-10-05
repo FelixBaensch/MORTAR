@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Headless unit tests for {@link FragmentationSettingsViewController} (COV-08). Unlike the four blocking modal
- * controllers of this phase, this controller's constructor ends in the NON-blocking {@code fragmentationSettingsViewStage.show()}
+ * Headless unit tests for {@link FragmentationSettingsViewController}. Unlike the four blocking modal
+ * settings and about controllers, this controller's constructor ends in the NON-blocking {@code fragmentationSettingsViewStage.show()}
  * (see {@code FragmentationSettingsViewController.openFragmentationSettingsView}), so a plain
  * {@link AbstractFxTestCase#runAndWait(Runnable)} over the construction returns immediately and no modal-driving helper
  * is required. Each test therefore constructs the controller on the JavaFX Application Thread with a real

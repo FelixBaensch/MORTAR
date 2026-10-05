@@ -38,18 +38,18 @@ import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Headless unit and characterization tests for {@link MainViewController} (COV-01). Unlike the Phase 15 settings
+ * Headless unit and characterization tests for {@link MainViewController}. Unlike the settings-view
  * controllers, this root controller's constructor ends in a NON-blocking {@code primaryStage.show()} (not
  * {@code showAndWait}), so the controller is constructed with a plain {@link AbstractFxTestCase#runAndWait(Runnable)}
  * over the shared {@link FxTestUtil#newMainViewController(Stage, String)} seam (reused by the sibling
- * {@code MainViewController} test classes of plans 16-02 and 16-03) rather than
+ * {@code MainViewController} test classes) rather than
  * {@link FxTestUtil#runAndDriveModal(java.util.concurrent.Callable, java.util.function.Consumer)}. The passed real
  * {@link Stage} is always hidden in a {@code finally} block; because {@code Stage.hide()} does not fire the window
  * close-request handler, the controller's {@code closeApplication}/{@code System.exit} path is never reached and the
  * test JVM fork survives.
  * <p>
- * This class covers the close-persist tail {@code persistSettingsAndStopTasks} that Phase 16 Plan 1 lifted into a
- * package-private method on the controller. The export seams lifted by the same plan — the precondition guard
+ * This class covers the close-persist tail {@code persistSettingsAndStopTasks}, which was extracted from
+ * {@code closeApplication} into a package-private method on the controller. The export seams extracted the same way — the precondition guard
  * {@code areExportPreconditionsMet} and the export dispatch {@code buildExportResult} — are covered in full by
  * {@code MainViewControllerExportTest}, which drives every precondition branch and every resolvable export type, so
  * no narrower pin of the same behavior is kept here. Assertions are behavioral invariants, never exact CDK-derived

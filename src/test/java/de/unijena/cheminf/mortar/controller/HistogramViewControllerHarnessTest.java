@@ -53,8 +53,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Headless coverage tests for the Stage-dependent residual of {@link HistogramViewController} (COV-03). This is the
- * additive counterpart to the Phase 14 characterization pins in {@code HistogramViewControllerTest} (which pin the pure
+ * Headless coverage tests for the Stage-dependent residual of {@link HistogramViewController}. This is the
+ * additive counterpart to the characterization pins in {@code HistogramViewControllerTest} (which pin the pure
  * bar-spacing/axis/enum/abbreviation logic and the toolkit-free {@code IViewToolController} members and are left
  * completely untouched here); JaCoCo aggregates both classes, so this class only needs to drive the parts a headless
  * run could not reach before: the whole {@code openHistogramView} flow, {@code createHistogram} (including the per-bar

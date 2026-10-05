@@ -64,8 +64,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
 /**
- * Headless coverage tests for the Stage-dependent residual of {@link OverviewViewController} (COV-02). This is the
- * additive counterpart to the Phase 14 characterization pins in {@code OverviewViewControllerTest} (which pin the pure
+ * Headless coverage tests for the Stage-dependent residual of {@link OverviewViewController}. This is the
+ * additive counterpart to the characterization pins in {@code OverviewViewControllerTest} (which pin the pure
  * pagination-math and the toolkit-free {@code IViewToolController} members and are left completely untouched here);
  * JaCoCo aggregates both classes, so this class only needs to drive the parts a headless run could not reach before:
  * the whole {@code initializeAndShowOverviewView} flow, the listeners registered in {@code addListeners}, the page

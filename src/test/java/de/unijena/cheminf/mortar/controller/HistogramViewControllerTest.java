@@ -45,19 +45,19 @@ import java.util.Locale;
  * (its constructor only builds eight {@code Simple*Property} settings with anonymous {@code set()} overrides, touching
  * no scene graph), so no JavaFX toolkit boot is required and this class deliberately extends no FX harness.
  * <p>
- * The primary purpose is a characterization pin on the pure spacing/axis/enum/abbreviation logic that RFCT-01 made
- * reachable: the four already-pure methods widened from private to package-private
+ * The primary purpose is a characterization pin on the pure spacing/axis/enum/abbreviation logic that was made
+ * reachable for testing: the four already-pure methods widened from private to package-private
  * ({@code calculateBarSpacing}, {@code calculateXAxisUpperBoundWithSpaceForLabels},
  * {@code getBarWidthOptionEnumConstantFromDisplayName}, {@code getFrequencyOptionEnumConstantFromDisplayName}) and the
  * two blocks extracted from {@code createHistogram} ({@code calculateNiceAxisTickUnit},
  * {@code abbreviateSmilesForDisplay}). The magic-number boundaries (bar-spacing switch at 24/17/13, the
  * {@code tick*number > max} comparison) are pinned on both sides; expected bar-spacing values are computed from the
  * documented formula and the public constants so any future edit to the formula or a constant is caught. These pins
- * are green after the Task 1 widen/extract and must stay green through {@code ./gradlew build}, proving the refactor
- * behavior-preserving.
+ * were green before and after the widen/extract and must stay green through {@code ./gradlew build}, proving the
+ * refactor behavior-preserving.
  * <p>
- * This plan intentionally does NOT chase {@literal >=}80% line coverage on the controller: the Stage/Scene/BarChart
- * /listener remainder is deferred to Phase 15 (COV-03). Real objects only, no mocks.
+ * This class intentionally does NOT chase line coverage of the Stage/Scene/BarChart/listener remainder of the
+ * controller; that is driven headlessly by {@code HistogramViewControllerHarnessTest}. Real objects only, no mocks.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
