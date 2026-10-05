@@ -27,9 +27,13 @@ package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.io.ChemFileTypes;
 import de.unijena.cheminf.mortar.model.io.Exporter;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
@@ -41,6 +45,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -221,9 +226,11 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
     //<editor-fold desc="E2 buildExportResult test methods" defaultstate="collapsed">
     /**
      * E2: for every resolvable (non-dialog) export type, {@code buildExportResult} dispatches an already-resolved
-     * temporary target file/directory to the correct {@link Exporter} method and returns a non-null list of failed
-     * fragment names. No native chooser is invoked. Directory-based chemical exports (PDB, multiple SD) receive a temp
-     * directory; the remaining types receive a temp file.
+     * temporary target file/directory to the real {@link Exporter}, which writes it. No native chooser is invoked.
+     * Directory-based chemical exports (PDB, multiple SD) receive a temp directory, which must afterwards contain at
+     * least one file; the remaining types receive a temp file, which must afterwards exist and be non-empty. Which
+     * {@link Exporter} method and arguments each type is routed to is pinned separately by
+     * {@link #buildExportResultRoutesEachTypeToItsExporterCallTest(Path)}.
      *
      * @param aTempDir per-test temporary directory for the export targets
      * @throws Exception if anything goes wrong on the FX thread
@@ -247,26 +254,95 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
                     MainViewControllerTestSupport.setField(tmpController, "importedFileName", "TestInput.smi");
                     Exporter tmpExporter = new Exporter(MainViewControllerTestSupport.getSettingsContainer(tmpController));
                     Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_CSV_FILE, tmpCsvFile, false),
-                            "FRAGMENT_CSV_FILE dispatch must return a non-null list");
+                            tmpExporter, Exporter.ExportTypes.FRAGMENT_CSV_FILE, tmpCsvFile, false));
                     Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_PDB_FILE, tmpPdbDir, false),
-                            "FRAGMENT_PDB_FILE dispatch must return a non-null list");
+                            tmpExporter, Exporter.ExportTypes.FRAGMENT_PDB_FILE, tmpPdbDir, false));
                     Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_PDF_FILE, tmpPdfFile, false),
-                            "FRAGMENT_PDF_FILE dispatch must return a non-null list");
+                            tmpExporter, Exporter.ExportTypes.FRAGMENT_PDF_FILE, tmpPdfFile, false));
                     Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE, tmpSingleSdFile, false),
-                            "FRAGMENT_SINGLE_SD_FILE dispatch must return a non-null list");
+                            tmpExporter, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE, tmpSingleSdFile, false));
                     Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES, tmpMultipleSdDir, false),
-                            "FRAGMENT_MULTIPLE_SD_FILES dispatch must return a non-null list");
+                            tmpExporter, Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES, tmpMultipleSdDir, false));
                     Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.ITEM_CSV_FILE, tmpItemCsvFile, false),
-                            "ITEM_CSV_FILE dispatch must return a non-null list");
+                            tmpExporter, Exporter.ExportTypes.ITEM_CSV_FILE, tmpItemCsvFile, false));
                     Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.ITEM_PDF_FILE, tmpItemPdfFile, false),
-                            "ITEM_PDF_FILE dispatch must return a non-null list");
+                            tmpExporter, Exporter.ExportTypes.ITEM_PDF_FILE, tmpItemPdfFile, false));
+                } catch (Exception anException) {
+                    throw new RuntimeException(anException);
+                }
+            });
+            for (File tmpFile : new File[]{tmpCsvFile, tmpPdfFile, tmpSingleSdFile, tmpItemCsvFile, tmpItemPdfFile}) {
+                Assertions.assertTrue(tmpFile.isFile() && tmpFile.length() > 0L,
+                        "the export must have written a non-empty " + tmpFile.getName());
+            }
+            for (File tmpDir : new File[]{tmpPdbDir, tmpMultipleSdDir}) {
+                File[] tmpWritten = tmpDir.listFiles();
+                Assertions.assertTrue(tmpWritten != null && tmpWritten.length > 0,
+                        "the export must have written at least one file into " + tmpDir.getName());
+            }
+        } finally {
+            MainViewControllerTestSupport.hideStage(tmpStageReference);
+        }
+    }
+    //
+    /**
+     * E2 routing: with a mocked {@link Exporter}, every resolvable export type must reach its own exporter call with the
+     * target file, the fragmentation name of the selected tab and the right data: the fragment exports get the
+     * fragments tab's list and {@link TabNames#FRAGMENTS}; the item CSV export gets the controller's molecule list and
+     * {@link TabNames#ITEMIZATION}; the item PDF export gets both lists and {@link TabNames#ITEMIZATION}; the chemical
+     * exports get their file type, the passed 2D-coordinates flag and (for SD) the single-file flag. A swapped tab name,
+     * file type or flag in the dispatch fails a verification.
+     *
+     * @param aTempDir per-test temporary directory for the (unwritten) export targets
+     * @throws Exception if anything goes wrong on the FX thread
+     */
+    @Test
+    public void buildExportResultRoutesEachTypeToItsExporterCallTest(@TempDir Path aTempDir) throws Exception {
+        File tmpFile = aTempDir.resolve("target").toFile();
+        String tmpName = MainViewControllerExportTest.FRAGMENTATION_NAME;
+        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
+        try {
+            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
+            AbstractFxTestCase.runAndWait(() -> {
+                try {
+                    MainViewControllerTestSupport.setUpPopulatedFragmentsAndItems(tmpController, tmpName);
+                    MainViewControllerTestSupport.setField(tmpController, "importedFileName", "TestInput.smi");
+                    ObservableList<MoleculeDataModel> tmpMolecules = (ObservableList<MoleculeDataModel>)
+                            MainViewControllerTestSupport.getMoleculeList(tmpController);
+                    Exporter tmpExporter = Mockito.mock(Exporter.class);
+                    for (Exporter.ExportTypes tmpType : new Exporter.ExportTypes[]{
+                            Exporter.ExportTypes.FRAGMENT_CSV_FILE, Exporter.ExportTypes.FRAGMENT_PDB_FILE,
+                            Exporter.ExportTypes.FRAGMENT_PDF_FILE, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE,
+                            Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES, Exporter.ExportTypes.ITEM_CSV_FILE,
+                            Exporter.ExportTypes.ITEM_PDF_FILE}) {
+                        //the PDB export gets true for the 2D-coordinates flag, so its pass-through is pinned as well
+                        tmpController.buildExportResult(tmpExporter, tmpType, tmpFile,
+                                tmpType == Exporter.ExportTypes.FRAGMENT_PDB_FILE);
+                    }
+                    Mockito.verify(tmpExporter).exportCsvFile(ArgumentMatchers.eq(tmpFile),
+                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(tmpName),
+                            ArgumentMatchers.anyChar(), ArgumentMatchers.eq(TabNames.FRAGMENTS));
+                    Mockito.verify(tmpExporter).exportCsvFile(ArgumentMatchers.eq(tmpFile),
+                            ArgumentMatchers.same(tmpMolecules), ArgumentMatchers.eq(tmpName),
+                            ArgumentMatchers.anyChar(), ArgumentMatchers.eq(TabNames.ITEMIZATION));
+                    Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
+                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.PDB),
+                            ArgumentMatchers.eq(true));
+                    Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
+                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.SDF),
+                            ArgumentMatchers.eq(false), ArgumentMatchers.eq(true));
+                    Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
+                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.SDF),
+                            ArgumentMatchers.eq(false), ArgumentMatchers.eq(false));
+                    Mockito.verify(tmpExporter).exportPdfFile(ArgumentMatchers.eq(tmpFile),
+                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.same(tmpMolecules),
+                            ArgumentMatchers.eq(tmpName), ArgumentMatchers.eq("TestInput.smi"),
+                            ArgumentMatchers.eq(TabNames.FRAGMENTS));
+                    Mockito.verify(tmpExporter).exportPdfFile(ArgumentMatchers.eq(tmpFile),
+                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.same(tmpMolecules),
+                            ArgumentMatchers.eq(tmpName), ArgumentMatchers.eq("TestInput.smi"),
+                            ArgumentMatchers.eq(TabNames.ITEMIZATION));
+                    Mockito.verifyNoMoreInteractions(tmpExporter);
                 } catch (Exception anException) {
                     throw new RuntimeException(anException);
                 }
@@ -473,6 +549,17 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
         tmpThread.start();
         tmpThread.join(MainViewControllerExportTest.JOIN_TIMEOUT_MILLIS);
         return tmpTask;
+    }
+    //
+    /**
+     * Matches the fragments tab's item list of the populated fixture: exactly one element, and that a
+     * {@link FragmentDataModel} (the molecule list of the itemization side holds a plain {@link MoleculeDataModel}).
+     *
+     * @return null (Mockito argument-matcher convention); the matcher is registered as a side effect
+     */
+    private static List<MoleculeDataModel> isFragmentsList() {
+        return ArgumentMatchers.argThat(aList -> aList != null && aList.size() == 1
+                && aList.getFirst() instanceof FragmentDataModel);
     }
     //</editor-fold>
 }

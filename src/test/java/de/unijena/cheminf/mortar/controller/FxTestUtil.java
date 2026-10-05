@@ -146,10 +146,14 @@ public final class FxTestUtil {
      * visible it schedules — via {@link Platform#runLater(Runnable)} so the work runs INSIDE the nested loop — a driver
      * that first invokes {@code aDriver} on the stage (if non-null) so button and close handlers can be fired, and then
      * ALWAYS closes the stage in a {@code finally} block so no orphan window leaks into a sibling test. The construct is
-     * invoked on the FX thread and blocks until that close returns; the window listener is always removed in a
-     * {@code finally}. A throwable raised by {@code aDriver} on the JavaFX Application Thread is captured and rethrown to
-     * the caller (wrapped in a {@link RuntimeException}) so a failing driver can never produce a false-green result by
-     * escaping unnoticed into the FX event loop. The outer wait is bounded at {@link #FX_TIMEOUT_SECONDS} seconds (the
+     * invoked on the FX thread; the window listener is always removed in a {@code finally}. A blocking
+     * {@code showAndWait} construct returns only after its driver has closed the stage, but a construct that opens its
+     * stage with a non-blocking {@link Stage#show()} returns at once, before the queued driver has run. Every driver
+     * therefore signals its own completion latch, and this helper waits for the latch of every stage it detected before
+     * it reads the driver's outcome, so the driver has always run (and the stage is always closed) when this method
+     * returns, for both kinds of construct. A throwable raised by {@code aDriver} on the JavaFX Application Thread is
+     * captured and rethrown to the caller (wrapped in a {@link RuntimeException}) so a failing driver can never produce a
+     * false-green result by escaping unnoticed into the FX event loop. The outer wait is bounded at {@link #FX_TIMEOUT_SECONDS} seconds (the
      * same bound the harness applies) so a stuck modal fails fast with an {@link IllegalStateException} rather than
      * hanging the CI build; on timeout a best-effort recovery is scheduled on the FX thread (the still-pumping nested
      * {@code showAndWait} loop) that removes the window listener and closes any still-showing stage the listener
@@ -172,6 +176,9 @@ public final class FxTestUtil {
         //stages the listener detected, so a timeout recovery can close a still-showing modal; only touched on the FX
         //thread (the listener adds, the recovery reads), a CopyOnWriteArrayList keeps that access safe regardless
         List<Stage> tmpDetectedStages = new CopyOnWriteArrayList<>();
+        //one completion latch per scheduled driver, counted down in its finally, so the caller can wait for drivers that
+        //were queued behind a non-blocking show() construct which already returned
+        List<CountDownLatch> tmpDriverLatches = new CopyOnWriteArrayList<>();
         CountDownLatch tmpDone = new CountDownLatch(1);
         Platform.runLater(() -> {
             ListChangeListener<Window> tmpListener = aChange -> {
@@ -179,15 +186,21 @@ public final class FxTestUtil {
                     for (Window tmpWindow : aChange.getAddedSubList()) {
                         if (tmpWindow instanceof Stage tmpStage && tmpWindow.isShowing()) {
                             tmpDetectedStages.add(tmpStage);
+                            CountDownLatch tmpDriverDone = new CountDownLatch(1);
+                            tmpDriverLatches.add(tmpDriverDone);
                             Platform.runLater(() -> {
                                 try {
                                     if (aDriver != null) {
                                         aDriver.accept(tmpStage);
                                     }
                                 } catch (Throwable anError) {
-                                    tmpDriverError.set(anError);
+                                    tmpDriverError.compareAndSet(null, anError);
                                 } finally {
-                                    tmpStage.close();
+                                    try {
+                                        tmpStage.close();
+                                    } finally {
+                                        tmpDriverDone.countDown();
+                                    }
                                 }
                             });
                         }
@@ -222,6 +235,11 @@ public final class FxTestUtil {
                     }
                 });
                 throw new IllegalStateException("Modal construct did not complete within the bounded timeout");
+            }
+            for (CountDownLatch tmpDriverDone : tmpDriverLatches) {
+                if (!tmpDriverDone.await(FxTestUtil.FX_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("Modal driver did not complete within the bounded timeout");
+                }
             }
         } catch (InterruptedException anInterruptedException) {
             Thread.currentThread().interrupt();

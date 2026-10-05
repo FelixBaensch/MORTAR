@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.controller;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
 import javafx.collections.FXCollections;
@@ -45,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Shared, package-private test-support seam for the {@link MainViewController} headless test classes
@@ -140,23 +142,61 @@ final class MainViewControllerTestSupport {
     //
     //<editor-fold desc="Import drive and background thread join" defaultstate="collapsed">
     /**
-     * Drives {@code importMoleculeFile(File)} for the given file on the FX thread (alerts mocked), joins the background
-     * importer thread for determinism, then drains the nested {@code Platform.runLater} success/failure callbacks.
+     * Drives {@code importMoleculeFile(File)} for the given file with alerts mocked, joins the background importer
+     * thread for determinism, then drains the nested {@code Platform.runLater} success/failure callbacks.
      *
      * @param aController the controller under test
      * @param aFile the molecule file to import
      * @throws Exception if anything goes wrong on the FX thread
      */
     static void importFileAndDrain(MainViewController aController, File aFile) throws Exception {
-        AbstractFxTestCase.runAndWait(() -> {
-            try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
-                aController.importMoleculeFile(aFile);
+        MainViewControllerTestSupport.importFileAndDrain(aController, aFile, null, null);
+    }
+    //
+    /**
+     * Drives {@code importMoleculeFile(File, Importer)} for the given file and importer, joins the background importer
+     * thread for determinism, drains the nested {@code Platform.runLater} success/failure callbacks and finally hands
+     * the {@link GuiUtil} static mock to the given verifier.
+     * <p>
+     * The import task's success and failure callbacks both raise their alert through a further
+     * {@code Platform.runLater}, so they run only after the import call itself has returned. The static mock is
+     * therefore opened on the JavaFX Application Thread before the import starts and closed there only after the join,
+     * the drains and the verifier, so those deferred alerts reach the mock instead of a real {@code Alert} (a Mockito
+     * static mock is confined to the thread that opened it, which is why opening, verifying and closing all happen on
+     * the FX thread).
+     *
+     * @param aController the controller under test
+     * @param aFile the molecule file to import
+     * @param anImporter the importer to use, or null for the controller's default importer
+     * @param aVerifier callback run on the FX thread with the still-open alert mock after the drain, or null for none
+     * @throws Exception if anything goes wrong on the FX thread
+     */
+    static void importFileAndDrain(MainViewController aController, File aFile, Importer anImporter,
+            Consumer<MockedStatic<GuiUtil>> aVerifier) throws Exception {
+        AtomicReference<MockedStatic<GuiUtil>> tmpGuiUtilMock = new AtomicReference<>();
+        try {
+            AbstractFxTestCase.runAndWait(() -> {
+                tmpGuiUtilMock.set(FxTestUtil.mockGuiAlerts());
+                if (anImporter == null) {
+                    aController.importMoleculeFile(aFile);
+                } else {
+                    aController.importMoleculeFile(aFile, anImporter);
+                }
+            });
+            MainViewControllerTestSupport.joinThreadField(aController, "importerThread");
+            AbstractFxTestCase.waitForFxEvents();
+            AbstractFxTestCase.waitForFxEvents();
+            AbstractFxTestCase.runAndWait(() -> { });
+            if (aVerifier != null) {
+                AbstractFxTestCase.runAndWait(() -> aVerifier.accept(tmpGuiUtilMock.get()));
             }
-        });
-        MainViewControllerTestSupport.joinThreadField(aController, "importerThread");
-        AbstractFxTestCase.waitForFxEvents();
-        AbstractFxTestCase.waitForFxEvents();
-        AbstractFxTestCase.runAndWait(() -> { });
+        } finally {
+            AbstractFxTestCase.runAndWait(() -> {
+                if (tmpGuiUtilMock.get() != null) {
+                    tmpGuiUtilMock.get().close();
+                }
+            });
+        }
     }
     //
     /**

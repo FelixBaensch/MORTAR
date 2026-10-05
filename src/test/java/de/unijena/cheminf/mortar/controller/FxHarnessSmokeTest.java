@@ -37,13 +37,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Smoke test that proves the headless JavaFX harness works: the toolkit boots once (inherited from
  * {@link AbstractFxTestCase}), an offscreen {@link Stage} plus a trivial control construct on the FX thread inside a
  * bounded {@code runAndWait} without throwing, and {@link FxTestUtil#mockGuiAlerts()} neutralizes a {@link GuiUtil}
  * alert call so no real {@code Alert} is created and the call returns without hanging. This is the first test in the
- * suite to actually construct live JavaFX objects headless; Phase 14+ controller tests extend the same base.
+ * suite to actually construct live JavaFX objects headless; the controller tests extend the same base.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
@@ -91,6 +92,32 @@ public class FxHarnessSmokeTest extends AbstractFxTestCase {
                 Assertions.assertNotNull(tmpGuiUtilMock);
             }
         });
+    }
+    //
+    /**
+     * Drives a construct that opens its stage with a non-blocking {@link Stage#show()} and therefore returns before the
+     * queued driver has run. {@link FxTestUtil#runAndDriveModal(java.util.concurrent.Callable,
+     * java.util.function.Consumer)} must still wait for that driver: the driver has seen the stage and closed it when the
+     * call returns, and a failure thrown by the driver is surfaced to the caller instead of being lost.
+     */
+    @Test
+    public void runAndDriveModalWaitsForDriverOfNonBlockingShowTest() {
+        AtomicReference<Stage> tmpDrivenStage = new AtomicReference<>();
+        FxTestUtil.runAndDriveModal(() -> {
+            FxTestUtil.newOffscreenStage().show();
+            return null;
+        }, tmpDrivenStage::set);
+        Assertions.assertNotNull(tmpDrivenStage.get(), "the driver must have run before runAndDriveModal returned");
+        Assertions.assertFalse(tmpDrivenStage.get().isShowing(), "the driven stage must have been closed");
+        RuntimeException tmpFailure = Assertions.assertThrows(RuntimeException.class,
+                () -> FxTestUtil.runAndDriveModal(() -> {
+                    FxTestUtil.newOffscreenStage().show();
+                    return null;
+                }, aStage -> {
+                    throw new IllegalStateException("driver failure");
+                }));
+        Assertions.assertEquals("driver failure", tmpFailure.getCause().getMessage(),
+                "the driver's own failure must be surfaced as the cause");
     }
     //</editor-fold>
 }

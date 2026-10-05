@@ -28,15 +28,18 @@ package de.unijena.cheminf.mortar.controller;
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.OverviewView;
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.Event;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
+import javafx.scene.input.Clipboard;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -120,11 +123,14 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     //
     //<editor-fold desc="Test methods" defaultstate="collapsed">
     /**
-     * Drives the MOLECULES_TAB data source through the full happy path: forces a page with structure images, changes the
-     * pagination page, applies a valid and an invalid (zero) grid configuration, restores the default grid, fires the
-     * three copy context-menu items, and opens the enlarged-structure view. The stage is left open so the helper's
-     * {@code finally} closes it (exercising the plain {@code Stage.close()} path rather than the close-request filter,
-     * which the other drives cover). Behavioral assertion: the view exposes a pagination with at least two pages.
+     * Drives the MOLECULES_TAB data source through the full happy path and checks the effect of every handler it fires:
+     * the mouse-enter/exit handlers swap the hovered structure's style, the drag handler sets the drag flag and the next
+     * click consumes it without scheduling the enlarged view, the context-menu request caches the structure's index,
+     * a valid grid configuration is applied (and the page count recomputed), an oversized one is clamped below the
+     * requested value, an invalid (zero) one is rejected without changing the grid, the default button restores the
+     * default grid, the copy context-menu items put the cached structure's SMILES and name on the clipboard, and the
+     * enlarged-structure view opens. The stage is left open so the helper's {@code finally} closes it (exercising the
+     * plain {@code Stage.close()} path rather than the close-request filter, which the other drives cover).
      *
      * @throws Exception if anything goes wrong on the FX thread
      */
@@ -137,13 +143,32 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
             // grid and only then flips the createStructureImages flag to true)
             OverviewViewControllerHarnessTest.setBooleanField(aController, "createStructureImages", true);
             OverviewViewControllerHarnessTest.invokeCreateOverviewViewPage(aController, 0, 5, 5);
-            //exercise the mouse-enter/exit style handlers and the context-menu-request handler on a rendered structure
+            //the mouse-enter/exit handlers on a rendered structure swap its drop-shadow style
+            Node tmpFirstStructure = OverviewViewControllerHarnessTest.firstStructureNode(aView);
             OverviewViewControllerHarnessTest.fireStructureMouseEvent(aView, MouseEvent.MOUSE_ENTERED);
+            String tmpHoveredStyle = tmpFirstStructure.getStyle();
             OverviewViewControllerHarnessTest.fireStructureMouseEvent(aView, MouseEvent.MOUSE_EXITED);
+            Assertions.assertNotEquals(tmpHoveredStyle, tmpFirstStructure.getStyle(),
+                    "leaving a structure must reset the style its hover set");
+            //a drag sets the drag flag; the click that ends the drag consumes it and schedules no enlarged view
             OverviewViewControllerHarnessTest.fireStructureDrag(aView);
-            OverviewViewControllerHarnessTest.fireStructureContextMenuRequest(aView);
-            //single click on the first structure schedules the deferred single-click action
+            Assertions.assertTrue((boolean) OverviewViewControllerHarnessTest.getField(aController, "dragFlag"),
+                    "a primary-button drag must set the drag flag");
             OverviewViewControllerHarnessTest.fireStructureClick(aView, 1);
+            Assertions.assertFalse((boolean) OverviewViewControllerHarnessTest.getField(aController, "dragFlag"),
+                    "the click ending a drag must reset the drag flag");
+            Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "scheduledFuture"),
+                    "the click ending a drag must not schedule the enlarged-structure view");
+            //the context-menu request on the first structure caches its index and shows the structure context menu
+            Assertions.assertEquals(-1,
+                    (int) OverviewViewControllerHarnessTest.getField(aController, "cachedIndexOfStructureInMoleculeDataModelList"));
+            OverviewViewControllerHarnessTest.fireStructureContextMenuRequest(aView);
+            Assertions.assertEquals(0,
+                    (int) OverviewViewControllerHarnessTest.getField(aController, "cachedIndexOfStructureInMoleculeDataModelList"),
+                    "a context-menu request on the first structure must cache its index");
+            ContextMenu tmpContextMenu = (ContextMenu) OverviewViewControllerHarnessTest.getField(aController, "structureContextMenu");
+            Assertions.assertTrue(tmpContextMenu.isShowing(), "the context-menu request must show the structure context menu");
+            tmpContextMenu.hide();
             //render a page whose image dimensions fall below the minimum so the below-limit branch is exercised
             OverviewViewControllerHarnessTest.invokeCreateOverviewViewPage(aController, 0, 100, 100);
             OverviewViewControllerHarnessTest.invokeCreateOverviewViewPage(aController, 0, 5, 5);
@@ -153,44 +178,80 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
             //change a text field then switch page to exercise the page-change text-field reset listener
             aView.getColumnsPerPageTextField().setText("9");
             aView.getRowsPerPageTextField().setText("9");
-            if (tmpPagination.getPageCount() > 1) {
-                tmpPagination.setCurrentPageIndex(1);
-                tmpPagination.setCurrentPageIndex(0);
-            }
-            //valid grid configuration change
+            tmpPagination.setCurrentPageIndex(1);
+            tmpPagination.setCurrentPageIndex(0);
+            //valid grid configuration change: 3 x 4 structures per page, so 30 molecules need three pages
             aView.getColumnsPerPageTextField().setText("3");
             aView.getRowsPerPageTextField().setText("4");
             aView.getApplyButton().fire();
+            OverviewViewControllerHarnessTest.assertGrid(aController, 3, 4);
+            Assertions.assertEquals(3, tmpPagination.getPageCount(), "30 structures at 12 per page need three pages");
             //grid configuration exceeding the displayable maximum -> values clamped to the maximum
             aView.getColumnsPerPageTextField().setText("999");
             aView.getRowsPerPageTextField().setText("999");
             aView.getApplyButton().fire();
-            //invalid grid configuration -> message alert branch (alert is neutralized by the static mock)
+            int tmpClampedColumns = OverviewViewControllerHarnessTest.getIntProperty(aController, "columnsPerPageSetting");
+            int tmpClampedRows = OverviewViewControllerHarnessTest.getIntProperty(aController, "rowsPerPageSetting");
+            Assertions.assertTrue(tmpClampedColumns < 999 && tmpClampedRows < 999,
+                    "an oversized grid configuration must be clamped to the displayable maximum");
+            Assertions.assertEquals(Integer.toString(tmpClampedColumns), aView.getColumnsPerPageTextField().getText(),
+                    "the columns text field must show the clamped value");
+            //invalid grid configuration -> message alert branch (alert is neutralized by the static mock), grid unchanged
             aView.getColumnsPerPageTextField().setText("0");
             aView.getApplyButton().fire();
+            OverviewViewControllerHarnessTest.assertGrid(aController, tmpClampedColumns, tmpClampedRows);
             //restore the default grid configuration
             aView.getDefaultButton().fire();
-            //fire the copy context-menu items with a valid cached structure index
+            OverviewViewControllerHarnessTest.assertGrid(aController,
+                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT,
+                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT);
+            Assertions.assertEquals(Integer.toString(OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_COLUMNS_PER_PAGE_DEFAULT),
+                    aView.getColumnsPerPageTextField().getText(), "the default button must reset the columns text field");
+            //fire the copy context-menu items with a valid cached structure index; the SMILES and name items must put
+            //that structure's SMILES and name on the clipboard
             OverviewViewControllerHarnessTest.setIntField(aController, "cachedIndexOfStructureInMoleculeDataModelList", 0);
-            ContextMenu tmpContextMenu = (ContextMenu) OverviewViewControllerHarnessTest.getField(aController, "structureContextMenu");
+            MoleculeDataModel tmpFirstModel = OverviewViewControllerHarnessTest.firstModel(aController);
+            List<String> tmpCopiedStrings = new ArrayList<>();
             for (MenuItem tmpItem : tmpContextMenu.getItems()) {
                 //skip the show-in-main-view item here (it closes the view); it is covered by a dedicated test
                 if (tmpItem.getOnAction() != null && !tmpItem.getText().equals(
-                        de.unijena.cheminf.mortar.message.Message.get("OverviewView.contextMenu.showInMainViewMenuItem.molecules"))) {
+                        Message.get("OverviewView.contextMenu.showInMainViewMenuItem.molecules"))) {
+                    Clipboard.getSystemClipboard().clear();
                     tmpItem.fire();
+                    if (Clipboard.getSystemClipboard().hasString()) {
+                        tmpCopiedStrings.add(Clipboard.getSystemClipboard().getString());
+                    }
                 }
             }
+            //the enlarged-structure-view item fired in the loop above defers its open with Platform.runLater, so that
+            //view opens only after this driver has returned and the overview stage has been closed; it is checked and
+            //closed after the drive below
+            Assertions.assertTrue(tmpCopiedStrings.contains(tmpFirstModel.getUniqueSmiles()),
+                    "the copy-SMILES item must put the cached structure's SMILES on the clipboard");
+            Assertions.assertTrue(tmpCopiedStrings.contains(tmpFirstModel.getName()),
+                    "the copy-name item must put the cached structure's name on the clipboard");
             //open the enlarged-structure view directly (its second stage is auto-closed by the window listener) and
             //resize it so its structure-depiction resize listener runs
             Stage tmpEnlargedStage = OverviewViewControllerHarnessTest.invokeShowEnlargedStructureView(aController,
-                    OverviewViewControllerHarnessTest.firstModel(aController), aView);
-            if (tmpEnlargedStage != null) {
-                tmpEnlargedStage.setWidth(tmpEnlargedStage.getWidth() + 80.0);
-                tmpEnlargedStage.setHeight(tmpEnlargedStage.getHeight() + 80.0);
-            }
+                    tmpFirstModel, aView);
+            Assertions.assertNotNull(tmpEnlargedStage, "the enlarged-structure view must have opened");
+            tmpEnlargedStage.setWidth(tmpEnlargedStage.getWidth() + 80.0);
+            tmpEnlargedStage.setHeight(tmpEnlargedStage.getHeight() + 80.0);
         });
         Assertions.assertTrue(tmpPageCount.get() >= 2,
                 "30 molecules at the default 25 per page should paginate into at least two pages");
+        AtomicReference<Stage> tmpDeferredEnlargedStage = new AtomicReference<>();
+        AbstractFxTestCase.runAndWait(() -> {
+            for (Window tmpWindow : new ArrayList<>(Window.getWindows())) {
+                if (tmpWindow instanceof Stage tmpStage && tmpStage.isShowing()
+                        && Message.get("OverviewView.enlargedStructureView.title").equals(tmpStage.getTitle())) {
+                    tmpDeferredEnlargedStage.set(tmpStage);
+                    tmpStage.close();
+                }
+            }
+        });
+        Assertions.assertNotNull(tmpDeferredEnlargedStage.get(),
+                "the enlarged-structure-view context-menu item must have opened the enlarged view");
     }
     //
     /**
@@ -427,41 +488,33 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     //
     /**
      * Fires a synthesized primary-button {@link MouseEvent} of the given click count at the first child node of the
-     * view's structure grid pane, so the grid pane's mouse-click handler is exercised with a real target node. Does
-     * nothing if the grid pane is empty (e.g. if the headless layout produced no rendered structure images).
+     * view's structure grid pane, so the grid pane's mouse-click handler is exercised with a real target node. Fails
+     * the test if the grid pane is empty, because the click would otherwise silently test nothing.
      *
      * @param aView the overview view whose structure grid pane is clicked
      * @param aClickCount the click count to simulate (1 for single click, 2 for double click)
      */
     private static void fireStructureClick(OverviewView aView, int aClickCount) {
         GridPane tmpStructureGridPane = aView.getStructureGridPane();
-        if (tmpStructureGridPane.getChildren().isEmpty()) {
-            return;
-        }
-        Node tmpTargetNode = tmpStructureGridPane.getChildren().get(0);
+        Node tmpTargetNode = OverviewViewControllerHarnessTest.firstStructureNode(aView);
         MouseEvent tmpBaseEvent = new MouseEvent(MouseEvent.MOUSE_CLICKED, 1.0, 1.0, 1.0, 1.0, MouseButton.PRIMARY,
                 aClickCount, false, false, false, false, true, false, false, true, false, false, null);
         //copyFor sets the event target to the structure node so the grid pane's click handler runs its structure branch
         MouseEvent tmpTargetedEvent = tmpBaseEvent.copyFor(tmpTargetNode, tmpTargetNode);
-        if (tmpStructureGridPane.getOnMouseClicked() != null) {
-            tmpStructureGridPane.getOnMouseClicked().handle(tmpTargetedEvent);
-        }
+        Assertions.assertNotNull(tmpStructureGridPane.getOnMouseClicked(), "the structure grid pane must have a click handler");
+        tmpStructureGridPane.getOnMouseClicked().handle(tmpTargetedEvent);
     }
     //
     /**
      * Fires a synthesized primary-button mouse event of the given type at the first child node of the view's structure
-     * grid pane. Used to exercise the mouse-enter/exit style handlers registered on the rendered structure nodes. Does
-     * nothing if the grid pane is empty.
+     * grid pane. Used to exercise the mouse-enter/exit style handlers registered on the rendered structure nodes. Fails
+     * the test if the grid pane is empty.
      *
      * @param aView the overview view whose first structure node receives the event
      * @param anEventType the mouse event type to fire (e.g. {@code MOUSE_ENTERED}, {@code MOUSE_EXITED})
      */
     private static void fireStructureMouseEvent(OverviewView aView, EventType<MouseEvent> anEventType) {
-        GridPane tmpStructureGridPane = aView.getStructureGridPane();
-        if (tmpStructureGridPane.getChildren().isEmpty()) {
-            return;
-        }
-        Node tmpTargetNode = tmpStructureGridPane.getChildren().get(0);
+        Node tmpTargetNode = OverviewViewControllerHarnessTest.firstStructureNode(aView);
         MouseEvent tmpMouseEvent = new MouseEvent(anEventType, 1.0, 1.0, 1.0, 1.0, MouseButton.PRIMARY, 0,
                 false, false, false, false, true, false, false, true, false, false, null);
         Event.fireEvent(tmpTargetNode, tmpMouseEvent);
@@ -469,7 +522,7 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     //
     /**
      * Fires a synthesized primary-button drag event at the structure grid pane so the drag-detection handler sets its
-     * drag flag. Does nothing if the grid pane is empty.
+     * drag flag.
      *
      * @param aView the overview view whose structure grid pane receives the drag event
      */
@@ -482,28 +535,59 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     //
     /**
      * Fires a synthesized {@link ContextMenuEvent} at the first child node of the view's structure grid pane so the
-     * context-menu-request handler is exercised. Does nothing if the grid pane is empty.
+     * context-menu-request handler is exercised. Fails the test if the grid pane is empty or if the handler throws.
      *
      * @param aView the overview view whose first structure node receives the context-menu request
      */
     private static void fireStructureContextMenuRequest(OverviewView aView) {
         GridPane tmpStructureGridPane = aView.getStructureGridPane();
-        if (tmpStructureGridPane.getChildren().isEmpty()) {
-            return;
-        }
-        Node tmpTargetNode = tmpStructureGridPane.getChildren().get(0);
+        Node tmpTargetNode = OverviewViewControllerHarnessTest.firstStructureNode(aView);
         ContextMenuEvent tmpBaseEvent = new ContextMenuEvent(ContextMenuEvent.CONTEXT_MENU_REQUESTED,
                 1.0, 1.0, 1.0, 1.0, false, null);
         //copyFor sets the event target to the structure node so the grid pane's context-menu handler runs
         ContextMenuEvent tmpTargetedEvent = tmpBaseEvent.copyFor(tmpTargetNode, tmpTargetNode);
-        if (tmpStructureGridPane.getOnContextMenuRequested() != null) {
-            try {
-                tmpStructureGridPane.getOnContextMenuRequested().handle(tmpTargetedEvent);
-            } catch (Throwable anIgnoredPopupFailure) {
-                //showing the popup context menu may fail on a headless host; the handler body up to the show() call
-                //is still exercised and the popup failure must not abort the drive
-            }
-        }
+        Assertions.assertNotNull(tmpStructureGridPane.getOnContextMenuRequested(),
+                "the structure grid pane must have a context-menu handler");
+        tmpStructureGridPane.getOnContextMenuRequested().handle(tmpTargetedEvent);
+    }
+    //
+    /**
+     * Returns the first rendered structure node of the view's structure grid pane, failing the test if the grid pane is
+     * empty, so a structure drive can never silently pass without having targeted a structure.
+     *
+     * @param aView the overview view whose structure grid pane is read
+     * @return the first child node of the structure grid pane
+     */
+    private static Node firstStructureNode(OverviewView aView) {
+        GridPane tmpStructureGridPane = aView.getStructureGridPane();
+        Assertions.assertFalse(tmpStructureGridPane.getChildren().isEmpty(),
+                "the structure grid pane must hold rendered structures for this drive");
+        return tmpStructureGridPane.getChildren().getFirst();
+    }
+    //
+    /**
+     * Asserts the controller's current grid configuration (its private columns- and rows-per-page settings).
+     *
+     * @param aController the controller under test
+     * @param aColumns the expected number of columns per page
+     * @param aRows the expected number of rows per page
+     */
+    private static void assertGrid(OverviewViewController aController, int aColumns, int aRows) {
+        Assertions.assertEquals(aColumns, OverviewViewControllerHarnessTest.getIntProperty(aController, "columnsPerPageSetting"),
+                "unexpected columns per page");
+        Assertions.assertEquals(aRows, OverviewViewControllerHarnessTest.getIntProperty(aController, "rowsPerPageSetting"),
+                "unexpected rows per page");
+    }
+    //
+    /**
+     * Reads the value of a private {@link SimpleIntegerProperty} field of the given controller via reflection.
+     *
+     * @param aController the controller under test
+     * @param aFieldName the name of the property field
+     * @return the property's current value
+     */
+    private static int getIntProperty(OverviewViewController aController, String aFieldName) {
+        return ((SimpleIntegerProperty) OverviewViewControllerHarnessTest.getField(aController, aFieldName)).get();
     }
     //
     /**

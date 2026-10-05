@@ -30,6 +30,8 @@ import de.unijena.cheminf.mortar.model.util.AppDirTestUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 
 import javafx.application.Platform;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -39,6 +41,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.testfx.util.WaitForAsyncUtils;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -205,6 +209,13 @@ public abstract class AbstractFxTestCase {
      * The queue is therefore drained once more here before the slot is read. Because the check can fail the test, the
      * restore work runs in a {@code finally} block so no temporary home or file handler leaks into a sibling test.
      * <p>
+     * It also fails the test if any window is still showing once the test body (including its own {@code finally}
+     * clean-up) has finished. Every test hides the stages it opens, so a window still showing here is a stray one, most
+     * likely a real {@code Alert} that a deferred callback opened after the {@link de.unijena.cheminf.mortar.gui.util.GuiUtil}
+     * static mock had been closed; under Monocle such an alert's {@code showAndWait} parks the JavaFX Application Thread
+     * in a nested event loop. The stray windows are hidden before the failure is raised, so they cannot leak into the
+     * next test either.
+     * <p>
      * Instead of a JVM-wide {@code LogManager.reset()} (which would close and remove every handler on every logger in
      * the entire JVM and is never restored), only {@link FileHandler}s on the root logger are closed and removed. This
      * surgically releases any file handler that may have been rooted in the per-test temporary {@code user.home} (so
@@ -218,9 +229,13 @@ public abstract class AbstractFxTestCase {
         try {
             AbstractFxTestCase.waitForFxEvents();
             Throwable tmpUncaught = AbstractFxTestCase.FX_UNCAUGHT.getAndSet(null);
+            List<String> tmpStrayWindows = AbstractFxTestCase.hideShowingWindows();
             if (tmpUncaught != null) {
                 throw new AssertionError("A throwable escaped onto the JavaFX Application Thread during this test",
                         tmpUncaught);
+            }
+            if (!tmpStrayWindows.isEmpty()) {
+                throw new AssertionError("The test left windows showing (hidden now): " + tmpStrayWindows);
             }
         } finally {
             AppDirTestUtil.restoreAppDirPath(this.originalUserHome);
@@ -296,6 +311,28 @@ public abstract class AbstractFxTestCase {
     //</editor-fold>
     //
     //<editor-fold desc="Private methods" defaultstate="collapsed">
+    /**
+     * Hides every window that is still showing, on the JavaFX Application Thread, and returns a description of each.
+     * {@code hide()} is used instead of a close request so a {@code MainViewController} primary stage never reaches its
+     * {@code closeApplication}/{@code System.exit} handler.
+     *
+     * @return one description (class and title) per window that was still showing, empty if none was
+     * @throws Exception if the FX thread does not run the clean-up within the bounded timeout
+     */
+    private static List<String> hideShowingWindows() throws Exception {
+        List<String> tmpDescriptions = new ArrayList<>();
+        AbstractFxTestCase.runAndWait(() -> {
+            for (Window tmpWindow : new ArrayList<>(Window.getWindows())) {
+                if (tmpWindow.isShowing()) {
+                    String tmpTitle = tmpWindow instanceof Stage tmpStage ? tmpStage.getTitle() : null;
+                    tmpDescriptions.add(tmpWindow.getClass().getSimpleName() + "[" + tmpTitle + "]");
+                    tmpWindow.hide();
+                }
+            }
+        });
+        return tmpDescriptions;
+    }
+    //
     /**
      * Surfaces any throwable captured from the JavaFX Application Thread on the calling (test) thread, clearing the
      * captured reference so it is reported at most once.
