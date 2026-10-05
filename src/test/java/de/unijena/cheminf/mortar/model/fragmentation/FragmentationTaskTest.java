@@ -33,7 +33,9 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -45,27 +47,51 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Direct, headless unit tests for {@link FragmentationTask}, targeting the per-molecule exception-counter branch
- * (the generic {@code catch} in {@link FragmentationTask#call()}) that the {@link FragmentationService} happy path does
- * not reach. The branch is driven with a test-local {@link ThrowingFragmenter} — a <b>real</b> class implementing
- * {@link IMoleculeFragmenter} whose {@code fragmentMolecule} throws — not a Mockito mock (no Mockito is used anywhere in
- * MORTAR's tests). The task's {@code call()} blocks and returns the exception count synchronously, so the assertion
- * follows directly with no sleep/latch. The happy-path, filter-skip and preprocessing branches are covered transitively
- * via {@code FragmentationServiceTest} (plan 04-01); this test covers only the exception counter.
+ * Direct, headless unit tests for {@link FragmentationTask#call()}, covering the per-molecule branches the
+ * {@link FragmentationService} happy path does not reach: the typed {@code catch} around {@code fragmentMolecule} that
+ * feeds the exception counter, the failed atom-container branch, the filter-skip and preprocessing branches, the outer
+ * generic {@code catch} that feeds the unexpected-exception counter, and the thread-interrupted early return. The
+ * branches are driven with test-local fragmenters, which are real classes implementing {@link IMoleculeFragmenter}
+ * rather than mocks. The task's {@code call()} blocks and returns its counters synchronously, so the assertions follow
+ * directly with no sleep or latch.
  *
  * @author Felix Baensch
  * @version 1.0.0.0
  */
 public class FragmentationTaskTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that message-bundle-resolved strings are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        FragmentationTaskTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(FragmentationTaskTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (for deterministic, message-bundle-resolved strings) and
-     * bootstraps the Configuration singleton from the classpath (no data directory is touched by this).
+     * Constructor that bootstraps the Configuration singleton from the classpath (no data directory is touched by
+     * this).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public FragmentationTaskTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
@@ -74,8 +100,8 @@ public class FragmentationTaskTest {
     /**
      * Drives {@link FragmentationTask#call()} over a real molecule list with the test-local {@link ThrowingFragmenter}
      * (whose {@code fragmentMolecule} throws a {@link NullPointerException} for every molecule), and asserts the returned
-     * exception count is {@literal >} 0 — one per molecule that threw — confirming the per-molecule generic catch branch
-     * is exercised and the batch is not aborted by a single failure.
+     * exception count equals the number of molecules, one per molecule that threw, confirming the typed catch around
+     * {@code fragmentMolecule} is exercised and the batch is not aborted by a single failure.
      *
      * @throws Exception if anything goes wrong
      */
@@ -89,7 +115,6 @@ public class FragmentationTaskTest {
                 tmpMols, new ThrowingFragmenter(), tmpFragmentMap, "TaskTest", false);
         FragmentationTaskResult tmpResult = tmpTask.call();
         Assertions.assertNotNull(tmpResult);
-        Assertions.assertTrue(tmpResult.exceptionsCount() > 0);
         Assertions.assertEquals(tmpMols.size(), tmpResult.exceptionsCount());
     }
     //
@@ -200,7 +225,9 @@ public class FragmentationTaskTest {
     /**
      * Drives the thread-interrupted early-return branch of {@link FragmentationTask#call()}: the current thread's interrupt
      * flag is set before the task is run, so after processing the first molecule the task observes the interruption and
-     * returns {@code null}. The fragmenter used succeeds, so the early return is caused solely by the interrupt; the
+     * returns {@code null}. The fragmenter used succeeds, so the early return is caused solely by the interrupt. The first
+     * molecule must carry its fragments under the fragmentation name, while the second must be left unprocessed (no
+     * entry for the fragmentation name), which a task that merely returned {@code null} at the end would not do. The
      * interrupt flag is cleared in a finally block so sibling tests are unaffected.
      *
      * @throws Exception if anything goes wrong
@@ -223,6 +250,11 @@ public class FragmentationTaskTest {
             Thread.interrupted();
         }
         Assertions.assertNull(tmpResult);
+        //the first molecule was processed before the interrupt was observed, the second never was
+        Assertions.assertTrue(tmpMols.get(0).getAllFragments().containsKey("InterruptTask"));
+        Assertions.assertFalse(tmpMols.get(0).getAllFragments().get("InterruptTask").isEmpty());
+        Assertions.assertFalse(tmpMols.get(1).getAllFragments().containsKey("InterruptTask"));
+        Assertions.assertFalse(tmpMols.get(1).getFragmentFrequencies().containsKey("InterruptTask"));
     }
     //</editor-fold>
     //

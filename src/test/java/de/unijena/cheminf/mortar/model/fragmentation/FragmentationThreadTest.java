@@ -32,7 +32,9 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGro
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -56,16 +58,40 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 public class FragmentationThreadTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        FragmentationThreadTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(FragmentationThreadTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so the fragmenter settings tooltips and display names, which
-     * are resolved from the message.properties file during fragmenter instantiation, are deterministic) and bootstraps
-     * the Configuration singleton from the classpath (no data directory is touched by this).
+     * Constructor that bootstraps the Configuration singleton from the classpath (no data directory is touched by
+     * this).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public FragmentationThreadTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
@@ -98,9 +124,10 @@ public class FragmentationThreadTest {
     }
     //
     /**
-     * Drives {@link FragmentationThread#call()} with {@code aNumberOfTasks = 2} over a {@literal >=}2-molecule list to
-     * exercise the multi-task split branch. Asserts the returned hashtable is populated and the call completes without
-     * throwing.
+     * Drives {@link FragmentationThread#call()} with {@code aNumberOfTasks = 2} over three molecules to exercise the
+     * multi-task split branch. Every molecule carries exactly one carboxylic-acid group, so the most frequent fragment
+     * must be counted once per molecule: its absolute and molecule frequency must both equal the number of molecules,
+     * which fails if the split drops or repeats a molecule.
      *
      * @throws Exception if anything goes wrong
      */
@@ -116,10 +143,18 @@ public class FragmentationThreadTest {
         Hashtable<String, FragmentDataModel> tmpFragments = tmpThread.call();
         Assertions.assertNotNull(tmpFragments);
         Assertions.assertFalse(tmpFragments.isEmpty());
+        FragmentDataModel tmpMostFrequentFragment = null;
         for (FragmentDataModel tmpFragment : tmpFragments.values()) {
             Assertions.assertTrue(tmpFragment.getAbsoluteFrequency() >= 1);
             Assertions.assertTrue(tmpFragment.getAbsolutePercentage() > 0.0 && tmpFragment.getAbsolutePercentage() <= 1.0);
+            if (tmpMostFrequentFragment == null
+                    || tmpFragment.getAbsoluteFrequency() > tmpMostFrequentFragment.getAbsoluteFrequency()) {
+                tmpMostFrequentFragment = tmpFragment;
+            }
         }
+        //the shared carboxylic-acid fragment is counted once for each of the three molecules
+        Assertions.assertEquals(tmpMols.size(), tmpMostFrequentFragment.getAbsoluteFrequency());
+        Assertions.assertEquals(tmpMols.size(), tmpMostFrequentFragment.getMoleculeFrequency());
     }
     //</editor-fold>
     //

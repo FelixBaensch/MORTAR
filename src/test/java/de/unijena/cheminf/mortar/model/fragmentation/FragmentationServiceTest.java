@@ -41,8 +41,10 @@ import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
@@ -59,7 +61,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * Direct, headless unit tests for {@link FragmentationService}. The service orchestrates single and pipeline
@@ -83,16 +93,40 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version 1.0.0.0
  */
 public class FragmentationServiceTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        FragmentationServiceTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(FragmentationServiceTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to en-GB (so the fragmenter settings tooltips and display names, which
-     * are resolved from the message.properties file during fragmenter instantiation, are deterministic) and bootstraps
-     * the Configuration singleton from the classpath (the service reads config; no data directory is touched by this).
+     * Constructor that bootstraps the Configuration singleton from the classpath (the service reads config; no data
+     * directory is touched by this).
      *
      * @throws Exception if the Configuration singleton cannot be initialized
      */
     public FragmentationServiceTest() throws Exception {
-        Locale.setDefault(Locale.of("en", "GB"));
         Configuration.getInstance();
     }
     //</editor-fold>
@@ -127,9 +161,10 @@ public class FragmentationServiceTest {
     /**
      * Tests the task-split logic of the service by driving four (molecule count, task count) combinations that exercise
      * the even-split, modulo (remainder {@literal >} 0) and clamp (more tasks than molecules) branches in the private
-     * {@code startFragmentation} method. Each drive must complete without throwing and populate a non-empty fragment
-     * map, and the result must be shaped identically regardless of the task count (single task and two tasks over the
-     * same four molecules yield the same number of distinct fragments).
+     * {@code startFragmentation} method. Every molecule carries exactly one carboxylic-acid group, so the most frequent
+     * fragment of each drive must have an absolute and a molecule frequency equal to the number of molecules: a split
+     * that drops or duplicates a molecule changes that count. Each multi-task result must also equal the single-task
+     * result over the same molecules fragment by fragment (same fragment set, same absolute and molecule frequencies).
      *
      * @throws Exception if anything goes wrong
      */
@@ -141,19 +176,22 @@ public class FragmentationServiceTest {
         tmpFourMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCC"));
         tmpFourMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCC"));
         //size=4, tasks=1 (single task)
-        int tmpDistinctSingleTask = this.runSingleAndCountFragments(tmpFourMols, 1);
-        Assertions.assertTrue(tmpDistinctSingleTask > 0);
+        Map<String, FragmentDataModel> tmpFourSingleTask = this.runSingleFragmentation(tmpFourMols, 1);
+        FragmentationServiceTest.assertMostFrequentFragmentCoversEveryMolecule(tmpFourSingleTask, 4);
         //size=4, tasks=2 (even split)
-        int tmpDistinctTwoTasks = this.runSingleAndCountFragments(tmpFourMols, 2);
-        Assertions.assertTrue(tmpDistinctTwoTasks > 0);
-        //identical-shaped result regardless of task count
-        Assertions.assertEquals(tmpDistinctSingleTask, tmpDistinctTwoTasks);
+        Map<String, FragmentDataModel> tmpFourTwoTasks = this.runSingleFragmentation(tmpFourMols, 2);
+        FragmentationServiceTest.assertMostFrequentFragmentCoversEveryMolecule(tmpFourTwoTasks, 4);
+        FragmentationServiceTest.assertSameFragmentFrequencies(tmpFourSingleTask, tmpFourTwoTasks);
         //size=3, tasks=2 (modulo remainder > 0)
         List<MoleculeDataModel> tmpThreeMols = new ArrayList<>(tmpFourMols.subList(0, 3));
-        Assertions.assertTrue(this.runSingleAndCountFragments(tmpThreeMols, 2) > 0);
+        Map<String, FragmentDataModel> tmpThreeTwoTasks = this.runSingleFragmentation(tmpThreeMols, 2);
+        FragmentationServiceTest.assertMostFrequentFragmentCoversEveryMolecule(tmpThreeTwoTasks, 3);
+        FragmentationServiceTest.assertSameFragmentFrequencies(this.runSingleFragmentation(tmpThreeMols, 1), tmpThreeTwoTasks);
         //size=2, tasks=4 (clamp: more tasks than molecules)
         List<MoleculeDataModel> tmpTwoMols = new ArrayList<>(tmpFourMols.subList(0, 2));
-        Assertions.assertTrue(this.runSingleAndCountFragments(tmpTwoMols, 4) > 0);
+        Map<String, FragmentDataModel> tmpTwoFourTasks = this.runSingleFragmentation(tmpTwoMols, 4);
+        FragmentationServiceTest.assertMostFrequentFragmentCoversEveryMolecule(tmpTwoFourTasks, 2);
+        FragmentationServiceTest.assertSameFragmentFrequencies(this.runSingleFragmentation(tmpTwoMols, 1), tmpTwoFourTasks);
     }
     //
     /**
@@ -396,14 +434,14 @@ public class FragmentationServiceTest {
         String tmpOldHome = System.getProperty("user.home");
         try {
             AppDirTestUtil.redirectAppDirPath(aTempHome);
-            //null pipeline name -> default-name fallback branch (693)
+            //null pipeline name -> default-name fallback branch
             FragmentationService tmpNullNameService = new FragmentationService();
             tmpNullNameService.setPipeliningFragmentationName(null);
             Assertions.assertDoesNotThrow(tmpNullNameService::persistSelectedFragmenterAndPipeline);
             FragmentationService tmpReloadedFromNull = new FragmentationService();
             tmpReloadedFromNull.reloadActiveFragmenterAndPipeline();
             Assertions.assertEquals(FragmentationService.DEFAULT_PIPELINE_NAME, tmpReloadedFromNull.getPipeliningFragmentationName());
-            //invalid pipeline name (contains a tab) -> invalid-content reset branch (696-698)
+            //invalid pipeline name (contains a tab) -> invalid-content reset branch
             FragmentationService tmpInvalidNameService = new FragmentationService();
             tmpInvalidNameService.setPipeliningFragmentationName("Invalid\tName");
             Assertions.assertDoesNotThrow(tmpInvalidNameService::persistSelectedFragmenterAndPipeline);
@@ -563,39 +601,23 @@ public class FragmentationServiceTest {
     /**
      * Tests the task-loop modulo / final-task boundary branches of the private {@code startFragmentation} by driving a
      * single fragmentation over five molecules split across three parallel tasks (5 % 3 == 2, so the first two tasks get
-     * an extra molecule and the final-task index clamp applies). The drive must complete without throwing and produce a
-     * non-empty fragment map whose absolute percentages sum to approximately 1.0, and the result must be shaped
-     * identically to the same five molecules fragmented in a single task.
+     * an extra molecule and the final-task index clamp applies). Every molecule carries exactly one carboxylic-acid
+     * group, so the most frequent fragment must be counted once per molecule (absolute and molecule frequency five),
+     * and the three-task result must equal the single-task result over the same molecules fragment by fragment. A task
+     * boundary that skips or repeats a molecule fails both checks.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void multiTaskModuloBoundaryTest() throws Exception {
         List<String> tmpSmilesList = List.of("O=C(O)CC", "O=C(O)CCC", "O=C(O)CCCC", "O=C(O)CCCCC", "O=C(O)CCCCCC");
-        FragmentationService tmpThreeTaskService = new FragmentationService();
-        tmpThreeTaskService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpThreeTaskService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
-        List<MoleculeDataModel> tmpMolsThreeTasks = new ArrayList<>(tmpSmilesList.size());
+        List<MoleculeDataModel> tmpMols = new ArrayList<>(tmpSmilesList.size());
         for (String tmpSmiles : tmpSmilesList) {
-            tmpMolsThreeTasks.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
         }
-        tmpThreeTaskService.startSingleFragmentation(tmpMolsThreeTasks, 3, false);
-        Map<String, FragmentDataModel> tmpThreeTaskFragments = tmpThreeTaskService.getFragments();
-        Assertions.assertNotNull(tmpThreeTaskFragments);
-        Assertions.assertFalse(tmpThreeTaskFragments.isEmpty());
-        double tmpPercentageSum = 0.0;
-        for (FragmentDataModel tmpFragment : tmpThreeTaskFragments.values()) {
-            tmpPercentageSum += tmpFragment.getAbsolutePercentage();
-        }
-        Assertions.assertEquals(1.0, tmpPercentageSum, 1e-9);
-        //single-task drive over the same molecules must yield the same number of distinct fragments
-        FragmentationService tmpSingleTaskService = new FragmentationService();
-        tmpSingleTaskService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpSingleTaskService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
-        List<MoleculeDataModel> tmpMolsSingleTask = new ArrayList<>(tmpSmilesList.size());
-        for (String tmpSmiles : tmpSmilesList) {
-            tmpMolsSingleTask.add(FragmentationServiceTest.buildMDM(tmpSmiles));
-        }
-        tmpSingleTaskService.startSingleFragmentation(tmpMolsSingleTask, 1, false);
-        Assertions.assertEquals(tmpSingleTaskService.getFragments().size(), tmpThreeTaskFragments.size());
+        Map<String, FragmentDataModel> tmpThreeTaskFragments = this.runSingleFragmentation(tmpMols, 3);
+        FragmentationServiceTest.assertMostFrequentFragmentCoversEveryMolecule(tmpThreeTaskFragments, tmpSmilesList.size());
+        FragmentationServiceTest.assertSameFragmentFrequencies(this.runSingleFragmentation(tmpMols, 1), tmpThreeTaskFragments);
     }
     //
     /**
@@ -628,21 +650,35 @@ public class FragmentationServiceTest {
     }
     //
     /**
-     * Tests the {@code isKeepLastFragmentSetting == true} branch of {@code startPipelineFragmentation}: the same
-     * two-fragmenter pipeline is driven once with the keep-last-fragment flag {@code true} and once {@code false} over
-     * equivalent molecule sets. Both drives must complete without throwing and produce a non-empty fragment map with
-     * valid absolute frequencies and percentages; the keep-last-fragment drive must yield at least as many distinct
-     * fragments as the discard drive (keeping last fragments can only retain, never drop, results).
+     * Tests the {@code isKeepLastFragmentSetting} flag of {@code startPipelineFragmentation} with a pipeline of the Ertl
+     * functional groups finder followed by the Scaffold Generator. The Ertl stage splits each molecule into functional
+     * groups and alkane remnants; the Scaffold stage re-fragments only the ring-bearing remnants and yields nothing for
+     * the acyclic ones. With the flag {@code false} those acyclic stage-one fragments are dropped; with the flag
+     * {@code true} they are kept. So the kept result must be a strict superset of the discarded one, and every fragment
+     * only the kept run reports must be a fragment the Ertl stage produces on its own.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void pipelineKeepLastFragmentBranchTest() throws Exception {
-        int tmpKeptCount = this.runTwoStagePipelineAndCountFragments(true);
-        int tmpDiscardedCount = this.runTwoStagePipelineAndCountFragments(false);
-        Assertions.assertTrue(tmpKeptCount > 0);
-        Assertions.assertTrue(tmpDiscardedCount > 0);
-        Assertions.assertTrue(tmpKeptCount >= tmpDiscardedCount);
+        //non-aromatic input: the Scaffold Generator fails on un-kekulized aromatic input (see buildMDM)
+        List<String> tmpSmilesList = List.of("O=C(O)CCC1CCCCC1", "OCCCC1CCC1", "O=C(O)CCCC");
+        Map<String, FragmentDataModel> tmpKept = this.runErtlThenScaffoldPipeline(tmpSmilesList, true);
+        Map<String, FragmentDataModel> tmpDiscarded = this.runErtlThenScaffoldPipeline(tmpSmilesList, false);
+        Assertions.assertFalse(tmpDiscarded.isEmpty(), "the ring-bearing remnants must still yield scaffolds");
+        Assertions.assertTrue(tmpKept.keySet().containsAll(tmpDiscarded.keySet()));
+        Set<String> tmpOnlyKept = new HashSet<>(tmpKept.keySet());
+        tmpOnlyKept.removeAll(tmpDiscarded.keySet());
+        Assertions.assertFalse(tmpOnlyKept.isEmpty(),
+                "keeping the last fragments must retain the stage-one fragments the Scaffold stage cannot re-fragment");
+        List<MoleculeDataModel> tmpMols = new ArrayList<>(tmpSmilesList.size());
+        for (String tmpSmiles : tmpSmilesList) {
+            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+        }
+        Set<String> tmpErtlOnlyFragments = FragmentationServiceTest.singleStageFragmentSmiles(
+                ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME, tmpMols);
+        Assertions.assertTrue(tmpErtlOnlyFragments.containsAll(tmpOnlyKept),
+                "the additionally kept fragments must be stage-one (Ertl) fragments");
     }
     //
     /**
@@ -651,7 +687,9 @@ public class FragmentationServiceTest {
      * glycoside molecules. The later stages re-fragment the fragments of earlier stages, so a molecule's stored parent
      * fragments themselves carry child fragments, exercising the parent-has-children branch of the merge loop. The drive
      * must complete without throwing and produce a non-empty fragment map whose absolute frequencies and percentages are
-     * valid and whose absolute percentages sum to approximately 1.0.
+     * valid. Because those range checks would also hold for a single-stage run, the distinct-fragment set is additionally
+     * required to differ from the set the first stage alone produces over the same molecules (as in the mol-by-mol
+     * sibling test below).
      *
      * @throws Exception if anything goes wrong
      */
@@ -671,13 +709,16 @@ public class FragmentationServiceTest {
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
         Assertions.assertNotNull(tmpFragments);
         Assertions.assertFalse(tmpFragments.isEmpty());
-        double tmpPercentageSum = 0.0;
         for (FragmentDataModel tmpFragment : tmpFragments.values()) {
             Assertions.assertTrue(tmpFragment.getAbsoluteFrequency() >= 1);
             Assertions.assertTrue(tmpFragment.getAbsolutePercentage() > 0.0 && tmpFragment.getAbsolutePercentage() <= 1.0);
-            tmpPercentageSum += tmpFragment.getAbsolutePercentage();
         }
-        Assertions.assertEquals(1.0, tmpPercentageSum, 1e-9);
+        //discriminating cross-stage check: the three-stage result must differ from what stage one produces alone
+        Set<String> tmpFirstStageOnlyFragments = FragmentationServiceTest.singleStageFragmentSmiles(
+                SugarRemovalUtilityFragmenter.ALGORITHM_NAME, tmpMols);
+        Assertions.assertFalse(tmpFirstStageOnlyFragments.isEmpty());
+        Assertions.assertNotEquals(tmpFirstStageOnlyFragments, tmpFragments.keySet(),
+                "the downstream stages must re-fragment the first stage's output");
     }
     //
     /**
@@ -717,40 +758,47 @@ public class FragmentationServiceTest {
     }
     //
     /**
-     * Tests the zero-total-frequency branches: a Scaffold-Generator pipeline is driven over molecules that yield no
-     * fragments, so the sum of absolute frequencies is zero and the percentage-calculation step is skipped (the
-     * warning-only branch in {@code startPipelineFragmentation}). The drive must complete without throwing and leave a
-     * non-null, empty fragment map.
+     * Tests the zero-total-frequency branches: a Scaffold-Generator pipeline is driven over acyclic molecules, which
+     * have no scaffold, so the sum of absolute frequencies is zero and the percentage-calculation step is skipped (the
+     * warning-only branch in {@code startPipelineFragmentation}). A direct {@link FragmentationTask} run first proves
+     * that the empty result is genuine: every molecule is counted as having produced no fragments, and none failed with
+     * an exception or a SMILES-generation error. The pipeline drive must complete without throwing and leave a non-null,
+     * empty fragment map.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void pipelineZeroFrequencyTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        //the Scaffold Generator yields no fragments for these molecules, which is what drives the zero-total-frequency
-        //branch; that precondition is asserted below rather than assumed, so a CDK snapshot that starts returning
-        //fragments here fails the test loudly instead of silently leaving the branch uncovered
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
                 FragmentationServiceTest.fragmenterCopy(tmpService, ScaffoldGeneratorFragmenter.ALGORITHM_NAME),
                 FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("ZeroFrequencyPipeline");
-        List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationServiceTest.buildMDM("c1ccc2c(c1)ccc3c2cccc3O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCc1ccc(O)cc1"));
-        Assertions.assertTrue(
-                FragmentationServiceTest.singleStageFragmentSmiles(
-                        ScaffoldGeneratorFragmenter.ALGORITHM_NAME, tmpMols).isEmpty(),
-                "the Scaffold Generator must yield no fragments for these molecules, otherwise this test no longer "
-                        + "reaches the zero-total-frequency branch it exists for");
+        List<String> tmpSmilesList = List.of("CCCCCC", "O=C(O)CCCCO");
+        List<MoleculeDataModel> tmpMols = new ArrayList<>(tmpSmilesList.size());
+        List<MoleculeDataModel> tmpPreconditionMols = new ArrayList<>(tmpSmilesList.size());
+        for (String tmpSmiles : tmpSmilesList) {
+            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+            tmpPreconditionMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+        }
+        //precondition: the Scaffold Generator yields no fragments for these molecules because they have no rings, not
+        //because fragmentation failed; a failure would leave the map empty just the same and hide a broken stage
+        FragmentationTaskResult tmpPrecondition = new FragmentationTask(tmpPreconditionMols,
+                FragmentationServiceTest.fragmenterCopy(tmpService, ScaffoldGeneratorFragmenter.ALGORITHM_NAME),
+                new ConcurrentHashMap<>(), "ZeroFrequencyPrecondition", false).call();
+        Assertions.assertEquals(tmpSmilesList.size(), tmpPrecondition.moleculeProducedNoFragmentsCount());
+        Assertions.assertEquals(0, tmpPrecondition.exceptionsCount());
+        Assertions.assertEquals(0, tmpPrecondition.unexpectedExceptionsCount());
+        Assertions.assertEquals(0, tmpPrecondition.fragmentFailedSmilesGenerationCount());
         Assertions.assertDoesNotThrow(() -> tmpService.startPipelineFragmentation(tmpMols, 1, false, false));
         Assertions.assertNotNull(tmpService.getFragments());
         Assertions.assertTrue(tmpService.getFragments().isEmpty());
     }
     //
     /**
-     * Tests the deprecated mol-by-mol pipeline over a genuine two-stage pipeline with two distinct fragmenters (the Ertl
-     * functional groups finder followed by the Sugar Removal Utility), driving the {@code i == 1} stage loop body that
+     * Tests the deprecated mol-by-mol pipeline over a genuine two-stage pipeline with two distinct fragmenters (the Sugar
+     * Removal Utility followed by the Ertl functional groups finder), driving the {@code i == 1} stage loop body that
      * re-fragments each molecule's stage-one fragments. As in the three-stage test, the result is required to differ
      * from the first stage's own output so the assertion cannot be satisfied by a single-stage run, and the
      * empty-pipeline-name fallback branch is exercised by leaving the pipeline name empty — the fallback name is
@@ -937,24 +985,55 @@ public class FragmentationServiceTest {
     }
     //
     /**
-     * Tests the interrupted-thread branch of {@code abortExecutor}: a single fragmentation is run first so the service's
-     * internal {@code ExecutorService} is instantiated, then the current thread's interrupt flag is set so that the
-     * {@code executorService.awaitTermination} call inside {@code abortExecutor} throws an {@link InterruptedException},
-     * driving the catch body (which logs a warning, force-shuts down the executor, and re-sets the interrupt flag). The
-     * interrupt flag is cleared in a finally block so sibling tests are unaffected. The method must not throw.
+     * Tests the interrupted-thread branch of {@code abortExecutor}. {@code awaitTermination} only throws an
+     * {@link InterruptedException} for a pool that has not terminated yet; a pool whose tasks have finished returns
+     * {@code true} without looking at the interrupt flag. So a fragmentation is started on a background thread with a
+     * test-local {@link BlockingFragmenter} pipeline stage that blocks inside {@code fragmentMolecule} until released, and
+     * {@code abortExecutor} is called with the interrupt flag set only once that task is known to be running. The catch
+     * body is the only place in {@code abortExecutor} that logs a warning carrying an {@link InterruptedException}, so
+     * such a log record is asserted, together with the re-set interrupt flag and the interruption of the blocked worker by
+     * the subsequent {@code shutdownNow}. The interrupt flag is cleared, the worker released and the log handler removed
+     * in a finally block so sibling tests are unaffected.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void abortExecutorInterruptedTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
+        BlockingFragmenter tmpBlockingFragmenter = new BlockingFragmenter();
+        tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {tmpBlockingFragmenter});
+        tmpService.setPipeliningFragmentationName("BlockingPipeline");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(1);
         tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
-        //run a fragmentation so the internal executor service exists
-        tmpService.startSingleFragmentation(tmpMols, 1, false);
+        Thread tmpFragmentationThread = new Thread(() -> {
+            try {
+                tmpService.startPipelineFragmentation(tmpMols, 1, false, false);
+            } catch (Exception anException) {
+                //the aborted drive may end in an exception; only abortExecutor is under test here
+            }
+        });
+        Logger tmpServiceLogger = Logger.getLogger(FragmentationService.class.getName());
+        List<LogRecord> tmpRecords = new CopyOnWriteArrayList<>();
+        Handler tmpHandler = new Handler() {
+            @Override
+            public void publish(LogRecord aRecord) {
+                tmpRecords.add(aRecord);
+            }
+            @Override
+            public void flush() {
+                //nothing buffered
+            }
+            @Override
+            public void close() {
+                //nothing to release
+            }
+        };
+        tmpServiceLogger.addHandler(tmpHandler);
         try {
-            //set the interrupt flag so awaitTermination inside abortExecutor throws InterruptedException
+            tmpFragmentationThread.start();
+            Assertions.assertTrue(tmpBlockingFragmenter.started.await(30, TimeUnit.SECONDS),
+                    "the blocking fragmentation task never started");
+            //the pool now has a running task, so awaitTermination inside abortExecutor must throw InterruptedException
             Thread.currentThread().interrupt();
             Assertions.assertDoesNotThrow(tmpService::abortExecutor);
             //abortExecutor re-sets the interrupt flag in its catch body
@@ -962,7 +1041,16 @@ public class FragmentationServiceTest {
         } finally {
             //clear the interrupt status so subsequent tests are not affected
             Thread.interrupted();
+            tmpBlockingFragmenter.release.countDown();
+            tmpFragmentationThread.join(30000);
+            tmpServiceLogger.removeHandler(tmpHandler);
         }
+        Assertions.assertTrue(tmpRecords.stream().anyMatch(aRecord -> aRecord.getLevel() == Level.WARNING
+                        && aRecord.getThrown() instanceof InterruptedException),
+                "abortExecutor must log the InterruptedException from its catch body");
+        //the catch body's shutdownNow interrupts the blocked worker
+        Assertions.assertTrue(tmpBlockingFragmenter.wasInterrupted);
+        Assertions.assertFalse(tmpFragmentationThread.isAlive());
     }
     //</editor-fold>
     //
@@ -1037,7 +1125,10 @@ public class FragmentationServiceTest {
     }
     //
     /**
-     * Builds a MoleculeDataModel from a SMILES string using the verified (IAtomContainer, boolean) constructor.
+     * Builds a MoleculeDataModel from a SMILES string using the verified (IAtomContainer, boolean) constructor. The
+     * SMILES is parsed without kekulization, so aromatic input stays un-kekulized; the Scaffold Generator fails on such
+     * input (it throws, or yields fragments whose SMILES cannot be generated), which is why the Scaffold-stage tests use
+     * non-aromatic molecules.
      *
      * @param aSmiles SMILES string of the molecule
      * @return MoleculeDataModel for the given SMILES
@@ -1066,15 +1157,52 @@ public class FragmentationServiceTest {
     }
     //
     /**
-     * Runs a single fragmentation on a fresh service over the given molecules with the given number of tasks and
-     * returns the number of distinct fragments produced.
+     * Asserts that the most frequent fragment of the given map is counted exactly once per molecule: its absolute
+     * frequency and its molecule frequency both equal the given number of molecules. Used with molecule sets in which
+     * every molecule carries exactly one carboxylic-acid group, so a fragmentation that drops or double-counts a
+     * molecule changes the count.
+     *
+     * @param aFragmentsMap map of unique SMILES to FragmentDataModel
+     * @param aNumberOfMolecules the number of molecules that were fragmented
+     */
+    private static void assertMostFrequentFragmentCoversEveryMolecule(Map<String, FragmentDataModel> aFragmentsMap,
+                                                                      int aNumberOfMolecules) {
+        Assertions.assertNotNull(aFragmentsMap);
+        Assertions.assertFalse(aFragmentsMap.isEmpty());
+        FragmentDataModel tmpMaxFrequencyFragment = FragmentationServiceTest.findMaxAbsoluteFrequencyFragment(aFragmentsMap);
+        Assertions.assertEquals(aNumberOfMolecules, tmpMaxFrequencyFragment.getAbsoluteFrequency());
+        Assertions.assertEquals(aNumberOfMolecules, tmpMaxFrequencyFragment.getMoleculeFrequency());
+    }
+    //
+    /**
+     * Asserts that two fragment maps hold the same fragments with the same absolute and molecule frequencies.
+     *
+     * @param anExpected the reference fragment map
+     * @param anActual the fragment map to compare
+     */
+    private static void assertSameFragmentFrequencies(Map<String, FragmentDataModel> anExpected,
+                                                      Map<String, FragmentDataModel> anActual) {
+        Assertions.assertEquals(anExpected.keySet(), anActual.keySet());
+        for (Map.Entry<String, FragmentDataModel> tmpEntry : anExpected.entrySet()) {
+            FragmentDataModel tmpActual = anActual.get(tmpEntry.getKey());
+            Assertions.assertEquals(tmpEntry.getValue().getAbsoluteFrequency(), tmpActual.getAbsoluteFrequency(),
+                    "absolute frequency of " + tmpEntry.getKey());
+            Assertions.assertEquals(tmpEntry.getValue().getMoleculeFrequency(), tmpActual.getMoleculeFrequency(),
+                    "molecule frequency of " + tmpEntry.getKey());
+        }
+    }
+    //
+    /**
+     * Runs a single Ertl fragmentation on a fresh service over fresh copies of the given molecules with the given number
+     * of tasks and returns the resulting fragment map.
      *
      * @param aListOfMolecules molecules to fragment
      * @param aNumberOfTasks number of parallel tasks
-     * @return number of distinct fragments in the result map
+     * @return the resulting fragment map
      * @throws Exception if anything goes wrong
      */
-    private int runSingleAndCountFragments(List<MoleculeDataModel> aListOfMolecules, int aNumberOfTasks) throws Exception {
+    private Map<String, FragmentDataModel> runSingleFragmentation(List<MoleculeDataModel> aListOfMolecules,
+                                                                  int aNumberOfTasks) throws Exception {
         FragmentationService tmpService = new FragmentationService();
         tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         //fresh molecule data models per drive so previous fragmentation state does not interfere
@@ -1085,45 +1213,132 @@ public class FragmentationServiceTest {
         tmpService.startSingleFragmentation(tmpFreshMols, aNumberOfTasks, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
         Assertions.assertNotNull(tmpFragments);
-        Assertions.assertFalse(tmpFragments.isEmpty());
-        return tmpFragments.size();
+        return tmpFragments;
     }
     //
     /**
-     * Runs a genuine two-stage pipeline (the Ertl functional groups finder followed by the Sugar Removal Utility) on a
-     * fresh service over a small molecule set and returns the number of distinct fragments produced. The keep-last-fragment
-     * flag is passed through so both its branches can be exercised by the caller.
+     * Runs a two-stage pipeline (the Ertl functional groups finder followed by the Scaffold Generator) on a fresh service
+     * over the given molecules and returns the resulting fragment map. The keep-last-fragment flag is passed through so
+     * both its branches can be exercised by the caller.
      *
-     * @param isKeepLastFragment whether the last pipeline fragments should be kept when a molecule produces no new fragment
-     * @return number of distinct fragments in the result map
+     * @param aSmilesList SMILES strings of the molecules to fragment
+     * @param isKeepLastFragment whether stage-one fragments that the next stage does not re-fragment are kept
+     * @return the resulting fragment map
      * @throws Exception if anything goes wrong
      */
-    private int runTwoStagePipelineAndCountFragments(boolean isKeepLastFragment) throws Exception {
+    private Map<String, FragmentDataModel> runErtlThenScaffoldPipeline(List<String> aSmilesList,
+                                                                       boolean isKeepLastFragment) throws Exception {
         FragmentationService tmpService = new FragmentationService();
-        //Sugar Removal Utility first (splits sugar moieties from aglycone), then the Ertl functional groups finder
-        //re-fragments those stage-one fragments, producing the nested parent/child fragment structure
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                FragmentationServiceTest.fragmenterCopy(tmpService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME),
-                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
+                FragmentationServiceTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                FragmentationServiceTest.fragmenterCopy(tmpService, ScaffoldGeneratorFragmenter.ALGORITHM_NAME)
         });
-        tmpService.setPipeliningFragmentationName("TwoStagePipeline");
-        List<MoleculeDataModel> tmpMols = new ArrayList<>(4);
-        //a disaccharide and a glycoside both bear sugar moieties that the SRU stage splits, whose aglycone children the
-        //Ertl stage fragments further, exercising the parent-has-children path of the pipeline merge
-        tmpMols.add(FragmentationServiceTest.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCCc1ccccc1O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("OCC1OC(O)C(O)C(O)C1O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
+        tmpService.setPipeliningFragmentationName("ErtlThenScaffoldPipeline");
+        List<MoleculeDataModel> tmpMols = new ArrayList<>(aSmilesList.size());
+        for (String tmpSmiles : aSmilesList) {
+            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+        }
         tmpService.startPipelineFragmentation(tmpMols, 1, false, isKeepLastFragment);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
         Assertions.assertNotNull(tmpFragments);
-        Assertions.assertFalse(tmpFragments.isEmpty());
-        for (FragmentDataModel tmpFragment : tmpFragments.values()) {
-            Assertions.assertTrue(tmpFragment.getAbsoluteFrequency() >= 1);
-            Assertions.assertTrue(tmpFragment.getAbsolutePercentage() > 0.0 && tmpFragment.getAbsolutePercentage() <= 1.0);
-        }
-        return tmpFragments.size();
+        return tmpFragments;
     }
     //
+    //</editor-fold>
+    //
+    //<editor-fold desc="Test-local fragmenter" defaultstate="collapsed">
+    /**
+     * Real (non-mock) test-local {@link IMoleculeFragmenter} whose {@link #fragmentMolecule(IAtomContainer)} signals
+     * that it has started and then blocks until it is released or its thread is interrupted, so a fragmentation task can
+     * be held running while {@code abortExecutor} is called. {@link #copy()} returns this instance, so the copy the
+     * service makes per task shares the latches and the interruption flag with the test.
+     */
+    private static final class BlockingFragmenter implements IMoleculeFragmenter {
+        /**
+         * Counted down once {@code fragmentMolecule} has been entered.
+         */
+        private final CountDownLatch started = new CountDownLatch(1);
+        /**
+         * Counted down by the test to release a blocked {@code fragmentMolecule} call.
+         */
+        private final CountDownLatch release = new CountDownLatch(1);
+        /**
+         * Whether the blocked {@code fragmentMolecule} call was interrupted.
+         */
+        private volatile boolean wasInterrupted = false;
+        //
+        @Override
+        public List<Property<?>> settingsProperties() {
+            return new ArrayList<>(0);
+        }
+        //
+        @Override
+        public Map<String, String> getSettingNameToTooltipTextMap() {
+            return Map.of();
+        }
+        //
+        @Override
+        public Map<String, String> getSettingNameToDisplayNameMap() {
+            return Map.of();
+        }
+        //
+        @Override
+        public String getFragmentationAlgorithmName() {
+            return "BlockingFragmenter";
+        }
+        //
+        @Override
+        public String getFragmentationAlgorithmDisplayName() {
+            return "Blocking Fragmenter";
+        }
+        //
+        @Override
+        public IMoleculeFragmenter copy() {
+            return this;
+        }
+        //
+        @Override
+        public void restoreDefaultSettings() {
+            //no-op: this test fragmenter has no settings
+        }
+        //
+        @Override
+        public List<IAtomContainer> fragmentMolecule(IAtomContainer aMolecule)
+                throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
+            this.started.countDown();
+            try {
+                if (!this.release.await(30, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("BlockingFragmenter was neither released nor interrupted");
+                }
+            } catch (InterruptedException anException) {
+                this.wasInterrupted = true;
+                Thread.currentThread().interrupt();
+            }
+            List<IAtomContainer> tmpFragments = new ArrayList<>(1);
+            tmpFragments.add(aMolecule);
+            return tmpFragments;
+        }
+        //
+        @Override
+        public boolean shouldBeFiltered(IAtomContainer aMolecule) {
+            return false;
+        }
+        //
+        @Override
+        public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
+            return false;
+        }
+        //
+        @Override
+        public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
+            return true;
+        }
+        //
+        @Override
+        public IAtomContainer applyPreprocessing(IAtomContainer aMolecule)
+                throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
+            return aMolecule;
+        }
+    }
     //</editor-fold>
 }
