@@ -549,16 +549,13 @@ public class GuiUtil {
     /**
      * Copies the given molecule structure image to the system clipboard.
      *
-     * @param aMoleculeDataModel molecule whose structure should be copied
+     * @param anAtomContainer molecule whose structure should be copied
      */
-    public static void copyMoleculeStructureImageToClipboard(MoleculeDataModel aMoleculeDataModel) {
-        if (aMoleculeDataModel == null) {
+    public static void copyMoleculeStructureImageToClipboard(IAtomContainer anAtomContainer) {
+        if (anAtomContainer == null) {
             return;
         }
-
-        try {
-            Image tmpStructureImage = DepictionUtil.depictImage(
-                    aMoleculeDataModel.getAtomContainer(),
+            Image tmpStructureImage = DepictionUtil.depictImage(anAtomContainer,
                     1.0,
                     GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
                     GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
@@ -567,17 +564,26 @@ public class GuiUtil {
             ClipboardContent tmpContent = new ClipboardContent();
             tmpContent.putImage(tmpStructureImage);
             Clipboard.getSystemClipboard().setContent(tmpContent);
+        }
+
+    public static void copyMoleculeStructureImageToClipboard(MoleculeDataModel aMoleculeDataModel) {
+        if (aMoleculeDataModel == null) {
+            return;
+        }
+        try {
+            IAtomContainer tmpAtomContainer = aMoleculeDataModel.getAtomContainer();
+            copyMoleculeStructureImageToClipboard(tmpAtomContainer);
         } catch (CDKException aCDKException) {
             GuiUtil.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            GuiUtil.guiExceptionAlert(
-                    Message.get("Error.ExceptionAlert.Title"),
-                    Message.get("Error.ExceptionAlert.Header"),
-                    aCDKException.toString(),
-                    aCDKException
-            );
+            int tmpErrorImageWidth = (int) GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH;
+            int tmpErrorImageHeight = (int) GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT;
+            Image tmpErrorImage = DepictionUtil.depictErrorImage(aCDKException.getMessage(), tmpErrorImageWidth, tmpErrorImageHeight);
+            ClipboardContent tmpContent = new ClipboardContent();
+            tmpContent.putImage(tmpErrorImage);
+            Clipboard.getSystemClipboard().setContent(tmpContent);
         }
     }
-
+    //
     /**
      * Copies the unique SMILES of the given molecule to the system clipboard.
      *
@@ -591,7 +597,27 @@ public class GuiUtil {
         tmpContent.putString(aMoleculeDataModel.getUniqueSmiles());
         Clipboard.getSystemClipboard().setContent(tmpContent);
     }
-
+    //
+    /**
+     * Copies the unique SMILES of the given atom container to the system clipboard. Does nothing if the atom container
+     * is null or no SMILES could be created.
+     *
+     * @param anAtomContainer atom container whose SMILES should be copied
+     * @param isStereoChemEncoded whether stereochemistry should be encoded in the SMILES
+     * @param isAromaticityEncoded whether aromaticity should be encoded in the SMILES
+     */
+    public static void copyMoleculeSmilesToClipboard(IAtomContainer anAtomContainer, boolean isStereoChemEncoded, boolean isAromaticityEncoded) {
+        if (anAtomContainer == null) {
+            return;
+        }
+        String tmpSmiles = ChemUtil.createUniqueSmiles(anAtomContainer, isStereoChemEncoded, isAromaticityEncoded);
+        if (tmpSmiles == null) {
+            return;
+        }
+        ClipboardContent tmpContent = new ClipboardContent();
+        tmpContent.putString(tmpSmiles);
+        Clipboard.getSystemClipboard().setContent(tmpContent);
+    }
     /**
      * Copies the name of the given molecule to the system clipboard.
      *
@@ -603,6 +629,25 @@ public class GuiUtil {
         }
         ClipboardContent tmpContent = new ClipboardContent();
         tmpContent.putString(aMoleculeDataModel.getName());
+        Clipboard.getSystemClipboard().setContent(tmpContent);
+    }
+    //
+    /**
+     * Copies the name of the given atom container to the system clipboard. The name is read from the atom container
+     * property Importer.MOLECULE_NAME_PROPERTY_KEY. Does nothing if the atom container is null or has no name.
+     *
+     * @param anAtomContainer atom container whose name should be copied
+     */
+    public static void copyMoleculeNameToClipboard(IAtomContainer anAtomContainer) {
+        if (anAtomContainer == null) {
+            return;
+        }
+        String tmpName = (String) anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY);
+        if (tmpName == null) {
+            return;
+        }
+        ClipboardContent tmpContent = new ClipboardContent();
+        tmpContent.putString(tmpName);
         Clipboard.getSystemClipboard().setContent(tmpContent);
     }
     //

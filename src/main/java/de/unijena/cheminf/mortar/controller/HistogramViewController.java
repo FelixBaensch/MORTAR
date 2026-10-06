@@ -993,17 +993,7 @@ public class HistogramViewController implements IViewToolController {
             Clipboard.getSystemClipboard().setContent(tmpSmilesClipboardContent);
         });
         tmpCopyStructureMenuItem.setOnAction(event -> {
-            //note: making the background transparent leads to problems on Windows, where the background then appears black
-            Image tmpCopyImageOnBar = DepictionUtil.depictImage(
-                    this.atomContainerForDisplayCache,
-                    12.0,
-                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
-                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
-                    true,
-                    true);
-            ClipboardContent tmpImageClipboardContent = new ClipboardContent();
-            tmpImageClipboardContent.putImage(tmpCopyImageOnBar);
-            Clipboard.getSystemClipboard().setContent(tmpImageClipboardContent);
+            GuiUtil.copyMoleculeStructureImageToClipboard(this.atomContainerForDisplayCache);
         });
         tmpNodePane.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
             tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);

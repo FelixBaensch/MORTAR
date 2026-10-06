@@ -1296,29 +1296,13 @@ public class OverviewViewController implements IViewToolController {
         //copySmilesMenuItem listener
         tmpCopySmilesMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                String tmpSmilesString;
-                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
-                    tmpSmilesString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getUniqueSmiles();
-                } else {
-                    tmpSmilesString = "";
-                }
-                ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putString(tmpSmilesString);
-                Clipboard.getSystemClipboard().setContent(tmpContent);
+                GuiUtil.copyMoleculeSmilesToClipboard(this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList));
             }
         });
         //copyNameMenuItem listener
         tmpCopyNameMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
-                String tmpNameString;
-                if (this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList) != null) {
-                    tmpNameString = this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getName();
-                } else {
-                    tmpNameString = "";
-                }
-                ClipboardContent tmpContent = new ClipboardContent();
-                tmpContent.putString(tmpNameString);
-                Clipboard.getSystemClipboard().setContent(tmpContent);
+                GuiUtil.copyMoleculeNameToClipboard(this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList));
             }
         });
         //add view-independent MenuItems
