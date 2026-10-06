@@ -113,7 +113,6 @@ public class FragmentationSettingsViewController {
         this.fragmentationSettingsViewStage.setScene(tmpScene);
         this.fragmentationSettingsViewStage.initModality(Modality.WINDOW_MODAL);
         this.fragmentationSettingsViewStage.initOwner(this.mainStage);
-        this.fragmentationSettingsViewStage.show();
         this.fragmentationSettingsViewStage.setTitle(Message.get("FragmentationSettingsView.title.text"));
         this.fragmentationSettingsViewStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.fragmentationSettingsViewStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
@@ -134,6 +133,7 @@ public class FragmentationSettingsViewController {
                 this.settingsView.getSelectionModel().select(tmpTab);
             }
         }
+        this.fragmentationSettingsViewStage.show();
     }
     //
     /**
