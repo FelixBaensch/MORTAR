@@ -651,14 +651,7 @@ public class GuiUtil {
      * @return the suitable page count (&gt;= 1)
      */
     public static int calculatePageCount(int aItemCount, int aItemsPerPage) {
-        int tmpPageCount = aItemCount / aItemsPerPage;
-        if (aItemCount % aItemsPerPage > 0) {
-            tmpPageCount++;
-        }
-        if (aItemCount == 0) {
-            tmpPageCount = 1;
-        }
-        return tmpPageCount;
+        return Math.max(1, Math.ceilDiv(aItemCount, aItemsPerPage));
     }
     //</editor-fold>
 }
