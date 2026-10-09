@@ -789,6 +789,8 @@ public class HistogramViewController implements IViewToolController {
                 tmpFullSmilesLength.size());
         this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
         this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
+        Collections.reverse(this.displayedHistogramSmiles);
+        Collections.reverse(this.displayedHistogramFrequencies);
         this.histogramView.getExportCSVButton().setDisable(
                 this.displayedHistogramSmiles == null || this.displayedHistogramSmiles.isEmpty() || this.displayedHistogramFrequencies == null || this.displayedHistogramFrequencies.isEmpty());
         XYChart.Series<Number, String> tmpSeries = new XYChart.Series<>();
