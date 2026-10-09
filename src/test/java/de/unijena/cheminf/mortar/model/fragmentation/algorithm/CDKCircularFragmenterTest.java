@@ -68,6 +68,7 @@ class CDKCircularFragmenterTest {
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
         Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
         Assertions.assertDoesNotThrow(tmpFragmenter::getRadiusSetting);
+        Assertions.assertDoesNotThrow(tmpFragmenter::getIncludeSmallerRadiiSetting);
         Assertions.assertDoesNotThrow(tmpFragmenter::getPreserveStereoSetting);
         Assertions.assertDoesNotThrow(tmpFragmenter::getMarkAttachmentsSetting);
         Assertions.assertDoesNotThrow(tmpFragmenter::getApplyAromaticityDetectionSetting);
@@ -78,6 +79,7 @@ class CDKCircularFragmenterTest {
         }
         // Verify default values match the declared constants
         Assertions.assertEquals(CDKCircularFragmenter.RADIUS_SETTING_DEFAULT, tmpFragmenter.getRadiusSetting());
+        Assertions.assertEquals(CDKCircularFragmenter.INCLUDE_SMALLER_RADII_SETTING_DEFAULT, tmpFragmenter.getIncludeSmallerRadiiSetting());
         Assertions.assertEquals(CDKCircularFragmenter.PRESERVE_STEREO_SETTING_DEFAULT, tmpFragmenter.getPreserveStereoSetting());
         Assertions.assertEquals(CDKCircularFragmenter.MARK_ATTACHMENTS_SETTING_DEFAULT, tmpFragmenter.getMarkAttachmentsSetting());
         Assertions.assertEquals(CDKCircularFragmenter.APPLY_AROMATICITY_DETECTION_SETTING_DEFAULT, tmpFragmenter.getApplyAromaticityDetectionSetting());
@@ -181,6 +183,27 @@ class CDKCircularFragmenterTest {
     }
     //
     /**
+     * Tests the include-smaller-radii setting using benzene.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    void includeSmallerRadiiSettingTest() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        CDKCircularFragmenter tmpFragmenter = new CDKCircularFragmenter();
+        IAtomContainer tmpBenzene = tmpSmiPar.parseSmiles("c1ccccc1");
+        int tmpAtomCount = tmpBenzene.getAtomCount();
+        tmpFragmenter.setRadiusSetting(3);
+        tmpFragmenter.setIncludeSmallerRadiiSetting(true);
+        List<IAtomContainer> tmpFrags = tmpFragmenter.fragmentMolecule(tmpBenzene);
+        // 4 radii: 0, 1, 2, 3; one fragment created per atom in each round
+        Assertions.assertEquals(tmpAtomCount * 4, tmpFrags.size());
+        // Verify that fragments from at least the smallest (0) and largest (3) radii are present
+        Assertions.assertTrue(tmpFrags.stream().anyMatch(f -> f.getAtomCount() == 1));
+        Assertions.assertTrue(tmpFrags.stream().anyMatch(f -> f.getAtomCount() == tmpAtomCount));
+    }
+    //
+    /**
      * Tests the mark-attachments setting using propane (CCC, 3 atoms) at radius 1.
      * <ul>
      *   <li>Fragment 0 (center = C0, terminal carbon): contains C0 and C1; the bond C1–C2 was cut.
@@ -264,6 +287,7 @@ class CDKCircularFragmenterTest {
         // Change every setting away from its default
         tmpFragmenter.setRadiusSetting(5);
         tmpFragmenter.setPreserveStereoSetting(!CDKCircularFragmenter.PRESERVE_STEREO_SETTING_DEFAULT);
+        tmpFragmenter.setIncludeSmallerRadiiSetting(!CDKCircularFragmenter.INCLUDE_SMALLER_RADII_SETTING_DEFAULT);
         tmpFragmenter.setMarkAttachmentsSetting(!CDKCircularFragmenter.MARK_ATTACHMENTS_SETTING_DEFAULT);
         tmpFragmenter.setApplyAromaticityDetectionSetting(!CDKCircularFragmenter.APPLY_AROMATICITY_DETECTION_SETTING_DEFAULT);
         tmpFragmenter.setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption.CDK);
@@ -271,6 +295,7 @@ class CDKCircularFragmenterTest {
         // Restore and verify every setting is back to its default
         tmpFragmenter.restoreDefaultSettings();
         Assertions.assertEquals(CDKCircularFragmenter.RADIUS_SETTING_DEFAULT, tmpFragmenter.getRadiusSetting());
+        Assertions.assertEquals(CDKCircularFragmenter.INCLUDE_SMALLER_RADII_SETTING_DEFAULT, tmpFragmenter.getIncludeSmallerRadiiSetting());
         Assertions.assertEquals(CDKCircularFragmenter.PRESERVE_STEREO_SETTING_DEFAULT, tmpFragmenter.getPreserveStereoSetting());
         Assertions.assertEquals(CDKCircularFragmenter.MARK_ATTACHMENTS_SETTING_DEFAULT, tmpFragmenter.getMarkAttachmentsSetting());
         Assertions.assertEquals(CDKCircularFragmenter.APPLY_AROMATICITY_DETECTION_SETTING_DEFAULT, tmpFragmenter.getApplyAromaticityDetectionSetting());
