@@ -606,7 +606,6 @@ public class Exporter {
         }
         Document tmpPDFDocument = new Document(PageSize.A4);
         FileOutputStream tmpPdfFileOutputStream = new FileOutputStream(aPdfFile.getPath());
-        boolean tmpIsCompleted = false;
         try {
             List<String> tmpFailedExportFragments = new LinkedList<>();
             tmpPDFDocument.setPageSize(tmpPDFDocument.getPageSize().rotate());
@@ -680,29 +679,29 @@ public class Exporter {
             tmpPDFDocument.add(this.createHeaderTable(aFragmentDataModelList.size(), aMoleculeDataModelListSize, aFragmentationName, anImportedFileName));
             tmpPDFDocument.add(tmpSpace);
             tmpPDFDocument.add(tmpFragmentationTable);
-            tmpIsCompleted = true;
+            //closed here, not in the finally block, so a failed final write (trailer, xref) propagates
+            tmpPDFDocument.close();
             return tmpFailedExportFragments;
         } finally {
-            //guard the close: on an interrupted/early-return path no pages were added yet (the content table is only
-            // added after the export loop), and iText's Document.close() then throws an ExceptionConverter
-            // ("The document has no pages."). Swallow it only on that path; on the completed path the same exception
-            // type wraps a failed final write (trailer, xref), which must propagate instead of reporting success.
-            try {
-                tmpPDFDocument.close();
-            } catch (ExceptionConverter anExceptionConverter) {
-                if (tmpIsCompleted) {
-                    throw anExceptionConverter;
-                }
-                Exporter.LOGGER.log(Level.WARNING, anExceptionConverter.toString(), anExceptionConverter);
-            } finally {
-                //the document close above closes the output stream on the success path; on the guarded (zero-page) or
-                //failing path it does not, so close it here explicitly - a second close is a no-op, a leaked handle
-                //blocks deletion of the file on Windows
+            //guard the close: a document still open here left the try block early (interrupt or exception); on the
+            // interrupt path no pages were added yet (the content table is only added after the export loop), and
+            // iText's Document.close() then throws an ExceptionConverter ("The document has no pages."), which is
+            // swallowed so a cancelled export returns cleanly. Document.close() marks the document closed before
+            // writing, so a failing close above is not retried here.
+            if (tmpPDFDocument.isOpen()) {
                 try {
-                    tmpPdfFileOutputStream.close();
-                } catch (IOException anException) {
-                    Exporter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    tmpPDFDocument.close();
+                } catch (ExceptionConverter anExceptionConverter) {
+                    Exporter.LOGGER.log(Level.WARNING, anExceptionConverter.toString(), anExceptionConverter);
                 }
+            }
+            //the document close closes the output stream on the success path; on the guarded (zero-page) or failing
+            //path it does not, so close it here explicitly - a second close is a no-op, a leaked handle blocks
+            //deletion of the file on Windows
+            try {
+                tmpPdfFileOutputStream.close();
+            } catch (IOException anException) {
+                Exporter.LOGGER.log(Level.WARNING, anException.toString(), anException);
             }
         }
     }
