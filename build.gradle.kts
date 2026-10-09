@@ -41,7 +41,6 @@ dependencies {
     testImplementation(libs.jupiter)
     testImplementation(libs.mockitoCore)
     testImplementation(libs.testfxCore)
-    testImplementation(libs.testfxJunit5)
     testImplementation(libs.openjfxMonocle)
     // Teaches PIT to discover/run JUnit 5 (Jupiter) tests via the JUnit Platform.
     pitest(libs.pitestJunit5)
@@ -253,36 +252,19 @@ tasks.jacocoTestCoverageVerification {
 // covering tests per mutant, so runtime is the dominant constraint). FX/controller and
 // full-pipeline integration tests are excluded (mutation-hostile + slow).
 pitest {
-    // Engine versions (pinned for reproducibility; 1.22.1 is already the plugin default).
-    pitestVersion.set("1.22.1")
-    junit5PluginVersion.set("1.2.3")
-
-    // SCOPE: deterministic non-GUI core + fragmentation algorithms (second pass).
-    targetClasses.set(listOf(
+    // SCOPE: deterministic non-GUI core + fragmentation algorithms (second pass); the same packages are mutated and
+    // tested, so controller and integration tests never run.
+    // DEFERRED to a later pass (slower / CDK-heavy): model.depict.*, model.settings.*
+    val tmpPitestScope = listOf(
         "de.unijena.cheminf.mortar.model.util.*",
         "de.unijena.cheminf.mortar.model.data.*",
         "de.unijena.cheminf.mortar.model.io.*",
         "de.unijena.cheminf.mortar.model.fragmentation.*",
         "de.unijena.cheminf.mortar.preference.*",
         "de.unijena.cheminf.mortar.configuration.*"
-        // DEFERRED to a later pass (slower / CDK-heavy):
-        // "de.unijena.cheminf.mortar.model.depict.*",
-        // "de.unijena.cheminf.mortar.model.settings.*"
-    ))
-    targetTests.set(listOf(
-        "de.unijena.cheminf.mortar.model.util.*",
-        "de.unijena.cheminf.mortar.model.data.*",
-        "de.unijena.cheminf.mortar.model.io.*",
-        "de.unijena.cheminf.mortar.model.fragmentation.*",
-        "de.unijena.cheminf.mortar.preference.*",
-        "de.unijena.cheminf.mortar.configuration.*"
-    ))
-
-    // Keep FX/controller + CDK integration tests out (belt-and-suspenders).
-    excludedTestClasses.set(listOf(
-        "de.unijena.cheminf.mortar.controller.*",
-        "de.unijena.cheminf.mortar.integration.*"
-    ))
+    )
+    targetClasses.set(tmpPitestScope)
+    targetTests.set(tmpPitestScope)
 
     // Report-only: HTML for humans, XML for tooling/diffing. Stable path
     // build/reports/pitest (no timestamp subdir).
