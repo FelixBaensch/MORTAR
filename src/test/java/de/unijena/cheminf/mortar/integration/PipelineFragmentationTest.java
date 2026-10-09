@@ -157,7 +157,7 @@ public class PipelineFragmentationTest {
         //algorithm would silently repoint a positional access at a different fragmenter.
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
                 PipelineFragmentationTest.deglycosylatingSugarRemovalFragmenter(tmpService),
-                PipelineFragmentationTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
+                TestUtil.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("SugarRemovalToErtlPipeline");
         List<MoleculeDataModel> tmpMolecules = PipelineFragmentationTest.buildInputMolecules();
@@ -211,22 +211,6 @@ public class PipelineFragmentationTest {
     }
     //
     /**
-     * Returns a fresh copy of the registered fragmenter carrying the given algorithm name.
-     *
-     * @param aService the service whose registered fragmenters are searched
-     * @param anAlgorithmName the algorithm name to look up
-     * @return an independent copy of that fragmenter
-     */
-    private static IMoleculeFragmenter fragmenterCopy(FragmentationService aService, String anAlgorithmName) {
-        for (IMoleculeFragmenter tmpFragmenter : aService.getFragmenters()) {
-            if (tmpFragmenter.getFragmentationAlgorithmName().equals(anAlgorithmName)) {
-                return tmpFragmenter.copy();
-            }
-        }
-        throw new IllegalStateException("no fragmenter is registered under the algorithm name " + anAlgorithmName);
-    }
-    //
-    /**
      * Returns a fresh copy of the registered SugarRemovalUtility fragmenter switched to
      * {@link SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption#ONLY_AGLYCONE}, i.e. configured to
      * perform a deglycosylation: it emits the aglycone of each molecule and discards the detached sugar moieties. Both
@@ -236,7 +220,7 @@ public class PipelineFragmentationTest {
      * @return an independent, deglycosylating copy of the SugarRemovalUtility fragmenter
      */
     private static IMoleculeFragmenter deglycosylatingSugarRemovalFragmenter(FragmentationService aService) {
-        IMoleculeFragmenter tmpFragmenter = PipelineFragmentationTest.fragmenterCopy(
+        IMoleculeFragmenter tmpFragmenter = TestUtil.fragmenterCopy(
                 aService, SugarRemovalUtilityFragmenter.ALGORITHM_NAME);
         ((SugarRemovalUtilityFragmenter) tmpFragmenter).setReturnedFragmentsSetting(
                 SugarRemovalUtilityFragmenter.SRUFragmenterReturnedFragmentsOption.ONLY_AGLYCONE);

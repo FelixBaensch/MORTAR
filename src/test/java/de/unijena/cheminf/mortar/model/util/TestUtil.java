@@ -26,6 +26,8 @@
 package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
 import javafx.beans.property.Property;
 
@@ -94,6 +96,25 @@ public final class TestUtil {
     public static MoleculeDataModel buildMDM(String aSmiles) throws Exception {
         IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
         return new MoleculeDataModel(tmpAtomContainer, false);
+    }
+    //
+    /**
+     * Returns a fresh copy of the registered fragmenter carrying the given algorithm name. Looking the fragmenter up by
+     * name rather than by its position in {@code getFragmenters()} keeps a test pinned to the algorithm it means to
+     * drive: the array order is an implementation detail of the {@code FragmentationService} constructor.
+     *
+     * @param aService the service whose registered fragmenters are searched
+     * @param anAlgorithmName the algorithm name to look up
+     * @return an independent copy of that fragmenter
+     * @throws IllegalStateException if no fragmenter is registered under the given algorithm name
+     */
+    public static IMoleculeFragmenter fragmenterCopy(FragmentationService aService, String anAlgorithmName) {
+        for (IMoleculeFragmenter tmpFragmenter : aService.getFragmenters()) {
+            if (tmpFragmenter.getFragmentationAlgorithmName().equals(anAlgorithmName)) {
+                return tmpFragmenter.copy();
+            }
+        }
+        throw new IllegalStateException("no fragmenter is registered under the algorithm name " + anAlgorithmName);
     }
     //
     /**
