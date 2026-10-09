@@ -31,6 +31,7 @@ import de.unijena.cheminf.mortar.gui.views.OverviewView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.Event;
@@ -152,21 +153,21 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
                     "leaving a structure must reset the style its hover set");
             //a drag sets the drag flag; the click that ends the drag consumes it and schedules no enlarged view
             OverviewViewControllerHarnessTest.fireStructureDrag(aView);
-            Assertions.assertTrue((boolean) OverviewViewControllerHarnessTest.getField(aController, "dragFlag"),
+            Assertions.assertTrue((boolean) TestUtil.getField(aController, "dragFlag"),
                     "a primary-button drag must set the drag flag");
             OverviewViewControllerHarnessTest.fireStructureClick(aView, 1);
-            Assertions.assertFalse((boolean) OverviewViewControllerHarnessTest.getField(aController, "dragFlag"),
+            Assertions.assertFalse((boolean) TestUtil.getField(aController, "dragFlag"),
                     "the click ending a drag must reset the drag flag");
-            Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "scheduledFuture"),
+            Assertions.assertNull(TestUtil.getField(aController, "scheduledFuture"),
                     "the click ending a drag must not schedule the enlarged-structure view");
             //the context-menu request on the first structure caches its index and shows the structure context menu
             Assertions.assertEquals(-1,
-                    (int) OverviewViewControllerHarnessTest.getField(aController, "cachedIndexOfStructureInMoleculeDataModelList"));
+                    (int) TestUtil.getField(aController, "cachedIndexOfStructureInMoleculeDataModelList"));
             OverviewViewControllerHarnessTest.fireStructureContextMenuRequest(aView);
             Assertions.assertEquals(0,
-                    (int) OverviewViewControllerHarnessTest.getField(aController, "cachedIndexOfStructureInMoleculeDataModelList"),
+                    (int) TestUtil.getField(aController, "cachedIndexOfStructureInMoleculeDataModelList"),
                     "a context-menu request on the first structure must cache its index");
-            ContextMenu tmpContextMenu = (ContextMenu) OverviewViewControllerHarnessTest.getField(aController, "structureContextMenu");
+            ContextMenu tmpContextMenu = (ContextMenu) TestUtil.getField(aController, "structureContextMenu");
             Assertions.assertTrue(tmpContextMenu.isShowing(), "the context-menu request must show the structure context menu");
             tmpContextMenu.hide();
             //render a page whose image dimensions fall below the minimum so the below-limit branch is exercised
@@ -277,7 +278,7 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
         //the controller instance survives (only its GUI caches are cleared on close); because the return-to-structure
         //double click sets returnToStructureEventOccurred before closing, closeOverviewViewEvent does NOT reset the
         //cached index, so it must read back as the clicked structure's index (0) rather than the -1 marker
-        int tmpCachedIndex = (int) OverviewViewControllerHarnessTest.getField(
+        int tmpCachedIndex = (int) TestUtil.getField(
                 tmpControllerRef.get(), "cachedIndexOfStructureInMoleculeDataModelList");
         Assertions.assertEquals(0, tmpCachedIndex,
                 "the return-to-structure double click must cache the clicked structure's index (0), not the -1 marker");
@@ -294,7 +295,7 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     public void fragmentsTabShowInMainViewMenuItemClosesViewTest() throws Exception {
         this.driveOverview(OverviewViewController.DataSources.FRAGMENTS_TAB, "Fragments", (aController, aView) -> {
             OverviewViewControllerHarnessTest.setIntField(aController, "cachedIndexOfStructureInMoleculeDataModelList", 0);
-            ContextMenu tmpContextMenu = (ContextMenu) OverviewViewControllerHarnessTest.getField(aController, "structureContextMenu");
+            ContextMenu tmpContextMenu = (ContextMenu) TestUtil.getField(aController, "structureContextMenu");
             //last item is the enabled show-in-main-view item for a tab data source
             MenuItem tmpShowInMainViewItem = tmpContextMenu.getItems().get(tmpContextMenu.getItems().size() - 1);
             Stage tmpStage = (Stage) aView.getScene().getWindow();
@@ -434,13 +435,13 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
      */
     private static void assertOverviewViewClosed(OverviewViewController aController, Stage aStage) {
         Assertions.assertFalse(aStage.isShowing(), "the overview stage must no longer be showing after the close");
-        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "overviewViewStage"),
+        Assertions.assertNull(TestUtil.getField(aController, "overviewViewStage"),
                 "closing must discard the cached overview stage");
-        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "overviewView"),
+        Assertions.assertNull(TestUtil.getField(aController, "overviewView"),
                 "closing must discard the cached overview view");
-        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "overviewViewTitle"),
+        Assertions.assertNull(TestUtil.getField(aController, "overviewViewTitle"),
                 "closing must discard the cached overview view title");
-        Assertions.assertNull(OverviewViewControllerHarnessTest.getField(aController, "structureContextMenu"),
+        Assertions.assertNull(TestUtil.getField(aController, "structureContextMenu"),
                 "closing must discard the cached structure context menu");
     }
     //
@@ -479,7 +480,7 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
     private static MoleculeDataModel firstModel(OverviewViewController aController) {
         try {
             List<MoleculeDataModel> tmpList =
-                    (List<MoleculeDataModel>) OverviewViewControllerHarnessTest.getField(aController, "moleculeDataModelList");
+                    (List<MoleculeDataModel>) TestUtil.getField(aController, "moleculeDataModelList");
             return tmpList.get(0);
         } catch (RuntimeException anException) {
             throw anException;
@@ -587,7 +588,7 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
      * @return the property's current value
      */
     private static int getIntProperty(OverviewViewController aController, String aFieldName) {
-        return ((SimpleIntegerProperty) OverviewViewControllerHarnessTest.getField(aController, aFieldName)).get();
+        return ((SimpleIntegerProperty) TestUtil.getField(aController, aFieldName)).get();
     }
     //
     /**
@@ -656,23 +657,6 @@ public class OverviewViewControllerHarnessTest extends AbstractFxTestCase {
             }
         }
         return null;
-    }
-    //
-    /**
-     * Reflectively reads the value of a private field of the given controller.
-     *
-     * @param aController the controller under test
-     * @param aFieldName the name of the field to read
-     * @return the current field value
-     */
-    private static Object getField(OverviewViewController aController, String aFieldName) {
-        try {
-            Field tmpField = OverviewViewController.class.getDeclaredField(aFieldName);
-            tmpField.setAccessible(true);
-            return tmpField.get(aController);
-        } catch (ReflectiveOperationException anException) {
-            throw new RuntimeException("Could not read field " + aFieldName + " via reflection", anException);
-        }
     }
     //
     /**

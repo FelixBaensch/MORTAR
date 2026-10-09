@@ -30,6 +30,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.io.Importer;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,7 +41,6 @@ import org.mockito.MockedStatic;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -224,13 +224,7 @@ final class MainViewControllerTestSupport {
      * @return the current field value
      */
     static Object getField(MainViewController aController, String aFieldName) {
-        try {
-            Field tmpField = MainViewController.class.getDeclaredField(aFieldName);
-            tmpField.setAccessible(true);
-            return tmpField.get(aController);
-        } catch (ReflectiveOperationException anException) {
-            throw new RuntimeException("Could not read field " + aFieldName + " via reflection", anException);
-        }
+        return TestUtil.getField(aController, aFieldName);
     }
     //
     /**
@@ -242,13 +236,7 @@ final class MainViewControllerTestSupport {
      * @param aValue the value to set
      */
     static void setField(MainViewController aController, String aFieldName, Object aValue) {
-        try {
-            Field tmpField = MainViewController.class.getDeclaredField(aFieldName);
-            tmpField.setAccessible(true);
-            tmpField.set(aController, aValue);
-        } catch (ReflectiveOperationException anException) {
-            throw new RuntimeException("Could not write field " + aFieldName + " via reflection", anException);
-        }
+        TestUtil.setField(aController, aFieldName, aValue);
     }
     //
     /**

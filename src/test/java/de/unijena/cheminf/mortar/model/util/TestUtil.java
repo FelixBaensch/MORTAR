@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Assertions;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.FileHandler;
@@ -128,6 +129,44 @@ public final class TestUtil {
     public static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
         Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
         Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
+    }
+    //
+    /**
+     * Reflectively reads the value of a private field declared by the runtime class of the given object, so a test can
+     * observe state without production code being widened. Superclasses are not searched.
+     *
+     * @param aTarget the object whose field is read
+     * @param aFieldName the name of the field to read
+     * @return the current field value
+     * @throws RuntimeException if the field does not exist or cannot be read
+     */
+    public static Object getField(Object aTarget, String aFieldName) {
+        try {
+            Field tmpField = aTarget.getClass().getDeclaredField(aFieldName);
+            tmpField.setAccessible(true);
+            return tmpField.get(aTarget);
+        } catch (ReflectiveOperationException anException) {
+            throw new RuntimeException("Could not read field " + aFieldName + " via reflection", anException);
+        }
+    }
+    //
+    /**
+     * Reflectively sets the value of a private field declared by the runtime class of the given object, so a test can
+     * drive a code path with prepared state without production code being widened. Superclasses are not searched.
+     *
+     * @param aTarget the object whose field is written
+     * @param aFieldName the name of the field to write
+     * @param aValue the value to set
+     * @throws RuntimeException if the field does not exist or cannot be written
+     */
+    public static void setField(Object aTarget, String aFieldName, Object aValue) {
+        try {
+            Field tmpField = aTarget.getClass().getDeclaredField(aFieldName);
+            tmpField.setAccessible(true);
+            tmpField.set(aTarget, aValue);
+        } catch (ReflectiveOperationException anException) {
+            throw new RuntimeException("Could not write field " + aFieldName + " via reflection", anException);
+        }
     }
     //
     /**

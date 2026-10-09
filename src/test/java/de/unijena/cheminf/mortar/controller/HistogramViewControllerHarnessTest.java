@@ -29,6 +29,7 @@ import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.event.Event;
 import javafx.scene.Node;
@@ -45,7 +46,6 @@ import javafx.stage.WindowEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -110,7 +110,7 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
         HistogramViewController tmpController = new HistogramViewController(Configuration.getInstance());
         this.openHistogram(tmpController, tmpFragments);
         try {
-            HistogramView tmpView = (HistogramView) HistogramViewControllerHarnessTest.getField(tmpController, "histogramView");
+            HistogramView tmpView = (HistogramView) TestUtil.getField(tmpController, "histogramView");
             Assertions.assertNotNull(tmpView, "the histogram view must be initialized after opening");
             Object tmpContent = tmpView.getHistogramScrollPane().getContent();
             Assertions.assertInstanceOf(BarChart.class, tmpContent, "the scroll pane must hold the bar chart after opening");
@@ -145,7 +145,7 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
         HistogramViewController tmpController = new HistogramViewController(Configuration.getInstance());
         this.openHistogram(tmpController, tmpFragments);
         try {
-            HistogramView tmpView = (HistogramView) HistogramViewControllerHarnessTest.getField(tmpController, "histogramView");
+            HistogramView tmpView = (HistogramView) TestUtil.getField(tmpController, "histogramView");
             AbstractFxTestCase.runAndWait(() -> {
                 //toggle the checkbox-backed settings so their listeners fire
                 tmpView.getDisplayGridLinesCheckBox().setSelected(!tmpView.getDisplayGridLinesCheckBox().isSelected());
@@ -163,7 +163,7 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
             AbstractFxTestCase.waitForFxEvents();
             //resize the scene so the width/height listeners recompute the image dimensions
             AbstractFxTestCase.runAndWait(() -> {
-                Stage tmpStage = (Stage) HistogramViewControllerHarnessTest.getField(tmpController, "histogramStage");
+                Stage tmpStage = (Stage) TestUtil.getField(tmpController, "histogramStage");
                 tmpStage.setWidth(tmpStage.getWidth() + 120.0);
                 tmpStage.setHeight(tmpStage.getHeight() + 120.0);
             });
@@ -174,7 +174,7 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
                     "after applying a displayed-fragment number of 3 the series must hold three bars");
             //close via a fired window-close request to exercise the close-request event filter and closeWindowEvent
             AbstractFxTestCase.runAndWait(() -> {
-                Stage tmpStage = (Stage) HistogramViewControllerHarnessTest.getField(tmpController, "histogramStage");
+                Stage tmpStage = (Stage) TestUtil.getField(tmpController, "histogramStage");
                 tmpStage.fireEvent(new WindowEvent(tmpStage, WindowEvent.WINDOW_CLOSE_REQUEST));
             });
             AbstractFxTestCase.waitForFxEvents();
@@ -200,11 +200,11 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
         HistogramViewController tmpController = new HistogramViewController(Configuration.getInstance());
         this.openHistogram(tmpController, tmpFragments);
         try {
-            HistogramView tmpView = (HistogramView) HistogramViewControllerHarnessTest.getField(tmpController, "histogramView");
+            HistogramView tmpView = (HistogramView) TestUtil.getField(tmpController, "histogramView");
             AtomicReference<Object> tmpChartBefore = new AtomicReference<>();
             AtomicReference<Integer> tmpBarCountBefore = new AtomicReference<>();
             AbstractFxTestCase.runAndWait(() -> {
-                tmpChartBefore.set(HistogramViewControllerHarnessTest.getField(tmpController, "histogramChart"));
+                tmpChartBefore.set(TestUtil.getField(tmpController, "histogramChart"));
                 tmpBarCountBefore.set(HistogramViewControllerHarnessTest.barCount(tmpController));
             });
             //fire the over-count apply through the modal driver: the warning Alert.showAndWait is detected and closed
@@ -222,14 +222,14 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
                     tmpAlertTitle.get(), "the over-count apply must show the refresh warning alert");
             AbstractFxTestCase.runAndWait(() -> {
                 Assertions.assertSame(tmpChartBefore.get(),
-                        HistogramViewControllerHarnessTest.getField(tmpController, "histogramChart"),
+                        TestUtil.getField(tmpController, "histogramChart"),
                         "a rejected over-count apply must not rebuild the chart");
                 Assertions.assertEquals(tmpBarCountBefore.get(), HistogramViewControllerHarnessTest.barCount(tmpController),
                         "a rejected over-count apply must leave the number of bars unchanged");
             });
             //close the histogram view
             AbstractFxTestCase.runAndWait(() -> {
-                Stage tmpStage = (Stage) HistogramViewControllerHarnessTest.getField(tmpController, "histogramStage");
+                Stage tmpStage = (Stage) TestUtil.getField(tmpController, "histogramStage");
                 tmpStage.fireEvent(new WindowEvent(tmpStage, WindowEvent.WINDOW_CLOSE_REQUEST));
             });
             AbstractFxTestCase.waitForFxEvents();
@@ -278,7 +278,7 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
      * @return the total number of bars
      */
     private static int barCount(HistogramViewController aController) {
-        BarChart<?, ?> tmpChart = (BarChart<?, ?>) HistogramViewControllerHarnessTest.getField(aController, "histogramChart");
+        BarChart<?, ?> tmpChart = (BarChart<?, ?>) TestUtil.getField(aController, "histogramChart");
         int tmpCount = 0;
         for (XYChart.Series<?, ?> tmpSeries : tmpChart.getData()) {
             tmpCount += tmpSeries.getData().size();
@@ -299,7 +299,7 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
             return;
         }
         AbstractFxTestCase.runAndWait(() -> {
-            Stage tmpStage = (Stage) HistogramViewControllerHarnessTest.getField(aController, "histogramStage");
+            Stage tmpStage = (Stage) TestUtil.getField(aController, "histogramStage");
             if (tmpStage != null && tmpStage.isShowing()) {
                 tmpStage.close();
             }
@@ -371,7 +371,7 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
                 tmpBarNode.getStyle().contains(HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE),
                 "hovering in did not recolour the bar to the selected colour, style was: " + tmpBarNode.getStyle());
         Assertions.assertNotNull(
-                HistogramViewControllerHarnessTest.getField(aController, "atomContainerForDisplayCache"),
+                TestUtil.getField(aController, "atomContainerForDisplayCache"),
                 "hovering in did not parse the bar's SMILES into the display cache");
         Assertions.assertNotNull(tmpStructureImageView.getImage(),
                 "hovering in did not put a structure image into the view's image view");
@@ -396,23 +396,6 @@ public class HistogramViewControllerHarnessTest extends AbstractFxTestCase {
     private static MouseEvent newBarMouseEvent(javafx.event.EventType<MouseEvent> anEventType) {
         return new MouseEvent(anEventType, 1.0, 1.0, 1.0, 1.0, MouseButton.PRIMARY, 0,
                 false, false, false, false, true, false, false, true, false, false, null);
-    }
-    //
-    /**
-     * Reflectively reads the value of a private field of the given controller.
-     *
-     * @param aController the controller under test
-     * @param aFieldName the name of the field to read
-     * @return the current field value
-     */
-    private static Object getField(HistogramViewController aController, String aFieldName) {
-        try {
-            Field tmpField = HistogramViewController.class.getDeclaredField(aFieldName);
-            tmpField.setAccessible(true);
-            return tmpField.get(aController);
-        } catch (ReflectiveOperationException anException) {
-            throw new RuntimeException("Could not read field " + aFieldName + " via reflection", anException);
-        }
     }
     //</editor-fold>
 }
