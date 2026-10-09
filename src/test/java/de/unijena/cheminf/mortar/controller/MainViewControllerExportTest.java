@@ -40,7 +40,9 @@ import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentMatchers;
@@ -67,9 +69,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * so no OS dialog is opened and the {@code System.exit} tail of {@code closeApplication} is never reached (the test JVM
  * fork survives). The controller's constructor ends in a NON-blocking {@code primaryStage.show()}, so it is constructed
  * with a plain {@link AbstractFxTestCase#runAndWait(Runnable)} over the shared
- * {@link FxTestUtil#newMainViewController(Stage, String)} seam and the caller-owned {@link Stage} is always hidden in a
- * {@code finally} ({@code Stage.hide()} does not fire the window close-request handler). Every {@link MockedStatic} over
- * {@link GuiUtil} is opened INSIDE the FX-thread body because a Mockito static mock is thread-confined and the driven
+ * {@link FxTestUtil#newMainViewController(Stage, String)} seam in a {@code @BeforeEach}, and its {@link Stage} is
+ * always hidden in an {@code @AfterEach} ({@code Stage.hide()} does not fire the window close-request handler).
+ * Every {@link MockedStatic} over {@link GuiUtil} is opened INSIDE the FX-thread body because a Mockito static mock is thread-confined and the driven
  * code runs on the JavaFX Application Thread. Assertions are behavioral invariants (return value, alert routing,
  * non-null dispatch result), never exact CDK-derived strings, since CDK 2.12 is a moving snapshot.
  *
@@ -98,6 +100,44 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
     }
     //</editor-fold>
     //
+    //<editor-fold desc="Private instance variables" defaultstate="collapsed">
+    /**
+     * Receives the primary stage of the controller under test when it is constructed, so it can be hidden after the
+     * test.
+     */
+    private final AtomicReference<Stage> stageReference = new AtomicReference<>();
+    /**
+     * The controller under test, constructed before each test.
+     */
+    private MainViewController controller;
+    //</editor-fold>
+    //
+    //<editor-fold desc="Lifecycle hooks" defaultstate="collapsed">
+    /**
+     * Constructs the controller under test on the JavaFX Application Thread over a fresh primary stage. Runs after the inherited {@link AbstractFxTestCase} setup, so the
+     * application directory is the isolated per-test {@code user.home}.
+     *
+     * @throws Exception if construction fails on the FX thread
+     */
+    @BeforeEach
+    public void setUpController() throws Exception {
+        this.controller = MainViewControllerTestSupport.constructController(this.stageReference);
+    }
+    //
+    /**
+     * Hides the primary stage of the controller under test (if one was created) on the JavaFX Application Thread.
+     * {@code Stage.hide()} does not fire the window close-request handler, so the controller's
+     * {@code closeApplication}/{@code System.exit} path is never reached. Runs before the inherited
+     * {@link AbstractFxTestCase} teardown.
+     *
+     * @throws Exception if hiding fails on the FX thread
+     */
+    @AfterEach
+    public void hideControllerStage() throws Exception {
+        MainViewControllerTestSupport.hideStage(this.stageReference);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="E1 areExportPreconditionsMet test methods" defaultstate="collapsed">
     /**
      * E1: with the molecules tab selected after a real import, {@code areExportPreconditionsMet} raises the
@@ -110,27 +150,21 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
     public void areExportPreconditionsMetMoleculesTabSelectedAbortsTest(@TempDir Path aTempDir) throws Exception {
         File tmpSmilesFile = Files.writeString(aTempDir.resolve("in.smi"),
                 MainViewControllerTestSupport.BENZENE_SMILES_LINE).toFile();
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            MainViewControllerTestSupport.importFileAndDrain(tmpController, tmpSmilesFile);
-            AbstractFxTestCase.runAndWait(() -> {
-                try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
-                    Assertions.assertFalse(
-                            tmpController.areExportPreconditionsMet(Exporter.ExportTypes.FRAGMENT_CSV_FILE),
-                            "with the molecules tab selected the export precondition must not be met");
-                    Assertions.assertFalse(
-                            tmpController.areExportPreconditionsMet(Exporter.ExportTypes.ITEM_CSV_FILE),
-                            "with the molecules tab selected the item export precondition must not be met");
-                    tmpGuiUtilMock.verify(() -> GuiUtil.guiConfirmationAlert(
-                            ArgumentMatchers.eq(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title")),
-                            ArgumentMatchers.anyString(),
-                            ArgumentMatchers.anyString()), org.mockito.Mockito.atLeast(2));
-                }
-            });
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        MainViewControllerTestSupport.importFileAndDrain(this.controller, tmpSmilesFile);
+        AbstractFxTestCase.runAndWait(() -> {
+            try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
+                Assertions.assertFalse(
+                        this.controller.areExportPreconditionsMet(Exporter.ExportTypes.FRAGMENT_CSV_FILE),
+                        "with the molecules tab selected the export precondition must not be met");
+                Assertions.assertFalse(
+                        this.controller.areExportPreconditionsMet(Exporter.ExportTypes.ITEM_CSV_FILE),
+                        "with the molecules tab selected the item export precondition must not be met");
+                tmpGuiUtilMock.verify(() -> GuiUtil.guiConfirmationAlert(
+                        ArgumentMatchers.eq(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title")),
+                        ArgumentMatchers.anyString(),
+                        ArgumentMatchers.anyString()), org.mockito.Mockito.atLeast(2));
+            }
+        });
     }
     //
     /**
@@ -141,27 +175,21 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
      */
     @Test
     public void areExportPreconditionsMetFragmentNoDataAbortsTest() throws Exception {
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            AbstractFxTestCase.runAndWait(() -> {
-                try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
-                    MainViewControllerTestSupport.getFragmentMap(tmpController)
-                            .put("EmptyFragmentation", FXCollections.observableArrayList());
-                    tmpController.addFragmentationResultTabs("EmptyFragmentation");
-                    Assertions.assertFalse(
-                            tmpController.areExportPreconditionsMet(Exporter.ExportTypes.FRAGMENT_CSV_FILE),
-                            "an empty fragment list must not meet the fragment export precondition");
-                    tmpGuiUtilMock.verify(() -> GuiUtil.guiMessageAlert(
-                            ArgumentMatchers.eq(Alert.AlertType.INFORMATION),
-                            ArgumentMatchers.eq(Message.get("Exporter.MessageAlert.NoDataAvailable.title")),
-                            ArgumentMatchers.anyString(),
-                            ArgumentMatchers.isNull()), org.mockito.Mockito.atLeastOnce());
-                }
-            });
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        AbstractFxTestCase.runAndWait(() -> {
+            try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
+                MainViewControllerTestSupport.getFragmentMap(this.controller)
+                        .put("EmptyFragmentation", FXCollections.observableArrayList());
+                this.controller.addFragmentationResultTabs("EmptyFragmentation");
+                Assertions.assertFalse(
+                        this.controller.areExportPreconditionsMet(Exporter.ExportTypes.FRAGMENT_CSV_FILE),
+                        "an empty fragment list must not meet the fragment export precondition");
+                tmpGuiUtilMock.verify(() -> GuiUtil.guiMessageAlert(
+                        ArgumentMatchers.eq(Alert.AlertType.INFORMATION),
+                        ArgumentMatchers.eq(Message.get("Exporter.MessageAlert.NoDataAvailable.title")),
+                        ArgumentMatchers.anyString(),
+                        ArgumentMatchers.isNull()), org.mockito.Mockito.atLeastOnce());
+            }
+        });
     }
     //
     /**
@@ -173,26 +201,20 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
      */
     @Test
     public void areExportPreconditionsMetItemNoDataAbortsTest() throws Exception {
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            AbstractFxTestCase.runAndWait(() -> {
-                try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
-                    MainViewControllerTestSupport.setUpSelectedFragmentsTab(tmpController,
-                            MainViewControllerExportTest.FRAGMENTATION_NAME);
-                    Assertions.assertFalse(
-                            tmpController.areExportPreconditionsMet(Exporter.ExportTypes.ITEM_CSV_FILE),
-                            "an empty molecule list must not meet the item export precondition");
-                    tmpGuiUtilMock.verify(() -> GuiUtil.guiMessageAlert(
-                            ArgumentMatchers.eq(Alert.AlertType.INFORMATION),
-                            ArgumentMatchers.eq(Message.get("Exporter.MessageAlert.NoDataAvailable.title")),
-                            ArgumentMatchers.anyString(),
-                            ArgumentMatchers.isNull()), org.mockito.Mockito.atLeastOnce());
-                }
-            });
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        AbstractFxTestCase.runAndWait(() -> {
+            try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
+                MainViewControllerTestSupport.setUpSelectedFragmentsTab(this.controller,
+                        MainViewControllerExportTest.FRAGMENTATION_NAME);
+                Assertions.assertFalse(
+                        this.controller.areExportPreconditionsMet(Exporter.ExportTypes.ITEM_CSV_FILE),
+                        "an empty molecule list must not meet the item export precondition");
+                tmpGuiUtilMock.verify(() -> GuiUtil.guiMessageAlert(
+                        ArgumentMatchers.eq(Alert.AlertType.INFORMATION),
+                        ArgumentMatchers.eq(Message.get("Exporter.MessageAlert.NoDataAvailable.title")),
+                        ArgumentMatchers.anyString(),
+                        ArgumentMatchers.isNull()), org.mockito.Mockito.atLeastOnce());
+            }
+        });
     }
     //
     /**
@@ -204,22 +226,16 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
      */
     @Test
     public void areExportPreconditionsMetPopulatedPassesTest() throws Exception {
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            AbstractFxTestCase.runAndWait(() -> {
-                MainViewControllerTestSupport.setUpPopulatedFragmentsAndItems(tmpController,
-                        MainViewControllerExportTest.FRAGMENTATION_NAME);
-                Assertions.assertTrue(
-                        tmpController.areExportPreconditionsMet(Exporter.ExportTypes.FRAGMENT_CSV_FILE),
-                        "a populated fragments tab must meet the fragment export precondition");
-                Assertions.assertTrue(
-                        tmpController.areExportPreconditionsMet(Exporter.ExportTypes.ITEM_CSV_FILE),
-                        "a populated itemization state must meet the item export precondition");
-            });
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        AbstractFxTestCase.runAndWait(() -> {
+            MainViewControllerTestSupport.setUpPopulatedFragmentsAndItems(this.controller,
+                    MainViewControllerExportTest.FRAGMENTATION_NAME);
+            Assertions.assertTrue(
+                    this.controller.areExportPreconditionsMet(Exporter.ExportTypes.FRAGMENT_CSV_FILE),
+                    "a populated fragments tab must meet the fragment export precondition");
+            Assertions.assertTrue(
+                    this.controller.areExportPreconditionsMet(Exporter.ExportTypes.ITEM_CSV_FILE),
+                    "a populated itemization state must meet the item export precondition");
+        });
     }
     //</editor-fold>
     //
@@ -244,44 +260,38 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
         File tmpItemPdfFile = aTempDir.resolve("items.pdf").toFile();
         File tmpPdbDir = Files.createDirectory(aTempDir.resolve("pdb")).toFile();
         File tmpMultipleSdDir = Files.createDirectory(aTempDir.resolve("sdf")).toFile();
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            AbstractFxTestCase.runAndWait(() -> {
-                try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
-                    MainViewControllerTestSupport.setUpPopulatedFragmentsAndItems(tmpController,
-                            MainViewControllerExportTest.FRAGMENTATION_NAME);
-                    MainViewControllerTestSupport.setField(tmpController, "importedFileName", "TestInput.smi");
-                    Exporter tmpExporter = new Exporter(MainViewControllerTestSupport.getSettingsContainer(tmpController));
-                    Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_CSV_FILE, tmpCsvFile, false));
-                    Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_PDB_FILE, tmpPdbDir, false));
-                    Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_PDF_FILE, tmpPdfFile, false));
-                    Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE, tmpSingleSdFile, false));
-                    Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES, tmpMultipleSdDir, false));
-                    Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.ITEM_CSV_FILE, tmpItemCsvFile, false));
-                    Assertions.assertNotNull(tmpController.buildExportResult(
-                            tmpExporter, Exporter.ExportTypes.ITEM_PDF_FILE, tmpItemPdfFile, false));
-                } catch (Exception anException) {
-                    throw new RuntimeException(anException);
-                }
-            });
-            for (File tmpFile : new File[]{tmpCsvFile, tmpPdfFile, tmpSingleSdFile, tmpItemCsvFile, tmpItemPdfFile}) {
-                Assertions.assertTrue(tmpFile.isFile() && tmpFile.length() > 0L,
-                        "the export must have written a non-empty " + tmpFile.getName());
+        AbstractFxTestCase.runAndWait(() -> {
+            try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
+                MainViewControllerTestSupport.setUpPopulatedFragmentsAndItems(this.controller,
+                        MainViewControllerExportTest.FRAGMENTATION_NAME);
+                MainViewControllerTestSupport.setField(this.controller, "importedFileName", "TestInput.smi");
+                Exporter tmpExporter = new Exporter(MainViewControllerTestSupport.getSettingsContainer(this.controller));
+                Assertions.assertNotNull(this.controller.buildExportResult(
+                        tmpExporter, Exporter.ExportTypes.FRAGMENT_CSV_FILE, tmpCsvFile, false));
+                Assertions.assertNotNull(this.controller.buildExportResult(
+                        tmpExporter, Exporter.ExportTypes.FRAGMENT_PDB_FILE, tmpPdbDir, false));
+                Assertions.assertNotNull(this.controller.buildExportResult(
+                        tmpExporter, Exporter.ExportTypes.FRAGMENT_PDF_FILE, tmpPdfFile, false));
+                Assertions.assertNotNull(this.controller.buildExportResult(
+                        tmpExporter, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE, tmpSingleSdFile, false));
+                Assertions.assertNotNull(this.controller.buildExportResult(
+                        tmpExporter, Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES, tmpMultipleSdDir, false));
+                Assertions.assertNotNull(this.controller.buildExportResult(
+                        tmpExporter, Exporter.ExportTypes.ITEM_CSV_FILE, tmpItemCsvFile, false));
+                Assertions.assertNotNull(this.controller.buildExportResult(
+                        tmpExporter, Exporter.ExportTypes.ITEM_PDF_FILE, tmpItemPdfFile, false));
+            } catch (Exception anException) {
+                throw new RuntimeException(anException);
             }
-            for (File tmpDir : new File[]{tmpPdbDir, tmpMultipleSdDir}) {
-                File[] tmpWritten = tmpDir.listFiles();
-                Assertions.assertTrue(tmpWritten != null && tmpWritten.length > 0,
-                        "the export must have written at least one file into " + tmpDir.getName());
-            }
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
+        });
+        for (File tmpFile : new File[]{tmpCsvFile, tmpPdfFile, tmpSingleSdFile, tmpItemCsvFile, tmpItemPdfFile}) {
+            Assertions.assertTrue(tmpFile.isFile() && tmpFile.length() > 0L,
+                    "the export must have written a non-empty " + tmpFile.getName());
+        }
+        for (File tmpDir : new File[]{tmpPdbDir, tmpMultipleSdDir}) {
+            File[] tmpWritten = tmpDir.listFiles();
+            Assertions.assertTrue(tmpWritten != null && tmpWritten.length > 0,
+                    "the export must have written at least one file into " + tmpDir.getName());
         }
     }
     //
@@ -300,56 +310,50 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
     public void buildExportResultRoutesEachTypeToItsExporterCallTest(@TempDir Path aTempDir) throws Exception {
         File tmpFile = aTempDir.resolve("target").toFile();
         String tmpName = MainViewControllerExportTest.FRAGMENTATION_NAME;
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            AbstractFxTestCase.runAndWait(() -> {
-                try {
-                    MainViewControllerTestSupport.setUpPopulatedFragmentsAndItems(tmpController, tmpName);
-                    MainViewControllerTestSupport.setField(tmpController, "importedFileName", "TestInput.smi");
-                    ObservableList<MoleculeDataModel> tmpMolecules = (ObservableList<MoleculeDataModel>)
-                            MainViewControllerTestSupport.getMoleculeList(tmpController);
-                    Exporter tmpExporter = Mockito.mock(Exporter.class);
-                    for (Exporter.ExportTypes tmpType : new Exporter.ExportTypes[]{
-                            Exporter.ExportTypes.FRAGMENT_CSV_FILE, Exporter.ExportTypes.FRAGMENT_PDB_FILE,
-                            Exporter.ExportTypes.FRAGMENT_PDF_FILE, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE,
-                            Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES, Exporter.ExportTypes.ITEM_CSV_FILE,
-                            Exporter.ExportTypes.ITEM_PDF_FILE}) {
-                        //the PDB export gets true for the 2D-coordinates flag, so its pass-through is pinned as well
-                        tmpController.buildExportResult(tmpExporter, tmpType, tmpFile,
-                                tmpType == Exporter.ExportTypes.FRAGMENT_PDB_FILE);
-                    }
-                    Mockito.verify(tmpExporter).exportCsvFile(ArgumentMatchers.eq(tmpFile),
-                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(tmpName),
-                            ArgumentMatchers.anyChar(), ArgumentMatchers.eq(TabNames.FRAGMENTS));
-                    Mockito.verify(tmpExporter).exportCsvFile(ArgumentMatchers.eq(tmpFile),
-                            ArgumentMatchers.same(tmpMolecules), ArgumentMatchers.eq(tmpName),
-                            ArgumentMatchers.anyChar(), ArgumentMatchers.eq(TabNames.ITEMIZATION));
-                    Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
-                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.PDB),
-                            ArgumentMatchers.eq(true));
-                    Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
-                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.SDF),
-                            ArgumentMatchers.eq(false), ArgumentMatchers.eq(true));
-                    Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
-                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.SDF),
-                            ArgumentMatchers.eq(false), ArgumentMatchers.eq(false));
-                    Mockito.verify(tmpExporter).exportPdfFile(ArgumentMatchers.eq(tmpFile),
-                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.same(tmpMolecules),
-                            ArgumentMatchers.eq(tmpName), ArgumentMatchers.eq("TestInput.smi"),
-                            ArgumentMatchers.eq(TabNames.FRAGMENTS));
-                    Mockito.verify(tmpExporter).exportPdfFile(ArgumentMatchers.eq(tmpFile),
-                            MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.same(tmpMolecules),
-                            ArgumentMatchers.eq(tmpName), ArgumentMatchers.eq("TestInput.smi"),
-                            ArgumentMatchers.eq(TabNames.ITEMIZATION));
-                    Mockito.verifyNoMoreInteractions(tmpExporter);
-                } catch (Exception anException) {
-                    throw new RuntimeException(anException);
+        AbstractFxTestCase.runAndWait(() -> {
+            try {
+                MainViewControllerTestSupport.setUpPopulatedFragmentsAndItems(this.controller, tmpName);
+                MainViewControllerTestSupport.setField(this.controller, "importedFileName", "TestInput.smi");
+                ObservableList<MoleculeDataModel> tmpMolecules = (ObservableList<MoleculeDataModel>)
+                        MainViewControllerTestSupport.getMoleculeList(this.controller);
+                Exporter tmpExporter = Mockito.mock(Exporter.class);
+                for (Exporter.ExportTypes tmpType : new Exporter.ExportTypes[]{
+                        Exporter.ExportTypes.FRAGMENT_CSV_FILE, Exporter.ExportTypes.FRAGMENT_PDB_FILE,
+                        Exporter.ExportTypes.FRAGMENT_PDF_FILE, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE,
+                        Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES, Exporter.ExportTypes.ITEM_CSV_FILE,
+                        Exporter.ExportTypes.ITEM_PDF_FILE}) {
+                    //the PDB export gets true for the 2D-coordinates flag, so its pass-through is pinned as well
+                    this.controller.buildExportResult(tmpExporter, tmpType, tmpFile,
+                            tmpType == Exporter.ExportTypes.FRAGMENT_PDB_FILE);
                 }
-            });
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+                Mockito.verify(tmpExporter).exportCsvFile(ArgumentMatchers.eq(tmpFile),
+                        MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(tmpName),
+                        ArgumentMatchers.anyChar(), ArgumentMatchers.eq(TabNames.FRAGMENTS));
+                Mockito.verify(tmpExporter).exportCsvFile(ArgumentMatchers.eq(tmpFile),
+                        ArgumentMatchers.same(tmpMolecules), ArgumentMatchers.eq(tmpName),
+                        ArgumentMatchers.anyChar(), ArgumentMatchers.eq(TabNames.ITEMIZATION));
+                Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
+                        MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.PDB),
+                        ArgumentMatchers.eq(true));
+                Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
+                        MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.SDF),
+                        ArgumentMatchers.eq(false), ArgumentMatchers.eq(true));
+                Mockito.verify(tmpExporter).exportFragmentsAsChemicalFile(ArgumentMatchers.eq(tmpFile),
+                        MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.eq(ChemFileTypes.SDF),
+                        ArgumentMatchers.eq(false), ArgumentMatchers.eq(false));
+                Mockito.verify(tmpExporter).exportPdfFile(ArgumentMatchers.eq(tmpFile),
+                        MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.same(tmpMolecules),
+                        ArgumentMatchers.eq(tmpName), ArgumentMatchers.eq("TestInput.smi"),
+                        ArgumentMatchers.eq(TabNames.FRAGMENTS));
+                Mockito.verify(tmpExporter).exportPdfFile(ArgumentMatchers.eq(tmpFile),
+                        MainViewControllerExportTest.isFragmentsList(), ArgumentMatchers.same(tmpMolecules),
+                        ArgumentMatchers.eq(tmpName), ArgumentMatchers.eq("TestInput.smi"),
+                        ArgumentMatchers.eq(TabNames.ITEMIZATION));
+                Mockito.verifyNoMoreInteractions(tmpExporter);
+            } catch (Exception anException) {
+                throw new RuntimeException(anException);
+            }
+        });
     }
     //</editor-fold>
     //
@@ -365,15 +369,9 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
     @Test
     public void launchExportTaskCleanBranchWritesFileTest(@TempDir Path aTempDir) throws Exception {
         File tmpCsvFile = aTempDir.resolve("fragments.csv").toFile();
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            MainViewControllerExportTest.launchCsvExport(tmpController, tmpCsvFile);
-            Assertions.assertTrue(tmpCsvFile.isFile(), "the clean export branch did not write the CSV file");
-            Assertions.assertTrue(tmpCsvFile.length() > 0L, "the exported CSV file is empty");
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        MainViewControllerExportTest.launchCsvExport(this.controller, tmpCsvFile);
+        Assertions.assertTrue(tmpCsvFile.isFile(), "the clean export branch did not write the CSV file");
+        Assertions.assertTrue(tmpCsvFile.length() > 0L, "the exported CSV file is empty");
     }
     //
     /**
@@ -389,56 +387,50 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
     @Test
     public void launchExportTaskCallbackBranchesTest(@TempDir Path aTempDir) throws Exception {
         File tmpCsvFile = aTempDir.resolve("fragments.csv").toFile();
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            MainViewControllerExportTest.launchCsvExport(tmpController, tmpCsvFile);
-            //prepare stand-in tasks on the test thread so their value/exception properties are settled
-            Task<List<String>> tmpNullResultTask = new Task<>() {
-                @Override
-                protected List<String> call() {
-                    return null;
-                }
-            };
-            Task<List<String>> tmpFailedFragmentsTask = MainViewControllerExportTest.runTaskToCompletion(
-                    List.of("FailedFragmentA", "FailedFragmentB"));
-            Task<List<String>> tmpExceptionTask = MainViewControllerExportTest.runTaskToFailure(
-                    "Simulated export failure for the failure-callback branch");
-            AbstractFxTestCase.waitForFxEvents();
-            //re-invoke the captured callbacks with swapped tasks to cover the remaining branches deterministically
-            AbstractFxTestCase.runAndWait(() -> {
-                try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
-                    Task<?> tmpRealTask = (Task<?>) MainViewControllerTestSupport.getField(tmpController, "exportTask");
-                    EventHandler<WorkerStateEvent> tmpOnSucceeded = tmpRealTask.getOnSucceeded();
-                    EventHandler<WorkerStateEvent> tmpOnCancelled = tmpRealTask.getOnCancelled();
-                    EventHandler<WorkerStateEvent> tmpOnFailed = tmpRealTask.getOnFailed();
-                    //null-result branch -> WARNING message alert
-                    MainViewControllerTestSupport.setField(tmpController, "exportTask", tmpNullResultTask);
-                    tmpOnSucceeded.handle(new WorkerStateEvent(tmpNullResultTask,
-                            WorkerStateEvent.WORKER_STATE_SUCCEEDED));
-                    //non-empty failed-fragments branch -> expandable alert
-                    MainViewControllerTestSupport.setField(tmpController, "exportTask", tmpFailedFragmentsTask);
-                    tmpOnSucceeded.handle(new WorkerStateEvent(tmpFailedFragmentsTask,
-                            WorkerStateEvent.WORKER_STATE_SUCCEEDED));
-                    //cancel branch -> status bar update, no alert
-                    tmpOnCancelled.handle(new WorkerStateEvent(tmpNullResultTask,
-                            WorkerStateEvent.WORKER_STATE_CANCELLED));
-                    //failure branch -> WARNING message alert (reads the exception off the event source)
-                    tmpOnFailed.handle(new WorkerStateEvent(tmpExceptionTask,
-                            WorkerStateEvent.WORKER_STATE_FAILED));
-                    tmpGuiUtilMock.verify(() -> GuiUtil.guiExpandableAlert(
-                            ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyString(),
-                            ArgumentMatchers.anyString(), ArgumentMatchers.anyString()),
-                            org.mockito.Mockito.atLeastOnce());
-                    tmpGuiUtilMock.verify(() -> GuiUtil.guiMessageAlert(
-                            ArgumentMatchers.eq(Alert.AlertType.WARNING),
-                            ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.isNull()),
-                            org.mockito.Mockito.times(2));
-                }
-            });
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        MainViewControllerExportTest.launchCsvExport(this.controller, tmpCsvFile);
+        //prepare stand-in tasks on the test thread so their value/exception properties are settled
+        Task<List<String>> tmpNullResultTask = new Task<>() {
+            @Override
+            protected List<String> call() {
+                return null;
+            }
+        };
+        Task<List<String>> tmpFailedFragmentsTask = MainViewControllerExportTest.runTaskToCompletion(
+                List.of("FailedFragmentA", "FailedFragmentB"));
+        Task<List<String>> tmpExceptionTask = MainViewControllerExportTest.runTaskToFailure(
+                "Simulated export failure for the failure-callback branch");
+        AbstractFxTestCase.waitForFxEvents();
+        //re-invoke the captured callbacks with swapped tasks to cover the remaining branches deterministically
+        AbstractFxTestCase.runAndWait(() -> {
+            try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
+                Task<?> tmpRealTask = (Task<?>) MainViewControllerTestSupport.getField(this.controller, "exportTask");
+                EventHandler<WorkerStateEvent> tmpOnSucceeded = tmpRealTask.getOnSucceeded();
+                EventHandler<WorkerStateEvent> tmpOnCancelled = tmpRealTask.getOnCancelled();
+                EventHandler<WorkerStateEvent> tmpOnFailed = tmpRealTask.getOnFailed();
+                //null-result branch -> WARNING message alert
+                MainViewControllerTestSupport.setField(this.controller, "exportTask", tmpNullResultTask);
+                tmpOnSucceeded.handle(new WorkerStateEvent(tmpNullResultTask,
+                        WorkerStateEvent.WORKER_STATE_SUCCEEDED));
+                //non-empty failed-fragments branch -> expandable alert
+                MainViewControllerTestSupport.setField(this.controller, "exportTask", tmpFailedFragmentsTask);
+                tmpOnSucceeded.handle(new WorkerStateEvent(tmpFailedFragmentsTask,
+                        WorkerStateEvent.WORKER_STATE_SUCCEEDED));
+                //cancel branch -> status bar update, no alert
+                tmpOnCancelled.handle(new WorkerStateEvent(tmpNullResultTask,
+                        WorkerStateEvent.WORKER_STATE_CANCELLED));
+                //failure branch -> WARNING message alert (reads the exception off the event source)
+                tmpOnFailed.handle(new WorkerStateEvent(tmpExceptionTask,
+                        WorkerStateEvent.WORKER_STATE_FAILED));
+                tmpGuiUtilMock.verify(() -> GuiUtil.guiExpandableAlert(
+                        ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyString(),
+                        ArgumentMatchers.anyString(), ArgumentMatchers.anyString()),
+                        org.mockito.Mockito.atLeastOnce());
+                tmpGuiUtilMock.verify(() -> GuiUtil.guiMessageAlert(
+                        ArgumentMatchers.eq(Alert.AlertType.WARNING),
+                        ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.isNull()),
+                        org.mockito.Mockito.times(2));
+            }
+        });
     }
     //</editor-fold>
     //
@@ -451,20 +443,14 @@ public class MainViewControllerExportTest extends AbstractFxTestCase {
      */
     @Test
     public void getStatusMessageByThreadTypeAllCasesTest() throws Exception {
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            AbstractFxTestCase.runAndWait(() -> {
-                Assertions.assertEquals(Message.get("Status.running"),
-                        tmpController.getStatusMessageByThreadType(MainViewController.ThreadType.FRAGMENTATION_THREAD));
-                Assertions.assertEquals(Message.get("Status.importing"),
-                        tmpController.getStatusMessageByThreadType(MainViewController.ThreadType.IMPORT_THREAD));
-                Assertions.assertEquals(Message.get("Status.exporting"),
-                        tmpController.getStatusMessageByThreadType(MainViewController.ThreadType.EXPORT_THREAD));
-            });
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        AbstractFxTestCase.runAndWait(() -> {
+            Assertions.assertEquals(Message.get("Status.running"),
+                    this.controller.getStatusMessageByThreadType(MainViewController.ThreadType.FRAGMENTATION_THREAD));
+            Assertions.assertEquals(Message.get("Status.importing"),
+                    this.controller.getStatusMessageByThreadType(MainViewController.ThreadType.IMPORT_THREAD));
+            Assertions.assertEquals(Message.get("Status.exporting"),
+                    this.controller.getStatusMessageByThreadType(MainViewController.ThreadType.EXPORT_THREAD));
+        });
     }
     //
     /**

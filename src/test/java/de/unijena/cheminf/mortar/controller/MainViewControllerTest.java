@@ -30,7 +30,9 @@ import de.unijena.cheminf.mortar.model.util.FileUtil;
 
 import javafx.stage.Stage;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
@@ -43,10 +45,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * {@code showAndWait}), so the controller is constructed with a plain {@link AbstractFxTestCase#runAndWait(Runnable)}
  * over the shared {@link FxTestUtil#newMainViewController(Stage, String)} seam (reused by the sibling
  * {@code MainViewController} test classes) rather than
- * {@link FxTestUtil#runAndDriveModal(java.util.concurrent.Callable, java.util.function.Consumer)}. The passed real
- * {@link Stage} is always hidden in a {@code finally} block; because {@code Stage.hide()} does not fire the window
- * close-request handler, the controller's {@code closeApplication}/{@code System.exit} path is never reached and the
- * test JVM fork survives.
+ * {@link FxTestUtil#runAndDriveModal(java.util.concurrent.Callable, java.util.function.Consumer)}, in a
+ * {@code @BeforeEach}. The passed real {@link Stage} is always hidden in an {@code @AfterEach}; because
+ * {@code Stage.hide()} does not fire the window close-request handler, the controller's
+ * {@code closeApplication}/{@code System.exit} path is never reached and the test JVM fork survives.
  * <p>
  * This class covers the close-persist tail {@code persistSettingsAndStopTasks}, which was extracted from
  * {@code closeApplication} into a package-private method on the controller. The export seams extracted the same way — the precondition guard
@@ -68,6 +70,45 @@ public class MainViewControllerTest extends AbstractFxTestCase {
     }
     //</editor-fold>
     //
+    //<editor-fold desc="Private instance variables" defaultstate="collapsed">
+    /**
+     * Receives the primary stage of the controller under test when it is constructed, so it can be hidden after the
+     * test.
+     */
+    private final AtomicReference<Stage> stageReference = new AtomicReference<>();
+    /**
+     * The controller under test, constructed before each test.
+     */
+    private MainViewController controller;
+    //</editor-fold>
+    //
+    //<editor-fold desc="Lifecycle hooks" defaultstate="collapsed">
+    /**
+     * Constructs the controller under test on the JavaFX Application Thread over a fresh primary stage. Runs after
+     * the inherited {@link AbstractFxTestCase} setup, so the application directory is the isolated per-test
+     * {@code user.home}.
+     *
+     * @throws Exception if construction fails on the FX thread
+     */
+    @BeforeEach
+    public void setUpController() throws Exception {
+        this.controller = MainViewControllerTestSupport.constructController(this.stageReference);
+    }
+    //
+    /**
+     * Hides the primary stage of the controller under test (if one was created) on the JavaFX Application Thread.
+     * {@code Stage.hide()} does not fire the window close-request handler, so the controller's
+     * {@code closeApplication}/{@code System.exit} path is never reached. Runs before the inherited
+     * {@link AbstractFxTestCase} teardown.
+     *
+     * @throws Exception if hiding fails on the FX thread
+     */
+    @AfterEach
+    public void hideControllerStage() throws Exception {
+        MainViewControllerTestSupport.hideStage(this.stageReference);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Test methods" defaultstate="collapsed">
     /**
      * Unit test for the extracted close-persist tail (seam E4): calls {@code persistSettingsAndStopTasks()} directly
@@ -79,19 +120,13 @@ public class MainViewControllerTest extends AbstractFxTestCase {
      */
     @Test
     public void persistSettingsAndStopTasksPersistsWithoutReachingSystemExitTest() throws Exception {
-        AtomicReference<Stage> tmpStageReference = new AtomicReference<>();
-        try {
-            MainViewController tmpController = MainViewControllerTestSupport.constructController(tmpStageReference);
-            AbstractFxTestCase.runAndWait(() -> {
-                try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
-                    tmpController.persistSettingsAndStopTasks();
-                }
-            });
-            //observable side effect: preserveSettings created the settings directory under the isolated user.home
-            Assertions.assertTrue(new File(FileUtil.getSettingsDirPath()).isDirectory());
-        } finally {
-            MainViewControllerTestSupport.hideStage(tmpStageReference);
-        }
+        AbstractFxTestCase.runAndWait(() -> {
+            try (MockedStatic<GuiUtil> tmpGuiUtilMock = FxTestUtil.mockGuiAlerts()) {
+                this.controller.persistSettingsAndStopTasks();
+            }
+        });
+        //observable side effect: preserveSettings created the settings directory under the isolated user.home
+        Assertions.assertTrue(new File(FileUtil.getSettingsDirPath()).isDirectory());
     }
     //</editor-fold>
 }
