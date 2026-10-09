@@ -41,6 +41,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.openscience.cdk.exception.CDKException;
@@ -67,6 +70,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  * Tests the file-taking export methods of the {@link Exporter} class directly against a temporary output directory and
@@ -898,66 +902,44 @@ public class ExporterTest {
     }
     //
     /**
-     * Tests the main exception-handling branch of {@code createFragmentationTabSingleSDFile}. A FragmentDataModel built
-     * from an unparsable unique SMILES makes {@code getAtomContainer} throw a CDKException, which is caught by the
-     * method's outer catch block: the fragment's SMILES is added to the failed-export list and the export continues. The
-     * returned failed-list holds exactly that SMILES.
+     * Tests the main exception-handling branch of {@code createFragmentationTabSingleSDFile} ("single sdf"),
+     * {@code createFragmentationTabSeparateSDFiles} ("separate sdf") and {@code createFragmentationTabPDBFiles} ("pdb").
+     * A FragmentDataModel built from an unparsable unique SMILES makes {@code getAtomContainer} throw a CDKException,
+     * which is caught by the method's outer catch block: the fragment's SMILES is added to the failed-export list and the
+     * export continues (for the separate SDF and PDB exports the sub-directory is still created). The returned
+     * failed-list holds exactly that SMILES.
      *
+     * @param aCaseName name of the export case (display only)
+     * @param anExportCall the export call under test, fed a list holding only the invalid fragment
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
      */
-    @Test
-    public void testExportFragmentsAsChemicalFileSingleSdfInvalidFragment(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = new ArrayList<>();
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
-        tmpInvalidFragment.setAbsoluteFrequency(1);
-        tmpFragments.add(tmpInvalidFragment);
-        File tmpOut = aTempDir.resolve("single_invalid.sdf").toFile();
-        List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
-                tmpOut, tmpFragments, ChemFileTypes.SDF, true, true);
+    @ParameterizedTest(name = "invalid fragment, {0}")
+    @MethodSource("invalidFragmentExportCalls")
+    public void testExportFragmentsAsChemicalFileInvalidFragment(String aCaseName, ExportCall anExportCall,
+            @TempDir Path aTempDir) throws Exception {
+        List<String> tmpFailed = anExportCall.export(this.exporter, aTempDir);
         Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
     }
     //
     /**
-     * Tests the main exception-handling branch of {@code createFragmentationTabSeparateSDFiles}. A FragmentDataModel built
-     * from an unparsable unique SMILES makes {@code getAtomContainer} throw a CDKException, caught by the method's outer
-     * catch block: the fragment's SMILES is added to the failed-export list and the export continues. The sub-directory is
-     * still created and the returned failed-list holds exactly that SMILES.
+     * Provides the chemical-file export calls for {@link #testExportFragmentsAsChemicalFileInvalidFragment}, each fed a
+     * fresh list holding a single FragmentDataModel built from {@link #UNPARSABLE_SMILES}.
      *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
+     * @return named export calls
      */
-    @Test
-    public void testExportFragmentsAsChemicalFileSeparateSdfInvalidFragment(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = new ArrayList<>();
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
-        tmpInvalidFragment.setAbsoluteFrequency(1);
-        tmpFragments.add(tmpInvalidFragment);
-        File tmpDir = aTempDir.toFile();
-        List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
-                tmpDir, tmpFragments, ChemFileTypes.SDF, true, false);
-        Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
-    }
-    //
-    /**
-     * Tests the main exception-handling branch of {@code createFragmentationTabPDBFiles}. A FragmentDataModel built from
-     * an unparsable unique SMILES makes {@code getAtomContainer} throw a CDKException, caught by the method's outer catch
-     * block: the fragment's SMILES is added to the failed-export list and the export continues. The sub-directory is still
-     * created and the returned failed-list is non-empty.
-     *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testExportFragmentsAsChemicalFilePdbInvalidFragment(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = new ArrayList<>();
-        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
-        tmpInvalidFragment.setAbsoluteFrequency(1);
-        tmpFragments.add(tmpInvalidFragment);
-        File tmpDir = aTempDir.toFile();
-        List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
-                tmpDir, tmpFragments, ChemFileTypes.PDB, true);
-        Assertions.assertEquals(List.of(ExporterTest.UNPARSABLE_SMILES), tmpFailed);
+    private static Stream<Arguments> invalidFragmentExportCalls() {
+        List<MoleculeDataModel> tmpSingleSdfFragments = ExporterTest.buildInvalidFragmentList();
+        List<MoleculeDataModel> tmpSeparateSdfFragments = ExporterTest.buildInvalidFragmentList();
+        List<MoleculeDataModel> tmpPdbFragments = ExporterTest.buildInvalidFragmentList();
+        return Stream.of(
+                Arguments.of("single sdf", (ExportCall) (anExporter, aTempDir) -> anExporter.exportFragmentsAsChemicalFile(
+                        aTempDir.resolve("single_invalid.sdf").toFile(), tmpSingleSdfFragments, ChemFileTypes.SDF,
+                        true, true)),
+                Arguments.of("separate sdf", (ExportCall) (anExporter, aTempDir) -> anExporter.exportFragmentsAsChemicalFile(
+                        aTempDir.toFile(), tmpSeparateSdfFragments, ChemFileTypes.SDF, true, false)),
+                Arguments.of("pdb", (ExportCall) (anExporter, aTempDir) -> anExporter.exportFragmentsAsChemicalFile(
+                        aTempDir.toFile(), tmpPdbFragments, ChemFileTypes.PDB, true)));
     }
     //
     /**
@@ -1284,20 +1266,27 @@ public class ExporterTest {
      * unreachable single-threaded because the outer guard returns first.
      */
     /**
-     * Tests that the ITEMIZATION-tab CSV export returns {@code null} immediately when the current thread is interrupted
-     * (top-of-loop guard of {@code createItemizationTabCsvFile}).
+     * Tests that each export routine returns {@code null} immediately when the current thread is interrupted (top-of-loop
+     * guard of the routine named in the case). The export inputs are built by {@link #interruptedExportCalls()} before
+     * the interrupt flag is set; only the export call itself runs interrupted.
+     * <p>
+     * The "pdf fragments tab" case is special: unlike the itemization variant, {@code createFragmentsTabPdfFile} opens the
+     * iText {@code Document} but only adds its content table AFTER the export loop, so the interrupt's {@code return null}
+     * on the first iteration leaves the document with no pages. The document close is guarded so the zero-page iText
+     * {@code ExceptionConverter} ("The document has no pages.") is swallowed instead of escaping; the export therefore
+     * returns {@code null} on interrupt rather than propagating a spurious runtime exception.
      *
+     * @param aCaseName name of the export case (display only)
+     * @param anExportCall the export call under test
      * @param aTempDir per-test temporary directory (auto-deleted)
      * @throws Exception if anything goes wrong
      */
-    @Test
-    public void testExportCsvFileItemizationTabInterrupted(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpMolecules = new ArrayList<>();
-        tmpMolecules.add(ExporterTest.buildMoleculeWithFragments("ErtlFG"));
-        File tmpOut = aTempDir.resolve("items_interrupt.csv").toFile();
+    @ParameterizedTest(name = "interrupted, {0}")
+    @MethodSource("interruptedExportCalls")
+    public void testExportInterrupted(String aCaseName, ExportCall anExportCall, @TempDir Path aTempDir) throws Exception {
         try {
             Thread.currentThread().interrupt();
-            List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpMolecules, "ErtlFG", ',', TabNames.ITEMIZATION);
+            List<String> tmpFailed = anExportCall.export(this.exporter, aTempDir);
             Assertions.assertNull(tmpFailed);
         } finally {
             Thread.interrupted();
@@ -1305,139 +1294,85 @@ public class ExporterTest {
     }
     //
     /**
-     * Tests that the FRAGMENTS-tab CSV export returns {@code null} immediately when the current thread is interrupted
-     * (top-of-loop guard of {@code createFragmentsTabCsvFile}).
+     * Provides the interrupted-export cases for {@link #testExportInterrupted}: the CSV export of the ITEMIZATION and
+     * FRAGMENTS tabs ({@code createItemizationTabCsvFile}, {@code createFragmentsTabCsvFile}), the PDF export of the
+     * FRAGMENTS and ITEMIZATION tabs ({@code createFragmentsTabPdfFile}, {@code createItemizationTabPdfFile}), and the
+     * single SD-file, separate SD-files and PDB exports ({@code createFragmentationTabSingleSDFile},
+     * {@code createFragmentationTabSeparateSDFiles}, {@code createFragmentationTabPDBFiles}). Each case gets its own
+     * freshly built input lists.
      *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
+     * @return named export calls
+     * @throws Exception if building the inputs fails
      */
-    @Test
-    public void testExportCsvFileFragmentsTabInterrupted(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        File tmpOut = aTempDir.resolve("frags_interrupt.csv").toFile();
-        try {
-            Thread.currentThread().interrupt();
-            List<String> tmpFailed = this.exporter.exportCsvFile(tmpOut, tmpFragments, "ErtlFG", ',', TabNames.FRAGMENTS);
-            Assertions.assertNull(tmpFailed);
-        } finally {
-            Thread.interrupted();
-        }
-    }
-    //
-    /**
-     * Tests that the FRAGMENTS-tab PDF export hits its top-of-loop interrupt guard ({@code createFragmentsTabPdfFile})
-     * when the current thread is interrupted and returns {@code null} cleanly. Unlike the itemization variant, this
-     * method opens the iText {@code Document} but only adds its content table AFTER the export loop, so the interrupt's
-     * {@code return null} on the first iteration leaves the document with no pages. The document close is guarded so the
-     * zero-page iText {@code ExceptionConverter} ("The document has no pages.") is swallowed instead of escaping; the
-     * export therefore returns {@code null} on interrupt rather than propagating a spurious runtime exception.
-     *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testExportPdfFileFragmentsTabInterrupted(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        ObservableList<MoleculeDataModel> tmpMolecules = FXCollections.observableArrayList(tmpFragments);
-        File tmpOut = aTempDir.resolve("frags_interrupt.pdf").toFile();
-        try {
-            Thread.currentThread().interrupt();
-            List<String> tmpFailed = this.exporter.exportPdfFile(
-                    tmpOut, tmpFragments, tmpMolecules, "ErtlFG", "input.smi", TabNames.FRAGMENTS);
-            Assertions.assertNull(tmpFailed);
-        } finally {
-            Thread.interrupted();
-        }
-    }
-    //
-    /**
-     * Tests that the ITEMIZATION-tab PDF export returns {@code null} immediately when the current thread is interrupted
-     * (top-of-loop guard of {@code createItemizationTabPdfFile}).
-     *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testExportPdfFileItemizationTabInterrupted(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        ObservableList<MoleculeDataModel> tmpMolecules =
+    private static Stream<Arguments> interruptedExportCalls() throws Exception {
+        List<MoleculeDataModel> tmpCsvItemizationMolecules = new ArrayList<>();
+        tmpCsvItemizationMolecules.add(ExporterTest.buildMoleculeWithFragments("ErtlFG"));
+        List<MoleculeDataModel> tmpCsvFragments = ExporterTest.buildFragmentList();
+        List<MoleculeDataModel> tmpPdfFragmentsTabFragments = ExporterTest.buildFragmentList();
+        ObservableList<MoleculeDataModel> tmpPdfFragmentsTabMolecules =
+                FXCollections.observableArrayList(tmpPdfFragmentsTabFragments);
+        List<MoleculeDataModel> tmpPdfItemizationTabFragments = ExporterTest.buildFragmentList();
+        ObservableList<MoleculeDataModel> tmpPdfItemizationTabMolecules =
                 FXCollections.observableArrayList(ExporterTest.buildMoleculeWithFragments("ErtlFG"));
-        File tmpOut = aTempDir.resolve("items_interrupt.pdf").toFile();
-        try {
-            Thread.currentThread().interrupt();
-            List<String> tmpFailed = this.exporter.exportPdfFile(
-                    tmpOut, tmpFragments, tmpMolecules, "ErtlFG", "input.smi", TabNames.ITEMIZATION);
-            Assertions.assertNull(tmpFailed);
-        } finally {
-            Thread.interrupted();
-        }
+        List<MoleculeDataModel> tmpSingleSdfFragments = ExporterTest.buildFragmentList();
+        List<MoleculeDataModel> tmpSeparateSdfFragments = ExporterTest.buildFragmentList();
+        List<MoleculeDataModel> tmpPdbFragments = ExporterTest.buildFragmentList();
+        return Stream.of(
+                Arguments.of("csv itemization tab", (ExportCall) (anExporter, aTempDir) -> anExporter.exportCsvFile(
+                        aTempDir.resolve("items_interrupt.csv").toFile(), tmpCsvItemizationMolecules, "ErtlFG", ',',
+                        TabNames.ITEMIZATION)),
+                Arguments.of("csv fragments tab", (ExportCall) (anExporter, aTempDir) -> anExporter.exportCsvFile(
+                        aTempDir.resolve("frags_interrupt.csv").toFile(), tmpCsvFragments, "ErtlFG", ',',
+                        TabNames.FRAGMENTS)),
+                Arguments.of("pdf fragments tab", (ExportCall) (anExporter, aTempDir) -> anExporter.exportPdfFile(
+                        aTempDir.resolve("frags_interrupt.pdf").toFile(), tmpPdfFragmentsTabFragments,
+                        tmpPdfFragmentsTabMolecules, "ErtlFG", "input.smi", TabNames.FRAGMENTS)),
+                Arguments.of("pdf itemization tab", (ExportCall) (anExporter, aTempDir) -> anExporter.exportPdfFile(
+                        aTempDir.resolve("items_interrupt.pdf").toFile(), tmpPdfItemizationTabFragments,
+                        tmpPdfItemizationTabMolecules, "ErtlFG", "input.smi", TabNames.ITEMIZATION)),
+                Arguments.of("single sdf", (ExportCall) (anExporter, aTempDir) -> anExporter.exportFragmentsAsChemicalFile(
+                        aTempDir.resolve("single_interrupt.sdf").toFile(), tmpSingleSdfFragments, ChemFileTypes.SDF,
+                        true, true)),
+                Arguments.of("separate sdf", (ExportCall) (anExporter, aTempDir) -> anExporter.exportFragmentsAsChemicalFile(
+                        aTempDir.toFile(), tmpSeparateSdfFragments, ChemFileTypes.SDF, true, false)),
+                Arguments.of("pdb", (ExportCall) (anExporter, aTempDir) -> anExporter.exportFragmentsAsChemicalFile(
+                        aTempDir.toFile(), tmpPdbFragments, ChemFileTypes.PDB, true)));
     }
+    //</editor-fold>
     //
+    //<editor-fold desc="Nested types" defaultstate="collapsed">
     /**
-     * Tests that the single SD-file export returns {@code null} immediately when the current thread is interrupted
-     * (top-of-loop guard of {@code createFragmentationTabSingleSDFile}).
-     *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
+     * One export call against a temporary directory, used to parameterize tests over several export routines.
      */
-    @Test
-    public void testExportFragmentsAsChemicalFileSingleSdfInterrupted(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        File tmpOut = aTempDir.resolve("single_interrupt.sdf").toFile();
-        try {
-            Thread.currentThread().interrupt();
-            List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
-                    tmpOut, tmpFragments, ChemFileTypes.SDF, true, true);
-            Assertions.assertNull(tmpFailed);
-        } finally {
-            Thread.interrupted();
-        }
-    }
-    //
-    /**
-     * Tests that the separate SD-files export returns {@code null} immediately when the current thread is interrupted
-     * (top-of-loop guard of {@code createFragmentationTabSeparateSDFiles}).
-     *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testExportFragmentsAsChemicalFileSeparateSdfInterrupted(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        File tmpDir = aTempDir.toFile();
-        try {
-            Thread.currentThread().interrupt();
-            List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
-                    tmpDir, tmpFragments, ChemFileTypes.SDF, true, false);
-            Assertions.assertNull(tmpFailed);
-        } finally {
-            Thread.interrupted();
-        }
-    }
-    //
-    /**
-     * Tests that the PDB export returns {@code null} immediately when the current thread is interrupted (top-of-loop
-     * guard of {@code createFragmentationTabPDBFiles}).
-     *
-     * @param aTempDir per-test temporary directory (auto-deleted)
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testExportFragmentsAsChemicalFilePdbInterrupted(@TempDir Path aTempDir) throws Exception {
-        List<MoleculeDataModel> tmpFragments = ExporterTest.buildFragmentList();
-        File tmpDir = aTempDir.toFile();
-        try {
-            Thread.currentThread().interrupt();
-            List<String> tmpFailed = this.exporter.exportFragmentsAsChemicalFile(
-                    tmpDir, tmpFragments, ChemFileTypes.PDB, true);
-            Assertions.assertNull(tmpFailed);
-        } finally {
-            Thread.interrupted();
-        }
+    @FunctionalInterface
+    interface ExportCall {
+        /**
+         * Runs the export.
+         *
+         * @param anExporter exporter under test
+         * @param aTempDir per-test temporary directory (auto-deleted)
+         * @return the list returned by the export routine
+         * @throws Exception if the export throws
+         */
+        List<String> export(Exporter anExporter, Path aTempDir) throws Exception;
     }
     //</editor-fold>
     //
     //<editor-fold desc="Private static helper methods" defaultstate="collapsed">
+    /**
+     * Builds a list holding a single FragmentDataModel built from {@link #UNPARSABLE_SMILES} (absolute frequency 1), so
+     * that {@code getAtomContainer} throws during an export.
+     *
+     * @return list holding only the invalid fragment
+     */
+    private static List<MoleculeDataModel> buildInvalidFragmentList() {
+        List<MoleculeDataModel> tmpFragments = new ArrayList<>();
+        FragmentDataModel tmpInvalidFragment = new FragmentDataModel(ExporterTest.UNPARSABLE_SMILES, "Invalid", new HashMap<>());
+        tmpInvalidFragment.setAbsoluteFrequency(1);
+        tmpFragments.add(tmpInvalidFragment);
+        return tmpFragments;
+    }
+    //
     /**
      * Builds a FRAGMENTS-tab export input: a list of real FragmentDataModel instances (parsed from three SMILES) with
      * their frequency/percentage fields populated. The list is typed as List of MoleculeDataModel (the export method
