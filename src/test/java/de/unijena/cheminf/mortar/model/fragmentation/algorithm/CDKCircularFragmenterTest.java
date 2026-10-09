@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.model.util.TestUtil;
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.AfterAll;
@@ -91,19 +93,19 @@ class CDKCircularFragmenterTest {
         // Every setting is exposed through settingsProperties() and its property mirrors the getter
         List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
         Assertions.assertEquals(7, tmpSettings.size());
-        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.radiusSettingProperty(), tmpFragmenter.getRadiusSetting());
-        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.includeSmallerRadiiSettingProperty(), tmpFragmenter.getIncludeSmallerRadiiSetting());
-        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.preserveStereoSettingProperty(), tmpFragmenter.getPreserveStereoSetting());
-        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.markAttachmentsSettingProperty(), tmpFragmenter.getMarkAttachmentsSetting());
-        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.applyAromaticityDetectionSettingProperty(), tmpFragmenter.getApplyAromaticityDetectionSetting());
-        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.electronDonationModelSettingProperty(), tmpFragmenter.getElectronDonationModelSetting());
-        CDKCircularFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.cycleFinderSettingProperty(), tmpFragmenter.getCycleFinderSetting());
         // Every setting has a tooltip and a display name
         for (Property<?> tmpSetting : tmpSettings) {
@@ -426,18 +428,5 @@ class CDKCircularFragmenterTest {
             }
         }
         throw new IllegalStateException("No center atom (depth 0) found in the fragment.");
-    }
-    //
-    /**
-     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
-     * equals the value returned by the matching getter.
-     *
-     * @param aSettings the settingsProperties() list of the fragmenter
-     * @param aProperty the property returned by the property accessor under test
-     * @param aGetterValue the value returned by the matching getter
-     */
-    private static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
-        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
-        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
     }
 }

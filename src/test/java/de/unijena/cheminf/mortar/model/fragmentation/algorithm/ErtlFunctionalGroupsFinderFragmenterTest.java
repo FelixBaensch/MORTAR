@@ -26,6 +26,7 @@
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.Property;
 
@@ -247,19 +248,19 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
         ErtlFunctionalGroupsFinderFragmenter tmpFragmenter = new ErtlFunctionalGroupsFinderFragmenter();
         //every property accessor returns a property exposed by settingsProperties() that mirrors its getter
         List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
-        ErtlFunctionalGroupsFinderFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.fragmentSaturationSettingProperty(), tmpFragmenter.getFragmentSaturationSetting());
-        ErtlFunctionalGroupsFinderFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.environmentModeSettingProperty(), tmpFragmenter.getEnvironmentModeSetting());
-        ErtlFunctionalGroupsFinderFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.electronDonationModelSettingProperty(), tmpFragmenter.getElectronDonationModelSetting());
-        ErtlFunctionalGroupsFinderFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.returnedFragmentsSettingProperty(), tmpFragmenter.getReturnedFragmentsSetting());
-        ErtlFunctionalGroupsFinderFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.cycleFinderSettingProperty(), tmpFragmenter.getCycleFinderSetting());
-        ErtlFunctionalGroupsFinderFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.filterSingleAtomsSettingProperty(), tmpFragmenter.getFilterSingleAtomsSetting());
-        ErtlFunctionalGroupsFinderFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.applyInputRestrictionsSettingProperty(), tmpFragmenter.getApplyInputRestrictionsSetting());
         //boolean setters with read-back
         tmpFragmenter.setFilterSingleAtomsSetting(false);
@@ -387,19 +388,6 @@ public class ErtlFunctionalGroupsFinderFragmenterTest {
     }
     //
     //<editor-fold desc="Private static methods" defaultstate="collapsed">
-    /**
-     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
-     * equals the value returned by the matching getter.
-     *
-     * @param aSettings the settingsProperties() list of the fragmenter
-     * @param aProperty the property returned by the property accessor under test
-     * @param aGetterValue the value returned by the matching getter
-     */
-    private static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
-        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
-        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
-    }
-    //
     /**
      * Asserts that the given fragment list is non-empty and that every fragment carries a fragment category.
      *

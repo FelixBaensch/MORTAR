@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.model.util.TestUtil;
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.AfterAll;
@@ -200,26 +202,26 @@ public class ScaffoldGeneratorFragmenterTest {
         ScaffoldGeneratorFragmenter tmpFragmenter = new ScaffoldGeneratorFragmenter();
         //every property accessor returns a property exposed by settingsProperties() that mirrors its getter
         List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.fragmentSaturationSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.fragmentSaturationSettingProperty(),
                 tmpFragmenter.getFragmentSaturationSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.scaffoldModeSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.scaffoldModeSettingProperty(),
                 tmpFragmenter.getScaffoldModeSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.determineAromaticitySettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.determineAromaticitySettingProperty(),
                 tmpFragmenter.getDetermineAromaticitySetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.electronDonationModelSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.electronDonationModelSettingProperty(),
                 tmpFragmenter.getElectronDonationModelSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.cycleFinderSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.cycleFinderSettingProperty(),
                 tmpFragmenter.getCycleFinderSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.smilesGeneratorSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.smilesGeneratorSettingProperty(),
                 tmpFragmenter.getSmilesGeneratorSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.ruleSevenAppliedSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.ruleSevenAppliedSettingProperty(),
                 tmpFragmenter.getRuleSevenAppliedSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.retainOnlyHybridisationsAtAromaticBondsSetting(),
                 tmpFragmenter.getRetainOnlyHybridisationsAtAromaticBondsSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.fragmentationTypeSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.fragmentationTypeSettingProperty(),
                 tmpFragmenter.getFragmentationTypeSetting());
-        ScaffoldGeneratorFragmenterTest.assertExposedSetting(tmpSettings, tmpFragmenter.sideChainSettingProperty(),
+        TestUtil.assertExposedSetting(tmpSettings, tmpFragmenter.sideChainSettingProperty(),
                 tmpFragmenter.getSideChainSetting());
         //the two spellings of the retain-only-hybridisation accessors expose one and the same setting
         Assertions.assertSame(tmpFragmenter.retainOnlyHybridisationsAtAromaticBondsSetting(),
@@ -350,19 +352,6 @@ public class ScaffoldGeneratorFragmenterTest {
     //</editor-fold>
     //
     //<editor-fold desc="Private static methods">
-    /**
-     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
-     * equals the value returned by the matching getter.
-     *
-     * @param aSettings the settingsProperties() list of the fragmenter
-     * @param aProperty the property returned by the property accessor under test
-     * @param aGetterValue the value returned by the matching getter
-     */
-    private static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
-        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
-        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
-    }
-    //
     /**
      * Counts the fragments that carry the side-chain fragment category.
      *

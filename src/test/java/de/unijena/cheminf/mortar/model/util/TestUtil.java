@@ -27,6 +27,8 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 
+import javafx.beans.property.Property;
+
 import org.junit.jupiter.api.Assertions;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -92,6 +94,19 @@ public final class TestUtil {
     public static MoleculeDataModel buildMDM(String aSmiles) throws Exception {
         IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
         return new MoleculeDataModel(tmpAtomContainer, false);
+    }
+    //
+    /**
+     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
+     * equals the value returned by the matching getter.
+     *
+     * @param aSettings the settingsProperties() list of the fragmenter
+     * @param aProperty the property returned by the property accessor under test
+     * @param aGetterValue the value returned by the matching getter
+     */
+    public static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
+        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
+        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
     }
     //
     /**

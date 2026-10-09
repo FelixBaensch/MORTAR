@@ -25,6 +25,8 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.model.util.TestUtil;
+
 import javafx.beans.property.Property;
 
 import org.junit.jupiter.api.AfterAll;
@@ -156,41 +158,41 @@ public class SugarRemovalUtilityFragmenterTest {
         SugarRemovalUtilityFragmenter tmpFragmenter = new SugarRemovalUtilityFragmenter();
         //every property accessor returns a property exposed by settingsProperties() that mirrors its getter
         List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.returnedFragmentsSettingProperty(), tmpFragmenter.getReturnedFragmentsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.sugarTypeToRemoveSettingProperty(), tmpFragmenter.getSugarTypeToRemoveSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.detectCircularSugarsOnlyWithGlycosidicBondSettingProperty(), tmpFragmenter.getDetectCircularSugarsOnlyWithGlycosidicBondSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.removeOnlyTerminalSugarsSettingProperty(), tmpFragmenter.getRemoveOnlyTerminalSugarsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.preservationModeSettingProperty(), tmpFragmenter.getPreservationModeSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.preservationModeThresholdSettingProperty(), tmpFragmenter.getPreservationModeThresholdSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.detectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSettingProperty(), tmpFragmenter.getDetectCircularSugarsOnlyWithEnoughExocyclicOxygenAtomsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.exocyclicOxygenAtomsToAtomsInRingRatioThresholdSettingProperty(), tmpFragmenter.getExocyclicOxygenAtomsToAtomsInRingRatioThresholdSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.detectLinearSugarsInRingsSettingProperty(), tmpFragmenter.getDetectLinearSugarsInRingsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.linearSugarCandidateMinimumSizeSettingProperty(), tmpFragmenter.getLinearSugarCandidateMinimumSizeSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.linearSugarCandidateMaximumSizeSettingProperty(), tmpFragmenter.getLinearSugarCandidateMaximumSizeSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.detectLinearAcidicSugarsSettingProperty(), tmpFragmenter.getDetectLinearAcidicSugarsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.detectSpiroRingsAsCircularSugarsSettingProperty(), tmpFragmenter.getDetectSpiroRingsAsCircularSugarsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.detectCircularSugarsWithKetoGroupsSettingProperty(), tmpFragmenter.getDetectCircularSugarsWithKetoGroupsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.markAttachPointsByRSettingProperty(), tmpFragmenter.getMarkAttachPointsByRSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.postProcessSugarsSettingProperty(), tmpFragmenter.getPostProcessSugarsSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.limitPostprocessingBySizeSettingProperty(), tmpFragmenter.getLimitPostprocessingBySizeSetting());
-        SugarRemovalUtilityFragmenterTest.assertExposedSetting(tmpSettings,
+        TestUtil.assertExposedSetting(tmpSettings,
                 tmpFragmenter.discardTooSmallSugarModificationsSettingProperty(), tmpFragmenter.getDiscardTooSmallSugarModificationsSetting());
         //every boolean setting accepts a value and the getter reflects it
         tmpFragmenter.setDetectCircularSugarsOnlyWithGlycosidicBondSetting(true);
@@ -335,19 +337,4 @@ public class SugarRemovalUtilityFragmenterTest {
                     tmpFragment.getProperty(IMoleculeFragmenter.FRAGMENT_CATEGORY_PROPERTY_KEY));
         }
     }
-    //
-    //<editor-fold desc="Private static methods" defaultstate="collapsed">
-    /**
-     * Asserts that the given setting property is one of the fragmenter's settingsProperties() and that its value
-     * equals the value returned by the matching getter.
-     *
-     * @param aSettings the settingsProperties() list of the fragmenter
-     * @param aProperty the property returned by the property accessor under test
-     * @param aGetterValue the value returned by the matching getter
-     */
-    private static void assertExposedSetting(List<Property<?>> aSettings, Property<?> aProperty, Object aGetterValue) {
-        Assertions.assertTrue(aSettings.contains(aProperty), aProperty.getName() + " is not exposed by settingsProperties()");
-        Assertions.assertEquals(aGetterValue, aProperty.getValue(), aProperty.getName());
-    }
-    //</editor-fold>
 }
