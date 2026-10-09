@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.data;
 
+import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 
 import javafx.scene.image.ImageView;
@@ -233,7 +234,8 @@ public class FragmentDataModel extends MoleculeDataModel {
      */
     public ImageView getParentMoleculeStructure() throws NullPointerException {
         if (this.parentMolecules.isEmpty()) {
-            return new ImageView(DepictionUtil.depictErrorImage("No parent molecules",
+            return new ImageView(DepictionUtil.depictErrorImage(
+                    Message.get("FragmentDataModel.parentMoleculeStructure.noParentMolecules"),
                     (int) super.getStructureImageWidth(),
                     (int) super.getStructureImageHeight()));
         }
@@ -334,7 +336,12 @@ public class FragmentDataModel extends MoleculeDataModel {
     }
     //
     /**
-     * Sets the parent molecule of this fragment.
+     * Sets the parent molecule of this fragment, overriding the parent that {@link #getFirstParentMolecule()} would
+     * otherwise resolve lazily from the parent molecule Set.
+     * <br>NOTE: this only sets the cached first-parent field, it does not add the molecule to the parent Set returned
+     * by {@link #getParentMolecules()}. Every reader of the cached parent short-circuits while that Set is empty, so
+     * calling this method on a fragment with no registered parents has no observable effect; the molecule has to be in
+     * the Set as well. Nothing in the application currently calls this method.
      *
      * @param aParentMolecule parent molecule
      */

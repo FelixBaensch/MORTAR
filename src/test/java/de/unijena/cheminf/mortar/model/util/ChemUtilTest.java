@@ -25,8 +25,11 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -41,8 +44,11 @@ import java.io.FileReader;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.regex.Pattern;
 
 /**
@@ -97,7 +103,11 @@ class ChemUtilTest {
         IAtomContainer tmpMolecule = tmpReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
         tmpReader.close();
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
+        //the fixture contains radicals (single electrons) before fixing
+        Assertions.assertTrue(tmpMolecule.getSingleElectronCount() > 0);
         ChemUtil.fixRadicals(tmpMolecule);
+        //fixRadicals must remove every single electron from the molecule (pins the electron-removal loop)
+        Assertions.assertEquals(0, tmpMolecule.getSingleElectronCount());
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Canonical);
         Assertions.assertEquals("N=C1N=C2C3=C(N1)CCC3CC(C)C2CCCC", smiGen.create(tmpMolecule));
     }
@@ -235,5 +245,297 @@ class ChemUtilTest {
             tmpFormula = ChemUtil.generateMolecularFormula(tmpMolecule);
             Assertions.assertEquals(tmpExpectedFormulas[i], tmpFormula);
         }
+    }
+    //
+    /**
+     * Tests that ChemUtil.generateMolecularFormula() returns the correct molecular formula for a parsed molecule.
+     * Golden value is acceptable here because the CDK version is pinned in the version catalog; if CDK is bumped the
+     * expected formula string may need to be refreshed.
+     */
+    @Test
+    public void testGenerateMolecularFormula() throws Exception {
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        String tmpFormula = ChemUtil.generateMolecularFormula(tmpMolecule);
+        Assertions.assertEquals("C6H6", tmpFormula);
+    }
+    //
+    /**
+     * Tests ChemUtil.has2DCoordinates(): false before 2D coordinates are generated, true afterwards.
+     */
+    @Test
+    public void testHas2DCoordinates() throws Exception {
+        IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        MoleculeDataModel tmpMolecule = new MoleculeDataModel(tmpAtomContainer, false);
+        Assertions.assertFalse(ChemUtil.has2DCoordinates(tmpMolecule));
+        ChemUtil.generate2DCoordinates(tmpMolecule.getAtomContainer());
+        Assertions.assertTrue(ChemUtil.has2DCoordinates(tmpMolecule));
+    }
+    //
+    /**
+     * Tests ChemUtil.has3DCoordinates(): false before 3D coordinates are generated, true afterwards.
+     */
+    @Test
+    public void testHas3DCoordinates() throws Exception {
+        IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        MoleculeDataModel tmpMolecule = new MoleculeDataModel(tmpAtomContainer, false);
+        Assertions.assertFalse(ChemUtil.has3DCoordinates(tmpMolecule));
+        ChemUtil.generateZero3DCoordinates(tmpMolecule.getAtomContainer());
+        Assertions.assertTrue(ChemUtil.has3DCoordinates(tmpMolecule));
+    }
+    //
+    /**
+     * Tests all branches of ChemUtil.checkMoleculeListForCoordinates(): null list, empty list, a list with a molecule
+     * that has coordinates, and a list with a molecule that has none.
+     */
+    @Test
+    public void testCheckMoleculeListForCoordinates() throws Exception {
+        Assertions.assertFalse(ChemUtil.checkMoleculeListForCoordinates(null));
+        Assertions.assertFalse(ChemUtil.checkMoleculeListForCoordinates(new ArrayList<>(0)));
+        IAtomContainer tmpAtomContainerWithoutCoords = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        MoleculeDataModel tmpMoleculeWithoutCoords = new MoleculeDataModel(tmpAtomContainerWithoutCoords, false);
+        List<MoleculeDataModel> tmpListWithoutCoords = new ArrayList<>(1);
+        tmpListWithoutCoords.add(tmpMoleculeWithoutCoords);
+        Assertions.assertFalse(ChemUtil.checkMoleculeListForCoordinates(tmpListWithoutCoords));
+        IAtomContainer tmpAtomContainerWithCoords = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        MoleculeDataModel tmpMoleculeWithCoords = new MoleculeDataModel(tmpAtomContainerWithCoords, false);
+        ChemUtil.generate2DCoordinates(tmpMoleculeWithCoords.getAtomContainer());
+        List<MoleculeDataModel> tmpListWithCoords = new ArrayList<>(1);
+        tmpListWithCoords.add(tmpMoleculeWithCoords);
+        Assertions.assertTrue(ChemUtil.checkMoleculeListForCoordinates(tmpListWithCoords));
+    }
+    //
+    /**
+     * Tests ChemUtil.generate2DCoordinates(): null molecule throws NullPointerException, empty container returns without
+     * throwing, and a real molecule gains 2D coordinates on its atoms.
+     */
+    @Test
+    public void testGenerate2DCoordinates() throws Exception {
+        Assertions.assertThrows(NullPointerException.class, () -> ChemUtil.generate2DCoordinates(null));
+        IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertDoesNotThrow(() -> ChemUtil.generate2DCoordinates(tmpEmptyContainer));
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        ChemUtil.generate2DCoordinates(tmpMolecule);
+        for (IAtom tmpAtom : tmpMolecule.atoms()) {
+            Assertions.assertNotNull(tmpAtom.getPoint2d());
+        }
+    }
+    //
+    /**
+     * Tests ChemUtil.generatePseudo3Dfrom2DCoordinates(): after 2D coordinates exist the generated 3D points have z=0;
+     * a molecule without 2D coordinates throws IllegalArgumentException; a null molecule throws NullPointerException.
+     */
+    @Test
+    public void testGeneratePseudo3Dfrom2DCoordinates() throws Exception {
+        Assertions.assertThrows(NullPointerException.class, () -> ChemUtil.generatePseudo3Dfrom2DCoordinates(null));
+        IAtomContainer tmpMoleculeWithout2D = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ChemUtil.generatePseudo3Dfrom2DCoordinates(tmpMoleculeWithout2D));
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        ChemUtil.generate2DCoordinates(tmpMolecule);
+        ChemUtil.generatePseudo3Dfrom2DCoordinates(tmpMolecule);
+        for (IAtom tmpAtom : tmpMolecule.atoms()) {
+            Assertions.assertNotNull(tmpAtom.getPoint3d());
+            Assertions.assertEquals(0.0, tmpAtom.getPoint3d().z);
+        }
+    }
+    //
+    /**
+     * Tests ChemUtil.generateZero3DCoordinates(): null molecule throws NullPointerException, empty container returns
+     * without throwing, and every atom of a real molecule gets the (0,0,0) coordinate.
+     */
+    @Test
+    public void testGenerateZero3DCoordinates() throws Exception {
+        Assertions.assertThrows(NullPointerException.class, () -> ChemUtil.generateZero3DCoordinates(null));
+        IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertDoesNotThrow(() -> ChemUtil.generateZero3DCoordinates(tmpEmptyContainer));
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        ChemUtil.generateZero3DCoordinates(tmpMolecule);
+        for (IAtom tmpAtom : tmpMolecule.atoms()) {
+            Assertions.assertNotNull(tmpAtom.getPoint3d());
+            Assertions.assertEquals(0.0, tmpAtom.getPoint3d().x);
+            Assertions.assertEquals(0.0, tmpAtom.getPoint3d().y);
+            Assertions.assertEquals(0.0, tmpAtom.getPoint3d().z);
+        }
+    }
+    //
+    /**
+     * Tests the isAromaticityEncoded=false path of ChemUtil.createUniqueSmiles(): the returned unique SMILES is
+     * non-null and round-trips back to the same unique SMILES when parsed again (an invariant, no golden value).
+     */
+    @Test
+    public void testCreateUniqueSmilesWithoutAromaticityEncoding() throws Exception {
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1", false, false);
+        String tmpUniqueSmiles = ChemUtil.createUniqueSmiles(tmpMolecule, false, false);
+        Assertions.assertNotNull(tmpUniqueSmiles);
+        IAtomContainer tmpReparsed = ChemUtil.parseSmilesToAtomContainer(tmpUniqueSmiles, false, false);
+        Assertions.assertEquals(tmpUniqueSmiles, ChemUtil.createUniqueSmiles(tmpReparsed, false, false));
+    }
+    //
+    /**
+     * Tests the CDKException -> fix-aromatic-nitrogen fallback path of ChemUtil.createUniqueSmiles(): a molecule
+     * parsed from an aromatic SMILES that is missing an explicit hydrogen on an aromatic nitrogen cannot be
+     * kekulized directly, so createUniqueSmiles must take the fix-aromatic-N branch (observable through the INFO record
+     * it logs after adding the hydrogen) and still return a non-null unique SMILES.
+     */
+    @Test
+    public void testCreateUniqueSmilesAromaticNitrogenFallback() throws Exception {
+        //CHEBI:929 - one aromatic n is missing its explicit hydrogen, forcing the fix-aromatic-N fallback branch
+        String tmpSmilesCode = "Nc1nc(N[C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]2O)c(N)c(=O)n1";
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        tmpSmiPar.kekulise(false);
+        IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles(tmpSmilesCode);
+        //isAromaticityEncoded=false forces a kekulizing flavor, so the first generation fails and the fix-aromatic-N branch is taken
+        String[] tmpUniqueSmiles = new String[1];
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(ChemUtil.class.getName(), Level.INFO,
+                () -> tmpUniqueSmiles[0] = ChemUtil.createUniqueSmiles(tmpMolecule, false, false));
+        Assertions.assertNotNull(tmpUniqueSmiles[0]);
+        ChemUtilTest.assertAromaticNitrogenFixLogged(tmpRecords);
+    }
+    //
+    /**
+     * Tests ChemUtil.saturateWithHydrogen() guard branches: a null molecule throws NullPointerException and an empty
+     * atom container returns without throwing. Also checks that a hydrogen-depleted ethanol skeleton (every implicit
+     * hydrogen count set to zero) is saturated to CH3, CH2 and OH.
+     */
+    @Test
+    public void testSaturateWithHydrogen() throws Exception {
+        Assertions.assertThrows(NullPointerException.class, () -> ChemUtil.saturateWithHydrogen(null));
+        IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertDoesNotThrow(() -> ChemUtil.saturateWithHydrogen(tmpEmptyContainer));
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("CCO", false, false);
+        for (IAtom tmpAtom : tmpMolecule.atoms()) {
+            tmpAtom.setImplicitHydrogenCount(0);
+        }
+        ChemUtil.saturateWithHydrogen(tmpMolecule);
+        Assertions.assertEquals(3, tmpMolecule.getAtom(0).getImplicitHydrogenCount());
+        Assertions.assertEquals(2, tmpMolecule.getAtom(1).getImplicitHydrogenCount());
+        Assertions.assertEquals(1, tmpMolecule.getAtom(2).getImplicitHydrogenCount());
+    }
+    //
+    /**
+     * Tests ChemUtil.checkAndCorrectElectronConfiguration() guard branches: a null molecule throws
+     * NullPointerException and an empty atom container returns without throwing. Also checks that ethanol parsed from
+     * SMILES, which carries no lone pairs, gets the two lone pairs of its oxygen atom added (and none on the carbons).
+     */
+    @Test
+    public void testCheckAndCorrectElectronConfiguration() throws Exception {
+        Assertions.assertThrows(NullPointerException.class,
+                () -> ChemUtil.checkAndCorrectElectronConfiguration(null));
+        IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertDoesNotThrow(() -> ChemUtil.checkAndCorrectElectronConfiguration(tmpEmptyContainer));
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("CCO");
+        Assertions.assertEquals(0, tmpMolecule.getLonePairCount());
+        ChemUtil.checkAndCorrectElectronConfiguration(tmpMolecule);
+        Assertions.assertEquals(2, tmpMolecule.getLonePairCount());
+        Assertions.assertEquals(2, tmpMolecule.getConnectedLonePairsCount(tmpMolecule.getAtom(2)));
+    }
+    //
+    /**
+     * Tests ChemUtil.fixRadicals() guard branches: a null molecule throws NullPointerException, an empty atom
+     * container returns without throwing, and a molecule without any single electrons is left untouched (the
+     * "do nothing" branch).
+     */
+    @Test
+    public void testFixRadicalsGuards() throws Exception {
+        Assertions.assertThrows(NullPointerException.class, () -> ChemUtil.fixRadicals(null));
+        IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertDoesNotThrow(() -> ChemUtil.fixRadicals(tmpEmptyContainer));
+        IAtomContainer tmpMoleculeWithoutRadicals = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        Assertions.assertEquals(0, tmpMoleculeWithoutRadicals.getSingleElectronCount());
+        Assertions.assertDoesNotThrow(() -> ChemUtil.fixRadicals(tmpMoleculeWithoutRadicals));
+        Assertions.assertEquals(0, tmpMoleculeWithoutRadicals.getSingleElectronCount());
+    }
+    //
+    /**
+     * Tests the single-argument ChemUtil.parseSmilesToAtomContainer(String), which delegates to the three-argument
+     * variant with kekulization and atom type perception enabled. The result must be a non-null atom container.
+     */
+    @Test
+    public void testParseSmilesToAtomContainerSingleArg() throws Exception {
+        IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer("c1ccccc1");
+        Assertions.assertNotNull(tmpMolecule);
+        Assertions.assertEquals(6, tmpMolecule.getAtomCount());
+    }
+    //
+    /**
+     * Tests the CDKException catch branch of ChemUtil.has2DCoordinates() and has3DCoordinates(): a molecule data model
+     * whose unique SMILES cannot be parsed makes getAtomContainer() throw, and both coordinate checks must return
+     * false instead of propagating the exception.
+     */
+    @Test
+    public void testHasCoordinatesWithUnparseableSmiles() throws Exception {
+        MoleculeDataModel tmpMolecule = new MoleculeDataModel("not_a_valid_smiles", "BrokenMolecule", new HashMap<>());
+        Assertions.assertFalse(ChemUtil.has2DCoordinates(tmpMolecule));
+        Assertions.assertFalse(ChemUtil.has3DCoordinates(tmpMolecule));
+    }
+    //
+    /**
+     * Tests the empty-container early-return branch of ChemUtil.generatePseudo3Dfrom2DCoordinates(): an empty atom
+     * container returns without throwing.
+     */
+    @Test
+    public void testGeneratePseudo3Dfrom2DCoordinatesEmptyContainer() throws Exception {
+        IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertDoesNotThrow(() -> ChemUtil.generatePseudo3Dfrom2DCoordinates(tmpEmptyContainer));
+    }
+    //
+    /**
+     * Drives the fix-aromatic-nitrogen success branch of ChemUtil.createUniqueSmiles(): the first SMILES generation
+     * fails to kekulize because of an aromatic nitrogen missing its explicit hydrogen, then the fix-aromatic-N
+     * routine succeeds (observable through the INFO record it logs) and a non-null unique SMILES is produced. Uses a
+     * ChEBI molecule known to be fixable.
+     */
+    @Test
+    public void testCreateUniqueSmilesFixAromaticNitrogenSuccess() throws Exception {
+        //CHEBI:10048 - two aromatic n need to be fixed; proven fixable by testFixAromaticNitrogensAndCreateSMILES
+        String tmpSmilesCode = "O=c1nc(=O)c2ncn([C@@H]3O[C@H](COP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]3O)c2n1";
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        tmpSmiPar.kekulise(false);
+        IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles(tmpSmilesCode);
+        //isAromaticityEncoded=false forces a kekulizing flavor, so the first generation fails and the fix-aromatic-N branch is taken
+        String[] tmpUniqueSmiles = new String[1];
+        List<LogRecord> tmpRecords = TestUtil.captureLogRecords(ChemUtil.class.getName(), Level.INFO,
+                () -> tmpUniqueSmiles[0] = ChemUtil.createUniqueSmiles(tmpMolecule, false, false));
+        Assertions.assertNotNull(tmpUniqueSmiles[0]);
+        ChemUtilTest.assertAromaticNitrogenFixLogged(tmpRecords);
+    }
+    //
+    /**
+     * Tests the guard branches of ChemUtil.fixAromaticNitrogenAndCreateSMILES(): a null molecule throws
+     * NullPointerException, an empty atom container returns null, and a molecule without any aromatic nitrogen
+     * atoms returns null.
+     */
+    @Test
+    public void testFixAromaticNitrogenAndCreateSMILESGuards() throws Exception {
+        Assertions.assertThrows(NullPointerException.class,
+                () -> ChemUtil.fixAromaticNitrogenAndCreateSMILES(null));
+        IAtomContainer tmpEmptyContainer = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertNull(ChemUtil.fixAromaticNitrogenAndCreateSMILES(tmpEmptyContainer));
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        tmpSmiPar.kekulise(false);
+        IAtomContainer tmpMoleculeWithoutAromaticN = tmpSmiPar.parseSmiles("c1ccccc1");
+        Assertions.assertNull(ChemUtil.fixAromaticNitrogenAndCreateSMILES(tmpMoleculeWithoutAromaticN));
+    }
+    //
+    /**
+     * Exercises the private no-argument constructor of the utility class ChemUtil via reflection to cover the
+     * otherwise-unreachable constructor line.
+     */
+    @Test
+    public void privateConstructorTest() throws Exception {
+        TestUtil.assertPrivateConstructorIsInvocable(ChemUtil.class);
+    }
+    //
+    /**
+     * Asserts that the captured records contain the INFO record createUniqueSmiles logs after the fix-aromatic-nitrogen
+     * routine succeeded, i.e. that the fallback actually ran (and not the plain-kekulization alternative, which logs a
+     * different record).
+     *
+     * @param aRecords records captured from the ChemUtil logger
+     */
+    private static void assertAromaticNitrogenFixLogged(List<LogRecord> aRecords) {
+        Assertions.assertTrue(aRecords.stream().anyMatch(aRecord -> aRecord.getLevel() == Level.INFO
+                        && aRecord.getMessage().startsWith("Added hydrogen atom to aromatic nitrogen atom")),
+                "the fix-aromatic-nitrogen fallback did not run");
     }
 }

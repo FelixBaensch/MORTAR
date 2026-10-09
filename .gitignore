@@ -54,3 +54,8 @@ AdoptOpenJDK.zip
 /build-logic/build
 /build-logic/.kotlin
 /build-logic/src/main/kotlin/de/unijena/cheminf/mortar/gradle/bundle/gen/
+
+# Local-only assistant/workflow scaffolding
+/CLAUDE.md
+/.planning/
+/.claude/

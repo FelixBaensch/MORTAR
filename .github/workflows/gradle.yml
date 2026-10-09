@@ -34,4 +34,7 @@ jobs:
     - name: Set up Gradle
       uses: gradle/actions/setup-gradle@v6
     - name: Build with Gradle
-      run: ./gradlew build
+      # The JaCoCo coverage gate is not part of `check`/`build` (it is unreachable on Windows, where a few
+      # platform-specific tests are skipped), so it is requested explicitly here on the one platform that runs
+      # the full suite.
+      run: ./gradlew build jacocoTestCoverageVerification

@@ -191,7 +191,7 @@ public class Importer {
         this.settingsContainer = aSettingsContainer;
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.getRecentDirectoryPathSettingDefault());
             Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         this.fileName = null;
@@ -222,7 +222,7 @@ public class Importer {
         Objects.requireNonNull(aFile, "aFile is null");
         String tmpRecentDirFromContainer = this.settingsContainer.getRecentDirectoryPathSetting();
         if (tmpRecentDirFromContainer == null || tmpRecentDirFromContainer.isEmpty()) {
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.getRecentDirectoryPathSettingDefault());
             Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         String tmpFilePath = aFile.getPath();
@@ -335,8 +335,8 @@ public class Importer {
                 tmpFormattedExtensionsList));
         File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
         if (!tmpRecentDirectory.isDirectory()) {
-            tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
-            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            tmpRecentDirectory = new File(SettingsContainer.getRecentDirectoryPathSettingDefault());
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.getRecentDirectoryPathSettingDefault());
             Importer.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         tmpFileChooser.setInitialDirectory(tmpRecentDirectory);
