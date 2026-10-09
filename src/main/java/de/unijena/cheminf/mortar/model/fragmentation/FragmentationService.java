@@ -347,8 +347,10 @@ public class FragmentationService {
                             isKeepLastFragmentSetting ||
                                 (tmpFragmentsMap != null && tmpFragmentsMap.containsKey(tmpParentFragment.getUniqueSmiles()))
                         ) {
+                            //a parent kept only because of isKeepLastFragmentSetting is not in the results of this
+                            // fragmentation, so it is carried forward as it is
                             if (
-                                tmpFragmentsMap != null && tmpNewFragmentsOfMol.add(tmpFragmentsMap.get(tmpParentFragment.getUniqueSmiles()))
+                                tmpFragmentsMap != null && tmpNewFragmentsOfMol.add(tmpFragmentsMap.getOrDefault(tmpParentFragment.getUniqueSmiles(), tmpParentFragment))
                             ) {
                                 tmpNewFragmentFrequenciesOfMol.put(
                                     tmpParentFragment.getUniqueSmiles(),
