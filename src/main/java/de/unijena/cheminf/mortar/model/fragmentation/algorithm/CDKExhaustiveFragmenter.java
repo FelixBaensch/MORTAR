@@ -60,27 +60,20 @@ import java.util.logging.Logger;
  * <p>Example:</p>
  * <pre>
  *
- *        Non-terminal (splittable)
- *                       |
- *          terminal     |       [O]
- *      (not splittable) |      //
- *              |        |     //  &lt;-- double bond (not splittable)
- *              |        |    //
- *  [H]----[C]-----[C]-----[C]
- *         / |     / |        \
- *        /  |    /  |         \ &lt;-- terminal bond (not splittable)
- *       /   |   /   |          \
- *    [H]  [H] [H] [H]          [O-]
+ *    Non-terminal (splittable)
+ *                   |
+ *      terminal     |       [O]
+ *  (not splittable) |      //
+ *          |        |     //  &lt;-- double bond (not splittable)
+ *          |        |    //
+ *     [C]-----[C]-----[C]
+ *                        \
+ *                         \ &lt;-- terminal bond (not splittable)
+ *                          \
+ *                          [O-]
  *
  *
  * </pre>
- * <ul>
- *     <li>The C-C bond on the left IS NOT splittable (because the left one has no further heavy atoms bonded)</li>
- *     <li>The C-C bond on the right IS splittable (because both have a degree greater than one)</li>
- *     <li>The C=O bond on the right is NOT splittable as it is a double bond.</li>
- *     <li>The C-[O-] bond on the right is also NOT splittable because the negatively charged oxygen
- *     is only connected by one bond to another heavy atom, making it a terminal bond.</li>
- * </ul>
  *
  * @author Tom Weiß
  * @version 1.0.0.0
@@ -177,7 +170,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public static final int DEFAULT_MINIMUM_FRAGMENT_SIZE = 6;
     //
     /**
-     * The default setting for saturation is {@code HYDROGEN_SATURATED_FRAGMENTS}.
+     * The default setting for saturation is {@link CDKExhaustiveFragmenter.SaturationDisplay#HYDROGEN_SATURATED_FRAGMENTS}.
      */
     public static final SaturationDisplay DEFAULT_SATURATION =  SaturationDisplay.HYDROGEN_SATURATED_FRAGMENTS;
     //
@@ -189,11 +182,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      */
     public static final int DEFAULT_INCLUSIVE_MAX_TREE_DEPTH = 27;
     /**
-     * Do not copy stereochemistry information by default
+     * Do not copy stereochemistry information by default.
      */
     public static final boolean DEFAULT_PRESERVE_STEREO_INFO = false;
     /**
-     * The inclusive maximum number of bonds split in one fragmentation.
+     * The inclusive maximum number of bonds split in one fragmentation. This is the current architectural
+     * limit.
      */
     public static final int INCLUSIVE_MAX_TREE_DEPTH_LIMIT = 32;
     /**
@@ -218,8 +212,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      */
     private final SimpleBooleanProperty preserveStereoSetting;
     /**
-     * The minimum size of the returned fragments. This size consists of all atoms, that are connected by more than
-     * a single bond or have more than one single bond.
+     * The minimum size of the returned fragments. This size represents
+     * all atoms present.
      */
     private final SimpleIntegerProperty minimumFragmentSizeSetting;
     /**
@@ -258,6 +252,11 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.cdkEFInstance = new ExhaustiveFragmenter();
+        // Keep underlying CDK fragmenter in sync with this wrapper's declared defaults
+        this.cdkEFInstance.setMinimumFragmentSize(CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE);
+        this.cdkEFInstance.setInclusiveMaxTreeDepth(CDKExhaustiveFragmenter.DEFAULT_INCLUSIVE_MAX_TREE_DEPTH);
+        this.cdkEFInstance.setSaturationSetting(CDKExhaustiveFragmenter.DEFAULT_SATURATION.getSaturationValue());
+        this.cdkEFInstance.setPreserveStereo(CDKExhaustiveFragmenter.DEFAULT_PRESERVE_STEREO_INFO);
 
         this.minimumFragmentSizeSetting = new SimpleIntegerProperty(this,
                 "Minimum Size for the returned fragments",
@@ -400,8 +399,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //<editor-fold desc="Public properties get">
     /**
      * Returns the setting for the threshold of splittable bonds.
-     * If fragments have more splittable bonds then the value of this setting
-     * they will not be fragmented.
+     * If a molecule has more splittable bonds than the value of this setting,
+     * it will not be fragmented.
      *
      * @return the currently set inclusive threshold of splittable bonds.
      */
@@ -412,7 +411,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * Returns the limit of splittable bonds for the filtering.
      *
-     * @return the currently set limit. Molecules above this limit will be excluded for fragmentation.
+     * @return the currently set limit. Molecules above this limit will be excluded from fragmentation.
      */
     public int getInclusiveLimitForSplittableBonds() {
         return this.inclusiveSplittableBondsLimitSetting.get();
@@ -428,7 +427,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     }
 
     /**
-     * Gets the boolean setting of the de/activate the splittable bonds limit.
+     * Gets the boolean setting that allows de/activate the splittable bonds limit.
      *
      * @return the setting of the splittable bonds limit which can be active (true) or inactive(false)
      */
@@ -631,8 +630,11 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         try {
             this.cdkEFInstance.generateFragments(tmpMoleculeClone);
         } catch (Exception anException) {
-            throw new IllegalArgumentException("An error occurred during fragmentation: " + anException +
-                    " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+            throw new IllegalArgumentException(
+                    "An error occurred during fragmentation: " + anException +
+                    " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                    anException
+            );
         }
         return List.of(this.cdkEFInstance.getFragmentsAsContainers());
     }

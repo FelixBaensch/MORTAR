@@ -122,7 +122,7 @@ public class CDKExhaustiveFragmenterTest {
                 "CCCCC[C@H]1O[C@@H]1/C=C/C=O");
 
         Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
-        tmpFragmenter.preserveStereoSettingProperty().set(false);
+        tmpFragmenter.preserveStereoSettingProperty().set(true);
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
         for (IAtomContainer tmpFragment : tmpFragmentList) {
             Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
