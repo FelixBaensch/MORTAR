@@ -426,9 +426,7 @@ public class MainViewController {
     //
     /**
      * Persists the global, view-tools and fragmenter/pipeline settings, interrupts a running fragmentation and logs the
-     * session end. Extracted (behavior-preserving) from {@code closeApplication} so the persist/interrupt sequence is
-     * unit-testable headlessly, sequenced away from the {@code Platform.exit()}/{@code System.exit} tail that cannot be
-     * exercised in-suite. The calls and their order are unchanged.
+     * session end.
      */
     void persistSettingsAndStopTasks() {
         this.settingsContainer.preserveSettings();
@@ -448,7 +446,6 @@ public class MainViewController {
      *
      * @return true if "OK" was clicked, false for "Cancel"
      */
-    //Note: package-private (not private) so same-package headless tests can drive both confirmation branches.
     boolean isFragmentationStopAndDataLossConfirmed() {
         ButtonType tmpConfirmationResult;
         if (this.isFragmentationRunning) {
@@ -495,7 +492,6 @@ public class MainViewController {
      *
      * @param aFile File that contains molecular data
      */
-    //Note: package-private (not private) so same-package headless tests can drive import with a resolved file.
     void importMoleculeFile(File aFile) {
         this.importMoleculeFile(aFile, new Importer(this.settingsContainer));
     }
@@ -505,7 +501,6 @@ public class MainViewController {
      *
      * @param aFile File that contains molecular data
      */
-    //Note: package-private (not private) so same-package headless tests can drive import with a resolved file/importer.
     void importMoleculeFile(File aFile, Importer anImporter) {
         if (Objects.isNull(aFile)) {
             return;
@@ -608,7 +603,6 @@ public class MainViewController {
      *
      * @param anExportType Enum to specify what type of file to export
      */
-    //Note: package-private (not private) so same-package headless tests can drive the export precondition guards.
     void exportFile(Exporter.ExportTypes anExportType) {
         if (!this.areExportPreconditionsMet(anExportType)) {
             return;
@@ -650,8 +644,7 @@ public class MainViewController {
     //
     /**
      * Checks whether the preconditions for exporting the given type of file are met, raising the appropriate alert and
-     * returning false when export must be aborted. Extracted (behavior-preserving) from {@code exportFile} so the
-     * pre-chooser guards are unit-testable headlessly; the alert calls and branch conditions are unchanged.
+     * returning false when export must be aborted.
      *
      * @param anExportType Enum to specify what type of file to export
      * @return true if export may proceed, false if it must be aborted
@@ -702,9 +695,7 @@ public class MainViewController {
     //
     /**
      * Dispatches the export of the given already-resolved file to the appropriate {@link Exporter} method per export
-     * type, returning the list of fragment names that could not be exported. Extracted (behavior-preserving) from the
-     * {@code exportFile} export task's {@code call()} so the dispatch is unit-testable headlessly with a resolved file;
-     * the per-type routing is unchanged.
+     * type, returning the list of fragment names that could not be exported.
      *
      * @param anExporter the exporter to delegate to
      * @param anExportType Enum to specify what type of file to export
@@ -774,9 +765,7 @@ public class MainViewController {
     //
     /**
      * Builds the export {@link Task} whose {@code call()} delegates to {@link #buildExportResult}, wires the
-     * success/cancel/failure callbacks and starts the exporter thread. Extracted (behavior-preserving) from
-     * {@code exportFile} so the post-chooser task wiring is drivable headlessly with an already-resolved file; the task
-     * body, callbacks and thread setup are unchanged.
+     * success/cancel/failure callbacks and starts the exporter thread.
      *
      * @param anExporter the exporter to delegate to
      * @param anExportType Enum to specify what type of file to export
@@ -844,7 +833,6 @@ public class MainViewController {
     /**
      * Opens settings view for fragmentation settings.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the modal open.
     void openFragmentationSettingsView() {
         new FragmentationSettingsViewController(this.primaryStage,
                 this.fragmentationService.getFragmenters(),
@@ -855,7 +843,6 @@ public class MainViewController {
     /**
      * Opens PipelineSettingsView.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the modal open.
     void openPipelineSettingsView() {
         PipelineSettingsViewController tmpPipelineSettingsViewController =
                 new PipelineSettingsViewController(this.primaryStage, this.fragmentationService, !this.moleculeDataModelList.isEmpty(), this.isFragmentationRunning, this.configuration);
@@ -867,7 +854,6 @@ public class MainViewController {
     /**
      * Opens HistogramView.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the modal open.
     void openHistogramView()  {
         List<MoleculeDataModel> tmpMoleculesList = this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS);
         List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(tmpMoleculesList.size());
@@ -880,7 +866,6 @@ public class MainViewController {
     /**
      * Adds CheckMenuItems for fragmentation algorithms to MainMenuBar.
      */
-    //Note: package-private (not private) so same-package headless tests can assert the algorithm-toggle listener.
     void addFragmentationAlgorithmCheckMenuItems() {
         ToggleGroup tmpToggleGroup = new ToggleGroup();
         for (IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()) {
@@ -904,7 +889,6 @@ public class MainViewController {
     /**
      * Opens settings view for global settings.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the modal open and apply body.
     void openGlobalSettingsView() {
         SettingsViewController tmpSettingsViewController = new SettingsViewController(this.primaryStage, this.settingsContainer, this.configuration);
         Platform.runLater(() -> this.applyGlobalSettingsChanges(
@@ -915,18 +899,13 @@ public class MainViewController {
     /**
      * Applies the global-settings changes to the currently open result tabs and data models: recomputes the pagination
      * page count / current page for every tab when the rows-per-page setting changed, and propagates the
-     * keep-atom-container-in-data-model setting to every molecule and fragment when that setting changed. Extracted
-     * from the {@code Platform.runLater} body of {@code openGlobalSettingsView} so the apply logic is unit-testable
-     * headlessly with populated tabs and explicit change flags. One observable difference from the original body: for
-     * an empty items list {@link GuiUtil#calculatePageCount(int, int)} now yields a page count of 1 instead of 0. This
-     * is equivalent in effect, because {@link javafx.scene.control.Pagination} rejects page counts below 1 and keeps its
-     * previous value, so passing 0 never changed the pagination either.
+     * keep-atom-container-in-data-model setting to every molecule and fragment when that setting changed. For an
+     * empty items list the page count is 1, the minimum {@link javafx.scene.control.Pagination} accepts.
      *
      * @param aRowsPerPageChanged whether the rows-per-page setting changed (triggers the pagination recompute)
      * @param aKeepAtomContainerChanged whether the keep-atom-container-in-data-model setting changed (triggers the
      *                                  propagation to the molecule and fragment data models)
      */
-    //Note: package-private (not private) so same-package headless tests can drive the apply body directly.
     void applyGlobalSettingsChanges(boolean aRowsPerPageChanged, boolean aKeepAtomContainerChanged) {
         if (aRowsPerPageChanged) {
             for (Tab tmpTab : this.mainTabPane.getTabs()) {
@@ -969,7 +948,6 @@ public class MainViewController {
      *
      * @param aDataSource Source of the data to be shown in the overview view
      */
-    //Note: package-private (not private) so same-package headless tests can drive each data-source branch.
     void openOverviewView(OverviewViewController.DataSources aDataSource) {
         try {
             switch (aDataSource) {
@@ -1089,7 +1067,6 @@ public class MainViewController {
     /**
      * Opens molecules tab.
      */
-    //Note: package-private (not private) so same-package headless tests can build the molecules tab directly.
     void openMoleculesTab() {
         this.moleculesDataTableView = new MoleculesDataTableView(this.configuration);
         this.moleculesDataTableView.setItemsList(this.moleculeDataModelList);
@@ -1174,7 +1151,6 @@ public class MainViewController {
     /**
      * Cancels import task and interrupts the corresponding thread.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the interrupt.
     void interruptImport() {
         this.importTask.cancel();
         this.importerThread.interrupt();
@@ -1183,7 +1159,6 @@ public class MainViewController {
     /**
      * Cancels export task and interrupts the corresponding thread.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the interrupt.
     void interruptExport() {
         this.exportTask.cancel();
         this.exporterThread.interrupt();
@@ -1192,7 +1167,6 @@ public class MainViewController {
     /**
      * Gets called by the cancel fragmentation button.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the interrupt.
     void interruptFragmentation() {
         //cancel() of the task was overridden to shut down the executor service in FragmentationService
         this.parallelFragmentationMainTask.cancel(true);
@@ -1203,7 +1177,6 @@ public class MainViewController {
     /**
      * Starts fragmentation for only one algorithm.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the fragmentation flow.
     void startFragmentation() {
         this.startFragmentation(false);
     }
@@ -1211,7 +1184,6 @@ public class MainViewController {
     /**
      * Starts fragmentation task and opens fragment and itemization tabs.
      */
-    //Note: package-private (not private) so same-package headless tests can drive the fragmentation flow.
     void startFragmentation(boolean isPipelining) {
         long tmpStartTime = System.nanoTime();
         MainViewController.LOGGER.info("Start of method startFragmentation");
@@ -1314,7 +1286,6 @@ public class MainViewController {
      *
      * @param aFragmentationName name of the fragmentation process
      */
-    //Note: package-private (not private) so same-package headless tests can build the result tabs directly.
     void addFragmentationResultTabs(String aFragmentationName) {
         //fragments tab
         Tab tmpFragmentsTab = this.createFragmentsTab(aFragmentationName);
@@ -1329,7 +1300,6 @@ public class MainViewController {
      * @param aFragmentationName String, unique name for fragmentation job
      * @return Tab
      */
-    //Note: package-private (not private) so same-package headless tests can reach it via the result-tab builder.
     Tab createFragmentsTab(String aFragmentationName){
         FragmentsDataTableView tmpFragmentsDataTableView = new FragmentsDataTableView(this.configuration);
         GridTabForTableView tmpFragmentsTab = new GridTabForTableView(Message.get("MainTabPane.fragmentsTab.title") + " - " + aFragmentationName, TabNames.FRAGMENTS.name(), tmpFragmentsDataTableView);
@@ -1401,7 +1371,6 @@ public class MainViewController {
      * @param aFragmentationName String, unique name for the fragmentation job
      * @return Tab
      */
-    //Note: package-private (not private) so same-package headless tests can reach it via the result-tab builder.
     Tab createItemsTab(String aFragmentationName){
         ItemizationDataTableView tmpItemizationDataTableView = new ItemizationDataTableView(aFragmentationName, this.configuration);
         tmpItemizationDataTableView.setItemsList(
@@ -1493,7 +1462,6 @@ public class MainViewController {
      * @param aThread  Thread which was started or ended
      * @param aMessage String message to display in StatusBar
      */
-    //Note: package-private (not private) so same-package headless tests can drive the add/remove/last-thread branches.
     void updateStatusBar(Thread aThread, String aMessage) {
         if (!this.threadList.contains(aThread)) {
             this.threadList.add(aThread);
@@ -1524,7 +1492,6 @@ public class MainViewController {
      * @param aThreadType ThreadType
      * @return String status message
      */
-    //Note: package-private (not private) so same-package headless tests can unit-test this pure switch.
     String getStatusMessageByThreadType(ThreadType aThreadType) {
         return switch (aThreadType) {
             case FRAGMENTATION_THREAD -> Message.get("Status.running");

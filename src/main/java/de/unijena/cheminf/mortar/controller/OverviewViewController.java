@@ -1456,7 +1456,6 @@ public class OverviewViewController implements IViewToolController {
      * @return Integer value of the maximum amount of structure image columns per page
      * @throws IllegalArgumentException if the given parameter is less than or equal to zero
      */
-    //note: package-private (not private) so a same-package unit test can pin the pure arithmetic directly
     int calculateMaxColumnsPerPage(double aOverviewViewPaginationNodeWidth) throws IllegalArgumentException {
         if (aOverviewViewPaginationNodeWidth <= 0.0)
             throw new IllegalArgumentException("aOverviewViewPaginationNodeWidth (Double value) is < or = to zero.");
@@ -1478,7 +1477,6 @@ public class OverviewViewController implements IViewToolController {
      * @return Integer value of the maximum amount of structure image rows per page
      * @throws IllegalArgumentException if the given parameter is less than or equal to zero
      */
-    //note: package-private (not private) so a same-package unit test can pin the pure arithmetic directly
     int calculateMaxRowsPerPage(double aOverviewViewPaginationNodeHeight) throws IllegalArgumentException {
         if (aOverviewViewPaginationNodeHeight <= 0.0)
             throw new IllegalArgumentException("aOverviewViewPaginationNodeHeight (Double value) is < or = to zero.");
