@@ -1161,8 +1161,7 @@ public class MainViewController {
      * @param aListSize number of molecules/fragments to display
      * @return configured pagination control instance
      */
-    //Note: package-private (not private) so same-package headless tests can reach it via the tab builders.
-    Pagination createPaginationWithSuitablePageCount(int aListSize) {
+    private Pagination createPaginationWithSuitablePageCount(int aListSize) {
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         int tmpPageCount = GuiUtil.calculatePageCount(aListSize, tmpRowsPerPage);
         Pagination tmpPagination = new Pagination(tmpPageCount, 0);
@@ -1463,8 +1462,7 @@ public class MainViewController {
     /**
      * Clears the gui and all collections.
      */
-    //Note: package-private (not private) so same-package headless tests can drive it directly.
-    void clearGuiAndCollections() {
+    private void clearGuiAndCollections() {
         this.moleculeDataModelList.clear();
         this.mapOfFragmentDataModelLists.clear();
         this.moleculesDataTableView = null;
@@ -1477,8 +1475,7 @@ public class MainViewController {
      * @param aTabName Enum which specifies which kind of tab
      * @return List {@literal <}MoleculeDataModel{@literal >}
      */
-    //Note: package-private (not private) so same-package headless tests can assert the selected-tab items list.
-    List<MoleculeDataModel> getItemsListOfSelectedFragmentationByTabId(TabNames aTabName) {
+    private List<MoleculeDataModel> getItemsListOfSelectedFragmentationByTabId(TabNames aTabName) {
         GridTabForTableView tmpSelectedTab =  (GridTabForTableView) (this.mainTabPane.getTabs().stream().filter(tab ->
                 ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle()
                         .equals(((GridTabForTableView) tab).getFragmentationNameOutOfTitle()) && tab.getId().equals(aTabName.name())
