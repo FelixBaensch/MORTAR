@@ -34,6 +34,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openscience.cdk.Atom;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomContainerSet;
@@ -59,6 +63,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.util.stream.Stream;
 
 /**
  * Tests some functionalities of the {@link Importer} class.
@@ -527,111 +532,77 @@ public class ImporterTest extends Importer {
         Assertions.assertTrue(((List<?>) tmpResult).isEmpty());
     }
     /**
-     * Tests the ID-fallback branch of the private {@code findMoleculeName} method (reached via reflection). When the atom
-     * container has no title and no property whose key contains 'name', but has a property whose key contains 'id', the
-     * value of that ID property is returned as the molecule name.
+     * Tests the branches of the private {@code findMoleculeName} method (reached via reflection) on an atom container
+     * built from the given title and properties:
+     * <ul>
+     *     <li>"id property": no title and no property whose key contains 'name', but one whose key contains 'id'; the
+     *     value of that ID property is returned as the molecule name.</li>
+     *     <li>"name property when no title": no title but a property whose key contains 'name'; its value is returned.
+     *     This pins the title-null guard and the name-key detection predicate.</li>
+     *     <li>"ignores database name key": the name-key detection explicitly excludes the 'Database_Name' key, so a
+     *     container carrying only that key (no title, no id) resolves no name and null is returned. This pins the
+     *     {@code !k.equalsIgnoreCase("Database_Name")} exclusion predicate: dropping it would wrongly return the
+     *     database name.</li>
+     *     <li>"NONE resets to null": the resolved name equals 'None' (case-insensitive) and no usable ID property is
+     *     present, so the returned name is reset to null.</li>
+     *     <li>"id branch ignores distractor": no title, exactly one key containing 'id' ({@code Compound_ID}) and exactly
+     *     one distractor key containing neither 'id' nor 'name' ({@code Weight}). Both the real predicate and its
+     *     negation select deterministically regardless of HashMap iteration order, so expecting the id value
+     *     {@code CID-777} (not {@code 180.16}) pins the id-branch {@code anyMatch} and {@code filter} lambdas.</li>
+     *     <li>"name branch ignores distractor": no title, exactly one key containing 'name' ({@code Molecule_Name}) and
+     *     exactly one distractor key containing neither 'name' nor 'id' ({@code Comment}). Expecting the name value
+     *     {@code Glucose} (not {@code note}) pins the name-branch {@code filter} lambda.</li>
+     * </ul>
      *
+     * @param aCaseName name of the case (display only)
+     * @param aTitle title to set on the atom container, or null to leave it unset
+     * @param aProperties key-value pairs set as properties on the atom container, in order
+     * @param anExpectedName expected return value of findMoleculeName
      * @throws Exception if anything goes wrong
      */
-    @Test
-    public void testFindMoleculeNameReturnsIdProperty() throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("findMoleculeNameCases")
+    public void testFindMoleculeName(String aCaseName, String aTitle, String[][] aProperties, String anExpectedName)
+            throws Exception {
         IAtomContainer tmpAtomContainer = new AtomContainer();
-        tmpAtomContainer.setProperty("Compound_ID", "CID-12345");
-        Method tmpFindMoleculeName = Importer.class.getDeclaredMethod("findMoleculeName", IAtomContainer.class);
-        tmpFindMoleculeName.setAccessible(true);
-        Object tmpResult = tmpFindMoleculeName.invoke(this, tmpAtomContainer);
-        Assertions.assertEquals("CID-12345", tmpResult);
+        if (aTitle != null) {
+            tmpAtomContainer.setTitle(aTitle);
+        }
+        for (String[] tmpProperty : aProperties) {
+            tmpAtomContainer.setProperty(tmpProperty[0], tmpProperty[1]);
+        }
+        Object tmpResult = this.invokeFindMoleculeName(tmpAtomContainer);
+        Assertions.assertEquals(anExpectedName, tmpResult);
     }
+    //
     /**
-     * Tests the name-property branch of the private {@code findMoleculeName} method (reached via reflection). When the
-     * atom container has no title but carries a property whose key contains 'name', the value of that property is
-     * returned as the molecule name. This pins the title-null guard and the name-key detection predicate.
+     * Provides the cases for {@link #testFindMoleculeName}: case name, title (or null), properties, expected name.
      *
-     * @throws Exception if anything goes wrong
+     * @return the findMoleculeName cases
      */
-    @Test
-    public void testFindMoleculeNameReturnsNamePropertyWhenNoTitle() throws Exception {
-        IAtomContainer tmpAtomContainer = new AtomContainer();
-        tmpAtomContainer.setProperty("Molecule_Name", "Glucose");
-        Method tmpFindMoleculeName = Importer.class.getDeclaredMethod("findMoleculeName", IAtomContainer.class);
-        tmpFindMoleculeName.setAccessible(true);
-        Object tmpResult = tmpFindMoleculeName.invoke(this, tmpAtomContainer);
-        Assertions.assertEquals("Glucose", tmpResult);
+    private static Stream<Arguments> findMoleculeNameCases() {
+        return Stream.of(
+                Arguments.of("id property", null, new String[][] {{"Compound_ID", "CID-12345"}}, "CID-12345"),
+                Arguments.of("name property when no title", null, new String[][] {{"Molecule_Name", "Glucose"}}, "Glucose"),
+                Arguments.of("ignores database name key", null, new String[][] {{"Database_Name", "ChEBI"}}, null),
+                Arguments.of("NONE resets to null", "None", new String[][] {}, null),
+                Arguments.of("id branch ignores distractor", null,
+                        new String[][] {{"Weight", "180.16"}, {"Compound_ID", "CID-777"}}, "CID-777"),
+                Arguments.of("name branch ignores distractor", null,
+                        new String[][] {{"Comment", "note"}, {"Molecule_Name", "Glucose"}}, "Glucose"));
     }
+    //
     /**
-     * Tests the 'Database_Name'-exclusion branch of the private {@code findMoleculeName} method (reached via
-     * reflection). The name-key detection explicitly excludes the 'Database_Name' key, so a container carrying only
-     * that key (no title, no id) must not resolve a name and findMoleculeName returns null. This pins the
-     * {@code !k.equalsIgnoreCase("Database_Name")} exclusion predicate: dropping it would wrongly return the
-     * database name.
+     * Invokes the private {@code findMoleculeName} method of {@link Importer} on this instance via reflection.
      *
-     * @throws Exception if anything goes wrong
+     * @param anAtomContainer atom container to find the name of
+     * @return the return value of findMoleculeName
+     * @throws Exception if the reflective lookup or invocation fails
      */
-    @Test
-    public void testFindMoleculeNameIgnoresDatabaseNameKey() throws Exception {
-        IAtomContainer tmpAtomContainer = new AtomContainer();
-        tmpAtomContainer.setProperty("Database_Name", "ChEBI");
+    private Object invokeFindMoleculeName(IAtomContainer anAtomContainer) throws Exception {
         Method tmpFindMoleculeName = Importer.class.getDeclaredMethod("findMoleculeName", IAtomContainer.class);
         tmpFindMoleculeName.setAccessible(true);
-        Object tmpResult = tmpFindMoleculeName.invoke(this, tmpAtomContainer);
-        Assertions.assertNull(tmpResult);
-    }
-    /**
-     * Tests the 'None'-reset branch of the private {@code findMoleculeName} method (reached via reflection). When the
-     * resolved name equals 'None' (case-insensitive) and no usable ID property is present, the method resets the returned
-     * name to null.
-     *
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testFindMoleculeNameResetsNoneToNull() throws Exception {
-        IAtomContainer tmpAtomContainer = new AtomContainer();
-        tmpAtomContainer.setTitle("None");
-        Method tmpFindMoleculeName = Importer.class.getDeclaredMethod("findMoleculeName", IAtomContainer.class);
-        tmpFindMoleculeName.setAccessible(true);
-        Object tmpResult = tmpFindMoleculeName.invoke(this, tmpAtomContainer);
-        Assertions.assertNull(tmpResult);
-    }
-    /**
-     * Tests the id-branch lambda predicates of the private {@code findMoleculeName} method (reached via reflection) with a
-     * distractor property. The container carries no title, exactly one key containing 'id' ({@code Compound_ID}) and
-     * exactly one distractor key containing neither 'id' nor 'name' ({@code Weight}). Both the real predicate and its
-     * negation therefore select deterministically regardless of HashMap iteration order. Asserting the returned name is
-     * the id value {@code CID-777} (not the distractor value {@code 180.16}) pins the id-branch {@code anyMatch} and
-     * {@code filter} lambdas: a negated predicate would select the {@code Weight} key and return {@code 180.16}, failing
-     * this assertion.
-     *
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testFindMoleculeNameIdBranchIgnoresDistractorProperty() throws Exception {
-        IAtomContainer tmpAtomContainer = new AtomContainer();
-        tmpAtomContainer.setProperty("Weight", "180.16");
-        tmpAtomContainer.setProperty("Compound_ID", "CID-777");
-        Method tmpFindMoleculeName = Importer.class.getDeclaredMethod("findMoleculeName", IAtomContainer.class);
-        tmpFindMoleculeName.setAccessible(true);
-        Object tmpResult = tmpFindMoleculeName.invoke(this, tmpAtomContainer);
-        Assertions.assertEquals("CID-777", tmpResult);
-    }
-    /**
-     * Tests the name-branch filter lambda of the private {@code findMoleculeName} method (reached via reflection) with a
-     * distractor property. The container carries no title, exactly one key containing 'name' ({@code Molecule_Name}) and
-     * exactly one distractor key containing neither 'name' nor 'id' ({@code Comment}). Both the real predicate and its
-     * negation therefore select deterministically regardless of HashMap iteration order. Asserting the returned name is
-     * the name value {@code Glucose} (not the distractor value {@code note}) pins the name-branch {@code filter} lambda:
-     * a negated predicate would select the {@code Comment} key and return {@code note}, failing this assertion.
-     *
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testFindMoleculeNameNameBranchIgnoresDistractorProperty() throws Exception {
-        IAtomContainer tmpAtomContainer = new AtomContainer();
-        tmpAtomContainer.setProperty("Comment", "note");
-        tmpAtomContainer.setProperty("Molecule_Name", "Glucose");
-        Method tmpFindMoleculeName = Importer.class.getDeclaredMethod("findMoleculeName", IAtomContainer.class);
-        tmpFindMoleculeName.setAccessible(true);
-        Object tmpResult = tmpFindMoleculeName.invoke(this, tmpAtomContainer);
-        Assertions.assertEquals("Glucose", tmpResult);
+        return tmpFindMoleculeName.invoke(this, anAtomContainer);
     }
     /**
      * Tests the deprecated, currently-unused private {@code importPDBFile} method (reached via reflection). Although it is
@@ -658,49 +629,30 @@ public class ImporterTest extends Importer {
         Assertions.assertFalse(tmpNameProperty.toString().isBlank());
     }
     /**
-     * Tests the thread-interrupt {@code break} guard of the private {@code importPDBFile} method (reached via reflection).
-     * The current thread is interrupted before the call, so after the PDB file is read the per-atom-container loop hits
-     * its {@code if (Thread.currentThread().isInterrupted()) break;} on the first iteration and adds no molecule; the
-     * returned atom container set is therefore empty. The interrupt flag is cleared in a {@code finally} block so it does
-     * not leak into the rest of the suite. This drives the guard with the real interrupt flag (no mocking) and documents
-     * that cancelling a PDB import stops it promptly.
+     * Tests the thread-interrupt guards of the private {@code importPDBFile} ("pdb") and {@code importSDFile} ("sdf")
+     * methods (reached via reflection). The current thread is interrupted before the call. In {@code importPDBFile}, after
+     * the PDB file is read the per-atom-container loop hits its {@code if (Thread.currentThread().isInterrupted()) break;}
+     * on the first iteration and adds no molecule; in {@code importSDFile} the
+     * {@code while (!Thread.currentThread().isInterrupted())} loop is never entered. Either way the returned atom
+     * container set is empty. The interrupt flag is cleared in a {@code finally} block so it does not leak into the rest
+     * of the suite. This drives the guards with the real interrupt flag (no mocking) and documents that cancelling an
+     * import stops it promptly.
      *
+     * @param aCaseName name of the case (display only)
+     * @param aResourceName name of the test resource file to import
+     * @param aMethodName name of the private import method taking a File
      * @throws Exception if anything goes wrong
      */
-    @Test
-    @SuppressWarnings("deprecation")
-    public void testImportPDBFileInterrupted() throws Exception {
-        URL tmpURL = this.getClass().getResource("Glycine.pdb");
+    @ParameterizedTest(name = "interrupted, {0}")
+    @CsvSource({"pdb, Glycine.pdb, importPDBFile", "sdf, MultiRecord.sdf, importSDFile"})
+    public void testImportFileInterrupted(String aCaseName, String aResourceName, String aMethodName) throws Exception {
+        URL tmpURL = this.getClass().getResource(aResourceName);
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
-        Method tmpImportPDBFile = Importer.class.getDeclaredMethod("importPDBFile", File.class);
-        tmpImportPDBFile.setAccessible(true);
+        Method tmpImportMethod = Importer.class.getDeclaredMethod(aMethodName, File.class);
+        tmpImportMethod.setAccessible(true);
         try {
             Thread.currentThread().interrupt();
-            Object tmpResult = tmpImportPDBFile.invoke(this, tmpResourceFile);
-            Assertions.assertInstanceOf(IAtomContainerSet.class, tmpResult);
-            Assertions.assertEquals(0, ((IAtomContainerSet) tmpResult).getAtomContainerCount());
-        } finally {
-            Thread.interrupted();
-        }
-    }
-    /**
-     * Tests the thread-interrupt guard of the private {@code importSDFile} method (reached via reflection). The current
-     * thread is interrupted before the call, so the {@code while (!Thread.currentThread().isInterrupted())} loop is never
-     * entered and the returned atom container set is empty. The interrupt flag is cleared in a {@code finally} block so it
-     * does not leak into the rest of the suite. This drives the loop's interrupted-exit condition with the real interrupt
-     * flag (no mocking).
-     *
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testImportSDFileInterrupted() throws Exception {
-        URL tmpURL = this.getClass().getResource("MultiRecord.sdf");
-        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
-        Method tmpImportSDFile = Importer.class.getDeclaredMethod("importSDFile", File.class);
-        tmpImportSDFile.setAccessible(true);
-        try {
-            Thread.currentThread().interrupt();
-            Object tmpResult = tmpImportSDFile.invoke(this, tmpResourceFile);
+            Object tmpResult = tmpImportMethod.invoke(this, tmpResourceFile);
             Assertions.assertInstanceOf(IAtomContainerSet.class, tmpResult);
             Assertions.assertEquals(0, ((IAtomContainerSet) tmpResult).getAtomContainerCount());
         } finally {
