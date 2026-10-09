@@ -136,7 +136,7 @@ open class LocalWinDeploy @Inject constructor(
      *
      * Copies the following from `build/install/MORTAR` to the corresponding `winDeploy/in` subdirectories:
      * - `bin` directory to `in/bin`
-     * - `lib` directory to `in/lib`, minus the JavaFX artifacts of the non-Windows platforms
+     * - `lib` directory to `in/lib`
      * - `tutorial` directory to `in/tutorial`
      *
      * Also copies the icon file `Images/Mortar_Logo_Icon1.ico` to `in/icon/Mortar_Logo_Icon1.ico` if it exists.
@@ -157,11 +157,7 @@ open class LocalWinDeploy @Inject constructor(
         }
 
         DeployUtil.copyDir(File(tmpInstallDir, "bin"), File(tmpWinDeployDir, "in/bin"))
-        //the distribution carries the JavaFX natives of every supported platform so it stays portable; a Windows
-        //installer only ever loads the Windows ones, so the other four classifiers are dead weight in the .exe
-        DeployUtil.copyDir(File(tmpInstallDir, "lib"), File(tmpWinDeployDir, "in/lib")) { tmpFile ->
-            !tmpFile.name.startsWith("javafx-") || tmpFile.name.endsWith("-win.jar")
-        }
+        DeployUtil.copyDir(File(tmpInstallDir, "lib"), File(tmpWinDeployDir, "in/lib"))
         DeployUtil.copyDir(File(tmpInstallDir, "tutorial"), File(tmpWinDeployDir, "in/tutorial"))
 
         File(MortarBundle.message(PropertyNames.ICON_PATH_WINDOWS)).takeIf { it.exists() }
