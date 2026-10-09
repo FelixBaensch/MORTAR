@@ -375,13 +375,7 @@ public class MainViewControllerHarnessTest extends AbstractFxTestCase {
             AbstractFxTestCase.runAndWait(() -> {
                 MainViewControllerTestSupport.setField(tmpController, "parallelFragmentationMainTask",
                         MainViewControllerHarnessTest.noOpTask());
-                try {
-                    Method tmpMethod = MainViewController.class.getDeclaredMethod("interruptFragmentation");
-                    tmpMethod.setAccessible(true);
-                    tmpMethod.invoke(tmpController);
-                } catch (ReflectiveOperationException anException) {
-                    throw new RuntimeException(anException);
-                }
+                tmpController.interruptFragmentation();
             });
             AbstractFxTestCase.waitForFxEvents();
             Button tmpCancelButton = (Button)
