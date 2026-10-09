@@ -25,7 +25,10 @@
 
 package de.unijena.cheminf.mortar.model.util;
 
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+
 import org.junit.jupiter.api.Assertions;
+import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -38,10 +41,10 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
- * Static helpers shared by the non-GUI test classes, holding the three pieces of test infrastructure that would
- * otherwise be copied into every test class that needs them: invoking the private constructor of a static utility
- * class, capturing the log records a production method publishes, and releasing the log file handlers a test rooted in
- * a temporary user home may have created.
+ * Static helpers shared by the test classes, holding test infrastructure that would otherwise be copied into every
+ * test class that needs it, e.g. invoking the private constructor of a static utility class, capturing the log records a
+ * production method publishes, releasing the log file handlers a test rooted in a temporary user home may have created,
+ * and building molecule data models from SMILES.
  * <p>
  * The JavaFX controller tests get the equivalent handler cleanup from {@code AbstractFxTestCase}; this class exists so
  * the toolkit-free tests, which cannot extend that base class, do not have to fall back on a JVM-wide
@@ -73,6 +76,22 @@ public final class TestUtil {
         tmpConstructor.setAccessible(true);
         Assertions.assertNotNull(tmpConstructor.newInstance(),
                 "the private constructor of " + aUtilityClass.getSimpleName() + " must yield an instance");
+    }
+    //
+    /**
+     * Builds a {@link MoleculeDataModel} from a SMILES string using {@link ChemUtil#parseSmilesToAtomContainer} and the
+     * (IAtomContainer, boolean) constructor without stereochemistry encoding. The SMILES is parsed without kekulization
+     * (kekulize=false, perceive=false, matching the production import path), so aromatic input stays un-kekulized; the
+     * Scaffold Generator fails on such input (it throws, or yields fragments whose SMILES cannot be generated), which is
+     * why Scaffold-stage tests use non-aromatic molecules.
+     *
+     * @param aSmiles SMILES string of the molecule
+     * @return MoleculeDataModel wrapping the parsed atom container
+     * @throws Exception if parsing or unique-SMILES creation fails
+     */
+    public static MoleculeDataModel buildMDM(String aSmiles) throws Exception {
+        IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
+        return new MoleculeDataModel(tmpAtomContainer, false);
     }
     //
     /**

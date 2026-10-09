@@ -30,13 +30,12 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
-import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -109,8 +108,8 @@ public class FragmentationThreadTest {
     @Test
     public void callReturnsPopulatedTableTest() throws Exception {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationThreadTest.buildMDM("c1ccccc1"));
-        tmpMols.add(FragmentationThreadTest.buildMDM("O=C(O)CCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("c1ccccc1"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC(=O)O"));
         SettingsContainer tmpSettings = new SettingsContainer();
         FragmentationThread tmpThread = new FragmentationThread(
                 tmpMols, 1, "ThreadTest", new ErtlFunctionalGroupsFinderFragmenter(), tmpSettings);
@@ -134,9 +133,9 @@ public class FragmentationThreadTest {
     @Test
     public void callWithMultipleTasksTest() throws Exception {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(3);
-        tmpMols.add(FragmentationThreadTest.buildMDM("O=C(O)CC"));
-        tmpMols.add(FragmentationThreadTest.buildMDM("O=C(O)CCC"));
-        tmpMols.add(FragmentationThreadTest.buildMDM("O=C(O)CCCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC"));
         SettingsContainer tmpSettings = new SettingsContainer();
         FragmentationThread tmpThread = new FragmentationThread(
                 tmpMols, 2, "ThreadTestMultiTask", new ErtlFunctionalGroupsFinderFragmenter(), tmpSettings);
@@ -155,21 +154,6 @@ public class FragmentationThreadTest {
         //the shared carboxylic-acid fragment is counted once for each of the three molecules
         Assertions.assertEquals(tmpMols.size(), tmpMostFrequentFragment.getAbsoluteFrequency());
         Assertions.assertEquals(tmpMols.size(), tmpMostFrequentFragment.getMoleculeFrequency());
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Private static methods" defaultstate="collapsed">
-    /**
-     * Builds a {@link MoleculeDataModel} from the given SMILES string using {@link ChemUtil#parseSmilesToAtomContainer}
-     * and the (IAtomContainer, boolean) constructor without stereochemistry encoding.
-     *
-     * @param aSmiles SMILES string to parse
-     * @return a MoleculeDataModel wrapping the parsed atom container
-     * @throws Exception if parsing or unique-SMILES creation fails
-     */
-    private static MoleculeDataModel buildMDM(String aSmiles) throws Exception {
-        IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
-        return new MoleculeDataModel(tmpAtomContainer, false);
     }
     //</editor-fold>
 }

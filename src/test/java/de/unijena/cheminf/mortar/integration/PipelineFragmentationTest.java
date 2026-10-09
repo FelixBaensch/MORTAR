@@ -32,13 +32,12 @@ import de.unijena.cheminf.mortar.model.fragmentation.FragmentationService;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
-import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -206,7 +205,7 @@ public class PipelineFragmentationTest {
     private static List<MoleculeDataModel> buildInputMolecules() throws Exception {
         List<MoleculeDataModel> tmpMolecules = new ArrayList<>(PipelineFragmentationTest.INPUT_SMILES.length);
         for (String tmpSmiles : PipelineFragmentationTest.INPUT_SMILES) {
-            tmpMolecules.add(PipelineFragmentationTest.buildMDM(tmpSmiles));
+            tmpMolecules.add(TestUtil.buildMDM(tmpSmiles));
         }
         return tmpMolecules;
     }
@@ -225,20 +224,6 @@ public class PipelineFragmentationTest {
             }
         }
         throw new IllegalStateException("no fragmenter is registered under the algorithm name " + anAlgorithmName);
-    }
-    //
-    /**
-     * Builds a molecule data model from a SMILES string by parsing it into an atom container via the project-standard
-     * parse entry point (kekulize=false, perceive=false, matching the production import path) and wrapping it in a
-     * non-saturated molecule data model.
-     *
-     * @param aSmiles the SMILES string to parse
-     * @return a molecule data model wrapping the parsed atom container
-     * @throws Exception if the SMILES cannot be parsed
-     */
-    private static MoleculeDataModel buildMDM(String aSmiles) throws Exception {
-        IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
-        return new MoleculeDataModel(tmpAtomContainer, false);
     }
     //
     /**

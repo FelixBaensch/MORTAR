@@ -29,7 +29,7 @@ import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
-import de.unijena.cheminf.mortar.model.util.ChemUtil;
+import de.unijena.cheminf.mortar.model.util.TestUtil;
 
 import javafx.beans.property.Property;
 
@@ -108,8 +108,8 @@ public class FragmentationTaskTest {
     @Test
     public void exceptionCounterTest() throws Exception {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationTaskTest.buildMDM("c1ccccc1"));
-        tmpMols.add(FragmentationTaskTest.buildMDM("O=C(O)CCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("c1ccccc1"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC(=O)O"));
         Map<String, FragmentDataModel> tmpFragmentMap = new ConcurrentHashMap<>();
         FragmentationTask tmpTask = new FragmentationTask(
                 tmpMols, new ThrowingFragmenter(), tmpFragmentMap, "TaskTest", false);
@@ -154,8 +154,8 @@ public class FragmentationTaskTest {
     @Test
     public void filteredMoleculesAreSkippedTest() throws Exception {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationTaskTest.buildMDM("c1ccccc1"));
-        tmpMols.add(FragmentationTaskTest.buildMDM("O=C(O)CCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("c1ccccc1"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC(=O)O"));
         Map<String, FragmentDataModel> tmpFragmentMap = new ConcurrentHashMap<>();
         FragmentationTask tmpTask = new FragmentationTask(
                 tmpMols, new FilteringFragmenter(), tmpFragmentMap, "FilterTask", false);
@@ -181,8 +181,8 @@ public class FragmentationTaskTest {
     @Test
     public void preprocessingBranchTest() throws Exception {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationTaskTest.buildMDM("c1ccccc1"));
-        tmpMols.add(FragmentationTaskTest.buildMDM("O=C(O)CCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("c1ccccc1"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC(=O)O"));
         Map<String, FragmentDataModel> tmpFragmentMap = new ConcurrentHashMap<>();
         PreprocessingFragmenter tmpFragmenter = new PreprocessingFragmenter();
         FragmentationTask tmpTask = new FragmentationTask(
@@ -207,8 +207,8 @@ public class FragmentationTaskTest {
     @Test
     public void genericCatchBranchTest() throws Exception {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationTaskTest.buildMDM("c1ccccc1"));
-        tmpMols.add(FragmentationTaskTest.buildMDM("O=C(O)CCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("c1ccccc1"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC(=O)O"));
         Map<String, FragmentDataModel> tmpFragmentMap = new ConcurrentHashMap<>();
         FragmentationTask tmpTask = new FragmentationTask(
                 tmpMols, new GenericThrowingFragmenter(), tmpFragmentMap, "GenericCatchTask", false);
@@ -235,8 +235,8 @@ public class FragmentationTaskTest {
     @Test
     public void threadInterruptedReturnsNullTest() throws Exception {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationTaskTest.buildMDM("c1ccccc1"));
-        tmpMols.add(FragmentationTaskTest.buildMDM("O=C(O)CCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("c1ccccc1"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC(=O)O"));
         Map<String, FragmentDataModel> tmpFragmentMap = new ConcurrentHashMap<>();
         FragmentationTask tmpTask = new FragmentationTask(
                 tmpMols, new SuccessfulFragmenter(), tmpFragmentMap, "InterruptTask", false);
@@ -255,21 +255,6 @@ public class FragmentationTaskTest {
         Assertions.assertFalse(tmpMols.get(0).getAllFragments().get("InterruptTask").isEmpty());
         Assertions.assertFalse(tmpMols.get(1).getAllFragments().containsKey("InterruptTask"));
         Assertions.assertFalse(tmpMols.get(1).getFragmentFrequencies().containsKey("InterruptTask"));
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="Private static methods" defaultstate="collapsed">
-    /**
-     * Builds a {@link MoleculeDataModel} from the given SMILES string using {@link ChemUtil#parseSmilesToAtomContainer}
-     * and the (IAtomContainer, boolean) constructor without stereochemistry encoding.
-     *
-     * @param aSmiles SMILES string to parse
-     * @return a MoleculeDataModel wrapping the parsed atom container
-     * @throws Exception if parsing or unique-SMILES creation fails
-     */
-    private static MoleculeDataModel buildMDM(String aSmiles) throws Exception {
-        IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
-        return new MoleculeDataModel(tmpAtomContainer, false);
     }
     //</editor-fold>
     //

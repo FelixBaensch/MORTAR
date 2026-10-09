@@ -35,7 +35,6 @@ import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ScaffoldGenerator
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.SugarRemovalUtilityFragmenter;
 import de.unijena.cheminf.mortar.model.util.AppDirTestUtil;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
-import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.TestUtil;
 
@@ -143,8 +142,8 @@ public class FragmentationServiceTest {
     public void singleFragmentationTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationServiceTest.buildMDM("c1ccccc1"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("c1ccccc1"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCC(=O)O"));
         tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         tmpService.startSingleFragmentation(tmpMols, 1, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
@@ -171,10 +170,10 @@ public class FragmentationServiceTest {
     @Test
     public void multiTaskSplitTest() throws Exception {
         List<MoleculeDataModel> tmpFourMols = new ArrayList<>(4);
-        tmpFourMols.add(FragmentationServiceTest.buildMDM("O=C(O)CC"));
-        tmpFourMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
-        tmpFourMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCC"));
-        tmpFourMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCC"));
+        tmpFourMols.add(TestUtil.buildMDM("O=C(O)CC"));
+        tmpFourMols.add(TestUtil.buildMDM("O=C(O)CCC"));
+        tmpFourMols.add(TestUtil.buildMDM("O=C(O)CCCC"));
+        tmpFourMols.add(TestUtil.buildMDM("O=C(O)CCCCC"));
         //size=4, tasks=1 (single task)
         Map<String, FragmentDataModel> tmpFourSingleTask = this.runSingleFragmentation(tmpFourMols, 1);
         FragmentationServiceTest.assertMostFrequentFragmentCoversEveryMolecule(tmpFourSingleTask, 4);
@@ -209,8 +208,8 @@ public class FragmentationServiceTest {
         FragmentationService tmpService = new FragmentationService();
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
         //two different molecules that both bear a carboxylic acid group -> shared Ertl functional group fragment
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCCCC"));
         //select the Ertl functional groups finder fragmenter (the default, first registered)
         tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         tmpService.startSingleFragmentation(tmpMols, 2, false);
@@ -250,8 +249,8 @@ public class FragmentationServiceTest {
         String tmpPipelineName = "TestPipeline";
         tmpService.setPipeliningFragmentationName(tmpPipelineName);
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCCCC"));
         tmpService.startPipelineFragmentation(tmpMols, 1, false, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
         Assertions.assertNotNull(tmpFragments);
@@ -269,8 +268,8 @@ public class FragmentationServiceTest {
         });
         tmpMolByMolService.setPipeliningFragmentationName("MolByMolPipeline");
         List<MoleculeDataModel> tmpMolsForMolByMol = new ArrayList<>(2);
-        tmpMolsForMolByMol.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
-        tmpMolsForMolByMol.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCC"));
+        tmpMolsForMolByMol.add(TestUtil.buildMDM("O=C(O)CCC"));
+        tmpMolsForMolByMol.add(TestUtil.buildMDM("O=C(O)CCCCCC"));
         Assertions.assertDoesNotThrow(() -> tmpMolByMolService.startPipelineFragmentationMolByMol(tmpMolsForMolByMol, 1, false));
         Assertions.assertNotNull(tmpMolByMolService.getFragments());
     }
@@ -315,11 +314,11 @@ public class FragmentationServiceTest {
         //two single fragmentations -> duplicate-name append branch in createAndCheckFragmentationName
         tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         List<MoleculeDataModel> tmpMols = new ArrayList<>(1);
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCC"));
         tmpService.startSingleFragmentation(tmpMols, 1, false);
         String tmpFirstName = tmpService.getCurrentFragmentationName();
         List<MoleculeDataModel> tmpMols2 = new ArrayList<>(1);
-        tmpMols2.add(FragmentationServiceTest.buildMDM("O=C(O)CCCC"));
+        tmpMols2.add(TestUtil.buildMDM("O=C(O)CCCC"));
         tmpService.startSingleFragmentation(tmpMols2, 1, false);
         String tmpSecondName = tmpService.getCurrentFragmentationName();
         Assertions.assertNotEquals(tmpFirstName, tmpSecondName);
@@ -585,7 +584,7 @@ public class FragmentationServiceTest {
         FragmentationService tmpService = new FragmentationService();
         tmpService.setSelectedFragmenter(FragmentationServiceTest.displayName(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME));
         List<MoleculeDataModel> tmpMols = new ArrayList<>(1);
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCC"));
         //aNumberOfTasks == 0 -> normalised to 1
         tmpService.startSingleFragmentation(tmpMols, 0, false);
         Assertions.assertNotNull(tmpService.getFragments());
@@ -613,7 +612,7 @@ public class FragmentationServiceTest {
         List<String> tmpSmilesList = List.of("O=C(O)CC", "O=C(O)CCC", "O=C(O)CCCC", "O=C(O)CCCCC", "O=C(O)CCCCCC");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(tmpSmilesList.size());
         for (String tmpSmiles : tmpSmilesList) {
-            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+            tmpMols.add(TestUtil.buildMDM(tmpSmiles));
         }
         Map<String, FragmentDataModel> tmpThreeTaskFragments = this.runSingleFragmentation(tmpMols, 3);
         FragmentationServiceTest.assertMostFrequentFragmentCoversEveryMolecule(tmpThreeTaskFragments, tmpSmilesList.size());
@@ -639,8 +638,8 @@ public class FragmentationServiceTest {
         //empty pipeline name -> default-name fallback branch
         tmpService.setPipeliningFragmentationName("");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCCCC"));
         //aNumberOfTasks == 0 -> normalised to 1
         tmpService.startPipelineFragmentation(tmpMols, 0, false, false);
         Assertions.assertNotNull(tmpService.getFragments());
@@ -661,7 +660,7 @@ public class FragmentationServiceTest {
      */
     @Test
     public void pipelineKeepLastFragmentBranchTest() throws Exception {
-        //non-aromatic input: the Scaffold Generator fails on un-kekulized aromatic input (see buildMDM)
+        //non-aromatic input: the Scaffold Generator fails on un-kekulized aromatic input (see TestUtil.buildMDM)
         List<String> tmpSmilesList = List.of("O=C(O)CCC1CCCCC1", "OCCCC1CCC1", "O=C(O)CCCC");
         Map<String, FragmentDataModel> tmpKept = this.runErtlThenScaffoldPipeline(tmpSmilesList, true);
         Map<String, FragmentDataModel> tmpDiscarded = this.runErtlThenScaffoldPipeline(tmpSmilesList, false);
@@ -673,7 +672,7 @@ public class FragmentationServiceTest {
                 "keeping the last fragments must retain the stage-one fragments the Scaffold stage cannot re-fragment");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(tmpSmilesList.size());
         for (String tmpSmiles : tmpSmilesList) {
-            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+            tmpMols.add(TestUtil.buildMDM(tmpSmiles));
         }
         Set<String> tmpErtlOnlyFragments = FragmentationServiceTest.singleStageFragmentSmiles(
                 ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME, tmpMols);
@@ -703,8 +702,8 @@ public class FragmentationServiceTest {
         });
         tmpService.setPipeliningFragmentationName("ThreeStagePipeline");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationServiceTest.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2OCCC(=O)O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"));
+        tmpMols.add(TestUtil.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2OCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"));
         tmpService.startPipelineFragmentation(tmpMols, 1, false, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
         Assertions.assertNotNull(tmpFragments);
@@ -743,8 +742,8 @@ public class FragmentationServiceTest {
         });
         tmpService.setPipeliningFragmentationName("ThreeStageMolByMol");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(2);
-        tmpMols.add(FragmentationServiceTest.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2OCCC(=O)O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"));
+        tmpMols.add(TestUtil.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2OCCC(=O)O"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCCCCc1ccc(OC2OC(CO)C(O)C(O)C2O)cc1"));
         Assertions.assertDoesNotThrow(() -> tmpService.startPipelineFragmentationMolByMol(tmpMols, 1, false));
         Assertions.assertNotNull(tmpService.getFragments());
         Assertions.assertFalse(tmpService.getFragments().isEmpty());
@@ -779,8 +778,8 @@ public class FragmentationServiceTest {
         List<MoleculeDataModel> tmpMols = new ArrayList<>(tmpSmilesList.size());
         List<MoleculeDataModel> tmpPreconditionMols = new ArrayList<>(tmpSmilesList.size());
         for (String tmpSmiles : tmpSmilesList) {
-            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
-            tmpPreconditionMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+            tmpMols.add(TestUtil.buildMDM(tmpSmiles));
+            tmpPreconditionMols.add(TestUtil.buildMDM(tmpSmiles));
         }
         //precondition: the Scaffold Generator yields no fragments for these molecules because they have no rings, not
         //because fragmentation failed; a failure would leave the map empty just the same and hide a broken stage
@@ -818,9 +817,9 @@ public class FragmentationServiceTest {
         //empty pipeline name -> default-name fallback branch in the mol-by-mol path
         tmpService.setPipeliningFragmentationName("");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(3);
-        tmpMols.add(FragmentationServiceTest.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCCCCCc1ccccc1O"));
-        tmpMols.add(FragmentationServiceTest.buildMDM("OCC1OC(O)C(O)C(O)C1O"));
+        tmpMols.add(TestUtil.buildMDM("OCC1OC(O)C(O)C(O)C1OC2OC(CO)C(O)C(O)C2O"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCCCCCc1ccccc1O"));
+        tmpMols.add(TestUtil.buildMDM("OCC1OC(O)C(O)C(O)C1O"));
         //aNumberOfTasks == 0 -> normalised to 1
         Assertions.assertDoesNotThrow(() -> tmpService.startPipelineFragmentationMolByMol(tmpMols, 0, false));
         Assertions.assertNotNull(tmpService.getFragments());
@@ -1004,7 +1003,7 @@ public class FragmentationServiceTest {
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {tmpBlockingFragmenter});
         tmpService.setPipeliningFragmentationName("BlockingPipeline");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(1);
-        tmpMols.add(FragmentationServiceTest.buildMDM("O=C(O)CCC"));
+        tmpMols.add(TestUtil.buildMDM("O=C(O)CCC"));
         Thread tmpFragmentationThread = new Thread(() -> {
             try {
                 tmpService.startPipelineFragmentation(tmpMols, 1, false, false);
@@ -1074,7 +1073,7 @@ public class FragmentationServiceTest {
                 FragmentationServiceTest.displayName(tmpSingleStageService, anAlgorithmName));
         List<MoleculeDataModel> tmpFreshMolecules = new ArrayList<>(aMolecules.size());
         for (MoleculeDataModel tmpMolecule : aMolecules) {
-            tmpFreshMolecules.add(FragmentationServiceTest.buildMDM(tmpMolecule.getUniqueSmiles()));
+            tmpFreshMolecules.add(TestUtil.buildMDM(tmpMolecule.getUniqueSmiles()));
         }
         //synchronous-blocking: the map is fully populated on return
         tmpSingleStageService.startSingleFragmentation(tmpFreshMolecules, 1, false);
@@ -1122,21 +1121,6 @@ public class FragmentationServiceTest {
      */
     private static String displayName(FragmentationService aService, String anAlgorithmName) {
         return FragmentationServiceTest.fragmenter(aService, anAlgorithmName).getFragmentationAlgorithmDisplayName();
-    }
-    //
-    /**
-     * Builds a MoleculeDataModel from a SMILES string using the verified (IAtomContainer, boolean) constructor. The
-     * SMILES is parsed without kekulization, so aromatic input stays un-kekulized; the Scaffold Generator fails on such
-     * input (it throws, or yields fragments whose SMILES cannot be generated), which is why the Scaffold-stage tests use
-     * non-aromatic molecules.
-     *
-     * @param aSmiles SMILES string of the molecule
-     * @return MoleculeDataModel for the given SMILES
-     * @throws Exception if the SMILES cannot be parsed
-     */
-    private static MoleculeDataModel buildMDM(String aSmiles) throws Exception {
-        IAtomContainer tmpAtomContainer = ChemUtil.parseSmilesToAtomContainer(aSmiles, false, false);
-        return new MoleculeDataModel(tmpAtomContainer, false);
     }
     //
     /**
@@ -1208,7 +1192,7 @@ public class FragmentationServiceTest {
         //fresh molecule data models per drive so previous fragmentation state does not interfere
         List<MoleculeDataModel> tmpFreshMols = new ArrayList<>(aListOfMolecules.size());
         for (MoleculeDataModel tmpMolecule : aListOfMolecules) {
-            tmpFreshMols.add(FragmentationServiceTest.buildMDM(tmpMolecule.getUniqueSmiles()));
+            tmpFreshMols.add(TestUtil.buildMDM(tmpMolecule.getUniqueSmiles()));
         }
         tmpService.startSingleFragmentation(tmpFreshMols, aNumberOfTasks, false);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
@@ -1236,7 +1220,7 @@ public class FragmentationServiceTest {
         tmpService.setPipeliningFragmentationName("ErtlThenScaffoldPipeline");
         List<MoleculeDataModel> tmpMols = new ArrayList<>(aSmilesList.size());
         for (String tmpSmiles : aSmilesList) {
-            tmpMols.add(FragmentationServiceTest.buildMDM(tmpSmiles));
+            tmpMols.add(TestUtil.buildMDM(tmpSmiles));
         }
         tmpService.startPipelineFragmentation(tmpMols, 1, false, isKeepLastFragment);
         Map<String, FragmentDataModel> tmpFragments = tmpService.getFragments();
