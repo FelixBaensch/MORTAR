@@ -116,6 +116,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
          * @param aMolecule to store in class arrays
          */
         protected MolecularArrays(IAtomContainer aMolecule) {
+            Objects.requireNonNull(aMolecule, "Original molecule was null.");
+            //Todo: necessary?
             this.setMoleculeName(aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             ArrayList<IAtom> tmpAtomArrayList = new ArrayList<>(aMolecule.getAtomCount());
             ArrayList<IBond> tmpBondArrayList = new ArrayList<>(aMolecule.getBondCount());
@@ -191,6 +193,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
          *
          * @param moleculeName String of original molecule name
          */
+        //Todo: unnecessary
         public void setMoleculeName(String moleculeName) {
             this.moleculeName = moleculeName;
         }
@@ -321,6 +324,10 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private final HashMap<String, String> settingNameDisplayNameMap;
     /**
+     * String of origin molecule name.
+     */
+    private String originMoleculeName;
+    /**
      * String key for internal molecule filter passage.
      */
     private static final String ASF_FILTER_MARKER = "ASF.FilterMarker";
@@ -344,7 +351,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     //
     //<editor-fold desc="Constructor">
     /**
-     * Constructor, all settings are initialised with their respective default values.
+     * Constructor, all settings are initialized with their respective default values.
      */
     public AlkylStructureFragmenter(){
         //check current logger environment for debug
@@ -653,6 +660,9 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
+        if (this.originMoleculeName == null) {
+            this.originMoleculeName = aMolecule.getProperty("IMPORTER.MOLECULE_NAME_PROPERTY_KEY");
+        }
         boolean tmpContainsCarbons = false;
         boolean tmpContainsHeteroAtoms = false;
         boolean tmpContainsPseudoAtoms = false;
@@ -681,7 +691,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 default -> {
                     tmpContainsIllegalBond = true;
                     AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
-                            String.format(AlkylStructureFragmenter.LOGGER_WARNING_STRING_FORMAT, "Illegal Bond.", aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                            String.format(AlkylStructureFragmenter.LOGGER_WARNING_STRING_FORMAT, "Illegal Bond.", this.originMoleculeName,
                                     "An illegal bond state was detected, therefor the molecule cannot be fragmented.", ""));
                     break bondIteration;
                 }
@@ -709,12 +719,18 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     @Override
     public boolean shouldBePreprocessed(IAtomContainer aMolecule) throws NullPointerException {
         Objects.requireNonNull(aMolecule, "Given molecule is null");
+        if (this.originMoleculeName == null) {
+            this.originMoleculeName = aMolecule.getProperty("IMPORTER.MOLECULE_NAME_PROPERTY_KEY");
+        }
         return false;
     }
     @Override
     public boolean canBeFragmented(IAtomContainer aMolecule) throws NullPointerException {
         //throws NullpointerException if molecule is null
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
+        if (this.originMoleculeName == null) {
+            this.originMoleculeName = aMolecule.getProperty("IMPORTER.MOLECULE_NAME_PROPERTY_KEY");
+        }
         if ((boolean) aMolecule.getProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER)) {
             return false;
         }
@@ -794,11 +810,12 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         //<editor-fold desc="Molecule Cloning and Chemical Formula Check" defaultstate="collapsed">
         IAtomContainer tmpClone = aMolecule.clone();
+        this.originMoleculeName = aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY);
         try {
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpClone);
         } catch (CDKException aCDKException) {
             AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
-                    String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, aCDKException, tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                    String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, aCDKException, this.originMoleculeName,
                             "Atom types could not be perceived or atoms could not be configured.", ""));
         }
         int tmpPreFragmentationAtomCount = this.countAtoms(tmpClone);
@@ -824,7 +841,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpFragmentSet = this.getFragmentationResults(tmpMolecularArrays);
             } catch (IllegalArgumentException anException) {
                 throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                        aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), "Fragmentation result combination failed!", ""));
+                        this.originMoleculeName, "Fragmentation result combination failed!", ""));
             }
             for (IAtomContainer tmpAtomContainer: tmpFragmentSet.atomContainers()) {
                 tmpPostFragmentationAtomCount += this.countAtoms(tmpAtomContainer);
@@ -837,7 +854,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
             if (tmpPostFragmentationAtomCount != tmpPreFragmentationAtomCount) {
                 AlkylStructureFragmenter.LOGGER.log(Level.WARNING, "{0}", String.format(LOGGER_WARNING_STRING_FORMAT,
-                        "Chemical Formula Check", tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                        "Chemical Formula Check", this.originMoleculeName,
                         "Chemical formula was not constant!"));
             }
             if (this.fragmentSaturationSetting.get().equals(FragmentSaturationOption.HYDROGEN_SATURATION)) {
@@ -845,7 +862,8 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpFragmentSet = this.saturateWithImplicitHydrogen(tmpFragmentSet);
                 } catch (CDKException anException) {
                     throw new CDKException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                            aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), "Saturation failed!", ""));
+                            this.originMoleculeName,
+                            "Saturation failed!", ""));
                 }
             }
             ArrayList<IAtomContainer> tmpFragmentList = new ArrayList<>(tmpFragmentSet.getAtomContainerCount());
@@ -856,7 +874,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     } catch (Exception aStereoChemException) {
                         tmpFragmentList.add(tmpAtomContainer);
                         AlkylStructureFragmenter.LOGGER.log(Level.WARNING, "{0}", String.format(LOGGER_WARNING_STRING_FORMAT,
-                                "Stereo Chemistry Remap", tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                                "Stereo Chemistry Remap", this.originMoleculeName,
                                 "The stereo chemistry remap for a fragment was not possible."));
                     }
                     //debug
@@ -873,7 +891,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return tmpFragmentList;
         } catch (IllegalArgumentException | CDKException anException) {
             throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                    tmpClone.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), "Fragmentation failed!", ""));
+                    this.originMoleculeName, "Fragmentation failed!", ""));
         }
         //</editor-fold>
     }
@@ -899,7 +917,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //closest non-general exception for a faulty ring detection
             throw new UnsupportedOperationException (
                     String.format("Ring marking failed! Fragments may not be correct! Occurred at molecule: %s",
-                            anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), aFailedRingMarkException);
+                            this.originMoleculeName), aFailedRingMarkException);
         }
         this.markTertQuatAndNeighbors(aMolecularArraysInstance);
         try {
@@ -908,7 +926,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             //closest non-general exception for a faulty conj. pi system detection
             throw new UnsupportedOperationException (
                     String.format("Conjugated Pi System marking failed! Fragments may not be correct! Occurred at molecule: %s",
-                            anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), aFailedConjPiMarkException);
+                            this.originMoleculeName), aFailedConjPiMarkException);
         }
         this.markConnectedTertQuatRing(aMolecularArraysInstance);
         this.markMultiBonds(aMolecularArraysInstance);
@@ -972,7 +990,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         } catch (Exception anException) {
             throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT,
-                    anException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                    anException, this.originMoleculeName,
                     "CycleFinder failed."));
         }
     }
@@ -1011,6 +1029,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             } else if (tmpArrayBond.getOrder() == IBond.Order.TRIPLE) {
                 tmpIsStartBondTriple = true;
             } else {
+                //Todo: triple???
                 if (tmpArrayBond.getBegin().getMaxBondOrder() == IBond.Order.DOUBLE && tmpArrayBond.getEnd().getMaxBondOrder() == IBond.Order.DOUBLE) {
                     tmpArrayBond.setProperty(AlkylStructureFragmenter.INTERNAL_ASF_CONJ_PI_MARKER_KEY, true);
                 }
@@ -1648,7 +1667,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpRingACSet = this.separateDisconnectedStructures(tmpRingFragmentationContainer);
             } catch (IllegalArgumentException anException) {
                 throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                        "Name not defined.", "Dispersion of ring structures failed!", ""));
+                        this.originMoleculeName, "Dispersion of ring structures failed!", ""));
             }
         }
         //extracts disconnected isolated tertiary and quaternary systems into atom container set
@@ -1657,7 +1676,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpTertQuatCarbonContainer));
             } catch (IllegalArgumentException anException) {
                 throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                        "Name not defined.", "Dispersion of isolated tert/quat structures failed!", ""));
+                        this.originMoleculeName, "Dispersion of isolated tert/quat structures failed!", ""));
             }
         }
         //if more than one atom container containing a ring system is present, add to extraction atom container set
@@ -1676,7 +1695,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                 tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpIsolatedMultiBondsContainer));
             } catch (IllegalArgumentException anException) {
                 throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                        "Name not defined.", "Dispersion of isolated multi-bond structures failed!", ""));
+                        this.originMoleculeName, "Dispersion of isolated multi-bond structures failed!", ""));
             }
         }
         IAtomContainerSet tmpChainACSet;
@@ -1684,7 +1703,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             tmpChainACSet = this.separateDisconnectedStructures(tmpChainFragmentationContainer);
         } catch (IllegalArgumentException anException) {
             throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                    "Name not defined.", "Dispersion of linear chain structures failed!", ""));
+                    this.originMoleculeName, "Dispersion of linear chain structures failed!", ""));
         }
         int tmpMaxChainLengthInteger = this.maxChainLengthSetting.get();
         //checks for applied restrictions, default restriction is set to 6
@@ -1700,7 +1719,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                     tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                 } catch (IllegalArgumentException anException) {
                     throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                            "Name not defined.", "Dispersion of linear chain structures (max length = 1) failed!", ""));
+                            this.originMoleculeName, "Dispersion of linear chain structures (max length = 1) failed!", ""));
                 }
             } else {//restrictions > 1
                 for (IAtomContainer tmpAtomContainer : tmpChainACSet.atomContainers()) {
@@ -1709,7 +1728,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
                         tmpDispersedAtomContainerSet.add(this.separateDisconnectedStructures(tmpDissectedAC));
                     } catch (IllegalArgumentException anException) {
                         throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                                "Name not defined.", "Dispersion of linear chain structures (max length > 1) failed!", ""));
+                                this.originMoleculeName, "Dispersion of linear chain structures (max length > 1) failed!", ""));
                     }
                 }
             }
@@ -1732,21 +1751,21 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             tmpExtractedAtomACSet = this.extractAtoms(aMolecularArraysInstance.getAtomArray());
         } catch (Exception anException) {
             throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                    aMolecularArraysInstance.getMoleculeName(), "Atom extraction failed!", ""));
+                    this.originMoleculeName, "Atom extraction failed!", ""));
         }
         IAtomContainerSet tmpExtractedAtomAndBondACSet;
         try {
             tmpExtractedAtomAndBondACSet = this.extractBonds(aMolecularArraysInstance.getBondArray(), tmpExtractedAtomACSet);
         } catch (Exception anException) {
             throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                    aMolecularArraysInstance.getMoleculeName(), "Bond extraction failed!", ""));
+                    this.originMoleculeName, "Bond extraction failed!", ""));
         }
         IAtomContainerSet tmpDispersedAtomContainerSet;
         try {
             tmpDispersedAtomContainerSet = this.disperseDisconnectedAtomContainerSet(tmpExtractedAtomAndBondACSet);
         } catch (Exception anException) {
             throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                    aMolecularArraysInstance.getMoleculeName(), "AtomContainer dispersion failed!", ""));
+                    this.originMoleculeName, "AtomContainer dispersion failed!", ""));
         }
         return tmpDispersedAtomContainerSet;
     }
@@ -1778,7 +1797,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return tmpFragmentSet;
         } catch (Exception anException) {
             AlkylStructureFragmenter.LOGGER.log(Level.WARNING, String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT,
-                    anException, anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), "Connectivity Check failed.", ""),
+                    anException, this.originMoleculeName, "Connectivity Check failed.", ""),
                     anException);
         }
         return tmpFragmentSet;
@@ -1803,7 +1822,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             return anUnsaturatedACSet;
         } catch (CDKException anException) {
             throw new CDKException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT,
-                    anException, "None given.",
+                    anException, this.originMoleculeName,
                     "Saturation failed."), anException);
         }
     }
@@ -1838,7 +1857,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             }
         } catch (IllegalArgumentException anException) {
             throw new IllegalArgumentException(String.format(AlkylStructureFragmenter.LOGGER_EXCEPTION_STRING_FORMAT, anException,
-                    "Name not defined.", "Dissection of linear chain structures (max length > 1) failed!", ""));
+                    this.originMoleculeName, "Dissection of linear chain structures (max length > 1) failed!", ""));
         }
         return tmpReturnAC;
     }
