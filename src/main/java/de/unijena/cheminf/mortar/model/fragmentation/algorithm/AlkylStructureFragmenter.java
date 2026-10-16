@@ -328,10 +328,6 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
      */
     private String originMoleculeName;
     /**
-     * String key for internal molecule filter passage.
-     */
-    private static final String ASF_FILTER_MARKER = "ASF.FilterMarker";
-    /**
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(AlkylStructureFragmenter.class.getName());
@@ -663,50 +659,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         if (this.originMoleculeName == null) {
             this.originMoleculeName = aMolecule.getProperty("IMPORTER.MOLECULE_NAME_PROPERTY_KEY");
         }
-        boolean tmpContainsCarbons = false;
-        boolean tmpContainsHeteroAtoms = false;
-        boolean tmpContainsPseudoAtoms = false;
-        boolean tmpContainsIllegalBond = false;
-        for (IAtom tmpAtom : aMolecule.atoms()) {
-            if (tmpAtom == null) {
-                //filter if an atom in the mol is null
-                return true;
-            }
-            if (tmpAtom.getAtomicNumber() == IElement.C) {
-                tmpContainsCarbons = true;
-            } else if (this.isPseudoAtom(tmpAtom)) {
-                tmpContainsPseudoAtoms = true;
-            } else if (this.isHeteroAtom(tmpAtom)) {
-                tmpContainsHeteroAtoms = true;
-            }
-        }
-        bondIteration:
-        for (IBond tmpBond : aMolecule.bonds()) {
-            switch (tmpBond.getOrder()) {
-                case SINGLE -> tmpContainsIllegalBond = false;
-                case DOUBLE -> tmpContainsIllegalBond = false;
-                case TRIPLE -> tmpContainsIllegalBond = false;
-                case QUADRUPLE -> tmpContainsIllegalBond = false;
-                //all orders beyond quadruple are filtered out
-                default -> {
-                    tmpContainsIllegalBond = true;
-                    AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
-                            String.format(AlkylStructureFragmenter.LOGGER_WARNING_STRING_FORMAT, "Illegal Bond.", this.originMoleculeName,
-                                    "An illegal bond state was detected, therefor the molecule cannot be fragmented.", ""));
-                    break bondIteration;
-                }
-            }
-        }
-        if (tmpContainsCarbons && !tmpContainsHeteroAtoms && !tmpContainsPseudoAtoms && !tmpContainsIllegalBond) {
-            //contains carbons and no hetero atoms, internal filter property false -> shouldn't be filtered out of fragmentation
-            aMolecule.setProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER, false);
-            return false;
-        } else {
-            //contains hetero atoms or no carbons
-            aMolecule.setProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER, true);
-            //whether to return true or false depends on the setting (inverted for correct behavior)
-            return !this.keepNonFragmentableMoleculesSetting.get();
-        }
+        return !this.isFragmentable(aMolecule) && !this.keepNonFragmentableMoleculesSetting.get();
     }
     /**
      * {@inheritDoc}
@@ -731,12 +684,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         if (this.originMoleculeName == null) {
             this.originMoleculeName = aMolecule.getProperty("IMPORTER.MOLECULE_NAME_PROPERTY_KEY");
         }
-        if ((boolean) aMolecule.getProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER)) {
-            return false;
-        }
-        boolean tmpShouldBeFiltered = this.shouldBeFiltered(aMolecule);
-        boolean tmpShouldBePreprocessed = this.shouldBePreprocessed(aMolecule);
-        return !tmpShouldBeFiltered && !tmpShouldBePreprocessed;
+        return !this.isFragmentable(aMolecule) && !this.shouldBePreprocessed(aMolecule);
     }
     /**
      * Method for applying special preprocessing steps before fragmenting the given molecule.
@@ -803,7 +751,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
             throws NullPointerException, IllegalArgumentException, CloneNotSupportedException {
         Objects.requireNonNull(aMolecule, "Given molecule is null.");
         //skip fragmentation if molecule is not fragmentable and just return it as one fragment to keep it in pipeline
-        if ((boolean) aMolecule.getProperty(AlkylStructureFragmenter.ASF_FILTER_MARKER) && this.keepNonFragmentableMoleculesSetting.get()) {
+        if (!this.isFragmentable(aMolecule) && this.keepNonFragmentableMoleculesSetting.get()) {
             List<IAtomContainer> tmpNonFragACList = new ArrayList<>(1);
             tmpNonFragACList.add(aMolecule);
             return tmpNonFragACList;
@@ -1993,62 +1941,7 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
     }
     //</editor-fold>
     //
-    //</editor-fold>
-    /**
-     * Checks whether the given atom is a pseudo atom. Very strict, any atom
-     * whose atomic number is null or 0, whose symbol equals "R" or "*", or that
-     * is an instance of an IPseudoAtom implementing class will be classified as
-     * a pseudo atom.
-     *
-     * @param atom the atom to test
-     * @return true if the given atom is identified as a pseudo (R) atom
-     */
-    protected boolean isPseudoAtom(IAtom atom) {
-        Integer tmpAtomicNr = atom.getAtomicNumber();
-        if (Objects.isNull(tmpAtomicNr)) {
-            return true;
-        }
-        String tmpSymbol = atom.getSymbol();
-        return tmpAtomicNr == IElement.Wildcard ||
-                tmpSymbol.equals("R") ||
-                tmpSymbol.equals("*") ||
-                atom instanceof IPseudoAtom;
-    }
-
-    /**
-     * Checks whether the given atom is a hetero-atom (i.e. non-carbon and
-     * non-hydrogen). Pseudo (R) atoms will also return false.
-     *
-     * @param atom the atom to test
-     * @return true if the given atom is neither a carbon nor a hydrogen or
-     *         pseudo atom
-     */
-    protected boolean isHeteroAtom(IAtom atom) {
-        Integer tmpAtomicNr = atom.getAtomicNumber();
-        if (Objects.isNull(tmpAtomicNr)) {
-            return false;
-        }
-        int tmpAtomicNumberInt = tmpAtomicNr;
-        return tmpAtomicNumberInt != IElement.H && tmpAtomicNumberInt != IElement.C
-                && !this.isPseudoAtom(atom);
-    }
-
-    /**
-     * Utility method to count non-pseudo atoms of a given AtomContainer.
-     *
-     * @param anAtomContainerToCount atom container in which to count
-     * @return int count of non-pseudo atoms in given atom container
-     */
-    protected int countAtoms(IAtomContainer anAtomContainerToCount) {
-        int tmpAtomCount = 0;
-        for (IAtom tmpAtom: anAtomContainerToCount.atoms()) {
-            if (!this.isPseudoAtom(tmpAtom)) {
-                tmpAtomCount++;
-            }
-        }
-        return tmpAtomCount;
-    }
-
+    //<editor-fold desc="Stereomapping methods"
     /**
      * Utility method creating a map of {@link IChemObject} and {@link IStereoElement} of the IChemObjects (atoms and bonds)
      * of a given atom container.
@@ -2185,6 +2078,119 @@ public class AlkylStructureFragmenter implements IMoleculeFragmenter{
         }
         return aFragment;
     }
+    //</editor-fold>
+    //
+    //</editor-fold>
+    /**
+     * Checks whether the given atom is a pseudo atom. Very strict, any atom
+     * whose atomic number is null or 0, whose symbol equals "R" or "*", or that
+     * is an instance of an IPseudoAtom implementing class will be classified as
+     * a pseudo atom.
+     *
+     * @param atom the atom to test
+     * @return true if the given atom is identified as a pseudo (R) atom
+     */
+    protected boolean isPseudoAtom(IAtom atom) {
+        Integer tmpAtomicNr = atom.getAtomicNumber();
+        if (Objects.isNull(tmpAtomicNr)) {
+            return true;
+        }
+        String tmpSymbol = atom.getSymbol();
+        return tmpAtomicNr == IElement.Wildcard ||
+                tmpSymbol.equals("R") ||
+                tmpSymbol.equals("*") ||
+                atom instanceof IPseudoAtom;
+    }
+
+    /**
+     * Checks whether the given atom is a hetero-atom (i.e. non-carbon and
+     * non-hydrogen). Pseudo (R) atoms will also return false.
+     *
+     * @param atom the atom to test
+     * @return true if the given atom is neither a carbon nor a hydrogen or
+     *         pseudo atom
+     */
+    protected boolean isHeteroAtom(IAtom atom) {
+        Integer tmpAtomicNr = atom.getAtomicNumber();
+        if (Objects.isNull(tmpAtomicNr)) {
+            return false;
+        }
+        int tmpAtomicNumberInt = tmpAtomicNr;
+        return tmpAtomicNumberInt != IElement.H && tmpAtomicNumberInt != IElement.C
+                && !this.isPseudoAtom(atom);
+    }
+
+    /**
+     * Utility method to count non-pseudo atoms of a given AtomContainer.
+     *
+     * @param anAtomContainerToCount atom container in which to count
+     * @return int count of non-pseudo atoms in given atom container
+     */
+    protected int countAtoms(IAtomContainer anAtomContainerToCount) {
+        int tmpAtomCount = 0;
+        for (IAtom tmpAtom: anAtomContainerToCount.atoms()) {
+            if (!this.isPseudoAtom(tmpAtom)) {
+                tmpAtomCount++;
+            }
+        }
+        return tmpAtomCount;
+    }
+    //
+    // <editor-fold desc="General Utilities" defaultstate="collapsed">
+
+    /**
+     * Utility method checking a given AtomContainer for fragmentability.
+     * It checks whether the AtomContainer is only composed of carbon atoms (pseudo atoms are allowed)
+     * and whether bond orders are of allowed state (permitted orders: single; double; triple; quadruple).
+     * If one of these conditions is NOT met, the AtomContainer is stated as not fragmentable and false is returned.
+     *
+     * @param anAtomContainerToTest AtomContainer to be tested for fragmentability
+     * @return true if AtomContainer meets criteria for alkyl fragmentation, false if at least one is not met
+     */
+    protected boolean isFragmentable(IAtomContainer anAtomContainerToTest) {
+        boolean tmpContainsCarbons = false;
+        boolean tmpContainsHeteroAtoms = false;
+        boolean tmpContainsPseudoAtoms = false;
+        boolean tmpContainsIllegalBond = false;
+        for (IAtom tmpAtom : anAtomContainerToTest.atoms()) {
+            if (tmpAtom == null) {
+                //filter if an atom in the mol is null
+                return false;
+            }
+            if (tmpAtom.getAtomicNumber() == IElement.C) {
+                tmpContainsCarbons = true;
+            } else if (this.isPseudoAtom(tmpAtom)) {
+                tmpContainsPseudoAtoms = true;
+            } else if (this.isHeteroAtom(tmpAtom)) {
+                tmpContainsHeteroAtoms = true;
+            }
+        }
+        bondIteration:
+        for (IBond tmpBond : anAtomContainerToTest.bonds()) {
+            switch (tmpBond.getOrder()) {
+                case SINGLE -> tmpContainsIllegalBond = false;
+                case DOUBLE -> tmpContainsIllegalBond = false;
+                case TRIPLE -> tmpContainsIllegalBond = false;
+                case QUADRUPLE -> tmpContainsIllegalBond = false;
+                //all orders beyond quadruple are filtered out
+                default -> {
+                    tmpContainsIllegalBond = true;
+                    AlkylStructureFragmenter.LOGGER.log(Level.WARNING,
+                            String.format(AlkylStructureFragmenter.LOGGER_WARNING_STRING_FORMAT, "Illegal Bond.", this.originMoleculeName,
+                                    "An illegal bond state was detected, therefor the molecule cannot be fragmented.", ""));
+                    break bondIteration;
+                }
+            }
+        }
+        if (tmpContainsCarbons && !tmpContainsHeteroAtoms && !tmpContainsPseudoAtoms && !tmpContainsIllegalBond) {
+            //contains carbons and no hetero atoms -> shouldn't be filtered out of fragmentation
+            return true;
+        } else {
+            //contains hetero atoms or no carbons
+            return false;
+        }
+    }
+    //</editor-fold>
     //
     //</editor-fold>
 }
