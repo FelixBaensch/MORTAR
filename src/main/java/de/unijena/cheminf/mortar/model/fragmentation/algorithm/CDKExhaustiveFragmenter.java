@@ -53,7 +53,8 @@ import java.util.logging.Logger;
  * <a href="https://cdk.github.io/cdk/latest/docs/api/org/openscience/cdk/fragment/ExhaustiveFragmenter.html">
  *    CDK exhaustive fragmentation
  * </a>
- * available in MORTAR. It has a performance of O(n!) where n is the number of splittable bonds. Splittable
+ * available in MORTAR. It enumerates all 2<sup>n</sup> - 1 non-empty combinations of the n splittable bonds of a
+ * molecule, so its runtime is O(2<sup>n</sup>), i.e. it doubles with every additional splittable bond. Splittable
  * bonds are defined as non-ring, non-terminal single bonds. Non-terminal bonds are those connected to heavy atoms
  * that respectively have another bond to a heavy atom.
  *
@@ -74,6 +75,9 @@ import java.util.logging.Logger;
  *
  *
  * </pre>
+ *
+ * Use the splittable bonds limit to exclude large molecules from fragmentation. Molecules with more
+ * than {@link CDKExhaustiveFragmenter#MAXIMUM_SPLITTABLE_BONDS} splittable bonds are always filtered, independent of the settings.
  *
  * @author Tom Weiß
  * @version 1.0.0.0
@@ -175,10 +179,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     public static final SaturationDisplay DEFAULT_SATURATION = SaturationDisplay.HYDROGEN_SATURATED_FRAGMENTS;
     //
     /**
-     * Maximum number of bonds that get split in one fragmentation.
-     * This value is based on the assumption each fragment is unique (as if there was no deduplication)
-     * this 27 would be the maximum tree depth to hold all fragments in the
-     * hashmap.
+     * Default maximum number of bonds that get split in one fragmentation, same as the default of the CDK
+     * ExhaustiveFragmenter. Since molecules with more than {@link CDKExhaustiveFragmenter#MAXIMUM_SPLITTABLE_BONDS} splittable bonds are
+     * always filtered, this default only restricts the fragmentation of molecules with 28 to 30 splittable bonds.
      */
     public static final int DEFAULT_INCLUSIVE_MAX_TREE_DEPTH = 27;
     /**
@@ -186,10 +189,26 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      */
     public static final boolean DEFAULT_PRESERVE_STEREO_INFO = false;
     /**
-     * The inclusive maximum number of bonds split in one fragmentation. This is the current architectural
-     * limit.
+     * Molecules with more splittable bonds than this are always filtered to prevent overflows, even if the splittable
+     * bonds limit setting is deactivated or set to a higher value.
+     * The CDK ExhaustiveFragmenter iterates over the 2<sup>n</sup> - 1 bond
+     * combinations with an int counter, which breaks for n &gt;= 31 splittable bonds: for n = 31 the loop never
+     * terminates because the counter overflows, and for n &gt;= 32 the number of combinations itself overflows, so
+     * no or incomplete results would be returned silently.
+     * <p>
+     * Note that this is only the limit for correct results. Molecules close to this limit are not feasible to
+     * fragment in practice, because the CDK ExhaustiveFragmenter enumerates 2<sup>n</sup> - 1 combinations and sizes
+     * its fragment map accordingly (about 2<sup>30</sup> entries for n = 30). The splittable bonds limit setting
+     * should be used to restrict the fragmentation to molecules of reasonable size.
      */
-    public static final int INCLUSIVE_MAX_TREE_DEPTH_LIMIT = 32;
+    public static final int MAXIMUM_SPLITTABLE_BONDS = 30;
+    /**
+     * The highest allowed value for the inclusive maximum tree depth, i.e. the maximum number of bonds split in one
+     * fragmentation. The number of bonds split at once cannot exceed the number of splittable bonds of a molecule,
+     * which is at most {@link CDKExhaustiveFragmenter#MAXIMUM_SPLITTABLE_BONDS} for all molecules that are not filtered. Higher values would
+     * therefore have no effect.
+     */
+    public static final int INCLUSIVE_MAX_TREE_DEPTH_LIMIT = CDKExhaustiveFragmenter.MAXIMUM_SPLITTABLE_BONDS;
     /**
      * The name of this fragmenter.
      */
@@ -556,7 +575,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * The value is inclusive: a value of N means nodes at depth N are included.
      *
      * @param aDepth the new inclusive maximum tree depth; must be positive and smaller or equal to {@link CDKExhaustiveFragmenter#INCLUSIVE_MAX_TREE_DEPTH_LIMIT}.
-     * @throws IllegalArgumentException if depth is negative or bigger than {@link CDKExhaustiveFragmenter#INCLUSIVE_MAX_TREE_DEPTH_LIMIT}.
+     * @throws IllegalArgumentException if depth is zero, negative, or bigger than {@link CDKExhaustiveFragmenter#INCLUSIVE_MAX_TREE_DEPTH_LIMIT}.
      */
     public void setInclusiveMaxTreeDepthSetting(int aDepth) {
         if (aDepth > 0 && aDepth <= CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT) {
@@ -642,8 +661,10 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * {@inheritDoc}
      *
-     * Checks if {@link #activateSplittableBondsLimitSetting} is true to determine if molecules should be filtered based
-     * on the {@link #inclusiveSplittableBondsLimitSetting} so that molecules with more splittable bonds will be filtered out.
+     * Molecules with more than {@link CDKExhaustiveFragmenter#MAXIMUM_SPLITTABLE_BONDS} splittable bonds are always filtered out, independent
+     * of the settings. Otherwise, checks if {@link CDKExhaustiveFragmenter#activateSplittableBondsLimitSetting} is true to determine if
+     * molecules should be filtered based on the {@link CDKExhaustiveFragmenter#inclusiveSplittableBondsLimitSetting} so that molecules with
+     * more splittable bonds will be filtered out.
      *
      * @param aMolecule the molecule to check.
      * @return true if the molecule should be filtered out, false otherwise.
@@ -653,11 +674,12 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         if (Objects.isNull(aMolecule) || aMolecule.isEmpty()) {
             return true;
         }
-        if (this.activateSplittableBondsLimitSetting.get() &&
-                ExhaustiveFragmenter.getSplittableBonds(aMolecule).length > this.inclusiveSplittableBondsLimitSetting.get()) {
+        int tmpNumberOfSplittableBonds = ExhaustiveFragmenter.getSplittableBonds(aMolecule).length;
+        if (tmpNumberOfSplittableBonds > CDKExhaustiveFragmenter.MAXIMUM_SPLITTABLE_BONDS) {
             return true;
         }
-        return false;
+        return this.activateSplittableBondsLimitSetting.get()
+                && tmpNumberOfSplittableBonds > this.inclusiveSplittableBondsLimitSetting.get();
     }
 
     @Override
