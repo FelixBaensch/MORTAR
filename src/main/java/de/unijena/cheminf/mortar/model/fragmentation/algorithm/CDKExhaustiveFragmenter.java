@@ -64,7 +64,7 @@ import java.util.logging.Logger;
  *                   |
  *      terminal     |       [O]
  *  (not splittable) |      //
- *          |        |     //  &lt;-- double bond (not splittable)
+ *          |        |     //  &lt;-- double bond and terminal bond (not splittable)
  *          |        |    //
  *     [C]-----[C]-----[C]
  *                        \
@@ -197,7 +197,15 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
+    /**
+     * The boolean setting that allows de/activate the splittable bonds limit.
+     */
     private final SimpleBooleanProperty activateSplittableBondsLimitSetting;
+    /**
+     * The setting for the threshold of splittable bonds.
+     * If a molecule has more splittable bonds than the value of this setting,
+     * it will not be fragmented.
+     */
     private final SimpleIntegerProperty inclusiveSplittableBondsLimitSetting;
     /**
      * The maximum tree depth which represents the maximum number of bonds that will be split in a fragmentation.
@@ -291,14 +299,14 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 if (newValue > 0) {
                     super.set(newValue);
                 } else {
-                    IllegalArgumentException anException = new IllegalArgumentException("The threshold of splittable bonds must be positive");
-                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    IllegalArgumentException tmpException = new IllegalArgumentException("The threshold of splittable bonds must be positive");
+                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
                             Message.get("Fragmenter.IllegalSettingValue.Header"),
-                            anException.toString(),
-                            anException);
+                            tmpException.toString(),
+                            tmpException);
                     //re-throws the exception to properly reset the binding
-                    throw anException;
+                    throw tmpException;
                 }
             }
         };
@@ -312,15 +320,15 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                     CDKExhaustiveFragmenter.this.cdkEFInstance.setInclusiveMaxTreeDepth(newValue);
                     super.set(newValue);
                 } else {
-                    IllegalArgumentException anException = new IllegalArgumentException(
+                    IllegalArgumentException tmpException = new IllegalArgumentException(
                             "The inclusive max tree depth must be positive and smaller than or equal to 32"
                     );
-                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                    CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
                             Message.get("Fragmenter.IllegalSettingValue.Header"),
-                            anException.toString(),
-                            anException);
-                    throw anException;
+                            tmpException.toString(),
+                            tmpException);
+                    throw tmpException;
                 }
             }
         };
@@ -397,13 +405,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Public properties get">
-    /**
-     * Returns the setting for the threshold of splittable bonds.
-     * If a molecule has more splittable bonds than the value of this setting,
-     * it will not be fragmented.
-     *
-     * @return the currently set inclusive threshold of splittable bonds.
-     */
     public SimpleIntegerProperty inclusiveSplittableBondsLimitSettingProperty() {
         return this.inclusiveSplittableBondsLimitSetting;
     }
@@ -423,14 +424,9 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * @return true if splittable bonds limit should be regarded.
      */
     public boolean getActivateSplittableBondsLimitSetting() {
-        return activateSplittableBondsLimitSetting.get();
+        return this.activateSplittableBondsLimitSetting.get();
     }
 
-    /**
-     * Gets the boolean setting that allows de/activate the splittable bonds limit.
-     *
-     * @return the setting of the splittable bonds limit which can be active (true) or inactive(false)
-     */
     public SimpleBooleanProperty activateSplittableBondsLimitSettingProperty() {
         return this.activateSplittableBondsLimitSetting;
     }
@@ -494,7 +490,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Sets the minimum fragment size.
      *
      * @param aMinimumFragmentSize the new minimum fragment size.
-     * @throws IllegalArgumentException if the fragment size is negative.
+     * @throws IllegalArgumentException if the fragment size is negative or zero.
      */
     public void setMinimumFragmentSize(int aMinimumFragmentSize) {
         if (aMinimumFragmentSize > 0) {
@@ -547,14 +543,14 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      */
     public void setSaturationSetting(SaturationDisplay aSaturation) {
         Objects.requireNonNull(aSaturation, "saturation must not be null");
-            this.saturationSetting.set(aSaturation);
+        this.saturationSetting.set(aSaturation);
     }
 
     /**
      * Set the inclusive maximum tree depth for the exhaustive fragmenter.
      * The value is inclusive: a value of N means nodes at depth N are included.
      *
-     * @param aDepth the new inclusive maximum tree depth; must be positive and smaller than 32.
+     * @param aDepth the new inclusive maximum tree depth; must be positive and smaller or equal to 32.
      * @throws IllegalArgumentException if depth is negative or bigger than 32.
      */
     public void setInclusiveMaxTreeDepthSetting(int aDepth) {
@@ -626,7 +622,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         }
         //</editor-fold>
         IAtomContainer tmpMoleculeClone = aMolecule.clone();
-        // a rough estimation of the number of unique fragments produced by this fragmenter.
         try {
             this.cdkEFInstance.generateFragments(tmpMoleculeClone);
         } catch (Exception anException) {

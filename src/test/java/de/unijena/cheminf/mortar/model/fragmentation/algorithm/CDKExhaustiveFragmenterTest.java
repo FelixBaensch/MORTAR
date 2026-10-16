@@ -75,6 +75,9 @@ public class CDKExhaustiveFragmenterTest {
         for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
             Assertions.assertDoesNotThrow(tmpSetting::getName);
         }
+        int tmpMinimumFragmentSize = 8;
+        tmpFragmenter.setMinimumFragmentSize(tmpMinimumFragmentSize);
+        Assertions.assertEquals(tmpMinimumFragmentSize, tmpFragmenter.getMinimumFragmentSize());
     }
     //
     /**
@@ -96,12 +99,10 @@ public class CDKExhaustiveFragmenterTest {
         Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpOriginalMolecule));
         Assertions.assertTrue(tmpFragmenter.canBeFragmented(tmpOriginalMolecule));
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
+        Assertions.assertFalse(tmpFragmentList.isEmpty());
         for (IAtomContainer tmpFragment : tmpFragmentList) {
             Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
         }
-        int tmpMinimumFragmentSize = 8;
-        tmpFragmenter.setMinimumFragmentSize(tmpMinimumFragmentSize);
-        Assertions.assertEquals(tmpMinimumFragmentSize, tmpFragmenter.getMinimumFragmentSize());
     }
     //
     /**
@@ -124,8 +125,15 @@ public class CDKExhaustiveFragmenterTest {
         Assertions.assertFalse(tmpFragmenter.shouldBeFiltered(tmpOriginalMolecule));
         tmpFragmenter.preserveStereoSettingProperty().set(true);
         tmpFragmentList = tmpFragmenter.fragmentMolecule(tmpOriginalMolecule);
+        boolean tmpFoundStereoInFragments = false;
         for (IAtomContainer tmpFragment : tmpFragmentList) {
+            if (tmpFragment.stereoElements().iterator().hasNext()) {
+                tmpFoundStereoInFragments = true;
+            }
             Assertions.assertDoesNotThrow(() -> tmpSmiGen.create(tmpFragment));
+        }
+        if (!tmpFoundStereoInFragments) {
+            Assertions.fail("Did not find any retained stereochemistry in the fragments");
         }
     }
 
