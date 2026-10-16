@@ -99,15 +99,15 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
          */
         R_SATURATED_FRAGMENTS(
                 ExhaustiveFragmenter.Saturation.R_SATURATED_FRAGMENTS,
-                Message.get("CDKExhaustiveFragmenter.SaturationSetting.Rest.displayName"),
-                Message.get("CDKExhaustiveFragmenter.SaturationSetting.Rest.tooltip")
+                Message.get("CDKExhaustiveFragmenter.SaturationSetting.RGroup.displayName"),
+                Message.get("CDKExhaustiveFragmenter.SaturationSetting.RGroup.tooltip")
         ),
         /**
          * Fragments will be returned in their unsaturated form
          * (no additional hydrogen atoms). The unsaturated atoms are the atoms
          * of the split bonds.
          */
-        UNSATURATED_FRAGMENTS (
+        UNSATURATED_FRAGMENTS(
                 ExhaustiveFragmenter.Saturation.UNSATURATED_FRAGMENTS,
                 Message.get("CDKExhaustiveFragmenter.SaturationSetting.Unsaturated.displayName"),
                 Message.get("CDKExhaustiveFragmenter.SaturationSetting.Unsaturated.tooltip")
@@ -155,7 +155,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Public static final variables">
+    //<editor-fold desc="Public static final constants">
     /**
      * The default activation state of the splittable bonds limit.
      */
@@ -172,7 +172,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     /**
      * The default setting for saturation is {@link CDKExhaustiveFragmenter.SaturationDisplay#HYDROGEN_SATURATED_FRAGMENTS}.
      */
-    public static final SaturationDisplay DEFAULT_SATURATION =  SaturationDisplay.HYDROGEN_SATURATED_FRAGMENTS;
+    public static final SaturationDisplay DEFAULT_SATURATION = SaturationDisplay.HYDROGEN_SATURATED_FRAGMENTS;
     //
     /**
      * Maximum number of bonds that get split in one fragmentation.
@@ -194,6 +194,13 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * The name of this fragmenter.
      */
     public static final String ALGORITHM_NAME = "Exhaustive Fragmenter";
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private static final constants">
+    /**
+     * Logger of this class.
+     */
+    private static final Logger LOGGER = Logger.getLogger(CDKExhaustiveFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Private final variables">
@@ -221,7 +228,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     private final SimpleBooleanProperty preserveStereoSetting;
     /**
      * The minimum size of the returned fragments. This size represents
-     * all atoms present.
+     * all atoms present (which practically means only the heavy atoms in MORTAR),
+     * excluding R atoms that might be added in fragmentation.
      */
     private final SimpleIntegerProperty minimumFragmentSizeSetting;
     /**
@@ -240,10 +248,6 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Instance of ExhaustiveFragmenter class to fragment a molecule.
      */
     private final ExhaustiveFragmenter cdkEFInstance;
-    /**
-     * Logger of this class.
-     */
-    private static final Logger LOGGER = Logger.getLogger(CDKExhaustiveFragmenter.class.getName());
     //</editor-fold>
     //
     //<editor-fold desc="Constructor">
@@ -321,7 +325,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                     super.set(newValue);
                 } else {
                     IllegalArgumentException tmpException = new IllegalArgumentException(
-                            "The inclusive max tree depth must be positive and smaller than or equal to 32"
+                            "The inclusive max tree depth must be positive and smaller than or equal to " + CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT
                     );
                     CDKExhaustiveFragmenter.LOGGER.log(Level.WARNING, tmpException.toString(), tmpException);
                     GuiUtil.guiExceptionAlert(Message.get("Fragmenter.IllegalSettingValue.Title"),
@@ -405,6 +409,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
     //</editor-fold>
     //
     //<editor-fold desc="Public properties get">
+
     public SimpleIntegerProperty inclusiveSplittableBondsLimitSettingProperty() {
         return this.inclusiveSplittableBondsLimitSetting;
     }
@@ -550,8 +555,8 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
      * Set the inclusive maximum tree depth for the exhaustive fragmenter.
      * The value is inclusive: a value of N means nodes at depth N are included.
      *
-     * @param aDepth the new inclusive maximum tree depth; must be positive and smaller or equal to 32.
-     * @throws IllegalArgumentException if depth is negative or bigger than 32.
+     * @param aDepth the new inclusive maximum tree depth; must be positive and smaller or equal to {@link CDKExhaustiveFragmenter#INCLUSIVE_MAX_TREE_DEPTH_LIMIT}.
+     * @throws IllegalArgumentException if depth is negative or bigger than {@link CDKExhaustiveFragmenter#INCLUSIVE_MAX_TREE_DEPTH_LIMIT}.
      */
     public void setInclusiveMaxTreeDepthSetting(int aDepth) {
         if (aDepth > 0 && aDepth <= CDKExhaustiveFragmenter.INCLUSIVE_MAX_TREE_DEPTH_LIMIT) {
@@ -627,7 +632,7 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
         } catch (Exception anException) {
             throw new IllegalArgumentException(
                     "An error occurred during fragmentation: " + anException +
-                    " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
+                    "; Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY),
                     anException
             );
         }

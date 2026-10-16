@@ -40,7 +40,9 @@ In addition to five currently integrated methods for fragmentation and substruct
 <a href="https://github.com/JonasSchaub/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
 <a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a> (with the <a href="https://github.com/cdk/cdk/pull/1225">Sugar Detection Utility</a> extension), 
 <a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a>, <a href="https://gitlab.com/glycoinfo/molwurcs">MolWURCS</a>,
-and Circular Fragmentation analogous to HOSE codes or Morgan Fingerprints - MORTAR allows straightforward integration of
+ Circular Fragmentation analogous to HOSE codes or Morgan Fingerprints, and 
+<a href="https://github.com/cdk/cdk/blob/main/tool/fragment/src/main/java/org/openscience/cdk/fragment/ExhaustiveFragmenter.java">Exhaustive Fragmentation</a> - 
+MORTAR allows straightforward integration of
 additional fragmentation algorithms to support the development of new methods at an early stage. 
 All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
 The scientific article describing MORTAR can be found here: 
