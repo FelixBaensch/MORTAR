@@ -824,7 +824,7 @@ public class OverviewViewController implements IViewToolController {
         // copies to not be affected by clearGUICachesAtClosing() if the window is closed during the export
         final List<MoleculeDataModel> tmpStructures = new ArrayList<>(this.moleculeDataModelList);
         final boolean tmpIsFrequencyExported = this.dataSource == DataSources.FRAGMENTS_TAB;
-        // fragments have no meaningful names, so names are omitted if only fragments are exported
+        // fragment names equal their IDs, so the name column is omitted if only fragments are exported
         final boolean tmpIsNameExported = !tmpStructures.stream().allMatch(FragmentDataModel.class::isInstance);
         final char tmpSeparator = this.settingsContainer.getCsvExportSeparatorSettingCharacter();
         final File tmpFinalFile = tmpFile;
@@ -835,7 +835,7 @@ public class OverviewViewController implements IViewToolController {
             protected List<String> call() throws IOException {
                 return switch (anExportType) {
                     case Exporter.ExportTypes.MOLECULE_SD_FILE ->
-                            tmpExporter.exportStructuresAsSDFile(tmpFinalFile, tmpStructures, tmpIsNameExported);
+                            tmpExporter.exportStructuresAsSDFile(tmpFinalFile, tmpStructures);
                     case Exporter.ExportTypes.MOLECULE_CSV_FILE ->
                             tmpExporter.exportStructuresAsCsvFile(tmpFinalFile, tmpStructures, tmpSeparator, tmpIsFrequencyExported, tmpIsNameExported);
                     default -> throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));

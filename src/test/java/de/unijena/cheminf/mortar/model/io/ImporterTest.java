@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.io;
 
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
 import org.junit.jupiter.api.Assertions;
@@ -42,6 +43,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -69,6 +71,28 @@ public class ImporterTest extends Importer {
     //</editor-fold>
     //
     // <editor-fold desc="test methods">
+    /**
+     * Tests that imported molecules are assigned IDs consisting of the file name and the 1-based index of the structure
+     * in the file, so that structures that could not be imported do not shift the IDs of the following ones.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testMoleculeIDs() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileThree.txt");
+        File tmpFile = Paths.get(tmpURL.toURI()).toFile();
+        List<MoleculeDataModel> tmpMolecules = this.importMoleculeFile(tmpFile, false, false, false);
+        //the first structure in the file is invalid
+        Assertions.assertEquals("tert-Butanol", tmpMolecules.getFirst().getName());
+        Assertions.assertEquals("SMILESTestFileThree_2", tmpMolecules.getFirst().getId());
+        Assertions.assertNull(tmpMolecules.getFirst().getProperties().get(Importer.MOLECULE_RECORD_INDEX_PROPERTY_KEY));
+        Assertions.assertFalse(this.isIDPrefixTruncated());
+        tmpURL = this.getClass().getResource("Mirabilin_B.mol");
+        tmpFile = Paths.get(tmpURL.toURI()).toFile();
+        tmpMolecules = this.importMoleculeFile(tmpFile, false, false, false);
+        Assertions.assertEquals("Mirabilin_B_1", tmpMolecules.getFirst().getId());
+    }
+    //
     /**
      * Test importing a MOL file containing a molecules with radicals and testing whether these are fixed correctly.
      * This is basically an integration test for the ChemUtil functionality used internally by the Importer.

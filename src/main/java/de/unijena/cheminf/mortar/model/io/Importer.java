@@ -33,6 +33,7 @@ import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
+import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -148,6 +149,11 @@ public class Importer {
      */
     public static final String MOLECULE_NAME_PROPERTY_KEY = "MORTAR_IMPORTER_NAME";
     /**
+     * Property key that is used to temporarily store the (1-based) index of a structure in the imported file on the
+     * imported atom containers. The index is used to create the molecule IDs and the property is removed afterwards.
+     */
+    public static final String MOLECULE_RECORD_INDEX_PROPERTY_KEY = "MORTAR_IMPORTER_RECORD_INDEX";
+    /**
      * Unmodifiable Set of valid files extensions for file import.
      */
     public static final Set<String> VALID_IMPORT_FILE_EXTENSIONS_SET;
@@ -172,6 +178,10 @@ public class Importer {
      * Name of the last imported file.
      */
     private String fileName;
+    /**
+     * Whether the file name had to be truncated to create the ID prefix of the molecules at the last import.
+     */
+    private boolean isIDPrefixTruncated;
     /**
      * Container of general MORTAR settings, providing the recent directory path and other import-related settings.
      */
@@ -204,7 +214,9 @@ public class Importer {
      * CSV/TSV/DSV file will be treated
      * as a SMILES file. If the respective setting is activated, incomplete valences of the imported atoms are filled
      * with implicit hydrogen atoms. If no molecule name or ID is given in the input file, the file name with an appended
-     * counter is used as such and added to the returned atom containers as a property.
+     * counter is used as such and added to the returned atom containers as a property. Additionally, every molecule is
+     * assigned a unique ID consisting of the (cleaned and possibly truncated, see {@link #isIDPrefixTruncated()}) file
+     * name and the 1-based index of the structure in the file, e.g. "COCONUT_12".
      *
      * @param aFile File to import
      * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
@@ -260,7 +272,14 @@ public class Importer {
         }
         this.preprocessMoleculeSet(tmpImportedMoleculesSet, isFillOpenValencesWithImplH);
         this.fileName = aFile.getName();
-        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced);
+        String tmpFileNameWithoutExtension = FileUtil.getFileNameWithoutExtension(aFile);
+        String tmpIDPrefix = MiscUtil.createIDPrefix(tmpFileNameWithoutExtension, MiscUtil.ID_PREFIX_MAX_LENGTH);
+        this.isIDPrefixTruncated = tmpIDPrefix.length() < MiscUtil.createIDPrefix(tmpFileNameWithoutExtension, Integer.MAX_VALUE).length();
+        if (this.isIDPrefixTruncated) {
+            Importer.LOGGER.log(Level.WARNING, "File name {0} was truncated to {1} for the molecule IDs.",
+                    new Object[]{tmpFileNameWithoutExtension, tmpIDPrefix});
+        }
+        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced, tmpIDPrefix);
         return tmpReturnList;
     }
     //
@@ -274,15 +293,21 @@ public class Importer {
      * @param isRegardStereo whether stereochemistry should be encoded in the SMILES strings
      * @param isKekulizationEnforced whether imported molecules should always be kekulized, which means aromaticity
      *                               will not(!) be encoded in the internal SMILES strings (if false, aromaticity will be(!) encoded)
+     * @param anIDPrefix prefix for the molecule IDs, the index of the structure in the file is appended to it
      * @return list of MoleculeDataModel instances or empty list if the input set is empty or null
      */
-    private List<MoleculeDataModel> parse(IAtomContainerSet anAtomContainerSet, boolean isRegardStereo, boolean isKekulizationEnforced) {
+    private List<MoleculeDataModel> parse(IAtomContainerSet anAtomContainerSet, boolean isRegardStereo, boolean isKekulizationEnforced, String anIDPrefix) {
         if (anAtomContainerSet == null || anAtomContainerSet.isEmpty()) {
             return new ArrayList<>(0);
         }
         List<MoleculeDataModel> tmpReturnList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
         int tmpExceptionCount = 0;
+        int tmpIndexInSet = 0;
         for (IAtomContainer tmpAtomContainer : anAtomContainerSet.atomContainers()) {
+            tmpIndexInSet++;
+            //removed so that the temporary index is not kept in the properties of the molecule (and exported)
+            Object tmpRecordIndex = tmpAtomContainer.getProperty(Importer.MOLECULE_RECORD_INDEX_PROPERTY_KEY);
+            tmpAtomContainer.removeProperty(Importer.MOLECULE_RECORD_INDEX_PROPERTY_KEY);
             //returns null if no SMILES code could be created
             String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, isRegardStereo, !isKekulizationEnforced);
             if (tmpSmiles == null || tmpSmiles.isBlank()) {
@@ -296,6 +321,8 @@ public class Importer {
                 tmpMoleculeDataModel = new MoleculeDataModel(tmpSmiles, tmpAtomContainer.getTitle(), tmpAtomContainer.getProperties());
             }
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+            //the index of the structure in the file is used if available, so that skipped entries do not shift the IDs
+            tmpMoleculeDataModel.setId(anIDPrefix + "_" + (tmpRecordIndex != null ? tmpRecordIndex : tmpIndexInSet));
             tmpReturnList.add(tmpMoleculeDataModel);
         }
         int finalTmpExceptionCount = tmpExceptionCount;
@@ -313,6 +340,16 @@ public class Importer {
      */
     public String getFileName(){
         return this.fileName;
+    }
+    //
+    /**
+     * Returns whether the file name had to be truncated to create the ID prefix of the molecules at the last import
+     * because it was longer than {@link MiscUtil#ID_PREFIX_MAX_LENGTH}.
+     *
+     * @return true if the ID prefix was truncated
+     */
+    public boolean isIDPrefixTruncated() {
+        return this.isIDPrefixTruncated;
     }
     //
     /**
@@ -403,6 +440,7 @@ public class Importer {
             }
         }
         tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
+        tmpAtomContainer.setProperty(Importer.MOLECULE_RECORD_INDEX_PROPERTY_KEY, 1);
         tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
         return tmpAtomContainerSet;
     }
@@ -446,6 +484,8 @@ public class Importer {
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpCounter;
                 }
                 tmpAtomContainer.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
+                // the counter equals the 0-based index of the structure in the file
+                tmpAtomContainer.setProperty(Importer.MOLECULE_RECORD_INDEX_PROPERTY_KEY, tmpCounter + 1);
                 tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
                 tmpCounter++;
             }

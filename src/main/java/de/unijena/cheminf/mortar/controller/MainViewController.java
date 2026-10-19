@@ -49,6 +49,7 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
+import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -569,6 +570,12 @@ public class MainViewController {
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpImportedMoleculeDataModels.size() +
                         " " + Message.get((tmpImportedMoleculeDataModels.size() == 1 ? "Title.molecule" : "Title.molecules")));
                 this.importedFileName = tmpImporter.getFileName();
+                if (tmpImporter.isIDPrefixTruncated()) {
+                    GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
+                            Message.get("Importer.IDPrefixTruncatedAlert.title"),
+                            Message.get("Importer.IDPrefixTruncatedAlert.header"),
+                            String.format(Message.get("Importer.IDPrefixTruncatedAlert.text"), MiscUtil.ID_PREFIX_MAX_LENGTH));
+                }
                 this.updateStatusBar(this.importerThread, Message.get("Status.imported"));
                 this.isImportRunningProperty.setValue(false);
                 this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");

@@ -58,6 +58,12 @@ public class MoleculeDataModel {
     private String name;
     //
     /**
+     * Unique ID of molecule or fragment assigned by MORTAR, e.g. the import file name with the index of the structure
+     * in the file appended for molecules or the fragmentation name with a counter appended for fragments; might be null.
+     */
+    private String id;
+    //
+    /**
      * Unique SMILES code of molecule.
      */
     private final String uniqueSmiles;
@@ -143,7 +149,8 @@ public class MoleculeDataModel {
     //
     //<editor-fold desc="public properties get/set">
     /**
-     * Returns name (String) of the molecule. If it is null, "NoName" will be returned.
+     * Returns name (String) of the molecule. If it is null or empty, the ID of the molecule is returned instead or
+     * "NoName" if there is no ID either (the latter is the case e.g. for fragments before their IDs are assigned).
      * <br>NOTE: Do not delete or rename this method, it is used by reflection (in MoleculesDataTableView, the
      * CellValueFactory of the name column is set to a PropertyValueFactory that uses "name" as
      * property string to invoke this method; same usage in ItemizationDataTableView; see also
@@ -153,9 +160,20 @@ public class MoleculeDataModel {
      */
     public String getName() {
         if (this.name == null || this.name.isEmpty()) {
-            this.name = "NoName";
+            //note: "NoName" is not saved as name to allow the ID to be returned once it is assigned
+            return (this.id == null || this.id.isEmpty()) ? "NoName" : this.id;
         }
         return this.name;
+    }
+    //
+    /**
+     * Returns the unique ID of the molecule or fragment assigned by MORTAR at import or after fragmentation,
+     * respectively. Might be null if no ID has been assigned.
+     *
+     * @return ID of the molecule or fragment or null
+     */
+    public String getId() {
+        return this.id;
     }
     //
     /**
@@ -329,6 +347,15 @@ public class MoleculeDataModel {
      */
     public void setName(String aName) {
         this.name = aName;
+    }
+    //
+    /**
+     * Sets the given String as unique ID of this molecule or fragment.
+     *
+     * @param anId ID to set
+     */
+    public void setId(String anId) {
+        this.id = anId;
     }
     //
     /**

@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.io;
 
+import de.unijena.cheminf.mortar.controller.TabNames;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
@@ -46,7 +47,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Tests the structure (molecules and fragments) export functionalities of the {@link Exporter} class.
+ * Tests the structure (molecules and fragments) export functionalities of the {@link Exporter} class, especially
+ * the export of the MORTAR IDs.
  *
  * @author Manuel Schauer
  */
@@ -62,7 +64,7 @@ public class ExporterTest {
     //
     // <editor-fold desc="test methods">
     /**
-     * Tests exporting molecules to a CSV file without frequency columns.
+     * Tests exporting molecules to a CSV file with SMILES, name, and ID columns.
      *
      * @param aTempDir temporary directory provided by JUnit
      * @throws Exception if anything goes wrong
@@ -76,14 +78,14 @@ public class ExporterTest {
         Assertions.assertTrue(tmpFailed.isEmpty());
         List<String> tmpLines = Files.readAllLines(tmpFile.toPath());
         Assertions.assertEquals(3, tmpLines.size());
-        Assertions.assertEquals("SMILES;Name", tmpLines.get(0));
-        Assertions.assertEquals("c1ccccc1;Benzene", tmpLines.get(1));
-        Assertions.assertEquals("CCO;Eth_anol", tmpLines.get(2));
+        Assertions.assertEquals("SMILES;Name;ID", tmpLines.get(0));
+        Assertions.assertEquals("c1ccccc1;Benzene;Test_1", tmpLines.get(1));
+        Assertions.assertEquals("CCO;Eth_anol;Test_2", tmpLines.get(2));
     }
     //
     /**
      * Tests exporting fragments to a CSV file including the molecule frequency and molecule percentage columns but
-     * without the name column.
+     * without the name column; the ID has to be in the second column instead.
      *
      * @param aTempDir temporary directory provided by JUnit
      * @throws Exception if anything goes wrong
@@ -91,56 +93,142 @@ public class ExporterTest {
     @Test
     public void testExportFragmentsAsCsvFileWithFrequencies(@TempDir Path aTempDir) throws Exception {
         Exporter tmpExporter = new Exporter(new SettingsContainer());
-        FragmentDataModel tmpFragment = new FragmentDataModel("c1ccccc1", null, new HashMap<>());
-        tmpFragment.setMoleculeFrequency(3);
-        tmpFragment.setMoleculePercentage(0.75);
-        List<MoleculeDataModel> tmpList = new ArrayList<>(List.of(tmpFragment));
         File tmpFile = aTempDir.resolve("fragments.csv").toFile();
-        List<String> tmpFailed = tmpExporter.exportStructuresAsCsvFile(tmpFile, tmpList, ',', true, false);
+        List<String> tmpFailed = tmpExporter.exportStructuresAsCsvFile(tmpFile, this.getFragments(), ',', true, false);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
         List<String> tmpLines = Files.readAllLines(tmpFile.toPath());
-        Assertions.assertEquals("SMILES,MoleculeFrequency,MoleculePercentage", tmpLines.get(0));
-        Assertions.assertEquals("c1ccccc1,3,0.7500", tmpLines.get(1));
+        Assertions.assertEquals("SMILES,ID,MoleculeFrequency,MoleculePercentage", tmpLines.get(0));
+        Assertions.assertEquals("c1ccccc1,Ertl_algorithm_1,3,0.7500", tmpLines.get(1));
+        Assertions.assertEquals("CO,Ertl_algorithm_2,1,0.2500", tmpLines.get(2));
     }
     //
     /**
-     * Tests exporting molecules to a single SD file with generated 2D coordinates and the names as titles.
+     * Tests exporting a mixed list of molecules and fragments to a CSV file; fragments have to be written with their
+     * ID as name.
      *
      * @param aTempDir temporary directory provided by JUnit
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void testExportMoleculesAsSDFile(@TempDir Path aTempDir) throws Exception {
+    public void testExportMixedStructuresAsCsvFile(@TempDir Path aTempDir) throws Exception {
         Exporter tmpExporter = new Exporter(new SettingsContainer());
-        File tmpFile = aTempDir.resolve("molecules.sdf").toFile();
-        List<String> tmpFailed = tmpExporter.exportStructuresAsSDFile(tmpFile, this.getMolecules());
+        List<MoleculeDataModel> tmpList = new ArrayList<>(this.getMolecules());
+        tmpList.addAll(this.getFragments());
+        File tmpFile = aTempDir.resolve("mixed.csv").toFile();
+        tmpExporter.exportStructuresAsCsvFile(tmpFile, tmpList, ';', false);
+        List<String> tmpLines = Files.readAllLines(tmpFile.toPath());
+        Assertions.assertEquals("c1ccccc1;Ertl_algorithm_1;Ertl_algorithm_1", tmpLines.get(3));
+    }
+    //
+    /**
+     * Tests the fragments tab CSV export, which has to contain the fragment IDs in the second column.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testExportFragmentsTabCsvFile(@TempDir Path aTempDir) throws Exception {
+        Exporter tmpExporter = new Exporter(new SettingsContainer());
+        File tmpFile = aTempDir.resolve("fragmentsTab.csv").toFile();
+        List<String> tmpFailed = tmpExporter.exportCsvFile(tmpFile, this.getFragments(), "Ertl algorithm", ';', TabNames.FRAGMENTS);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
-        List<IAtomContainer> tmpReadMolecules = new ArrayList<>();
+        List<String> tmpLines = Files.readAllLines(tmpFile.toPath());
+        Assertions.assertEquals("SMILES;ID;Frequency;Percentage;MoleculeFrequency;MoleculePercentage", tmpLines.get(0));
+        Assertions.assertTrue(tmpLines.get(1).startsWith("c1ccccc1;Ertl_algorithm_1;"));
+    }
+    //
+    /**
+     * Tests that fragments exported from the fragments tab to a CSV file get their IDs as names when the file is
+     * re-imported into MORTAR (and not their frequencies, see GitHub issue #47), and that the re-imported molecules
+     * get new IDs derived from the file name.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testReImportOfExportedFragments(@TempDir Path aTempDir) throws Exception {
+        SettingsContainer tmpSettingsContainer = new SettingsContainer();
+        Exporter tmpExporter = new Exporter(tmpSettingsContainer);
+        File tmpFile = aTempDir.resolve("Exported Fragments.csv").toFile();
+        tmpExporter.exportCsvFile(tmpFile, this.getFragments(), "Ertl algorithm", ';', TabNames.FRAGMENTS);
+        Importer tmpImporter = new Importer(tmpSettingsContainer);
+        List<MoleculeDataModel> tmpReImported = tmpImporter.importMoleculeFile(tmpFile, false, false, false);
+        Assertions.assertEquals(2, tmpReImported.size());
+        Assertions.assertEquals("Ertl_algorithm_1", tmpReImported.get(0).getName());
+        Assertions.assertEquals("Ertl_algorithm_2", tmpReImported.get(1).getName());
+        Assertions.assertEquals("Exported_Fragments_1", tmpReImported.get(0).getId());
+        Assertions.assertEquals("Exported_Fragments_2", tmpReImported.get(1).getId());
+    }
+    //
+    /**
+     * Tests exporting molecules and fragments to a single SD file with generated 2D coordinates, the names (fragments:
+     * IDs) as titles, and the IDs as data field.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testExportStructuresAsSDFile(@TempDir Path aTempDir) throws Exception {
+        Exporter tmpExporter = new Exporter(new SettingsContainer());
+        List<MoleculeDataModel> tmpList = new ArrayList<>(this.getMolecules());
+        tmpList.addAll(this.getFragments());
+        File tmpFile = aTempDir.resolve("structures.sdf").toFile();
+        List<String> tmpFailed = tmpExporter.exportStructuresAsSDFile(tmpFile, tmpList);
+        Assertions.assertNotNull(tmpFailed);
+        Assertions.assertTrue(tmpFailed.isEmpty());
+        List<IAtomContainer> tmpReadStructures = new ArrayList<>();
         try (IteratingSDFReader tmpReader = new IteratingSDFReader(new FileReader(tmpFile), SilentChemObjectBuilder.getInstance())) {
             while (tmpReader.hasNext()) {
-                tmpReadMolecules.add(tmpReader.next());
+                tmpReadStructures.add(tmpReader.next());
             }
         }
-        Assertions.assertEquals(2, tmpReadMolecules.size());
-        Assertions.assertEquals("Benzene", tmpReadMolecules.get(0).getTitle());
-        Assertions.assertEquals(6, tmpReadMolecules.get(0).getAtomCount());
-        Assertions.assertNotNull(tmpReadMolecules.get(0).getAtom(0).getPoint2d());
-        Assertions.assertEquals("Eth;anol", tmpReadMolecules.get(1).getTitle());
+        Assertions.assertEquals(4, tmpReadStructures.size());
+        Assertions.assertEquals("Benzene", tmpReadStructures.get(0).getTitle());
+        Assertions.assertEquals("Test_1", tmpReadStructures.get(0).getProperty(Exporter.ID_PROPERTY_KEY));
+        Assertions.assertEquals(6, tmpReadStructures.get(0).getAtomCount());
+        Assertions.assertNotNull(tmpReadStructures.get(0).getAtom(0).getPoint2d());
+        Assertions.assertEquals("Eth;anol", tmpReadStructures.get(1).getTitle());
+        Assertions.assertEquals("Ertl_algorithm_1", tmpReadStructures.get(2).getTitle());
+        Assertions.assertEquals("Ertl_algorithm_1", tmpReadStructures.get(2).getProperty(Exporter.ID_PROPERTY_KEY));
     }
     //</editor-fold>
     //
     //<editor-fold desc="private methods">
     /**
-     * Returns two test molecules, one of them with a CSV separator char in its name.
+     * Returns two test molecules with IDs, one of them with a CSV separator char in its name.
      *
      * @return list of molecule data models
      */
     private List<MoleculeDataModel> getMolecules() {
         List<MoleculeDataModel> tmpList = new ArrayList<>(2);
-        tmpList.add(new MoleculeDataModel("c1ccccc1", "Benzene", new HashMap<>()));
-        tmpList.add(new MoleculeDataModel("CCO", "Eth;anol", new HashMap<>()));
+        MoleculeDataModel tmpBenzene = new MoleculeDataModel("c1ccccc1", "Benzene", new HashMap<>());
+        tmpBenzene.setId("Test_1");
+        tmpList.add(tmpBenzene);
+        MoleculeDataModel tmpEthanol = new MoleculeDataModel("CCO", "Eth;anol", new HashMap<>());
+        tmpEthanol.setId("Test_2");
+        tmpList.add(tmpEthanol);
+        return tmpList;
+    }
+    //
+    /**
+     * Returns two test fragments without names but with IDs and frequencies.
+     *
+     * @return list of fragment data models
+     */
+    private List<MoleculeDataModel> getFragments() {
+        List<MoleculeDataModel> tmpList = new ArrayList<>(2);
+        FragmentDataModel tmpBenzene = new FragmentDataModel("c1ccccc1", null, new HashMap<>());
+        tmpBenzene.setId("Ertl_algorithm_1");
+        tmpBenzene.setMoleculeFrequency(3);
+        tmpBenzene.setMoleculePercentage(0.75);
+        tmpList.add(tmpBenzene);
+        FragmentDataModel tmpMethanol = new FragmentDataModel("CO", null, new HashMap<>());
+        tmpMethanol.setId("Ertl_algorithm_2");
+        tmpMethanol.setMoleculeFrequency(1);
+        tmpMethanol.setMoleculePercentage(0.25);
+        tmpList.add(tmpMethanol);
         return tmpList;
     }
     //</editor-fold>

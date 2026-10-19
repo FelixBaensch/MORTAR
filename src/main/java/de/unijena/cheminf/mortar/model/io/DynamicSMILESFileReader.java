@@ -279,12 +279,15 @@ public class DynamicSMILESFileReader {
             int tmpIDExpectedPosition = aFormat.getIDColumnPosition();
             this.skippedLinesCounter = 0;
             int tmpLineInFileCounter = -1;
+            // 1-based index of the structure (i.e. line without header line) in the file, including unparsable lines
+            int tmpRecordCounter = 0;
             if (aFormat.hasHeaderLine()) {
                 tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine();
                 tmpLineInFileCounter++;
             }
             while (!Thread.currentThread().isInterrupted() && (tmpSmilesFileCurrentLine = tmpSmilesFileBufferedReader.readLine()) != null) {
                 tmpLineInFileCounter++;
+                tmpRecordCounter++;
                 //trying to parse as SMILES code
                 try {
                     String tmpSmiles;
@@ -320,6 +323,7 @@ public class DynamicSMILESFileReader {
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpLineInFileCounter;
                 }
                 tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
+                tmpMolecule.setProperty(Importer.MOLECULE_RECORD_INDEX_PROPERTY_KEY, tmpRecordCounter);
                 tmpAtomContainerSet.addAtomContainer(tmpMolecule);
             }
             return tmpAtomContainerSet;

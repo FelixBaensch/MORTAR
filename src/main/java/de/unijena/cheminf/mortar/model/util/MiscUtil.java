@@ -46,6 +46,16 @@ public final class MiscUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(MiscUtil.class.getName());
+    //
+    /**
+     * Maximum length of the prefixes used for the IDs of molecules and fragments (file or fragmentation name).
+     */
+    public static final int ID_PREFIX_MAX_LENGTH = 40;
+    //
+    /**
+     * Prefix used for IDs if the given base name does not contain any usable characters.
+     */
+    public static final String ID_PREFIX_DEFAULT = "MORTAR";
     //</editor-fold>
     //
     //<editor-fold desc="Private constructor" defaultstate="collapsed">
@@ -58,6 +68,33 @@ public final class MiscUtil {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
+    /**
+     * Creates a prefix for the IDs of molecules or fragments from the given base name, e.g. the import file name
+     * (without extension) or the fragmentation name. All characters other than letters, digits, '_', and '-' are
+     * replaced by '_', consecutive '_' are merged, and leading or trailing '_' removed. The result is truncated to the
+     * given maximum length. If no usable characters remain, {@link #ID_PREFIX_DEFAULT} is returned.
+     * <br>The result never contains characters that are used as CSV separators in MORTAR.
+     *
+     * @param aBaseName name to derive the prefix from
+     * @param aMaxLength maximum length of the returned prefix
+     * @return ID prefix
+     * @throws IllegalArgumentException if the given maximum length is smaller than 1
+     */
+    public static String createIDPrefix(String aBaseName, int aMaxLength) throws IllegalArgumentException {
+        if (aMaxLength < 1) {
+            throw new IllegalArgumentException("Given maximum length must be at least 1.");
+        }
+        if (aBaseName == null) {
+            return MiscUtil.ID_PREFIX_DEFAULT;
+        }
+        String tmpPrefix = aBaseName.replaceAll("[^A-Za-z0-9_-]+", "_").replaceAll("_{2,}", "_");
+        tmpPrefix = MiscUtil.stripUnderscores(tmpPrefix);
+        if (tmpPrefix.length() > aMaxLength) {
+            tmpPrefix = MiscUtil.stripUnderscores(tmpPrefix.substring(0, aMaxLength));
+        }
+        return tmpPrefix.isEmpty() ? MiscUtil.ID_PREFIX_DEFAULT : tmpPrefix;
+    }
+    //
     /**
      * String with globally unique ID.
      *
@@ -113,6 +150,18 @@ public final class MiscUtil {
             }
         }
         return Integer.compare(tmpSeparateNumbersV1.length, tmpSeparateNumbersV2.length);
+    }
+    //</editor-fold>
+    //
+    //<editor-fold defaultstate="collapsed" desc="Private static methods">
+    /**
+     * Removes all leading and trailing underscores from the given string.
+     *
+     * @param aString string to process
+     * @return the string without leading and trailing underscores
+     */
+    private static String stripUnderscores(String aString) {
+        return aString.replaceAll("^_+|_+$", "");
     }
     //</editor-fold>
 }
