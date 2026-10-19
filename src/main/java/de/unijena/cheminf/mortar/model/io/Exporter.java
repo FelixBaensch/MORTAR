@@ -126,7 +126,15 @@ public class Exporter {
         /**
          * enum value for pdb file.
          */
-        FRAGMENT_PDB_FILE;
+        FRAGMENT_PDB_FILE,
+        /**
+         * enum value for molecules csv file.
+         */
+        MOLECULE_CSV_FILE,
+        /**
+         * enum value for molecules single sd file.
+         */
+        MOLECULE_SD_FILE;
     }
     //</editor-fold>
     //
@@ -343,10 +351,225 @@ public class Exporter {
                 }
                 yield tmpFile;
             }
+            case ExportTypes.MOLECULE_CSV_FILE, ExportTypes.MOLECULE_SD_FILE ->
+                    this.openFileChooserForStructureExportFile(aParentStage, anExportType, "Molecules_" + tmpFragmentationName);
             default ->
                     throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
         };
         return tmpFile;
+    }
+    //
+    /**
+     * Opens a FileChooser to enable the user to choose an export destination file for a structure export
+     * (molecules or fragments) as CSV or SD file. The appropriate file extension is appended if the user did not
+     * give it.
+     *
+     * @param aParentStage Stage
+     * @param anExportType either {@link ExportTypes#MOLECULE_CSV_FILE} or {@link ExportTypes#MOLECULE_SD_FILE}
+     * @param aFileNameProposal initial file name to suggest to the user, without the file extension
+     * @return the chosen file or null if the user chose to cancel the export in the file chooser dialog
+     * @throws NullPointerException if the stage or export type is null
+     * @throws UnsupportedOperationException if the export type is not a structure export type
+     */
+    public File openFileChooserForStructureExportFile(Stage aParentStage, ExportTypes anExportType, String aFileNameProposal)
+            throws NullPointerException, UnsupportedOperationException {
+        Objects.requireNonNull(aParentStage, "aParentStage must not be null");
+        Objects.requireNonNull(anExportType, "anExportType must not be null");
+        String tmpFileName = Objects.requireNonNullElse(aFileNameProposal, "Structures").replaceAll("\\s+", "_").trim();
+        FileExtension tmpExtension;
+        String tmpDescription;
+        switch (anExportType) {
+            case ExportTypes.MOLECULE_CSV_FILE -> {
+                tmpExtension = FileExtension.CSV;
+                tmpDescription = "CSV";
+            }
+            case ExportTypes.MOLECULE_SD_FILE -> {
+                tmpExtension = FileExtension.SDF;
+                tmpDescription = "SD-File";
+            }
+            default ->
+                    throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
+        }
+        File tmpFile = this.chooseFile(aParentStage, tmpDescription, tmpExtension.toString(), tmpFileName);
+        if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(tmpExtension.extension.toLowerCase(Locale.ROOT))) {
+            tmpFile = new File(tmpFile.getAbsolutePath() + tmpExtension);
+        }
+        return tmpFile;
+    }
+    //
+    /**
+     * Exports the given structures (molecules or fragments) to a CSV file containing their SMILES codes and names.
+     * If frequencies should be exported, the molecule frequency and molecule percentage of all given fragments are
+     * added as further columns (left empty for structures that are no fragments). In the names, the given separator
+     * character is replaced by a placeholder character ('_').
+     * <br>NOTE: MORTAR holds all structures as SMILES codes only, so no 3D or other information of the imported file
+     * beyond the SMILES code and name is exported.
+     * Returns a list containing SMILES of the structures that caused an error when exported.
+     *
+     * @param aFile the file to export to; method returns null if the file is null
+     * @param aStructureList list of molecules and/or fragments to export
+     * @param aSeparator the separator for the csv file
+     * @param anIsFrequencyExported whether the molecule frequency and molecule percentage of fragments should be exported
+     * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
+     * @throws FileNotFoundException if the given file cannot be found
+     */
+    public List<String> exportStructuresAsCsvFile(File aFile,
+                                                  List<MoleculeDataModel> aStructureList,
+                                                  char aSeparator,
+                                                  boolean anIsFrequencyExported) throws FileNotFoundException {
+        return this.exportStructuresAsCsvFile(aFile, aStructureList, aSeparator, anIsFrequencyExported, true);
+    }
+    //
+    /**
+     * Exports the given structures (molecules or fragments) to a CSV file containing their SMILES codes and, optionally,
+     * their names. See {@link #exportStructuresAsCsvFile(File, List, char, boolean)} for details. The name column can
+     * be omitted, e.g. if only fragments are exported which have no meaningful names.
+     *
+     * @param aFile the file to export to; method returns null if the file is null
+     * @param aStructureList list of molecules and/or fragments to export
+     * @param aSeparator the separator for the csv file
+     * @param anIsFrequencyExported whether the molecule frequency and molecule percentage of fragments should be exported
+     * @param anIsNameExported whether the name column should be exported
+     * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
+     * @throws FileNotFoundException if the given file cannot be found
+     */
+    public List<String> exportStructuresAsCsvFile(File aFile,
+                                                  List<MoleculeDataModel> aStructureList,
+                                                  char aSeparator,
+                                                  boolean anIsFrequencyExported,
+                                                  boolean anIsNameExported) throws FileNotFoundException {
+        if (aFile == null || aStructureList == null) {
+            return null;
+        }
+        List<String> tmpFailedExportStructures = new LinkedList<>();
+        //the character used to replace all occurrences of the given separator char in the exported strings
+        final char tmpReplacementChar = '_';
+        try (PrintWriter tmpWriter = new PrintWriter(aFile.getPath())) {
+            StringBuilder tmpCsvHeader = new StringBuilder();
+            tmpCsvHeader.append(Message.get("Exporter.structures.csvHeader.smiles"));
+            if (anIsNameExported) {
+                tmpCsvHeader.append(aSeparator).append(Message.get("Exporter.structures.csvHeader.name"));
+            }
+            if (anIsFrequencyExported) {
+                tmpCsvHeader.append(aSeparator).append(Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency"))
+                        .append(aSeparator).append(Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage"));
+            }
+            tmpWriter.write(tmpCsvHeader.toString());
+            for (MoleculeDataModel tmpStructure : aStructureList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                try {
+                    //note to developers: make sure no chars are offered as separator char options that can
+                    // also occur in SMILES strings!
+                    tmpWriter.printf("%n%s", tmpStructure.getUniqueSmiles());
+                    if (anIsNameExported) {
+                        tmpWriter.printf("%s%s", aSeparator, tmpStructure.getName().replace(aSeparator, tmpReplacementChar));
+                    }
+                    if (anIsFrequencyExported) {
+                        if (tmpStructure instanceof FragmentDataModel tmpFragment) {
+                            tmpWriter.printf(Locale.ROOT, "%s%d%s%.4f",
+                                    aSeparator, tmpFragment.getMoleculeFrequency(),
+                                    aSeparator, tmpFragment.getMoleculePercentage());
+                        } else {
+                            tmpWriter.printf("%s%s", aSeparator, aSeparator);
+                        }
+                    }
+                } catch (Exception anException) {
+                    Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                    tmpFailedExportStructures.add(tmpStructure.getUniqueSmiles());
+                    //continue;
+                }
+            }
+            return tmpFailedExportStructures;
+        }
+    }
+    //
+    /**
+     * Exports the given structures (molecules or fragments) into a single MDL SD file. Since MORTAR holds all
+     * structures as SMILES codes only, the atom containers are re-created from the SMILES codes and 2D atom coordinates
+     * are generated for layout purposes; no 3D information of the originally imported file is retained. The structure
+     * name is used as title of the respective record. Whether the MDL V3000 format is always used depends on the
+     * alwaysMDLV3000FormatAtExportSetting of the instance's settingsContainer. If a structure could not be exported in
+     * the first place, a second attempt with a kekulized clone is made.
+     * Returns a list containing SMILES of the structures that caused an error when exported.
+     *
+     * @param aFile the file to export to; method returns null if the file is null
+     * @param aStructureList list of molecules and/or fragments to export
+     * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
+     * @throws IOException if sth goes wrong
+     */
+    public List<String> exportStructuresAsSDFile(File aFile, List<MoleculeDataModel> aStructureList) throws IOException {
+        return this.exportStructuresAsSDFile(aFile, aStructureList, true);
+    }
+    //
+    /**
+     * Exports the given structures (molecules or fragments) into a single MDL SD file. See
+     * {@link #exportStructuresAsSDFile(File, List)} for details. Setting the structure names as record titles can be
+     * omitted, e.g. if only fragments are exported which have no meaningful names.
+     *
+     * @param aFile the file to export to; method returns null if the file is null
+     * @param aStructureList list of molecules and/or fragments to export
+     * @param anIsNameExported whether the structure names should be used as record titles
+     * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
+     * @throws IOException if sth goes wrong
+     */
+    public List<String> exportStructuresAsSDFile(File aFile,
+                                                 List<MoleculeDataModel> aStructureList,
+                                                 boolean anIsNameExported) throws IOException {
+        if (aFile == null || aStructureList == null) {
+            return null;
+        }
+        List<String> tmpFailedExportStructures = new LinkedList<>();
+        int tmpExportedStructuresCounter = 0;
+        try (
+                PrintWriter tmpWriter = new PrintWriter(aFile.getPath());
+                BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
+        ) {
+            tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+            try {
+                tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
+            } catch (CDKException anException) {
+                Exporter.LOGGER.log(Level.WARNING, "Exporting structures with aromatic bond types not possible", anException);
+            }
+            for (MoleculeDataModel tmpStructure : aStructureList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                try {
+                    //cloned to not alter a possibly cached atom container of the data model
+                    IAtomContainer tmpAtomContainer = tmpStructure.getAtomContainer().clone();
+                    if (anIsNameExported) {
+                        tmpAtomContainer.setTitle(tmpStructure.getName());
+                    }
+                    try {
+                        ChemUtil.generate2DCoordinates(tmpAtomContainer);
+                    } catch (CDKException anException) {
+                        //exported without atom coordinates (all set to 0)
+                        Exporter.LOGGER.log(Level.WARNING, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                    }
+                    try {
+                        tmpSDFWriter.write(tmpAtomContainer);
+                    } catch (CDKException anException) {
+                        //retrying with a kekulized clone - going to main catch block if sth goes wrong
+                        IAtomContainer tmpKekulizedClone = tmpAtomContainer.clone();
+                        Kekulization.kekulize(tmpKekulizedClone);
+                        tmpSDFWriter.write(tmpKekulizedClone);
+                    }
+                    tmpExportedStructuresCounter++;
+                } catch (CDKException | CloneNotSupportedException anException) {
+                    Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                    tmpFailedExportStructures.add(tmpStructure.getUniqueSmiles());
+                    //continue;
+                }
+            }
+            int tmpFinalExportedStructuresCounter = tmpExportedStructuresCounter;
+            Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d structures as single SD file " +
+                            "(export of %d structures failed). File name: %s", tmpFinalExportedStructuresCounter,
+                    tmpFailedExportStructures.size(), aFile.getName()));
+            return tmpFailedExportStructures;
+        }
     }
     //
     /**
