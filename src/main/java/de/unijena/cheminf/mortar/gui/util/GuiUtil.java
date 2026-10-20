@@ -197,6 +197,28 @@ public class GuiUtil {
     }
     //
     /**
+     * Creates and shows a confirmation alert before a molecule export informing the user that MORTAR holds all
+     * structures as SMILES codes only (so no 3D structures, stereo elements, etc. are exported) and that only the
+     * molecules but not their fragments are exported (for which the items tab export should be used).
+     *
+     * @param anAdditionalText optional text shown before the final question, e.g. on which molecules are exported; may be null
+     * @return true if the user confirmed the export with "OK", false otherwise
+     */
+    public static boolean guiMoleculeExportConfirmationAlert(String anAdditionalText) {
+        StringBuilder tmpText = new StringBuilder();
+        tmpText.append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.smilesText")).append("\n\n")
+                .append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.itemsText")).append("\n\n");
+        if (anAdditionalText != null && !anAdditionalText.isBlank()) {
+            tmpText.append(anAdditionalText).append("\n\n");
+        }
+        tmpText.append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.question"));
+        return GuiUtil.guiConfirmationAlert(
+                Message.get("Exporter.ConfirmationAlert.MoleculeExport.title"),
+                Message.get("Exporter.ConfirmationAlert.MoleculeExport.header"),
+                tmpText.toString()) == ButtonType.OK;
+    }
+    //
+    /**
      * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
      * Three buttons are possible - ButtonType.YES, ButtonType.NO, and ButtonType.CANCEL.
      *

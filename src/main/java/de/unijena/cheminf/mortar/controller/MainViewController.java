@@ -616,6 +616,10 @@ public class MainViewController {
     private void exportFile(Exporter.ExportTypes anExportType) {
         boolean tmpIsMoleculeExport = anExportType == Exporter.ExportTypes.MOLECULE_CSV_FILE
                 || anExportType == Exporter.ExportTypes.MOLECULE_SD_FILE;
+        //only the molecules selected in the molecules tab are exported
+        List<MoleculeDataModel> tmpSelectedMolecules = (!tmpIsMoleculeExport || this.moleculeDataModelList == null)
+                ? new ArrayList<>(0)
+                : this.moleculeDataModelList.stream().filter(MoleculeDataModel::isSelected).toList();
         if (!tmpIsMoleculeExport && (this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
@@ -651,7 +655,7 @@ public class MainViewController {
                 }
                 break;
             case Exporter.ExportTypes.MOLECULE_CSV_FILE, Exporter.ExportTypes.MOLECULE_SD_FILE:
-                if (this.moleculeDataModelList == null || this.moleculeDataModelList.isEmpty()) {
+                if (tmpSelectedMolecules.isEmpty()) {
                     GuiUtil.guiMessageAlert(
                             Alert.AlertType.INFORMATION,
                             Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
@@ -660,10 +664,9 @@ public class MainViewController {
                     );
                     return;
                 }
-                if (GuiUtil.guiConfirmationAlert(
-                        Message.get("Exporter.ConfirmationAlert.StructuresOnlyAsSmiles.title"),
-                        Message.get("Exporter.ConfirmationAlert.StructuresOnlyAsSmiles.header"),
-                        Message.get("Exporter.ConfirmationAlert.StructuresOnlyAsSmiles.text")) != ButtonType.OK) {
+                if (!GuiUtil.guiMoleculeExportConfirmationAlert(String.format(
+                        Message.get("Exporter.ConfirmationAlert.MoleculeExport.selectionText"),
+                        tmpSelectedMolecules.size(), this.moleculeDataModelList.size()))) {
                     return;
                 }
                 break;
@@ -760,13 +763,13 @@ public class MainViewController {
                     );
                     case Exporter.ExportTypes.MOLECULE_CSV_FILE -> tmpExporter.exportStructuresAsCsvFile(
                             tmpExportFile,
-                            MainViewController.this.moleculeDataModelList,
+                            tmpSelectedMolecules,
                             MainViewController.this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                             false
                     );
                     case Exporter.ExportTypes.MOLECULE_SD_FILE -> tmpExporter.exportStructuresAsSDFile(
                             tmpExportFile,
-                            MainViewController.this.moleculeDataModelList
+                            tmpSelectedMolecules
                     );
                     default -> throw new UnsupportedOperationException("Unknown export type.");
                 };
@@ -794,6 +797,13 @@ public class MainViewController {
                         Message.get("Exporter.FragmentsTab.ExportNotPossible.header"),
                         tmpFailedExportFragments.size() + " " + Message.get("Exporter.FragmentsTab.ExportNotPossible.label"),
                         tmpStringBuilder.toString()
+                );
+            } else {
+                GuiUtil.guiMessageAlert(
+                        Alert.AlertType.INFORMATION,
+                        Message.get("Exporter.ExportFinished.title"),
+                        Message.get("Exporter.ExportFinished.header"),
+                        tmpExportFile.getAbsolutePath()
                 );
             }
         });

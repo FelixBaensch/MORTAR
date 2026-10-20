@@ -52,7 +52,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -791,8 +790,9 @@ public class OverviewViewController implements IViewToolController {
     }
     //
     /**
-     * Exports all structures displayed in the overview view (on all pages) as SD or CSV file. The user is informed
-     * beforehand that MORTAR holds all structures as SMILES codes only and asked to confirm. Fragment frequencies are
+     * Exports all structures displayed in the overview view (on all pages) as SD or CSV file. If the molecules tab is
+     * the data source, the user is informed beforehand that MORTAR holds all structures as SMILES codes only and that
+     * no fragments are exported, and asked to confirm. Fragment frequencies are
      * only exported to CSV files and only if they are displayed in the overview, i.e. for the fragments tab as data
      * source. The export runs in a background thread; the export button is disabled in the meantime.
      *
@@ -808,10 +808,8 @@ public class OverviewViewController implements IViewToolController {
             );
             return;
         }
-        if (GuiUtil.guiConfirmationAlert(
-                Message.get("Exporter.ConfirmationAlert.StructuresOnlyAsSmiles.title"),
-                Message.get("Exporter.ConfirmationAlert.StructuresOnlyAsSmiles.header"),
-                Message.get("Exporter.ConfirmationAlert.StructuresOnlyAsSmiles.text")) != ButtonType.OK) {
+        //the hint is only relevant if molecules (and not their fragments) are exported
+        if (this.dataSource == DataSources.MOLECULES_TAB && !GuiUtil.guiMoleculeExportConfirmationAlert(null)) {
             return;
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
@@ -864,8 +862,8 @@ public class OverviewViewController implements IViewToolController {
             } else {
                 GuiUtil.guiMessageAlert(
                         Alert.AlertType.INFORMATION,
-                        Message.get("OverviewView.exportButton.success.title"),
-                        Message.get("OverviewView.exportButton.success.header"),
+                        Message.get("Exporter.ExportFinished.title"),
+                        Message.get("Exporter.ExportFinished.header"),
                         tmpFinalFile.getAbsolutePath()
                 );
             }
