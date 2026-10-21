@@ -397,5 +397,15 @@ public class MoleculeDataModel {
     public void setStructureImageWidth(double aStructureImageWidth) {
         this.structureImageWidth = aStructureImageWidth;
     }
+    //
+    /**
+     * Clears the fragments that are referenced/fragmented from this molecule.
+     *
+     * @param aFragmentationName the fragmentation name of the fragments that should be cleared.
+     */
+    public void clearFragmentsForFragmentation(String aFragmentationName) {
+        this.fragments.remove(aFragmentationName);
+        this.fragmentFrequencies.remove(aFragmentationName);
+    }
     //</editor-fold>
 }
