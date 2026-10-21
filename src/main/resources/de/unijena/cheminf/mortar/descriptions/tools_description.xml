@@ -73,4 +73,34 @@
         <author>Jordan Russell (jrsoftware.org)</author>
         <license>Inno Setup License</license>
     </externalTool>
+    <externalTool>
+        <name>Mockito</name>
+        <version>5.18.0</version>
+        <author>Mockito contributors</author>
+        <license>MIT License</license>
+    </externalTool>
+    <externalTool>
+        <name>TestFX</name>
+        <version>4.0.18</version>
+        <author>TestFX contributors</author>
+        <license>European Union Public Licence v1.1</license>
+    </externalTool>
+    <externalTool>
+        <name>OpenJFX Monocle</name>
+        <version>21.0.2</version>
+        <author>TestFX contributors (repackaged from OpenJFX)</author>
+        <license>GPL v2 with Classpath Exception</license>
+    </externalTool>
+    <externalTool>
+        <name>JaCoCo</name>
+        <version>0.8.15</version>
+        <author>Mountainminds GmbH &amp; Co. KG and Contributors</author>
+        <license>Eclipse Public License 2.0</license>
+    </externalTool>
+    <externalTool>
+        <name>PIT Mutation Testing</name>
+        <version>1.19.0</version>
+        <author>Henry Coles and Contributors; Gradle plugin by Marcin Zajaczkowski</author>
+        <license>Apache License 2.0</license>
+    </externalTool>
 </tools>

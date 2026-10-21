@@ -27,8 +27,14 @@ package de.unijena.cheminf.mortar.model.util;
 
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Test class for the custom-made {@link de.unijena.cheminf.mortar.model.util.SimpleEnumConstantNameProperty} JavaFx
@@ -38,6 +44,33 @@ import org.junit.jupiter.api.Test;
  * @version 1.0.0.0
  */
 public class SimpleEnumConstantNamePropertyTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale. The
+     * fixture enum used in these tests resolves its display names through the Message resource bundle whose static
+     * initializer loads the bundle for the default locale; pinning the locale to en-GB ensures the bundle is found
+     * regardless of the test JVM's environment locale.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        SimpleEnumConstantNamePropertyTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(SimpleEnumConstantNamePropertyTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     /**
      * Basic test for retrieval of associated enum, currently set option, and available options.
      *
@@ -57,5 +90,101 @@ public class SimpleEnumConstantNamePropertyTest {
             Assertions.assertDoesNotThrow(() -> tmpEnumProperty.setEnumValue(tmpOption));
             Assertions.assertDoesNotThrow(() -> tmpEnumProperty.set(tmpOption.name()));
         }
+    }
+    //
+    /**
+     * Tests the alternative constructor without an initial value (bean, name, class). The associated enum class must be
+     * retrievable and the names array must reflect all enum constants.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testConstructorWithoutInitialValue() throws Exception {
+        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(this, "testProp",
+                IMoleculeFragmenter.FragmentSaturationOption.class);
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.class, tmpEnumProperty.getAssociatedEnum());
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.values().length,
+                tmpEnumProperty.getAssociatedEnumConstantNames().length);
+    }
+    //
+    /**
+     * Tests the alternative constructor with an initial value but without bean and property name (initialValue, class).
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testConstructorWithInitialValueOnly() throws Exception {
+        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(
+                IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION.name(),
+                IMoleculeFragmenter.FragmentSaturationOption.class);
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.class, tmpEnumProperty.getAssociatedEnum());
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION.name(),
+                tmpEnumProperty.get());
+    }
+    //
+    /**
+     * Tests the alternative constructor taking only the associated enum class. The associated enum class must be
+     * retrievable and the names array must reflect all enum constants.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testConstructorWithClassOnly() throws Exception {
+        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(
+                IMoleculeFragmenter.FragmentSaturationOption.class);
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.class, tmpEnumProperty.getAssociatedEnum());
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.values().length,
+                tmpEnumProperty.getAssociatedEnumConstantNames().length);
+    }
+    //
+    /**
+     * Tests that setValue accepts a valid enum constant name and rejects an unknown name with an
+     * IllegalArgumentException.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testSetValue() throws Exception {
+        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(
+                IMoleculeFragmenter.FragmentSaturationOption.class);
+        tmpEnumProperty.setValue(IMoleculeFragmenter.FragmentSaturationOption.NO_SATURATION.name());
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.NO_SATURATION.name(), tmpEnumProperty.get());
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> tmpEnumProperty.setValue("NOT_AN_ENUM_CONSTANT_NAME"));
+    }
+    //
+    /**
+     * Tests that getAssociatedEnumConstantNames returns the names of every enum constant of the associated enum class.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testGetAssociatedEnumConstantNames() throws Exception {
+        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(
+                IMoleculeFragmenter.FragmentSaturationOption.class);
+        String[] tmpNames = tmpEnumProperty.getAssociatedEnumConstantNames();
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.values().length, tmpNames.length);
+        List<String> tmpNameList = Arrays.asList(tmpNames);
+        for (IMoleculeFragmenter.FragmentSaturationOption tmpOption : IMoleculeFragmenter.FragmentSaturationOption.values()) {
+            Assertions.assertTrue(tmpNameList.contains(tmpOption.name()));
+        }
+    }
+    //
+    /**
+     * Tests translateNameToEnumConstant for a valid name (returns the matching constant), a null argument (throws
+     * NullPointerException), and an unknown name (throws IllegalArgumentException).
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testTranslateNameToEnumConstant() throws Exception {
+        SimpleEnumConstantNameProperty tmpEnumProperty = new SimpleEnumConstantNameProperty(
+                IMoleculeFragmenter.FragmentSaturationOption.class);
+        Assertions.assertEquals(IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION,
+                tmpEnumProperty.translateNameToEnumConstant(
+                        IMoleculeFragmenter.FragmentSaturationOption.HYDROGEN_SATURATION.name()));
+        Assertions.assertThrows(NullPointerException.class, () -> tmpEnumProperty.translateNameToEnumConstant(null));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> tmpEnumProperty.translateNameToEnumConstant("NOT_AN_ENUM_CONSTANT_NAME"));
     }
 }

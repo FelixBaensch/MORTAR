@@ -25,9 +25,13 @@
 
 package de.unijena.cheminf.mortar.model.fragmentation.algorithm;
 
+import de.unijena.cheminf.mortar.model.util.TestUtil;
+
 import javafx.beans.property.Property;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openscience.cdk.fragment.CircularFragmenter;
 import org.openscience.cdk.interfaces.IAtom;
@@ -48,13 +52,32 @@ import java.util.Locale;
  * @version 1.0.0.0
  */
 class CDKCircularFragmenterTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
     /**
-     * Constructor that sets the default locale to British English, which is important for the correct functioning of the
-     * fragmenter because the settings tooltips are imported from the message.properties file.
+     * Default locale before this test class ran, restored after all tests.
      */
-    public CDKCircularFragmenterTest() {
+    private static Locale originalLocale;
+    //
+    /**
+     * Sets the default locale to British English for this test class, remembering the original default locale, so
+     * that the fragmenter settings tooltips and display names, which are resolved from the message bundle when a
+     * fragmenter is instantiated, are deterministic.
+     */
+    @BeforeAll
+    public static void setLocale() {
+        CDKCircularFragmenterTest.originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.of("en", "GB"));
     }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    public static void restoreLocale() {
+        Locale.setDefault(CDKCircularFragmenterTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //
     /**
      * Tests instantiation and basic settings retrieval, including verification that all default values match
@@ -65,17 +88,29 @@ class CDKCircularFragmenterTest {
     @Test
     void basicTest() throws Exception {
         CDKCircularFragmenter tmpFragmenter = new CDKCircularFragmenter();
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getFragmentationAlgorithmDisplayName);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getRadiusSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getIncludeSmallerRadiiSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getPreserveStereoSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getMarkAttachmentsSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getApplyAromaticityDetectionSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getElectronDonationModelSetting);
-        Assertions.assertDoesNotThrow(tmpFragmenter::getCycleFinderSetting);
-        for (Property<?> tmpSetting : tmpFragmenter.settingsProperties()) {
-            Assertions.assertDoesNotThrow(tmpSetting::getName);
+        Assertions.assertEquals(CDKCircularFragmenter.ALGORITHM_NAME, tmpFragmenter.getFragmentationAlgorithmName());
+        Assertions.assertFalse(tmpFragmenter.getFragmentationAlgorithmDisplayName().isBlank());
+        // Every setting is exposed through settingsProperties() and its property mirrors the getter
+        List<Property<?>> tmpSettings = tmpFragmenter.settingsProperties();
+        Assertions.assertEquals(7, tmpSettings.size());
+        TestUtil.assertExposedSetting(tmpSettings,
+                tmpFragmenter.radiusSettingProperty(), tmpFragmenter.getRadiusSetting());
+        TestUtil.assertExposedSetting(tmpSettings,
+                tmpFragmenter.includeSmallerRadiiSettingProperty(), tmpFragmenter.getIncludeSmallerRadiiSetting());
+        TestUtil.assertExposedSetting(tmpSettings,
+                tmpFragmenter.preserveStereoSettingProperty(), tmpFragmenter.getPreserveStereoSetting());
+        TestUtil.assertExposedSetting(tmpSettings,
+                tmpFragmenter.markAttachmentsSettingProperty(), tmpFragmenter.getMarkAttachmentsSetting());
+        TestUtil.assertExposedSetting(tmpSettings,
+                tmpFragmenter.applyAromaticityDetectionSettingProperty(), tmpFragmenter.getApplyAromaticityDetectionSetting());
+        TestUtil.assertExposedSetting(tmpSettings,
+                tmpFragmenter.electronDonationModelSettingProperty(), tmpFragmenter.getElectronDonationModelSetting());
+        TestUtil.assertExposedSetting(tmpSettings,
+                tmpFragmenter.cycleFinderSettingProperty(), tmpFragmenter.getCycleFinderSetting());
+        // Every setting has a tooltip and a display name
+        for (Property<?> tmpSetting : tmpSettings) {
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToTooltipTextMap().containsKey(tmpSetting.getName()), tmpSetting.getName());
+            Assertions.assertTrue(tmpFragmenter.getSettingNameToDisplayNameMap().containsKey(tmpSetting.getName()), tmpSetting.getName());
         }
         // Verify default values match the declared constants
         Assertions.assertEquals(CDKCircularFragmenter.RADIUS_SETTING_DEFAULT, tmpFragmenter.getRadiusSetting());
@@ -306,6 +341,76 @@ class CDKCircularFragmenterTest {
         IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("c1ccccc1");
         List<IAtomContainer> tmpFragments = tmpFragmenter.fragmentMolecule(tmpMolecule);
         Assertions.assertEquals(tmpMolecule.getAtomCount(), tmpFragments.size());
+    }
+    //
+    /**
+     * Exercises the settings surface not reached by the behavioural tests: every property accessor, the {@code copy()}
+     * deep-copy, all {@link IMoleculeFragmenter.CycleFinderOption} and {@link IMoleculeFragmenter.ElectronDonationModelOption}
+     * constants driven through their setters (covering the internal cycle-finder and electron-donation switch branches),
+     * the null-argument guards of the enum setters, the two setting name-to-text maps, and the guard branches of
+     * {@code fragmentMolecule} / {@code canBeFragmented} for a null and an empty molecule. Also drives the CDK-atom-types
+     * electron-donation branch of the aromaticity path.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    void settingsAccessorsCopyAndGuardsTest() throws Exception {
+        CDKCircularFragmenter tmpFragmenter = new CDKCircularFragmenter();
+        //every property accessor returns a non-null JavaFX property
+        Assertions.assertNotNull(tmpFragmenter.radiusSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.includeSmallerRadiiSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.preserveStereoSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.markAttachmentsSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.applyAromaticityDetectionSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.electronDonationModelSettingProperty());
+        Assertions.assertNotNull(tmpFragmenter.cycleFinderSettingProperty());
+        //the setting name-to-text maps carry one entry per exposed setting
+        Assertions.assertEquals(tmpFragmenter.settingsProperties().size(), tmpFragmenter.getSettingNameToTooltipTextMap().size());
+        Assertions.assertEquals(tmpFragmenter.settingsProperties().size(), tmpFragmenter.getSettingNameToDisplayNameMap().size());
+        //every cycle finder option is accepted by its setter and round-trips (drives the cycle-finder switch)
+        for (IMoleculeFragmenter.CycleFinderOption tmpOption : IMoleculeFragmenter.CycleFinderOption.values()) {
+            tmpFragmenter.setCycleFinderSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getCycleFinderSetting());
+        }
+        //every electron donation model option is accepted by its setter and round-trips (drives the donation switch)
+        for (IMoleculeFragmenter.ElectronDonationModelOption tmpOption : IMoleculeFragmenter.ElectronDonationModelOption.values()) {
+            tmpFragmenter.setElectronDonationModelSetting(tmpOption);
+            Assertions.assertEquals(tmpOption, tmpFragmenter.getElectronDonationModelSetting());
+        }
+        //null guards of the enum setters (Objects.requireNonNull, before the property set())
+        Assertions.assertThrows(NullPointerException.class, () -> tmpFragmenter.setCycleFinderSetting(null));
+        Assertions.assertThrows(NullPointerException.class, () -> tmpFragmenter.setElectronDonationModelSetting(null));
+        //copy() produces an independent CDKCircularFragmenter carrying the same settings
+        tmpFragmenter.setRadiusSetting(4);
+        tmpFragmenter.setMarkAttachmentsSetting(!CDKCircularFragmenter.MARK_ATTACHMENTS_SETTING_DEFAULT);
+        tmpFragmenter.setCycleFinderSetting(IMoleculeFragmenter.CycleFinderOption.ALL);
+        tmpFragmenter.setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption.CDK);
+        IMoleculeFragmenter tmpCopy = tmpFragmenter.copy();
+        Assertions.assertInstanceOf(CDKCircularFragmenter.class, tmpCopy);
+        CDKCircularFragmenter tmpTypedCopy = (CDKCircularFragmenter) tmpCopy;
+        Assertions.assertEquals(4, tmpTypedCopy.getRadiusSetting());
+        Assertions.assertEquals(tmpFragmenter.getMarkAttachmentsSetting(), tmpTypedCopy.getMarkAttachmentsSetting());
+        Assertions.assertEquals(IMoleculeFragmenter.CycleFinderOption.ALL, tmpTypedCopy.getCycleFinderSetting());
+        Assertions.assertEquals(IMoleculeFragmenter.ElectronDonationModelOption.CDK, tmpTypedCopy.getElectronDonationModelSetting());
+        //guard branches: null molecule -> NPE; empty molecule -> not fragmentable, fragmentMolecule throws
+        Assertions.assertThrows(NullPointerException.class, () -> tmpFragmenter.fragmentMolecule(null));
+        IAtomContainer tmpEmpty = SilentChemObjectBuilder.getInstance().newAtomContainer();
+        Assertions.assertFalse(tmpFragmenter.canBeFragmented(tmpEmpty));
+        Assertions.assertFalse(tmpFragmenter.shouldBePreprocessed(tmpEmpty));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> tmpFragmenter.fragmentMolecule(tmpEmpty));
+        //CDK-atom-types electron-donation branch of the aromaticity path
+        CDKCircularFragmenter tmpAromaticFragmenter = new CDKCircularFragmenter();
+        tmpAromaticFragmenter.setApplyAromaticityDetectionSetting(true);
+        tmpAromaticFragmenter.setElectronDonationModelSetting(IMoleculeFragmenter.ElectronDonationModelOption.CDK);
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        //written in Kekule form on purpose: the fragmenter has to perceive the aromaticity itself
+        IAtomContainer tmpBenzene = tmpSmiPar.parseSmiles("C1=CC=CC=C1");
+        List<IAtomContainer> tmpFragments = tmpAromaticFragmenter.fragmentMolecule(tmpBenzene);
+        Assertions.assertEquals(tmpBenzene.getAtomCount(), tmpFragments.size());
+        //lower-case ring atoms in the generated SMILES prove the aromaticity detection actually ran; without it the
+        //fragment would come back in the Kekule form it was parsed from and the fragment count alone would not notice
+        Assertions.assertEquals("c1ccccc1",
+                new SmilesGenerator(SmiFlavor.UseAromaticSymbols).create(tmpFragments.getFirst()));
     }
     //
     /**
