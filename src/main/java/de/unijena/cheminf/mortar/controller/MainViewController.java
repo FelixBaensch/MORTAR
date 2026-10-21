@@ -637,8 +637,17 @@ public class MainViewController {
         }
         GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
         String tmpFragmentationName = tmpSelectedTab.getFragmentationNameOutOfTitle();
+        if (tmpFragmentationName == null || this.mapOfFragmentDataModelLists.get(tmpFragmentationName) == null) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return;
+        }
         List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(this.mapOfFragmentDataModelLists.get(tmpFragmentationName));
-        if (tmpFragmentsList.isEmpty() || tmpFragmentationName == null) {
+        if (tmpFragmentsList.isEmpty()) {
             GuiUtil.guiMessageAlert(
                     Alert.AlertType.INFORMATION,
                     Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
