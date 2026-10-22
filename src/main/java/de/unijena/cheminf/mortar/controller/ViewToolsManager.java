@@ -95,7 +95,7 @@ public class ViewToolsManager {
      */
     public ViewToolsManager(IConfiguration aConfiguration, SettingsContainer aSettingsContainer) {
         this.viewToolsArray = new IViewToolController[2];
-        this.histogramViewController = new HistogramViewController(aConfiguration);
+        this.histogramViewController = new HistogramViewController(aConfiguration, aSettingsContainer );
         this.viewToolsArray[0] = this.histogramViewController;
         this.overviewViewController = new OverviewViewController(aConfiguration, aSettingsContainer);
         this.viewToolsArray[1] = this.overviewViewController;
