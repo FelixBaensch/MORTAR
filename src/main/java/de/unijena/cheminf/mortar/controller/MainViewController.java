@@ -617,9 +617,9 @@ public class MainViewController {
         boolean tmpIsMoleculeExport = anExportType == Exporter.ExportTypes.MOLECULE_CSV_FILE
                 || anExportType == Exporter.ExportTypes.MOLECULE_SD_FILE;
         //only the molecules selected in the molecules tab are exported
-        List<MoleculeDataModel> tmpSelectedMolecules = (!tmpIsMoleculeExport || this.moleculeDataModelList == null)
-                ? new ArrayList<>(0)
-                : this.moleculeDataModelList.stream().filter(MoleculeDataModel::isSelected).toList();
+        List<MoleculeDataModel> tmpSelectedMolecules = tmpIsMoleculeExport
+                ? Exporter.getSelectedMolecules(this.moleculeDataModelList)
+                : new ArrayList<>(0);
         if (!tmpIsMoleculeExport && (this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
@@ -839,8 +839,7 @@ public class MainViewController {
         if (this.importedFileName == null || this.importedFileName.isBlank()) {
             return "MORTAR";
         }
-        int tmpExtensionIndex = this.importedFileName.lastIndexOf('.');
-        return tmpExtensionIndex > 0 ? this.importedFileName.substring(0, tmpExtensionIndex) : this.importedFileName;
+        return FileUtil.getFileNameWithoutExtension(new File(this.importedFileName));
     }
     //
     /**

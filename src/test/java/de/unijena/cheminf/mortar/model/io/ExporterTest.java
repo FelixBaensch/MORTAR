@@ -215,6 +215,58 @@ public class ExporterTest {
         tmpSingleFileExporter.exportFragmentsAsChemicalFile(tmpFile, this.getFragments(), ChemFileTypes.SDF, true, true);
         Assertions.assertEquals(tmpFile, tmpSingleFileExporter.getActualExportDestination(tmpFile));
     }
+    //
+    /**
+     * Tests that numbers in the CSV exports are always written with '.' as decimal separator, independent of the
+     * default locale.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testCsvExportsIndependentOfDefaultLocale(@TempDir Path aTempDir) throws Exception {
+        Locale tmpDefaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.GERMANY);
+            Exporter tmpExporter = new Exporter(new SettingsContainer());
+            File tmpFragmentsTabFile = aTempDir.resolve("fragmentsTab.csv").toFile();
+            tmpExporter.exportCsvFile(tmpFragmentsTabFile, this.getFragments(), "Ertl algorithm", ';', TabNames.FRAGMENTS);
+            Assertions.assertTrue(Files.readAllLines(tmpFragmentsTabFile.toPath()).get(1).endsWith(";3;0.7500"));
+            File tmpStructuresFile = aTempDir.resolve("structures.csv").toFile();
+            tmpExporter.exportStructuresAsCsvFile(tmpStructuresFile, this.getFragments(), ';', true, false);
+            Assertions.assertEquals("c1ccccc1;Ertl_algorithm_1;3;0.7500", Files.readAllLines(tmpStructuresFile.toPath()).get(1));
+        } finally {
+            Locale.setDefault(tmpDefaultLocale);
+        }
+    }
+    //
+    /**
+     * Tests that only the selected molecules are returned for the molecule export and that only these end up in the
+     * exported file.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testOnlySelectedMoleculesAreExported(@TempDir Path aTempDir) throws Exception {
+        List<MoleculeDataModel> tmpMolecules = this.getMolecules();
+        MoleculeDataModel tmpMethanol = new MoleculeDataModel("CO", "Methanol", new HashMap<>());
+        tmpMethanol.setId("Test_3");
+        tmpMolecules.add(tmpMethanol);
+        //molecules are selected by default; deselect the second one
+        tmpMolecules.get(1).setSelection(false);
+        List<MoleculeDataModel> tmpSelected = Exporter.getSelectedMolecules(tmpMolecules);
+        Assertions.assertEquals(List.of(tmpMolecules.get(0), tmpMethanol), tmpSelected);
+        Exporter tmpExporter = new Exporter(new SettingsContainer());
+        File tmpFile = aTempDir.resolve("selected.csv").toFile();
+        tmpExporter.exportStructuresAsCsvFile(tmpFile, tmpSelected, ';', false);
+        List<String> tmpLines = Files.readAllLines(tmpFile.toPath());
+        Assertions.assertEquals(List.of("SMILES;Name;ID", "c1ccccc1;Benzene;Test_1", "CO;Methanol;Test_3"), tmpLines);
+        //no selected molecules and null input
+        tmpMolecules.forEach(tmpMolecule -> tmpMolecule.setSelection(false));
+        Assertions.assertTrue(Exporter.getSelectedMolecules(tmpMolecules).isEmpty());
+        Assertions.assertTrue(Exporter.getSelectedMolecules(null).isEmpty());
+    }
     //</editor-fold>
     //
     //<editor-fold desc="private methods">

@@ -83,6 +83,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Exporter.
@@ -306,6 +307,22 @@ public class Exporter {
     public Exporter(SettingsContainer aSettingsContainer) throws NullPointerException {
         Objects.requireNonNull(aSettingsContainer, "Given settings container is null.");
         this.settingsContainer = aSettingsContainer;
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Public static methods" defaultstate="collapsed">
+    /**
+     * Returns the molecules of the given list that are selected (e.g. via the checkboxes in the molecules tab), in the
+     * same order. Only these molecules are exported in the molecule export.
+     *
+     * @param aMoleculeList list of molecules; an empty list is returned if it is null
+     * @return new list of the selected molecules
+     */
+    public static List<MoleculeDataModel> getSelectedMolecules(List<MoleculeDataModel> aMoleculeList) {
+        if (aMoleculeList == null) {
+            return new ArrayList<>(0);
+        }
+        return aMoleculeList.stream().filter(MoleculeDataModel::isSelected).collect(Collectors.toCollection(ArrayList::new));
     }
     //</editor-fold>
     //
@@ -809,8 +826,9 @@ public class Exporter {
                 }
                 try {
                     FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-                    //the ID is written in the second column, so that it is used as name when the file is re-imported
-                    tmpWriter.printf("%n%s%s%s%s%d%s%.4f%s%d%s%.4f",
+                    //the ID is written in the second column, so that it is used as name when the file is re-imported;
+                    // Locale.ROOT ensures '.' as decimal separator, independent of the default locale
+                    tmpWriter.printf(Locale.ROOT, "%n%s%s%s%s%d%s%.4f%s%d%s%.4f",
                             tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
                             Objects.requireNonNullElse(tmpFragmentDataModel.getId(), ""), aSeparator,
                             tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
