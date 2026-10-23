@@ -860,12 +860,7 @@ public class OverviewViewController implements IViewToolController {
                         String.join("\n", tmpFailedStructures)
                 );
             } else {
-                GuiUtil.guiMessageAlert(
-                        Alert.AlertType.INFORMATION,
-                        Message.get("Exporter.ExportFinished.title"),
-                        Message.get("Exporter.ExportFinished.header"),
-                        tmpFinalFile.getAbsolutePath()
-                );
+                GuiUtil.guiExportFinishedAlert(tmpFinalFile);
             }
         });
         tmpExportTask.setOnFailed(workerStateEvent -> {

@@ -465,6 +465,41 @@ public final class FileUtil {
     //
     //<editor-fold defaultstate="collapsed" desc="Private static methods">
     /**
+     * Opens the location of the given file or directory in the OS depending explorer equivalent. For a file, its
+     * directory is opened and the file is selected (on Linux, only the directory is opened). For a directory, the
+     * directory is opened as in {@link #openFilePathInExplorer(String)}.
+     *
+     * @param aFileOrDirectory file or directory whose location should be opened
+     * @throws IllegalArgumentException if the given file is null
+     * @throws SecurityException if the location could not be opened
+     */
+    public static void openFileLocationInExplorer(File aFileOrDirectory) throws IllegalArgumentException, SecurityException {
+        if (Objects.isNull(aFileOrDirectory)) {
+            throw new IllegalArgumentException("Given file is null.");
+        }
+        if (aFileOrDirectory.isDirectory()) {
+            FileUtil.openFilePathInExplorer(aFileOrDirectory.getAbsolutePath());
+            return;
+        }
+        String tmpPath = aFileOrDirectory.getAbsolutePath();
+        OperatingSystem tmpOS = FileUtil.detectCurrentOperatingSystem();
+        try {
+            if (tmpOS.equals(OperatingSystem.WINDOWS)) {
+                Runtime.getRuntime().exec(new String[]{"explorer", "/select,", tmpPath});
+            } else if (tmpOS.equals(OperatingSystem.MAC_OS)) {
+                Runtime.getRuntime().exec(new String[]{"open", "-R", tmpPath});
+            } else if (tmpOS.equals(OperatingSystem.LINUX)) {
+                Runtime.getRuntime().exec(new String[]{"gio", "open", aFileOrDirectory.getAbsoluteFile().getParent()});
+            } else {
+                throw new SecurityException("OS name " + tmpOS + " unknown.");
+            }
+        } catch (IOException anException) {
+            FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
+            throw new SecurityException("Could not open file location");
+        }
+    }
+    //
+    /**
      * Detects the current operating system and returns the matching {@link OperatingSystem} enum constant.
      *
      * @return the {@link OperatingSystem} constant for the current platform

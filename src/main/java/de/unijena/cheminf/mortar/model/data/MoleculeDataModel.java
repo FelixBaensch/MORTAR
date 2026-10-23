@@ -58,8 +58,9 @@ public class MoleculeDataModel {
     private String name;
     //
     /**
-     * Unique ID of molecule or fragment assigned by MORTAR, e.g. the import file name with the index of the structure
-     * in the file appended for molecules or the fragmentation name with a counter appended for fragments; might be null.
+     * Unique ID of molecule or fragment assigned by MORTAR, i.e. the import file name with a consecutive number of the
+     * imported molecules appended for molecules or the fragmentation name with the rank of the fragment appended for
+     * fragments; might be null.
      */
     private String id;
     //

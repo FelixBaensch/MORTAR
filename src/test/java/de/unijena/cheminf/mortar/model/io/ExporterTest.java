@@ -193,6 +193,28 @@ public class ExporterTest {
         Assertions.assertEquals("Ertl_algorithm_1", tmpReadStructures.get(2).getTitle());
         Assertions.assertEquals("Ertl_algorithm_1", tmpReadStructures.get(2).getProperty(Exporter.ID_PROPERTY_KEY));
     }
+    //
+    /**
+     * Tests that the actual export destination is the newly created subdirectory for exports into separate files and
+     * the chosen file for exports into a single file.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testActualExportDestination(@TempDir Path aTempDir) throws Exception {
+        File tmpChosenDirectory = aTempDir.toFile();
+        Exporter tmpSeparateFilesExporter = new Exporter(new SettingsContainer());
+        tmpSeparateFilesExporter.exportFragmentsAsChemicalFile(tmpChosenDirectory, this.getFragments(), ChemFileTypes.SDF, true, false);
+        File tmpDestination = tmpSeparateFilesExporter.getActualExportDestination(tmpChosenDirectory);
+        Assertions.assertTrue(tmpDestination.isDirectory());
+        Assertions.assertEquals(tmpChosenDirectory, tmpDestination.getParentFile());
+        Assertions.assertEquals(2, tmpDestination.listFiles().length);
+        Exporter tmpSingleFileExporter = new Exporter(new SettingsContainer());
+        File tmpFile = aTempDir.resolve("fragments.sdf").toFile();
+        tmpSingleFileExporter.exportFragmentsAsChemicalFile(tmpFile, this.getFragments(), ChemFileTypes.SDF, true, true);
+        Assertions.assertEquals(tmpFile, tmpSingleFileExporter.getActualExportDestination(tmpFile));
+    }
     //</editor-fold>
     //
     //<editor-fold desc="private methods">

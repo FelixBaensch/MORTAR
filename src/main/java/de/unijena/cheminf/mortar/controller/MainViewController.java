@@ -799,12 +799,8 @@ public class MainViewController {
                         tmpStringBuilder.toString()
                 );
             } else {
-                GuiUtil.guiMessageAlert(
-                        Alert.AlertType.INFORMATION,
-                        Message.get("Exporter.ExportFinished.title"),
-                        Message.get("Exporter.ExportFinished.header"),
-                        tmpExportFile.getAbsolutePath()
-                );
+                //for exports into separate files, a new subdirectory of the chosen directory is created
+                GuiUtil.guiExportFinishedAlert(tmpExporter.getActualExportDestination(tmpExportFile));
             }
         });
         this.exportTask.setOnCancelled(event -> {

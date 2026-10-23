@@ -286,6 +286,14 @@ public class Exporter {
     private final SettingsContainer settingsContainer;
     //</editor-fold>
     //
+    //<editor-fold desc="Private variables" defaultstate="collapsed">
+    /**
+     * Directory that was created by the last export into separate files (separate SD files or PDB files) of this
+     * instance; null if no such export took place. Volatile because exports run in a separate thread.
+     */
+    private volatile File createdExportDirectory;
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructors">
     /**
      * Constructor. Should the recent directory path provided by the container be faulty, it is set to its default
@@ -302,6 +310,19 @@ public class Exporter {
     //</editor-fold>
     //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
+    /**
+     * Returns the actual destination of an export: the directory created by the last export into separate files
+     * (separate SD files or PDB files) of this instance, which is a new subdirectory of the chosen directory, or the
+     * given chosen file or directory for all other exports.
+     *
+     * @param aChosenFileOrDirectory the file or directory chosen by the user for the export
+     * @return the file or directory the exported data was actually written to
+     */
+    public File getActualExportDestination(File aChosenFileOrDirectory) {
+        File tmpCreatedDirectory = this.createdExportDirectory;
+        return tmpCreatedDirectory != null ? tmpCreatedDirectory : aChosenFileOrDirectory;
+    }
+    //
     /**
      * Opens FileChooser to enable the user to choose an export destination file.
      *
@@ -1169,6 +1190,7 @@ public class Exporter {
         // this is not how this FileUtil method should be used, but I'll allow it
         String tmpFinalSDFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpSDFFilesDirectoryPathName, File.separator);
         File tmpSDFilesDirectory = Files.createDirectory(Paths.get(tmpFinalSDFilesDirectoryPathName)).toFile();
+        this.createdExportDirectory = tmpSDFilesDirectory;
         int tmpExportedFragmentsCounter = 0;
         int tmpFailedFragmentExportCounter = 0;
         //iterating through the fragments held by the list of fragments
@@ -1268,6 +1290,7 @@ public class Exporter {
         // this is not how this FileUtil method should be used, but I'll allow it
         String tmpFinalPDBFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectoryPathName, File.separator);
         File tmpPDBFilesDirectory = Files.createDirectory(Paths.get(tmpFinalPDBFilesDirectoryPathName)).toFile();
+        this.createdExportDirectory = tmpPDBFilesDirectory;
         int tmpExportedFragmentsCounter = 0;
         int tmpFailedFragmentExportCounter = 0;
         //iterating through the fragments held by the list of fragments

@@ -71,9 +71,24 @@ public final class MiscUtil {
     /**
      * Creates a prefix for the IDs of molecules or fragments from the given base name, e.g. the import file name
      * (without extension) or the fragmentation name. All characters other than letters, digits, '_', and '-' are
-     * replaced by '_', consecutive '_' are merged, and leading or trailing '_' removed. The result is truncated to the
-     * given maximum length. If no usable characters remain, {@link #ID_PREFIX_DEFAULT} is returned.
+     * replaced by '_', consecutive '_' are merged, and leading or trailing '_' removed. The result is not truncated,
+     * see {@link #truncateIDPrefix(String, int)}. If no usable characters remain, {@link #ID_PREFIX_DEFAULT} is returned.
      * <br>The result never contains characters that are used as CSV separators in MORTAR.
+     *
+     * @param aBaseName name to derive the prefix from
+     * @return ID prefix
+     */
+    public static String createIDPrefix(String aBaseName) {
+        if (aBaseName == null) {
+            return MiscUtil.ID_PREFIX_DEFAULT;
+        }
+        String tmpPrefix = MiscUtil.stripUnderscores(aBaseName.replaceAll("[^A-Za-z0-9_-]+", "_").replaceAll("_{2,}", "_"));
+        return tmpPrefix.isEmpty() ? MiscUtil.ID_PREFIX_DEFAULT : tmpPrefix;
+    }
+    //
+    /**
+     * Creates a prefix for the IDs of molecules or fragments from the given base name as described in
+     * {@link #createIDPrefix(String)} and truncates it to the given maximum length.
      *
      * @param aBaseName name to derive the prefix from
      * @param aMaxLength maximum length of the returned prefix
@@ -81,17 +96,30 @@ public final class MiscUtil {
      * @throws IllegalArgumentException if the given maximum length is smaller than 1
      */
     public static String createIDPrefix(String aBaseName, int aMaxLength) throws IllegalArgumentException {
+        return MiscUtil.truncateIDPrefix(MiscUtil.createIDPrefix(aBaseName), aMaxLength);
+    }
+    //
+    /**
+     * Truncates the given ID prefix (created by {@link #createIDPrefix(String)}) to the given maximum length and
+     * removes trailing '_' resulting from the truncation. If no usable characters remain, {@link #ID_PREFIX_DEFAULT}
+     * is returned.
+     *
+     * @param anIDPrefix ID prefix to truncate
+     * @param aMaxLength maximum length of the returned prefix
+     * @return the truncated ID prefix or the given one if it is not longer than the maximum length
+     * @throws IllegalArgumentException if the given maximum length is smaller than 1
+     */
+    public static String truncateIDPrefix(String anIDPrefix, int aMaxLength) throws IllegalArgumentException {
         if (aMaxLength < 1) {
             throw new IllegalArgumentException("Given maximum length must be at least 1.");
         }
-        if (aBaseName == null) {
+        if (anIDPrefix == null) {
             return MiscUtil.ID_PREFIX_DEFAULT;
         }
-        String tmpPrefix = aBaseName.replaceAll("[^A-Za-z0-9_-]+", "_").replaceAll("_{2,}", "_");
-        tmpPrefix = MiscUtil.stripUnderscores(tmpPrefix);
-        if (tmpPrefix.length() > aMaxLength) {
-            tmpPrefix = MiscUtil.stripUnderscores(tmpPrefix.substring(0, aMaxLength));
+        if (anIDPrefix.length() <= aMaxLength) {
+            return anIDPrefix;
         }
+        String tmpPrefix = MiscUtil.stripUnderscores(anIDPrefix.substring(0, aMaxLength));
         return tmpPrefix.isEmpty() ? MiscUtil.ID_PREFIX_DEFAULT : tmpPrefix;
     }
     //

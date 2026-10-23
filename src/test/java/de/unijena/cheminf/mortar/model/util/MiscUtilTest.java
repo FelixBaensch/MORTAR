@@ -47,4 +47,18 @@ public class MiscUtilTest {
         Assertions.assertEquals(MiscUtil.ID_PREFIX_DEFAULT, MiscUtil.createIDPrefix(null, 40));
         Assertions.assertThrows(IllegalArgumentException.class, () -> MiscUtil.createIDPrefix("abc", 0));
     }
+    //
+    /**
+     * Tests that the untruncated prefix creation only cleans the name and that truncation leaves short prefixes
+     * unchanged.
+     */
+    @Test
+    public void testCreateAndTruncateIDPrefix() {
+        String tmpLongName = "a".repeat(MiscUtil.ID_PREFIX_MAX_LENGTH + 10);
+        Assertions.assertEquals(tmpLongName, MiscUtil.createIDPrefix(tmpLongName));
+        Assertions.assertEquals(MiscUtil.ID_PREFIX_MAX_LENGTH, MiscUtil.truncateIDPrefix(tmpLongName, MiscUtil.ID_PREFIX_MAX_LENGTH).length());
+        Assertions.assertEquals("short", MiscUtil.truncateIDPrefix("short", MiscUtil.ID_PREFIX_MAX_LENGTH));
+        Assertions.assertEquals(MiscUtil.ID_PREFIX_DEFAULT, MiscUtil.truncateIDPrefix("___", 2));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> MiscUtil.truncateIDPrefix("abc", 0));
+    }
 }

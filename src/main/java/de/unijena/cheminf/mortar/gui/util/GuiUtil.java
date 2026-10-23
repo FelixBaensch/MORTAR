@@ -35,6 +35,7 @@ import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -66,6 +67,7 @@ import javafx.util.StringConverter;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -194,6 +196,34 @@ public class GuiUtil {
                 GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
         tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
+    }
+    //
+    /**
+     * Creates and shows an information alert telling the user that an export was finished successfully. The given
+     * export destination is shown as a hyperlink that opens its location in the explorer equivalent of the OS.
+     *
+     * @param anExportDestination file or directory the exported data was written to
+     */
+    public static void guiExportFinishedAlert(File anExportDestination) {
+        Hyperlink tmpHyperlink = new Hyperlink(anExportDestination.getAbsolutePath());
+        tmpHyperlink.setTooltip(GuiUtil.createTooltip(Message.get("Exporter.ExportFinished.linkTooltip")));
+        tmpHyperlink.setOnAction(anActionEvent -> {
+            try {
+                FileUtil.openFileLocationInExplorer(anExportDestination);
+            } catch (IllegalArgumentException | SecurityException anException) {
+                GuiUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                GuiUtil.guiExceptionAlert(
+                        Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("Exporter.ExportFinished.openError.header"),
+                        anExportDestination.getAbsolutePath(),
+                        anException);
+            }
+        });
+        GuiUtil.guiMessageAlertWithHyperlink(
+                Alert.AlertType.INFORMATION,
+                Message.get("Exporter.ExportFinished.title"),
+                Message.get("Exporter.ExportFinished.header"),
+                tmpHyperlink);
     }
     //
     /**
