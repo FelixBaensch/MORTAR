@@ -25,8 +25,17 @@
 
 package de.unijena.cheminf.mortar.model.depict;
 
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+
+import javafx.scene.image.Image;
+
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
 
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
@@ -35,13 +44,125 @@ import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 /**
- * Tests for {@link DepictionUtil}.
+ * Tests for {@link DepictionUtil}. The image-producing methods convert an AWT {@link java.awt.image.BufferedImage} to a
+ * JavaFX {@link Image} via {@code SwingFXUtils}; that conversion works without a started JavaFX toolkit (the class
+ * passes when run on its own, as do the data-model tests that depict structures), so nothing here boots the toolkit and
+ * the tests do not depend on another test class having booted it.
  *
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
 class DepictionUtilTest {
+    //<editor-fold desc="Locale setup and teardown" defaultstate="collapsed">
+    /**
+     * Default locale before this test class ran, restored after all tests.
+     */
+    private static Locale originalLocale;
+    //
+    /**
+     * Pins the default locale to en-GB, the locale the application itself runs under, remembering the original default
+     * locale. The integer-formatting methods of {@link DepictionUtil} build their {@link java.text.DecimalFormatSymbols}
+     * from {@code Locale.getDefault()}, so the decimal separator of their output, and therefore any exact assertion on
+     * it, depends on the locale of the JVM running the tests.
+     */
+    @BeforeAll
+    static void setLocale() {
+        DepictionUtilTest.originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.of("en", "GB"));
+    }
+    //
+    /**
+     * Restores the default locale that was in place before this test class ran.
+     */
+    @AfterAll
+    static void restoreLocale() {
+        Locale.setDefault(DepictionUtilTest.originalLocale);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Tests">
+    /**
+     * Drives every image-producing overload of {@link DepictionUtil} with a real molecule and asserts that each returns a
+     * JavaFX {@link Image} of the requested size: the explicitly given width and height, or the
+     * {@link BasicDefinitions} default for the dimension an overload fixes. This covers the depiction (BufferedImage to
+     * FX Image) path of each overload and shows that every overload passes its dimensions on correctly.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    void depictImageOverloadsProduceNonNullImages() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("c1ccccc1");
+        double tmpDefaultWidth = BasicDefinitions.DEFAULT_IMAGE_WIDTH_DEFAULT;
+        double tmpDefaultHeight = BasicDefinitions.DEFAULT_IMAGE_HEIGHT_DEFAULT;
+        DepictionUtilTest.assertImageSize(300.0, 200.0,
+                DepictionUtil.depictImageWithNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 300.0, 200.0));
+        DepictionUtilTest.assertImageSize(tmpDefaultWidth, 200.0,
+                DepictionUtil.depictImageWithDefaultWidthNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 200.0));
+        DepictionUtilTest.assertImageSize(300.0, tmpDefaultHeight,
+                DepictionUtil.depictImageWithDefaultHeightNoZoomNoFillToFitAndTransparentBackground(tmpMolecule, 300.0));
+        DepictionUtilTest.assertImageSize(tmpDefaultWidth, tmpDefaultHeight,
+                DepictionUtil.depictImageWithDefaultWidthDefaultHeightNoFillToFitAndTransparentBackground(tmpMolecule, 1.5));
+        DepictionUtilTest.assertImageSize(310.0, 210.0,
+                DepictionUtil.depictImageWithNoFillToFitAndTransparentBackground(tmpMolecule, 1.5, 310.0, 210.0));
+        DepictionUtilTest.assertImageSize(320.0, 220.0,
+                DepictionUtil.depictImageWithTransparentBackground(tmpMolecule, 1.5, 320.0, 220.0, true));
+        DepictionUtilTest.assertImageSize(330.0, 230.0,
+                DepictionUtil.depictImage(tmpMolecule, 1.5, 330.0, 230.0, true, false));
+    }
+    //
+    /**
+     * Drives the two text-annotated image overloads of {@link DepictionUtil}, asserting that each returns a JavaFX
+     * {@link Image} of the requested total size (structure plus text label).
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    void depictImageWithTextOverloadsProduceNonNullImages() throws Exception {
+        SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        IAtomContainer tmpMolecule = tmpSmiPar.parseSmiles("c1ccccc1");
+        DepictionUtilTest.assertImageSize(300.0, 200.0,
+                DepictionUtil.depictImageWithTextNoFillToFitAndTransparentBackground(tmpMolecule, 1.5, 300.0, 200.0, "Benzene"));
+        DepictionUtilTest.assertImageSize(310.0, 210.0,
+                DepictionUtil.depictImageWithText(tmpMolecule, 1.5, 310.0, 210.0, "Benzene", true, false));
+    }
+    //
+    /**
+     * Drives {@link DepictionUtil#depictErrorImage(String, int, int)}: a normal message with valid dimensions plus the
+     * fallback branches for a blank message and for non-positive dimensions all return a non-null JavaFX {@link Image}.
+     */
+    @Test
+    void depictErrorImageProducesImageAndCoversFallbacks() {
+        Image tmpErrorImage = DepictionUtil.depictErrorImage("boom", 120, 80);
+        Assertions.assertNotNull(tmpErrorImage);
+        //blank message -> "Error" fallback; non-positive dimensions -> default size fallback
+        Assertions.assertNotNull(DepictionUtil.depictErrorImage("   ", -1, -1));
+        Assertions.assertNotNull(DepictionUtil.depictErrorImage(null, 0, 0));
+    }
+    //
+    /**
+     * Drives the guard branch of {@link DepictionUtil#getGraphicsInstanceWithStandardFont(int, int)} (non-positive
+     * dimensions throw) and its happy path (a configured {@link Graphics2D} is returned), plus the early-fit return
+     * branch of {@link DepictionUtil#fitIntegerDisplayToImageWidth(double, int, FontMetrics)} where a very wide image
+     * keeps the first, most detailed formatting. Because that first pattern is
+     * {@link DepictionUtil.IntegerFormatPattern#THREE_DECIMALS_SCIENTIFIC} ({@code "0.000E0"}), the exact output for
+     * the value 42 is asserted rather than only its non-nullness — that is what shows the loop returned on the first,
+     * most detailed pattern instead of falling through to a shorter one. The class pins the en-GB default locale, so
+     * the decimal separator in the expected string is deterministic.
+     */
+    @Test
+    void graphicsInstanceGuardAndEarlyFitReturn() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> DepictionUtil.getGraphicsInstanceWithStandardFont(0, 10));
+        Graphics2D tmpGraphics = DepictionUtil.getGraphicsInstanceWithStandardFont(100, 50);
+        Assertions.assertNotNull(tmpGraphics);
+        FontMetrics tmpFontMetrics = tmpGraphics.getFontMetrics();
+        tmpGraphics.dispose();
+        //a very wide image -> the first (most detailed) formatting already fits, so the loop returns immediately
+        String tmpResult = DepictionUtil.fitIntegerDisplayToImageWidth(100000.0, 42, tmpFontMetrics);
+        Assertions.assertEquals("4.200E1", tmpResult);
+    }
+    //
     /**
      * Illustrates the effect of each format pattern defined in {@link DepictionUtil.IntegerFormatPattern}
      * enum on selected large integer values. The patterns are applied progressively (most detail → the least detail)
@@ -179,6 +300,21 @@ class DepictionUtilTest {
                     "fitIntegerDisplayToImageWidth mismatch for width=" + tmpVeryNarrowImage
                             + ", value=" + tmpValue);
         }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private static methods" defaultstate="collapsed">
+    /**
+     * Asserts that the given image is non-null and has the expected width and height.
+     *
+     * @param anExpectedWidth expected image width
+     * @param anExpectedHeight expected image height
+     * @param anImage the image to check
+     */
+    private static void assertImageSize(double anExpectedWidth, double anExpectedHeight, Image anImage) {
+        Assertions.assertNotNull(anImage);
+        Assertions.assertEquals(anExpectedWidth, anImage.getWidth(), "image width");
+        Assertions.assertEquals(anExpectedHeight, anImage.getHeight(), "image height");
     }
     //</editor-fold>
 }
