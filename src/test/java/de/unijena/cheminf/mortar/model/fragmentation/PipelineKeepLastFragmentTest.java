@@ -54,17 +54,23 @@ class PipelineKeepLastFragmentTest {
     }
     //
     /**
-     * Runs an Ertl-then-Scaffold pipeline with the keep-last-fragment flag set. The Scaffold Generator yields nothing for
-     * the acyclic Ertl fragments, so those parent fragments are not in the second stage's results; the flag must carry
-     * them forward as they are instead of adding null to the molecule's fragment list (issue #238).
+     * Runs an Ertl-then-Scaffold pipeline with the keep-last-fragment flag set. The Ertl fragmenter returns only
+     * functional groups, which are all acyclic, so the Scaffold Generator yields nothing for them and those parent
+     * fragments are not in the second stage's results; the flag must carry them forward as they are instead of adding
+     * null to the molecule's fragment list (issue #238).
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     void keepLastFragmentCarriesParentForwardInsteadOfNullTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
+        ErtlFunctionalGroupsFinderFragmenter tmpErtlFragmenter = (ErtlFunctionalGroupsFinderFragmenter)
+                PipelineKeepLastFragmentTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME);
+        //the default also returns the alkane remainders, including rings the Scaffold Generator would pick up
+        tmpErtlFragmenter.setReturnedFragmentsSetting(
+                ErtlFunctionalGroupsFinderFragmenter.EFGFFragmenterReturnedFragmentsOption.ONLY_FUNCTIONAL_GROUPS);
         tmpService.setPipelineFragmenter(new IMoleculeFragmenter[] {
-                PipelineKeepLastFragmentTest.fragmenterCopy(tmpService, ErtlFunctionalGroupsFinderFragmenter.ALGORITHM_NAME),
+                tmpErtlFragmenter,
                 PipelineKeepLastFragmentTest.fragmenterCopy(tmpService, ScaffoldGeneratorFragmenter.ALGORITHM_NAME)
         });
         tmpService.setPipeliningFragmentationName("KeepLastFragmentPipeline");
