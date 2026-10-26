@@ -287,8 +287,8 @@ public class FragmentationServiceTest {
     public void gettersAndCacheTest() throws Exception {
         FragmentationService tmpService = new FragmentationService();
         Assertions.assertNotNull(tmpService.getFragmenters());
-        //five registered fragmenters: ErtlFGF, SugarRemovalUtility, ScaffoldGenerator, MolWURCS, CDKCircular
-        Assertions.assertEquals(5, tmpService.getFragmenters().length);
+        //six registered fragmenters: ErtlFGF, SugarRemovalUtility, ScaffoldGenerator, MolWURCS, CDKCircular, CDKExhaustive
+        Assertions.assertEquals(6, tmpService.getFragmenters().length);
         Assertions.assertNotNull(tmpService.getSelectedFragmenter());
         Assertions.assertNotNull(tmpService.getPipelineFragmenter());
         Assertions.assertNotNull(tmpService.getPipeliningFragmentationName());
