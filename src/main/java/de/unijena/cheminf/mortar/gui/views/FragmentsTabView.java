@@ -49,6 +49,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+
 /**
  * A tab view for displaying fragmentation results with pagination, export controls, and data visualization options.
  *
@@ -180,7 +182,7 @@ public class FragmentsTabView extends GridTabForTableView {
     public FragmentsTabView(
             FragmentsDataTableView aFragmentsDataTableView,
             String aFragmentationName,
-            ObservableList<MoleculeDataModel> aObservableFragmentsList,
+            ObservableList<? extends MoleculeDataModel> aObservableFragmentsList,
             int aRowsPerPageSetting
     ) {
         super(Message.get(
@@ -195,7 +197,7 @@ public class FragmentsTabView extends GridTabForTableView {
         for (MoleculeDataModel tmpMoleculeDataModel : aObservableFragmentsList) {
             tmpMoleculeDataModel.setStructureImageWidth(aFragmentsDataTableView.getStructureColumn().getWidth());
         }
-        aFragmentsDataTableView.setItemsList(aObservableFragmentsList);
+        aFragmentsDataTableView.setItemsList((List<MoleculeDataModel>) aObservableFragmentsList);
         this.pagination = this.createPaginationWithSuitablePageCount(
                 aObservableFragmentsList.size(),
                 aRowsPerPageSetting

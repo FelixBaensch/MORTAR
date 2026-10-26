@@ -1041,7 +1041,7 @@ public class MainViewController {
         MoleculesDataTableView tmpMoleculesDataTableView = new MoleculesDataTableView(this.configuration);
         MoleculesTabView tmpMoleculesTab = new MoleculesTabView(
                 tmpMoleculesDataTableView,
-                FXCollections.observableArrayList(this.moleculeDataModelList),
+                this.moleculeDataModelList,
                 this.settingsContainer.getRowsPerPageSetting(),
                 this.fragmentationService.selectedFragmenterDisplayNameProperty()
         );
@@ -1261,7 +1261,8 @@ public class MainViewController {
         FragmentsTabView tmpFragmentsTab = new FragmentsTabView(
                 tmpFragmentsDataTableView,
                 aFragmentationName,
-                FXCollections.observableArrayList(this.mapOfFragmentDataModelLists.get(aFragmentationName)),
+                this.mapOfFragmentDataModelLists.get(aFragmentationName),
+                // (ObservableList<MoleculeDataModel>) (ObservableList<? extends MoleculeDataModel>)this.mapOfFragmentDataModelLists.get(aFragmentationName),
                 this.settingsContainer.getRowsPerPageSetting()
         );
         this.mainTabPane.getTabs().add(tmpFragmentsTab);
@@ -1331,7 +1332,7 @@ public class MainViewController {
             // as the itemization tab and fragmentation tab are both constructed
             // as GridTableViews
             if (tmpTab.isClosable() && tmpTab instanceof GridTabForTableView tmpGridTab) {
-                if (isGridTabDataCleanable(tmpGridTab)) {
+                if (this.isGridTabDataCleanable(tmpGridTab)) {
                     this.cleanupGridTabData(tmpGridTab);
                 }
                 this.mainTabPane.getTabs().remove(i);

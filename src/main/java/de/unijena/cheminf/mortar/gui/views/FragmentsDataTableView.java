@@ -115,7 +115,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
     /**
      * List which contains all items to be shown in this tableview not only the displayed ones for this page (Pagination).
      */
-    private List<MoleculeDataModel> itemsList;
+    private List<? extends MoleculeDataModel> itemsList;
     //</editor-fold>
     //
     /**
@@ -322,7 +322,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         int tmpRowsPerPage = aSettingsContainer.getRowsPerPageSetting();
         int fromIndex = aPageIndex * tmpRowsPerPage;
         int toIndex = Math.min(fromIndex + tmpRowsPerPage, this.itemsList.size());
-        List<MoleculeDataModel> tmpItems = this.itemsList.subList(fromIndex, toIndex);
+        List<? extends MoleculeDataModel> tmpItems = this.itemsList.subList(fromIndex, toIndex);
         for (MoleculeDataModel tmpMoleculeDataModel : tmpItems) {
             tmpMoleculeDataModel.setStructureImageWidth(this.structureColumn.getWidth());
             ((FragmentDataModel) tmpMoleculeDataModel).getFirstParentMolecule().setStructureImageWidth(this.parentMolColumn.getWidth());
@@ -445,7 +445,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
      * @return List
      */
     public List<MoleculeDataModel> getItemsList() {
-        return this.itemsList;
+        return (List<MoleculeDataModel>) this.itemsList;
     }
     //
     /**
