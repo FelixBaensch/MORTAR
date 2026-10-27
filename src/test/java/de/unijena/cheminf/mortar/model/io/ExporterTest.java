@@ -267,6 +267,25 @@ public class ExporterTest {
         Assertions.assertTrue(Exporter.getSelectedMolecules(tmpMolecules).isEmpty());
         Assertions.assertTrue(Exporter.getSelectedMolecules(null).isEmpty());
     }
+    //
+    /**
+     * Tests that duplicated file extensions (as appended by the native save dialog on macOS) are removed and other
+     * file names stay unchanged.
+     */
+    @Test
+    public void testRemoveDuplicatedFileExtension() {
+        File tmpDirectory = new File("exports");
+        Assertions.assertEquals(new File(tmpDirectory, "Overview.sdf"),
+                Exporter.removeDuplicatedFileExtension(new File(tmpDirectory, "Overview.sdf.sdf"), ".sdf"));
+        Assertions.assertEquals(new File(tmpDirectory, "Overview.sdf"),
+                Exporter.removeDuplicatedFileExtension(new File(tmpDirectory, "Overview.sdf.SDF.sdf"), ".sdf"));
+        Assertions.assertEquals(new File(tmpDirectory, "Overview.sdf"),
+                Exporter.removeDuplicatedFileExtension(new File(tmpDirectory, "Overview.sdf"), ".sdf"));
+        Assertions.assertEquals(new File(tmpDirectory, "Overview.csv.sdf"),
+                Exporter.removeDuplicatedFileExtension(new File(tmpDirectory, "Overview.csv.sdf"), ".sdf"));
+        Assertions.assertEquals(new File(tmpDirectory, "Overview"),
+                Exporter.removeDuplicatedFileExtension(new File(tmpDirectory, "Overview"), ".csv"));
+    }
     //</editor-fold>
     //
     //<editor-fold desc="private methods">

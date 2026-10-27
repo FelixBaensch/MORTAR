@@ -1480,9 +1480,31 @@ public class Exporter {
                 tmpNonExistingFilePath.lastIndexOf(File.separator) + 1));
         File tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         if (tmpFile != null) {
+            //the native save dialog (observed on macOS) may append the extension although the name already has it
+            tmpFile = Exporter.removeDuplicatedFileExtension(tmpFile, anExtension);
             this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent() + File.separator);
         }
         return tmpFile;
+    }
+    //
+    /**
+     * Removes a duplicated file extension from the name of the given file, e.g. "Export.sdf.sdf" becomes
+     * "Export.sdf". The comparison ignores the case. Other names, e.g. "Export.csv.sdf", are not changed.
+     *
+     * @param aFile file whose name should be checked
+     * @param anExtension file extension including the dot, e.g. ".sdf"
+     * @return the file without duplicated extension or the given file if its name does not end with a duplicated extension
+     */
+    static File removeDuplicatedFileExtension(File aFile, String anExtension) {
+        if (aFile == null || anExtension == null || anExtension.isEmpty()) {
+            return aFile;
+        }
+        String tmpName = aFile.getName();
+        String tmpDuplicatedExtension = (anExtension + anExtension).toLowerCase(Locale.ROOT);
+        while (tmpName.toLowerCase(Locale.ROOT).endsWith(tmpDuplicatedExtension)) {
+            tmpName = tmpName.substring(0, tmpName.length() - anExtension.length());
+        }
+        return tmpName.equals(aFile.getName()) ? aFile : new File(aFile.getParentFile(), tmpName);
     }
     //
     /**
