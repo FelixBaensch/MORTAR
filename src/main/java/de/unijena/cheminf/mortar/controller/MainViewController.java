@@ -655,18 +655,7 @@ public class MainViewController {
                 }
                 break;
             case Exporter.ExportTypes.MOLECULE_CSV_FILE, Exporter.ExportTypes.MOLECULE_SD_FILE:
-                if (tmpSelectedMolecules.isEmpty()) {
-                    GuiUtil.guiMessageAlert(
-                            Alert.AlertType.INFORMATION,
-                            Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
-                            Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
-                            null
-                    );
-                    return;
-                }
-                if (!GuiUtil.guiMoleculeExportConfirmationAlert(String.format(
-                        Message.get("Exporter.ConfirmationAlert.MoleculeExport.selectionText"),
-                        tmpSelectedMolecules.size(), this.moleculeDataModelList.size()))) {
+                if (!this.isMoleculeExportPossibleAndConfirmed(tmpSelectedMolecules)) {
                     return;
                 }
                 break;
@@ -827,6 +816,29 @@ public class MainViewController {
         this.isExportRunningProperty.setValue(true);
         this.updateStatusBar(this.exporterThread, Message.get("Status.exporting"));
         this.exporterThread.start();
+    }
+    //
+    /**
+     * Checks whether molecules are selected for the molecule export and, if so, shows the molecule export hint
+     * including the number of selected molecules. If no molecules are selected, the user is informed that there is
+     * no data to export.
+     *
+     * @param aSelectedMolecules molecules selected in the molecules tab
+     * @return true if molecules are selected and the user confirmed the export
+     */
+    private boolean isMoleculeExportPossibleAndConfirmed(List<MoleculeDataModel> aSelectedMolecules) {
+        if (aSelectedMolecules.isEmpty()) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return false;
+        }
+        return GuiUtil.guiMoleculeExportConfirmationAlert(String.format(
+                Message.get("Exporter.ConfirmationAlert.MoleculeExport.selectionText"),
+                aSelectedMolecules.size(), this.moleculeDataModelList.size()));
     }
     //
     /**

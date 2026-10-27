@@ -97,6 +97,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -819,55 +820,76 @@ public class OverviewViewController implements IViewToolController {
             // user canceled the dialog
             return;
         }
-        // copies to not be affected by clearGUICachesAtClosing() if the window is closed during the export
+        Callable<List<String>> tmpExportCall = this.createStructureExportCall(tmpExporter, anExportType, tmpFile);
+        // disable the button while the export is in progress to prevent duplicate exports
+        MenuButton tmpExportButton = this.overviewView.getExportMenuButton();
+        tmpExportButton.setDisable(true);
+        this.createStructureExportThread(tmpExportCall, tmpFile, tmpExportButton, this.overviewViewStage).start();
+    }
+    //
+    /**
+     * Creates the call that exports the structures currently displayed in the overview view to the given file. The
+     * structures and export options are copied at creation, so that the call is not affected by
+     * {@link #clearGUICachesAtClosing()} if the window is closed during the export. Frequencies are only exported for
+     * the fragments tab as data source; the name column is omitted if only fragments are exported, since their names
+     * equal their IDs.
+     *
+     * @param anExporter exporter instance to use
+     * @param anExportType {@link Exporter.ExportTypes#MOLECULE_SD_FILE} or {@link Exporter.ExportTypes#MOLECULE_CSV_FILE}
+     * @param aDestinationFile file to export to
+     * @return call returning the SMILES codes of the structures that could not be exported, see {@link Exporter}
+     * @throws UnsupportedOperationException if the given export type is not a structure export type
+     */
+    private Callable<List<String>> createStructureExportCall(Exporter anExporter, Exporter.ExportTypes anExportType,
+                                                             File aDestinationFile) throws UnsupportedOperationException {
         final List<MoleculeDataModel> tmpStructures = new ArrayList<>(this.moleculeDataModelList);
         final boolean tmpIsFrequencyExported = this.dataSource == DataSources.FRAGMENTS_TAB;
-        // fragment names equal their IDs, so the name column is omitted if only fragments are exported
         final boolean tmpIsNameExported = !tmpStructures.stream().allMatch(FragmentDataModel.class::isInstance);
         final char tmpSeparator = this.settingsContainer.getCsvExportSeparatorSettingCharacter();
-        final File tmpFinalFile = tmpFile;
-        final MenuButton tmpFinalExportButton = this.overviewView.getExportMenuButton();
-        final Stage tmpFinalCapturedStage = this.overviewViewStage;
+        return switch (anExportType) {
+            case Exporter.ExportTypes.MOLECULE_SD_FILE ->
+                    () -> anExporter.exportStructuresAsSDFile(aDestinationFile, tmpStructures);
+            case Exporter.ExportTypes.MOLECULE_CSV_FILE ->
+                    () -> anExporter.exportStructuresAsCsvFile(aDestinationFile, tmpStructures, tmpSeparator,
+                            tmpIsFrequencyExported, tmpIsNameExported);
+            default -> throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
+        };
+    }
+    //
+    /**
+     * Builds and returns a configured, <em>unstarted</em> daemon {@link Thread} that runs the given export call in a
+     * background {@link Task}. Analogous to {@link #createSnapshotWriteThread(File, WritableImage, Button, Stage)},
+     * the callbacks only use the given, captured UI references and re-enable the export button only if the captured
+     * stage is still showing, because the overview window might have been closed in the meantime.
+     *
+     * @param anExportCall call that performs the export
+     * @param aDestinationFile file the structures are exported to, shown to the user after the export
+     * @param anExportButton export button to re-enable after the export
+     * @param aCapturedStage stage of the overview window at the time the export was triggered
+     * @return a configured, unstarted daemon thread
+     */
+    private Thread createStructureExportThread(Callable<List<String>> anExportCall,
+                                               File aDestinationFile,
+                                               MenuButton anExportButton,
+                                               Stage aCapturedStage) {
         Task<List<String>> tmpExportTask = new Task<>() {
             @Override
-            protected List<String> call() throws IOException {
-                return switch (anExportType) {
-                    case Exporter.ExportTypes.MOLECULE_SD_FILE ->
-                            tmpExporter.exportStructuresAsSDFile(tmpFinalFile, tmpStructures);
-                    case Exporter.ExportTypes.MOLECULE_CSV_FILE ->
-                            tmpExporter.exportStructuresAsCsvFile(tmpFinalFile, tmpStructures, tmpSeparator, tmpIsFrequencyExported, tmpIsNameExported);
-                    default -> throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
-                };
+            protected List<String> call() throws Exception {
+                return anExportCall.call();
             }
         };
         // setOnSucceeded / setOnFailed are dispatched back on the JavaFX application thread by the framework
         tmpExportTask.setOnSucceeded(workerStateEvent -> {
-            if (tmpFinalCapturedStage.isShowing()) {
-                tmpFinalExportButton.setDisable(false);
+            if (aCapturedStage.isShowing()) {
+                anExportButton.setDisable(false);
             }
-            List<String> tmpFailedStructures = tmpExportTask.getValue();
-            if (tmpFailedStructures == null) {
-                GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
-                        Message.get("OverviewView.exportButton.error.title"),
-                        Message.get("OverviewView.exportButton.error.header"),
-                        null);
-            } else if (!tmpFailedStructures.isEmpty()) {
-                GuiUtil.guiExpandableAlert(
-                        Alert.AlertType.WARNING.toString(),
-                        Message.get("OverviewView.exportButton.error.title"),
-                        Message.get("OverviewView.exportButton.partialError.header"),
-                        tmpFailedStructures.size() + " " + Message.get("OverviewView.exportButton.partialError.label"),
-                        String.join("\n", tmpFailedStructures)
-                );
-            } else {
-                GuiUtil.guiExportFinishedAlert(tmpFinalFile);
-            }
+            OverviewViewController.showStructureExportResult(tmpExportTask.getValue(), aDestinationFile);
         });
         tmpExportTask.setOnFailed(workerStateEvent -> {
             Throwable tmpCause = tmpExportTask.getException();
             OverviewViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
-            if (tmpFinalCapturedStage.isShowing()) {
-                tmpFinalExportButton.setDisable(false);
+            if (aCapturedStage.isShowing()) {
+                anExportButton.setDisable(false);
             }
             Exception tmpException = (tmpCause instanceof Exception anException)
                     ? anException : new RuntimeException(tmpCause);
@@ -878,11 +900,35 @@ public class OverviewViewController implements IViewToolController {
                     tmpException
             );
         });
-        // disable the button while the export is in progress to prevent duplicate exports
-        tmpFinalExportButton.setDisable(true);
         Thread tmpExportThread = new Thread(tmpExportTask, "OverviewView-StructureExport");
         tmpExportThread.setDaemon(true);
-        tmpExportThread.start();
+        return tmpExportThread;
+    }
+    //
+    /**
+     * Shows the result of a finished structure export: a warning if the export was not possible at all (null),
+     * an expandable warning listing the structures that could not be exported, or the export finished dialog.
+     *
+     * @param aFailedStructures SMILES codes of the structures that could not be exported or null if the export failed
+     * @param aDestinationFile file the structures were exported to
+     */
+    private static void showStructureExportResult(List<String> aFailedStructures, File aDestinationFile) {
+        if (aFailedStructures == null) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                    Message.get("OverviewView.exportButton.error.title"),
+                    Message.get("OverviewView.exportButton.error.header"),
+                    null);
+        } else if (!aFailedStructures.isEmpty()) {
+            GuiUtil.guiExpandableAlert(
+                    Alert.AlertType.WARNING.toString(),
+                    Message.get("OverviewView.exportButton.error.title"),
+                    Message.get("OverviewView.exportButton.partialError.header"),
+                    aFailedStructures.size() + " " + Message.get("OverviewView.exportButton.partialError.label"),
+                    String.join("\n", aFailedStructures)
+            );
+        } else {
+            GuiUtil.guiExportFinishedAlert(aDestinationFile);
+        }
     }
     //
     /**
