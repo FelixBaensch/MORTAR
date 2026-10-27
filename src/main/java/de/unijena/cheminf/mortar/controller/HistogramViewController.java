@@ -1094,11 +1094,14 @@ public class HistogramViewController implements IViewToolController {
      */
     private void exportHistogramCsv() {
         if (this.displayedHistogramSmiles == null || this.displayedHistogramFrequencies == null || this.displayedHistogramSmiles.isEmpty()) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
+                    Message.get("Exporter.Histogram.ExportFailed.header"),
+                    Message.get("Exporter.Histogram.ExportFailed.noDataContent"));
             return;
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
         File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(
-                this.mainStage, ExportTypes.HISTOGRAM_CSV_FILE, "");
+                this.histogramStage, ExportTypes.HISTOGRAM_CSV_FILE, "");
         if (tmpExportFile == null) {
             return;
         }
@@ -1111,18 +1114,12 @@ public class HistogramViewController implements IViewToolController {
                     this.displayFrequencySetting.get().equals(HistogramViewController.FrequencyOption.ABSOLUTE_FREQUENCY));
             GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Exporter.Histogram.ExportSuccessful.title"),
                     Message.get("Exporter.Histogram.ExportSuccessful.header"),
-                    Message.get("Exporter.Histogram.ExportSuccessful.content"));
-        } catch (FileNotFoundException anException) {
+                    Message.get("Exporter.Histogram.ExportSuccessful.content") + System.lineSeparator() + tmpExportFile.getAbsolutePath());
+        } catch (FileNotFoundException | IllegalArgumentException anException) {
             Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
                     Message.get("Exporter.Histogram.ExportFailed.header"),
                     Message.get("Exporter.Histogram.ExportFailed.content"));
-        }
-        catch (IllegalArgumentException anException) {
-            Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
-            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
-                    Message.get("Exporter.Histogram.ExportFailed.header"),
-                    Message.get("Exporter.Histogram.ExportFailed.unequalListsContent"));
         }
     }
     //
