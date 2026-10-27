@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Manuel Schauer
  */
-public class MiscUtilTest {
+public class MiscUtilIDPrefixTest {
     /**
      * Tests that illegal characters are replaced, underscores are merged and stripped, and long names are truncated.
      */

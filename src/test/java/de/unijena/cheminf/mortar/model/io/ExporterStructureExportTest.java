@@ -52,7 +52,7 @@ import java.util.Locale;
  *
  * @author Manuel Schauer
  */
-public class ExporterTest {
+public class ExporterStructureExportTest {
     //<editor-fold desc="static initializer">
     /**
      * Sets the default locale to British English.

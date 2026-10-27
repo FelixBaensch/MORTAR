@@ -41,7 +41,7 @@ import java.util.Map;
  *
  * @author Manuel Schauer
  */
-public class FragmentationServiceTest {
+public class FragmentationServiceFragmentIDTest {
     //<editor-fold desc="static initializer">
     /**
      * Sets the default locale to British English.

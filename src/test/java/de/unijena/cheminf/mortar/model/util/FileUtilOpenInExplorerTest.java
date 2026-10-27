@@ -37,7 +37,7 @@ import java.io.File;
  *
  * @author Manuel Schauer
  */
-public class FileUtilTest {
+public class FileUtilOpenInExplorerTest {
     /**
      * Tests that invalid paths are rejected with an IllegalArgumentException before anything is opened.
      */
