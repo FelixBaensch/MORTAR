@@ -209,7 +209,7 @@ public class GuiUtil {
         tmpHyperlink.setTooltip(GuiUtil.createTooltip(Message.get("Exporter.ExportFinished.linkTooltip")));
         tmpHyperlink.setOnAction(anActionEvent -> {
             try {
-                FileUtil.openFileLocationInExplorer(anExportDestination);
+                FileUtil.openFilePathInExplorer(anExportDestination);
             } catch (IllegalArgumentException | SecurityException anException) {
                 GuiUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
                 GuiUtil.guiExceptionAlert(
