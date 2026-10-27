@@ -596,6 +596,16 @@ public class MainViewController {
      * @param anExportType Enum to specify what type of file to export
      */
     private void exportFile(Exporter.ExportTypes anExportType) {
+        //safety net: without any tab, there is no data to export (the export menu should be disabled in this case)
+        if (this.mainTabPane.getSelectionModel().getSelectedItem() == null) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return;
+        }
         if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
@@ -1369,13 +1379,18 @@ public class MainViewController {
     }
     //
     /**
-     * Clears the gui and all collections.
+     * Clears the gui and all collections. The menu items that need the removed tabs (export, histogram, and overview
+     * view) are disabled, since they would otherwise stay enabled without any tab, e.g. if the following import fails.
+     * They are enabled again after a successful import or fragmentation.
      */
     private void clearGuiAndCollections() {
         this.moleculeDataModelList.clear();
         this.mapOfFragmentDataModelLists.clear();
         this.moleculesDataTableView = null;
         this.mainTabPane.getTabs().clear();
+        this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+        this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
     }
     //
     /**
