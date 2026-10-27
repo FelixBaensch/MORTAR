@@ -614,6 +614,16 @@ public class MainViewController {
      * @param anExportType Enum to specify what type of file to export
      */
     private void exportFile(Exporter.ExportTypes anExportType) {
+        //safety net: without any tab, there is no data to export (the export menu should be disabled in this case)
+        if (this.mainTabPane.getSelectionModel().getSelectedItem() == null) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return;
+        }
         boolean tmpIsMoleculeExport = anExportType == Exporter.ExportTypes.MOLECULE_CSV_FILE
                 || anExportType == Exporter.ExportTypes.MOLECULE_SD_FILE;
         //only the molecules selected in the molecules tab are exported
@@ -1454,13 +1464,21 @@ public class MainViewController {
     }
     //
     /**
-     * Clears the gui and all collections.
+     * Clears the gui and all collections. The menu items that need the removed tabs (export, histogram, and overview
+     * view) are disabled, since they would otherwise stay enabled without any tab, e.g. if the following import fails.
+     * They are enabled again after a successful import or fragmentation. The window title is reset to the one at
+     * start-up, since it would otherwise still name the previously imported file.
      */
     private void clearGuiAndCollections() {
         this.moleculeDataModelList.clear();
         this.mapOfFragmentDataModelLists.clear();
         this.moleculesDataTableView = null;
         this.mainTabPane.getTabs().clear();
+        this.importedFileName = null;
+        this.primaryStage.setTitle(Message.get("Title.text"));
+        this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+        this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
     }
     //
     /**
