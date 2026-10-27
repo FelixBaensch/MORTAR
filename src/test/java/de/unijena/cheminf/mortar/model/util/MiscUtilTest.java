@@ -43,6 +43,8 @@ public class MiscUtilTest {
         Assertions.assertEquals("Ertl_algorithm_1", MiscUtil.createIDPrefix("Ertl algorithm_1", 40));
         Assertions.assertEquals("COCONUT_DB_2024", MiscUtil.createIDPrefix(" COCONUT; DB,,2024 ", 40));
         Assertions.assertEquals("abc", MiscUtil.createIDPrefix("abc_def", 4));
+        Assertions.assertEquals("a_b", MiscUtil.createIDPrefix("__a b__", 40));
+        Assertions.assertEquals("a", MiscUtil.createIDPrefix("_".repeat(10000) + "a" + "_".repeat(10000), 40));
         Assertions.assertEquals(MiscUtil.ID_PREFIX_DEFAULT, MiscUtil.createIDPrefix("ÄÖÜ;;", 40));
         Assertions.assertEquals(MiscUtil.ID_PREFIX_DEFAULT, MiscUtil.createIDPrefix(null, 40));
         Assertions.assertThrows(IllegalArgumentException.class, () -> MiscUtil.createIDPrefix("abc", 0));

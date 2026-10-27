@@ -189,7 +189,16 @@ public final class MiscUtil {
      * @return the string without leading and trailing underscores
      */
     private static String stripUnderscores(String aString) {
-        return aString.replaceAll("^_+|_+$", "");
+        //implemented without a regular expression to avoid backtracking
+        int tmpStart = 0;
+        int tmpEnd = aString.length();
+        while (tmpStart < tmpEnd && aString.charAt(tmpStart) == '_') {
+            tmpStart++;
+        }
+        while (tmpEnd > tmpStart && aString.charAt(tmpEnd - 1) == '_') {
+            tmpEnd--;
+        }
+        return aString.substring(tmpStart, tmpEnd);
     }
     //</editor-fold>
 }

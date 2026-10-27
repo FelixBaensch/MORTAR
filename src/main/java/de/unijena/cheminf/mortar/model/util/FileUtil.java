@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.util;
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -461,44 +462,41 @@ public final class FileUtil {
             throw new SecurityException("Could not open directory path");
         }
     }
-    // </editor-fold>
     //
-    //<editor-fold defaultstate="collapsed" desc="Private static methods">
     /**
-     * Opens the location of the given file or directory in the OS depending explorer equivalent. For a file, its
-     * directory is opened and the file is selected (on Linux, only the directory is opened). For a directory, the
-     * directory is opened as in {@link #openFilePathInExplorer(String)}.
+     * Opens the location of the given file or directory in the file explorer of the operating system via
+     * {@link Desktop}, i.e. without starting an external command. For a file, its directory is opened and the file is
+     * selected if the platform supports this (e.g. macOS); otherwise, only its directory is opened. A directory is
+     * opened itself.
      *
      * @param aFileOrDirectory file or directory whose location should be opened
      * @throws IllegalArgumentException if the given file is null
-     * @throws SecurityException if the location could not be opened
+     * @throws SecurityException if the location could not be opened, e.g. because the platform does not support it
      */
     public static void openFileLocationInExplorer(File aFileOrDirectory) throws IllegalArgumentException, SecurityException {
         if (Objects.isNull(aFileOrDirectory)) {
             throw new IllegalArgumentException("Given file is null.");
         }
-        if (aFileOrDirectory.isDirectory()) {
-            FileUtil.openFilePathInExplorer(aFileOrDirectory.getAbsolutePath());
-            return;
+        if (!Desktop.isDesktopSupported()) {
+            throw new SecurityException("Opening the file location is not supported on this platform.");
         }
-        String tmpPath = aFileOrDirectory.getAbsolutePath();
-        OperatingSystem tmpOS = FileUtil.detectCurrentOperatingSystem();
+        Desktop tmpDesktop = Desktop.getDesktop();
         try {
-            if (tmpOS.equals(OperatingSystem.WINDOWS)) {
-                Runtime.getRuntime().exec(new String[]{"explorer", "/select,", tmpPath});
-            } else if (tmpOS.equals(OperatingSystem.MAC_OS)) {
-                Runtime.getRuntime().exec(new String[]{"open", "-R", tmpPath});
-            } else if (tmpOS.equals(OperatingSystem.LINUX)) {
-                Runtime.getRuntime().exec(new String[]{"gio", "open", aFileOrDirectory.getAbsoluteFile().getParent()});
+            if (aFileOrDirectory.isFile() && tmpDesktop.isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
+                tmpDesktop.browseFileDirectory(aFileOrDirectory);
+            } else if (tmpDesktop.isSupported(Desktop.Action.OPEN)) {
+                tmpDesktop.open(aFileOrDirectory.isDirectory() ? aFileOrDirectory : aFileOrDirectory.getAbsoluteFile().getParentFile());
             } else {
-                throw new SecurityException("OS name " + tmpOS + " unknown.");
+                throw new SecurityException("Opening the file location is not supported on this platform.");
             }
-        } catch (IOException anException) {
+        } catch (IOException | UnsupportedOperationException | IllegalArgumentException anException) {
             FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             throw new SecurityException("Could not open file location");
         }
     }
+    // </editor-fold>
     //
+    //<editor-fold defaultstate="collapsed" desc="Private static methods">
     /**
      * Detects the current operating system and returns the matching {@link OperatingSystem} enum constant.
      *

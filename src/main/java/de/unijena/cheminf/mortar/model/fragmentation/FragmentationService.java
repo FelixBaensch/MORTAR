@@ -608,7 +608,7 @@ public class FragmentationService {
         tmpSortedFragments.sort(Comparator.comparingInt(FragmentDataModel::getMoleculeFrequency).reversed()
                 .thenComparing(FragmentDataModel::getUniqueSmiles));
         String tmpIDPrefix = MiscUtil.createIDPrefix(aFragmentationName, MiscUtil.ID_PREFIX_MAX_LENGTH);
-        Map<String, FragmentDataModel> tmpSortedMap = new LinkedHashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpSortedFragments.size()));
+        Map<String, FragmentDataModel> tmpSortedMap = LinkedHashMap.newLinkedHashMap(tmpSortedFragments.size());
         int tmpRank = 0;
         for (FragmentDataModel tmpFragment : tmpSortedFragments) {
             tmpFragment.setId(tmpIDPrefix + "_" + ++tmpRank);

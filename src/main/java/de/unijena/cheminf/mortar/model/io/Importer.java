@@ -277,8 +277,7 @@ public class Importer {
             Importer.LOGGER.log(Level.WARNING, "File name {0} was truncated to {1} for the molecule IDs.",
                     new Object[]{tmpFileNameWithoutExtension, tmpIDPrefix});
         }
-        List<MoleculeDataModel> tmpReturnList = this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced, tmpIDPrefix);
-        return tmpReturnList;
+        return this.parse(tmpImportedMoleculesSet, isRegardStereo, isKekulizationEnforced, tmpIDPrefix);
     }
     //
     /**
