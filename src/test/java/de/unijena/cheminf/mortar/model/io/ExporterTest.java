@@ -209,7 +209,16 @@ public class ExporterTest {
         File tmpDestination = tmpSeparateFilesExporter.getActualExportDestination(tmpChosenDirectory);
         Assertions.assertTrue(tmpDestination.isDirectory());
         Assertions.assertEquals(tmpChosenDirectory, tmpDestination.getParentFile());
+        //the files are named after the fragment IDs
+        Assertions.assertTrue(new File(tmpDestination, "Ertl_algorithm_1.sdf").isFile());
+        Assertions.assertTrue(new File(tmpDestination, "Ertl_algorithm_2.sdf").isFile());
         Assertions.assertEquals(2, tmpDestination.listFiles().length);
+        Exporter tmpPDBExporter = new Exporter(new SettingsContainer());
+        File tmpPDBDirectory = Files.createDirectory(aTempDir.resolve("pdb")).toFile();
+        tmpPDBExporter.exportFragmentsAsChemicalFile(tmpPDBDirectory, this.getFragments(), ChemFileTypes.PDB, true);
+        File tmpPDBDestination = tmpPDBExporter.getActualExportDestination(tmpPDBDirectory);
+        Assertions.assertTrue(new File(tmpPDBDestination, "Ertl_algorithm_1.pdb").isFile());
+        Assertions.assertTrue(new File(tmpPDBDestination, "Ertl_algorithm_2.pdb").isFile());
         Exporter tmpSingleFileExporter = new Exporter(new SettingsContainer());
         File tmpFile = aTempDir.resolve("fragments.sdf").toFile();
         tmpSingleFileExporter.exportFragmentsAsChemicalFile(tmpFile, this.getFragments(), ChemFileTypes.SDF, true, true);

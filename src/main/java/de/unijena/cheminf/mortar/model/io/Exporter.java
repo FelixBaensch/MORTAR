@@ -1175,8 +1175,9 @@ public class Exporter {
     //
     /**
      * Exports the chemical data of the given fragments as separate MDL SD files to an
-     * empty folder generated at the chosen path. The molecular formula of each fragment is used as name for each respective
-     * file. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format
+     * empty folder generated at the chosen path. The ID of each fragment is used as name for each respective file (the
+     * molecular formula if the fragment has no ID, see {@link #getFileNameForFragment(MoleculeDataModel, IAtomContainer)}).
+     * Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format
      * depends on the current status of the alwaysMDLV3000FormatAtExportSetting of the instance's settingsContainer or
      * whether a fragment exceeds an atom count of 999 atoms. The option for writing aromatic bond types is enabled. If
      * a fragment could not be exported in the first place, a second attempt with a kekulized clone of the fragment's atom
@@ -1229,9 +1230,8 @@ public class Exporter {
                             tmpPoint2dAvailable, generate2DCoordinates);
                 } //else: given 3D info is used
                 //generating file
-                String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
                 String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
-                        + File.separator + tmpMolecularFormula, ".sdf");
+                        + File.separator + this.getFileNameForFragment(tmpFragmentDataModel, tmpFragment), ".sdf");
                 File tmpSDFile = new File(tmpSDFilePathName);
                 //writing to file
                 try (
@@ -1282,7 +1282,8 @@ public class Exporter {
     //
     /**
      * Opens a directory chooser and exports the chemical data of the given fragments as PDB files to an empty folder
-     * generated at the chosen path. The molecular formula of each fragment is used as name for the associated file. In
+     * generated at the chosen path. The ID of each fragment is used as name for the associated file (the molecular
+     * formula if the fragment has no ID, see {@link #getFileNameForFragment(MoleculeDataModel, IAtomContainer)}). In
      * case no 3D information are being held in a fragment atom container, the respective PDB files are created using 2D
      * information equally setting each z coordinate to 0. If no 2D information are available, it can be chosen to
      * either generate (pseudo-) 2D atom coordinates (originally intended for layout
@@ -1329,9 +1330,8 @@ public class Exporter {
                             tmpPoint2dAvailable, generate2DCoordinates);
                 } //else: given 3D info is used
                 //generating file
-                String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
                 String tmpPDBFilePathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectory
-                        + File.separator + tmpMolecularFormula, ".pdb");
+                        + File.separator + this.getFileNameForFragment(tmpFragmentDataModel, tmpFragment), ".pdb");
                 File tmpPDBFile = new File(tmpPDBFilePathName);
                 //writing to file
                 try (
@@ -1367,6 +1367,20 @@ public class Exporter {
                         "(export of %d fragments failed). Folder name: %s", finalTmpExportedFragmentsCounter,
                 finalTmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
         return tmpFailedExportFragments;
+    }
+    //
+    /**
+     * Returns the file name (without extension) for the export of a fragment into a separate file: the ID of the
+     * fragment, which only contains characters that are valid in file names on all platforms, or its molecular formula
+     * if it has no ID.
+     *
+     * @param aFragmentDataModel data model of the fragment
+     * @param aFragment atom container of the fragment, used to generate the molecular formula if needed
+     * @return file name without extension
+     */
+    private String getFileNameForFragment(MoleculeDataModel aFragmentDataModel, IAtomContainer aFragment) {
+        String tmpID = aFragmentDataModel.getId();
+        return (tmpID == null || tmpID.isBlank()) ? ChemUtil.generateMolecularFormula(aFragment) : tmpID;
     }
     //
     /**

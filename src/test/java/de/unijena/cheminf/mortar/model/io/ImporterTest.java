@@ -98,7 +98,8 @@ public class ImporterTest extends Importer {
     }
     //
     /**
-     * Tests that empty lines in a SMILES file do not lead to gaps in the molecule IDs.
+     * Tests that empty lines in a SMILES file do not lead to gaps in the molecule IDs and that molecules without a
+     * name in the file get their ID as name.
      *
      * @throws Exception if anything goes wrong
      */
@@ -110,6 +111,8 @@ public class ImporterTest extends Importer {
         Assertions.assertTrue(tmpMolecules.size() > 1);
         for (int i = 0; i < tmpMolecules.size(); i++) {
             Assertions.assertEquals("SMILESTestFileOne_" + (i + 1), tmpMolecules.get(i).getId());
+            Assertions.assertEquals(tmpMolecules.get(i).getId(), tmpMolecules.get(i).getName());
+            Assertions.assertEquals(tmpMolecules.get(i).getId(), tmpMolecules.get(i).getProperties().get(Importer.MOLECULE_NAME_PROPERTY_KEY));
         }
     }
     //
@@ -121,8 +124,9 @@ public class ImporterTest extends Importer {
      */
     @Test
     public void testMoleculeIDsWithFaultySDFRecords(@TempDir Path aTempDir) throws Exception {
+        //the first record has no name and gets its ID as name
         String tmpMethane = """
-                Methane
+
                   test
 
                   1  0  0  0  0  0  0  0  0  0999 V2000
@@ -154,6 +158,7 @@ public class ImporterTest extends Importer {
         List<MoleculeDataModel> tmpMolecules = this.importMoleculeFile(tmpFile, false, false, false);
         Assertions.assertEquals(2, tmpMolecules.size());
         Assertions.assertEquals("Faulty_Records_1", tmpMolecules.get(0).getId());
+        Assertions.assertEquals("Faulty_Records_1", tmpMolecules.get(0).getName());
         Assertions.assertEquals("Ethane", tmpMolecules.get(1).getName());
         Assertions.assertEquals("Faulty_Records_2", tmpMolecules.get(1).getId());
     }
