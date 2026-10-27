@@ -49,6 +49,7 @@ import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
+import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -295,6 +296,14 @@ public class MainViewController {
         );
         this.mainView.getMainMenuBar().getCancelExportMenuItem().visibleProperty().bind(this.isExportRunningProperty);
         //<editor-fold desc="export">
+        //molecules export to CSV
+        this.mainView.getMainMenuBar().getMoleculesExportToCSVMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.exportFile(Exporter.ExportTypes.MOLECULE_CSV_FILE));
+        //molecules export to SDF
+        this.mainView.getMainMenuBar().getMoleculesExportToSDFMenuItem().addEventHandler(
+                EventType.ROOT,
+                anEvent -> this.exportFile(Exporter.ExportTypes.MOLECULE_SD_FILE));
         //fragments export to CSV
         this.mainView.getMainMenuBar().getFragmentsExportToCSVMenuItem().addEventHandler(
                 EventType.ROOT,
@@ -552,12 +561,21 @@ public class MainViewController {
                     });
                     return;
                 }
-                this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+                //molecules can be exported right after the import, fragments and items only after a fragmentation
+                this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                this.mainView.getMainMenuBar().getFragmentsExportMenu().setDisable(true);
+                this.mainView.getMainMenuBar().getItemsExportMenu().setDisable(true);
                 this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
                 this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(false);
                 this.primaryStage.setTitle(Message.get("Title.text") + " - " + tmpImporter.getFileName() + " - " + tmpImportedMoleculeDataModels.size() +
                         " " + Message.get((tmpImportedMoleculeDataModels.size() == 1 ? "Title.molecule" : "Title.molecules")));
                 this.importedFileName = tmpImporter.getFileName();
+                if (tmpImporter.isIDPrefixTruncated()) {
+                    GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION,
+                            Message.get("Importer.IDPrefixTruncatedAlert.title"),
+                            Message.get("Importer.IDPrefixTruncatedAlert.header"),
+                            String.format(Message.get("Importer.IDPrefixTruncatedAlert.text"), MiscUtil.ID_PREFIX_MAX_LENGTH));
+                }
                 this.updateStatusBar(this.importerThread, Message.get("Status.imported"));
                 this.isImportRunningProperty.setValue(false);
                 this.mainView.getMainCenterPane().setStyle("-fx-background-image: none");
@@ -606,7 +624,13 @@ public class MainViewController {
             );
             return;
         }
-        if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
+        boolean tmpIsMoleculeExport = anExportType == Exporter.ExportTypes.MOLECULE_CSV_FILE
+                || anExportType == Exporter.ExportTypes.MOLECULE_SD_FILE;
+        //only the molecules selected in the molecules tab are exported
+        List<MoleculeDataModel> tmpSelectedMolecules = tmpIsMoleculeExport
+                ? Exporter.getSelectedMolecules(this.moleculeDataModelList)
+                : new ArrayList<>(0);
+        if (!tmpIsMoleculeExport && (this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.text"));
@@ -640,6 +664,11 @@ public class MainViewController {
                     return;
                 }
                 break;
+            case Exporter.ExportTypes.MOLECULE_CSV_FILE, Exporter.ExportTypes.MOLECULE_SD_FILE:
+                if (!this.isMoleculeExportPossibleAndConfirmed(tmpSelectedMolecules)) {
+                    return;
+                }
+                break;
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
         if (this.isExportRunningProperty.get()) {
@@ -647,7 +676,8 @@ public class MainViewController {
         }
         //returns null if file chooser dialog was cancelled
         File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(this.primaryStage, anExportType,
-                ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+                tmpIsMoleculeExport ? this.getImportedFileNameWithoutExtension()
+                        : ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
         if (tmpExportFile == null) {
             return;
         }
@@ -730,6 +760,16 @@ public class MainViewController {
                             MainViewController.this.importedFileName,
                             TabNames.ITEMIZATION
                     );
+                    case Exporter.ExportTypes.MOLECULE_CSV_FILE -> tmpExporter.exportStructuresAsCsvFile(
+                            tmpExportFile,
+                            tmpSelectedMolecules,
+                            MainViewController.this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
+                            false
+                    );
+                    case Exporter.ExportTypes.MOLECULE_SD_FILE -> tmpExporter.exportStructuresAsSDFile(
+                            tmpExportFile,
+                            tmpSelectedMolecules
+                    );
                     default -> throw new UnsupportedOperationException("Unknown export type.");
                 };
             }
@@ -757,6 +797,9 @@ public class MainViewController {
                         tmpFailedExportFragments.size() + " " + Message.get("Exporter.FragmentsTab.ExportNotPossible.label"),
                         tmpStringBuilder.toString()
                 );
+            } else {
+                //for exports into separate files, a new subdirectory of the chosen directory is created
+                GuiUtil.guiExportFinishedAlert(tmpExporter.getActualExportDestination(tmpExportFile));
             }
         });
         this.exportTask.setOnCancelled(event -> {
@@ -783,6 +826,42 @@ public class MainViewController {
         this.isExportRunningProperty.setValue(true);
         this.updateStatusBar(this.exporterThread, Message.get("Status.exporting"));
         this.exporterThread.start();
+    }
+    //
+    /**
+     * Checks whether molecules are selected for the molecule export and, if so, shows the molecule export hint
+     * including the number of selected molecules. If no molecules are selected, the user is informed that there is
+     * no data to export.
+     *
+     * @param aSelectedMolecules molecules selected in the molecules tab
+     * @return true if molecules are selected and the user confirmed the export
+     */
+    private boolean isMoleculeExportPossibleAndConfirmed(List<MoleculeDataModel> aSelectedMolecules) {
+        if (aSelectedMolecules.isEmpty()) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return false;
+        }
+        return GuiUtil.guiMoleculeExportConfirmationAlert(String.format(
+                Message.get("Exporter.ConfirmationAlert.MoleculeExport.selectionText"),
+                aSelectedMolecules.size(), this.moleculeDataModelList.size()));
+    }
+    //
+    /**
+     * Returns the name of the last imported file without its file extension to be used as proposal for export file
+     * names. If no file has been imported, "MORTAR" is returned.
+     *
+     * @return name of the imported file without extension
+     */
+    private String getImportedFileNameWithoutExtension() {
+        if (this.importedFileName == null || this.importedFileName.isBlank()) {
+            return "MORTAR";
+        }
+        return FileUtil.getFileNameWithoutExtension(new File(this.importedFileName));
     }
     //
     /**
@@ -1178,6 +1257,8 @@ public class MainViewController {
                         this.addFragmentationResultTabs(this.fragmentationService.getCurrentFragmentationName());
                         this.updateStatusBar(this.fragmentationThread, Message.get("Status.finished"));
                         this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                        this.mainView.getMainMenuBar().getFragmentsExportMenu().setDisable(false);
+                        this.mainView.getMainMenuBar().getItemsExportMenu().setDisable(false);
                         this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(false);
                         this.fragmentationButton.setDisable(false);
                         this.cancelFragmentationButton.setVisible(false);
@@ -1193,6 +1274,8 @@ public class MainViewController {
                 this.updateStatusBar(this.fragmentationThread, Message.get("Status.canceled"));
                 //note: the export functions give a warning to the user should the fragment set be empty
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                this.mainView.getMainMenuBar().getFragmentsExportMenu().setDisable(false);
+                this.mainView.getMainMenuBar().getItemsExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;
@@ -1203,6 +1286,8 @@ public class MainViewController {
                 this.updateStatusBar(this.fragmentationThread, Message.get("Status.failed"));
                 //note: the export functions give a warning to the user should the fragment set be empty
                 this.mainView.getMainMenuBar().getExportMenu().setDisable(false);
+                this.mainView.getMainMenuBar().getFragmentsExportMenu().setDisable(false);
+                this.mainView.getMainMenuBar().getItemsExportMenu().setDisable(false);
                 this.fragmentationButton.setDisable(false);
                 this.cancelFragmentationButton.setVisible(false);
                 this.isFragmentationRunning = false;

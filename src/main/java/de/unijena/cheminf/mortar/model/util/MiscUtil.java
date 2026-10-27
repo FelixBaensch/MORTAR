@@ -46,6 +46,16 @@ public final class MiscUtil {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(MiscUtil.class.getName());
+    //
+    /**
+     * Maximum length of the prefixes used for the IDs of molecules and fragments (file or fragmentation name).
+     */
+    public static final int ID_PREFIX_MAX_LENGTH = 40;
+    //
+    /**
+     * Prefix used for IDs if the given base name does not contain any usable characters.
+     */
+    public static final String ID_PREFIX_DEFAULT = "MORTAR";
     //</editor-fold>
     //
     //<editor-fold desc="Private constructor" defaultstate="collapsed">
@@ -58,6 +68,61 @@ public final class MiscUtil {
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Public static methods">
+    /**
+     * Creates a prefix for the IDs of molecules or fragments from the given base name, e.g. the import file name
+     * (without extension) or the fragmentation name. All characters other than letters, digits, '_', and '-' are
+     * replaced by '_', consecutive '_' are merged, and leading or trailing '_' removed. The result is not truncated,
+     * see {@link #truncateIDPrefix(String, int)}. If no usable characters remain, {@link #ID_PREFIX_DEFAULT} is returned.
+     * <br>The result never contains characters that are used as CSV separators in MORTAR.
+     *
+     * @param aBaseName name to derive the prefix from
+     * @return ID prefix
+     */
+    public static String createIDPrefix(String aBaseName) {
+        if (aBaseName == null) {
+            return MiscUtil.ID_PREFIX_DEFAULT;
+        }
+        String tmpPrefix = MiscUtil.stripUnderscores(aBaseName.replaceAll("[^A-Za-z0-9_-]+", "_").replaceAll("_{2,}", "_"));
+        return tmpPrefix.isEmpty() ? MiscUtil.ID_PREFIX_DEFAULT : tmpPrefix;
+    }
+    //
+    /**
+     * Creates a prefix for the IDs of molecules or fragments from the given base name as described in
+     * {@link #createIDPrefix(String)} and truncates it to the given maximum length.
+     *
+     * @param aBaseName name to derive the prefix from
+     * @param aMaxLength maximum length of the returned prefix
+     * @return ID prefix
+     * @throws IllegalArgumentException if the given maximum length is smaller than 1
+     */
+    public static String createIDPrefix(String aBaseName, int aMaxLength) throws IllegalArgumentException {
+        return MiscUtil.truncateIDPrefix(MiscUtil.createIDPrefix(aBaseName), aMaxLength);
+    }
+    //
+    /**
+     * Truncates the given ID prefix (created by {@link #createIDPrefix(String)}) to the given maximum length and
+     * removes trailing '_' resulting from the truncation. If no usable characters remain, {@link #ID_PREFIX_DEFAULT}
+     * is returned.
+     *
+     * @param anIDPrefix ID prefix to truncate
+     * @param aMaxLength maximum length of the returned prefix
+     * @return the truncated ID prefix or the given one if it is not longer than the maximum length
+     * @throws IllegalArgumentException if the given maximum length is smaller than 1
+     */
+    public static String truncateIDPrefix(String anIDPrefix, int aMaxLength) throws IllegalArgumentException {
+        if (aMaxLength < 1) {
+            throw new IllegalArgumentException("Given maximum length must be at least 1.");
+        }
+        if (anIDPrefix == null) {
+            return MiscUtil.ID_PREFIX_DEFAULT;
+        }
+        if (anIDPrefix.length() <= aMaxLength) {
+            return anIDPrefix;
+        }
+        String tmpPrefix = MiscUtil.stripUnderscores(anIDPrefix.substring(0, aMaxLength));
+        return tmpPrefix.isEmpty() ? MiscUtil.ID_PREFIX_DEFAULT : tmpPrefix;
+    }
+    //
     /**
      * String with globally unique ID.
      *
@@ -113,6 +178,27 @@ public final class MiscUtil {
             }
         }
         return Integer.compare(tmpSeparateNumbersV1.length, tmpSeparateNumbersV2.length);
+    }
+    //</editor-fold>
+    //
+    //<editor-fold defaultstate="collapsed" desc="Private static methods">
+    /**
+     * Removes all leading and trailing underscores from the given string.
+     *
+     * @param aString string to process
+     * @return the string without leading and trailing underscores
+     */
+    private static String stripUnderscores(String aString) {
+        //implemented without a regular expression to avoid backtracking
+        int tmpStart = 0;
+        int tmpEnd = aString.length();
+        while (tmpStart < tmpEnd && aString.charAt(tmpStart) == '_') {
+            tmpStart++;
+        }
+        while (tmpEnd > tmpStart && aString.charAt(tmpEnd - 1) == '_') {
+            tmpEnd--;
+        }
+        return aString.substring(tmpStart, tmpEnd);
     }
     //</editor-fold>
 }

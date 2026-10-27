@@ -83,6 +83,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Exporter.
@@ -126,7 +127,15 @@ public class Exporter {
         /**
          * enum value for pdb file.
          */
-        FRAGMENT_PDB_FILE;
+        FRAGMENT_PDB_FILE,
+        /**
+         * enum value for molecules csv file.
+         */
+        MOLECULE_CSV_FILE,
+        /**
+         * enum value for molecules single sd file.
+         */
+        MOLECULE_SD_FILE;
     }
     //</editor-fold>
     //
@@ -247,6 +256,13 @@ public class Exporter {
     }
     //</editor-fold>
     //
+    //<editor-fold desc="Public static final class constants">
+    /**
+     * Key of the property (SD file data field) under which the MORTAR ID of exported molecules and fragments is written.
+     */
+    public static final String ID_PROPERTY_KEY = "MORTAR_ID";
+    //</editor-fold>
+    //
     //<editor-fold defaultstate="collapsed" desc="Private static final class constants">
     /**
      * Logger of this class.
@@ -271,6 +287,14 @@ public class Exporter {
     private final SettingsContainer settingsContainer;
     //</editor-fold>
     //
+    //<editor-fold desc="Private variables" defaultstate="collapsed">
+    /**
+     * Directory that was created by the last export into separate files (separate SD files or PDB files) of this
+     * instance; null if no such export took place. Volatile because exports run in a separate thread.
+     */
+    private volatile File createdExportDirectory;
+    //</editor-fold>
+    //
     //<editor-fold desc="Constructors">
     /**
      * Constructor. Should the recent directory path provided by the container be faulty, it is set to its default
@@ -286,7 +310,36 @@ public class Exporter {
     }
     //</editor-fold>
     //
+    //<editor-fold desc="Public static methods" defaultstate="collapsed">
+    /**
+     * Returns the molecules of the given list that are selected (e.g. via the checkboxes in the molecules tab), in the
+     * same order. Only these molecules are exported in the molecule export.
+     *
+     * @param aMoleculeList list of molecules; an empty list is returned if it is null
+     * @return new list of the selected molecules
+     */
+    public static List<MoleculeDataModel> getSelectedMolecules(List<MoleculeDataModel> aMoleculeList) {
+        if (aMoleculeList == null) {
+            return new ArrayList<>(0);
+        }
+        return aMoleculeList.stream().filter(MoleculeDataModel::isSelected).collect(Collectors.toCollection(ArrayList::new));
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Public methods" defaultstate="collapsed">
+    /**
+     * Returns the actual destination of an export: the directory created by the last export into separate files
+     * (separate SD files or PDB files) of this instance, which is a new subdirectory of the chosen directory, or the
+     * given chosen file or directory for all other exports.
+     *
+     * @param aChosenFileOrDirectory the file or directory chosen by the user for the export
+     * @return the file or directory the exported data was actually written to
+     */
+    public File getActualExportDestination(File aChosenFileOrDirectory) {
+        File tmpCreatedDirectory = this.createdExportDirectory;
+        return tmpCreatedDirectory != null ? tmpCreatedDirectory : aChosenFileOrDirectory;
+    }
+    //
     /**
      * Opens FileChooser to enable the user to choose an export destination file.
      *
@@ -343,10 +396,211 @@ public class Exporter {
                 }
                 yield tmpFile;
             }
+            case ExportTypes.MOLECULE_CSV_FILE, ExportTypes.MOLECULE_SD_FILE ->
+                    this.openFileChooserForStructureExportFile(aParentStage, anExportType, "Molecules_" + tmpFragmentationName);
             default ->
                     throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
         };
         return tmpFile;
+    }
+    //
+    /**
+     * Opens a FileChooser to enable the user to choose an export destination file for a structure export
+     * (molecules or fragments) as CSV or SD file. The appropriate file extension is appended if the user did not
+     * give it.
+     *
+     * @param aParentStage Stage
+     * @param anExportType either {@link ExportTypes#MOLECULE_CSV_FILE} or {@link ExportTypes#MOLECULE_SD_FILE}
+     * @param aFileNameProposal initial file name to suggest to the user, without the file extension
+     * @return the chosen file or null if the user chose to cancel the export in the file chooser dialog
+     * @throws NullPointerException if the stage or export type is null
+     * @throws UnsupportedOperationException if the export type is not a structure export type
+     */
+    public File openFileChooserForStructureExportFile(Stage aParentStage, ExportTypes anExportType, String aFileNameProposal)
+            throws NullPointerException, UnsupportedOperationException {
+        Objects.requireNonNull(aParentStage, "aParentStage must not be null");
+        Objects.requireNonNull(anExportType, "anExportType must not be null");
+        String tmpFileName = Objects.requireNonNullElse(aFileNameProposal, "Structures").replaceAll("\\s+", "_").trim();
+        FileExtension tmpExtension;
+        String tmpDescription;
+        switch (anExportType) {
+            case ExportTypes.MOLECULE_CSV_FILE -> {
+                tmpExtension = FileExtension.CSV;
+                tmpDescription = "CSV";
+            }
+            case ExportTypes.MOLECULE_SD_FILE -> {
+                tmpExtension = FileExtension.SDF;
+                tmpDescription = "SD-File";
+            }
+            default ->
+                    throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
+        }
+        File tmpFile = this.chooseFile(aParentStage, tmpDescription, tmpExtension.toString(), tmpFileName);
+        if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(tmpExtension.extension.toLowerCase(Locale.ROOT))) {
+            tmpFile = new File(tmpFile.getAbsolutePath() + tmpExtension);
+        }
+        return tmpFile;
+    }
+    //
+    /**
+     * Exports the given structures (molecules or fragments) to a CSV file containing their SMILES codes, names, and
+     * MORTAR IDs (columns in this order). Fragments that have no name are written with their ID as name.
+     * If frequencies should be exported, the molecule frequency and molecule percentage of all given fragments are
+     * added as further columns (left empty for structures that are no fragments). In the names, the given separator
+     * character is replaced by a placeholder character ('_').
+     * <br>NOTE: MORTAR holds all structures as SMILES codes only, so no 3D or other information of the imported file
+     * beyond the SMILES code and name is exported.
+     * Returns a list containing SMILES of the structures that caused an error when exported.
+     *
+     * @param aFile the file to export to; method returns null if the file is null
+     * @param aStructureList list of molecules and/or fragments to export
+     * @param aSeparator the separator for the csv file
+     * @param anIsFrequencyExported whether the molecule frequency and molecule percentage of fragments should be exported
+     * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
+     * @throws FileNotFoundException if the given file cannot be found
+     */
+    public List<String> exportStructuresAsCsvFile(File aFile,
+                                                  List<MoleculeDataModel> aStructureList,
+                                                  char aSeparator,
+                                                  boolean anIsFrequencyExported) throws FileNotFoundException {
+        return this.exportStructuresAsCsvFile(aFile, aStructureList, aSeparator, anIsFrequencyExported, true);
+    }
+    //
+    /**
+     * Exports the given structures (molecules or fragments) to a CSV file containing their SMILES codes, optionally
+     * their names, and their MORTAR IDs. See {@link #exportStructuresAsCsvFile(File, List, char, boolean)} for details.
+     * The name column can be omitted, e.g. if only fragments are exported whose names equal their IDs. Then, the ID is
+     * written in the second column, so that it is used as name when the file is re-imported.
+     *
+     * @param aFile the file to export to; method returns null if the file is null
+     * @param aStructureList list of molecules and/or fragments to export
+     * @param aSeparator the separator for the csv file
+     * @param anIsFrequencyExported whether the molecule frequency and molecule percentage of fragments should be exported
+     * @param anIsNameExported whether the name column should be exported
+     * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
+     * @throws FileNotFoundException if the given file cannot be found
+     */
+    public List<String> exportStructuresAsCsvFile(File aFile,
+                                                  List<MoleculeDataModel> aStructureList,
+                                                  char aSeparator,
+                                                  boolean anIsFrequencyExported,
+                                                  boolean anIsNameExported) throws FileNotFoundException {
+        if (aFile == null || aStructureList == null) {
+            return null;
+        }
+        List<String> tmpFailedExportStructures = new LinkedList<>();
+        //the character used to replace all occurrences of the given separator char in the exported strings
+        final char tmpReplacementChar = '_';
+        try (PrintWriter tmpWriter = new PrintWriter(aFile.getPath())) {
+            StringBuilder tmpCsvHeader = new StringBuilder();
+            tmpCsvHeader.append(Message.get("Exporter.structures.csvHeader.smiles"));
+            if (anIsNameExported) {
+                tmpCsvHeader.append(aSeparator).append(Message.get("Exporter.structures.csvHeader.name"));
+            }
+            tmpCsvHeader.append(aSeparator).append(Message.get("Exporter.structures.csvHeader.id"));
+            if (anIsFrequencyExported) {
+                tmpCsvHeader.append(aSeparator).append(Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency"))
+                        .append(aSeparator).append(Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage"));
+            }
+            tmpWriter.write(tmpCsvHeader.toString());
+            for (MoleculeDataModel tmpStructure : aStructureList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                try {
+                    //note to developers: make sure no chars are offered as separator char options that can
+                    // also occur in SMILES strings!
+                    tmpWriter.printf("%n%s", tmpStructure.getUniqueSmiles());
+                    if (anIsNameExported) {
+                        tmpWriter.printf("%s%s", aSeparator, tmpStructure.getName().replace(aSeparator, tmpReplacementChar));
+                    }
+                    tmpWriter.printf("%s%s", aSeparator, Objects.requireNonNullElse(tmpStructure.getId(), ""));
+                    if (anIsFrequencyExported) {
+                        if (tmpStructure instanceof FragmentDataModel tmpFragment) {
+                            tmpWriter.printf(Locale.ROOT, "%s%d%s%.4f",
+                                    aSeparator, tmpFragment.getMoleculeFrequency(),
+                                    aSeparator, tmpFragment.getMoleculePercentage());
+                        } else {
+                            tmpWriter.printf("%s%s", aSeparator, aSeparator);
+                        }
+                    }
+                } catch (Exception anException) {
+                    Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                    tmpFailedExportStructures.add(tmpStructure.getUniqueSmiles());
+                    //continue;
+                }
+            }
+            return tmpFailedExportStructures;
+        }
+    }
+    //
+    /**
+     * Exports the given structures (molecules or fragments) into a single MDL SD file. Since MORTAR holds all
+     * structures as SMILES codes only, the atom containers are re-created from the SMILES codes and 2D atom coordinates
+     * are generated for layout purposes; no 3D information of the originally imported file is retained. The structure
+     * name (for fragments without name, their ID) is used as title of the respective record and the MORTAR ID is
+     * written to the data field {@link #ID_PROPERTY_KEY}. Whether the MDL V3000 format is always used depends on the
+     * alwaysMDLV3000FormatAtExportSetting of the instance's settingsContainer. If a structure could not be exported in
+     * the first place, a second attempt with a kekulized clone is made.
+     * Returns a list containing SMILES of the structures that caused an error when exported.
+     *
+     * @param aFile the file to export to; method returns null if the file is null
+     * @param aStructureList list of molecules and/or fragments to export
+     * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
+     * @throws IOException if sth goes wrong
+     */
+    public List<String> exportStructuresAsSDFile(File aFile, List<MoleculeDataModel> aStructureList) throws IOException {
+        if (aFile == null || aStructureList == null) {
+            return null;
+        }
+        List<String> tmpFailedExportStructures = new LinkedList<>();
+        int tmpExportedStructuresCounter = 0;
+        try (
+                PrintWriter tmpWriter = new PrintWriter(aFile.getPath());
+                BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
+        ) {
+            tmpSDFWriter.setAlwaysV3000(this.settingsContainer.getAlwaysMDLV3000FormatAtExportSetting());
+            try {
+                tmpSDFWriter.getSetting(MDLV2000Writer.OptWriteAromaticBondTypes).setSetting("true");
+            } catch (CDKException anException) {
+                Exporter.LOGGER.log(Level.WARNING, "Exporting structures with aromatic bond types not possible", anException);
+            }
+            for (MoleculeDataModel tmpStructure : aStructureList) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                try {
+                    //cloned to not alter a possibly cached atom container of the data model
+                    IAtomContainer tmpAtomContainer = tmpStructure.getAtomContainer().clone();
+                    this.setNameAndID(tmpAtomContainer, tmpStructure);
+                    try {
+                        ChemUtil.generate2DCoordinates(tmpAtomContainer);
+                    } catch (CDKException anException) {
+                        //exported without atom coordinates (all set to 0)
+                        Exporter.LOGGER.log(Level.WARNING, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                    }
+                    try {
+                        tmpSDFWriter.write(tmpAtomContainer);
+                    } catch (CDKException anException) {
+                        //retrying with a kekulized clone - going to main catch block if sth goes wrong
+                        IAtomContainer tmpKekulizedClone = tmpAtomContainer.clone();
+                        Kekulization.kekulize(tmpKekulizedClone);
+                        tmpSDFWriter.write(tmpKekulizedClone);
+                    }
+                    tmpExportedStructuresCounter++;
+                } catch (CDKException | CloneNotSupportedException anException) {
+                    Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                    tmpFailedExportStructures.add(tmpStructure.getUniqueSmiles());
+                    //continue;
+                }
+            }
+            int tmpFinalExportedStructuresCounter = tmpExportedStructuresCounter;
+            Exporter.LOGGER.log(Level.INFO, () -> String.format("Exported %d structures as single SD file " +
+                            "(export of %d structures failed). File name: %s", tmpFinalExportedStructuresCounter,
+                    tmpFailedExportStructures.size(), aFile.getName()));
+            return tmpFailedExportStructures;
+        }
     }
     //
     /**
@@ -493,7 +747,9 @@ public class Exporter {
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
             String tmpCsvHeader = Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.idOfStructure") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfFragment") + aSeparator +
+                    Message.get("Exporter.itemsTab.csvHeader.idOfFragment") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.frequencyOfFragment");
             tmpWriter.write(tmpCsvHeader);
             for (MoleculeDataModel tmpMoleculeDataModel : aMoleculeDataModelList) {
@@ -501,12 +757,14 @@ public class Exporter {
                     return null;
                 }
                 try {
-                    tmpWriter.printf("%n%s%s%s",
+                    tmpWriter.printf("%n%s%s%s%s%s",
                             tmpMoleculeDataModel.getName().replace(aSeparator, tmpReplacementChar),
                             aSeparator,
                             //note to developers: make sure no chars are offered as separator char options that can
                             // also occur in SMILES strings!
-                            tmpMoleculeDataModel.getUniqueSmiles());
+                            tmpMoleculeDataModel.getUniqueSmiles(),
+                            aSeparator,
+                            Objects.requireNonNullElse(tmpMoleculeDataModel.getId(), ""));
                 } catch (Exception anException) {
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpMoleculeDataModel.getName()), anException);
                     tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
@@ -522,8 +780,10 @@ public class Exporter {
                     }
                     tmpWriter.append(aSeparator);
                     try {
-                        tmpWriter.printf("%s%s%s",
+                        tmpWriter.printf("%s%s%s%s%s",
                                 tmpFragmentDataModel.getUniqueSmiles(),
+                                aSeparator,
+                                Objects.requireNonNullElse(tmpFragmentDataModel.getId(), ""),
                                 aSeparator,
                                 tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
                     } catch (Exception anException) {
@@ -554,6 +814,7 @@ public class Exporter {
         List<String> tmpFailedExportFragments = new LinkedList<>();
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
             String tmpFragmentationCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
+                    Message.get("Exporter.fragmentationTab.csvHeader.id") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.frequency") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.percentage") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + aSeparator +
@@ -565,8 +826,11 @@ public class Exporter {
                 }
                 try {
                     FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-                    tmpWriter.printf("%n%s%s%d%s%.4f%s%d%s%.4f",
+                    //the ID is written in the second column, so that it is used as name when the file is re-imported;
+                    // Locale.ROOT ensures '.' as decimal separator, independent of the default locale
+                    tmpWriter.printf(Locale.ROOT, "%n%s%s%s%s%d%s%.4f%s%d%s%.4f",
                             tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
+                            Objects.requireNonNullElse(tmpFragmentDataModel.getId(), ""), aSeparator,
                             tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
                             tmpFragmentDataModel.getAbsolutePercentage(), aSeparator,
                             tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
@@ -868,6 +1132,7 @@ public class Exporter {
                 IAtomContainer tmpFragment;
                 try {
                     tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                    this.setNameAndID(tmpFragment, tmpFragmentDataModel);
                     IAtomContainer tmpFragmentClone = null;
                     boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
                     boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
@@ -910,8 +1175,9 @@ public class Exporter {
     //
     /**
      * Exports the chemical data of the given fragments as separate MDL SD files to an
-     * empty folder generated at the chosen path. The molecular formula of each fragment is used as name for each respective
-     * file. Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format
+     * empty folder generated at the chosen path. The ID of each fragment is used as name for each respective file (the
+     * molecular formula if the fragment has no ID, see {@link #getFileNameForFragment(MoleculeDataModel, IAtomContainer)}).
+     * Whether the fragments are written using the MDL V3000 format instead of the MDL V2000 format
      * depends on the current status of the alwaysMDLV3000FormatAtExportSetting of the instance's settingsContainer or
      * whether a fragment exceeds an atom count of 999 atoms. The option for writing aromatic bond types is enabled. If
      * a fragment could not be exported in the first place, a second attempt with a kekulized clone of the fragment's atom
@@ -943,6 +1209,7 @@ public class Exporter {
         // this is not how this FileUtil method should be used, but I'll allow it
         String tmpFinalSDFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpSDFFilesDirectoryPathName, File.separator);
         File tmpSDFilesDirectory = Files.createDirectory(Paths.get(tmpFinalSDFilesDirectoryPathName)).toFile();
+        this.createdExportDirectory = tmpSDFilesDirectory;
         int tmpExportedFragmentsCounter = 0;
         int tmpFailedFragmentExportCounter = 0;
         //iterating through the fragments held by the list of fragments
@@ -953,6 +1220,7 @@ public class Exporter {
             IAtomContainer tmpFragment;
             try {
                 tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                this.setNameAndID(tmpFragment, tmpFragmentDataModel);
                 IAtomContainer tmpFragmentClone = null;
                 boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
                 boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
@@ -962,9 +1230,8 @@ public class Exporter {
                             tmpPoint2dAvailable, generate2DCoordinates);
                 } //else: given 3D info is used
                 //generating file
-                String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
                 String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
-                        + File.separator + tmpMolecularFormula, ".sdf");
+                        + File.separator + this.getFileNameForFragment(tmpFragmentDataModel, tmpFragment), ".sdf");
                 File tmpSDFile = new File(tmpSDFilePathName);
                 //writing to file
                 try (
@@ -1015,7 +1282,8 @@ public class Exporter {
     //
     /**
      * Opens a directory chooser and exports the chemical data of the given fragments as PDB files to an empty folder
-     * generated at the chosen path. The molecular formula of each fragment is used as name for the associated file. In
+     * generated at the chosen path. The ID of each fragment is used as name for the associated file (the molecular
+     * formula if the fragment has no ID, see {@link #getFileNameForFragment(MoleculeDataModel, IAtomContainer)}). In
      * case no 3D information are being held in a fragment atom container, the respective PDB files are created using 2D
      * information equally setting each z coordinate to 0. If no 2D information are available, it can be chosen to
      * either generate (pseudo-) 2D atom coordinates (originally intended for layout
@@ -1041,6 +1309,7 @@ public class Exporter {
         // this is not how this FileUtil method should be used, but I'll allow it
         String tmpFinalPDBFilesDirectoryPathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectoryPathName, File.separator);
         File tmpPDBFilesDirectory = Files.createDirectory(Paths.get(tmpFinalPDBFilesDirectoryPathName)).toFile();
+        this.createdExportDirectory = tmpPDBFilesDirectory;
         int tmpExportedFragmentsCounter = 0;
         int tmpFailedFragmentExportCounter = 0;
         //iterating through the fragments held by the list of fragments
@@ -1051,6 +1320,7 @@ public class Exporter {
             IAtomContainer tmpFragment;
             try {
                 tmpFragment = tmpFragmentDataModel.getAtomContainer();
+                this.setNameAndID(tmpFragment, tmpFragmentDataModel);
                 IAtomContainer tmpFragmentClone = null;
                 boolean tmpPoint3dAvailable = ChemUtil.has3DCoordinates(tmpFragmentDataModel);
                 boolean tmpPoint2dAvailable = ChemUtil.has2DCoordinates(tmpFragmentDataModel);
@@ -1060,9 +1330,8 @@ public class Exporter {
                             tmpPoint2dAvailable, generate2DCoordinates);
                 } //else: given 3D info is used
                 //generating file
-                String tmpMolecularFormula = ChemUtil.generateMolecularFormula(tmpFragment);
                 String tmpPDBFilePathName = FileUtil.getNonExistingFilePath(tmpPDBFilesDirectory
-                        + File.separator + tmpMolecularFormula, ".pdb");
+                        + File.separator + this.getFileNameForFragment(tmpFragmentDataModel, tmpFragment), ".pdb");
                 File tmpPDBFile = new File(tmpPDBFilePathName);
                 //writing to file
                 try (
@@ -1098,6 +1367,35 @@ public class Exporter {
                         "(export of %d fragments failed). Folder name: %s", finalTmpExportedFragmentsCounter,
                 finalTmpFailedFragmentExportCounter, tmpPDBFilesDirectory.getName()));
         return tmpFailedExportFragments;
+    }
+    //
+    /**
+     * Returns the file name (without extension) for the export of a fragment into a separate file: the ID of the
+     * fragment, which only contains characters that are valid in file names on all platforms, or its molecular formula
+     * if it has no ID.
+     *
+     * @param aFragmentDataModel data model of the fragment
+     * @param aFragment atom container of the fragment, used to generate the molecular formula if needed
+     * @return file name without extension
+     */
+    private String getFileNameForFragment(MoleculeDataModel aFragmentDataModel, IAtomContainer aFragment) {
+        String tmpID = aFragmentDataModel.getId();
+        return (tmpID == null || tmpID.isBlank()) ? ChemUtil.generateMolecularFormula(aFragment) : tmpID;
+    }
+    //
+    /**
+     * Sets the name of the given data model (for fragments without name, their ID) as title of the given atom container
+     * and its MORTAR ID, if available, as property under the key {@link #ID_PROPERTY_KEY}, so that both are written to
+     * exported chemical files.
+     *
+     * @param anAtomContainer atom container to be exported
+     * @param aDataModel data model the atom container was created from
+     */
+    private void setNameAndID(IAtomContainer anAtomContainer, MoleculeDataModel aDataModel) {
+        anAtomContainer.setTitle(aDataModel.getName());
+        if (aDataModel.getId() != null) {
+            anAtomContainer.setProperty(Exporter.ID_PROPERTY_KEY, aDataModel.getId());
+        }
     }
     //
     /**
@@ -1196,9 +1494,31 @@ public class Exporter {
                 tmpNonExistingFilePath.lastIndexOf(File.separator) + 1));
         File tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         if (tmpFile != null) {
+            //the native save dialog (observed on macOS) may append the extension although the name already has it
+            tmpFile = Exporter.removeDuplicatedFileExtension(tmpFile, anExtension);
             this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent() + File.separator);
         }
         return tmpFile;
+    }
+    //
+    /**
+     * Removes a duplicated file extension from the name of the given file, e.g. "Export.sdf.sdf" becomes
+     * "Export.sdf". The comparison ignores the case. Other names, e.g. "Export.csv.sdf", are not changed.
+     *
+     * @param aFile file whose name should be checked
+     * @param anExtension file extension including the dot, e.g. ".sdf"
+     * @return the file without duplicated extension or the given file if its name does not end with a duplicated extension
+     */
+    static File removeDuplicatedFileExtension(File aFile, String anExtension) {
+        if (aFile == null || anExtension == null || anExtension.isEmpty()) {
+            return aFile;
+        }
+        String tmpName = aFile.getName();
+        String tmpDuplicatedExtension = (anExtension + anExtension).toLowerCase(Locale.ROOT);
+        while (tmpName.toLowerCase(Locale.ROOT).endsWith(tmpDuplicatedExtension)) {
+            tmpName = tmpName.substring(0, tmpName.length() - anExtension.length());
+        }
+        return tmpName.equals(aFile.getName()) ? aFile : new File(aFile.getParentFile(), tmpName);
     }
     //
     /**

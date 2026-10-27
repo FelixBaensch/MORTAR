@@ -99,8 +99,9 @@ public class DynamicSMILESFileReaderTest {
         DynamicSMILESFileReader tmpReader = new DynamicSMILESFileReader();
         IAtomContainerSet tmpMolSet = tmpReader.readFile(tmpResourceFile, tmpFormat);
         Assertions.assertEquals(3, tmpMolSet.getAtomContainerCount());
-        Assertions.assertEquals("SMILESTestFileOne1", tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
-        Assertions.assertEquals("SMILESTestFileOne5", tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        //no names are given in the file, so no name property is set (the Importer uses the molecule IDs as names)
+        Assertions.assertNull(tmpMolSet.getAtomContainer(0).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+        Assertions.assertNull(tmpMolSet.getAtomContainer(2).getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
         Assertions.assertEquals(2, tmpReader.getSkippedLinesCounter());
     }
     //
