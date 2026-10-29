@@ -111,9 +111,20 @@ public class FragmentationTask implements Callable<FragmentationTaskResult> {
     //
     /**
      * Applies the IMoleculeFragmenter.fragment(IAtomContainer container) method on all given
-     * molecules and counts the occurring exceptions.
+     * molecules and records the exceptions and various statistics for the resulting fragments as a
+     * {@link FragmentationTaskResult}.
      *
-     * @return the number of occurred exceptions
+     * @return a {@link FragmentationTaskResult} containing:
+     * <ol>
+     *     <li> Nr. of exceptions that happened during molecule fragmentation.</li>
+     *     <li> Nr. of molecules that were successfully(!) fragmented but produced no fragments.</li>
+     *     <li> Nr. of molecules that were successfully(!) fragmented and produced fragments (to check whether all molecules are a</li>
+     *     <li> Nr. of molecules that gave no atom container.</li>
+     *     <li> Nr. of molecules that were filtered according to the respective fragmentation algorithm method.</li>
+     *     <li> Nr. of fragments that produced no SMILES code.</li>
+     *     <li> Nr. of unexpected exceptions that happened during molecule fragmentation (i.e. the whole process of preprocessing,</li>
+     * </ol>
+     *
      * @throws Exception if unable to compute a result (copied from doc in Callable interface)
      */
     @Override
