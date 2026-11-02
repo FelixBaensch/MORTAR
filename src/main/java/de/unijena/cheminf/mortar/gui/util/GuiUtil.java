@@ -27,7 +27,6 @@ package de.unijena.cheminf.mortar.gui.util;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
-import de.unijena.cheminf.mortar.controller.OverviewViewController;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.IDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
@@ -35,9 +34,10 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.io.Importer;
+import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
-import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -599,6 +599,20 @@ public class GuiUtil {
     }
     //
     /**
+     * Copies the given SMILES string to the system clipboard. Does nothing if the string is null or empty.
+     *
+     * @param aSmiles SMILES string that should be copied
+     */
+    public static void copySmilesToClipboard(String aSmiles) {
+        if (aSmiles == null || aSmiles.isEmpty()) {
+            return;
+        }
+        ClipboardContent tmpContent = new ClipboardContent();
+        tmpContent.putString(aSmiles);
+        Clipboard.getSystemClipboard().setContent(tmpContent);
+    }
+    //
+    /**
      * Copies the unique SMILES of the given atom container to the system clipboard. Does nothing if the atom container
      * is null or no SMILES could be created.
      *
@@ -612,6 +626,7 @@ public class GuiUtil {
         }
         String tmpSmiles = ChemUtil.createUniqueSmiles(anAtomContainer, isStereoChemEncoded, isAromaticityEncoded);
         if (tmpSmiles == null) {
+            GuiUtil.LOGGER.log(Level.WARNING, "SMILES could not be created for the given atom container.");
             return;
         }
         ClipboardContent tmpContent = new ClipboardContent();
@@ -624,7 +639,7 @@ public class GuiUtil {
      * @param aMoleculeDataModel molecule whose name should be copied
      */
     public static void copyMoleculeNameToClipboard(MoleculeDataModel aMoleculeDataModel) {
-        if (aMoleculeDataModel == null) {
+        if (aMoleculeDataModel == null || aMoleculeDataModel.getName() == null) {
             return;
         }
         ClipboardContent tmpContent = new ClipboardContent();
@@ -764,23 +779,20 @@ public class GuiUtil {
         tmpEnlargedStructureViewStackPane.setStyle(
                 "-fx-background-color: WHITE; " +
                         "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " +
-                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
-                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
+                        GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INNER_SHADOW_WIDTH / 2 + ", 0, 0, " +
+                        GuiDefinitions.ENLARGED_STRUCTURE_VIEW_INNER_SHADOW_WIDTH / 8 + ")"
         );
         Scene tmpScene = new Scene(tmpEnlargedStructureViewStackPane,
-                OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH,
-                OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT);
+                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH,
+                GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT);
         tmpEnlargedStructureViewStage.setScene(tmpScene);
         tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
         tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
         tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
         String tmpIconURL = GuiUtil.class.getClassLoader().getResource(CONFIGURATION.getProperty("mortar.imagesFolder") + CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
         tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
-        tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
-        tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
-        //
-        tmpEnlargedStructureViewStage.show();
-        //
+        tmpEnlargedStructureViewStage.setMinHeight(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
+        tmpEnlargedStructureViewStage.setMinWidth(GuiDefinitions.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
         //generation of context menu for the options of copying the structure's image or SMILES String to the clipboard
         ContextMenu tmpContextMenu = new ContextMenu();
         //
@@ -788,37 +800,37 @@ public class GuiUtil {
             //depiction of the structure
             ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(
                     aMoleculeDataModel.getAtomContainer(), 1.0,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                    GuiDefinitions.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
                     true, true
             ));
             tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);
             //copyImageMenuItem
             MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
-            tmpCopyImageMenuItem.setOnAction(anActionEvent -> copyMoleculeStructureImageToClipboard(aMoleculeDataModel));
+            tmpCopyImageMenuItem.setOnAction(anActionEvent -> GuiUtil.copyMoleculeStructureImageToClipboard(aMoleculeDataModel));
             //copySmilesMenuItem
             MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
-            tmpCopySmilesMenuItem.setOnAction(anActionEvent -> copyMoleculeSmilesToClipboard(aMoleculeDataModel));
+            tmpCopySmilesMenuItem.setOnAction(anActionEvent -> GuiUtil.copyMoleculeSmilesToClipboard(aMoleculeDataModel));
             //copyNameMenuItem
             MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyNameMenuItem"));
-            tmpCopyNameMenuItem.setOnAction(anActionEvent -> copyMoleculeNameToClipboard(aMoleculeDataModel));
+            tmpCopyNameMenuItem.setOnAction(anActionEvent -> GuiUtil.copyMoleculeNameToClipboard(aMoleculeDataModel));
             tmpContextMenu.getItems().addAll(tmpCopyImageMenuItem, tmpCopySmilesMenuItem, tmpCopyNameMenuItem, new SeparatorMenuItem());
             tmpStructureImage.setOnContextMenuRequested(event -> tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY()));
             //listener for resize events to fit the structure depiction to the view size
-            ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) -> Platform.runLater(() -> {
+            ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) -> {
                 tmpEnlargedStructureViewStackPane.getChildren().clear();
                 try {
                     ImageView tmpUpdatedStructureImage = new ImageView(DepictionUtil.depictImage(aMoleculeDataModel.getAtomContainer(), 1.0,
-                                    tmpEnlargedStructureViewStackPane.getWidth() * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                                    tmpEnlargedStructureViewStackPane.getHeight() * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                                    tmpEnlargedStructureViewStackPane.getWidth() * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
+                                    tmpEnlargedStructureViewStackPane.getHeight() * GuiDefinitions.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
                                     true, true
                             ));
                     tmpEnlargedStructureViewStackPane.getChildren().add(tmpUpdatedStructureImage);
                     tmpUpdatedStructureImage.setOnContextMenuRequested(event -> tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY()));
                 } catch (CDKException aCDKException) {
                     //logging and guiMessageAlert at issues with structure depiction
-                    LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-                    guiMessageAlert(
+                    GuiUtil.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+                    GuiUtil.guiMessageAlert(
                             Alert.AlertType.WARNING,
                             Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.title"),
                             Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.header"),
@@ -826,13 +838,14 @@ public class GuiUtil {
                     );
                     tmpEnlargedStructureViewStage.close();
                 }
-            });
+            };
             tmpEnlargedStructureViewStage.heightProperty().addListener(tmpStageResizeEventListener);
             tmpEnlargedStructureViewStage.widthProperty().addListener(tmpStageResizeEventListener);
+            tmpEnlargedStructureViewStage.show();
         } catch (CDKException aCDKException) {
             //logging and guiMessageAlert at issues with structure depiction
-            LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            guiMessageAlert(
+            GuiUtil.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
+            GuiUtil.guiMessageAlert(
                     Alert.AlertType.WARNING,
                     Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.title"),
                     Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.header"),

@@ -167,7 +167,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         this.contextMenu.getItems().add(this.copyMenuItem);
         //-copyImageMenuItem
-        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyImageMenuItem"));
         tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopyImageMenuItem.setOnAction(anActionEvent -> {
             MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
@@ -178,7 +178,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.contextMenu.getItems().add(tmpCopyImageMenuItem);
 
         //-copySmilesMenuItem
-        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("TableView.contextMenu.copySmilesMenuItem"));
         tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopySmilesMenuItem.setOnAction(anActionEvent -> {
             MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
@@ -188,7 +188,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         });
         this.contextMenu.getItems().add(tmpCopySmilesMenuItem);
         //-copyNameMenuItem
-        MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyNameMenuItem"));
         tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopyNameMenuItem.setOnAction(anActionEvent -> {
             MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
@@ -201,7 +201,7 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.contextMenu.getItems().add(new SeparatorMenuItem());
         //-enlargedStructureViewMenuItem
         MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(
-                Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
+                Message.get("TableView.contextMenu.enlargedStructureViewMenuItem"));
         tmpEnlargedStructureViewMenuItem.setOnAction(anActionEvent -> {
             MoleculeDataModel tmpSelectedMolecule = (MoleculeDataModel) this.getSelectionModel().getSelectedItem();
             if (tmpSelectedMolecule != null && this.getScene() != null && this.getScene().getWindow() instanceof Stage tmpOwnerStage) {

@@ -60,8 +60,6 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
@@ -988,9 +986,7 @@ public class HistogramViewController implements IViewToolController {
         tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, tmpContextMenuEventHandler);
         // Listener ContextMenuItems
         tmpCopySmilesMenuItem.setOnAction(event -> {
-            ClipboardContent tmpSmilesClipboardContent = new ClipboardContent();
-            tmpSmilesClipboardContent.putString(aSmiles);
-            Clipboard.getSystemClipboard().setContent(tmpSmilesClipboardContent);
+            GuiUtil.copySmilesToClipboard(aSmiles);
         });
         tmpCopyStructureMenuItem.setOnAction(event -> {
             GuiUtil.copyMoleculeStructureImageToClipboard(this.atomContainerForDisplayCache);

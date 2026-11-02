@@ -161,26 +161,6 @@ public class OverviewViewController implements IViewToolController {
      * Default value for rows of structure images per overview view page.
      */
     public static final int OVERVIEW_VIEW_STRUCTURE_GRID_PANE_ROWS_PER_PAGE_DEFAULT = 5;
-    /**
-     * Minimum value for the width of the enlarged structure view.
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE = 250.0;
-    /**
-     * Minimum value for the height of the enlarged structure view.
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
-    /**
-     * Initial width of the enlarged structure view's scene.
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH = 500.0;
-    /**
-     * Initial height of the enlarged structure view's scene.
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT = 400.0;
-    /**
-     * Ratio of width and height of the enlarged structure view's structure image to the one of its parent stack pane.
-     */
-    public static final double ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO = 0.9;
     //</editor-fold>
     //
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">
@@ -574,7 +554,7 @@ public class OverviewViewController implements IViewToolController {
                             this.scheduledFuture = this.scheduledThreadPoolExecutor.schedule(
                                     //Platform runLater enables this method call in a separate thread
                                     () -> Platform.runLater(() ->
-                                            this.showEnlargedStructureView(
+                                            GuiUtil.showEnlargedStructureView(
                                                     this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList),
                                                     this.overviewViewStage
                                             )
@@ -1318,7 +1298,7 @@ public class OverviewViewController implements IViewToolController {
             tmpEnlargedStructureViewMenuItem.setOnAction((ActionEvent anActionEvent) -> {
                 if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
                     Platform.runLater(() ->
-                            this.showEnlargedStructureView(
+                            GuiUtil.showEnlargedStructureView(
                                     this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList),
                                     this.overviewViewStage
                             )
@@ -1442,100 +1422,5 @@ public class OverviewViewController implements IViewToolController {
         return tmpMaxRowsPerPage;
     }
     //
-    /**
-     * Opens and shows the enlarged structure view. The view shows an enlarged version of the given structure and gives
-     * the options to copy the image or the SMILES string of the structure.
-     *
-     * @param aMoleculeDataModel MoleculeDataModel of the structure to be shown in the enlarged structure view
-     * @param anOwnerStage Stage to own the enlarged structure view's stage
-     * @throws NullPointerException if one of the given parameters is null
-     */
-    private void showEnlargedStructureView(MoleculeDataModel aMoleculeDataModel, Stage anOwnerStage)
-            throws NullPointerException {
-        //checks
-        Objects.requireNonNull(aMoleculeDataModel, "aMoleculeDataModel (instance of MoleculeDataModel) is null");
-        Objects.requireNonNull(anOwnerStage, "anOwnerStage (instance of Stage) is null");
-        //initialization of the view
-        Stage tmpEnlargedStructureViewStage = new Stage();
-        StackPane tmpEnlargedStructureViewStackPane = new StackPane();
-        tmpEnlargedStructureViewStackPane.setStyle(
-                "-fx-background-color: WHITE; " +
-                "-fx-effect: innershadow(gaussian, rgba(100, 100, 100, 0.9), " +
-                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 2 + ", 0, 0, " +
-                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 8 + ")"
-        );
-        Scene tmpScene = new Scene(tmpEnlargedStructureViewStackPane,
-                OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH,
-                OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT);
-        tmpEnlargedStructureViewStage.setScene(tmpScene);
-        tmpEnlargedStructureViewStage.initModality(Modality.WINDOW_MODAL);
-        tmpEnlargedStructureViewStage.initOwner(anOwnerStage);
-        tmpEnlargedStructureViewStage.setTitle(Message.get("OverviewView.enlargedStructureView.title"));
-        String tmpIconURL = this.getClass().getClassLoader().getResource(
-                this.configuration.getProperty("mortar.imagesFolder")
-                        + this.configuration.getProperty("mortar.logo.icon.name")).toExternalForm();
-        tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
-        tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
-        tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
-        //
-        tmpEnlargedStructureViewStage.show();
-        //
-        //generation of context menu for the options of copying the structure's image or SMILES String to the clipboard
-        ContextMenu tmpContextMenu = this.generateContextMenuWithListeners(true);
-        //
-        try {
-            //depiction of the structure
-            ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(
-                    aMoleculeDataModel.getAtomContainer(),1.0,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH
-                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                    OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT
-                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                    true, true
-            ));
-            tmpEnlargedStructureViewStackPane.getChildren().add(tmpStructureImage);
-            tmpStructureImage.setOnContextMenuRequested(event -> tmpContextMenu.show(tmpStructureImage, event.getScreenX(), event.getScreenY()));
-            //listener for resize events to fit the structure depiction to the view size
-            ChangeListener<Number> tmpStageResizeEventListener = (observable, oldValue, newValue) -> Platform.runLater(() -> {
-                tmpEnlargedStructureViewStackPane.getChildren().clear();
-                try {
-                    ImageView tmpUpdatedStructureImage = new ImageView(
-                            DepictionUtil.depictImage(
-                                    aMoleculeDataModel.getAtomContainer(), 1.0,
-                                    tmpEnlargedStructureViewStackPane.getWidth()
-                                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                                    tmpEnlargedStructureViewStackPane.getHeight()
-                                            * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
-                                    true, true
-                            )
-                    );
-                    tmpEnlargedStructureViewStackPane.getChildren().add(tmpUpdatedStructureImage);
-                    tmpUpdatedStructureImage.setOnContextMenuRequested(event -> tmpContextMenu.show(tmpUpdatedStructureImage, event.getScreenX(), event.getScreenY()));
-                } catch (CDKException aCDKException) {
-                    //logging and guiMessageAlert at issues with structure depiction
-                    OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-                    GuiUtil.guiMessageAlert(
-                            Alert.AlertType.WARNING,
-                            Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.title"),
-                            Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.header"),
-                            Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.text")
-                    );
-                    tmpEnlargedStructureViewStage.close();
-                }
-            });
-            tmpEnlargedStructureViewStage.heightProperty().addListener(tmpStageResizeEventListener);
-            tmpEnlargedStructureViewStage.widthProperty().addListener(tmpStageResizeEventListener);
-        } catch (CDKException aCDKException) {
-            //logging and guiMessageAlert at issues with structure depiction
-            OverviewViewController.LOGGER.log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            GuiUtil.guiMessageAlert(
-                    Alert.AlertType.WARNING,
-                    Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.title"),
-                    Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.header"),
-                    Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.text")
-            );
-            tmpEnlargedStructureViewStage.close();
-        }
-    }
     //</editor-fold>
 }

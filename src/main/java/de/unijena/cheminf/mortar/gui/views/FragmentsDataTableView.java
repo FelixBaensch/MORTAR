@@ -308,7 +308,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         //-separatorMenuItem
         this.contextMenu.getItems().add(new SeparatorMenuItem());
         //-enlargedStructureViewMenuItem
-        MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.enlargedStructureViewMenuItem"));
+        MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.enlargedStructureViewMenuItem"));
         tmpEnlargedStructureViewMenuItem.setOnAction(anActionEvent -> {
             FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel().getSelectedItem();
             if (tmpSelectedFragment != null && this.getScene() != null && this.getScene().getWindow() instanceof Stage tmpOwnerStage) {
@@ -320,11 +320,16 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.overviewViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.fragmentsTab.overviewViewMenuItem"));
         this.contextMenu.getItems().add(this.overviewViewMenuItem);
     }
+    //
+    /**
+     * Adds the context menu items for the structure column (copying the structure image, SMILES and name to the
+     * clipboard) to the context menu of this table view.
+     */
     private void addStructureContextMenuItems() {
         String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
                 this.configuration.getProperty("mortar.imagesFolder") + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
         //-copyImageMenuItem
-        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyImageMenuItem"));
+        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyImageMenuItem"));
         tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopyImageMenuItem.setOnAction(anActionEvent -> {
             FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel().getSelectedItem();
@@ -334,7 +339,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         });
         this.contextMenu.getItems().add(tmpCopyImageMenuItem);
         //-copySmilesMenuItem
-        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copySmilesMenuItem"));
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("TableView.contextMenu.copySmilesMenuItem"));
         tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopySmilesMenuItem.setOnAction(anActionEvent -> {
             FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel().getSelectedItem();
@@ -344,7 +349,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         });
         this.contextMenu.getItems().add(tmpCopySmilesMenuItem);
         //-copyNameMenuItem
-        MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("OverviewView.contextMenu.copyNameMenuItem"));
+        MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyNameMenuItem"));
         tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
         tmpCopyNameMenuItem.setOnAction(anActionEvent -> {
             FragmentDataModel tmpSelectedFragment = (FragmentDataModel) this.getSelectionModel().getSelectedItem();
@@ -352,6 +357,7 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
                 GuiUtil.copyMoleculeNameToClipboard(tmpSelectedFragment);
             }
         });
+        this.contextMenu.getItems().add(tmpCopyNameMenuItem);
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
