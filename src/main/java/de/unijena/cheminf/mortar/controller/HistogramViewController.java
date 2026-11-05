@@ -368,11 +368,13 @@ public class HistogramViewController implements IViewToolController {
      */
     private List<FragmentDataModel> fragmentListCopy;
     /**
-     * Smiles currently displayed in the histogram.
+     * Full (non-abbreviated) SMILES codes of the fragments currently displayed in the histogram, in descending frequency
+     * order (top to bottom as in the chart).
      */
     private List<String> displayedHistogramSmiles;
     /**
-     * Frequencies currently displayed in the histogram.
+     * Frequencies of the fragments currently displayed in the histogram, in descending order (top to bottom as in the
+     * chart), index-aligned with {@link #displayedHistogramSmiles}.
      */
     private List<Integer> displayedHistogramFrequencies;
     /**
@@ -409,8 +411,8 @@ public class HistogramViewController implements IViewToolController {
     /**
      * Constructor, initialises all settings with their default values. Does *not* open the view.
      *
-     * @param aConfiguration configuration instance.
-     * @param aSettingsContainer the setting container.
+     * @param aConfiguration configuration instance to read resource file paths for icons from
+     * @param aSettingsContainer the setting container to hand to the exporter for a CSV export and to read the CSV separator from
      */
     public HistogramViewController(IConfiguration aConfiguration,
                                    SettingsContainer aSettingsContainer) {
@@ -787,16 +789,15 @@ public class HistogramViewController implements IViewToolController {
                 tmpFrequencyList.size());
         List<String> tmpSmilesToDepict = tmpFullSmilesLength.subList(tmpFullSmilesLength.size()- aFragmentNumber,
                 tmpFullSmilesLength.size());
-        this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
-        this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
-        Collections.reverse(this.displayedHistogramSmiles);
-        Collections.reverse(this.displayedHistogramFrequencies);
-        this.histogramView.getExportCSVButton().setDisable(
-                this.displayedHistogramSmiles == null || this.displayedHistogramSmiles.isEmpty() || this.displayedHistogramFrequencies == null || this.displayedHistogramFrequencies.isEmpty());
         XYChart.Series<Number, String> tmpSeries = new XYChart.Series<>();
         if (tmpSublistSmiles.size() != tmpSublistFrequency.size() || tmpSublistSmiles.size() != tmpSmilesToDepict.size()) {
             throw new IllegalArgumentException("SMILES code and frequency sublists for display are of unequal size.");
         }
+        this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
+        this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
+        Collections.reverse(this.displayedHistogramSmiles);
+        Collections.reverse(this.displayedHistogramFrequencies);
+        this.histogramView.getExportCSVButton().setDisable(this.displayedHistogramSmiles.isEmpty());
         for (int i = 0; i < tmpSublistSmiles.size(); i++) {
             Integer tmpCurrentFrequency = tmpSublistFrequency.get(i);
             String tmpCurrentDisplaySmiles = tmpSublistSmiles.get(i);
@@ -1112,10 +1113,11 @@ public class HistogramViewController implements IViewToolController {
                     this.displayedHistogramFrequencies,
                     this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                     this.displayFrequencySetting.get().equals(HistogramViewController.FrequencyOption.ABSOLUTE_FREQUENCY));
+            //TODO: after #243 is merged, this can be a "guiExportFinishedAlert" which contains the file path as a cliackable link
             GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Exporter.Histogram.ExportSuccessful.title"),
                     Message.get("Exporter.Histogram.ExportSuccessful.header"),
                     Message.get("Exporter.Histogram.ExportSuccessful.content") + System.lineSeparator() + tmpExportFile.getAbsolutePath());
-        } catch (FileNotFoundException | IllegalArgumentException anException) {
+        } catch (FileNotFoundException | RuntimeException anException) {
             Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
                     Message.get("Exporter.Histogram.ExportFailed.header"),

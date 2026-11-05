@@ -308,7 +308,9 @@ public class HistogramView extends AnchorPane {
      *
      * @return export CSV button
      */
-    public Button getExportCSVButton() { return this.exportCSVButton; }
+    public Button getExportCSVButton() {
+        return this.exportCSVButton;
+    }
     //
     /**
      * Returns content of displayed fragments number text field, i.e. string representation of the number of fragments to
