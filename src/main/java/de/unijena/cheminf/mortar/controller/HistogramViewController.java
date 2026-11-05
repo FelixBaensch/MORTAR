@@ -368,6 +368,10 @@ public class HistogramViewController implements IViewToolController {
      */
     private List<FragmentDataModel> fragmentListCopy;
     /**
+     * Name of the fragmentation whose fragments are displayed, used as part of the proposed CSV export file name.
+     */
+    private String fragmentationName;
+    /**
      * Full (non-abbreviated) SMILES codes of the fragments currently displayed in the histogram, in descending frequency
      * order (top to bottom as in the chart).
      */
@@ -572,12 +576,15 @@ public class HistogramViewController implements IViewToolController {
      *
      * @param aMainStage Stage of the MainView
      * @param aFragmentDataModelList ObservableList that holds FragmentDataModel objects for visualisation in histogram
+     * @param aFragmentationName name of the fragmentation the fragments stem from, used for the proposed export file name
      * @throws NullPointerException if any param is null
      */
-    public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aFragmentDataModelList) throws NullPointerException {
+    public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName)
+            throws NullPointerException {
         //<editor-fold desc="Checks" defaultstate="collapsed">
         Objects.requireNonNull(aMainStage, "Main stage is null.");
         Objects.requireNonNull(aFragmentDataModelList, "Fragment data model list is ´null");
+        Objects.requireNonNull(aFragmentationName, "Fragmentation name is null.");
         //</editor-fold>
         //
         //<editor-fold desc="initialisation of stage and view" defaultstate="collapsed">
@@ -588,6 +595,7 @@ public class HistogramViewController implements IViewToolController {
         this.imageZoomFactor = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR;
         this.mainStage = aMainStage;
         this.fragmentListCopy = new ArrayList<>(aFragmentDataModelList);
+        this.fragmentationName = aFragmentationName;
         this.histogramStage = new Stage();
         this.histogramStage.initModality(Modality.WINDOW_MODAL);
         this.histogramStage.initOwner(this.mainStage);
@@ -1102,7 +1110,7 @@ public class HistogramViewController implements IViewToolController {
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
         File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(
-                this.histogramStage, ExportTypes.HISTOGRAM_CSV_FILE, "");
+                this.histogramStage, ExportTypes.HISTOGRAM_CSV_FILE, this.fragmentationName);
         if (tmpExportFile == null) {
             return;
         }
@@ -1144,6 +1152,7 @@ public class HistogramViewController implements IViewToolController {
         this.atomContainerForDisplayCache = null;
         this.displayedHistogramSmiles = null;
         this.displayedHistogramFrequencies = null;
+        this.fragmentationName = null;
     }
     //
     /**

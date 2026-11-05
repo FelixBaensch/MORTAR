@@ -314,7 +314,7 @@ public class Exporter {
                 yield tmpFile;
             }
             case ExportTypes.HISTOGRAM_CSV_FILE -> {
-                tmpFileName = "Histogram_Data";
+                tmpFileName = "Histogram_" + tmpFragmentationName;
                 tmpFile = this.chooseFile(aParentStage, "CSV", FileExtension.CSV.toString(), tmpFileName);
                 if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.CSV.extension.toLowerCase(Locale.ROOT))) {
                     tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);

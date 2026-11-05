@@ -121,14 +121,16 @@ public class ViewToolsManager {
         return this.viewToolsArray;
     }
     /**
-     * See {@link HistogramViewController#openHistogramView(Stage, List)}.
+     * See {@link HistogramViewController#openHistogramView(Stage, List, String)}.
      *
      * @param aMainStage Stage of the MainView
      * @param aFragmentDataModelList ObservableList that holds FragmentDataModel objects for visualisation in histogram
+     * @param aFragmentationName name of the fragmentation the fragments stem from, used for the proposed export file name
      * @throws NullPointerException if any param is null
      */
-    public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList) throws NullPointerException {
-        this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList);
+    public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList, String aFragmentationName)
+            throws NullPointerException {
+        this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList, aFragmentationName);
     }
     /**
      * See {@link OverviewViewController#initializeAndShowOverviewView(Stage, OverviewViewController.DataSources, String, List)}.
