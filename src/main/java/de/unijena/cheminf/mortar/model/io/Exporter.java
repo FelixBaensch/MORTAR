@@ -126,7 +126,11 @@ public class Exporter {
         /**
          * enum value for pdb file.
          */
-        FRAGMENT_PDB_FILE;
+        FRAGMENT_PDB_FILE,
+        /**
+         * enum value for histogram CSV file.
+         */
+        HISTOGRAM_CSV_FILE;
     }
     //</editor-fold>
     //
@@ -309,6 +313,14 @@ public class Exporter {
                 }
                 yield tmpFile;
             }
+            case ExportTypes.HISTOGRAM_CSV_FILE -> {
+                tmpFileName = "Histogram_" + tmpFragmentationName;
+                tmpFile = this.chooseFile(aParentStage, "CSV", FileExtension.CSV.toString(), tmpFileName);
+                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.CSV.extension.toLowerCase(Locale.ROOT))) {
+                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
+                }
+                yield tmpFile;
+            }
             case ExportTypes.FRAGMENT_PDB_FILE, ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
                     this.chooseDirectory(aParentStage);
             case ExportTypes.FRAGMENT_PDF_FILE -> {
@@ -362,7 +374,11 @@ public class Exporter {
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
      * @throws FileNotFoundException if the given file cannot be found
      */
-    public List<String> exportCsvFile(File aFile, List<MoleculeDataModel> aMoleculeDataModelList, String aFragmentationName, char aSeparator, TabNames aTabName)
+    public List<String> exportCsvFile(File aFile,
+                                      List<MoleculeDataModel> aMoleculeDataModelList,
+                                      String aFragmentationName,
+                                      char aSeparator,
+                                      TabNames aTabName)
             throws FileNotFoundException {
         if (aFile == null) {
             return null;
@@ -375,6 +391,36 @@ public class Exporter {
             return this.createItemizationTabCsvFile(aFile, aMoleculeDataModelList, aFragmentationName, aSeparator);
         }
         return new ArrayList<>(0);
+    }
+    /**
+     * Exports the histogram data as a CSV file.
+     *
+     * @param aFile the CSV file to create
+     * @param aSmilesList the full (non-abbreviated) SMILES codes of the fragments currently displayed in the histogram
+     * @param aFrequencyList the displayed frequency list
+     * @param aSeparator the separator for the CSV file
+     * @param anIsAbsoluteFrequencyHeader true if the frequency column header for the absolute fragment frequency should
+     *                                    be used, false for the header of the molecule frequency
+     * @throws NullPointerException if the file, the SMILES list, or the frequency list is null
+     * @throws IllegalArgumentException if the SMILES list and the frequency list differ in size
+     * @throws FileNotFoundException if given file cannot be found
+     */
+    public void exportHistogramCsvFile(File aFile,
+                                       List<String> aSmilesList,
+                                       List<Integer> aFrequencyList,
+                                       char aSeparator,
+                                       boolean anIsAbsoluteFrequencyHeader)
+            throws NullPointerException, IllegalArgumentException, FileNotFoundException {
+        Objects.requireNonNull(aFile, "aFile must not be null.");
+        Objects.requireNonNull(aSmilesList, "aSmilesList must not be null.");
+        Objects.requireNonNull(aFrequencyList, "aFrequencyList must not be null.");
+        if (aSmilesList.size() != aFrequencyList.size()) {
+            throw new IllegalArgumentException(
+                    "aSmilesList and aFrequencyList must have the same size, but were "
+                            + aSmilesList.size() + " and " + aFrequencyList.size() + "."
+            );
+        }
+        this.createHistogramCsvFile(aFile, aSmilesList, aFrequencyList, aSeparator, anIsAbsoluteFrequencyHeader);
     }
     //
     /**
@@ -578,6 +624,32 @@ public class Exporter {
                 }
             }
             return tmpFailedExportFragments;
+        }
+    }
+    /**
+     * Exports the histogram data as displayed in the histogram view as a CSV file.
+     *
+     * @param aCsvFile the CSV file to create
+     * @param aSmilesList the full (non-abbreviated) SMILES codes of the fragments currently displayed in the histogram
+     * @param aFrequencyList the list of displayed frequencies
+     * @param aSeparator the separator for the CSV file
+     * @param anIsAbsoluteFrequencyHeader true if the frequency column header for the absolute fragment frequency should
+     *                                    be used, false for the header of the molecule frequency
+     * @throws FileNotFoundException if given file cannot be found
+     */
+    private void createHistogramCsvFile(File aCsvFile,
+                                        List<String> aSmilesList,
+                                        List<Integer> aFrequencyList,
+                                        char aSeparator,
+                                        boolean anIsAbsoluteFrequencyHeader)
+            throws FileNotFoundException {
+        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+            String tmpFrequencyHeader = Message.get(anIsAbsoluteFrequencyHeader ? "Exporter.fragmentationTab.csvHeader.frequency" : "Exporter.fragmentationTab.csvHeader.moleculeFrequency");
+            String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator + tmpFrequencyHeader;
+            tmpWriter.write(tmpHistogramCsvHeader);
+            for (int i = 0; i < aSmilesList.size(); i++) {
+                tmpWriter.printf("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i));
+            }
         }
     }
     //

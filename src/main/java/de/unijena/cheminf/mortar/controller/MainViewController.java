@@ -815,7 +815,9 @@ public class MainViewController {
         for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
             tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
         }
-        this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
+        String tmpFragmentationName = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem())
+                .getFragmentationNameOutOfTitle();
+        this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList, tmpFragmentationName);
     }
     //
     /**
