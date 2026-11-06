@@ -42,6 +42,7 @@ import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 import de.unijena.cheminf.mortar.model.util.MORTARException;
+import de.unijena.cheminf.mortar.model.util.MiscUtil;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
 import de.unijena.cheminf.mortar.preference.PreferenceUtil;
 import de.unijena.cheminf.mortar.preference.SingleIntegerPreference;
@@ -59,9 +60,11 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -292,6 +295,7 @@ public class FragmentationService {
         this.currentFragmentationName = tmpFragmentationName;
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName, isStereoChemistryRegarded);
         FragmentationService.LOGGER.log(Level.INFO, "Number of different fragments extracted: {0}", this.fragments == null ? 0 : this.fragments.size());
+        this.fragments = FragmentationService.sortFragmentsAndAssignIDs(this.fragments, tmpFragmentationName);
     }
     //
     /**
@@ -458,6 +462,7 @@ public class FragmentationService {
             FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
         FragmentationService.LOGGER.log(Level.INFO, "Number of different fragments extracted: {0}",  this.fragments.size());
+        this.fragments = FragmentationService.sortFragmentsAndAssignIDs(this.fragments, tmpPipelineFragmentationName);
      }
     //
     /**
@@ -581,6 +586,35 @@ public class FragmentationService {
         } else {
             FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
+        this.fragments = FragmentationService.sortFragmentsAndAssignIDs(this.fragments, tmpPipelineFragmentationName);
+    }
+    //
+    /**
+     * Sorts the given fragments by their molecule frequency in descending order (ties are sorted by their unique SMILES
+     * codes, so that the order is reproducible regardless of the parallelised fragmentation) and assigns an ID to
+     * every fragment consisting of the (cleaned, see {@link MiscUtil#createIDPrefix(String, int)}) fragmentation name
+     * and the 1-based rank of the fragment in this order, e.g. "Ertl_algorithm_17" or "Ertl_algorithm_1_17" for the
+     * second fragmentation with the same algorithm. The fragments are returned in a map that preserves this order.
+     *
+     * @param aFragmentsMap map of unique SMILES codes to fragments; null is returned if it is null
+     * @param aFragmentationName name of the fragmentation the fragments resulted from
+     * @return map of unique SMILES codes to fragments with the fragments in the sorted order
+     */
+    public static Map<String, FragmentDataModel> sortFragmentsAndAssignIDs(Map<String, FragmentDataModel> aFragmentsMap, String aFragmentationName) {
+        if (aFragmentsMap == null) {
+            return null;
+        }
+        List<FragmentDataModel> tmpSortedFragments = new ArrayList<>(aFragmentsMap.values());
+        tmpSortedFragments.sort(Comparator.comparingInt(FragmentDataModel::getMoleculeFrequency).reversed()
+                .thenComparing(FragmentDataModel::getUniqueSmiles));
+        String tmpIDPrefix = MiscUtil.createIDPrefix(aFragmentationName, MiscUtil.ID_PREFIX_MAX_LENGTH);
+        Map<String, FragmentDataModel> tmpSortedMap = LinkedHashMap.newLinkedHashMap(tmpSortedFragments.size());
+        int tmpRank = 0;
+        for (FragmentDataModel tmpFragment : tmpSortedFragments) {
+            tmpFragment.setId(tmpIDPrefix + "_" + ++tmpRank);
+            tmpSortedMap.put(tmpFragment.getUniqueSmiles(), tmpFragment);
+        }
+        return tmpSortedMap;
     }
     //
     /**
@@ -896,7 +930,8 @@ public class FragmentationService {
     }
     /**
      * Returns Map of unique SMILES codes of fragments linked to the respective {@link FragmentDataModel} instances.
-     * Returned map is a ConcurrentHashMap.
+     * After a finished fragmentation, the returned map preserves the order of the fragments sorted by their molecule
+     * frequency (see {@link #sortFragmentsAndAssignIDs(Map, String)}).
      *
      * @return fragments (results of fragmentation)
      */

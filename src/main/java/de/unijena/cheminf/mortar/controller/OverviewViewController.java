@@ -54,6 +54,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.SeparatorMenuItem;
@@ -96,6 +97,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -542,6 +544,10 @@ public class OverviewViewController implements IViewToolController {
         //screenshot button listener
         this.overviewView.getScreenshotButton().setOnAction(actionEvent -> this.takeScreenshotOfStructureGridPane());
         //
+        //export menu items listeners
+        this.overviewView.getExportToSDFMenuItem().setOnAction(actionEvent -> this.exportDisplayedStructures(Exporter.ExportTypes.MOLECULE_SD_FILE));
+        this.overviewView.getExportToCSVMenuItem().setOnAction(actionEvent -> this.exportDisplayedStructures(Exporter.ExportTypes.MOLECULE_CSV_FILE));
+        //
         //listener to distinguish a drag from a click event (on the image views)
         /*
          * The following block of code was inspired by a post of the user "mipa" of the stackoverflow community;
@@ -743,17 +749,7 @@ public class OverviewViewController implements IViewToolController {
             OverviewViewController.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
         }
         //get the title of the overview without the number of molecules for the initial file name
-        String tmpBaseName = this.overviewViewTitle;
-        int tmpLastSeparatorIndex = tmpBaseName.lastIndexOf(" - ");
-        if (tmpLastSeparatorIndex > 0) {
-            tmpBaseName = tmpBaseName.substring(0, tmpLastSeparatorIndex);
-        }
-        tmpBaseName = tmpBaseName.replaceAll("\\s+", "").trim();
-        if (tmpBaseName.isEmpty()) {
-            tmpBaseName = "Overview_Screenshot";
-        } else {
-            tmpBaseName = FileUtil.replaceIllegalFileNameCharacters(tmpBaseName, "_");
-        }
+        String tmpBaseName = this.getFileNameProposalFromTitle("Overview_Screenshot");
         String tmpNonExistingFilePath = FileUtil.getNonExistingFilePath(
                 tmpRecentDirectory + File.separator + tmpBaseName,
                 Exporter.FileExtension.PNG.toString());
@@ -792,6 +788,168 @@ public class OverviewViewController implements IViewToolController {
                 tmpFinalScreenshotButton,
                 tmpFinalCapturedStage);
         tmpWriteThread.start();
+    }
+    //
+    /**
+     * Exports all structures displayed in the overview view (on all pages) as SD or CSV file. If the molecules tab is
+     * the data source, the user is informed beforehand that MORTAR holds all structures as SMILES codes only and that
+     * no fragments are exported, and asked to confirm. Fragment frequencies are
+     * only exported to CSV files and only if they are displayed in the overview, i.e. for the fragments tab as data
+     * source. The export runs in a background thread; the export button is disabled in the meantime.
+     *
+     * @param anExportType {@link Exporter.ExportTypes#MOLECULE_SD_FILE} or {@link Exporter.ExportTypes#MOLECULE_CSV_FILE}
+     */
+    private void exportDisplayedStructures(Exporter.ExportTypes anExportType) {
+        if (this.moleculeDataModelList == null || this.moleculeDataModelList.isEmpty()) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return;
+        }
+        //the hint is only relevant if molecules (and not their fragments) are exported
+        if (this.dataSource == DataSources.MOLECULES_TAB && !GuiUtil.guiMoleculeExportConfirmationAlert(null)) {
+            return;
+        }
+        Exporter tmpExporter = new Exporter(this.settingsContainer);
+        File tmpFile = tmpExporter.openFileChooserForStructureExportFile(this.overviewViewStage, anExportType,
+                this.getFileNameProposalFromTitle("Overview_Export"));
+        if (tmpFile == null) {
+            // user canceled the dialog
+            return;
+        }
+        Callable<List<String>> tmpExportCall = this.createStructureExportCall(tmpExporter, anExportType, tmpFile);
+        // disable the button while the export is in progress to prevent duplicate exports
+        MenuButton tmpExportButton = this.overviewView.getExportMenuButton();
+        tmpExportButton.setDisable(true);
+        this.createStructureExportThread(tmpExportCall, tmpFile, tmpExportButton, this.overviewViewStage).start();
+    }
+    //
+    /**
+     * Creates the call that exports the structures currently displayed in the overview view to the given file. The
+     * structures and export options are copied at creation, so that the call is not affected by
+     * {@link #clearGUICachesAtClosing()} if the window is closed during the export. Frequencies are only exported for
+     * the fragments tab as data source; the name column is omitted if only fragments are exported, since their names
+     * equal their IDs.
+     *
+     * @param anExporter exporter instance to use
+     * @param anExportType {@link Exporter.ExportTypes#MOLECULE_SD_FILE} or {@link Exporter.ExportTypes#MOLECULE_CSV_FILE}
+     * @param aDestinationFile file to export to
+     * @return call returning the SMILES codes of the structures that could not be exported, see {@link Exporter}
+     * @throws UnsupportedOperationException if the given export type is not a structure export type
+     */
+    private Callable<List<String>> createStructureExportCall(Exporter anExporter, Exporter.ExportTypes anExportType,
+                                                             File aDestinationFile) throws UnsupportedOperationException {
+        final List<MoleculeDataModel> tmpStructures = new ArrayList<>(this.moleculeDataModelList);
+        final boolean tmpIsFrequencyExported = this.dataSource == DataSources.FRAGMENTS_TAB;
+        final boolean tmpIsNameExported = !tmpStructures.stream().allMatch(FragmentDataModel.class::isInstance);
+        final char tmpSeparator = this.settingsContainer.getCsvExportSeparatorSettingCharacter();
+        return switch (anExportType) {
+            case Exporter.ExportTypes.MOLECULE_SD_FILE ->
+                    () -> anExporter.exportStructuresAsSDFile(aDestinationFile, tmpStructures);
+            case Exporter.ExportTypes.MOLECULE_CSV_FILE ->
+                    () -> anExporter.exportStructuresAsCsvFile(aDestinationFile, tmpStructures, tmpSeparator,
+                            tmpIsFrequencyExported, tmpIsNameExported);
+            default -> throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
+        };
+    }
+    //
+    /**
+     * Builds and returns a configured, <em>unstarted</em> daemon {@link Thread} that runs the given export call in a
+     * background {@link Task}. Analogous to {@link #createSnapshotWriteThread(File, WritableImage, Button, Stage)},
+     * the callbacks only use the given, captured UI references and re-enable the export button only if the captured
+     * stage is still showing, because the overview window might have been closed in the meantime.
+     *
+     * @param anExportCall call that performs the export
+     * @param aDestinationFile file the structures are exported to, shown to the user after the export
+     * @param anExportButton export button to re-enable after the export
+     * @param aCapturedStage stage of the overview window at the time the export was triggered
+     * @return a configured, unstarted daemon thread
+     */
+    private Thread createStructureExportThread(Callable<List<String>> anExportCall,
+                                               File aDestinationFile,
+                                               MenuButton anExportButton,
+                                               Stage aCapturedStage) {
+        Task<List<String>> tmpExportTask = new Task<>() {
+            @Override
+            protected List<String> call() throws Exception {
+                return anExportCall.call();
+            }
+        };
+        // setOnSucceeded / setOnFailed are dispatched back on the JavaFX application thread by the framework
+        tmpExportTask.setOnSucceeded(workerStateEvent -> {
+            if (aCapturedStage.isShowing()) {
+                anExportButton.setDisable(false);
+            }
+            OverviewViewController.showStructureExportResult(tmpExportTask.getValue(), aDestinationFile);
+        });
+        tmpExportTask.setOnFailed(workerStateEvent -> {
+            Throwable tmpCause = tmpExportTask.getException();
+            OverviewViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
+            if (aCapturedStage.isShowing()) {
+                anExportButton.setDisable(false);
+            }
+            Exception tmpException = (tmpCause instanceof Exception anException)
+                    ? anException : new RuntimeException(tmpCause);
+            GuiUtil.guiExceptionAlert(
+                    Message.get("OverviewView.exportButton.error.title"),
+                    Message.get("OverviewView.exportButton.error.header"),
+                    Message.get("OverviewView.exportButton.error.text"),
+                    tmpException
+            );
+        });
+        Thread tmpExportThread = new Thread(tmpExportTask, "OverviewView-StructureExport");
+        tmpExportThread.setDaemon(true);
+        return tmpExportThread;
+    }
+    //
+    /**
+     * Shows the result of a finished structure export: a warning if the export was not possible at all (null),
+     * an expandable warning listing the structures that could not be exported, or the export finished dialog.
+     *
+     * @param aFailedStructures SMILES codes of the structures that could not be exported or null if the export failed
+     * @param aDestinationFile file the structures were exported to
+     */
+    private static void showStructureExportResult(List<String> aFailedStructures, File aDestinationFile) {
+        if (aFailedStructures == null) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                    Message.get("OverviewView.exportButton.error.title"),
+                    Message.get("OverviewView.exportButton.error.header"),
+                    null);
+        } else if (!aFailedStructures.isEmpty()) {
+            GuiUtil.guiExpandableAlert(
+                    Alert.AlertType.WARNING.toString(),
+                    Message.get("OverviewView.exportButton.error.title"),
+                    Message.get("OverviewView.exportButton.partialError.header"),
+                    aFailedStructures.size() + " " + Message.get("OverviewView.exportButton.partialError.label"),
+                    String.join("\n", aFailedStructures)
+            );
+        } else {
+            GuiUtil.guiExportFinishedAlert(aDestinationFile);
+        }
+    }
+    //
+    /**
+     * Returns a file name proposal derived from the overview view title without the number of displayed structures,
+     * with all whitespaces removed and illegal file name characters replaced. If the title is empty, the given
+     * fallback is returned.
+     *
+     * @param aFallbackName file name to return if no proposal can be derived from the title
+     * @return file name proposal without file extension
+     */
+    private String getFileNameProposalFromTitle(String aFallbackName) {
+        String tmpBaseName = Objects.requireNonNullElse(this.overviewViewTitle, "");
+        int tmpLastSeparatorIndex = tmpBaseName.lastIndexOf(" - ");
+        if (tmpLastSeparatorIndex > 0) {
+            tmpBaseName = tmpBaseName.substring(0, tmpLastSeparatorIndex);
+        }
+        tmpBaseName = tmpBaseName.replaceAll("\\s+", "").trim();
+        if (tmpBaseName.isEmpty()) {
+            return aFallbackName;
+        }
+        return FileUtil.replaceIllegalFileNameCharacters(tmpBaseName, "_");
     }
     //
     /**

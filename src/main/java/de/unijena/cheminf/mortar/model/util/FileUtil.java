@@ -28,6 +28,7 @@ package de.unijena.cheminf.mortar.model.util;
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -435,30 +436,48 @@ public final class FileUtil {
                 .replaceAll(Matcher.quoteReplacement(aReplacement));
     }
     /**
-     * Opens given path in OS depending explorer equivalent.
+     * Opens the given path in the file explorer of the operating system, see {@link #openFilePathInExplorer(File)}.
      *
-     * @param aPath path to open
+     * @param aPath path of the file or directory to open
      * @throws IllegalArgumentException if the given path is empty, blank, or null
-     * @throws SecurityException if the directory could not be opened
+     * @throws SecurityException if the location could not be opened
      */
-    public static void openFilePathInExplorer(String aPath) throws SecurityException {
+    public static void openFilePathInExplorer(String aPath) throws IllegalArgumentException, SecurityException {
         if (Objects.isNull(aPath) || aPath.isBlank()) {
             throw new IllegalArgumentException("Given file path is null, empty, or blank.");
         }
-        OperatingSystem tmpOS = FileUtil.detectCurrentOperatingSystem();
+        FileUtil.openFilePathInExplorer(new File(aPath));
+    }
+    //
+    /**
+     * Opens the location of the given file or directory in the file explorer of the operating system via
+     * {@link Desktop}, i.e. without starting an external command whose path would have to be resolved via the PATH
+     * variable. For a file, its directory is opened and the file is selected if the platform supports this (e.g.
+     * macOS); otherwise, only its directory is opened. A directory is opened itself.
+     *
+     * @param aFileOrDirectory file or directory whose location should be opened
+     * @throws IllegalArgumentException if the given file is null
+     * @throws SecurityException if the location could not be opened, e.g. because the platform does not support it
+     */
+    public static void openFilePathInExplorer(File aFileOrDirectory) throws IllegalArgumentException, SecurityException {
+        if (Objects.isNull(aFileOrDirectory)) {
+            throw new IllegalArgumentException("Given file is null.");
+        }
+        if (!Desktop.isDesktopSupported()) {
+            throw new SecurityException("Opening the file location is not supported on this platform.");
+        }
+        Desktop tmpDesktop = Desktop.getDesktop();
         try {
-            if (tmpOS.equals(OperatingSystem.WINDOWS)) {
-                Runtime.getRuntime().exec(new String[]{"explorer", "/open,", aPath});
-            } else if (tmpOS.equals(OperatingSystem.MAC_OS)) {
-                Runtime.getRuntime().exec(new String[]{"open", "-R", aPath});
-            } else if (tmpOS.equals(OperatingSystem.LINUX)) {
-                Runtime.getRuntime().exec(new String[]{"gio", "open", aPath});
+            if (aFileOrDirectory.isFile() && tmpDesktop.isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
+                tmpDesktop.browseFileDirectory(aFileOrDirectory);
+            } else if (tmpDesktop.isSupported(Desktop.Action.OPEN)) {
+                tmpDesktop.open(aFileOrDirectory.isDirectory() ? aFileOrDirectory : aFileOrDirectory.getAbsoluteFile().getParentFile());
             } else {
-                throw new SecurityException("OS name " + tmpOS + " unknown.");
+                throw new SecurityException("Opening the file location is not supported on this platform.");
             }
-        } catch (IOException anException) {
+        } catch (IOException | UnsupportedOperationException | IllegalArgumentException anException) {
             FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            throw new SecurityException("Could not open directory path");
+            throw new SecurityException("Could not open file location");
         }
     }
     // </editor-fold>

@@ -27,7 +27,6 @@ package de.unijena.cheminf.mortar.model.io;
 
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
-import de.unijena.cheminf.mortar.model.util.FileUtil;
 
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.exception.CDKException;
@@ -256,7 +255,8 @@ public class DynamicSMILESFileReader {
      * first line if the format defines that the file has a headline, parses SMILES codes and IDs from the defined columns, etc.
      * Skipped lines (due to being empty or containing erroneous SMILES codes) are counted and this counter can be queried
      * after import via the respective getter method. If a name/ID column is given in the file, it is read and saved as
-     * a property of the respective atom container under the name property key taken from the Importer class.
+     * a property of the respective atom container under the name property key taken from the Importer class. If no name
+     * is given for a structure, no name property is set (the Importer then uses the molecule ID as name).
      *
      * @param aFile a SMILES file
      * @param aFormat the determined format of the file
@@ -312,14 +312,10 @@ public class DynamicSMILESFileReader {
                     DynamicSMILESFileReader.LOGGER.log(Level.WARNING, String.format("Import failed for structure in line (starting at 0):\t%s", tmpLineInFileCounter));
                     continue;
                 }
-                //setting the name of the atom container
-                String tmpName;
+                //setting the name of the atom container if one is given in the file
                 if (aFormat.hasIDColumn() && tmpProcessedLineArray.length > 1 && !tmpProcessedLineArray[tmpIDExpectedPosition].trim().isEmpty()) {
-                    tmpName = tmpProcessedLineArray[tmpIDExpectedPosition].trim();
-                } else {
-                    tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpLineInFileCounter;
+                    tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpProcessedLineArray[tmpIDExpectedPosition].trim());
                 }
-                tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
                 tmpAtomContainerSet.addAtomContainer(tmpMolecule);
             }
             return tmpAtomContainerSet;
