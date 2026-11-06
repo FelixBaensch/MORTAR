@@ -32,6 +32,9 @@ import de.unijena.cheminf.mortar.gui.views.HistogramView;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.io.Exporter;
+import de.unijena.cheminf.mortar.model.io.Exporter.ExportTypes;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.ChemUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.IDisplayEnum;
@@ -73,6 +76,8 @@ import javafx.stage.WindowEvent;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -300,6 +305,10 @@ public class HistogramViewController implements IViewToolController {
      */
     private final IConfiguration configuration;
     /**
+     * Settings container to access application settings.
+     */
+    private final SettingsContainer settingsContainer;
+    /**
      * Setting for number of displayed fragments.
      */
     private final SimpleIntegerProperty displayedFragmentsNumberSetting;
@@ -359,6 +368,20 @@ public class HistogramViewController implements IViewToolController {
      */
     private List<FragmentDataModel> fragmentListCopy;
     /**
+     * Name of the fragmentation whose fragments are displayed, used as part of the proposed CSV export file name.
+     */
+    private String fragmentationName;
+    /**
+     * Full (non-abbreviated) SMILES codes of the fragments currently displayed in the histogram, in descending frequency
+     * order (top to bottom as in the chart).
+     */
+    private List<String> displayedHistogramSmiles;
+    /**
+     * Frequencies of the fragments currently displayed in the histogram, in descending order (top to bottom as in the
+     * chart), index-aligned with {@link #displayedHistogramSmiles}.
+     */
+    private List<Integer> displayedHistogramFrequencies;
+    /**
      * Width of molecule depictions displayed when the cursor hovers over a bar. Changes when histogram is resized.
      */
     private double imageWidth;
@@ -392,10 +415,13 @@ public class HistogramViewController implements IViewToolController {
     /**
      * Constructor, initialises all settings with their default values. Does *not* open the view.
      *
-     * @param aConfiguration configuration instance to read resource file paths from
+     * @param aConfiguration configuration instance to read resource file paths for icons from
+     * @param aSettingsContainer the setting container to hand to the exporter for a CSV export and to read the CSV separator from
      */
-    public HistogramViewController(IConfiguration aConfiguration) {
+    public HistogramViewController(IConfiguration aConfiguration,
+                                   SettingsContainer aSettingsContainer) {
         this.configuration = aConfiguration;
+        this.settingsContainer = aSettingsContainer;
         this.settings = new ArrayList<>(8);
         this.displayedFragmentsNumberSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
@@ -550,12 +576,15 @@ public class HistogramViewController implements IViewToolController {
      *
      * @param aMainStage Stage of the MainView
      * @param aFragmentDataModelList ObservableList that holds FragmentDataModel objects for visualisation in histogram
+     * @param aFragmentationName name of the fragmentation the fragments stem from, used for the proposed export file name
      * @throws NullPointerException if any param is null
      */
-    public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aFragmentDataModelList) throws NullPointerException {
+    public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName)
+            throws NullPointerException {
         //<editor-fold desc="Checks" defaultstate="collapsed">
         Objects.requireNonNull(aMainStage, "Main stage is null.");
         Objects.requireNonNull(aFragmentDataModelList, "Fragment data model list is ´null");
+        Objects.requireNonNull(aFragmentationName, "Fragmentation name is null.");
         //</editor-fold>
         //
         //<editor-fold desc="initialisation of stage and view" defaultstate="collapsed">
@@ -566,6 +595,7 @@ public class HistogramViewController implements IViewToolController {
         this.imageZoomFactor = HistogramViewController.STRUCTURE_DEPICTION_IMAGE_INITIAL_ZOOM_FACTOR;
         this.mainStage = aMainStage;
         this.fragmentListCopy = new ArrayList<>(aFragmentDataModelList);
+        this.fragmentationName = aFragmentationName;
         this.histogramStage = new Stage();
         this.histogramStage.initModality(Modality.WINDOW_MODAL);
         this.histogramStage.initOwner(this.mainStage);
@@ -771,6 +801,11 @@ public class HistogramViewController implements IViewToolController {
         if (tmpSublistSmiles.size() != tmpSublistFrequency.size() || tmpSublistSmiles.size() != tmpSmilesToDepict.size()) {
             throw new IllegalArgumentException("SMILES code and frequency sublists for display are of unequal size.");
         }
+        this.displayedHistogramSmiles = new ArrayList<>(tmpSmilesToDepict);
+        this.displayedHistogramFrequencies = new ArrayList<>(tmpSublistFrequency);
+        Collections.reverse(this.displayedHistogramSmiles);
+        Collections.reverse(this.displayedHistogramFrequencies);
+        this.histogramView.getExportCSVButton().setDisable(this.displayedHistogramSmiles.isEmpty());
         for (int i = 0; i < tmpSublistSmiles.size(); i++) {
             Integer tmpCurrentFrequency = tmpSublistFrequency.get(i);
             String tmpCurrentDisplaySmiles = tmpSublistSmiles.get(i);
@@ -888,6 +923,7 @@ public class HistogramViewController implements IViewToolController {
             this.categoryAxis.setTickMarkVisible(tmpDisplaySMILES);
             this.categoryAxis.setTickLabelsVisible(tmpDisplaySMILES);
         });
+        this.histogramView.getExportCSVButton().setOnAction(event -> this.exportHistogramCsv());
         this.histogramView.getDisplayGridLinesCheckBox().selectedProperty()
                 .addListener((ObservableValue<? extends Boolean> ov, Boolean oldVal, Boolean newVal) -> {
             this.histogramChart.setVerticalGridLinesVisible(newVal);
@@ -1062,6 +1098,40 @@ public class HistogramViewController implements IViewToolController {
             this.displayBarShadowsSetting.set(newVal);
         });
     }
+    /**
+     * Exports the currently displayed histogram data to a CSV file selected by the user.
+     */
+    private void exportHistogramCsv() {
+        if (this.displayedHistogramSmiles == null || this.displayedHistogramFrequencies == null || this.displayedHistogramSmiles.isEmpty()) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
+                    Message.get("Exporter.Histogram.ExportFailed.header"),
+                    Message.get("Exporter.Histogram.ExportFailed.noDataContent"));
+            return;
+        }
+        Exporter tmpExporter = new Exporter(this.settingsContainer);
+        File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(
+                this.histogramStage, ExportTypes.HISTOGRAM_CSV_FILE, this.fragmentationName);
+        if (tmpExportFile == null) {
+            return;
+        }
+        try {
+            tmpExporter.exportHistogramCsvFile(
+                    tmpExportFile,
+                    this.displayedHistogramSmiles,
+                    this.displayedHistogramFrequencies,
+                    this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
+                    this.displayFrequencySetting.get().equals(HistogramViewController.FrequencyOption.ABSOLUTE_FREQUENCY));
+            //TODO: after #243 is merged, this can be a "guiExportFinishedAlert" which contains the file path as a cliackable link
+            GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Exporter.Histogram.ExportSuccessful.title"),
+                    Message.get("Exporter.Histogram.ExportSuccessful.header"),
+                    Message.get("Exporter.Histogram.ExportSuccessful.content") + System.lineSeparator() + tmpExportFile.getAbsolutePath());
+        } catch (FileNotFoundException | RuntimeException anException) {
+            Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
+            GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
+                    Message.get("Exporter.Histogram.ExportFailed.header"),
+                    Message.get("Exporter.Histogram.ExportFailed.content"));
+        }
+    }
     //
     /**
      * Discards all GUI variable values for when the view is closed.
@@ -1080,6 +1150,9 @@ public class HistogramViewController implements IViewToolController {
         this.numberAxis = null;
         this.histogramChart = null;
         this.atomContainerForDisplayCache = null;
+        this.displayedHistogramSmiles = null;
+        this.displayedHistogramFrequencies = null;
+        this.fragmentationName = null;
     }
     //
     /**
