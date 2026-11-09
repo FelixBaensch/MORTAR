@@ -39,7 +39,7 @@
 MORTAR ('MOlecule fRagmenTation fRamework') is a free and open-source graphical desktop application that supports 
 molecular <i>in silico</i> fragmentation and substructure analysis. The Java/JavaFX rich client offers extensive graphical 
 functions for visualizing the fragmentation results of individual compounds or entire compound sets. 
-In addition to five currently integrated methods for fragmentation and substructure analysis -
+In addition to six currently integrated methods for fragmentation and substructure analysis -
 <a href="https://github.com/JonasSchaub/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
 <a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a> (with the <a href="https://github.com/cdk/cdk/pull/1225">Sugar Detection Utility</a> extension), 
 <a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a>, <a href="https://gitlab.com/glycoinfo/molwurcs">MolWURCS</a>,
