@@ -33,6 +33,9 @@
 * [Acknowledgements](#Acknowledgements)
 
 ## Description
+
+![MORTAR_Screenshots](./Images/Screenshot_for_README.png)
+
 MORTAR ('MOlecule fRagmenTation fRamework') is a free and open-source graphical desktop application that supports 
 molecular <i>in silico</i> fragmentation and substructure analysis. The Java/JavaFX rich client offers extensive graphical 
 functions for visualizing the fragmentation results of individual compounds or entire compound sets. 
