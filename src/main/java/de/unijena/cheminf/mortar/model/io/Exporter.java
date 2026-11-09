@@ -72,8 +72,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -372,22 +374,22 @@ public class Exporter {
      * @param aSeparator             the separator for the csv file
      * @param aTabName               TabName to identify type of tab
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
-     * @throws FileNotFoundException if the given file cannot be found
+     * @throws IOException if the given file cannot be found or an error occurs while writing to it
      */
     public List<String> exportCsvFile(File aFile,
                                       List<MoleculeDataModel> aMoleculeDataModelList,
                                       String aFragmentationName,
                                       char aSeparator,
                                       TabNames aTabName)
-            throws FileNotFoundException {
+            throws IOException {
         if (aFile == null) {
             return null;
         }
         if (aTabName.equals(TabNames.FRAGMENTS)) {
-            //can throw FileNotFoundException, gets handled in setOnFailed()
+            //can throw IOException, gets handled in setOnFailed()
             return this.createFragmentsTabCsvFile(aFile, aMoleculeDataModelList, aSeparator);
         } else if (aTabName.equals(TabNames.ITEMIZATION)) {
-            //can throw FileNotFoundException, gets handled in setOnFailed()
+            //can throw IOException, gets handled in setOnFailed()
             return this.createItemizationTabCsvFile(aFile, aMoleculeDataModelList, aFragmentationName, aSeparator);
         }
         return new ArrayList<>(0);
@@ -403,14 +405,14 @@ public class Exporter {
      *                                    be used, false for the header of the molecule frequency
      * @throws NullPointerException if the file, the SMILES list, or the frequency list is null
      * @throws IllegalArgumentException if the SMILES list and the frequency list differ in size
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      */
     public void exportHistogramCsvFile(File aFile,
                                        List<String> aSmilesList,
                                        List<Integer> aFrequencyList,
                                        char aSeparator,
                                        boolean anIsAbsoluteFrequencyHeader)
-            throws NullPointerException, IllegalArgumentException, FileNotFoundException {
+            throws NullPointerException, IllegalArgumentException, IOException {
         Objects.requireNonNull(aFile, "aFile must not be null.");
         Objects.requireNonNull(aSmilesList, "aSmilesList must not be null.");
         Objects.requireNonNull(aFrequencyList, "aFrequencyList must not be null.");
@@ -523,20 +525,23 @@ public class Exporter {
      * @param aFragmentationName     fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aSeparator             the separator for the csv file
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      * @author Betül Sevindik
      */
     private List<String> createItemizationTabCsvFile(File aCsvFile,
                                              List<MoleculeDataModel> aMoleculeDataModelList,
                                              String aFragmentationName,
-                                             char aSeparator) throws FileNotFoundException {
+                                             char aSeparator) throws IOException {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
             return null;
         }
         List<String> tmpFailedExportFragments = new LinkedList<>();
         //the character used to replace all occurrences of the given separator char in the exported strings
         final char tmpReplacementChar = '_';
-        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+        //note: no PrintWriter, because it would swallow IOExceptions (e.g. disk full) and the export would then be
+        // reported as successful; the lines are therefore created first and written outside the try blocks below, so
+        // that IOExceptions are not mistaken for problems of a single molecule
+        try (BufferedWriter tmpWriter = Exporter.newReplacingUtf8BufferedWriter(aCsvFile.toPath())) {
             String tmpCsvHeader = Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfFragment") + aSeparator +
@@ -546,8 +551,9 @@ public class Exporter {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
+                String tmpMoleculeLine;
                 try {
-                    tmpWriter.printf("%n%s%s%s",
+                    tmpMoleculeLine = String.format("%n%s%s%s",
                             tmpMoleculeDataModel.getName().replace(aSeparator, tmpReplacementChar),
                             aSeparator,
                             //note to developers: make sure no chars are offered as separator char options that can
@@ -558,6 +564,7 @@ public class Exporter {
                     tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
                     continue;
                 }
+                tmpWriter.write(tmpMoleculeLine);
                 if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                     continue;
                 }
@@ -566,17 +573,19 @@ public class Exporter {
                     if (Thread.currentThread().isInterrupted()) {
                         return null;
                     }
-                    tmpWriter.append(aSeparator);
+                    tmpWriter.write(aSeparator);
+                    String tmpFragmentEntry;
                     try {
-                        tmpWriter.printf("%s%s%s",
+                        tmpFragmentEntry = String.format("%s%s%s",
                                 tmpFragmentDataModel.getUniqueSmiles(),
                                 aSeparator,
                                 tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
                     } catch (Exception anException) {
                         Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
                         tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                        //continue;
+                        continue;
                     }
+                    tmpWriter.write(tmpFragmentEntry);
                 }
             }
             return tmpFailedExportFragments;
@@ -589,16 +598,18 @@ public class Exporter {
      * @param aList a list of FragmentDataModel instances to export
      * @param aSeparator the separator for the csv file
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      * @author Betül Sevindik
      */
     private List<String> createFragmentsTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, char aSeparator)
-            throws FileNotFoundException {
+            throws IOException {
         if (aCsvFile == null || aList == null) {
             return null;
         }
         List<String> tmpFailedExportFragments = new LinkedList<>();
-        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+        //note: no PrintWriter, because it would swallow IOExceptions (e.g. disk full); the lines are created inside and
+        // written outside the try block, so that IOExceptions are not mistaken for problems of a single fragment
+        try (BufferedWriter tmpWriter = Exporter.newReplacingUtf8BufferedWriter(aCsvFile.toPath())) {
             String tmpFragmentationCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.frequency") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.percentage") + aSeparator +
@@ -609,9 +620,10 @@ public class Exporter {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
+                String tmpFragmentLine;
                 try {
                     FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-                    tmpWriter.printf("%n%s%s%d%s%.4f%s%d%s%.4f",
+                    tmpFragmentLine = String.format("%n%s%s%d%s%.4f%s%d%s%.4f",
                             tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
                             tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
                             tmpFragmentDataModel.getAbsolutePercentage(), aSeparator,
@@ -620,8 +632,9 @@ public class Exporter {
                 } catch (Exception anException) {
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpDataModel.getName()), anException);
                     tmpFailedExportFragments.add(tmpDataModel.getUniqueSmiles());
-                    //continue;
+                    continue;
                 }
+                tmpWriter.write(tmpFragmentLine);
             }
             return tmpFailedExportFragments;
         }
@@ -635,21 +648,55 @@ public class Exporter {
      * @param aSeparator the separator for the CSV file
      * @param anIsAbsoluteFrequencyHeader true if the frequency column header for the absolute fragment frequency should
      *                                    be used, false for the header of the molecule frequency
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      */
     private void createHistogramCsvFile(File aCsvFile,
                                         List<String> aSmilesList,
                                         List<Integer> aFrequencyList,
                                         char aSeparator,
                                         boolean anIsAbsoluteFrequencyHeader)
-            throws FileNotFoundException {
-        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+            throws IOException {
+        //note: no PrintWriter, because it would swallow IOExceptions (e.g. disk full)
+        try (BufferedWriter tmpWriter = Exporter.newReplacingUtf8BufferedWriter(aCsvFile.toPath())) {
             String tmpFrequencyHeader = Message.get(anIsAbsoluteFrequencyHeader ? "Exporter.fragmentationTab.csvHeader.frequency" : "Exporter.fragmentationTab.csvHeader.moleculeFrequency");
             String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator + tmpFrequencyHeader;
             tmpWriter.write(tmpHistogramCsvHeader);
             for (int i = 0; i < aSmilesList.size(); i++) {
-                tmpWriter.printf("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i));
+                tmpWriter.write(String.format("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i)));
             }
+        }
+    }
+    //
+    /**
+     * Opens a buffered UTF-8 writer for the given path that, unlike a PrintWriter, propagates IOExceptions (e.g. disk
+     * full) but, unlike Files.newBufferedWriter(), replaces characters that cannot be encoded (e.g. unpaired
+     * surrogates in molecule names) instead of throwing. The latter would leave the undecodable characters in the
+     * buffer of the BufferedWriter and make every subsequent write fail.
+     *
+     * @param aPath the path of the file to write to; it is created or truncated
+     * @return a buffered writer for the given file
+     * @throws IOException if the file cannot be opened for writing
+     */
+    private static BufferedWriter newReplacingUtf8BufferedWriter(Path aPath) throws IOException {
+        return new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(aPath), StandardCharsets.UTF_8));
+    }
+    //
+    /**
+     * Throws the IOException in the cause chain of the given exception, if there is one. CDK writers wrap
+     * IOExceptions of the underlying writer (e.g. disk full) into CDKExceptions. Such an error is not specific to the
+     * fragment that is currently written and the output stream may already contain a partial record, so the export
+     * must be aborted instead of retrying the fragment or continuing with the next one.
+     *
+     * @param anException the exception to inspect
+     * @throws IOException the IOException that caused the given exception, if any
+     */
+    private static void rethrowIfCausedByIOException(Throwable anException) throws IOException {
+        Throwable tmpCause = anException.getCause();
+        while (tmpCause != null && tmpCause != anException) {
+            if (tmpCause instanceof IOException tmpIOException) {
+                throw tmpIOException;
+            }
+            tmpCause = tmpCause.getCause();
         }
     }
     //
@@ -918,9 +965,10 @@ public class Exporter {
         List<String> tmpFailedExportFragments = new LinkedList<>();
         int tmpExportedFragmentsCounter = 0;
         int tmpFailedFragmentExportCounter = 0;
+        //note: no PrintWriter in between, because it would swallow IOExceptions (e.g. disk full) and the export would
+        // then be reported as successful
         try (
-                PrintWriter tmpWriter = new PrintWriter(aFile.getPath());
-                BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                BufferedWriter tmpBufferedWriter = Exporter.newReplacingUtf8BufferedWriter(aFile.toPath());
                 SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
         ) {
             //specifying format of export
@@ -956,6 +1004,8 @@ public class Exporter {
                         }
                         tmpExportedFragmentsCounter++;
                     } catch (CDKException anException) {
+                        //an I/O error is not a problem of the fragment's chemistry, so retrying makes no sense
+                        Exporter.rethrowIfCausedByIOException(anException);
                         //retrying with a kekulized clone of the fragment - going to main catch block if sth goes wrong
                         if (tmpPoint3dAvailable) {
                             tmpFragmentClone = tmpFragment.clone();
@@ -965,6 +1015,8 @@ public class Exporter {
                         tmpExportedFragmentsCounter++;
                     }
                 } catch (CDKException | CloneNotSupportedException anException) {
+                    //an I/O error (e.g. disk full) aborts the export instead of being blamed on this fragment
+                    Exporter.rethrowIfCausedByIOException(anException);
                     Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
                     tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
                     tmpFailedFragmentExportCounter++;
@@ -1038,10 +1090,9 @@ public class Exporter {
                 String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
                         + File.separator + tmpMolecularFormula, ".sdf");
                 File tmpSDFile = new File(tmpSDFilePathName);
-                //writing to file
+                //writing to file; no PrintWriter in between, because it would swallow IOExceptions (e.g. disk full)
                 try (
-                        PrintWriter tmpWriter = new PrintWriter(tmpSDFile);
-                        BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                        BufferedWriter tmpBufferedWriter = Exporter.newReplacingUtf8BufferedWriter(tmpSDFile.toPath());
                         SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
                 ) {
                     //specifying format of export
@@ -1061,6 +1112,8 @@ public class Exporter {
                         }
                         tmpExportedFragmentsCounter++;
                     } catch (CDKException anException) {
+                        //an I/O error is not a problem of the fragment's chemistry, so retrying makes no sense
+                        Exporter.rethrowIfCausedByIOException(anException);
                         //retrying with a kekulized clone of the fragment - going to main catch block if sth goes wrong
                         if (tmpPoint3dAvailable) {
                             tmpFragmentClone = tmpFragment.clone();
@@ -1071,6 +1124,8 @@ public class Exporter {
                     }
                 }
             } catch (CDKException | CloneNotSupportedException anException) {
+                //an I/O error (e.g. disk full) aborts the export instead of being blamed on this fragment
+                Exporter.rethrowIfCausedByIOException(anException);
                 Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
                 tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
                 tmpFailedFragmentExportCounter++;
@@ -1148,6 +1203,8 @@ public class Exporter {
                         }
                         tmpExportedFragmentsCounter++;
                     } catch (CDKException anException) {
+                        //an I/O error is not a problem of the fragment's chemistry, so retrying makes no sense
+                        Exporter.rethrowIfCausedByIOException(anException);
                         //retrying with a kekulized clone of the fragment - going to main catch block if sth goes wrong
                         if (tmpPoint3dAvailable) {
                             tmpFragmentClone = tmpFragment.clone();
@@ -1158,6 +1215,8 @@ public class Exporter {
                     }
                 }
             } catch (CDKException | CloneNotSupportedException anException) {
+                //an I/O error (e.g. disk full) aborts the export instead of being blamed on this fragment
+                Exporter.rethrowIfCausedByIOException(anException);
                 Exporter.LOGGER.log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
                 tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
                 tmpFailedFragmentExportCounter++;
