@@ -134,6 +134,9 @@ open class LocalWinDeploy @Inject constructor(
     /**
      * Copies the necessary files for Windows deployment.
      *
+     * The target subdirectories `in/bin`, `in/lib`, and `in/tutorial` are emptied first, so that no stale files from
+     * an earlier deployment run remain in them.
+     *
      * Copies the following from `build/install/MORTAR` to the corresponding `winDeploy/in` subdirectories:
      * - `bin` directory to `in/bin`
      * - `lib` directory to `in/lib`, minus the JavaFX artifacts of the non-Windows platforms
@@ -156,6 +159,16 @@ open class LocalWinDeploy @Inject constructor(
             logger.lifecycle("Unix MORTAR start script not deleted, this can have several reasons, like not running clean before deploy.")
         }
 
+        //empty the staging directories first, so that files from an earlier deployment run without "clean" (e.g. the
+        //filtered-out non-Windows JavaFX jars or jars of outdated dependency versions) do not end up in the installer;
+        //the downloaded JRE lives in a separate directory under winDeploy/in and is therefore kept
+        listOf("in/bin", "in/lib", "in/tutorial").forEach { tmpStagingDirName ->
+            val tmpStagingDir = File(tmpWinDeployDir, tmpStagingDirName)
+            if (!tmpStagingDir.deleteRecursively()) {
+                throw RuntimeException("Could not empty the staging directory ${tmpStagingDir.absolutePath}")
+            }
+            tmpStagingDir.mkdirs()
+        }
         DeployUtil.copyDir(File(tmpInstallDir, "bin"), File(tmpWinDeployDir, "in/bin"))
         //the distribution carries the JavaFX natives of every supported platform so it stays portable; a Windows
         //installer only ever loads the Windows ones, so the other four classifiers are dead weight in the .exe
