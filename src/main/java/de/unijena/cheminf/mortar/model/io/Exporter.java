@@ -73,7 +73,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -539,7 +538,10 @@ public class Exporter {
         List<String> tmpFailedExportFragments = new LinkedList<>();
         //the character used to replace all occurrences of the given separator char in the exported strings
         final char tmpReplacementChar = '_';
-        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+        //note: no PrintWriter, because it would swallow IOExceptions (e.g. disk full) and the export would then be
+        // reported as successful; the lines are therefore created first and written outside the try blocks below, so
+        // that IOExceptions are not mistaken for problems of a single molecule
+        try (BufferedWriter tmpWriter = Exporter.newReplacingUtf8BufferedWriter(aCsvFile.toPath())) {
             String tmpCsvHeader = Message.get("Exporter.itemsTab.csvHeader.moleculeName") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfStructure") + aSeparator +
                     Message.get("Exporter.itemsTab.csvHeader.smilesOfFragment") + aSeparator +
@@ -549,8 +551,9 @@ public class Exporter {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
+                String tmpMoleculeLine;
                 try {
-                    tmpWriter.printf("%n%s%s%s",
+                    tmpMoleculeLine = String.format("%n%s%s%s",
                             tmpMoleculeDataModel.getName().replace(aSeparator, tmpReplacementChar),
                             aSeparator,
                             //note to developers: make sure no chars are offered as separator char options that can
@@ -561,6 +564,7 @@ public class Exporter {
                     tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
                     continue;
                 }
+                tmpWriter.write(tmpMoleculeLine);
                 if (!tmpMoleculeDataModel.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName)) {
                     continue;
                 }
@@ -569,20 +573,21 @@ public class Exporter {
                     if (Thread.currentThread().isInterrupted()) {
                         return null;
                     }
-                    tmpWriter.append(aSeparator);
+                    tmpWriter.write(aSeparator);
+                    String tmpFragmentEntry;
                     try {
-                        tmpWriter.printf("%s%s%s",
+                        tmpFragmentEntry = String.format("%s%s%s",
                                 tmpFragmentDataModel.getUniqueSmiles(),
                                 aSeparator,
                                 tmpMoleculeDataModel.getFragmentFrequencyOfSpecificFragmentation(aFragmentationName).get(tmpFragmentDataModel.getUniqueSmiles()).toString());
                     } catch (Exception anException) {
                         Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpFragmentDataModel.getName()), anException);
                         tmpFailedExportFragments.add(tmpFragmentDataModel.getUniqueSmiles());
-                        //continue;
+                        continue;
                     }
+                    tmpWriter.write(tmpFragmentEntry);
                 }
             }
-            Exporter.closeAndCheckForWriteErrors(tmpWriter, aCsvFile);
             return tmpFailedExportFragments;
         }
     }
@@ -602,7 +607,9 @@ public class Exporter {
             return null;
         }
         List<String> tmpFailedExportFragments = new LinkedList<>();
-        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+        //note: no PrintWriter, because it would swallow IOExceptions (e.g. disk full); the lines are created inside and
+        // written outside the try block, so that IOExceptions are not mistaken for problems of a single fragment
+        try (BufferedWriter tmpWriter = Exporter.newReplacingUtf8BufferedWriter(aCsvFile.toPath())) {
             String tmpFragmentationCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.frequency") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.percentage") + aSeparator +
@@ -613,9 +620,10 @@ public class Exporter {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
+                String tmpFragmentLine;
                 try {
                     FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
-                    tmpWriter.printf("%n%s%s%d%s%.4f%s%d%s%.4f",
+                    tmpFragmentLine = String.format("%n%s%s%d%s%.4f%s%d%s%.4f",
                             tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
                             tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
                             tmpFragmentDataModel.getAbsolutePercentage(), aSeparator,
@@ -624,10 +632,10 @@ public class Exporter {
                 } catch (Exception anException) {
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpDataModel.getName()), anException);
                     tmpFailedExportFragments.add(tmpDataModel.getUniqueSmiles());
-                    //continue;
+                    continue;
                 }
+                tmpWriter.write(tmpFragmentLine);
             }
-            Exporter.closeAndCheckForWriteErrors(tmpWriter, aCsvFile);
             return tmpFailedExportFragments;
         }
     }
@@ -648,32 +656,14 @@ public class Exporter {
                                         char aSeparator,
                                         boolean anIsAbsoluteFrequencyHeader)
             throws IOException {
-        try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
+        //note: no PrintWriter, because it would swallow IOExceptions (e.g. disk full)
+        try (BufferedWriter tmpWriter = Exporter.newReplacingUtf8BufferedWriter(aCsvFile.toPath())) {
             String tmpFrequencyHeader = Message.get(anIsAbsoluteFrequencyHeader ? "Exporter.fragmentationTab.csvHeader.frequency" : "Exporter.fragmentationTab.csvHeader.moleculeFrequency");
             String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator + tmpFrequencyHeader;
             tmpWriter.write(tmpHistogramCsvHeader);
             for (int i = 0; i < aSmilesList.size(); i++) {
-                tmpWriter.printf("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i));
+                tmpWriter.write(String.format("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i)));
             }
-            Exporter.closeAndCheckForWriteErrors(tmpWriter, aCsvFile);
-        }
-    }
-    //
-    /**
-     * Closes the given writer and throws an IOException if it encountered an error at any point while writing,
-     * flushing, or closing. This is necessary because PrintWriter never throws IOExceptions itself but only sets an
-     * internal error flag, so without this check, a failed export (e.g. because the disk is full) would be reported
-     * as successful. Closing an already closed PrintWriter has no effect, so the writer can still be managed by a
-     * try-with-resources statement.
-     *
-     * @param aWriter the writer to close and check
-     * @param aFile the file the writer writes to, used in the exception message
-     * @throws IOException if the writer encountered an error
-     */
-    private static void closeAndCheckForWriteErrors(PrintWriter aWriter, File aFile) throws IOException {
-        aWriter.close();
-        if (aWriter.checkError()) {
-            throw new IOException(String.format("An error occurred while writing to file %s.", aFile.getPath()));
         }
     }
     //
