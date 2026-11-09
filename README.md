@@ -83,7 +83,7 @@ to run MORTAR from the command line.
 
 <p>
 <b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR_v1.6.0.0_WINx64_setup.exe">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.7.0/MORTAR_v1.7.0.0_WINx64_setup.exe">here</a> to 
 automatically download the setup.exe of the latest version). Download the installer 
 executable, start it, and follow the instructions to install MORTAR. During installation, you are asked whether desktop 
 or start menu icons/shortcuts should be created. The executable (batch file) denoted "MORTAR" uses up to 4 GB of RAM, 
@@ -91,7 +91,7 @@ while the "MORTAR 20GB" configuration allocates up to 20 GB of your RAM for runn
 will be created, so creating at least one of the shortcuts is recommended. To start MORTAR after installation, double-click 
 one of the created shortcuts. 
 <br>
-The MORTAR program folder is located at "C:\Program Files\MORTAR\MORTARv1.6.0.0" by default, but can be adjusted during 
+The MORTAR program folder is located at "C:\Program Files\MORTAR\MORTARv1.7.0.0" by default, but can be adjusted during 
 installation. MORTAR can be uninstalled by the provided "unins000.exe" executable in the MORTAR program folder or by 
 standard Windows functions (Settings -> Apps -> Installed Apps). Note that the installation includes a full Java Runtime 
 Environment (JRE).
@@ -134,7 +134,7 @@ command line:
 </p>
 
 ```shell
-sudo dpkg -i <path to>MORTAR-1.6.0.deb
+sudo dpkg -i <path to>MORTAR-1.7.0.deb
 ```
 
 Execute the command in the directory where the package is situated or use its explicit 
@@ -154,7 +154,7 @@ command line:
 </p>
 
 ```shell
-sudo rpm -i <path to>MORTAR-1.6.0.rpm
+sudo rpm -i <path to>MORTAR-1.7.0.rpm
 ```
 
 Execute the command in the directory where the package is situated or use its explicit
@@ -165,15 +165,15 @@ installation not work for you, you can run MORTAR directly from the command line
 (see below).
 
 <p><b>JAR execution via command line (all platforms)</b>: 
-Every release has the executable JAR "MORTAR-fat-1.6.0.0.jar"
+Every release has the executable JAR "MORTAR-fat-1.7.0.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR-fat-1.6.0.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.7.0/MORTAR-fat-1.7.0.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.6.0.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.7.0.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher (see [CONTRIBUTING.md](./CONTRIBUTING.md) for details on compatibility with 
@@ -183,10 +183,10 @@ Execute the command in the directory where the JAR is situated or use its explic
 Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx) according to your preferences.
 
 <p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all four platforms) and AArch64/ARM 
-(on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.6.0.0.jar" is available from the distributions attached 
+(on macOS and Linux) architectures in general.
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.7.0.0.jar" is available from the distributions attached 
 to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR-fat-aarch64-1.6.0.0.jar">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.7.0/MORTAR-fat-aarch64-1.7.0.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
